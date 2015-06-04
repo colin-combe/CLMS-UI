@@ -1,0 +1,106 @@
+/**
+ * Table 1 (searches)
+ */
+
+#t1 {
+   font-size: 13px;
+/*
+   table-layout:auto;
+*/
+}
+
+#t1 .dynamic-table-toolbar { 
+  height: 30px;
+}
+
+#t1 .dynamic-table-filter { 
+  height: 25px;
+  border: 1px solid lightgray;
+  display: block;
+  float: left;
+  margin-right: 5px;
+}
+
+/**
+ * tools can be styled individualy
+ * every tool has class name tool-1, tool-2, ..., tool-n
+ */
+/*
+#t1 .dynamic-table-toolbar .tool-1 .dynamic-table-filter { 
+  width: 50px;
+}
+*/
+/*
+#t1 .dynamic-table-toolbar .tool-2 .dynamic-table-filter { 
+  width: 80px;
+}
+*/
+/*
+#t1 .dynamic-table-toolbar .tool-3 .dynamic-table-filter { 
+  width: 150px;
+}*/
+#t1 .dynamic-table-toolbar .tool-4 .dynamic-table-filter { 
+  width: 100px;
+}
+
+
+
+#t1 .dynamic-table-downarrow { 
+  height: 16px;
+  width: 16px;
+  background-image: url(down_arrow3.png);
+  cursor: pointer;
+  display: inline-block;
+  margin: 3px;
+}
+#t1 .dynamic-table-uparrow { 
+  height: 16px;
+  width: 16px;
+  background-image: url(up_arrow3.png);
+  cursor: pointer;
+  display: inline-block;
+  margin: 3px;
+}
+
+#t1 .dynamic-table-pagerbar { 
+  background-color: white;
+  padding-top: 10px;
+}
+
+#t1 .dynamic-table-pagerbar .dynamic-table-page-selector { 
+  display : block;
+  color: #08C;
+  text-decoration: none;
+  float: left;
+  width: 30px;
+  margin-right: -1px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  text-align: center;
+} 
+
+#t1 .dynamic-table-pagerbar .dynamic-table-page-selector:hover,
+#t1 .dynamic-table-pagerbar .dynamic-table-page-selected:hover { 
+  font-weight: bold;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
+#t1 .dynamic-table-pagerbar .dynamic-table-page-selected:hover { 
+   background-color: transparent;
+   font-weight: normal;
+}
+
+#t1 .dynamic-table-pagerbar .dynamic-table-page-selected { 
+  display : block;
+  color: #999;
+  text-decoration: none;
+  float: left;
+  width: 30px;
+  margin-right: -1px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  text-align: center;
+} 
+

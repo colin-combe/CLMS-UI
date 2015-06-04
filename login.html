@@ -1,0 +1,81 @@
+<!--
+//  CLMS-UI
+//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
+//
+//  This file is part of CLMS-UI.
+//
+//  CLMS-UI is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  CLMS-UI is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Seaches</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="images/favicon.ico">
+	<meta name="description" content="a common platform for the downstream analysis of CLMS data" />
+	<meta name="google" content="notranslate" />
+	<meta name="author" content="Rappsilber Laboratory">
+	<meta name="copyright" content="2015">
+	<meta charset="UTF-8">
+  </head>
+  <body>
+
+
+	<header>
+		<div class="container">
+			<div class="demo-headline">
+<!--
+				<h1 class="demo-logo">CLMS-UI</h1>
+-->
+    	  </div>
+		</div>
+	</header>
+
+<div class="container">
+
+       <div class="login">
+        <div class="login-screen">
+
+          <form  name="login_form" method="post" action="../password/checkLogin.php" class="login-form">
+            <div class="control-group">
+
+              <input type="text" class="login-field" value="" placeholder="Username" id="login-name" name="login-name"/>
+              <label class="login-field-icon fui-user" for="login-name"></label>
+            </div>
+
+            <div class="control-group">
+              <input type="password" class="login-field" value="" placeholder="Password" id="login-pass" name="login-pass" />
+              <label class="login-field-icon fui-lock" for="login-pass"></label>
+            </div>
+
+            <input name="Submit" value="Login" type="submit" class="btn btn-primary btn-large btn-block"/>
+<!--
+            <a class="login-link" href="../password/lost_password.php"> </a>
+-->
+          </form>
+        </div>
+      </div>
+
+
+    </div> <!-- /container -->
+
+    <footer>
+      <div class="container">
+       <p>Rappsilber Laboratory</p>
+      </div>
+    </footer>
+
+  </body>
+</html>
