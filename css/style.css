@@ -26,6 +26,11 @@ body, input, select, textarea {
     line-height: 1.75em;
     color: #888;
     -webkit-text-stroke: .15px;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 }
 
 .container {
@@ -42,7 +47,15 @@ body, input, select, textarea {
 }
 
 #topDiv {
+/*
 	height:300px;
+*/
+	overflow:hidden;
+	-webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 /*
     top: 116px;
     bottom: 50%;
@@ -57,11 +70,13 @@ body, input, select, textarea {
     background: rgba(9, 29, 66, 1);
     margin-left: 40px;
     margin-right: 40px;
-    cursor:move;
+    cursor:ns-resize;
 }
 
 #bottomDiv {
 height:200px;
+padding-top:2px;
+overflow: auto;
 /*
        top: 60%;
     bottom: 116px;
@@ -480,6 +495,11 @@ table.default tfoot {
     margin-top: 10px;
 	padding-left: 60px;
 	padding-right: 60px;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 }
 
 #track1 {

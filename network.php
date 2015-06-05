@@ -40,7 +40,26 @@
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>   
-        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+<!--
+         <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+-->
+      
+        <!--xiNET dev-->
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/Layout.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/Refresh.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/ToolTips.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/model/Match.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/model/Link.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/model/Protein.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/model/Annotation.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/model/ProteinLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/model/ResidueLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
 		<!-- Main -->
@@ -80,7 +99,7 @@
 				</h1>
    	 		</div>				   	
 			
-			<div id="splitterContainer">
+			<div>
 				<div id="topDiv">
 				</div>
 				<div id=splitterDiv class="horizontalSplitter"></div>
@@ -89,13 +108,45 @@
 						<p>No selection.</p>
 				</div>
 				<script>
-				//<![CDATA[					
-					var splitterMoveStart;
+				//<![CDATA[		
+					var marginBottom = 95;
+					var minBottomDivHeight = 40;
+					var splitterDivHeight = 20;
+					var splitterDragging = false;
+					var splitterDiv = document.getElementById("splitterDiv");
+					var topDiv = document.getElementById("topDiv");
 					var bottomDiv = document.getElementById("bottomDiv");
-					bottomDiv.onmousedown = function() {
-						//~ alert("mouse down");
+					var main = document.getElementById("main");
+					splitterDiv.onmousedown = function(evt) {
+						splitterDragging = true;
+					}
+					main.onmousemove = function(evt) {
+						console.log("yo");
+						if (splitterDragging === true || !evt){
+							var element = topDiv;
+							var top = 0;
+							do {
+								top += element.offsetTop  || 0;
+								element = element.offsetParent;
+							} while(element);
+							var topDivHeight;
+							if (evt) topDivHeight = evt.pageY - top - (splitterDivHeight / 2);
+							else topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
+							if (topDivHeight < 0) topDivHeight = 0;
+							var bottomDivHeight = window.innerHeight - top - topDivHeight - splitterDivHeight - marginBottom;
+							if (bottomDivHeight < minBottomDivHeight){
+								bottomDivHeight = minBottomDivHeight;
+								topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
+							}
+							topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+							bottomDiv.setAttribute("style", "height:"+bottomDivHeight+"px;");
+						};
+					}
+					main.onmouseup = function(evt) {
+						splitterDragging = false;
 					}
 					
+					main.onmousemove();
 					
 				//]]>				  
 				</script>
