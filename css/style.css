@@ -47,22 +47,12 @@ body, input, select, textarea {
 }
 
 #topDiv {
-/*
-	height:300px;
-*/
 	overflow:hidden;
 	-webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
     user-select: none;
-/*
-    top: 116px;
-    bottom: 50%;
-    left: 0px;
-    right: 0px;
-    position: absolute;
-*/
 }
 
 .horizontalSplitter {
@@ -77,17 +67,6 @@ body, input, select, textarea {
 height:200px;
 padding-top:2px;
 overflow: auto;
-/*
-       top: 60%;
-    bottom: 116px;
-    left: 0px;
-    right: 0px;
- background-color: lightgreen;
-*/
-/*
-    position: absolute;
-*/
-font-size: 13pt;
 }
 
 #helpPanel{
@@ -96,8 +75,11 @@ font-size: 13pt;
 	top:-95px;
 	height: 0px;
 	z-index: 1;
-	width: 450px;
+	width: 460px;
 	overflow: hidden;
+/*
+	font-size: 1em
+*/
 }
 
 
@@ -110,31 +92,10 @@ font-size: 13pt;
 	overflow: hidden;
 }
 
-/*
-#networkContainer {
-    position: fixed;
-    z-index: -10;
-    margin-bottom: 0;
-    overflow: hidden;
-    bottom: 100px!important;
-    right: 0px;
-    top: 180px;
-    left: 300px;
-    -webkit-transform: translate3d(0, 0, 0);
-    -webkit-backface-visibility: hidden;
-	-webkit-perspective: 1000;
-}
-* #networkContainer{
-	left: 0px;
-	top:100px;
-}
-
-*/
-
-
-
 h1, h2, h3, h4, h5, h6 {
+/*
     font-weight: 200;
+*/
     color: #666;
     line-height: 1.75em;
 }
@@ -156,7 +117,9 @@ h2.alt strong {
     color: #666;
 }
 h3 {
+/*
     font-size: 1.5em;
+*/
 }
 option {
   color: #091D42;
@@ -234,194 +197,15 @@ nav a {
     letter-spacing: 1px;
     font-weight: 300;
     text-shadow: 0 0 1px rgba(255, 255, 255, .3);
+/*
     font-size: 1em;
+*/
 }
 nav a:focus, nav a:hover {
     outline: 0;
 }
-.currentPage a {
-    margin-right: 10px;
-    content: '-';
-    -webkit-transform: translateX(20px);
-    -moz-transform: translateX(20px);
-    transform: translateX(20px);
-}
-.currentPage a {
-    margin-left: 10px;
-    content: '-';
-    -webkit-transform: translateX(20px);
-    -moz-transform: translateX(20px);
-    transform: translateX(20px);
-}
-.hover-effect a::after, .hover-effect a::before {
-    display: inline-block;
-    opacity: 0;
-    -webkit-transition: -webkit-transform .3s, opacity .2s;
-    -moz-transition: -moz-transform .3s, opacity .2s;
-    transition: transform .3s, opacity .2s;
-}
-.hover-effect a::before {
-    margin-right: 10px;
-    content: '-';
-    -webkit-transform: translateX(20px);
-    -moz-transform: translateX(20px);
-    transform: translateX(20px);
-}
-.hover-effect a::after {
-    margin-left: 10px;
-    content: '-';
-    -webkit-transform: translateX(-20px);
-    -moz-transform: translateX(-20px);
-    transform: translateX(-20px);
-}
-.hover-effect a:focus::after, .hover-effect a:focus::before, .hover-effect a:hover::after, .hover-effect a:hover::before {
-    opacity: 1;
-    -webkit-transform: translateX(0px);
-    -moz-transform: translateX(0px);
-    transform: translateX(0px);
-}
-::-moz-selection {
-    background-color: #091D42;
-    color: #fff;
-}
-::selection {
-    background-color: #091D42;
-    color: #fff;
-}
-
-.image.centered {
-    display: block;
-    margin: 0 0 2em;
-}
-.image.centered img {
-    margin: 0 auto;
-    width: auto;
-}
-ul.default {
-    list-style: disc;
-    padding-left: 1em;
-}
-ul.default li {
-    padding-left: .5em;
-}
-ul.icons {
-    cursor: default;
-}
-ul.icons li {
-    display: inline-block;
-}
-ul.icons a {
-    display: inline-block;
-    width: 2em;
-    height: 2em;
-    line-height: 2em;
-    text-align: center;
-    border: 0;
-}
-ul.menu {
-    cursor: default;
-}
-ul.`menu` li {
-    display: inline-block;
-    line-height: 1em;
-    border-left: solid 1px rgba(128, 128, 128, .35);
-    padding: 0 0 0 .5em;
-    margin: 0 0 0 .5em;
-}
-ul.menu li:first-child {
-    border-left: 0;
-    padding-left: 0;
-    margin-left: 0;
-}
-ol.default {
-    list-style: decimal;
-    padding-left: 1.25em;
-}
-ol.default li {
-    padding-left: .25em;
-}
-form label {
-    display: block;
-    text-align: left;
-    margin-bottom: .5em;
-}
-form input.text, form select, form textarea {
-    position: relative;
-    -webkit-appearance: none;
-    display: block;
-    background: #fff;
-    background: rgba(255, 255, 255, .75);
-    width: 100%;
-    border-radius: .35em;
-    padding: .75em 1em;
-    box-shadow: inset 0 .1em .1em 0 rgba(0, 0, 0, .05);
-    border: solid 1px rgba(0, 0, 0, .15);
-    -moz-transition: all .35s ease-in-out;
-    -webkit-transition: all .35s ease-in-out;
-    -o-transition: all .35s ease-in-out;
-    -ms-transition: all .35s ease-in-out;
-    transition: all .35s ease-in-out;
-}
-form input.text:focus, form select:focus, form textarea:focus {
-    box-shadow: 0 0 2px 1px #8ededc;
-    background: #fff;
-}
-form textarea {
-    min-height: 14em;
-}
-form .formerize-placeholder {
-    color: #555!important;
-}
-form ::-webkit-input-placeholder {
-    color: #555!important;
-}
-form :-moz-placeholder {
-    color: #555!important;
-}
-form ::-moz-placeholder {
-    color: #555!important;
-}
-form :-ms-input-placeholder {
-    color: #555!important;
-}
-form ::-moz-focus-inner {
-    border: 0;
-}
-table {
-    width: 100%;
-    font-size: 12pt;
-}
-table.default {
-    width: 100%;
-    text-align: left;
-}
-table.default tbody tr:nth-child(2n+2) {
-    background: #f4f4f4;
-}
-table.default td {
-    padding: .5em 1em;
-}
-table.examples-page td {
-    width: 25%;
-}
-table.default th {
-    text-align: left;
-    padding: .5em 1em;
-    color: #fff;
-    background: #222729 url("../images/overlay.png");
-}
-table.default thead {
-    background: #444;
-    color: #fff;
-}
-table.default tfoot {
-    background: #eee;
-}
 
 .page-header {
-/*
-	height:77px;
-*/
     background-color: #091D42;
     color: #fff;
     padding: 20px;
@@ -429,56 +213,6 @@ table.default tfoot {
     margin-top: 10px;
 }
 
-.top a h1 span:hover, .top a h1:hover {
-    background: #fff;
-    color: #091D42;
-    -webkit-transition: all 300ms ease-in-out;
-    -moz-transition: all 300ms ease-in-out;
-    -ms-transition: all 300ms ease-in-out;
-    -o-transition: all 300ms ease-in-out;
-    transition: all 300ms ease-in-out;
-}
-
-#help:active, #help:hover {
-    color: #091D42;
-    background: #fff;
-}
-.controlling-features-box p {
-    margin-left: 10px;
-    margin-top: 10px;
-    line-height: 2;
-}
-.hor-minimalist-a {
-    left: auto;
-    right: auto;
-    font-size: .9em;
-    cursor: default;
-    position: relative;
-    margin-left: auto;
-    margin-right: auto;
-    border-collapse: collapse;
-}
-.hor-minimalist-a th {
-    color: #039;
-    padding: 10px 8px;
-}
-.hor-minimalist-a thead td {
-    color: #091D42;
-}
-.hor-minimalist-a td {
-    color: #777;
-    padding: 9px 8px 0;
-    border: 0 solid #eee;
-}
-.hor-minimalist-a tbody tr:hover td {
-    color: #fff;
-    background-color: #091D42;
-    -webkit-transition: all 200ms ease;
-    -moz-transition: all 200ms ease;
-    -ms-transition: all 200ms ease;
-    -o-transition: all 200ms ease;
-    transition: all 200ms ease;
-}
 .controlsexamplespage {
     clear: both;
     overflow: hidden;
@@ -533,7 +267,7 @@ table.default tfoot {
 	height: 32px;
     border: none;
     font-family: inherit;
-    font-size: .7em;
+    font-size: 0.7em;
     color: inherit;
     background: 0 0;
     cursor: pointer;
@@ -600,8 +334,12 @@ form table td {
     margin-left: 40px;
     margin-right: 40px;
 }
-.overlay-box img{
+#legend{
     background: white;
+}
+#logo{
+    display: block;
+    padding-top:5px;
 }
 .overlay-box ul {
     position: relative;
@@ -669,7 +407,7 @@ p.citation {
     color: #fff;
 }
 .overlay-box table {
-    font-size: 13pt;
+    font-size: 0.9em;
     left: auto;
     right: auto;
 /*
@@ -685,7 +423,9 @@ p.citation {
     text-align: left;
 }
 .overlay-box th {
+/*
     font-size: 14px;
+*/
     font-weight: 400;
     color: #039;
     padding: 10px 8px;
@@ -745,7 +485,9 @@ tbody tr:hover td, tbody tr:hover td a{
 .overlay-table {
     left: auto;
     right: auto;
+/*
     font-size: 1em;
+*/
     cursor: default;
     color: #fff;
     position: relative;

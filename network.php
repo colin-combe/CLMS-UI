@@ -67,24 +67,24 @@
 			<div class="container">   	 				
 				<h1 class="page-header">
 					<p style="padding-left:0px;" class="btn">Layout:</p>
-					<button class="btn btn-1 btn-1a network-control resetzoom" onclick="saveLayout();">
+					<button class="btn btn-1 btn-1a" onclick="saveLayout();">
 							Save
 					</button>
-					<button class="btn btn-1 btn-1a network-control resetzoom" onclick="xlv.reset();">
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Reset
 					</button>
 					<p class="btn">Summaries:</p>
-					<button class="btn btn-1 btn-1a network-control resetzoom" onclick="xlv.reset();">
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Links
 					</button>
-					<button class="btn btn-1 btn-1a network-control resetzoom" onclick="xlv.reset();">
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Residues
 					</button>
 					<p class="btn">Exports:</p>
-					<button class="btn btn-1 btn-1a network-control resetzoom" onclick="xlv.reset();">
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							CSV
 					</button>
-					<button class="btn btn-1 btn-1a network-control" onclick="xlv.exportSVG();">SVG</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
 							
 					<div style='float:right'>
 						<label class="btn">
@@ -121,7 +121,6 @@
 						splitterDragging = true;
 					}
 					main.onmousemove = function(evt) {
-						console.log("yo");
 						if (splitterDragging === true || !evt){
 							var element = topDiv;
 							var top = 0;
@@ -299,7 +298,7 @@
 			</table> 
 		</div>	
 		<div class="overlay-box" id="legendPanel">
-			<div><img src="./images/fig3_1.svg"></div>
+			<div><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 		</div>	
 		<script type="text/javascript">
 			//<![CDATA[
@@ -325,7 +324,7 @@
 			
 			function showHelpPanel() {
 					helpShown = true;
-					d3.select("#helpPanel").transition().style("height", "500px").style("top", "100px").duration(700);
+					d3.select("#helpPanel").transition().style("height", "550px").style("top", "100px").duration(700);
 			}
 			function hideHelpPanel() {
 					helpShown = false;
@@ -333,7 +332,7 @@
 			}
 			function showLegendPanel() {
 					legendShown = true;
-					d3.select("#legendPanel").transition().style("height", "500px").style("top", "100px").duration(700);
+					d3.select("#legendPanel").transition().style("height", "550px").style("top", "100px").duration(700);
 			}
 			function hideLegendPanel() {
 					legendShown = false;
