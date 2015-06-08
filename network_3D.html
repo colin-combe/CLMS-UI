@@ -31,20 +31,20 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		<link rel="icon" type="image/ico" href="images/logos/favicon.ico">
-		
+
 		<link rel="stylesheet" href="./css/reset.css" />
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
-		
-		<script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script> 
+
+		<script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
-        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>   
+        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 <!--
          <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 -->
-      
+
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
@@ -62,7 +62,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
-    <body>	
+    <body>
 		<!-- Main -->
 		<div id="main">
 			<div>
@@ -73,12 +73,12 @@
 					</div>
 				</div>
 								<div id=splitterDiv class="horizontalSplitter noMarg"></div>
-				
+
 				<div id="bottomDiv" class="overlay-box noMarg">
 						<p>Selection details (todo)</p>
 				</div>
 				<script>
-				//<![CDATA[		
+				//<![CDATA[
 					var marginBottom = 95;
 					var minBottomDivHeight = 40;
 					var splitterDivHeight = 20;
@@ -114,46 +114,46 @@
 					main.onmouseup = function(evt) {
 						splitterDragging = false;
 					}
-					
+
 					main.onmousemove();
-					
-				//]]>				  
+
+				//]]>
 				</script>
 			</div>
-			
-			
-			<div class="controlsexamplespage">						
+
+
+			<div class="controlsexamplespage">
 <!--
 					<label>A
-						<input checked="checked" 
-								   id="A" 			
-								   onclick="filterChanged();" 
+						<input checked="checked"
+								   id="A"
+								   onclick="filterChanged();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>B
-						<input checked="checked" 
-								   id="B" 			
-								   onclick="filterChanged();" 
+						<input checked="checked"
+								   id="B"
+								   onclick="filterChanged();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>C
-						<input checked="checked" 
-								   id="C" 			
-								   onclick="filterChanged();" 
+						<input checked="checked"
+								   id="C"
+								   onclick="filterChanged();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>?
-						<input id="Q" 			
-								   onclick="filterChanged();" 
+						<input id="Q"
+								   onclick="filterChanged();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>auto
-						<input id="AUTO" 			
-								   onclick="filterChanged();" 
+						<input id="AUTO"
+								   onclick="filterChanged();"
 								   type="checkbox"
 							/>
 					</label>
@@ -162,68 +162,68 @@
 						<p class="scoreLabel" id="scoreLabel1"></p>
 						<input id="slide" type="range" min="0" max="100" step="1" value="0" oninput="sliderChanged()"/>
 						<p class="scoreLabel" id="scoreLabel2"></p>
-						<p id="cutoffLabel">(cut-off)</p>							
-					</div> <!-- outlined scoreSlider -->						
-					
+						<p id="cutoffLabel">(cut-off)</p>
+					</div> <!-- outlined scoreSlider -->
+
 					<div style='float:right'>
 						<label>Self-Links
-							<input checked="checked" 
-								   id="selfLinks" 			
-								   onclick="xlv.showSelfLinks(document.getElementById('selfLinks').checked)" 
+							<input checked="checked"
+								   id="selfLinks"
+								   onclick="xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
 								   type="checkbox"
 							/>
 						</label>
 						<label>&nbsp;&nbsp;Ambiguous
-							<input checked="checked" 
-								   id="ambig" 			
-								   onclick="xlv.showAmbig(document.getElementById('ambig').checked)" 
+							<input checked="checked"
+								   id="ambig"
+								   onclick="xlv.showAmbig(document.getElementById('ambig').checked)"
 								   type="checkbox"
 							/>
 						</label>
 						<label style="margin-left:20px;">Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
-								<option>None</option>  								
-								<option>UniprotKB</option> 
-								<option>SuperFamily</option>  
-								<option>Lysines</option>  
+								<option>None</option>
+								<option>UniprotKB</option>
+								<option>SuperFamily</option>
+								<option>Lysines</option>
 							</select>
-						</label>	
-					</div>		
+						</label>
+					</div>
 				</div>
-				<script type="text/javascript">	
-					//<![CDATA[					
+				<script type="text/javascript">
+					//<![CDATA[
 					var sliderDecimalPlaces = 1;
 					function getMinScore(){
 						if (xlv.scores){
-							var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+							var powerOfTen = Math.pow(10, sliderDecimalPlaces);
 							return (Math.floor(xlv.scores.min * powerOfTen) / powerOfTen)
 									.toFixed(sliderDecimalPlaces);
 						}
 					}
 					function getMaxScore(){
 						if (xlv.scores){
-							var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+							var powerOfTen = Math.pow(10, sliderDecimalPlaces);
 							return (Math.ceil(xlv.scores.max * powerOfTen) / powerOfTen)
 									.toFixed(sliderDecimalPlaces);
 						}
 					}
 					function sliderChanged(){
 						var slide = document.getElementById('slide');
-						var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
-						
-						var cut = ((slide.value / 100) 
+						var powerOfTen = Math.pow(10, sliderDecimalPlaces);
+
+						var cut = ((slide.value / 100)
 									* (getMaxScore() - getMinScore()))
 									+ (getMinScore() / 1);
 						cut = cut.toFixed(sliderDecimalPlaces);
 						var cutoffLabel = document.getElementById("cutoffLabel");
 						cutoffLabel.innerHTML = '(' + cut + ')';
 						xlv.setCutOff(cut);
-					}						
+					}
 					//]]>
-				</script>	
-			</div>					
+				</script>
+			</div>
 		</div><!-- MAIN -->
-			
+
 		<script>
      		//<![CDATA[
 			document.addEventListener("DOMContentLoaded", function() {
@@ -255,17 +255,35 @@
 				//~ xlv.showSelfLinks(document.getElementById('selfLinks').checked);
 				//~ xlv.showAmbig(document.getElementById('ambig').checked);
 				//~ filterChanged();
-				
+
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(function (selectedResidueLinks){
-					console.log("SELECTED:"+selectedResidueLinks);				
+					console.log("SELECTED:", selectedResidueLinks);
+					var rl = selectedResidueLinks.values()[0];
+					if( rl && stage ){
+						console.log( rl.fromResidue, rl.toResidue );
+						stage.getRepresentationsByName( "selected" )[ 0 ]
+							.setSelection( rl.fromResidue + " OR " + rl.toResidue );
+					}else{
+						stage.getRepresentationsByName( "selected" )[ 0 ]
+							.setSelection( "none" );
+					}
 				});
 				xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
-					console.log("HIGHLIGHTED:"+highlightedLinks);				
+					console.log("HIGHLIGHTED:", highlightedLinks);
+					var rl = highlightedLinks.values()[0];
+					if( rl && stage ){
+						console.log( rl.fromResidue, rl.toResidue );
+						stage.getRepresentationsByName( "highlighted" )[ 0 ]
+							.setSelection( rl.fromResidue + " OR " + rl.toResidue );
+					}else{
+						stage.getRepresentationsByName( "highlighted" )[ 0 ]
+							.setSelection( "none" );
+					}
 				});
-			
-				//Alexander - 
-				 //in short term you can get the start-end residues of 
+
+				//Alexander -
+				 //in short term you can get the start-end residues of
 				 // loaded CLMS dataset as follows - this will work for testing with HSA example
 				 var residueLinks = xlv.proteinLinks.values()[0].residueLinks.values();
 				 console.log("crosslink count:"+residueLinks.length);
@@ -273,22 +291,39 @@
 					 var rl = residueLinks[i];
 					 console.log("fromResidue:"+rl.fromResidue+"\ttoResidue:"+rl.toResidue);
 				 }
-			
-				//create 3D network viewer
-				if ( ! Detector.webgl ) Detector.addGetWebGLMessage(); 
-				NGL.init( function(){
-					 var stage = new NGL.Stage( "topRightDiv" ); 
-					 stage.loadFile( "rcsb://1AO6" ); 
-				} );
-			} ); 
-			
 
-			 
+				//create 3D network viewer
+				if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+				var stage;
+				NGL.init( function(){
+					stage = new NGL.Stage( "topRightDiv" );
+					stage.loadFile( "rcsb://1AO6", {
+						onLoad: function( o ){
+
+							o.addRepresentation( "cartoon", { color: "residueindex" } );
+							o.centerView( true );
+
+							o.addRepresentation( "spacefill", {
+								scale: 0.7, name: "selected", sele: "none"
+							} );
+							o.addRepresentation( "spacefill", {
+								transparent: true, opacity: 0.6, name: "highlighted", sele: "none"
+							} );
+
+						},
+						sele: ":A"
+					} );
+				} );
+
+			} );
+
+
+
 			function changeAnnotations(){
 				var annotationSelect = document.getElementById('annotationsSelect');
 				xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
 			};
-			 
+
 			function initSlider(){
 				if (xlv.scores === null){
 					d3.select('#scoreSlider').style('display', 'none');
@@ -300,7 +335,7 @@
 					d3.select('#scoreSlider').style('display', 'inline-block');
 				}
 			};
-			  
+
 			//~ function filterChanged(){
 				//~ A_shown = document.getElementById('A').checked;
 				//~ B_shown = document.getElementById('B').checked;
@@ -308,8 +343,8 @@
 				//~ Q_shown = document.getElementById('Q').checked;
 				//~ AUTO_shown = document.getElementById('AUTO').checked;
 				//~ xlv.checkLinks();
-			//~ } 
-			  //~ 
+			//~ }
+			  //~
 			//~ xlv.filter = function (match) {
 				//~ var vChar = match.validated;
 				//~ if (vChar == 'A' && A_shown && (match.score >= xlv.cutOff)) return true;
@@ -319,7 +354,7 @@
 				//~ else if (match.autovalidated && AUTO_shown && (match.score >= xlv.cutOff))  return true;
 				//~ else return false;
 			//~ }
-			
+
 			//]]>
         </script>
 	</body>
