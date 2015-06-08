@@ -72,10 +72,10 @@
 					<div id="topRightDiv">
 					</div>
 				</div>
-				<div id="splitterDiv" class="horizontalSplitter noMarg"></div>
+								<div id=splitterDiv class="horizontalSplitter noMarg"></div>
 				
 				<div id="bottomDiv" class="overlay-box noMarg">
-						<p>No selection.</p>
+						<p>Selection details (todo)</p>
 				</div>
 				<script>
 				//<![CDATA[		
@@ -123,6 +123,7 @@
 			
 			
 			<div class="controlsexamplespage">						
+<!--
 					<label>A
 						<input checked="checked" 
 								   id="A" 			
@@ -156,6 +157,7 @@
 								   type="checkbox"
 							/>
 					</label>
+-->
 					<div id="scoreSlider">
 						<p class="scoreLabel" id="scoreLabel1"></p>
 						<input id="slide" type="range" min="0" max="100" step="1" value="0" oninput="sliderChanged()"/>
@@ -224,62 +226,63 @@
 			
 		<script>
      		//<![CDATA[
-
-			var targetDiv = document.getElementById('topLeftDiv');
-			var messageDiv = document.getElementById('bottomDiv');
-			xlv = new xiNET.Controller(targetDiv);
-			xlv.setMessageElement(messageDiv);
-
-			xlv.addProtein ('741824','ALBU','DAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLFFAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAVARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLKECCEKPLLEKSHCIAEVENDEMPADLPSLAADFVESKDVCKNYAEAKDVFLGMFLYEYARRHPDYSVVLLLRLAKTYETTLEKCCAAADPHECYAKVFDEFKPLVEEPQNLIKQNCELFEQLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVVLNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTLSEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLVAASQAALGL','ALBU_HUMAN Serum albumin active OS=Homo sapiens GN=ALB PE=1 SV=2','P02768-A','585')
-			xlv.addMatch("741824",[11],"741824",[146],178042688,11.186046913852776,7,14,"FKDLGEENFK","HPYFYAPELLFFAKR",'t','','');
-			xlv.addMatch("741824",[546],"741824",[525],178071988,11.184971236178828,11,1,"AVMDDFAAFVEK","KQTALVELVK",'t','','');
-			xlv.addMatch("741824",[349],"741824",[206],178053288,11.1845486045143,3,4,"LAKTYETTLEK","FGERAFK",'t','','');
-			xlv.addMatch("741824",[501],"741824",[525],178145945,11.184453727386577,17,2,"EFNAETFTFHADICcmTLSEK","KQTALVELVK",'t','','');
-			xlv.addMatch("741824",[485],"741824",[535],177992712,11.177865306498465,12,5,"RPCcmFSALEVDETYVPK","HKPKATK",'t','','');
-			xlv.addMatch("741824",[52],"741824",[42],178127929,11.17443422457621,1,9,"TCcmVADESAENCcmDK","LVNEVTEFAK",'t','','');
-			xlv.addMatch("741824",[241],"741824",[234],177993189,11.174359452143502,2,6,"VHTECcmCcmHGDLLECcmADDR","LVTDLTK",'t','','');
-			xlv.addMatch("741824",[160],"741824",[11],178141167,11.169511679933048,2,7,"RYKAAFTECcmCcmQAADK","FKDLGEENFK",'t','','');
-			xlv.addMatch("741824",[337],"741824",[440],178151406,11.16519928620856,2,5,"RHPDYSVVLLLR","HPEAKR",'f','A','');
-			xlv.addMatch("741824",[415],"741824",[429],178101433,11.164037174328673,11,4,"VPQVSTPTLVEVSR","NLGKVGSK",'t','','');
-			xlv.addMatch("741824",[546],"741824",[525],178005736,11.16081845314055,11,1,"AVMDDFAAFVEK","KQTALVELVK",'t','','');
-			xlv.addMatch("741824",[565],"741824",[546],178058843,1.363761679555658,2,10,"ETCcmFAEEGK","AVMDDFAAFVEK",'f','C','');
-			xlv.addMatch("741824",[187],"741824",[433],178073863,1.151897759655039,2,4,"DEGKASSAKQRLKCcmASLQK","VGSKCCKHPEAKR",'f','C','');
-			xlv.addMatch("741824",[74],"741824",[200],178057592,1.145205679559039,1,3,"LCcmTVATLR","CASLQK",'f','C','');
-
-			xlv.initLayout();
-			xlv.initProteins();
+			document.addEventListener("DOMContentLoaded", function() {
+				//create 2D network viewer
+				var targetDiv = document.getElementById('topLeftDiv');
+				xlv = new xiNET.Controller(targetDiv);
+				//load minimal dataset (todo: add better test data)
+				xlv.addProtein ('741824','ALBU','DAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLFFAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAVARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLKECCEKPLLEKSHCIAEVENDEMPADLPSLAADFVESKDVCKNYAEAKDVFLGMFLYEYARRHPDYSVVLLLRLAKTYETTLEKCCAAADPHECYAKVFDEFKPLVEEPQNLIKQNCELFEQLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVVLNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTLSEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLVAASQAALGL','ALBU_HUMAN Serum albumin active OS=Homo sapiens GN=ALB PE=1 SV=2','P02768-A','585')
+				xlv.addMatch("741824",[11],"741824",[146],178042688,3,7,14,"FKDLGEENFK","HPYFYAPELLFFAKR",'t','','');
+				xlv.addMatch("741824",[546],"741824",[525],178071988,4,11,1,"AVMDDFAAFVEK","KQTALVELVK",'t','','');
+				xlv.addMatch("741824",[349],"741824",[206],178053288,5,3,4,"LAKTYETTLEK","FGERAFK",'t','','');
+				xlv.addMatch("741824",[501],"741824",[525],178145945,6,17,2,"EFNAETFTFHADICcmTLSEK","KQTALVELVK",'t','','');
+				xlv.addMatch("741824",[485],"741824",[535],177992712,7,12,5,"RPCcmFSALEVDETYVPK","HKPKATK",'t','','');
+				xlv.addMatch("741824",[52],"741824",[42],178127929,8,1,9,"TCcmVADESAENCcmDK","LVNEVTEFAK",'t','','');
+				xlv.addMatch("741824",[241],"741824",[234],177993189,9,2,6,"VHTECcmCcmHGDLLECcmADDR","LVTDLTK",'t','','');
+				xlv.addMatch("741824",[160],"741824",[11],178141167,10,2,7,"RYKAAFTECcmCcmQAADK","FKDLGEENFK",'t','','');
+				xlv.addMatch("741824",[337],"741824",[440],178151406,11.16519928620856,2,5,"RHPDYSVVLLLR","HPEAKR",'f','A','');
+				xlv.addMatch("741824",[415],"741824",[429],178101433,12,11,4,"VPQVSTPTLVEVSR","NLGKVGSK",'t','','');
+				xlv.addMatch("741824",[546],"741824",[525],178005736,13,11,1,"AVMDDFAAFVEK","KQTALVELVK",'t','','');
+				xlv.addMatch("741824",[565],"741824",[546],178058843,1.363761679555658,2,10,"ETCcmFAEEGK","AVMDDFAAFVEK",'f','C','');
+				xlv.addMatch("741824",[187],"741824",[433],178073863,1.151897759655039,2,4,"DEGKASSAKQRLKCcmASLQK","VGSKCCKHPEAKR",'f','C','');
+				xlv.addMatch("741824",[74],"741824",[200],178057592,1.145205679559039,1,3,"LCcmTVATLR","CASLQK",'f','C','');
+				//xiNET initialisation
+				xlv.initLayout();
+				xlv.initProteins();
+				//filter init
+				initSlider();
+				changeAnnotations();
+				//~ xlv.showSelfLinks(document.getElementById('selfLinks').checked);
+				//~ xlv.showAmbig(document.getElementById('ambig').checked);
+				//~ filterChanged();
+				
+				//register callbacks
+				xlv.linkSelectionCallbacks.push(function (selectedResidueLinks){
+					console.log("SELECTED:"+selectedResidueLinks);				
+				});
+				xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
+					console.log("HIGHLIGHTED:"+highlightedLinks);				
+				});
 			
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage(); 
-			document.addEventListener("DOMContentLoaded", function() { 
+				//Alexander - 
+				 //in short term you can get the start-end residues of 
+				 // loaded CLMS dataset as follows - this will work for testing with HSA example
+				 var residueLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+				 console.log("crosslink count:"+residueLinks.length);
+				 for (var i = 0; i < residueLinks.length; i++){
+					 var rl = residueLinks[i];
+					 console.log("fromResidue:"+rl.fromResidue+"\ttoResidue:"+rl.toResidue);
+				 }
+			
+				//create 3D network viewer
+				if ( ! Detector.webgl ) Detector.addGetWebGLMessage(); 
 				NGL.init( function(){
 					 var stage = new NGL.Stage( "topRightDiv" ); 
 					 stage.loadFile( "rcsb://1AO6" ); 
-				} ); 
-			} );
+				} );
+			} ); 
 			
-			initSlider();
-			changeAnnotations();
-			xlv.showSelfLinks(document.getElementById('selfLinks').checked);
-			xlv.showAmbig(document.getElementById('ambig').checked);
-			filterChanged();
-			
-			
-			
-			function saveLayout () {
-				var layout = xlv.getLayout();
-				var xmlhttp = new XMLHttpRequest();
-				var url = "./php/saveLayout.php";
-				var params =  "id=" + xlv.id + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
-				xmlhttp.open("POST", url, true);
-				//Send the proper header information along with the request
-				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						xlv.message(xmlhttp.responseText, true);
-					}
-				}
-				xmlhttp.send(params);
-			}
+
 			 
 			function changeAnnotations(){
 				var annotationSelect = document.getElementById('annotationsSelect');
@@ -298,24 +301,24 @@
 				}
 			};
 			  
-			function filterChanged(){
-				A_shown = document.getElementById('A').checked;
-				B_shown = document.getElementById('B').checked;
-				C_shown = document.getElementById('C').checked;
-				Q_shown = document.getElementById('Q').checked;
-				AUTO_shown = document.getElementById('AUTO').checked;
-				xlv.checkLinks();
-			} 
-			  
-			xlv.filter = function (match) {
-				var vChar = match.validated;
-				if (vChar == 'A' && A_shown && (match.score >= xlv.cutOff)) return true;
-				else if (vChar == 'B' && B_shown  && (match.score >= xlv.cutOff)) return true;
-				else if (vChar == 'C' && C_shown && (match.score >= xlv.cutOff)) return true;
-				else if (vChar == '?' && Q_shown && (match.score >= xlv.cutOff)) return true;
-				else if (match.autovalidated && AUTO_shown && (match.score >= xlv.cutOff))  return true;
-				else return false;
-			}
+			//~ function filterChanged(){
+				//~ A_shown = document.getElementById('A').checked;
+				//~ B_shown = document.getElementById('B').checked;
+				//~ C_shown = document.getElementById('C').checked;
+				//~ Q_shown = document.getElementById('Q').checked;
+				//~ AUTO_shown = document.getElementById('AUTO').checked;
+				//~ xlv.checkLinks();
+			//~ } 
+			  //~ 
+			//~ xlv.filter = function (match) {
+				//~ var vChar = match.validated;
+				//~ if (vChar == 'A' && A_shown && (match.score >= xlv.cutOff)) return true;
+				//~ else if (vChar == 'B' && B_shown  && (match.score >= xlv.cutOff)) return true;
+				//~ else if (vChar == 'C' && C_shown && (match.score >= xlv.cutOff)) return true;
+				//~ else if (vChar == '?' && Q_shown && (match.score >= xlv.cutOff)) return true;
+				//~ else if (match.autovalidated && AUTO_shown && (match.score >= xlv.cutOff))  return true;
+				//~ else return false;
+			//~ }
 			
 			//]]>
         </script>
