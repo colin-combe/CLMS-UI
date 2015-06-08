@@ -17,6 +17,31 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 ?>
+<script>
+	function PV_CSV() {
+		//~ var out = "<pre>run_name,scan_number,precursor_mz,precursor_charge,match_score," +
+				//~ "spectrum_intensity_coverage,total_fragment_matches,delta,error," +
+				//~ "peptide1,display_protein1,peptide_position1,pep1_link_pos,peptide2,"+
+				//~ "display_protein2,peptide_position2,pep2_link_pos\n";
+		//~ 
+		//~ var mc = XiPV.matches.length;
+		//~ for (var m = 0; m < mc; m++) {
+			//~ var match = XiPV.matches[m];
+			//~ var m_out = "run_name," + match.scan_no + "," + "pre_m/z," + "pre_charge,"
+						//~ + match.score + "," + "spec_intens," + "frag_matches," 
+						//~ + "delta," + "error," 
+						//~ + match.pep1Seq + "," + "ALBU_HUMAN" + "," + match.pep1Pos + "," + (match.pep1LinkPos + 1) + ","
+						//~ + match.pep2Seq + "," + "ALBU_HUMAN" + "," + match.pep2Pos + "," + (match.pep2LinkPos + 1);
+			//~ 
+			//~ out += m_out + "\n";
+		//~ }
+		//~ 
+		//~ PV.html(out + "</pre>");	
+		//~ 
+		//~ var wnd = window.open("about:blank", "", "_blank");
+		//~ wnd.document.write(html);
+	}
+	
 		function PV_linkInfo() {
 
 			if (PV.set1 !== undefined) {
@@ -29,7 +54,7 @@
 				var lc = links.length;
 				for (var l = 0; l < lc; l++) {
 					var link = links[l];
-					message += "<u>" + link.fromProtein.name + " - " + link.toProtein.name + "</u><br/>"
+					html += "<u>" + link.fromProtein.name + " - " + link.toProtein.name + "</u><br/>"
 					//inter protein res links
 					var c2 = link.residueLinks.values().length;
 					var lcount = 0;
@@ -93,64 +118,64 @@
 					return result;
 				});
 
-				var message = "<br/><strong>Search ID: " + PV.set1 + " only (" + set1Links.length + " links)</strong><br/><br/>";
+				var html = "<br/><strong>Search ID: " + PV.set1 + " only (" + set1Links.length + " links)</strong><br/><br/>";
 				var c2 = set1Links.length;
 				for (var rl = 0; rl < c2; rl++) {
 					var resLink = set1Links[rl];
-					message += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
+					html += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
 							+ ") - "
 							+ resLink.toProtein.name.substring(0, 4) + ", <strong>" + resLink.toResidue + "</strong> (" + link.toProtein.sequence[resLink.toResidue - 1] + "), " + "";
 
-					message += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
+					html += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
 
 
 				}
 
-				message += "<br/><strong>Search ID: " + PV.set2 + " only (" + set2Links.length + " links)</strong><br/><br/>";
+				html += "<br/><strong>Search ID: " + PV.set2 + " only (" + set2Links.length + " links)</strong><br/><br/>";
 				var c2 = set2Links.length;
 				for (var rl = 0; rl < c2; rl++) {
 					var resLink = set2Links[rl];
-					message += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
+					html += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
 							+ ") - "
 							+ resLink.toProtein.name.substring(0, 4) + ", <strong>" + resLink.toResidue + "</strong> (" + link.toProtein.sequence[resLink.toResidue - 1] + "), " + "";
 
-					message += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
+					html += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
 				}
 
-				message += "<br/><strong>Search ID: " + PV.set3 + " only (" + set3Links.length + " links)</strong><br/><br/>";
+				html += "<br/><strong>Search ID: " + PV.set3 + " only (" + set3Links.length + " links)</strong><br/><br/>";
 				var c2 = set3Links.length;
 				for (var rl = 0; rl < c2; rl++) {
 					var resLink = set3Links[rl];
-					message += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
+					html += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
 							+ ") - "
 							+ resLink.toProtein.name.substring(0, 4) + ", <strong>" + resLink.toResidue + "</strong> (" + link.toProtein.sequence[resLink.toResidue - 1] + "), " + "";
 
-					message += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
+					html += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
 				}
 
 
 
-				message += "<br/><strong>Non-unique - multiple searches (" + nonuniqueLinks.length + " links)</strong><br/><br/>";
+				html += "<br/><strong>Non-unique - multiple searches (" + nonuniqueLinks.length + " links)</strong><br/><br/>";
 				var c2 = nonuniqueLinks.length;
 				for (var rl = 0; rl < c2; rl++) {
 					var resLink = nonuniqueLinks[rl];
-					message += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
+					html += resLink.fromProtein.name.substring(0, 4) + ", <strong>" + resLink.fromResidue + "</strong> (" + link.fromProtein.sequence[resLink.fromResidue - 1]
 							+ ") - "
 							+ resLink.toProtein.name.substring(0, 4) + ", <strong>" + resLink.toResidue + "</strong> (" + link.toProtein.sequence[resLink.toResidue - 1] + "), " + "";
 
-					message += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
+					html += resLink.matches[0].pep1Seq + " to " + resLink.matches[0].pep2Seq + "</br>";
 				}
-				PV.message(message);
+				PV.html(html);
 			}
 			else
 			{
-				var message = "Search ID: " + PV.sid + "<br/><br/>CUTOFF:" + PV.cutOff + "<br/><br/>";
+				var html = "Search ID: " + PV.sid + "<br/><br/>CUTOFF:" + PV.cutOff + "<br/><br/>";
 				var links = XiPV.proteinLinks.values();
 				var lc = links.length;
 				for (var l = 0; l < lc; l++) {
 					var link = links[l];
 					//            if (link.fromProt != link.toProt){
-					message += "<u>" + link.fromProtein.name + " - " + link.toProtein.name + "</u><br/><br/>"
+					html += "<u>" + link.fromProtein.name + " - " + link.toProtein.name + "</u><br/><br/>"
 								+"FromProtein, FromResidue, FromAA, ToProtein, ToResidue, ToAA, HighestScore, NumberMatches, Distance<br/>";
 					//inter protein res links
 					var c2 = link.residueLinks.values().length;
@@ -183,16 +208,16 @@
 							}
 						}
 						if (matchFound) {
-							message += link.fromProtein.name + ", " + resLink.fromResidue + ", " + link.fromProtein.sequence[resLink.fromResidue - 1]
+							html += link.fromProtein.name + ", " + resLink.fromResidue + ", " + link.fromProtein.sequence[resLink.fromResidue - 1]
 									+ ", "
 									+ link.toProtein.name + ", " + resLink.toResidue + ", " + link.toProtein.sequence[resLink.toResidue - 1] + ", " + highestScore + ", " + noMatches + ", " + d + "<br/>";
 							lcount++;
 						}
 					}
-					message += "<br/><br/>(" + lcount + " unique links)<br/><br/>";
+					html += "<br/><br/>(" + lcount + " unique links)<br/><br/>";
 					//            }
 				}
-				PV.message(message);
+				PV.html(html);
 			}
 			/*        function appendLinkSummary(link){
 			 var aboveSevenMatchFound = false;
@@ -207,14 +232,17 @@
 			 //                }
 			 }
 			 if (aboveSevenMatchFound){
-			 message += link.id + " " + scans + "]<br/>";
+			 html += link.id + " " + scans + "]<br/>";
 			 intraCount++;
 			 }
 			 }*/
+			 
+			var wnd = window.open("about:blank", "", "_blank");
+			wnd.document.write(html);
 		}
 
 		function PV_residueInfo() {
-			var message = "<h2>Summary of linked residues (currently ignores score cut-off)</h2>";
+			var html = "<h2>Summary of linked residues (currently ignores score cut-off)</h2>";
 			var resTypes = {};
 			var resPairTypes = {};
 
@@ -276,7 +304,7 @@
 			for (var l = 0; l < linkCount; l++) {
 				var link = links[l];
 				if (link.fromProtein != link.toProtein) {
-					//                            message += "<u>Inter protein links:"+link.id+"</u><br/><br/>"
+					//                            html += "<u>Inter protein links:"+link.id+"</u><br/><br/>"
 					//inter protein res links
 					var c2 = link.residueLinks.values().length;
 					var interCount = 0;
@@ -314,22 +342,22 @@
 
 						res2Count["lnkCnt"]++;
 						//                addLinkSummary(resLink, res2Count["links"]);}
-						//                            message += " (" + interCount + " unique links)<br/>";
+						//                            html += " (" + interCount + " unique links)<br/>";
 					}
 				}
 			}
 
-			//            message += "<u>"+ protein.name + " <b>(" + intraCount + " unique internal links)</b></u><br/><br/> ";
+			//            html += "<u>"+ protein.name + " <b>(" + intraCount + " unique internal links)</b></u><br/><br/> ";
 			//            var table1 = "<table><tr><th>Residue Pairs</th><th>#Unique links</th>"
 			//                + "<th>Links</th><th>Details</th></tr>\n";
-			//            message += getTableFromResTypeObj(resPairTypes, table1);// + '<pre>' + JSON.stringify(resTypes, null, '\t') + '</pre>';
+			//            html += getTableFromResTypeObj(resPairTypes, table1);// + '<pre>' + JSON.stringify(resTypes, null, '\t') + '</pre>';
 
-			message += getTableFromResTypeObj(resPairTypes);
-			message += '<br/>';
-			message += getTableFromResTypeObj(resTypes);// + '<pre>' + JSON.stringify(resTypes, null, '\t') + '</pre>';
+			html += getTableFromResTypeObj(resPairTypes);
+			html += '<br/>';
+			html += getTableFromResTypeObj(resTypes);// + '<pre>' + JSON.stringify(resTypes, null, '\t') + '</pre>';
 
 
-			PV.message(message);
+			PV.html(html);
 			//
 			function addLinkSummary(link, linkInfo) {
 				var mCount = link.matches.length;
@@ -400,3 +428,4 @@
 				return arr;
 			}
 		}
+</script>

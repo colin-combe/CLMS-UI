@@ -147,6 +147,10 @@
 					
 					main.onmousemove();
 					
+					window.onresize = function(event) {
+						main.onmousemove();
+					};
+					
 				//]]>				  
 				</script>
 			</div>
@@ -414,9 +418,10 @@
 					else if (match.autovalidated && AUTO_shown && (match.score >= xlv.cutOff))  return true;
 					else return false;
 				}
-			<?php
-				include './php/summaryFunctions.php';            
-			?>
+
         </script>
+		<?php
+			include './php/summaryFunctions.php';            
+		?>	
 	</body>
 </html>
