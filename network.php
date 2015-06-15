@@ -348,68 +348,26 @@
 		
 		<script>
      		//<![CDATA[
+     		//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
+			window.addEventListener("load", function() {
+				
+				var targetDiv = document.getElementById('topDiv');
+				var messageDiv = document.getElementById('bottomDiv');
+				xlv = new xiNET.Controller(targetDiv);
+				xlv.setMessageElement(messageDiv);
+				<?php
+				include './php/test.php';
+				?>
+				xlv.initLayout();
+				xlv.initProteins();
+				
+				initSlider();
+				changeAnnotations();
+				xlv.showSelfLinks(document.getElementById('selfLinks').checked);
+				xlv.showAmbig(document.getElementById('ambig').checked);
+				filterChanged();
 
-			var targetDiv = document.getElementById('topDiv');
-			var messageDiv = document.getElementById('bottomDiv');
-			xlv = new xiNET.Controller(targetDiv);
-			xlv.setMessageElement(messageDiv);
-
-            <?php
-            include './php/test.php';
-            ?>
-			xlv.initLayout();
-			xlv.initProteins();
-			
-			initSlider();
-			changeAnnotations();
-			xlv.showSelfLinks(document.getElementById('selfLinks').checked);
-			xlv.showAmbig(document.getElementById('ambig').checked);
-			filterChanged();
-			
-				function saveLayout () {
-					var layout = xlv.getLayout();
-		//            xlv.message(xlv.id + ", layout sent:" + layout, true);
-					var xmlhttp = new XMLHttpRequest();
-					var url = "./php/saveLayout.php";
-					var params =  "id=" + xlv.id + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
-					xmlhttp.open("POST", url, true);
-					//Send the proper header information along with the request
-					xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-					xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-						if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-							xlv.message(xmlhttp.responseText, true);
-						}
-					}
-					xmlhttp.send(params);
-				}
-            	 
-				function changeAnnotations(){
-					var annotationSelect = document.getElementById('annotationsSelect');
-					xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
-				};
-				 
-				function initSlider(){
-					if (xlv.scores === null){
-						d3.select('#scoreSlider').style('display', 'none');
-					}
-					else {
-						document.getElementById('scoreLabel1').innerHTML = "Score:&nbsp;&nbsp;" + getMinScore();
-						document.getElementById('scoreLabel2').innerHTML = getMaxScore();
-						sliderChanged();
-						d3.select('#scoreSlider').style('display', 'inline-block');
-					}
-				};
-				  
-				function filterChanged(){
-					A_shown = document.getElementById('A').checked;
-					B_shown = document.getElementById('B').checked;
-					C_shown = document.getElementById('C').checked;
-					Q_shown = document.getElementById('Q').checked;
-					AUTO_shown = document.getElementById('AUTO').checked;
-					xlv.checkLinks();
-				} 
-				  
-			    xlv.filter = function (match) {
+				xlv.filter = function (match) {
 					var vChar = match.validated;
 					if (vChar == 'A' && A_shown && (match.score >= xlv.cutOff)) return true;
 					else if (vChar == 'B' && B_shown  && (match.score >= xlv.cutOff)) return true;
@@ -417,9 +375,51 @@
 					else if (vChar == '?' && Q_shown && (match.score >= xlv.cutOff)) return true;
 					else if (match.autovalidated && AUTO_shown && (match.score >= xlv.cutOff))  return true;
 					else return false;
+				};
+			});
+			
+			function saveLayout () {
+				var layout = xlv.getLayout();
+				var xmlhttp = new XMLHttpRequest();
+				var url = "./php/saveLayout.php";
+				var params =  "id=" + xlv.id + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
+				xmlhttp.open("POST", url, true);
+				//Send the proper header information along with the request
+				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						xlv.message(xmlhttp.responseText, true);
+					}
 				}
-
-        </script>
+				xmlhttp.send(params);
+			}
+			 
+			function changeAnnotations(){
+				var annotationSelect = document.getElementById('annotationsSelect');
+				xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
+			};
+			 
+			function initSlider(){
+				if (xlv.scores === null){
+					d3.select('#scoreSlider').style('display', 'none');
+				}
+				else {
+					document.getElementById('scoreLabel1').innerHTML = "Score:&nbsp;&nbsp;" + getMinScore();
+					document.getElementById('scoreLabel2').innerHTML = getMaxScore();
+					sliderChanged();
+					d3.select('#scoreSlider').style('display', 'inline-block');
+				}
+			};
+			  
+			function filterChanged(){
+				A_shown = document.getElementById('A').checked;
+				B_shown = document.getElementById('B').checked;
+				C_shown = document.getElementById('C').checked;
+				Q_shown = document.getElementById('Q').checked;
+				AUTO_shown = document.getElementById('AUTO').checked;
+				xlv.checkLinks();
+			} ;
+		</script>
 		<?php
 			include './php/summaryFunctions.php';            
 		?>	

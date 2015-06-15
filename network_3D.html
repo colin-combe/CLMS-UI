@@ -41,11 +41,10 @@
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
-<!--
          <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
--->
 
         <!--xiNET dev-->
+<!--
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Layout.js"></script>
@@ -61,6 +60,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
+-->
     </head>
     <body>
 		<!-- Main -->
@@ -180,7 +180,7 @@
 								   type="checkbox"
 							/>
 						</label>
-						<label style="margin-left:20px;">Annotations:
+						<label>Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
 								<option>UniprotKB</option>
@@ -226,7 +226,7 @@
 
 		<script>
      		//<![CDATA[
-			document.addEventListener("DOMContentLoaded", function() {
+			window.addEventListener("load", function() {
 				//create 2D network viewer
 				var targetDiv = document.getElementById('topLeftDiv');
 				xlv = new xiNET.Controller(targetDiv);
