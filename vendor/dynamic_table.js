@@ -88,31 +88,42 @@ function DynamicTable(obj, options){
 
     // fill the toolbar
     for (var i = 0; i < this.cols.length; i++){
-	var colTools = document.createElement("th");
-	colTools.className = "tool-" + (i + 1);
+		var colTools = document.createElement("th");
+		colTools.className = "tool-" + (i + 1);
+		
+		if (this.opt.colTypes[i] == "clearCheckboxes"){
+			// button to clear aggregation checkboxes
+			alert('yo');
+			var clearBtn = document.createElement("button");
+			//~ toolBtn.src = blank_image_src;
+			clearBtn.innerHTML = "Clear";
+			clearBtn.className = "btn";// btn-1 btn-1a";
+			clearBtn.onclick = clearAggregationCheckboxes();
+			colTools.appendChild(clearBtn);
+				
+		}
+		else if (this.opt.colTypes[i] != "none"){
+			// input filter
+			var filter = document.createElement("input");
+			filter.type = "text";
+			filter.style.float = "left";
+			filter.className = "dynamic-table-filter";
+			DynamicTableEvent.observe(filter, "keypress", this._filterRows);
+			this.filters.push(filter);
 
-	if (this.opt.colTypes[i] != "none"){
-	    // input filter
-	    var filter = document.createElement("input");
-	    filter.type = "text";
-	    filter.style.float = "left";
-	    filter.className = "dynamic-table-filter";
-	    DynamicTableEvent.observe(filter, "keypress", this._filterRows);
-	    this.filters.push(filter);
+			// button for sorting
+			var toolBtn = document.createElement("img");
+			toolBtn.src = blank_image_src;
+			toolBtn.className = "dynamic-table-downarrow";
+			DynamicTableEvent.observe(toolBtn, "click", this._toolbarClick);
+			
+			colTools.appendChild(filter);
+			colTools.appendChild(toolBtn);
 
-	    // button for sorting
-	    var toolBtn = document.createElement("img");
-	    toolBtn.src = blank_image_src;
-	    toolBtn.className = "dynamic-table-downarrow";
-	    DynamicTableEvent.observe(toolBtn, "click", this._toolbarClick);
-	    
-	    colTools.appendChild(filter);
-	    colTools.appendChild(toolBtn);
-
-	} else	// no filter on this column
-	    this.filters.push("none");
-
-	this.toolbar.appendChild(colTools);
+		} else { // no filter on this column
+			this.filters.push("none");
+		}
+		this.toolbar.appendChild(colTools);
     }
 
     // insert to table header at first place (using effects by options)

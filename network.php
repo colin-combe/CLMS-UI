@@ -47,6 +47,7 @@
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/TouchEvents.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Layout.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Refresh.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ToolTips.js"></script>
@@ -73,20 +74,25 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Reset
 					</button>
+<!--
 					<p class="btn">Summaries:</p>
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
+					<button class="btn btn-1 btn-1a" onclick="linkSummary();">
 							Links
 					</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
+					<button class="btn btn-1 btn-1a" onclick="residueSummary();">
 							Residues
 					</button>
+-->
 					<p class="btn">Exports:</p>
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
+<!--
+					<button class="btn btn-1 btn-1a" onclick="exportCSV();">
 							CSV
 					</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
-							
+-->
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
+<!--
 					<div style='float:right'>
+-->
 						<label class="btn">
 								Legend
 								<input id="selection" onclick="toggleLegendPanel()" type="checkbox">
@@ -95,7 +101,9 @@
 								Help
 								<input id="help" onclick="toggleHelpPanel()" type="checkbox">
 						</label>
+<!--
 					</div>
+-->
 				</h1>
    	 		</div>				   	
 			
@@ -356,7 +364,7 @@
 				xlv = new xiNET.Controller(targetDiv);
 				xlv.setMessageElement(messageDiv);
 				<?php
-				include './php/test.php';
+				include './php/loadData.php';
 				?>
 				xlv.initLayout();
 				xlv.initProteins();

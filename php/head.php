@@ -24,11 +24,8 @@
 			<meta name="viewport" content="initial-scale=1, maximum-scale=1">
 			<meta name="apple-mobile-web-app-capable" content="yes">
 			<meta name="apple-mobile-web-app-status-bar-style" content="black">
-			<link rel="icon" type="image/ico" href="images/logos/favicon.ico">
+			<link rel="icon" type="image/ico" href="images/favicon.ico">
 			<link rel="stylesheet" href="css/reset.css" />
-			<link rel="stylesheet" href="css/noscript.css" />
 			<link rel="stylesheet" href="css/style.css" />
-			<link rel="stylesheet" href="css/responsive.css" />
-			<link rel="stylesheet" href="css/noNav.css" />
 			<link rel="stylesheet" href="css/dynamic_table.css" />
 			<script type="text/javascript" src="./vendor/dynamic_table.js"></script>

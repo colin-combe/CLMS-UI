@@ -33,6 +33,10 @@ body, input, select, textarea {
     user-select: none;
 }
 
+.aggregateCheckbox{
+	float:right;
+}
+
 .container {
     margin-top: 10px;
     margin-bottom: 10px;

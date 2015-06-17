@@ -41,11 +41,11 @@ header('Content-type: text/html; charset=utf-8');
 			<div class="container">
 				<h1 class="page-header">
 				<span style="text-transform: uppercase;margin-right:10px;font-size:0.9em;font-weight:bold;"><?php echo $_SESSION['session_name'] ?>&nbsp;</span>
-						<button class="btn btn-1 btn-1a network-control resetzoom" onclick="window.location = '../password/logout.php';">
+						<button class="btn btn-1 btn-1a" onclick="window.location = '../password/logout.php';">
 							Log Out
 						</button>
 					<div style='float:right'>
-						<button class="btn btn-1 btn-1a network-control resetzoom" onclick="aggregate();">
+						<button class="btn btn-1 btn-1a" onclick="aggregate();">
 							Aggregate
 						</button>
 
@@ -84,7 +84,7 @@ header('Content-type: text/html; charset=utf-8');
         <script>//<![CDATA[
 
 			var opt1 = {
-				colTypes: ["alpha","none", "alpha", "alpha", "none"],
+				colTypes: ["alpha","none", "alpha", "alpha", "clearCheckboxes"],
 				pager: {
 				rowsCount: 20
 				}
@@ -129,7 +129,7 @@ header('Content-type: text/html; charset=utf-8');
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
                 for (var i = 0; i < inputs.length; i++) {
                     if (inputs[i].type === 'checkbox') {
-                        inputs[i].checked = true;
+                        inputs[i].checked = false;
                     }
                 }	
 			}
