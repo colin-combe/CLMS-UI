@@ -28,13 +28,15 @@
 		exit;
 	}
 
+	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
+	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
+	
 	if (strpos($sid,',') === false) { //if not aggregation of more than one search
 
 		$dashPos = strpos($sid,'-');
 		$randId = substr($sid, $dashPos + 1);
 		$sid = substr($sid, 0, ($dashPos));
 
-		$peptidesTempTableName = 'tempMatchedPeptides'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).'_'.time();
 		
 		$q_makeTempMatchedPeptides = 
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
@@ -57,8 +59,6 @@
 			. ' OR (spectrum_match.validated LIKE \'?\')) '
 			. ' AND matched_peptide.link_position != -1;';
 
-		$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
-
 		$q_makeTempHasProtein = 
 			'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
 			. $proteinTempTableName 
@@ -70,110 +70,69 @@
 				. $proteinTempTableName . ' GROUP BY '. $proteinTempTableName .'.peptide_id';
 
 
-
+	// turns out that array_agg()[1] is quicker than the (SQL script created) first() function
+	$q_proteins = 'SELECT protein.id, (array_agg(protein.name))[1] AS name, (array_agg(protein.description))[1] AS description, (array_agg(protein.sequence))[1] AS sequence, (array_agg(protein.protein_length))[1] AS size, (array_agg(protein.accession_number))[1] AS accession'
+		  .' FROM protein, '
+		  .	$proteinTempTableName . ' WHERE ' . $proteinTempTableName 
+		  .'.protein_id = protein.id  GROUP BY protein.id;';
 	}
 	else { //its an aggregation of more than one search
 		$sets = explode("," , $sid);
-		$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
-		if (count($sets) == 3){
-			$set1 = $sets[0];
-			$set2 = $sets[1];
-			$set3 = $sets[2];
-
-			$WHERE = 'spectrum_match.search_id = '.$set1.' OR spectrum_match.search_id = '.$set2;
-			if ($set3 != "undefined" ) {
-				$WHERE = 'spectrum_match.search_id = '.$set1.' OR spectrum_match.search_id = '.$set2.' OR spectrum_match.search_id = '.$set3;
+		$WHERE = ' ';
+		for ($i = 0; $i < count($sets); $i++) {
+			if ($i > 0){
+				$WHERE = $WHERE.' OR ';
 			}
-
-			}
-		else {
-			$WHERE = ' ';
-			for ($i = 0; $i < count($sets); $i++) {
-				if ($i > 0){
-					$WHERE = $WHERE.' OR ';
-				}
-				$WHERE = $WHERE.'spectrum_match.search_id = '.$sets[$i].' ';
-			}
+			$agg = $sets[$i];
+		$dashPos = strpos($agg,'-');
+			$randId = substr($agg, $dashPos + 1);
+			$sid = substr($agg, 0, ($dashPos));
+			$WHERE = $WHERE.'(spectrum_match.search_id = '.$sid.' AND search.random_id = \''.$randId.'\''.') ';
 		}
 
-
-	$q_makeTempMatchedPeptides = 'SELECT matched_peptide.match_id, spectrum_match.score,'.
+		$q_makeTempMatchedPeptides = 'SELECT matched_peptide.match_id, spectrum_match.score,'.
 			' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position, '
-			. ' spectrum_match.autovalidated, spectrum_match.validated, spectrum_match.rejected, spectrum.scan_number, spectrum_match.search_id, peptide.sequence AS pepSeq  INTO TEMPORARY '
-			. $peptidesTempTableName .
-	//        ' FROM matched_peptide, spectrum_match, spectrum WHERE spectrum_match.search_id = '.$sid.
-
-
-			//special request...
-			' FROM matched_peptide, spectrum_match, spectrum, peptide WHERE ('.$WHERE.')'.
-
-		  ' AND spectrum.id = spectrum_match.spectrum_id '.
-			   ' AND peptide.id = matched_peptide.peptide_id '.
-
-
-	//        ' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true  AND dynamic_rank = true;';
-
-
-			' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
-			. '((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
+			.' spectrum_match.autovalidated, spectrum_match.validated, spectrum_match.rejected, spectrum.scan_number, spectrum_match.search_id, peptide.sequence AS pepSeq  INTO TEMPORARY '
+			. $peptidesTempTableName
+			.' FROM matched_peptide, spectrum_match, spectrum, peptide, search WHERE ('.$WHERE.')'
+			.' AND spectrum.id = spectrum_match.spectrum_id '
+			.' AND spectrum_match.search_id = search.id '
+			.' AND peptide.id = matched_peptide.peptide_id '
+			.' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
+			.'((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
 			.' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')   OR (spectrum_match.validated LIKE \'?\'));';
+	
+		$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
+				$proteinTempTableName . ' FROM has_protein, ' 
+				. $peptidesTempTableName .', protein'
+				.' WHERE ' . $peptidesTempTableName 
+				.'.peptide_id = has_protein.peptide_id AND has_protein.protein_id = protein.id GROUP BY has_protein.peptide_id, has_protein.protein_id, peptide_position;';
 
-
-	$proteinTempTableName = 'tempHasProtein' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
-
-	$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
-			$proteinTempTableName . ' FROM has_protein, ' . $peptidesTempTableName .', protein'.
-			' WHERE ' . $peptidesTempTableName .
-			'.peptide_id = has_protein.peptide_id AND has_protein.protein_id = protein.id GROUP BY  has_protein.peptide_id, has_protein.protein_id, peptide_position;';
-
-	$q_hasProtein = 'SELECT peptide_id, array_to_string(array_agg(accession), \',\') as proteins, array_to_string(array_agg(peptide_position), \',\') as positions FROM '
-			. $proteinTempTableName . ' GROUP BY '. $proteinTempTableName .'.peptide_id';
-
-
-
+		$q_hasProtein = 'SELECT peptide_id, array_to_string(array_agg(accession), \',\') as proteins, array_to_string(array_agg(peptide_position), \',\') as positions FROM '
+				. $proteinTempTableName . ' GROUP BY '. $proteinTempTableName .'.peptide_id';
+		// turns out that array_agg()[1] is quicker than the (SQL script created) first() function
+		$q_proteins = 'SELECT protein.accession_number as id, (array_agg(protein.name))[1] AS name, (array_agg(protein.description))[1] AS description, (array_agg(protein.sequence))[1] AS sequence, (array_agg(protein.protein_length))[1] AS size, (array_agg(protein.accession_number))[1] AS accession'
+			  .' FROM protein, '
+			  .	$proteinTempTableName . ' WHERE ' . $proteinTempTableName 
+			  .'.protein_id = protein.id  GROUP BY protein.accession_number;';
 	}
 
-
-
-	//' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
-	//        .' ((spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\'));';
-
-	//        ' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
-	//       . '((spectrum_match.autovalidated = true ));';// AND (spectrum_match.rejected != true));';//  OR spectrum_match.rejected is null));';
-
-
-
-	// DO THIS BEFORE: xi=# CREATE INDEX match_idx ON matched_peptide(match_id);
-	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '.
-			$peptidesTempTableName . ', ('
-			.$q_hasProtein.') AS prt WHERE '. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
-
-
-
+	// DO THIS BEFORE: =# CREATE INDEX match_idx ON matched_peptide(match_id);
+	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '
+			.$peptidesTempTableName . ', ('	.$q_hasProtein.') AS prt WHERE '
+			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
 
 			// following unneeded as ther are no matched_peptides with multiple possible links positions
 			// ' GROUP BY matched_peptide.match_id, matched_peptide.match_type, matched_peptide.peptide_id;';
 
 
 
-	// turns out that array_agg()[1] is quicker than the (SQL script created) first() function
-	$q_proteins = 'SELECT protein.id, (array_agg(protein.name))[1] AS name, (array_agg(protein.description))[1] AS description, (array_agg(protein.sequence))[1] AS sequence, (array_agg(protein.protein_length))[1] AS size, (array_agg(protein.accession_number))[1] AS accession'
-		  .  ' FROM protein, '.
-			$proteinTempTableName . ' WHERE ' . $proteinTempTableName .
-			'.protein_id = protein.id  GROUP BY protein.id;';
-
 	echo "xlv.sid = \"" . $sid . "\";";
 
-
 	include('../connectionString.php');
-	// Connecting, selecting database
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
-	echo "//" . $q_makeTempMatchedPeptides;
 	$res = pg_query($q_makeTempMatchedPeptides) or die('Query failed: ' . pg_last_error());
 	$res = pg_query($q_makeTempHasProtein) or die('Query failed: ' . pg_last_error());
-
-	// output protein info into a var, use protein id's as a key
-	//            echo "//".htmlspecialchars($q_proteins)."\n";
 
 	if (strpos($sid, ',') === false) {
 		$layoutQuery = "SELECT t1.layout AS l "

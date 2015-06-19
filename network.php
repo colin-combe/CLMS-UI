@@ -30,7 +30,7 @@
 -->
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-		<link rel="icon" type="image/ico" href="images/logos/favicon.ico">
+		<link rel="icon" type="image/ico" href="./images/favicon.ico">
 		
 		<link rel="stylesheet" href="./css/reset.css" />
 		<link rel="stylesheet" href="./css/style.css" />
