@@ -73,7 +73,6 @@
 				<div id='spectrum'>
 					<div id='spectrum_inner_div'>
 					HELLO
-						<div><img src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 					</div>
 				</div>
 			</div>	
@@ -435,17 +434,27 @@
 				AUTO_shown = document.getElementById('AUTO').checked;
 				xlv.checkLinks();
 			} ;
-				var spectrum = 	$( "#spectrum" ).dialog({resizable:true, autoOpen: false});
-			//~ $("div.ui-widget-overlay").css("height", function () {
-				  //~ return $(window).height();
-			//~ });		
-			//~ var widget = $(this).dialog("#spectrum");
-			//~ $(".ui-dialog-titlebar-close span", spectrum).removeClass("ui-button").addClass("btn");
-			function loadSpectra(){
-				//~ alert('loadSpectra');
-				//~ var 
 			
+			$("#spectrum").dialog({resizable:true, autoOpen: false});
+			function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 				$( "#spectrum" ).dialog("open");
+				
+				var out = id +"|"+ pepSeq1 +"|"+ linkPos1 +"|"+ pepSeq2 +"|"+ linkPos2;
+				var spectrumInnerDiv = document.getElementById("spectrum_inner_div");
+				spectrumInnerDiv.innerHTML = out; 
+				
+				var xmlhttp = new XMLHttpRequest();
+				var url = "./php/spectra.php";
+				var params =  "id=" + id;
+				xmlhttp.open("POST", url, true);
+				//Send the proper header information along with the request
+				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						spectrumInnerDiv.innerHTML = xmlhttp.responseText; 
+					}
+				}
+				xmlhttp.send(params);
 			}
 			//]]>
 		</script>

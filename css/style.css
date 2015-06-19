@@ -36,12 +36,14 @@ body, input, select, textarea {
     font-weight: 300;
     line-height: 1.75em;
     color: #888;
+/*
     -webkit-text-stroke: .15px;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
     user-select: none;
+*/
 }
 #main{
     height:100%;
@@ -192,8 +194,10 @@ overflow: auto;
 	overflow: auto;
 }
 #spectrum_inner_div{
-	padding-left:20px;
-	padding-right:20px;
+	margin-left:20px;
+	margin-right:20px;
+	color: #777;
+	background:#fff;
 }
 /*
 .ui-widget-overlay
@@ -470,7 +474,9 @@ form table td {
     background: #091D42;
     cursor: pointer;
     padding: 0px 10px;
+/*
     float:right;
+*/
     margin: 2px;
     text-transform: uppercase;
     letter-spacing: 1px;
