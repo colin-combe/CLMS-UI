@@ -93,7 +93,6 @@ function DynamicTable(obj, options){
 		
 		if (this.opt.colTypes[i] == "clearCheckboxes"){
 			// button to clear aggregation checkboxes
-			alert('yo');
 			var clearBtn = document.createElement("button");
 			//~ toolBtn.src = blank_image_src;
 			clearBtn.innerHTML = "Clear";

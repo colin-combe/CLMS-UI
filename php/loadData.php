@@ -34,7 +34,9 @@
 		$randId = substr($sid, $dashPos + 1);
 		$sid = substr($sid, 0, ($dashPos));
 
-		$peptidesTempTableName = 'tempMatchedPeptides'.str_replace(".", "_", getenv('REMOTE_ADDR')).'_'.time();
+		$peptidesTempTableName = 'tempMatchedPeptides'.str_replace(".", "_", $_SERVER['REMOTE_ADDR']).'_'.time();
+		
+		echo "HERE:".$peptidesTempTableName;
 		
 		$q_makeTempMatchedPeptides = 
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
@@ -165,9 +167,10 @@
 	echo "xlv.sid = \"" . $sid . "\";";
 
 
-	include('../../connectionString.php');
+	include('../connectionString.php');
 	// Connecting, selecting database
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
+	echo "//" . $q_makeTempMatchedPeptides;
 	$res = pg_query($q_makeTempMatchedPeptides) or die('Query failed: ' . pg_last_error());
 	$res = pg_query($q_makeTempHasProtein) or die('Query failed: ' . pg_last_error());
 
