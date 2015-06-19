@@ -115,7 +115,7 @@ function DynamicTable(obj, options){
 			// button for sorting
 			var toolBtn = document.createElement("img");
 			toolBtn.src = blank_image_src;
-			toolBtn.className = "dynamic-table-downarrow";
+			toolBtn.className = "dynamic-table-downarrow";//"fa fa-arrow-circle-up";//
 			DynamicTableEvent.observe(toolBtn, "click", this._toolbarClick);
 			
 			colTools.appendChild(filter);
@@ -368,7 +368,7 @@ DynamicTable.prototype.sort = function(col){
     this.sortColumn = col;
     this.orderRows(this.sortFunctions[this.opt.colTypes[col]]);
     // update sort arrows
-    this.toolbar.cells[this.sortColumn].lastChild.className = "dynamic-table-" + ((this.desc) ? "downarrow" : "uparrow");
+    this.toolbar.cells[this.sortColumn].lastChild.className = "dynamic-table-" + ((this.desc) ? "downarrow" : "uparrow");//"fa fa-arrow-circle-" + ((this.desc) ? "down" : "up");//
 }
 
 /**

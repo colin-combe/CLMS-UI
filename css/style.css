@@ -16,8 +16,19 @@
        url('../fonts/lato/regular/Lato-Regular.ttf')  format('truetype'), /* Safari, Android, iOS  */
        url('../fonts/lato/regular/Lato-Regular.svg#svgLato-Regular') format('svg');  /* Legacy iOS */ 
 }
-body {
+html{
+/*
     background: #fff;
+*/
+    height:100%;
+/*
+    overflow:hidden;
+*/
+}
+body{
+    background: #fff;
+    height:100%;
+    overflow:hidden;
 }
 body, input, select, textarea {
     font-family: "Lato-Regular", sans-serif;
@@ -32,7 +43,12 @@ body, input, select, textarea {
     -o-user-select: none;
     user-select: none;
 }
+#main{
+    height:100%;
+    width:100%;
+    position:fixed;
 
+}
 .container {
     margin-top: 10px;
     margin-bottom: 10px;
@@ -69,11 +85,47 @@ td:last-child{
     vertical-align: middle; /* center checkbox vertically */
 }
 
+.fa-arrow-circle-up{
+	font-size:2em;
+	-webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    transition: all .3s;
+	padding:4px;
+	vertical-align:middle;
+}
+.fa-arrow-circle-down{
+	font-size:2em;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    transition: all .3s;
+	padding:4px;
+	vertical-align:middle;
+}
+.fa-arrow-circle-up:hover{
+	color: #fdc086;
+}
+.fa-arrow-circle-down{
+	color:#fdc086;
+}
+
+.fa-home{
+	font-size:1.5em;
+	padding:4px;
+	vertical-align:middle;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    transition: all .3s;
+	cursor:pointer;
+}
+.fa-home:hover {
+	color: #091D42;
+	background:white;
+}
 
 .page-header p{
 	display: inline-block;
 	padding-right:1px;
-	padding-left:20px;
+	padding-left:10px;
 }
 
 #topDiv {
@@ -134,6 +186,32 @@ overflow: auto;
 	overflow: hidden;
 }
 
+.ui-widget-overlay
+{
+      position: fixed !important;
+      height: 100% !important;
+}
+.ui-resizable-se{
+	height:20px;
+	width: 100%;
+}
+#wrapper
+{
+	overflow: hidden;
+/*
+	height: 95%;
+*/
+	right:0px;
+/*
+	left:0px;
+*/
+	top:0px;
+	bottom: 40px;
+/*
+	width: 100%;
+*/
+	position:fixed;
+}
 h1, h2, h3, h4, h5, h6 {
 /*
     font-weight: 200;
@@ -313,7 +391,7 @@ nav a:focus, nav a:hover {
     color: inherit;
     background: #091D42;
     cursor: pointer;
-    padding: 5px 25px;
+    padding: 5px 20px;
 /*
     margin: 0 5px 0 0;
 */

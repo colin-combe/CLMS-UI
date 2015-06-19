@@ -35,7 +35,13 @@
 		<link rel="stylesheet" href="./css/reset.css" />
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
+		<link rel="stylesheet" href="./css/jquery-ui.css">
+<!--
+		<link rel="stylesheet" href="./css/jquery-ui.structure.css">
+-->
 		
+        <script type="text/javascript" src="./vendor/jquery.js"></script>
+        <script type="text/javascript" src="./vendor/jquery-ui.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
@@ -65,16 +71,23 @@
     <body>	
 		<!-- Main -->
 		<div id="main">
+			<div id="wrapper">
+			<div id='spectrum'>
+				HELLO
+					<div><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+	
+			</div>
+			</div>
 			<div class="container">   	 				
 				<h1 class="page-header">
-					<p style="padding-left:0px;" class="btn">Layout:</p>
+					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
+					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" onclick="saveLayout();">
 							Save
 					</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Reset
 					</button>
-<!--
 					<p class="btn">Summaries:</p>
 					<button class="btn btn-1 btn-1a" onclick="linkSummary();">
 							Links
@@ -82,24 +95,17 @@
 					<button class="btn btn-1 btn-1a" onclick="residueSummary();">
 							Residues
 					</button>
--->
 					<p class="btn">Exports:</p>
-<!--
 					<button class="btn btn-1 btn-1a" onclick="exportCSV();">
 							CSV
 					</button>
--->
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
 <!--
 					<div style='float:right'>
 -->
-						<label class="btn">
-								Legend
-								<input id="selection" onclick="toggleLegendPanel()" type="checkbox">
+						<label class="btn">Legend<input id="selection" onclick="toggleLegendPanel()" type="checkbox">
 						</label>
-						<label class="btn">
-								Help
-								<input id="help" onclick="toggleHelpPanel()" type="checkbox">
+						<label class="btn">Help<input id="help" onclick="toggleHelpPanel()" type="checkbox">
 						</label>
 <!--
 					</div>
@@ -427,6 +433,19 @@
 				AUTO_shown = document.getElementById('AUTO').checked;
 				xlv.checkLinks();
 			} ;
+				var spectrum = 	$( "#spectrum" ).dialog({resizable:true, autoOpen: false});
+			//~ $("div.ui-widget-overlay").css("height", function () {
+				  //~ return $(window).height();
+			//~ });		
+			//~ var widget = $(this).dialog("#spectrum");
+			//~ $(".ui-dialog-titlebar-close span", spectrum).removeClass("ui-button").addClass("btn");
+			function loadSpectra(){
+				//~ alert('loadSpectra');
+				//~ var 
+			
+				$( "#spectrum" ).dialog("open");
+			}
+			//]]>
 		</script>
 		<?php
 			include './php/summaryFunctions.php';            
