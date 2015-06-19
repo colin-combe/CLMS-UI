@@ -33,16 +33,42 @@ body, input, select, textarea {
     user-select: none;
 }
 
-.aggregateCheckbox{
-	float:right;
-}
-
 .container {
     margin-top: 10px;
     margin-bottom: 10px;
     margin-left: 40px;
     margin-right: 40px;
 }
+
+.tableContainer{
+/*
+	padding:20px;
+*/
+}
+table {
+	width:100%;
+}
+thead{
+	margin-top:10px;
+	margin-bottom:10px;
+}
+th:first-child{
+	padding-left:20px;
+}
+th:last-child{
+	padding-right:20px;
+}
+td:first-child{
+	padding-left:20px;
+}
+td:last-child{
+	padding-right:20px;
+}
+.chkbx_td, th{
+    text-align: center; /* center checkbox horizontally */
+    vertical-align: middle; /* center checkbox vertically */
+}
+
 
 .page-header p{
 	display: inline-block;
@@ -68,6 +94,8 @@ body, input, select, textarea {
 	margin:10px;
 */
 }
+
+
 
 .horizontalSplitter {
     height: 20px;
@@ -283,7 +311,7 @@ nav a:focus, nav a:hover {
     font-family: inherit;
     font-size: 0.8em;
     color: inherit;
-    background: 0 0;
+    background: #091D42;
     cursor: pointer;
     padding: 5px 25px;
 /*
@@ -539,7 +567,7 @@ tbody tr:hover td, tbody tr:hover td a{
     transition: all 200ms ease;
 }
 
-.external-link a {
+.tableContainer a {
     color:#091D42;
     text-decoration: underline;
      -webkit-transition: all 200ms ease-in-out;
@@ -548,7 +576,7 @@ tbody tr:hover td, tbody tr:hover td a{
        -o-transition: all 200ms ease-in-out;
        transition: all 200ms ease-in-out;
 }
-.external-link a:hover {
+.tableContainer a:hover {
     color: #ffffff!important;
     background-color: #091D42;
 /*

@@ -34,9 +34,7 @@
 		$randId = substr($sid, $dashPos + 1);
 		$sid = substr($sid, 0, ($dashPos));
 
-		$peptidesTempTableName = 'tempMatchedPeptides'.str_replace(".", "_", $_SERVER['REMOTE_ADDR']).'_'.time();
-		
-		echo "HERE:".$peptidesTempTableName;
+		$peptidesTempTableName = 'tempMatchedPeptides'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).'_'.time();
 		
 		$q_makeTempMatchedPeptides = 
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
@@ -59,7 +57,7 @@
 			. ' OR (spectrum_match.validated LIKE \'?\')) '
 			. ' AND matched_peptide.link_position != -1;';
 
-		$proteinTempTableName = 'tempHasProtein' . str_replace(".", "_", getenv('REMOTE_ADDR')) . '_' . time();
+		$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
 
 		$q_makeTempHasProtein = 
 			'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
@@ -76,7 +74,7 @@
 	}
 	else { //its an aggregation of more than one search
 		$sets = explode("," , $sid);
-		$peptidesTempTableName = 'tempMatchedPeptides' . str_replace(".", "_", getenv('REMOTE_ADDR')) . '_' . time();
+		$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 		if (count($sets) == 3){
 			$set1 = $sets[0];
 			$set2 = $sets[1];
@@ -121,7 +119,7 @@
 			.' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')   OR (spectrum_match.validated LIKE \'?\'));';
 
 
-	$proteinTempTableName = 'tempHasProtein' . str_replace(".", "_", getenv('REMOTE_ADDR')) . '_' . time();
+	$proteinTempTableName = 'tempHasProtein' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 
 	$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
 			$proteinTempTableName . ' FROM has_protein, ' . $peptidesTempTableName .', protein'.

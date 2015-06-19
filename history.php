@@ -41,7 +41,7 @@ header('Content-type: text/html; charset=utf-8');
 			<div class="container">
 				<h1 class="page-header">
 				<span style="text-transform: uppercase;margin-right:10px;font-size:0.9em;font-weight:bold;"><?php echo $_SESSION['session_name'] ?>&nbsp;</span>
-						<button class="btn btn-1 btn-1a" onclick="window.location = '../password/logout.php';">
+						<button class="btn btn-1 btn-1a" onclick="window.location = '../util/logout.php';">
 							Log Out
 						</button>
 					<div style='float:right'>
@@ -52,7 +52,7 @@ header('Content-type: text/html; charset=utf-8');
 					</div>
 				
 				</h1>
-				<div class="external-link" id="tableContainer">
+				<div class="tableContainer">
 					<table id='t1'>
 						<tbody>
 							<?php
@@ -70,8 +70,8 @@ header('Content-type: text/html; charset=utf-8');
 								echo "<td><a id=".$line['name']." href='./network.php?sid=" . urlencode($url) . "'>" . $line['name'] . "</a>" . "</td>";
 								echo "<td><strong>" . $line['status'] . "</strong></td>";
 								echo "<td>" .$line['file_name'] . "</td>";
-								echo "<td>" .$line['submit_date'] . "</td>";
-								echo  "<td><input type='checkbox' class='aggregateCheckbox' value='". $line['id'] . "'></td>";
+								echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
+								echo  "<td class='chkbx_td'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
 								echo "</tr>\n";
 							}
 							?>
@@ -90,39 +90,19 @@ header('Content-type: text/html; charset=utf-8');
 				}
 			}
 			new DynamicTable("t1", opt1);
-							
-            function compare(){
-                var radios = document.getElementsByTagName('input');
-                var value1, value2, value3;
-                for (var i = 0; i < radios.length; i++) {
-                    if (radios[i].type === 'radio' && radios[i].checked) {
-                        // get value, set checked flag or do whatever you need to
-                        var rad = radios[i];
-                        if (rad.name == "set1") value1 = rad.value;
-                        if (rad.name == "set2") value2 = rad.value;
-                        if (rad.name == "set3") value3 = rad.value;
+							            
+            function aggregate(){
+				var inputs = document.getElementsByClassName('aggregateCheckbox');
+                var values = new Array();
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].checked) {
+                        values.push(inputs[i].value);
                     }
                 }
-                if (value1 == null) alert ("Cannot compare: no selection for set 1");
-                else if (value2 == null) alert ("Cannot compare: no selection for set 2");
+                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
                 else {
-                    window.open("./ppi.php?sid="+value1+"," + value2 + "," + value3, "_self");
+                    window.open("./network.php?sid="+values.join(','), "_self");
                 }
-            }
-            
-            function aggregate(){
-				clearAggregationCheckboxes();
-                //~ var inputs = document.getElementsByClass('aggregateCheckbox');
-                //~ var values = new Array();
-                //~ for (var i = 0; i < inputs.length; i++) {
-                    //~ if (inputs[i].type === 'checkbox' && inputs[i].checked) {
-                        //~ values.push(inputs[i].value);
-                    //~ }
-                //~ }
-                //~ if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
-                //~ else {
-                    //~ window.open("./ppi.php?sid="+values.join(','), "_self");
-                //~ }
             }
             
             function clearAggregationCheckboxes(){

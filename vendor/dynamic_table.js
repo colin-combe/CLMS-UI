@@ -96,8 +96,10 @@ function DynamicTable(obj, options){
 			var clearBtn = document.createElement("button");
 			//~ toolBtn.src = blank_image_src;
 			clearBtn.innerHTML = "Clear";
-			clearBtn.className = "btn";// btn-1 btn-1a";
-			clearBtn.onclick = clearAggregationCheckboxes();
+			clearBtn.className = "btn btn-1 btn-1a clear";
+			clearBtn.onclick = function (){
+				clearAggregationCheckboxes();
+			}
 			colTools.appendChild(clearBtn);
 				
 		}
