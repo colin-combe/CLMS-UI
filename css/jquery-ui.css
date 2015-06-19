@@ -829,6 +829,7 @@ body .ag-ui .ui-tooltip {
 
 /* Component containers
 ----------------------------------*/
+/*
 .ui-widget {
 	font-family: Trebuchet MS,Tahoma,Verdana,Arial,sans-serif;
 	font-size: 1.1em;
@@ -840,23 +841,20 @@ body .ag-ui .ui-tooltip {
 .ui-widget select,
 .ui-widget textarea,
 .ui-widget button {
-/*
 	font-family: Trebuchet MS,Tahoma,Verdana,Arial,sans-serif;
-*/
 	font-size: 1em;
 }
 .ui-widget-content {
 	border: 1px solid #dddddd;
 	background: #eeeeee url("images/ui-bg_highlight-soft_100_eeeeee_1x100.png") 50% top repeat-x;
 	color: #333333;
+
 }
 .ui-widget-content a {
 	color: #333333;
 }
 .ui-widget-header {
-/*
 	border: 1px solid #e78f08;
-*/
 	background: rgba(9, 29, 66, 0.9);
 	color: #ffffff;
 	font-weight: bold;
@@ -864,7 +862,7 @@ body .ag-ui .ui-tooltip {
 .ui-widget-header a {
 	color: #ffffff;
 }
-
+*/
 /* Interaction states
 ----------------------------------*/
 .ui-state-default,
@@ -877,6 +875,7 @@ body .ag-ui .ui-tooltip {
 	color: #1c94c4;
 */
 }
+/*
 .ui-state-default a,
 .ui-state-default a:link,
 .ui-state-default a:visited {
@@ -919,6 +918,7 @@ body .ag-ui .ui-tooltip {
 	color: #eb8f00;
 	text-decoration: none;
 }
+*/
 
 /* Interaction Cues
 ----------------------------------*/
@@ -978,10 +978,10 @@ body .ag-ui .ui-tooltip {
 ----------------------------------*/
 
 /* states and images */
+/*
 .ui-icon {
 	width: 16px;
 	height: 16px;
-	/*COL*/
 	float:right;
 }
 .ui-icon,
@@ -1008,8 +1008,10 @@ body .ag-ui .ui-tooltip {
 .ui-state-error-text .ui-icon {
 	background-image: url("images/ui-icons_ffd27a_256x240.png");
 }
+*/
 
 /* positioning */
+/*
 .ui-icon-blank { background-position: 16px 16px; }
 .ui-icon-carat-1-n { background-position: 0 0; }
 .ui-icon-carat-1-ne { background-position: -16px 0; }
@@ -1147,7 +1149,9 @@ body .ag-ui .ui-tooltip {
 .ui-icon-seek-prev { background-position: -48px -160px; }
 .ui-icon-seek-end { background-position: -64px -160px; }
 .ui-icon-seek-start { background-position: -80px -160px; }
+*/
 /* ui-icon-seek-first is deprecated, use ui-icon-seek-start instead */
+/*
 .ui-icon-seek-first { background-position: -80px -160px; }
 .ui-icon-stop { background-position: -96px -160px; }
 .ui-icon-eject { background-position: -112px -160px; }
@@ -1184,16 +1188,9 @@ body .ag-ui .ui-tooltip {
 .ui-icon-grip-dotted-horizontal { background-position: -16px -224px; }
 .ui-icon-grip-solid-vertical { background-position: -32px -224px; }
 .ui-icon-grip-solid-horizontal { background-position: -48px -224px; }
-.ui-icon-gripsmall-diagonal-se { 
-/* COL
-background-position: -64px -224px; 
-*/
-width:100%;
-height:20px;
- background: rgba(9, 29, 66, 1);
-   
-}
+.ui-icon-gripsmall-diagonal-se { background-position: -64px -224px; }
 .ui-icon-grip-diagonal-se { background-position: -80px -224px; }
+*/
 
 
 /* Misc visuals

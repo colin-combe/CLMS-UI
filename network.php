@@ -33,9 +33,9 @@
 		<link rel="icon" type="image/ico" href="./images/favicon.ico">
 		
 		<link rel="stylesheet" href="./css/reset.css" />
+		<link rel="stylesheet" href="./css/jquery-ui.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
-		<link rel="stylesheet" href="./css/jquery-ui.css">
 <!--
 		<link rel="stylesheet" href="./css/jquery-ui.structure.css">
 -->
@@ -69,15 +69,17 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
+			<div id="wrapper">
+				<div id='spectrum'>
+					<div id='spectrum_inner_div'>
+					HELLO
+						<div><img src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+					</div>
+				</div>
+			</div>	
 		<!-- Main -->
 		<div id="main">
-			<div id="wrapper">
-			<div id='spectrum'>
-				HELLO
-					<div><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
-	
-			</div>
-			</div>
+
 			<div class="container">   	 				
 				<h1 class="page-header">
 					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
@@ -162,7 +164,7 @@
 					main.onmousemove();
 					
 					window.onresize = function(event) {
-						main.onmousemove();
+						main.onmousemove(event);
 					};
 					
 				//]]>				  
