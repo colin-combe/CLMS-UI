@@ -29,28 +29,29 @@ body{
     background: #fff;
     height:100%;
     overflow:hidden;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;   
 }
+
 body, input, select, textarea {
     font-family: "Lato-Regular", sans-serif;
     font-size: 13pt;
     font-weight: 300;
     line-height: 1.75em;
     color: #888;
-/*
-    -webkit-text-stroke: .15px;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-*/
+	-webkit-text-stroke: .15px;
 }
+
 #main{
     height:100%;
     width:100%;
     position:fixed;
 
 }
+
 .container {
     margin-top: 10px;
     margin-bottom: 10px;
@@ -59,9 +60,6 @@ body, input, select, textarea {
 }
 
 .tableContainer{
-/*
-	padding:20px;
-*/
 }
 table {
 	width:100%;
@@ -192,22 +190,40 @@ overflow: auto;
 	padding:0px;
 	background: rgba(9, 29, 66, 0.9);
 	overflow: auto;
+	color:#fff;
+/*
+	height:500px;
+	width:600px;
+*/
 }
 #spectrum_inner_div{
 	margin-left:20px;
 	margin-right:20px;
+/*
 	color: #777;
 	background:#fff;
-}
-/*
-.ui-widget-overlay
-{
-      position: fixed !important;
-      height: 100% !important;
-}
 */
-
-
+/*
+		width:100%;
+*/
+	height:100%;
+/*
+	width:400px;
+*/
+}
+#graphDiv{
+/*
+	width:100%;
+*/
+	height:calc(100% - 110px);
+}
+.axis{
+	fill:white;
+}
+#pepFragDiv{
+	width:400px;
+	height:70px;
+}
 
 .ui-resizable-se{
 	height:20px;
@@ -425,7 +441,7 @@ form table td {
     font-family: inherit;
     font-size: 0.8em;
     color: inherit;
-    background: #091D42;
+    background: 0 0;/*#091D42;*/
     cursor: pointer;
     padding: 5px 20px;
 /*

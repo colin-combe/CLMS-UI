@@ -25,7 +25,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="description" content="common platform for downstream analysis of CLMS data" />
-<!--
+<!--	//do we need following?
 		<meta name="viewport" content="initial-scale=1, maximum-scale=1">
 -->
 		<meta name="apple-mobile-web-app-capable" content="yes">
@@ -36,9 +36,6 @@
 		<link rel="stylesheet" href="./css/jquery-ui.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
-<!--
-		<link rel="stylesheet" href="./css/jquery-ui.structure.css">
--->
 		
         <script type="text/javascript" src="./vendor/jquery.js"></script>
         <script type="text/javascript" src="./vendor/jquery-ui.js"></script>
@@ -50,6 +47,13 @@
          <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 -->
       
+        <!--spectrum dev-->
+        <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
+        <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
+        
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
@@ -69,13 +73,15 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
-			<div id="wrapper">
-				<div id='spectrum'>
-					<div id='spectrum_inner_div'>
-					HELLO
-					</div>
+		<div id="wrapper">
+			<div id='spectrum'>
+				<div id='spectrum_inner_div'>
+					<div id='pepFragDiv'></div>
+					<div id='graphDiv'></div>
+					<button class="btn btn-1 btn-1a" style="margin:5px;float:right;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
 				</div>
-			</div>	
+			</div>
+		</div>	
 		<!-- Main -->
 		<div id="main">
 
@@ -435,14 +441,21 @@
 				xlv.checkLinks();
 			} ;
 			
-			$("#spectrum").dialog({resizable:true, autoOpen: false});
+			//forced to use jquery dialog for floaty internal frame
+			$("#spectrum").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
+			//init spectrum viewer
+			var pepFragDiv = document.getElementById('pepFragDiv');
+			var graphDiv = document.getElementById('graphDiv');
+			spectrumViewer = new SpectrumViewer(pepFragDiv, graphDiv);
+			
 			function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
+				//jquery dialog open
 				$( "#spectrum" ).dialog("open");
 				
-				var out = id +"|"+ pepSeq1 +"|"+ linkPos1 +"|"+ pepSeq2 +"|"+ linkPos2;
-				var spectrumInnerDiv = document.getElementById("spectrum_inner_div");
-				spectrumInnerDiv.innerHTML = out; 
-				
+				//~ var out = id +"|"+ pepSeq1 +"|"+ linkPos1 +"|"+ pepSeq2 +"|"+ linkPos2;
+				//~ var spectrumInnerDiv = document.getElementById("spectrum_inner_div");
+				//~ spectrumInnerDiv.innerHTML = out; 
+				spectrumViewer.clear();
 				var xmlhttp = new XMLHttpRequest();
 				var url = "./php/spectra.php";
 				var params =  "id=" + id;
@@ -451,7 +464,7 @@
 				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						spectrumInnerDiv.innerHTML = xmlhttp.responseText; 
+						spectrumViewer.setData(pepSeq1, linkPos1, pepSeq2, linkPos2, xmlhttp.responseText); 
 					}
 				}
 				xmlhttp.send(params);
