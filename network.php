@@ -37,8 +37,10 @@
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
 		
+<!--
         <script type="text/javascript" src="./vendor/jquery.js"></script>
         <script type="text/javascript" src="./vendor/jquery-ui.js"></script>
+-->
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
@@ -48,11 +50,13 @@
 -->
       
         <!--spectrum dev-->
+<!--
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
+-->
         
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
@@ -73,6 +77,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
+<!--
 		<div id="wrapper">
 			<div id='spectrum'>
 				<div id='spectrum_inner_div'>
@@ -82,6 +87,7 @@
 				</div>
 			</div>
 		</div>	
+-->
 		<!-- Main -->
 		<div id="main">
 
@@ -95,6 +101,7 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Reset
 					</button>
+<!--
 					<p class="btn">Summaries:</p>
 					<button class="btn btn-1 btn-1a" onclick="linkSummary();">
 							Links
@@ -102,10 +109,13 @@
 					<button class="btn btn-1 btn-1a" onclick="residueSummary();">
 							Residues
 					</button>
+-->
 					<p class="btn">Exports:</p>
+<!--
 					<button class="btn btn-1 btn-1a" onclick="exportCSV();">
 							CSV
 					</button>
+-->
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
 <!--
 					<div style='float:right'>
@@ -181,33 +191,33 @@
 					<label>A
 						<input checked="checked" 
 								   id="A" 			
-								   onclick="filterChanged();" 
+								   onclick="xlv.checkLinks();" 
 								   type="checkbox"
 							/>
 					</label>
 					<label>B
 						<input checked="checked" 
 								   id="B" 			
-								   onclick="filterChanged();" 
+								   onclick="xlv.checkLinks();" 
 								   type="checkbox"
 							/>
 					</label>
 					<label>C
 						<input checked="checked" 
 								   id="C" 			
-								   onclick="filterChanged();" 
+								   onclick="xlv.checkLinks();" 
 								   type="checkbox"
 							/>
 					</label>
 					<label>?
 						<input id="Q" 			
-								   onclick="filterChanged();" 
+								   onclick="xlv.checkLinks();" 
 								   type="checkbox"
 							/>
 					</label>
 					<label>auto
 						<input id="AUTO" 			
-								   onclick="filterChanged();" 
+								   onclick="xlv.checkLinks();" 
 								   type="checkbox"
 							/>
 					</label>
@@ -373,9 +383,7 @@
 			window.addEventListener("load", function() {
 				
 				var targetDiv = document.getElementById('topDiv');
-				var messageDiv = document.getElementById('bottomDiv');
 				xlv = new xiNET.Controller(targetDiv);
-				xlv.setMessageElement(messageDiv);
 				<?php
 				include './php/loadData.php';
 				?>
@@ -384,21 +392,152 @@
 				
 				initSlider();
 				changeAnnotations();
-				xlv.showSelfLinks(document.getElementById('selfLinks').checked);
-				xlv.showAmbig(document.getElementById('ambig').checked);
-				filterChanged();
-
+				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
+				xlv.ambigShown = document.getElementById('ambig').checked;
+				xlv.checkLinks();
+				
+				//register callbacks
+				xlv.linkSelectionCallbacks.push(function (selectedLinks){
+					console.log("SELECTED:", selectedLinks);
+					var selectionDiv = document.getElementById("bottomDiv");
+					var selectedLinkArray = selectedLinks.values();
+					var selectedLinkCount = selectedLinkArray.length;
+					if (selectedLinkCount === 0) {
+						selectionDiv.innerHTML = "<p>No selection.</p>";
+					} 
+					else {
+						var out = ""
+						for (var i = 0; i < selectedLinkCount; i++) {
+							var aLink = selectedLinkArray[i]; 
+							if (aLink.residueLinks) {//its a ProteinLink
+								out += proteinLinkToHTML(aLink);
+							}else {//must be ResidueLink
+								out += "<h5>" + aLink.proteinLink.fromProtein.name 
+									+ " [" + aLink.proteinLink.fromProtein.id
+									+ "] to " + aLink.proteinLink.toProtein.name 
+									+ " [" + aLink.proteinLink.toProtein.id
+									+ "]</h5>";
+								out += residueLinkToHTML(aLink);
+							}
+						}
+						selectionDiv.innerHTML = out;
+					}
+				});	
+					
 				xlv.filter = function (match) {
 					var vChar = match.validated;
-					if (vChar == 'A' && A_shown && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'B' && B_shown  && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'C' && C_shown && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == '?' && Q_shown && (match.score >= xlv.cutOff)) return true;
-					else if (match.autovalidated && AUTO_shown && (match.score >= xlv.cutOff))  return true;
+					if (vChar == 'A' && document.getElementById('A').checked && (match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'B' && document.getElementById('B').checked  && (match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'C' && document.getElementById('C').checked && (match.score >= xlv.cutOff)) return true;
+					else if (vChar == '?' && document.getElementById('Q').checked && (match.score >= xlv.cutOff)) return true;
+					else if (match.autovalidated && document.getElementById('AUTO').checked && (match.score >= xlv.cutOff))  return true;
 					else return false;
 				};
 			});
 			
+			//used when link clicked
+			proteinLinkToHTML = function(proteinLink) {
+				var linkInfo = "<h5>" + proteinLink.fromProtein.name 
+							+ " [" + proteinLink.fromProtein.id
+							+ "] to " + proteinLink.toProtein.name 
+							+ " [" + proteinLink.toProtein.id
+							+ "]</h5>";
+				var resLinks = proteinLink.residueLinks.values();
+				var resLinkCount = resLinks.length;
+				for (var i = 0; i < resLinkCount; i++) {
+					var resLink = resLinks[i];
+					linkInfo += residueLinkToHTML(resLink);
+				}
+				return linkInfo;
+			};
+			
+			function residueLinkToHTML(residueLink){		
+				var linkInfo = "<h5>residue " + residueLink.fromResidue 
+					+ " to  residue " + residueLink.toResidue + "</h5>";
+				
+				var matches = residueLink.getFilteredMatches();
+				var c = matches.length;
+				linkInfo += "<p>" + c + " match";
+				if (c > 1){
+					linkInfo += "es:</p>";
+				} else {
+					linkInfo += ":</p>";
+				}
+				
+				var scoresTable = "<table><tr>";
+				
+				scoresTable += "<th>Id</th>";
+				scoresTable += "<th>Protein1</th>";
+				scoresTable += "<th>PepPos1</th>";
+				scoresTable += "<th>PepSeq1</th>";
+				scoresTable += "<th>LinkPos1</th>";
+				scoresTable += "<th>Protein2</th>";
+				scoresTable += "<th>PepPos2</th>";
+				scoresTable += "<th>PepSeq2</th>";
+				scoresTable += "<th>LinkPos2</th>";
+				
+				scoresTable += "<th>Score</th>";
+				
+				if (residueLink.controller.autoValidatedFound === true){
+					scoresTable += "<th>Auto</th>";
+				}
+				if (residueLink.controller.manualValidatedFound === true){
+					scoresTable += "<th>Manual</th>";
+				}
+				
+				scoresTable += "</tr>";
+				for (var j = 0; j < c; j++) {
+					var match = matches[j][0];
+					
+					var htmlTableRow = "<tr>";
+					if (typeof loadSpectra == "function"){
+						htmlTableRow = "<tr onclick=\"loadSpectra('"+match.id+"','"+match.pepSeq1+"',"
+							+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");\">";
+					}
+					
+					htmlTableRow += "<td><p>" + match.id
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.protein1
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.pepPos1
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.pepSeq1
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.linkPos1
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.protein2
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.pepPos2
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.pepSeq2
+						+ "</p></td>";
+					htmlTableRow += "<td><p>" + match.linkPos2
+						+ "</p></td>";			
+						
+					htmlTableRow += "<td><p>" + 
+					((typeof match.score !== 'undefined')? match.score.toFixed(4) : 'undefined')
+					+ "</p></td>";
+					
+					if (match.controller.autoValidatedFound === true){
+						htmlTableRow += "<td><p>" + match.autovalidated
+							+ "</p></td>";
+					}
+					
+					if (match.controller.manualValidatedFound === true){
+						htmlTableRow += "<td><p>" + match.validated
+							+ "</p></td>";
+					}
+					
+					htmlTableRow += "</tr>";
+					return htmlTableRow;
+				}
+				
+				scoresTable += "</table><p>&nbsp;</p>";
+				
+				linkInfo += scoresTable;
+				return linkInfo;
+			}
+
 			function saveLayout () {
 				var layout = xlv.getLayout();
 				var xmlhttp = new XMLHttpRequest();
@@ -409,7 +548,7 @@
 				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						xlv.message(xmlhttp.responseText, true);
+						//~ xlv.message(xmlhttp.responseText, true);
 					}
 				}
 				xmlhttp.send(params);
@@ -431,18 +570,9 @@
 					d3.select('#scoreSlider').style('display', 'inline-block');
 				}
 			};
-			  
-			function filterChanged(){
-				A_shown = document.getElementById('A').checked;
-				B_shown = document.getElementById('B').checked;
-				C_shown = document.getElementById('C').checked;
-				Q_shown = document.getElementById('Q').checked;
-				AUTO_shown = document.getElementById('AUTO').checked;
-				xlv.checkLinks();
-			} ;
-			
+			  			
 			//forced to use jquery dialog for floaty internal frame
-			$("#spectrum").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
+	/*		$("#spectrum").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
 			//init spectrum viewer
 			var pepFragDiv = document.getElementById('pepFragDiv');
 			var graphDiv = document.getElementById('graphDiv');
@@ -468,7 +598,7 @@
 					}
 				}
 				xmlhttp.send(params);
-			}
+			}*/
 			//]]>
 		</script>
 		<?php
