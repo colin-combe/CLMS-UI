@@ -37,10 +37,8 @@
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
 		
-<!--
         <script type="text/javascript" src="./vendor/jquery.js"></script>
         <script type="text/javascript" src="./vendor/jquery-ui.js"></script>
--->
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
@@ -77,8 +75,8 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
-<!--
 		<div id="wrapper">
+<!--
 			<div id='spectrum'>
 				<div id='spectrum_inner_div'>
 					<div id='pepFragDiv'></div>
@@ -86,8 +84,15 @@
 					<button class="btn btn-1 btn-1a" style="margin:5px;float:right;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
 				</div>
 			</div>
-		</div>	
 -->
+			
+			<div class="" id="legendPanel">
+				<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+<!--
+			<div id="colours"></div>
+-->
+			</div>	
+		</div>	
 		<!-- Main -->
 		<div id="main">
 
@@ -101,15 +106,6 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
 							Reset
 					</button>
-<!--
-					<p class="btn">Summaries:</p>
-					<button class="btn btn-1 btn-1a" onclick="linkSummary();">
-							Links
-					</button>
-					<button class="btn btn-1 btn-1a" onclick="residueSummary();">
-							Residues
-					</button>
--->
 					<p class="btn">Exports:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">
 							CSV
@@ -118,7 +114,7 @@
 <!--
 					<div style='float:right'>
 -->
-						<label class="btn">Legend<input id="selection" onclick="toggleLegendPanel()" type="checkbox">
+						<label class="btn">Legend<input id="legendChkbx" onclick="$('#legendPanel').dialog('open');" type="checkbox">
 						</label>
 						<label class="btn">Help<input id="help" onclick="toggleHelpPanel()" type="checkbox">
 						</label>
@@ -177,7 +173,7 @@
 					main.onmousemove();
 					
 					window.onresize = function(event) {
-						main.onmousemove(event);
+						main.onmousemove();//event);
 					};
 					
 				//]]>				  
@@ -330,16 +326,11 @@
 				</tr>
 			</table> 
 		</div>	
-		<div class="overlay-box" id="legendPanel">
-			<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
-<!--
-			<div id="colours"></div>
--->
-		</div>	
+
 		<script type="text/javascript">
 			//<![CDATA[
 			helpShown = false;
-			legendShown = false;
+			//~ legendShown = false;
 			function toggleHelpPanel() {
 				if (helpShown){
 					hideHelpPanel();
@@ -349,14 +340,14 @@
 				}
 			}
 			
-			function toggleLegendPanel() {
-				if (legendShown){
-					hideLegendPanel();
-				}
-				else {
-					showLegendPanel();
-				}
-			}
+			//~ function toggleLegendPanel() {
+				//~ if (legendShown){
+					//~ hideLegendPanel();
+				//~ }
+				//~ else {
+					//~ showLegendPanel();
+				//~ }
+			//~ }
 			
 			function showHelpPanel() {
 					helpShown = true;
@@ -366,15 +357,20 @@
 					helpShown = false;
 					d3.select("#helpPanel").transition().style("height", "0px").style("top", "-95px").duration(700);
 			}
-			function showLegendPanel() {
-					legendShown = true;
-					d3.select("#legendPanel").transition().style("height", "550px").style("top", "100px").duration(700);
-			}
-			function hideLegendPanel() {
-					legendShown = false;
-					d3.select("#legendPanel").transition().style("height", "0px").style("top", "-95px").duration(700);
-
-			}
+			//~ function showLegendPanel() {
+					//~ legendShown = true;
+					//~ d3.select("#legendPanel").transition().style("height", "550px").style("top", "100px").duration(700);
+			//~ }
+			//~ function hideLegendPanel() {
+					//~ legendShown = false;
+					//~ d3.select("#legendPanel").transition().style("height", "0px").style("top", "-95px").duration(700);
+//~ 
+			//~ }
+			
+			$("#legendPanel").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
+			$('#legendPanel').on('dialogclose', function(event) {
+				document.getElementById('legendChkbx').checked = false;
+			});
 			//]]>
 		</script>
 		

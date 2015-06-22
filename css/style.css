@@ -180,6 +180,7 @@ overflow: auto;
 }
 
 
+/*
 #legendPanel{
 	position: fixed;
 	left: 0px;
@@ -188,8 +189,9 @@ overflow: auto;
 	z-index: 1;
 	overflow: hidden;
 }
+*/
 
-#spectrum{
+#spectrum, #legendPanel{
 	padding:0px;
 	background: rgba(9, 29, 66, 0.9);
 	overflow: auto;
@@ -199,7 +201,7 @@ overflow: auto;
 	width:600px;
 */
 }
-#spectrum_inner_div{
+#spectrum_inner_div, #colours{
 	margin-left:20px;
 	margin-right:20px;
 /*
