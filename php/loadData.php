@@ -143,7 +143,7 @@
 		echo "//" . htmlspecialchars($layoutQuery) . "\n";
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-			echo "   xlv.setLayout(" . $line["l"] . ");";
+			echo "   xlv.setLayout('" . $line["l"] . "');";
 		}
 	} else if ($set1 != '') {
 		echo 'PV.set1 = ' . $set1 . ';';

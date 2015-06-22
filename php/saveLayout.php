@@ -19,15 +19,16 @@
 
 include('../../connectionString.php');
 $sid = $_POST["sid"];
+echo '*'.$sid.'*';
 $layout = addslashes($_POST["layout"]);
 $desc = addslashes($_POST["desc"]);
-$user_id = "7";
+//~ $user_id = "7";
 
 $dbconn = pg_connect($connectionString)
         or die('Could not connect: ' . pg_last_error());
 //
 $query = "INSERT INTO layouts (search_id, user_id, layout, description)"
-        . "VALUES (".$sid.",".$user_id.",'".$layout."','".$desc."');";
+        . "VALUES ('".$sid."',-1,'".$layout."','".$desc."');";
 
 echo $query;
 

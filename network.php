@@ -111,11 +111,9 @@
 					</button>
 -->
 					<p class="btn">Exports:</p>
-<!--
 					<button class="btn btn-1 btn-1a" onclick="exportCSV();">
 							CSV
 					</button>
--->
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
 <!--
 					<div style='float:right'>
@@ -398,7 +396,7 @@
 				
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
-					console.log("SELECTED:", selectedLinks);
+					//console.log("SELECTED:", selectedLinks);
 					var selectionDiv = document.getElementById("bottomDiv");
 					var selectedLinkArray = selectedLinks.values();
 					var selectedLinkCount = selectedLinkArray.length;
@@ -412,11 +410,6 @@
 							if (aLink.residueLinks) {//its a ProteinLink
 								out += proteinLinkToHTML(aLink);
 							}else {//must be ResidueLink
-								out += "<h5>" + aLink.proteinLink.fromProtein.name 
-									+ " [" + aLink.proteinLink.fromProtein.id
-									+ "] to " + aLink.proteinLink.toProtein.name 
-									+ " [" + aLink.proteinLink.toProtein.id
-									+ "]</h5>";
 								out += residueLinkToHTML(aLink);
 							}
 						}
@@ -437,11 +430,7 @@
 			
 			//used when link clicked
 			proteinLinkToHTML = function(proteinLink) {
-				var linkInfo = "<h5>" + proteinLink.fromProtein.name 
-							+ " [" + proteinLink.fromProtein.id
-							+ "] to " + proteinLink.toProtein.name 
-							+ " [" + proteinLink.toProtein.id
-							+ "]</h5>";
+				var linkInfo = "";
 				var resLinks = proteinLink.residueLinks.values();
 				var resLinkCount = resLinks.length;
 				for (var i = 0; i < resLinkCount; i++) {
@@ -452,20 +441,22 @@
 			};
 			
 			function residueLinkToHTML(residueLink){		
-				var linkInfo = "<h5>residue " + residueLink.fromResidue 
-					+ " to  residue " + residueLink.toResidue + "</h5>";
-				
 				var matches = residueLink.getFilteredMatches();
+				var linkInfo = "<h5>" + residueLink.proteinLink.fromProtein.name 
+							+ " [" + residueLink.proteinLink.fromProtein.id
+							+ "] to " + residueLink.proteinLink.toProtein.name 
+							+ " [" + residueLink.proteinLink.toProtein.id
+							+ "], residue " + residueLink.fromResidue 
+							+ " to  residue " + residueLink.toResidue;
 				var c = matches.length;
-				linkInfo += "<p>" + c + " match";
+				linkInfo += ", " + c + " match";
 				if (c > 1){
-					linkInfo += "es:</p>";
+					linkInfo += "es:</h5>";
 				} else {
-					linkInfo += ":</p>";
+					linkInfo += ":</h5>";
 				}
 				
-				var scoresTable = "<table><tr>";
-				
+				var scoresTable = "<table><tr>";				
 				scoresTable += "<th>Id</th>";
 				scoresTable += "<th>Protein1</th>";
 				scoresTable += "<th>PepPos1</th>";
@@ -475,17 +466,15 @@
 				scoresTable += "<th>PepPos2</th>";
 				scoresTable += "<th>PepSeq2</th>";
 				scoresTable += "<th>LinkPos2</th>";
-				
 				scoresTable += "<th>Score</th>";
-				
 				if (residueLink.controller.autoValidatedFound === true){
 					scoresTable += "<th>Auto</th>";
 				}
 				if (residueLink.controller.manualValidatedFound === true){
 					scoresTable += "<th>Manual</th>";
-				}
-				
+				}				
 				scoresTable += "</tr>";
+				
 				for (var j = 0; j < c; j++) {
 					var match = matches[j][0];
 					
@@ -529,7 +518,7 @@
 					}
 					
 					htmlTableRow += "</tr>";
-					return htmlTableRow;
+					scoresTable += htmlTableRow;
 				}
 				
 				scoresTable += "</table><p>&nbsp;</p>";
@@ -542,13 +531,14 @@
 				var layout = xlv.getLayout();
 				var xmlhttp = new XMLHttpRequest();
 				var url = "./php/saveLayout.php";
-				var params =  "id=" + xlv.id + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
+				//~ console.log('^'+xlv.sid+'^');
+				var params =  "sid=" + xlv.sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
 				xmlhttp.open("POST", url, true);
 				//Send the proper header information along with the request
 				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						//~ xlv.message(xmlhttp.responseText, true);
+						console.log(xmlhttp.responseText, true);
 					}
 				}
 				xmlhttp.send(params);

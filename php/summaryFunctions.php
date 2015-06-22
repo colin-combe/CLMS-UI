@@ -42,7 +42,7 @@
 		var html = "THIS IS YOUR CSV (not)"
 		
 		var wnd = window.open();
-		wnd.document.write(html);
+		wnd.document.write(csv);
 	}
 	
 	function linkSummary() {
