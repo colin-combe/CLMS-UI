@@ -60,6 +60,9 @@ body, input, select, textarea {
 }
 
 .tableContainer{
+/* //seem to have prob with this
+overflow:auto;
+*/
 }
 table {
 	width:100%;

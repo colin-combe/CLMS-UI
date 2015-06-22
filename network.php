@@ -331,7 +331,10 @@
 			</table> 
 		</div>	
 		<div class="overlay-box" id="legendPanel">
-			<div><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+			<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+<!--
+			<div id="colours"></div>
+-->
 		</div>	
 		<script type="text/javascript">
 			//<![CDATA[
@@ -392,6 +395,15 @@
 				changeAnnotations();
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
 				xlv.ambigShown = document.getElementById('ambig').checked;
+				xlv.filter = function (match) {
+					var vChar = match.validated;
+					if (vChar == 'A' && document.getElementById('A').checked && (match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'B' && document.getElementById('B').checked  && (match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'C' && document.getElementById('C').checked && (match.score >= xlv.cutOff)) return true;
+					else if (vChar == '?' && document.getElementById('Q').checked && (match.score >= xlv.cutOff)) return true;
+					else if (match.autovalidated && document.getElementById('AUTO').checked && (match.score >= xlv.cutOff))  return true;
+					else return false;
+				};
 				xlv.checkLinks();
 				
 				//register callbacks
@@ -416,16 +428,32 @@
 						selectionDiv.innerHTML = out;
 					}
 				});	
+				
+                xlv.legendCallbacks.push(function (domainColours) {
+					var coloursKeyDiv = document.getElementById('colours');
 					
-				xlv.filter = function (match) {
-					var vChar = match.validated;
-					if (vChar == 'A' && document.getElementById('A').checked && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'B' && document.getElementById('B').checked  && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'C' && document.getElementById('C').checked && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == '?' && document.getElementById('Q').checked && (match.score >= xlv.cutOff)) return true;
-					else if (match.autovalidated && document.getElementById('AUTO').checked && (match.score >= xlv.cutOff))  return true;
-					else return false;
-				};
+					var table = "<table>";
+					
+					if (domainColours){
+						var domain = domainColours.domain();
+						//~ console.log("Domain:"+domain);
+						var range = domainColours.range();
+						//~ console.log("Range:"+range);
+						table += "<tr style='height:10px;'></tr>";
+						for (var i = 0; i < domain.length; i ++){
+							//make transparent version of colour
+							var temp = new RGBColor(range[i%20]);
+							var trans = "rgba(" +temp.r+","+temp.g+","+temp.b+ ", 0.6)"
+							table += "<tr><td style='width:75px;margin:10px;background:"
+									+ trans + ";border:1px solid " 
+									+ range[i%20] + ";'></td><td>"
+									+ domain[i] +"</td></tr>";
+							//~ console.log(i + " "+ domain[i] + " " + range[i]);
+						}
+					}
+					table = table += "</table>";
+					coloursKeyDiv.innerHTML = table;					
+				});					
 			});
 			
 			//used when link clicked
