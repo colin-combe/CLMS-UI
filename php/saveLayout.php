@@ -18,19 +18,13 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 include('../../connectionString.php');
-$sid = $_POST["sid"];
-echo '*'.$sid.'*';
-$layout = addslashes($_POST["layout"]);
-$desc = addslashes($_POST["desc"]);
-//~ $user_id = "7";
-
 $dbconn = pg_connect($connectionString)
         or die('Could not connect: ' . pg_last_error());
-//
-$query = "INSERT INTO layouts (search_id, user_id, layout, description)"
-        . "VALUES ('".$sid."',-1,'".$layout."','".$desc."');";
-
-echo $query;
-
-$result = pg_query($query) or die('Query failed: ' . pg_last_error());
+// Prepare a query for execution
+$result = pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_id, layout, description) VALUES ($1, -1, $2, $3)');
+// Execute the prepared query
+$sid = $_POST["sid"];
+$layout = addslashes($_POST["layout"]);
+$desc = addslashes($_POST["desc"]);
+$result = pg_execute($dbconn, "my_query", [$sid, $layout, $result]);
 ?>
