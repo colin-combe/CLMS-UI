@@ -18,6 +18,7 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 ?>
 <script>
+<<<<<<< Updated upstream
 	function exportCSV() {
 		//~ var out = "<pre>run_name,scan_number,precursor_mz,precursor_charge,match_score," +
 				//~ "spectrum_intensity_coverage,total_fragment_matches,delta,error," +
@@ -44,6 +45,11 @@
 		var wnd = window.open();
 		wnd.document.write(csv);
 	}
+=======
+	
+	
+	//NOT USED
+>>>>>>> Stashed changes
 	
 	function linkSummary() {
 /*

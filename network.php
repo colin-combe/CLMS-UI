@@ -111,7 +111,7 @@
 					</button>
 -->
 					<p class="btn">Exports:</p>
-					<button class="btn btn-1 btn-1a" onclick="exportCSV();">
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">
 							CSV
 					</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
@@ -442,88 +442,90 @@
 			
 			function residueLinkToHTML(residueLink){		
 				var matches = residueLink.getFilteredMatches();
-				var linkInfo = "<h5>" + residueLink.proteinLink.fromProtein.name 
-							+ " [" + residueLink.proteinLink.fromProtein.id
-							+ "] to " + residueLink.proteinLink.toProtein.name 
-							+ " [" + residueLink.proteinLink.toProtein.id
-							+ "], residue " + residueLink.fromResidue 
-							+ " to  residue " + residueLink.toResidue;
 				var c = matches.length;
-				linkInfo += ", " + c + " match";
-				if (c > 1){
-					linkInfo += "es:</h5>";
-				} else {
-					linkInfo += ":</h5>";
-				}
-				
-				var scoresTable = "<table><tr>";				
-				scoresTable += "<th>Id</th>";
-				scoresTable += "<th>Protein1</th>";
-				scoresTable += "<th>PepPos1</th>";
-				scoresTable += "<th>PepSeq1</th>";
-				scoresTable += "<th>LinkPos1</th>";
-				scoresTable += "<th>Protein2</th>";
-				scoresTable += "<th>PepPos2</th>";
-				scoresTable += "<th>PepSeq2</th>";
-				scoresTable += "<th>LinkPos2</th>";
-				scoresTable += "<th>Score</th>";
-				if (residueLink.controller.autoValidatedFound === true){
-					scoresTable += "<th>Auto</th>";
-				}
-				if (residueLink.controller.manualValidatedFound === true){
-					scoresTable += "<th>Manual</th>";
-				}				
-				scoresTable += "</tr>";
-				
-				for (var j = 0; j < c; j++) {
-					var match = matches[j][0];
-					
-					var htmlTableRow = "<tr>";
-					if (typeof loadSpectra == "function"){
-						htmlTableRow = "<tr onclick=\"loadSpectra('"+match.id+"','"+match.pepSeq1+"',"
-							+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");\">";
+				var linkInfo = "";
+				if (c > 0){
+					var linkInfo = "<h5>" + residueLink.proteinLink.fromProtein.name 
+								+ " [" + residueLink.proteinLink.fromProtein.id
+								+ "] to " + residueLink.proteinLink.toProtein.name 
+								+ " [" + residueLink.proteinLink.toProtein.id
+								+ "], residue " + residueLink.fromResidue 
+								+ " to  residue " + residueLink.toResidue;
+					linkInfo += ", " + c + " match";
+					if (c > 1){
+						linkInfo += "es:</h5>";
+					} else {
+						linkInfo += ":</h5>";
 					}
 					
-					htmlTableRow += "<td><p>" + match.id
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.protein1
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.pepPos1
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.pepSeq1
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.linkPos1
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.protein2
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.pepPos2
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.pepSeq2
-						+ "</p></td>";
-					htmlTableRow += "<td><p>" + match.linkPos2
-						+ "</p></td>";			
+					var scoresTable = "<table><tr>";				
+					scoresTable += "<th>Id</th>";
+					scoresTable += "<th>Protein1</th>";
+					scoresTable += "<th>PepPos1</th>";
+					scoresTable += "<th>PepSeq1</th>";
+					scoresTable += "<th>LinkPos1</th>";
+					scoresTable += "<th>Protein2</th>";
+					scoresTable += "<th>PepPos2</th>";
+					scoresTable += "<th>PepSeq2</th>";
+					scoresTable += "<th>LinkPos2</th>";
+					scoresTable += "<th>Score</th>";
+					if (residueLink.controller.autoValidatedFound === true){
+						scoresTable += "<th>Auto</th>";
+					}
+					if (residueLink.controller.manualValidatedFound === true){
+						scoresTable += "<th>Manual</th>";
+					}				
+					scoresTable += "</tr>";
+					
+					for (var j = 0; j < c; j++) {
+						var match = matches[j][0];
 						
-					htmlTableRow += "<td><p>" + 
-					((typeof match.score !== 'undefined')? match.score.toFixed(4) : 'undefined')
-					+ "</p></td>";
-					
-					if (match.controller.autoValidatedFound === true){
-						htmlTableRow += "<td><p>" + match.autovalidated
+						var htmlTableRow = "<tr>";
+						if (typeof loadSpectra == "function"){
+							htmlTableRow = "<tr onclick=\"loadSpectra('"+match.id+"','"+match.pepSeq1+"',"
+								+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");\">";
+						}
+						
+						htmlTableRow += "<td><p>" + match.id
 							+ "</p></td>";
-					}
-					
-					if (match.controller.manualValidatedFound === true){
-						htmlTableRow += "<td><p>" + match.validated
+						htmlTableRow += "<td><p>" + match.protein1
 							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.pepPos1
+							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.pepSeq1
+							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.linkPos1
+							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.protein2
+							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.pepPos2
+							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.pepSeq2
+							+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.linkPos2
+							+ "</p></td>";			
+							
+						htmlTableRow += "<td><p>" + 
+						((typeof match.score !== 'undefined')? match.score.toFixed(4) : 'undefined')
+						+ "</p></td>";
+						
+						if (match.controller.autoValidatedFound === true){
+							htmlTableRow += "<td><p>" + match.autovalidated
+								+ "</p></td>";
+						}
+						
+						if (match.controller.manualValidatedFound === true){
+							htmlTableRow += "<td><p>" + match.validated
+								+ "</p></td>";
+						}
+						
+						htmlTableRow += "</tr>";
+						scoresTable += htmlTableRow;
 					}
-					
-					htmlTableRow += "</tr>";
-					scoresTable += htmlTableRow;
+					scoresTable += "</table><p>&nbsp;</p>";
+					linkInfo += scoresTable;
 				}
 				
-				scoresTable += "</table><p>&nbsp;</p>";
-				
-				linkInfo += scoresTable;
 				return linkInfo;
 			}
 
@@ -591,8 +593,5 @@
 			}*/
 			//]]>
 		</script>
-		<?php
-			include './php/summaryFunctions.php';            
-		?>	
 	</body>
 </html>
