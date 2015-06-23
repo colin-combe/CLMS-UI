@@ -16,19 +16,15 @@
        url('../fonts/lato/regular/Lato-Regular.ttf')  format('truetype'), /* Safari, Android, iOS  */
        url('../fonts/lato/regular/Lato-Regular.svg#svgLato-Regular') format('svg');  /* Legacy iOS */ 
 }
-html{
-/*
+/* html{
+    height:100%;
+}*/
+body, html{
     background: #fff;
-*/
     height:100%;
 /*
     overflow:hidden;
 */
-}
-body{
-    background: #fff;
-    height:100%;
-    overflow:hidden;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -180,46 +176,22 @@ overflow: auto;
 }
 
 
-/*
-#legendPanel{
-	position: fixed;
-	left: 0px;
-	top:-95px;
-	height: 0px;
-	z-index: 1;
-	overflow: hidden;
-}
-*/
 
-#spectrum, #legendPanel{
+#spectrumPanel, #legendPanel, #helpPanel{
 	padding:0px;
 	background: rgba(9, 29, 66, 0.9);
 	overflow: auto;
 	color:#fff;
-/*
-	height:500px;
-	width:600px;
-*/
 }
 #spectrum_inner_div, #colours{
-	margin-left:20px;
+	margin:20px;
 	margin-right:20px;
 /*
-	color: #777;
-	background:#fff;
-*/
-/*
-		width:100%;
-*/
 	height:100%;
-/*
-	width:400px;
 */
 }
 #graphDiv{
-/*
-	width:100%;
-*/
+
 	height:calc(100% - 110px);
 }
 .axis{
@@ -265,24 +237,12 @@ height:20px;
 #wrapper
 {
 	overflow: hidden;
-/*
-	height: 95%;
-*/
 	right:0px;
-/*
-	left:0px;
-*/
 	top:0px;
 	bottom: 40px;
-/*
-	width: 100%;
-*/
 	position:fixed;
 }
 h1, h2, h3, h4, h5, h6 {
-/*
-    font-weight: 200;
-*/
     color: #666;
     line-height: 1.75em;
 }
@@ -540,7 +500,7 @@ font-size:1.4em;
 */
 }
 
-/*
+/**/
 .btn-1a-inverse:active, .btn-1a-inverse:hover {
     color: #091D42;
     background: #fff;
@@ -555,15 +515,8 @@ font-size:1.4em;
     margin: 0;
     padding: 0;
 }
-*/
 .overlay-box {
-/*
-	font-size: 13pt;
-*/
     background: rgba(9, 29, 66, 0.9);
-/*
-    border-top: 20px solid rgba(9, 29, 66, 0.9);
-*/
 	overflow: scroll;   
     color: #fff;
     padding: 20px;
@@ -573,6 +526,7 @@ font-size:1.4em;
     margin-left: 40px;
     margin-right: 40px;
 }
+
 .noMarg{
     margin-left: 0px;
     margin-right: 0px;
