@@ -353,8 +353,6 @@
 				<?php
 				include './php/loadData.php';
 				?>
-				xlv.initLayout();
-				xlv.initProteins();
 				
 				initSlider();
 				changeAnnotations();
@@ -370,6 +368,8 @@
 					else return false;
 				};
 				xlv.checkLinks();
+				xlv.initLayout();
+				xlv.initProteins();
 				
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
