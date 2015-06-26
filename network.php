@@ -34,9 +34,13 @@
 		<link rel="stylesheet" href="./css/jquery-ui.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
-		
+		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
+<script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>	
+
+<!--
         <script type="text/javascript" src="./vendor/jquery.js"></script>
         <script type="text/javascript" src="./vendor/jquery-ui.js"></script>
+-->
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
@@ -71,72 +75,85 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
+  	<div class="wrapper dynDiv_setLimit">
+		
+		<div class="legendPanel">
+			<div id="testdiv_1_move" class="dynDiv_moveParentDiv">Move Div here !</div>
+			<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+			<div class="dynDiv_resizeDiv_tl"></div>
+			<div class="dynDiv_resizeDiv_tr"></div>
+			<div class="dynDiv_resizeDiv_bl"></div>
+			<div class="dynDiv_resizeDiv_br"></div>	
+		</div>				
+		
+		<div class="legendPanel">
+			<div id="testdiv_2_move" class="dynDiv_moveParentDiv">Move Div here !</div>
 <!--
-    wrapper for the jquery ui dialogs
+			<div class="" id='spectrum_inner_div'>
+				<div id='pepFragDiv'></div>
+				<div id='graphDiv'></div>
 -->
-		<div id="wrapper">
+				<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
 <!--
-			<div id='spectrum'>
-				<div id='spectrum_inner_div'>
-					<div id='pepFragDiv'></div>
-					<div id='graphDiv'></div>
-					<button class="btn btn-1 btn-1a" style="margin:5px;float:right;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
-				</div>
 			</div>
 -->
-			
-			<div class="" id="legendPanel">
-				<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
-			</div>	
+			<div class="dynDiv_resizeDiv_tl"></div>
+			<div class="dynDiv_resizeDiv_tr"></div>
+			<div class="dynDiv_resizeDiv_bl"></div>
+			<div class="dynDiv_resizeDiv_br"></div>
+		</div>
+		
+		<div class="legendPanel">
+			<div id="testdiv_3_move" class="dynDiv_moveParentDiv">Move Div here !</div>
+			<table>
+				<tr>
+					<td>Toggle the proteins between a bar and a circle</td>
+					<td>Click on protein</td>
+				</tr>
+				<tr>
+					<td>Zoom</td>
+					<td>Mouse wheel</td>
+				</tr>
+				<tr>
+					<td>Pan</td>
+					<td>Click and drag on background</td>
+				</tr>
+				<tr>
+					<td>Move protein</td>
+					<td>Click and drag on protein</td>
+				</tr>
+				<tr>
+					<td>Expand bar <br>(increases bar length until sequence is visible)</td>
+					<td>Shift_left-click on protein</td>
+				</tr>
+				<tr>
+					<td>Rotate bar</td>
+					<td>Click and drag on handles that appear at end of bar</td>
+				</tr>
+				<tr>
+					<td>Hide/show protein (and all links to it)</td>
+					<td>Right-click on protein</td>
+				</tr>
+				<tr>
+					<td>Hide links between two specific proteins</td>
+					<td>Right click on any link between those proteins</td>
+				</tr>
+				<tr>
+					<td>Show all hidden links</td>
+					<td>Right click on background</td>
+				</tr>
+				<tr>
+					<td>'Flip' self-links</td>
+					<td>Right-click on self-link</td>
+				</tr>
+			</table> 
+				<div class="dynDiv_resizeDiv_tl"></div>
+			<div class="dynDiv_resizeDiv_tr"></div>
+			<div class="dynDiv_resizeDiv_bl"></div>
+			<div class="dynDiv_resizeDiv_br"></div>
+		</div>				
 
-<!--
-			<div class="" id="helpPanel">
-				<table class="overlay-table"  bordercolor="#eee" >
-					<tr>
-						<td>Toggle the proteins between a bar and a circle</td>
-						<td>Click on protein</td>
-					</tr>
-					<tr>
-						<td>Zoom</td>
-						<td>Mouse wheel</td>
-					</tr>
-					<tr>
-						<td>Pan</td>
-						<td>Click and drag on background</td>
-					</tr>
-					<tr>
-						<td>Move protein</td>
-						<td>Click and drag on protein</td>
-					</tr>
-					<tr>
-						<td>Expand bar <br>(increases bar length until sequence is visible)</td>
-						<td>Shift_left-click on protein</td>
-					</tr>
-					<tr>
-						<td>Rotate bar</td>
-						<td>Click and drag on handles that appear at end of bar</td>
-					</tr>
-					<tr>
-						<td>Hide/show protein (and all links to it)</td>
-						<td>Right-click on protein</td>
-					</tr>
-					<tr>
-						<td>Hide links between two specific proteins</td>
-						<td>Right click on any link between those proteins</td>
-					</tr>
-					<tr>
-						<td>Show all hidden links</td>
-						<td>Right click on background</td>
-					</tr>
-					<tr>
-						<td>'Flip' self-links</td>
-						<td>Right-click on self-link</td>
-					</tr>
-				</table> 
-			</div>	
--->
-
-		</div>	
+	</div>	
 
 		
 		<!-- Main -->
@@ -305,20 +322,40 @@
 
 		<script type="text/javascript">
 			//<![CDATA[
+			
+			
+			
+			// Drag Event
+ByRei_dynDiv.api.drag = function () {
+ var
+  mode = ByRei_dynDiv.cache.modus,
+  limit = ByRei_dynDiv.db(1),
+  status = ByRei_dynDiv.db(2);
+
+ console.log('Div was dragged...'
+  + 'ID: ' + ByRei_dynDiv.api.elem
+  + 'Mode: ' + mode
+  + 'Status: ' + status
+  + 'Limit: ' + limit
+  + '');
+};
+			
+			
+			
 			//forced to use jquery dialog for floaty internal frame
 	  	
-			$("#legendPanel").dialog({resizable:true, autoOpen: false, 
-								width: 360, height: "auto", position: { my: "left top", at: "left+40 top+100"}});
-			$('#legendPanel').on('dialogclose', function(event) {
-				document.getElementById('legendChkbx').checked = false;
-			});
-			
+			//~ $("#legendPanel").dialog({resizable:true, autoOpen: false, 
+								//~ width: 360, height: "auto", position: { my: "left top", at: "left+40 top+100"}});
+			//~ $('#legendPanel').on('dialogclose', function(event) {
+				//~ document.getElementById('legendChkbx').checked = false;
+			//~ });
+			//~ 
 			//~ $("#spectrum").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
 			//~ //init spectrum viewer
 			//~ var pepFragDiv = document.getElementById('pepFragDiv');
 			//~ var graphDiv = document.getElementById('graphDiv');
 			//~ spectrumViewer = new SpectrumViewer(pepFragDiv, graphDiv);
-			//~ 
+			
 			//~ function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 				//~ //jquery dialog open
 				//~ $( "#spectrum" ).dialog("open");

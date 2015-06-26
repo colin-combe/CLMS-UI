@@ -44,8 +44,13 @@ body, input, select, textarea {
 #main{
     height:100%;
     width:100%;
+    overflow:hidden;
+/*
     position:fixed;
-
+*/
+/*
+	z-index:1;
+*/
 }
 
 .container {
@@ -167,7 +172,9 @@ overflow: auto;
 	right: 0px;
 	top:-95px;
 	height: 0px;
+/*
 	z-index: 1;
+*/
 	width: 460px;
 	overflow: hidden;
 /*
@@ -177,11 +184,13 @@ overflow: auto;
 
 
 
-#spectrumPanel, #legendPanel, #helpPanel{
+#spectrumPanel, .legendPanel, #helpPanel{
 	padding:0px;
 	background: rgba(9, 29, 66, 0.9);
 	overflow: auto;
 	color:#fff;
+	position:fixed;
+	pointer-events:all;
 }
 #spectrum_inner_div, #colours{
 	margin:20px;
@@ -207,9 +216,7 @@ overflow: auto;
 	width: 100%;
 }
 .ui-icon-gripsmall-diagonal-se { 
-/* COL
-background-position: -64px -224px; 
-*/
+
 width:100%;
 height:20px;
  background: rgba(9, 29, 66, 1);
@@ -234,13 +241,20 @@ height:20px;
 	text-align: left;
 }
 
-#wrapper
+.wrapper
 {
+height:100%;
+width:100%;
+/*
+z-index:2;
+*/
+/*
 	overflow: hidden;
 	right:0px;
 	top:0px;
 	bottom: 40px;
-	position:fixed;
+*/	position:fixed;
+pointer-events:none;
 }
 h1, h2, h3, h4, h5, h6 {
     color: #666;
@@ -349,7 +363,9 @@ body {
     left: 0px;
     position: fixed;
 	bottom: 0px;
+/*
     z-index: 11;
+*/
     right: 0px;
     background:#ecedf2;
     color:#091D42;
@@ -555,7 +571,9 @@ font-size:1.4em;
     position: fixed;
     height: 100%;
     width: 500px;
+/*
     z-index: 998;
+*/
     margin-top: 60px;
     top: 50%;
     left: 229px;
@@ -605,20 +623,27 @@ p.citation {
 .overlay-box h4 {
     color: #fff;
 }
-.overlay-box table {
+table {
     font-size: 0.9em;
     left: auto;
+/*
     right: auto;
+*/
 /*
     top: 10px;
 */
+	margin:20px;
     position: relative;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
     border-collapse: collapse;
+/*
     background-color: rgba(255, 255, 255, 1);
+*/
+/*
     color: rgba(255, 255, 255, 1);
+*/
     text-align: left;
 }
 .overlay-box th {
@@ -690,7 +715,9 @@ tbody tr:hover td, tbody tr:hover td a{
 */
     cursor: default;
     color: #fff;
+/*
     position: relative;
+*/
     margin-left: auto;
     background-color: #091D42;
     margin-right: auto;
