@@ -28,7 +28,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-		<link rel="icon" type="image/ico" href="./images/favicon.ico">
+		<link rel="icon" type="image/ico" href="images/favicon.ico">
 		
 		<link rel="stylesheet" href="./css/reset.css" />
 		<link rel="stylesheet" href="./css/jquery-ui.css">
@@ -382,6 +382,29 @@
 					} 
 					else {
 						var out = ""
+						
+						var scoresTable = "<table><tr>";				
+					scoresTable += "<th>Id</th>";
+					scoresTable += "<th>Protein1</th>";
+					scoresTable += "<th>PepPos1</th>";
+					scoresTable += "<th>PepSeq1</th>";
+					scoresTable += "<th>LinkPos1</th>";
+					scoresTable += "<th>Protein2</th>";
+					scoresTable += "<th>PepPos2</th>";
+					scoresTable += "<th>PepSeq2</th>";
+					scoresTable += "<th>LinkPos2</th>";
+					scoresTable += "<th>Score</th>";
+					if (xlv.autoValidatedFound === true){
+						scoresTable += "<th>Auto</th>";
+					}
+					if (xlv.manualValidatedFound === true){
+						scoresTable += "<th>Manual</th>";
+					}				
+						scoresTable += "<th>Group</th>";
+					scoresTable += "</tr>";
+					
+						out +=  scoresTable;
+						
 						for (var i = 0; i < selectedLinkCount; i++) {
 							var aLink = selectedLinkArray[i]; 
 							if (aLink.residueLinks) {//its a ProteinLink
@@ -390,6 +413,9 @@
 								out += residueLinkToHTML(aLink);
 							}
 						}
+						
+						out += "</table>";
+					
 						selectionDiv.innerHTML = out;
 					}
 				});	
@@ -446,39 +472,22 @@
 			function residueLinkToHTML(residueLink){		
 				var matches = residueLink.getFilteredMatches();
 				var c = matches.length;
-				var linkInfo = "";
-				if (c > 0){
-					var linkInfo = "<h5>" + residueLink.proteinLink.fromProtein.name 
-								+ " [" + residueLink.proteinLink.fromProtein.id
-								+ "] to " + residueLink.proteinLink.toProtein.name 
-								+ " [" + residueLink.proteinLink.toProtein.id
-								+ "], residue " + residueLink.fromResidue 
-								+ " to  residue " + residueLink.toResidue;
-					linkInfo += ", " + c + " match";
-					if (c > 1){
-						linkInfo += "es:</h5>";
-					} else {
-						linkInfo += ":</h5>";
-					}
+				//~ var linkInfo = "";
+				//~ if (c > 0){
+					//~ var linkInfo = "<h5>" + residueLink.proteinLink.fromProtein.name 
+								//~ + " [" + residueLink.proteinLink.fromProtein.id
+								//~ + "] to " + residueLink.proteinLink.toProtein.name 
+								//~ + " [" + residueLink.proteinLink.toProtein.id
+								//~ + "], residue " + residueLink.fromResidue 
+								//~ + " to  residue " + residueLink.toResidue;
+					//~ linkInfo += ", " + c + " match";
+					//~ if (c > 1){
+						//~ linkInfo += "es:</h5>";
+					//~ } else {
+						//~ linkInfo += ":</h5>";
+					//~ }
 					
-					var scoresTable = "<table><tr>";				
-					scoresTable += "<th>Id</th>";
-					scoresTable += "<th>Protein1</th>";
-					scoresTable += "<th>PepPos1</th>";
-					scoresTable += "<th>PepSeq1</th>";
-					scoresTable += "<th>LinkPos1</th>";
-					scoresTable += "<th>Protein2</th>";
-					scoresTable += "<th>PepPos2</th>";
-					scoresTable += "<th>PepSeq2</th>";
-					scoresTable += "<th>LinkPos2</th>";
-					scoresTable += "<th>Score</th>";
-					if (residueLink.controller.autoValidatedFound === true){
-						scoresTable += "<th>Auto</th>";
-					}
-					if (residueLink.controller.manualValidatedFound === true){
-						scoresTable += "<th>Manual</th>";
-					}				
-					scoresTable += "</tr>";
+					
 					
 					for (var j = 0; j < c; j++) {
 						var match = matches[j][0];
@@ -521,15 +530,15 @@
 							htmlTableRow += "<td><p>" + match.validated
 								+ "</p></td>";
 						}
-						
+						htmlTableRow += "<td><p>" + match.group
+								+ "</p></td>";
 						htmlTableRow += "</tr>";
-						scoresTable += htmlTableRow;
+						//~ scoresTable += htmlTableRow;
 					}
-					scoresTable += "</table><p>&nbsp;</p>";
-					linkInfo += scoresTable;
-				}
+					//~ linkInfo += scoresTable;
+				//~ }
 				
-				return linkInfo;
+				return htmlTableRow;
 			}
 
 			function saveLayout () {

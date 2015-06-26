@@ -36,7 +36,7 @@ header('Content-type: text/html; charset=utf-8');
 
 	<body>
    	 	<!-- Main -->
-   	 	<div id="main">
+   	 	<div id="">
    	 	<!-- Intro -->			
 			<div class="container">
 				<h1 class="page-header">

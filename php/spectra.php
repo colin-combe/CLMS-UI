@@ -26,7 +26,7 @@ $dbconn = pg_connect($connectionString)
 // Prepare a query for execution
 $result = pg_prepare($dbconn, "my_query", 
 'SELECT expmz, absoluteintesity as intensity, fragment_name, sequence, mass, charge, isprimarymatch  FROM v_spec_viewer_advanced_materialized WHERE spectrum_match_id = $1 );'); 
-		. $id. ";";);
+	//	. $id. ";";);
 // Execute the prepared query
 $export = pg_execute($dbconn, "my_query", [$id]);
 $fields = pg_num_fields ( $export );
