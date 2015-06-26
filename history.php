@@ -60,11 +60,10 @@ header('Content-type: text/html; charset=utf-8');
 							//open connection
 							$dbconn = pg_connect($connectionString)
 								or die('Could not connect: ' . pg_last_error());
-
-						
-							$query = "SELECT search.id, search.submit_date, search.name, search.notes, search.status, users.user_name, search.random_id, sequence_file.file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND users.user_name = '".$_SESSION['session_name']."' AND status != 'hide' ORDER BY submit_date DESC ;";
-							$result = pg_query($query) or die('Query failed: ' . pg_last_error());
-						
+							$result = pg_prepare($dbconn, "my_query", 
+"SELECT search.id, (array_agg(search.submit_date))[1] AS submit_date, (array_agg(search.name))[1] AS name, (array_agg(search.status))[1] AS status, (array_agg(search.random_id))[1] AS random_id, array_agg(sequence_file.file_name) AS file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND users.user_name = $1 AND status != 'hide' GROUP BY search.id ORDER BY submit_date DESC ;");
+							// Execute the prepared query
+							$result = pg_execute($dbconn, "my_query", [$_SESSION['session_name']]);
 							while ($line = pg_fetch_array($result, null, PGSQL_ASSOC)) {
 								$url = $line['id'].'-'.$line['random_id'];
 								echo "<td><a id=".$line['name']." href='./network.php?sid=" . urlencode($url) . "'>" . $line['name'] . "</a>" . "</td>";

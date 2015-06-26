@@ -24,7 +24,7 @@
 			<meta name="viewport" content="initial-scale=1, maximum-scale=1">
 			<meta name="apple-mobile-web-app-capable" content="yes">
 			<meta name="apple-mobile-web-app-status-bar-style" content="black">
-			<link rel="icon" type="image/ico" href="images/favicon.ico">
+			<link rel="icon" type="image/ico" href="/images/favicon.ico">
 			<link rel="stylesheet" href="css/reset.css" />
 			<link rel="stylesheet" href="css/style.css" />
 			<link rel="stylesheet" href="css/dynamic_table.css" />
