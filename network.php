@@ -31,23 +31,15 @@
 		<link rel="icon" type="image/ico" href="images/favicon.ico">
 		
 		<link rel="stylesheet" href="./css/reset.css" />
-		<link rel="stylesheet" href="./css/jquery-ui.css">
+		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
-		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
-<script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>	
 
-<!--
-        <script type="text/javascript" src="./vendor/jquery.js"></script>
-        <script type="text/javascript" src="./vendor/jquery-ui.js"></script>
--->
+		<script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>	
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>   
-<!--
-         <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
--->
       
         <!--spectrum dev-->
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
@@ -78,7 +70,7 @@
   	<div class="wrapper dynDiv_setLimit">
 		
 		<div class="legendPanel">
-			<div id="testdiv_1_move" class="dynDiv_moveParentDiv">Move Div here !</div>
+			<div id="testdiv_1_move" class="dynDiv_moveParentDiv"><i class="fa fa-times-circle">YO!</i></div>
 			<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 			<div class="dynDiv_resizeDiv_tl"></div>
 			<div class="dynDiv_resizeDiv_tr"></div>
@@ -404,9 +396,6 @@ ByRei_dynDiv.api.drag = function () {
 					else if (match.autovalidated && document.getElementById('AUTO').checked && (match.score >= xlv.cutOff))  return true;
 					else return false;
 				};
-				xlv.checkLinks();
-				xlv.initLayout();
-				xlv.initProteins();
 				
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
@@ -457,10 +446,46 @@ ByRei_dynDiv.api.drag = function () {
 					}
 				});	
 				
-                xlv.legendCallbacks.push(function (domainColours) {
+                xlv.legendCallbacks.push(function (linkColours, domainColours) {
 					var coloursKeyDiv = document.getElementById('colours');
 					
+					
+					
+					
 					var table = "<table>";
+					
+					if (linkColours){
+						var domain = linkColours.domain();
+						//~ console.log("Domain:"+domain);
+						var range = linkColours.range();
+						//~ console.log("Range:"+range);
+						for (var i = 0; i < domain.length; i ++){
+							//make opaque version of colour
+							//~ http://stackoverflow.com/questions/2049230/convert-rgba-color-to-rgb
+							var temp = new RGBColor(range[i%20]);
+							//~ Target.R = ((1 - Source.A) * BGColor.R) + (Source.A * Source.R)
+							//~ Target.G = ((1 - Source.A) * BGColor.G) + (Source.A * Source.G)
+							//~ Target.B = ((1 - Source.A) * BGColor.B) + (Source.A * Source.B)
+							var opaque = {};
+							opaque.r = ((1 - 0.6) * 1) + (0.6 * (temp.r / 255));
+							opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255))
+							opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255))
+							var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
+								+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
+							//~ var trans = "rgba(" +temp.r+","+temp.g+","+temp.b+ ", 0.6)"
+							table += "<tr><td><div style='width:75px;margin:auto;height:3px;background:"
+									+ temp.toRGB() + ";'></div></td><td>"
+									+ searchesShown[domain[i]] +"</td></tr>";
+							//~ console.log(i + " "+ domain[i] + " " + range[i]);
+						}
+					}
+					table = table += "</table>";
+					coloursKeyDiv.innerHTML = table;					
+			
+					
+					
+					
+					/*var table = "<table>";
 					
 					if (domainColours){
 						var domain = domainColours.domain();
@@ -489,9 +514,15 @@ ByRei_dynDiv.api.drag = function () {
 							//~ console.log(i + " "+ domain[i] + " " + range[i]);
 						}
 					}
-					table = table += "</table>";
-					coloursKeyDiv.innerHTML = table;					
-				});					
+					table = table += "</table>";*/
+					//coloursKeyDiv.innerHTML = table;					
+				});		
+				
+				
+				xlv.checkLinks();
+				xlv.initLayout();
+				xlv.initProteins();
+							
 			});
 			
 			//used when link clicked
@@ -509,23 +540,7 @@ ByRei_dynDiv.api.drag = function () {
 			function residueLinkToHTML(residueLink){		
 				var matches = residueLink.getFilteredMatches();
 				var c = matches.length;
-				//~ var linkInfo = "";
-				//~ if (c > 0){
-					//~ var linkInfo = "<h5>" + residueLink.proteinLink.fromProtein.name 
-								//~ + " [" + residueLink.proteinLink.fromProtein.id
-								//~ + "] to " + residueLink.proteinLink.toProtein.name 
-								//~ + " [" + residueLink.proteinLink.toProtein.id
-								//~ + "], residue " + residueLink.fromResidue 
-								//~ + " to  residue " + residueLink.toResidue;
-					//~ linkInfo += ", " + c + " match";
-					//~ if (c > 1){
-						//~ linkInfo += "es:</h5>";
-					//~ } else {
-						//~ linkInfo += ":</h5>";
-					//~ }
-					
-					
-					
+				var rows = "";
 					for (var j = 0; j < c; j++) {
 						var match = matches[j][0];
 						
@@ -570,12 +585,12 @@ ByRei_dynDiv.api.drag = function () {
 						htmlTableRow += "<td><p>" + match.group
 								+ "</p></td>";
 						htmlTableRow += "</tr>";
-						//~ scoresTable += htmlTableRow;
+						rows += htmlTableRow;
 					}
 					//~ linkInfo += scoresTable;
 				//~ }
 				
-				return htmlTableRow;
+				return rows;
 			}
 
 			function saveLayout () {
