@@ -25,9 +25,11 @@
   width: calc(100% - 40px);         /* standards-based answer for IE9+, FF16+ */
   width: -moz-calc(100% - 40px);    /* support for FF4 - FF15                 */
   width: -webkit-calc(100% - 40px); /* support for Chrome19+ and Safari6+     */
+/*
   margin-bottom:10px;
 
   margin-right: 5px;
+*/
 }
 
 /**

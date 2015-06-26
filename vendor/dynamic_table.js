@@ -95,8 +95,8 @@ function DynamicTable(obj, options){
 			// button to clear aggregation checkboxes
 			var clearBtn = document.createElement("button");
 			//~ toolBtn.src = blank_image_src;
-			clearBtn.innerHTML = "Clear";
-			clearBtn.className = "btn btn-1 btn-1a clear";
+			clearBtn.innerHTML = "Uncheck all";
+			clearBtn.className = "btn btn-1 btn-1a clearChx";
 			clearBtn.onclick = function (){
 				clearAggregationCheckboxes();
 			}
