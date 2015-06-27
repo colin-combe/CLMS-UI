@@ -29,25 +29,25 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		<link rel="icon" type="image/ico" href="images/favicon.ico">
-		
+
 		<link rel="stylesheet" href="./css/reset.css" />
 		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
 
-		<script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>	
+		<script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
-        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>   
-      
+        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
+
         <!--spectrum dev-->
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
-        
+
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
@@ -66,37 +66,22 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
-    <body>	
+    <body>
 		<div class="dynDiv_setLimit"><!-- div limiting movement of floaty panels -->
-			
+
 			<div class="dynDiv_moveDiv" id="keyPanel">
-				<i class="fa fa-times-circle"></i>
+				<i class="fa fa-times-circle" onclick="keyPanel(false);"></i>
 				<p class="btn">Key</p>
 				<div id="linksKey"><img src="./images/fig3_1.svg"></div>
 				<div id="domainsKey"><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>	
-			</div>				
-			
-			<div class="dynDiv_moveDiv" id="spectrumPanel">
-				<!-- <div id="testdiv_2_move" class="dynDiv_moveParentDiv">Move Div here !</div> -->
-				<i class="fa fa-times-circle"></i>
-				<p class="btn">Spectrum</p>
-				<div class="" id='spectrum_inner_div'>
-					<div id='pepFragDiv'></div>
-					<div id='graphDiv'></div>
-					<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
-				</div>
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
-			
-			<div class="dynDiv_moveDiv helpPanel">
-				<i class="fa fa-times-circle"></i>
+
+			<div class="dynDiv_moveDiv helpPanel" id="helpPanel">
+				<i class="fa fa-times-circle" onclick="helpPanel(false);"></i>
 				<p class="btn">Help</p>
 				<table>
 					<tbody>
@@ -141,19 +126,34 @@
 							<td>Right-click on self-link</td>
 						</tr>
 					</tbody>
-				</table> 
+				</table>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
-							
-		</div><!-- div limiting movement of floaty panels -->	
+
+			<div class="dynDiv_moveDiv" id="spectrumPanel">
+				<!-- <div id="testdiv_2_move" class="dynDiv_moveParentDiv">Move Div here !</div> -->
+				<i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i>
+				<p class="btn">Spectrum</p>
+				<div class="" id='spectrum_inner_div'>
+					<div id='pepFragDiv'></div>
+					<div id='graphDiv'></div>
+					<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
+				</div>
+				<div class="dynDiv_resizeDiv_tl"></div>
+				<div class="dynDiv_resizeDiv_tr"></div>
+				<div class="dynDiv_resizeDiv_bl"></div>
+				<div class="dynDiv_resizeDiv_br"></div>
+			</div>
+			
+		</div><!-- div limiting movement of floaty panels -->
 
 		<!-- Main -->
 		<div id="main">
 
-			<div class="container">   	 				
+			<div class="container">
 				<h1 class="page-header">
 					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
 					<p class="btn">Layout:</p>
@@ -161,49 +161,49 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 					<p class="btn">Exports:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
-					<label class="btn">Key<input id="legendChkbx" onclick="$('#legendPanel').dialog('open');" type="checkbox"></label>
-					<label class="btn">Help<input id="help" onclick="toggleHelpPanel()" type="checkbox"></label>
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
+					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
+					<label class="btn">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
 				</h1>
-   	 		</div>				   	
-			
+   	 		</div>
+
 			<div>
 				<div id="topDiv"></div>
 				<div id=splitterDiv class="horizontalSplitter"></div>
 				<div id="bottomDiv" class="overlay-box"><p>No selection.</p></div>
 			</div>
-						
-			<div class="controls">						
+
+			<div class="controls">
 					<label>A
-						<input checked="checked" 
-								   id="A" 			
-								   onclick="xlv.checkLinks();" 
+						<input checked="checked"
+								   id="A"
+								   onclick="xlv.checkLinks();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>B
-						<input checked="checked" 
-								   id="B" 			
-								   onclick="xlv.checkLinks();" 
+						<input checked="checked"
+								   id="B"
+								   onclick="xlv.checkLinks();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>C
-						<input checked="checked" 
-								   id="C" 			
-								   onclick="xlv.checkLinks();" 
+						<input checked="checked"
+								   id="C"
+								   onclick="xlv.checkLinks();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>?
-						<input id="Q" 			
-								   onclick="xlv.checkLinks();" 
+						<input id="Q"
+								   onclick="xlv.checkLinks();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>auto
-						<input id="AUTO" 			
-								   onclick="xlv.checkLinks();" 
+						<input id="AUTO"
+								   onclick="xlv.checkLinks();"
 								   type="checkbox"
 							/>
 					</label>
@@ -211,42 +211,42 @@
 						<p class="scoreLabel" id="scoreLabel1"></p>
 						<input id="slide" type="range" min="0" max="100" step="1" value="0" oninput="sliderChanged()"/>
 						<p class="scoreLabel" id="scoreLabel2"></p>
-						<p id="cutoffLabel">(cut-off)</p>							
-					</div> <!-- outlined scoreSlider -->						
-					
+						<p id="cutoffLabel">(cut-off)</p>
+					</div> <!-- outlined scoreSlider -->
+
 					<div style='float:right'>
 						<label>Self-Links
-							<input checked="checked" 
-								   id="selfLinks" 			
-								   onclick="xlv.showSelfLinks(document.getElementById('selfLinks').checked)" 
+							<input checked="checked"
+								   id="selfLinks"
+								   onclick="xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
 								   type="checkbox"
 							/>
 						</label>
 						<label>&nbsp;&nbsp;Ambiguous
-							<input checked="checked" 
-								   id="ambig" 			
-								   onclick="xlv.showAmbig(document.getElementById('ambig').checked)" 
+							<input checked="checked"
+								   id="ambig"
+								   onclick="xlv.showAmbig(document.getElementById('ambig').checked)"
 								   type="checkbox"
 							/>
 						</label>
 						<label style="margin-left:20px;">Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
-								<option>None</option>  								
-								<option>UniprotKB</option> 
-								<option>SuperFamily</option>  
-								<option>Lysines</option>  
+								<option>None</option>
+								<option>UniprotKB</option>
+								<option>SuperFamily</option>
+								<option>Lysines</option>
 							</select>
-						</label>	
-					</div>		
+						</label>
+					</div>
 				</div>
-			</div>			
-					
+			</div>
+
 		</div><!-- MAIN -->
-		
+
 		<script>
-			//<![CDATA[		
+			//<![CDATA[
 			/*
-			 * Horizontal splitter JS 
+			 * Horizontal splitter JS
 			 */
 			var marginBottom = 95;
 			var minBottomDivHeight = 40;
@@ -283,14 +283,40 @@
 			main.onmouseup = function(evt) {
 				splitterDragging = false;
 			}
-			
 			main.onmousemove();
-			
 			window.onresize = function(event) {
 				main.onmousemove();//event);
 			};
-			
+
 			/* floaty panels JS */
+			keyPanel = function (show) {
+				var kp = d3.select('#keyPanel');
+				if (show) {
+					kp.style('display', 'block');
+				} else {
+					kp.style('display', 'none');
+				}
+				var kChkBx = document.getElementById('keyChkBx');
+				kChkBx.checked = show;
+			}
+			helpPanel = function (show) {
+				var hp = d3.select('#helpPanel');
+				if (show) {
+					hp.style('display', 'block');
+				} else {
+					hp.style('display', 'none');
+				}
+				var hChkBx = document.getElementById('helpChkBx');
+				hChkBx.checked = show;
+			}
+			spectrumPanel = function (show) {
+				var sp = d3.select('#spectrumPanel');
+				if (show) {
+					sp.style('display', 'block');
+				} else {
+					sp.style('display', 'none');
+				}
+			}
 			// Drag Event
 			ByRei_dynDiv.api.drag = function () {
 			 var
@@ -305,27 +331,14 @@
 			  + 'Limit: ' + limit
 			  + '');
 			};
-			
-			
-			
-			//forced to use jquery dialog for floaty internal frame
-	  	
-			//~ $("#legendPanel").dialog({resizable:true, autoOpen: false, 
-								//~ width: 360, height: "auto", position: { my: "left top", at: "left+40 top+100"}});
-			//~ $('#legendPanel').on('dialogclose', function(event) {
-				//~ document.getElementById('legendChkbx').checked = false;
-			//~ });
-			//~ 
-			//~ $("#spectrum").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
+
 			//~ //init spectrum viewer
 			var pepFragDiv = document.getElementById('pepFragDiv');
 			var graphDiv = document.getElementById('graphDiv');
 			spectrumViewer = new SpectrumViewer(pepFragDiv, graphDiv);
-			
+
 			function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
-				//~ //jquery dialog open
-				//~ $( "#spectrum" ).dialog("open");
-				spectrumViewer.clear();
+				spectrumPanel(true);
 				var xmlhttp = new XMLHttpRequest();
 				var url = "./php/spectra.php";
 				var params =  "id=" + id;
@@ -334,25 +347,25 @@
 				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						spectrumViewer.setData(pepSeq1, linkPos1, pepSeq2, linkPos2, xmlhttp.responseText); 
+						spectrumViewer.setData(pepSeq1, linkPos1, pepSeq2, linkPos2, xmlhttp.responseText);
 					}
 				}
 				xmlhttp.send(params);
 			};
-			
+
 			/*
 			* xiNET init JS
 			*/
-		
+
      		//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
-				
+
 				var targetDiv = document.getElementById('topDiv');
 				xlv = new xiNET.Controller(targetDiv);
 				<?php
 				include './php/loadData.php';
 				?>
-				
+
 				initSlider();
 				changeAnnotations();
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
@@ -366,7 +379,7 @@
 					else if (match.autovalidated && document.getElementById('AUTO').checked && (match.score >= xlv.cutOff))  return true;
 					else return false;
 				};
-				
+
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
 					//console.log("SELECTED:", selectedLinks);
@@ -375,11 +388,11 @@
 					var selectedLinkCount = selectedLinkArray.length;
 					if (selectedLinkCount === 0) {
 						selectionDiv.innerHTML = "<p>No selection.</p>";
-					} 
+					}
 					else {
 						var out = ""
-						
-						var scoresTable = "<table><tr>";				
+
+						var scoresTable = "<table><tr>";
 					scoresTable += "<th>Id</th>";
 					scoresTable += "<th>Protein1</th>";
 					scoresTable += "<th>PepPos1</th>";
@@ -395,27 +408,27 @@
 					}
 					if (xlv.manualValidatedFound === true){
 						scoresTable += "<th>Manual</th>";
-					}				
+					}
 						scoresTable += "<th>Group</th>";
 					scoresTable += "</tr>";
-					
+
 						out +=  scoresTable;
-						
+
 						for (var i = 0; i < selectedLinkCount; i++) {
-							var aLink = selectedLinkArray[i]; 
+							var aLink = selectedLinkArray[i];
 							if (aLink.residueLinks) {//its a ProteinLink
 								out += proteinLinkToHTML(aLink);
 							}else {//must be ResidueLink
 								out += residueLinkToHTML(aLink);
 							}
 						}
-						
+
 						out += "</table>";
-					
+
 						selectionDiv.innerHTML = out;
 					}
-				});	
-				
+				});
+
                 xlv.legendCallbacks.push(function (linkColours, domainColours) {
 					if (linkColours){
 						var coloursKeyDiv = document.getElementById('linksKey');
@@ -444,11 +457,11 @@
 							//~ console.log(i + " "+ domain[i] + " " + range[i]);
 						}
 						table = table += "</table>";
-						coloursKeyDiv.innerHTML = table;					
+						coloursKeyDiv.innerHTML = table;
 					}
-					
+
 					/*var table = "<table>";
-					
+
 					if (domainColours){
 						var domain = domainColours.domain();
 						//~ console.log("Domain:"+domain);
@@ -470,22 +483,22 @@
 								+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
 							//~ var trans = "rgba(" +temp.r+","+temp.g+","+temp.b+ ", 0.6)"
 							table += "<tr><td style='width:75px;margin:10px;background:"
-									+ col + ";border:1px solid " 
+									+ col + ";border:1px solid "
 									+ range[i%20] + ";'></td><td>"
 									+ domain[i] +"</td></tr>";
 							//~ console.log(i + " "+ domain[i] + " " + range[i]);
 						}
 					}
 					table = table += "</table>";*/
-					//coloursKeyDiv.innerHTML = table;					
-				});		
-				
+					//coloursKeyDiv.innerHTML = table;
+				});
+
 				xlv.checkLinks();
 				xlv.initLayout();
 				xlv.initProteins();
-							
+
 			});
-			
+
 			//used when link clicked
 			proteinLinkToHTML = function(proteinLink) {
 				var linkInfo = "";
@@ -497,20 +510,20 @@
 				}
 				return linkInfo;
 			};
-			
-			function residueLinkToHTML(residueLink){		
+
+			function residueLinkToHTML(residueLink){
 				var matches = residueLink.getFilteredMatches();
 				var c = matches.length;
 				var rows = "";
 					for (var j = 0; j < c; j++) {
 						var match = matches[j][0];
-						
+
 						var htmlTableRow = "<tr>";
 						if (typeof loadSpectra == "function"){
 							htmlTableRow = "<tr onclick=\"loadSpectra('"+match.id+"','"+match.pepSeq1+"',"
 								+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");\">";
 						}
-						
+
 						htmlTableRow += "<td><p>" + match.id
 							+ "</p></td>";
 						htmlTableRow += "<td><p>" + match.protein1
@@ -528,17 +541,17 @@
 						htmlTableRow += "<td><p>" + match.pepSeq2
 							+ "</p></td>";
 						htmlTableRow += "<td><p>" + match.linkPos2
-							+ "</p></td>";			
-							
-						htmlTableRow += "<td><p>" + 
+							+ "</p></td>";
+
+						htmlTableRow += "<td><p>" +
 						((typeof match.score !== 'undefined')? match.score.toFixed(4) : 'undefined')
 						+ "</p></td>";
-						
+
 						if (match.controller.autoValidatedFound === true){
 							htmlTableRow += "<td><p>" + match.autovalidated
 								+ "</p></td>";
 						}
-						
+
 						if (match.controller.manualValidatedFound === true){
 							htmlTableRow += "<td><p>" + match.validated
 								+ "</p></td>";
@@ -550,7 +563,7 @@
 					}
 					//~ linkInfo += scoresTable;
 				//~ }
-				
+
 				return rows;
 			}
 
@@ -570,12 +583,12 @@
 				}
 				xmlhttp.send(params);
 			}
-			 
+
 			function changeAnnotations(){
 				var annotationSelect = document.getElementById('annotationsSelect');
 				xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
 			};
-			 
+
 			function initSlider(){
 				if (xlv.scores === null){
 					d3.select('#scoreSlider').style('display', 'none');
@@ -587,35 +600,35 @@
 					d3.select('#scoreSlider').style('display', 'inline-block');
 				}
 			};
-			  		
+
 			/*slider*/
 			var sliderDecimalPlaces = 1;
 			function getMinScore(){
 				if (xlv.scores){
-					var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+					var powerOfTen = Math.pow(10, sliderDecimalPlaces);
 					return (Math.floor(xlv.scores.min * powerOfTen) / powerOfTen)
 							.toFixed(sliderDecimalPlaces);
 				}
 			}
 			function getMaxScore(){
 				if (xlv.scores){
-					var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+					var powerOfTen = Math.pow(10, sliderDecimalPlaces);
 					return (Math.ceil(xlv.scores.max * powerOfTen) / powerOfTen)
 							.toFixed(sliderDecimalPlaces);
 				}
 			}
 			function sliderChanged(){
 				var slide = document.getElementById('slide');
-				var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
-				
-				var cut = ((slide.value / 100) 
+				var powerOfTen = Math.pow(10, sliderDecimalPlaces);
+
+				var cut = ((slide.value / 100)
 							* (getMaxScore() - getMinScore()))
 							+ (getMinScore() / 1);
 				cut = cut.toFixed(sliderDecimalPlaces);
 				var cutoffLabel = document.getElementById("cutoffLabel");
 				cutoffLabel.innerHTML = '(' + cut + ')';
 				xlv.setCutOff(cut);
-			}						
+			}
 			//]]>
 		</script>
 </html>

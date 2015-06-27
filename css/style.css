@@ -347,16 +347,20 @@ p#scoreLabel2.scoreLabel {
     display: block;
     padding-top:5px;
 }
-#helpPanel{
-/*
-	position: fixed;
-	right: 0px;
-	top:-95px;
-	height: 0px;
-	width: 460px;
-	overflow: hidden;
-*/
+#keyPanel, #helpPanel, #spectrumPanel{
+	display:none;
+	top:100px;
 }
+#keyPanel{
+	left:40px;
+}
+#helpPanel{
+	left: 160px;
+}
+#spectrumPanel{
+	left: 280px;
+}
+
 
 #spectrum_inner_div, #colours{
 	margin:20px;
