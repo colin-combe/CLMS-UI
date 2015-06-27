@@ -67,87 +67,89 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>	
-  	<div class="wrapper dynDiv_setLimit">
-		
-		<div class="legendPanel">
-			<div id="testdiv_1_move" class="dynDiv_moveParentDiv"><i class="fa fa-times-circle">YO!</i></div>
-			<div id="colours"><img id="legend" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
-			<div class="dynDiv_resizeDiv_tl"></div>
-			<div class="dynDiv_resizeDiv_tr"></div>
-			<div class="dynDiv_resizeDiv_bl"></div>
-			<div class="dynDiv_resizeDiv_br"></div>	
-		</div>				
-		
-		<div class="legendPanel">
-			<div id="testdiv_2_move" class="dynDiv_moveParentDiv">Move Div here !</div>
-<!--
-			<div class="" id='spectrum_inner_div'>
-				<div id='pepFragDiv'></div>
-				<div id='graphDiv'></div>
--->
-				<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
-<!--
-			</div>
--->
-			<div class="dynDiv_resizeDiv_tl"></div>
-			<div class="dynDiv_resizeDiv_tr"></div>
-			<div class="dynDiv_resizeDiv_bl"></div>
-			<div class="dynDiv_resizeDiv_br"></div>
-		</div>
-		
-		<div class="legendPanel">
-			<div id="testdiv_3_move" class="dynDiv_moveParentDiv">Move Div here !</div>
-			<table>
-				<tr>
-					<td>Toggle the proteins between a bar and a circle</td>
-					<td>Click on protein</td>
-				</tr>
-				<tr>
-					<td>Zoom</td>
-					<td>Mouse wheel</td>
-				</tr>
-				<tr>
-					<td>Pan</td>
-					<td>Click and drag on background</td>
-				</tr>
-				<tr>
-					<td>Move protein</td>
-					<td>Click and drag on protein</td>
-				</tr>
-				<tr>
-					<td>Expand bar <br>(increases bar length until sequence is visible)</td>
-					<td>Shift_left-click on protein</td>
-				</tr>
-				<tr>
-					<td>Rotate bar</td>
-					<td>Click and drag on handles that appear at end of bar</td>
-				</tr>
-				<tr>
-					<td>Hide/show protein (and all links to it)</td>
-					<td>Right-click on protein</td>
-				</tr>
-				<tr>
-					<td>Hide links between two specific proteins</td>
-					<td>Right click on any link between those proteins</td>
-				</tr>
-				<tr>
-					<td>Show all hidden links</td>
-					<td>Right click on background</td>
-				</tr>
-				<tr>
-					<td>'Flip' self-links</td>
-					<td>Right-click on self-link</td>
-				</tr>
-			</table> 
+		<div class="dynDiv_setLimit"><!-- div limiting movement of floaty panels -->
+			
+			<div class="dynDiv_moveDiv" id="keyPanel">
+				<i class="fa fa-times-circle"></i>
+				<p class="btn">Key</p>
+				<div id="linksKey"><img src="./images/fig3_1.svg"></div>
+				<div id="domainsKey"><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 				<div class="dynDiv_resizeDiv_tl"></div>
-			<div class="dynDiv_resizeDiv_tr"></div>
-			<div class="dynDiv_resizeDiv_bl"></div>
-			<div class="dynDiv_resizeDiv_br"></div>
-		</div>				
+				<div class="dynDiv_resizeDiv_tr"></div>
+				<div class="dynDiv_resizeDiv_bl"></div>
+				<div class="dynDiv_resizeDiv_br"></div>	
+			</div>				
+			
+			<div class="dynDiv_moveDiv" id="spectrumPanel">
+				<!-- <div id="testdiv_2_move" class="dynDiv_moveParentDiv">Move Div here !</div> -->
+				<i class="fa fa-times-circle"></i>
+				<p class="btn">Spectrum</p>
+				<div class="" id='spectrum_inner_div'>
+					<div id='pepFragDiv'></div>
+					<div id='graphDiv'></div>
+					<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
+				</div>
+				<div class="dynDiv_resizeDiv_tl"></div>
+				<div class="dynDiv_resizeDiv_tr"></div>
+				<div class="dynDiv_resizeDiv_bl"></div>
+				<div class="dynDiv_resizeDiv_br"></div>
+			</div>
+			
+			<div class="dynDiv_moveDiv helpPanel">
+				<i class="fa fa-times-circle"></i>
+				<p class="btn">Help</p>
+				<table>
+					<tbody>
+						<tr>
+							<td>Toggle the proteins between a bar and a circle</td>
+							<td>Click on protein</td>
+						</tr>
+						<tr>
+							<td>Zoom</td>
+							<td>Mouse wheel</td>
+						</tr>
+						<tr>
+							<td>Pan</td>
+							<td>Click and drag on background</td>
+						</tr>
+						<tr>
+							<td>Move protein</td>
+							<td>Click and drag on protein</td>
+						</tr>
+						<tr>
+							<td>Expand bar <br>(increases bar length until sequence is visible)</td>
+							<td>Shift_left-click on protein</td>
+						</tr>
+						<tr>
+							<td>Rotate bar</td>
+							<td>Click and drag on handles that appear at end of bar</td>
+						</tr>
+						<tr>
+							<td>Hide/show protein (and all links to it)</td>
+							<td>Right-click on protein</td>
+						</tr>
+						<tr>
+							<td>Hide links between two specific proteins</td>
+							<td>Right click on any link between those proteins</td>
+						</tr>
+						<tr>
+							<td>Show all hidden links</td>
+							<td>Right click on background</td>
+						</tr>
+						<tr>
+							<td>'Flip' self-links</td>
+							<td>Right-click on self-link</td>
+						</tr>
+					</tbody>
+				</table> 
+				<div class="dynDiv_resizeDiv_tl"></div>
+				<div class="dynDiv_resizeDiv_tr"></div>
+				<div class="dynDiv_resizeDiv_bl"></div>
+				<div class="dynDiv_resizeDiv_br"></div>
+			</div>
+							
+		</div><!-- div limiting movement of floaty panels -->	
 
-	</div>	
-
-		
 		<!-- Main -->
 		<div id="main">
 
@@ -155,43 +157,23 @@
 				<h1 class="page-header">
 					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
 					<p class="btn">Layout:</p>
-					<button class="btn btn-1 btn-1a" onclick="saveLayout();">
-							Save
-					</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">
-							Reset
-					</button>
+					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 					<p class="btn">Exports:</p>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">
-							CSV
-					</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>							
-<!--
-					<div style='float:right'>
--->
-						<label class="btn">Legend<input id="legendChkbx" onclick="$('#legendPanel').dialog('open');" type="checkbox">
-						</label>
-						<label class="btn">Help<input id="help" onclick="toggleHelpPanel()" type="checkbox">
-						</label>
-<!--
-					</div>
--->
+					<label class="btn">Key<input id="legendChkbx" onclick="$('#legendPanel').dialog('open');" type="checkbox"></label>
+					<label class="btn">Help<input id="help" onclick="toggleHelpPanel()" type="checkbox"></label>
 				</h1>
    	 		</div>				   	
 			
 			<div>
-				<div id="topDiv">
-				</div>
+				<div id="topDiv"></div>
 				<div id=splitterDiv class="horizontalSplitter"></div>
-				
-				<div id="bottomDiv" class="overlay-box">
-						<p>No selection.</p>
-				</div>
-
+				<div id="bottomDiv" class="overlay-box"><p>No selection.</p></div>
 			</div>
-			
-			
-			<div class="controlsexamplespage">						
+						
+			<div class="controls">						
 					<label>A
 						<input checked="checked" 
 								   id="A" 			
@@ -257,80 +239,72 @@
 						</label>	
 					</div>		
 				</div>
-			</div>					
+			</div>			
+					
 		</div><!-- MAIN -->
 		
-<!--
-		horizontal splitter JS
--->
-				<script>
-				//<![CDATA[		
-					var marginBottom = 95;
-					var minBottomDivHeight = 40;
-					var splitterDivHeight = 20;
-					var splitterDragging = false;
-					var splitterDiv = document.getElementById("splitterDiv");
-					var topDiv = document.getElementById("topDiv");
-					var bottomDiv = document.getElementById("bottomDiv");
-					var main = document.getElementById("main");
-					splitterDiv.onmousedown = function(evt) {
-						splitterDragging = true;
+		<script>
+			//<![CDATA[		
+			/*
+			 * Horizontal splitter JS 
+			 */
+			var marginBottom = 95;
+			var minBottomDivHeight = 40;
+			var splitterDivHeight = 20;
+			var splitterDragging = false;
+			var splitterDiv = document.getElementById("splitterDiv");
+			var topDiv = document.getElementById("topDiv");
+			var bottomDiv = document.getElementById("bottomDiv");
+			var main = document;//.getElementById("main");
+			splitterDiv.onmousedown = function(evt) {
+				splitterDragging = true;
+			}
+			main.onmousemove = function(evt) {
+				if (splitterDragging === true || !evt){
+					var element = topDiv;
+					var top = 0;
+					do {
+						top += element.offsetTop  || 0;
+						element = element.offsetParent;
+					} while(element);
+					var topDivHeight;
+					if (evt) topDivHeight = evt.pageY - top - (splitterDivHeight / 2);
+					else topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
+					if (topDivHeight < 0) topDivHeight = 0;
+					var bottomDivHeight = window.innerHeight - top - topDivHeight - splitterDivHeight - marginBottom;
+					if (bottomDivHeight < minBottomDivHeight){
+						bottomDivHeight = minBottomDivHeight;
+						topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
 					}
-					main.onmousemove = function(evt) {
-						if (splitterDragging === true || !evt){
-							var element = topDiv;
-							var top = 0;
-							do {
-								top += element.offsetTop  || 0;
-								element = element.offsetParent;
-							} while(element);
-							var topDivHeight;
-							if (evt) topDivHeight = evt.pageY - top - (splitterDivHeight / 2);
-							else topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
-							if (topDivHeight < 0) topDivHeight = 0;
-							var bottomDivHeight = window.innerHeight - top - topDivHeight - splitterDivHeight - marginBottom;
-							if (bottomDivHeight < minBottomDivHeight){
-								bottomDivHeight = minBottomDivHeight;
-								topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
-							}
-							topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
-							bottomDiv.setAttribute("style", "height:"+bottomDivHeight+"px;");
-						};
-					}
-					main.onmouseup = function(evt) {
-						splitterDragging = false;
-					}
-					
-					main.onmousemove();
-					
-					window.onresize = function(event) {
-						main.onmousemove();//event);
-					};
-					
-				//]]>				  
-				</script>	
-				
-		<!-- floaty panels JS -->	
-
-		<script type="text/javascript">
-			//<![CDATA[
+					topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+					bottomDiv.setAttribute("style", "height:"+bottomDivHeight+"px;");
+				};
+			}
+			main.onmouseup = function(evt) {
+				splitterDragging = false;
+			}
 			
+			main.onmousemove();
 			
+			window.onresize = function(event) {
+				main.onmousemove();//event);
+			};
 			
+			/* floaty panels JS */
 			// Drag Event
-ByRei_dynDiv.api.drag = function () {
- var
-  mode = ByRei_dynDiv.cache.modus,
-  limit = ByRei_dynDiv.db(1),
-  status = ByRei_dynDiv.db(2);
+			ByRei_dynDiv.api.drag = function () {
+			 var
+			  mode = ByRei_dynDiv.cache.modus,
+			  limit = ByRei_dynDiv.db(1),
+			  status = ByRei_dynDiv.db(2);
 
- console.log('Div was dragged...'
-  + 'ID: ' + ByRei_dynDiv.api.elem
-  + 'Mode: ' + mode
-  + 'Status: ' + status
-  + 'Limit: ' + limit
-  + '');
-};
+			 console.log('Div was dragged...'
+			  + 'ID: ' + ByRei_dynDiv.api.elem
+			  + 'Mode: ' + mode
+			  + 'Status: ' + status
+			  + 'Limit: ' + limit
+			  + '');
+			};
 			
 			
 			
@@ -344,36 +318,32 @@ ByRei_dynDiv.api.drag = function () {
 			//~ 
 			//~ $("#spectrum").dialog({resizable:true, autoOpen: false, width: 600, height: 450});
 			//~ //init spectrum viewer
-			//~ var pepFragDiv = document.getElementById('pepFragDiv');
-			//~ var graphDiv = document.getElementById('graphDiv');
-			//~ spectrumViewer = new SpectrumViewer(pepFragDiv, graphDiv);
+			var pepFragDiv = document.getElementById('pepFragDiv');
+			var graphDiv = document.getElementById('graphDiv');
+			spectrumViewer = new SpectrumViewer(pepFragDiv, graphDiv);
 			
-			//~ function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
+			function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 				//~ //jquery dialog open
 				//~ $( "#spectrum" ).dialog("open");
-				//~ spectrumViewer.clear();
-				//~ var xmlhttp = new XMLHttpRequest();
-				//~ var url = "./php/spectra.php";
-				//~ var params =  "id=" + id;
-				//~ xmlhttp.open("POST", url, true);
-				//~ //Send the proper header information along with the request
-				//~ xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-				//~ xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-					//~ if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						//~ spectrumViewer.setData(pepSeq1, linkPos1, pepSeq2, linkPos2, xmlhttp.responseText); 
-					//~ }
-				//~ }
-				//~ xmlhttp.send(params);
-			//~ };
-			//]]>
-		</script>
-
-<!--
-		xiNET init JS
--->
+				spectrumViewer.clear();
+				var xmlhttp = new XMLHttpRequest();
+				var url = "./php/spectra.php";
+				var params =  "id=" + id;
+				xmlhttp.open("POST", url, true);
+				//Send the proper header information along with the request
+				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						spectrumViewer.setData(pepSeq1, linkPos1, pepSeq2, linkPos2, xmlhttp.responseText); 
+					}
+				}
+				xmlhttp.send(params);
+			};
+			
+			/*
+			* xiNET init JS
+			*/
 		
-		<script>
-     		//<![CDATA[
      		//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
 				
@@ -447,14 +417,9 @@ ByRei_dynDiv.api.drag = function () {
 				});	
 				
                 xlv.legendCallbacks.push(function (linkColours, domainColours) {
-					var coloursKeyDiv = document.getElementById('colours');
-					
-					
-					
-					
-					var table = "<table>";
-					
 					if (linkColours){
+						var coloursKeyDiv = document.getElementById('linksKey');
+						var table = "<table>";
 						var domain = linkColours.domain();
 						//~ console.log("Domain:"+domain);
 						var range = linkColours.range();
@@ -478,12 +443,9 @@ ByRei_dynDiv.api.drag = function () {
 									+ searchesShown[domain[i]] +"</td></tr>";
 							//~ console.log(i + " "+ domain[i] + " " + range[i]);
 						}
+						table = table += "</table>";
+						coloursKeyDiv.innerHTML = table;					
 					}
-					table = table += "</table>";
-					coloursKeyDiv.innerHTML = table;					
-			
-					
-					
 					
 					/*var table = "<table>";
 					
@@ -517,7 +479,6 @@ ByRei_dynDiv.api.drag = function () {
 					table = table += "</table>";*/
 					//coloursKeyDiv.innerHTML = table;					
 				});		
-				
 				
 				xlv.checkLinks();
 				xlv.initLayout();
@@ -626,43 +587,35 @@ ByRei_dynDiv.api.drag = function () {
 					d3.select('#scoreSlider').style('display', 'inline-block');
 				}
 			};
-			  			
-
+			  		
+			/*slider*/
+			var sliderDecimalPlaces = 1;
+			function getMinScore(){
+				if (xlv.scores){
+					var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+					return (Math.floor(xlv.scores.min * powerOfTen) / powerOfTen)
+							.toFixed(sliderDecimalPlaces);
+				}
+			}
+			function getMaxScore(){
+				if (xlv.scores){
+					var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+					return (Math.ceil(xlv.scores.max * powerOfTen) / powerOfTen)
+							.toFixed(sliderDecimalPlaces);
+				}
+			}
+			function sliderChanged(){
+				var slide = document.getElementById('slide');
+				var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
+				
+				var cut = ((slide.value / 100) 
+							* (getMaxScore() - getMinScore()))
+							+ (getMinScore() / 1);
+				cut = cut.toFixed(sliderDecimalPlaces);
+				var cutoffLabel = document.getElementById("cutoffLabel");
+				cutoffLabel.innerHTML = '(' + cut + ')';
+				xlv.setCutOff(cut);
+			}						
 			//]]>
 		</script>
-		
-<!--
-		slider
--->
-				<script type="text/javascript">	
-					//<![CDATA[					
-					var sliderDecimalPlaces = 1;
-					function getMinScore(){
-						if (xlv.scores){
-							var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
-							return (Math.floor(xlv.scores.min * powerOfTen) / powerOfTen)
-									.toFixed(sliderDecimalPlaces);
-						}
-					}
-					function getMaxScore(){
-						if (xlv.scores){
-							var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
-							return (Math.ceil(xlv.scores.max * powerOfTen) / powerOfTen)
-									.toFixed(sliderDecimalPlaces);
-						}
-					}
-					function sliderChanged(){
-						var slide = document.getElementById('slide');
-						var powerOfTen = Math.pow(10, sliderDecimalPlaces); 
-						
-						var cut = ((slide.value / 100) 
-									* (getMaxScore() - getMinScore()))
-									+ (getMinScore() / 1);
-						cut = cut.toFixed(sliderDecimalPlaces);
-						var cutoffLabel = document.getElementById("cutoffLabel");
-						cutoffLabel.innerHTML = '(' + cut + ')';
-						xlv.setCutOff(cut);
-					}						
-					//]]>
-				</script>
 </html>

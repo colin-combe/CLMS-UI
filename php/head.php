@@ -21,7 +21,7 @@
 			<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 			<meta name="description" content="common platform for downstream analysis of CLMS data" />
 			<meta name="keywords" content="biologists, mass-spectrometrists, cross-linking, protein, complexes, 3d, models, rappsilber, software" />	
-			<meta name="viewport" content="initial-scale=1, maximum-scale=1">
+			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<meta name="apple-mobile-web-app-capable" content="yes">
 			<meta name="apple-mobile-web-app-status-bar-style" content="black">
 			<link rel="icon" type="image/ico" href="/images/favicon.ico">
