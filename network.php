@@ -135,12 +135,12 @@
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
 
-			<div class="dynDiv_moveDiv" id="spectrumPanel">
+			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
 				<div class="panelInner">
 					<div id='pepFragDiv'></div>
 					<div id='graphDiv'></div>
-					<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
+					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
 				</div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
@@ -163,13 +163,14 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
 					<label class="btn" style="margin-left:30px;">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
+					<label class="btn">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
 					<label class="btn">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>
 
 			<div>
 				<div id="topDiv"></div>
-				<div id=splitterDiv class="horizontalSplitter"></div>
+				<div id=splitterDiv class="horizontalSplitter"><i class="fa fa-times-circle" onclick="selectionPanel(false);"></i></div>
 				<div id="bottomDiv"><div id="selectionPanel" class="panelInner"><p>No selection.</p></div></div>
 			</div>
 
@@ -287,7 +288,30 @@
 			window.onresize = function(event) {
 				main.onmousemove();//event);
 			};
-
+			var selChkBx = document.getElementById('selectionChkBx');
+			selChkBx.checked = true;
+			selectionPanel = function (show) {
+				var bd = d3.select('#bottomDiv');
+				var splt = d3.select('#splitterDiv');
+				if (show) {
+					bd.style('display', 'block');
+					splt.style('display', 'block');
+					main.onmousemove();
+				} else {
+					bd.style('display', 'none');
+					splt.style('display', 'none');
+					var element = topDiv;
+					var top = 0;
+					do {
+						top += element.offsetTop  || 0;
+						element = element.offsetParent;
+					} while(element);
+					var topDivHeight = window.innerHeight - top - marginBottom;
+					topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+				}
+				selChkBx.checked = show;
+			}
+			
 			/* floaty panels JS */
 			var kChkBx = document.getElementById('keyChkBx');
 			kChkBx.checked = false;
@@ -317,6 +341,7 @@
 					sp.style('display', 'block');
 				} else {
 					sp.style('display', 'none');
+					topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
 				}
 			}
 			// Drag Event
