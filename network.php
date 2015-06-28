@@ -42,11 +42,13 @@
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 
         <!--spectrum dev-->
+<!--
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
+-->
 
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
@@ -133,6 +135,7 @@
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
+<!--
 
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
@@ -146,6 +149,7 @@
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
+-->
 			
 		</div><!-- div limiting movement of floaty panels -->
 
@@ -334,7 +338,7 @@
 				}
 				hChkBx.checked = show;
 			}
-			spectrumPanel = function (show) {
+/*			spectrumPanel = function (show) {
 				var sp = d3.select('#spectrumPanel');
 				if (show) {
 					sp.style('display', 'block');
@@ -378,7 +382,7 @@
 				}
 				xmlhttp.send(params);
 			};
-
+*/
 			/*
 			* xiNET init JS
 			*/
