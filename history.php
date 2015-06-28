@@ -68,7 +68,7 @@ header('Content-type: text/html; charset=utf-8');
 							echo "<td><strong>" . $line['status'] . "</strong></td>";
 							echo "<td>" .$line['file_name'] . "</td>";
 							echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
-							echo  "<td class='chkbx_td'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
+							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
 							echo "</tr>\n";
 						}
 						?>

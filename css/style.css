@@ -23,7 +23,7 @@ body, html{
     height:100%;
     -webkit-user-select: none;
     -khtml-user-select: none;
-    -moz-user-select: none;
+    -moz-user-select: -moz-none;
     -o-user-select: none;
     user-select: none;   
 }
@@ -35,10 +35,11 @@ body, input, select, textarea {
     color: #888;
 	-webkit-text-stroke: .15px;
 }
-.center {
+.centre {
     text-align: center;
     margin-left: auto;
     margin-right: auto;
+    vertical-align: middle; 
 }
 .container {
     margin-top: 10px;
@@ -95,7 +96,6 @@ table {
 	width:100%;
     font-size: 0.9em;
     left: auto;
-	margin:20px;
     position: relative;
     margin-left: auto;
     margin-right: auto;
@@ -110,10 +110,12 @@ thead{
 th{
 	padding-left:5px;
 	padding-right:5px;
+    vertical-align: middle; 
 }
 td{
 	padding-left:5px;
 	padding-right:5px;
+    vertical-align: middle; 
 }
 th:first-child{
 	padding-left:20px;
@@ -127,20 +129,6 @@ td:first-child{
 td:last-child{
 	padding-right:20px;
 }
-.overlay-box th {
-    font-weight: 400;
-    color: #039;
-    padding: 10px 8px;
-    border: 0;
-}
-.overlay-box thead td {
-    color: #091D42;
-}
-.overlay-box td, .helpPanel td {
-    color: #777;
-    padding: 9px 8px 0;
-    border: 0 solid #eee;
-}
 tbody tr:hover td, tbody tr:hover td a{
     color: #fff;
     background-color: #091D42;
@@ -150,7 +138,6 @@ tbody tr:hover td, tbody tr:hover td a{
     -o-transition: all 200ms ease;
     transition: all 200ms ease;
 }
-
 
 /* fa */
 .fa-home{
@@ -174,6 +161,7 @@ tbody tr:hover td, tbody tr:hover td a{
 	cursor:pointer;
 	float:right;
 	margin:2px;
+	margin-right:22px;
 }
 .fa-times-circle:hover {
 	color: #091D42;
@@ -198,10 +186,7 @@ tbody tr:hover td, tbody tr:hover td a{
 }
 .clearChx{
 	background:#091D42;
-}
-.chkbx_td, th{
-    text-align: center; /* center checkbox horizontally */
-    vertical-align: middle; /* center checkbox vertically */
+	width:142px;
 }
 .dynamic-table-filter{
 	margin:auto;
@@ -232,9 +217,8 @@ tbody tr:hover td, tbody tr:hover td a{
 	float:right;
 	width:50%;
 	height:100%;
-/* causes NGL to fail?
+ causes NGL to fail?
 	margin:10px;
-*/
 }
 .horizontalSplitter {
     height: 20px;
@@ -244,21 +228,72 @@ tbody tr:hover td, tbody tr:hover td a{
     cursor:ns-resize;
 }
 #bottomDiv {
-	height:200px;
-	padding-top:2px;
-	overflow: auto;
-}
-.overlay-box {
-    background: rgba(9, 29, 66, 0.9);
-	overflow: scroll;   
-    color: #fff;
-    padding: 20px;
-    line-height: 1.5;
-    z-index: -1;
-    text-align: left;
     margin-left: 40px;
     margin-right: 40px;
+	background: rgba(9, 29, 66, 0.9);
+	padding:20px;
+	padding-top:0px;
+	padding-bottom:0px;
 }
+.dynDiv_setLimit{
+	height:100%;
+	width:100%;
+	z-index:2;
+	position:fixed;
+	pointer-events:none;
+}
+.dynDiv{
+	padding:20px;
+	background: rgba(9, 29, 66, 0.9);
+	overflow: hidden;
+	color:#fff;
+	position:fixed;
+	pointer-events:all;
+}
+.dynDiv_moveParentDiv{
+	height:20px;
+	background:#091D42;
+}
+.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
+	width:20px;
+	height:20px;
+	background:#091D42;
+	border:none;
+}
+
+.panelInner{
+	overflow: auto;   
+	height:100%;
+	width:100%;
+    color: #fff;
+	text-align: left;
+}
+
+.panelInner th {
+    font-weight: 400;
+    color: #039;/*#091D42;*/
+/*
+    padding: 10px 8px;
+    border: 0;
+*/
+}
+.panelInner thead td {
+    color: #091D42;
+}
+.panelInner td, .helpPanel td {
+    color: #777;
+}/*
+*/
+/*
+.panelInner tr {
+    color: #ffffff;
+    background-color: #091D42;
+}
+tbody tr:hover td, tbody tr:hover td  {
+    color:#091D42!important;
+    background-color: #fff!important;
+}*/
+
 .controls{
     clear: both;
     overflow: hidden;
@@ -280,6 +315,11 @@ tbody tr:hover td, tbody tr:hover td a{
     -o-user-select: none;
     user-select: none;
 }
+#scoreSlider, .scoreLabel,#cutoffLabel  {
+    vertical-align: top;
+    position: relative;
+    display: inline-block;
+}
 #slide {
     background: none;
     position: relative;
@@ -287,65 +327,12 @@ tbody tr:hover td, tbody tr:hover td a{
     margin-top:5px;
     display: inline-block;
 }
-p#scoreLabel2.scoreLabel {
-    position: relative;
-    left:-10px;
-    display: inline-block;
-}
-#scoreSlider {
-    vertical-align: top;
-    position: relative;
-    display: inline-block;
-}
-#cutoffLabel {
-    position: relative;
-    display: inline-block;
-    vertical-align: top;
-}
-#scoreLabel1 {
-    position: relative;
-    display: inline-block;
-    vertical-align: top;
-}
-#scoreLabel2 {
-    position: relative;
-    display: inline-block;
-    left: 20px;
-    top: 0px;
-    vertical-align: top;
-}
-.dynDiv_setLimit{
-	height:100%;
-	width:100%;
-	z-index:2;
-	position:fixed;
-	pointer-events:none;
-}
-.dynDiv_moveDiv{
-	padding:20px;
-	padding-top:0px;
-	background: rgba(9, 29, 66, 0.9);
-	overflow: hidden;
-	color:#fff;
-	position:fixed;
-	pointer-events:all;
-}
-.dynDiv_moveParentDiv{
-	height:20px;
-	background:#091D42;
-}
-.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
-	width:20px;
-	height:20px;
-	background:#091D42;
-	border:none;
-}
-#legend{
+#defaultLinkKey{
     background: white;
 }
 #logo{
     display: block;
-    padding-top:5px;
+    padding-top:20px;
 }
 #keyPanel, #helpPanel, #spectrumPanel{
 	display:none;
@@ -359,12 +346,6 @@ p#scoreLabel2.scoreLabel {
 }
 #spectrumPanel{
 	left: 280px;
-}
-
-
-#spectrum_inner_div, #colours{
-	margin:20px;
-	margin-right:20px;
 }
 #graphDiv{
 

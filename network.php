@@ -69,64 +69,66 @@
     <body>
 		<div class="dynDiv_setLimit"><!-- div limiting movement of floaty panels -->
 
-			<div class="dynDiv_moveDiv" id="keyPanel">
-				<i class="fa fa-times-circle" onclick="keyPanel(false);"></i>
-				<p class="btn">Key</p>
-				<div id="linksKey"><img src="./images/fig3_1.svg"></div>
-				<div id="domainsKey"><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+			<div class="dynDiv" id="keyPanel">
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="keyPanel(false);"></i></div>
+				<div class="panelInner">
+					<div id="linksKey"><img id="defaultLinkKey" src="./images/fig3_1.svg"></div>
+					<div id="domainsKey"><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+				</div>					
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
 
-			<div class="dynDiv_moveDiv helpPanel" id="helpPanel">
-				<i class="fa fa-times-circle" onclick="helpPanel(false);"></i>
-				<p class="btn">Help</p>
-				<table>
-					<tbody>
-						<tr>
-							<td>Toggle the proteins between a bar and a circle</td>
-							<td>Click on protein</td>
-						</tr>
-						<tr>
-							<td>Zoom</td>
-							<td>Mouse wheel</td>
-						</tr>
-						<tr>
-							<td>Pan</td>
-							<td>Click and drag on background</td>
-						</tr>
-						<tr>
-							<td>Move protein</td>
-							<td>Click and drag on protein</td>
-						</tr>
-						<tr>
-							<td>Expand bar <br>(increases bar length until sequence is visible)</td>
-							<td>Shift_left-click on protein</td>
-						</tr>
-						<tr>
-							<td>Rotate bar</td>
-							<td>Click and drag on handles that appear at end of bar</td>
-						</tr>
-						<tr>
-							<td>Hide/show protein (and all links to it)</td>
-							<td>Right-click on protein</td>
-						</tr>
-						<tr>
-							<td>Hide links between two specific proteins</td>
-							<td>Right click on any link between those proteins</td>
-						</tr>
-						<tr>
-							<td>Show all hidden links</td>
-							<td>Right click on background</td>
-						</tr>
-						<tr>
-							<td>'Flip' self-links</td>
-							<td>Right-click on self-link</td>
-						</tr>
-					</tbody>
-				</table>
+			<div class="dynDiv helpPanel" id="helpPanel">
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="helpPanel(false);"></i></div>
+				<div class="panelInner">
+					<table>
+						<tbody>
+							<tr>
+								<td>Toggle the proteins between a bar and a circle</td>
+								<td>Click on protein</td>
+							</tr>
+							<tr>
+								<td>Zoom</td>
+								<td>Mouse wheel</td>
+							</tr>
+							<tr>
+								<td>Pan</td>
+								<td>Click and drag on background</td>
+							</tr>
+							<tr>
+								<td>Move protein</td>
+								<td>Click and drag on protein</td>
+							</tr>
+							<tr>
+								<td>Expand bar <br>(increases bar length until sequence is visible)</td>
+								<td>Shift_left-click on protein</td>
+							</tr>
+							<tr>
+								<td>Rotate bar</td>
+								<td>Click and drag on handles that appear at end of bar</td>
+							</tr>
+							<tr>
+								<td>Hide/show protein (and all links to it)</td>
+								<td>Right-click on protein</td>
+							</tr>
+							<tr>
+								<td>Hide links between two specific proteins</td>
+								<td>Right click on any link between those proteins</td>
+							</tr>
+							<tr>
+								<td>Show all hidden links</td>
+								<td>Right click on background</td>
+							</tr>
+							<tr>
+								<td>'Flip' self-links</td>
+								<td>Right-click on self-link</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
@@ -134,10 +136,8 @@
 			</div>
 
 			<div class="dynDiv_moveDiv" id="spectrumPanel">
-				<!-- <div id="testdiv_2_move" class="dynDiv_moveParentDiv">Move Div here !</div> -->
-				<i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i>
-				<p class="btn">Spectrum</p>
-				<div class="" id='spectrum_inner_div'>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
+				<div class="panelInner">
 					<div id='pepFragDiv'></div>
 					<div id='graphDiv'></div>
 					<button class="btn btn-1 btn-1a" style="margin:5px;" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
@@ -162,7 +162,7 @@
 					<p class="btn">Exports:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
-					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
+					<label class="btn" style="margin-left:30px;">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>
@@ -170,7 +170,7 @@
 			<div>
 				<div id="topDiv"></div>
 				<div id=splitterDiv class="horizontalSplitter"></div>
-				<div id="bottomDiv" class="overlay-box"><p>No selection.</p></div>
+				<div id="bottomDiv"><div id="selectionPanel" class="panelInner"><p>No selection.</p></div></div>
 			</div>
 
 			<div class="controls">
@@ -289,6 +289,10 @@
 			};
 
 			/* floaty panels JS */
+			var kChkBx = document.getElementById('keyChkBx');
+			kChkBx.checked = false;
+			var hChkBx = document.getElementById('helpChkBx');
+			hChkBx.checked = false;
 			keyPanel = function (show) {
 				var kp = d3.select('#keyPanel');
 				if (show) {
@@ -296,7 +300,6 @@
 				} else {
 					kp.style('display', 'none');
 				}
-				var kChkBx = document.getElementById('keyChkBx');
 				kChkBx.checked = show;
 			}
 			helpPanel = function (show) {
@@ -306,7 +309,6 @@
 				} else {
 					hp.style('display', 'none');
 				}
-				var hChkBx = document.getElementById('helpChkBx');
 				hChkBx.checked = show;
 			}
 			spectrumPanel = function (show) {
@@ -383,7 +385,7 @@
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
 					//console.log("SELECTED:", selectedLinks);
-					var selectionDiv = document.getElementById("bottomDiv");
+					var selectionDiv = document.getElementById("selectionPanel");
 					var selectedLinkArray = selectedLinks.values();
 					var selectedLinkCount = selectedLinkArray.length;
 					if (selectedLinkCount === 0) {
@@ -451,7 +453,7 @@
 							var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
 								+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
 							//~ var trans = "rgba(" +temp.r+","+temp.g+","+temp.b+ ", 0.6)"
-							table += "<tr><td><div style='width:75px;margin:auto;height:3px;background:"
+							table += "<tr><td><div style='width:40px;height:3px;background:"
 									+ temp.toRGB() + ";'></div></td><td>"
 									+ searchesShown[domain[i]] +"</td></tr>";
 							//~ console.log(i + " "+ domain[i] + " " + range[i]);
