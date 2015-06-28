@@ -72,8 +72,7 @@
 			<div class="dynDiv" id="keyPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="keyPanel(false);"></i></div>
 				<div class="panelInner">
-					<div id="linksKey"><img id="defaultLinkKey" src="./images/fig3_1.svg"></div>
-					<div id="domainsKey"><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
+					<div id="key"><img id="defaultLinkKey" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 				</div>					
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
@@ -457,67 +456,53 @@
 				});
 
                 xlv.legendCallbacks.push(function (linkColours, domainColours) {
-					if (linkColours){
-						var coloursKeyDiv = document.getElementById('linksKey');
+					var coloursKeyDiv = document.getElementById('key');
+					if ((linkColours && linkColours.domain().length > 0) || (domainColours && domainColours.domain().length > 0)){
 						var table = "<table>";
-						var domain = linkColours.domain();
-						//~ console.log("Domain:"+domain);
-						var range = linkColours.range();
-						//~ console.log("Range:"+range);
-						for (var i = 0; i < domain.length; i ++){
-							//make opaque version of colour
-							//~ http://stackoverflow.com/questions/2049230/convert-rgba-color-to-rgb
-							var temp = new RGBColor(range[i%20]);
-							//~ Target.R = ((1 - Source.A) * BGColor.R) + (Source.A * Source.R)
-							//~ Target.G = ((1 - Source.A) * BGColor.G) + (Source.A * Source.G)
-							//~ Target.B = ((1 - Source.A) * BGColor.B) + (Source.A * Source.B)
-							var opaque = {};
-							opaque.r = ((1 - 0.6) * 1) + (0.6 * (temp.r / 255));
-							opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255))
-							opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255))
-							var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
-								+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
-							//~ var trans = "rgba(" +temp.r+","+temp.g+","+temp.b+ ", 0.6)"
-							table += "<tr><td><div style='width:40px;height:3px;background:"
-									+ temp.toRGB() + ";'></div></td><td>"
-									+ searchesShown[domain[i]] +"</td></tr>";
-							//~ console.log(i + " "+ domain[i] + " " + range[i]);
+						var domain, range;
+						if (linkColours){
+							domain = linkColours.domain();
+							range = linkColours.range();
+							for (var i = 0; i < domain.length; i ++){
+								var temp = new RGBColor(range[i%20]);
+								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
+										+ temp.toRGB() + ";'></div></td><td>"
+										+ searchesShown[domain[i]] +"</td></tr>";
+							}	
+							table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
+										+ "#000;" + ";'></div></td><td>"
+										+ "Not unique" +"</td></tr>";
+							
+						}
+						if (domainColours) {
+							domain = domainColours.domain();
+							range = domainColours.range();
+							//table += "<tr style='height:10px;'></tr>";
+							for (var i = 0; i < domain.length; i ++){
+								//make opauq version of transparnet colour on white
+								//~ http://stackoverflow.com/questions/2049230/convert-rgba-color-to-rgb
+								var temp = new RGBColor(range[i%20]);
+								//~ Target.R = ((1 - Source.A) * BGColor.R) + (Source.A * Source.R)
+								//~ Target.G = ((1 - Source.A) * BGColor.G) + (Source.A * Source.G)
+								//~ Target.B = ((1 - Source.A) * BGColor.B) + (Source.A * Source.B)
+								var opaque = {};
+								opaque.r = ((1 - 0.6) * 1) + (0.6 * (temp.r / 255));
+								opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255))
+								opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255))
+								var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
+									+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
+								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:30px;background:"
+										+ col + ";border:1px solid "
+										+ range[i%20] + ";'></div></td><td>"
+										+ domain[i] +"</td></tr>";
+							}
 						}
 						table = table += "</table>";
 						coloursKeyDiv.innerHTML = table;
 					}
-
-					/*var table = "<table>";
-
-					if (domainColours){
-						var domain = domainColours.domain();
-						//~ console.log("Domain:"+domain);
-						var range = domainColours.range();
-						//~ console.log("Range:"+range);
-						table += "<tr style='height:10px;'></tr>";
-						for (var i = 0; i < domain.length; i ++){
-							//make transparent version of colour
-							//~ http://stackoverflow.com/questions/2049230/convert-rgba-color-to-rgb
-							var temp = new RGBColor(range[i%20]);
-							//~ Target.R = ((1 - Source.A) * BGColor.R) + (Source.A * Source.R)
-							//~ Target.G = ((1 - Source.A) * BGColor.G) + (Source.A * Source.G)
-							//~ Target.B = ((1 - Source.A) * BGColor.B) + (Source.A * Source.B)
-							var opaque = {};
-							opaque.r = ((1 - 0.6) * 1) + (0.6 * (temp.r / 255));
-							opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255))
-							opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255))
-							var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
-								+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
-							//~ var trans = "rgba(" +temp.r+","+temp.g+","+temp.b+ ", 0.6)"
-							table += "<tr><td style='width:75px;margin:10px;background:"
-									+ col + ";border:1px solid "
-									+ range[i%20] + ";'></td><td>"
-									+ domain[i] +"</td></tr>";
-							//~ console.log(i + " "+ domain[i] + " " + range[i]);
-						}
+					else {
+						coloursKeyDiv.innerHTML = '<img id="defaultLinkKey" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png">';
 					}
-					table = table += "</table>";*/
-					//coloursKeyDiv.innerHTML = table;
 				});
 
 				xlv.checkLinks();

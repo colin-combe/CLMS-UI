@@ -116,6 +116,7 @@ td{
 	padding-left:5px;
 	padding-right:5px;
     vertical-align: middle; 
+    text-align: left;
 }
 th:first-child{
 	padding-left:20px;
@@ -336,6 +337,7 @@ tbody tr:hover td, tbody tr:hover td  {
 #logo{
     display: block;
     padding-top:20px;
+    padding-bottom:20px;
 }
 #keyPanel, #helpPanel, #spectrumPanel{
 	display:none;
