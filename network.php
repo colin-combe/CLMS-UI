@@ -28,7 +28,6 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-		<link rel="icon" type="image/ico" href="images/favicon.ico">
 
 		<link rel="stylesheet" href="./css/reset.css" />
 		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
@@ -162,9 +161,12 @@
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
-					<p class="btn">Exports:</p>
+					<p class="btn">Export:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
+<!--
+					<button class="btn btn-1 btn-1a" onclick="linkSummary();">Summary</button>
+-->
 					<label class="btn" style="margin-left:30px;">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
 					<label class="btn">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
@@ -394,6 +396,7 @@
 				xlv = new xiNET.Controller(targetDiv);
 				<?php
 				include './php/loadData.php';
+				//~ include './php/summaryFunctions.php';
 				?>
 
 				initSlider();
@@ -491,10 +494,10 @@
 								//~ Target.B = ((1 - Source.A) * BGColor.B) + (Source.A * Source.B)
 								var opaque = {};
 								opaque.r = ((1 - 0.6) * 1) + (0.6 * (temp.r / 255));
-								opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255))
-								opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255))
+								opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255));
+								opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255));
 								var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
-									+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")"
+									+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")";
 								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:30px;background:"
 										+ col + ";border:1px solid "
 										+ range[i%20] + ";'></div></td><td>"
@@ -509,8 +512,8 @@
 					}
 				});
 
-				xlv.checkLinks();
 				xlv.initLayout();
+				xlv.checkLinks();
 				xlv.initProteins();
 
 			});

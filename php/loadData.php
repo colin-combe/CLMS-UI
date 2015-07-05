@@ -21,37 +21,44 @@
 
 	$startTime = microtime(true);
 	$sid = urldecode($_GET["sid"]);
-	$pattern = '/[^0-9,\-]/';
-	if (preg_match($pattern, $sid)){
-		header();
-		echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
-		exit;
-	}
+$pattern = '/[^0-9,\-(xwalk)]/';
+if (preg_match($pattern, $sid)){
+	header();
+	echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
+	exit;
+}
 
 	include('../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 		
 	$id_rands = explode("," , $sid);
+	$xwalk = false;
 	$searchesShown = 'searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$agg = $id_rands[$i];
-		$dashPos = strpos($agg,'-');
-		$randId = substr($agg, $dashPos + 1);
-		$id = substr($agg, 0, ($dashPos));
-		$res = pg_query("SELECT name FROM search WHERE id = '".$id."';") or die('Query failed: ' . pg_last_error());
-		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
-		$name = $line['name'];
-		$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'"';
-		if (($i + 1) < count($id_rands)){
-			$searchesShown = $searchesShown.',';
+		if ($agg == "xwalk") {
+			$xwalk = true;
+			$searchesShown = $searchesShown . '"xwalk":"sda xwalk"';
 		}
-	}
+		else { 
+			$dashPos = strpos($agg,'-');
+			$randId = substr($agg, $dashPos + 1);
+			$id = substr($agg, 0, ($dashPos));
+			$res = pg_query("SELECT name FROM search WHERE id = '".$id."';") or die('Query failed: ' . pg_last_error());
+			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+			$name = $line['name'];
+			$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'"';
+		}	
+		if (($i + 1) < count($id_rands)){
+				$searchesShown = $searchesShown.',';
+			}
+		}
 	echo $searchesShown."};\n";
 
 	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
 
-	if (strpos($sid,',') === false) { //if not aggregation of more than one search
+	if (strpos($sid,',') === false && $sid != "xwalk") { //if not aggregation of more than one search
 
 		$dashPos = strpos($sid,'-');
 		$randId = substr($sid, $dashPos + 1);
@@ -86,7 +93,8 @@
 			. ' ((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
 			. ' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')  '
 			. ' OR (spectrum_match.validated LIKE \'?\')) '
-			. ' AND matched_peptide.link_position != 0;';
+			. ' AND matched_peptide.link_position != -1;';
+
 
 		$q_makeTempHasProtein =
 			'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
@@ -108,15 +116,19 @@
 	else { //its an aggregation of more than one search
 		$sets = explode("," , $sid);
 		$WHERE = ' ';
+		$c = 0;
 		for ($i = 0; $i < count($sets); $i++) {
-			if ($i > 0){
-				$WHERE = $WHERE.' OR ';
-			}
 			$agg = $sets[$i];
-			$dashPos = strpos($agg,'-');
-			$randId = substr($agg, $dashPos + 1);
-			$id = substr($agg, 0, ($dashPos));
-			$WHERE = $WHERE.'(spectrum_match.search_id = '.$id.' AND search.random_id = \''.$randId.'\''.') ';
+			if ($agg != "xwalk"){
+				if ($c > 0){
+					$WHERE = $WHERE.' OR ';
+				}
+				$c++;
+				$dashPos = strpos($agg,'-');
+				$randId = substr($agg, $dashPos + 1);
+				$id = substr($agg, 0, ($dashPos));
+				$WHERE = $WHERE.'(spectrum_match.search_id = '.$id.' AND search.random_id = \''.$randId.'\''.') ';
+			}
 		}
 
 
@@ -131,7 +143,7 @@
 			.' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
 			.'((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
 			.' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')   OR (spectrum_match.validated LIKE \'?\'))'
-			. ' AND matched_peptide.link_position != 0;';
+			. ' AND matched_peptide.link_position != -1;';
 			
 		$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
 				$proteinTempTableName . ' FROM has_protein, '
@@ -148,11 +160,8 @@
 			  .'.protein_id = protein.id  GROUP BY protein.accession_number;';
 	}
 
-	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '
-			.$peptidesTempTableName . ', ('	.$q_hasProtein.') AS prt WHERE '
-			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
 
-	//echo '//'.$q_makeTempMatchedPeptides."\n";
+	echo '//q_makeTempMatchedPeptides>'.$q_makeTempMatchedPeptides."\n";
 	$res = pg_query($q_makeTempMatchedPeptides) or die('Query failed: ' . pg_last_error());
 	$res = pg_query($q_makeTempHasProtein) or die('Query failed: ' . pg_last_error());
 
@@ -184,7 +193,11 @@
 				. ");\n";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	}
-
+	
+	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '
+			.$peptidesTempTableName . ', ('	.$q_hasProtein.') AS prt WHERE '
+			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
+	echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
 	echo "xlv.addMatches([";
 	$waitingForFirstMatch = true;
@@ -235,6 +248,10 @@
 		}
 	}
 	echo "]);\n";
+	if ($xwalk == true) {
+		echo "//**XWALK**";
+		//~ include 'php/';
+	}
 	// Free resultset
 	pg_free_result($res);
 	// Closing connection

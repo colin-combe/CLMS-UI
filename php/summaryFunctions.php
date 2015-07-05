@@ -18,38 +18,7 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 ?>
 <script>
-<<<<<<< Updated upstream
-	function exportCSV() {
-		//~ var out = "<pre>run_name,scan_number,precursor_mz,precursor_charge,match_score," +
-				//~ "spectrum_intensity_coverage,total_fragment_matches,delta,error," +
-				//~ "peptide1,display_protein1,peptide_position1,pep1_link_pos,peptide2,"+
-				//~ "display_protein2,peptide_position2,pep2_link_pos\n";
-		//~ 
-		//~ var mc = XiPV.matches.length;
-		//~ for (var m = 0; m < mc; m++) {
-			//~ var match = XiPV.matches[m];
-			//~ var m_out = "run_name," + match.scan_no + "," + "pre_m/z," + "pre_charge,"
-						//~ + match.score + "," + "spec_intens," + "frag_matches," 
-						//~ + "delta," + "error," 
-						//~ + match.pep1Seq + "," + "ALBU_HUMAN" + "," + match.pep1Pos + "," + (match.pep1LinkPos + 1) + ","
-						//~ + match.pep2Seq + "," + "ALBU_HUMAN" + "," + match.pep2Pos + "," + (match.pep2LinkPos + 1);
-			//~ 
-			//~ out += m_out + "\n";
-		//~ }
-		//~ 
-		//~ PV.html(out + "</pre>");	
-		//~ 
-		
-		var html = "THIS IS YOUR CSV (not)"
-		
-		var wnd = window.open();
-		wnd.document.write(csv);
-	}
-=======
-	
-	
-	//NOT USED
->>>>>>> Stashed changes
+
 	
 	function linkSummary() {
 /*

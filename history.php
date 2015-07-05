@@ -54,6 +54,15 @@ header('Content-type: text/html; charset=utf-8');
 				<table id='t1'>
 					<tbody>
 						<?php
+						if ($_SESSION['session_name'] == "adam"){
+							$url = "xwalk";
+							echo "<tr><td><a id="."HSA SDA Xwalk"." href='./network.php?sid=" . urlencode($url) . "'>" . "sda xwalk" . "</a>" . "</td>";
+							echo "<td><strong>" . "not real" . "</strong></td>";
+							echo "<td>" . "simulated" . "</td>";
+							echo "<td>" ."didn't happen" . "</td>";
+							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
+							echo "</tr>\n";
+						}
 						include('../connectionString.php');
 						//open connection
 						$dbconn = pg_connect($connectionString)
@@ -64,7 +73,7 @@ header('Content-type: text/html; charset=utf-8');
 						$result = pg_execute($dbconn, "my_query", [$_SESSION['session_name']]);
 						while ($line = pg_fetch_array($result, null, PGSQL_ASSOC)) {
 							$url = $line['id'].'-'.$line['random_id'];
-							echo "<td><a id=".$line['name']." href='./network.php?sid=" . urlencode($url) . "'>" . $line['name'] . "</a>" . "</td>";
+							echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($url) . "'>" . $line['name'] . "</a>" . "</td>";
 							echo "<td><strong>" . $line['status'] . "</strong></td>";
 							echo "<td>" .$line['file_name'] . "</td>";
 							echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
