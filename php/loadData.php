@@ -175,8 +175,8 @@ if (preg_match($pattern, $sid)){
 		}
 		//sanitise name
 		$name = str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["name"])));
-		$underscore_pos = strpos($name,'_');
-		$name = substr($name, 0, $underscore_pos); //removes e.g. '_HUMAN' from end of names
+		//~ $underscore_pos = strpos($name,'_');
+		//~ $name = substr($name, 0, $underscore_pos); //removes e.g. '_HUMAN' from end of names
 
 		$pid = $line["id"];
 		if (strpos($sid,',') !== false) { //if aggregation
@@ -199,6 +199,10 @@ if (preg_match($pattern, $sid)){
 			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
 	echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
+	if ($xwalk == true) {
+		echo "//**XWALK**\n";
+		include 'xwalk.php';
+	}
 	echo "xlv.addMatches([";
 	$waitingForFirstMatch = true;
 	//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
@@ -241,17 +245,14 @@ if (preg_match($pattern, $sid)){
 								. "]";
 					//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 					//~ if ($line)
-					 {echo ',';} // that last comma should be removed
+					 {echo ',';} // that last comma should be removed 
 					$waitingForFirstMatch = true;
 				}
 			}
 		}
 	}
 	echo "]);\n";
-	if ($xwalk == true) {
-		echo "//**XWALK**";
-		//~ include 'php/';
-	}
+
 	// Free resultset
 	pg_free_result($res);
 	// Closing connection

@@ -164,9 +164,7 @@
 					<p class="btn">Export:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
-<!--
 					<button class="btn btn-1 btn-1a" onclick="linkSummary();">Summary</button>
--->
 					<label class="btn" style="margin-left:30px;">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
 					<label class="btn">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
@@ -238,6 +236,7 @@
 						<label style="margin-left:20px;">Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
+								<option selected>Custom</option>
 								<option>UniprotKB</option>
 								<option>SuperFamily</option>
 								<option>Lysines</option>
@@ -396,7 +395,7 @@
 				xlv = new xiNET.Controller(targetDiv);
 				<?php
 				include './php/loadData.php';
-				//~ include './php/summaryFunctions.php';
+				include '../annotations.php';
 				?>
 
 				initSlider();
@@ -405,11 +404,11 @@
 				xlv.ambigShown = document.getElementById('ambig').checked;
 				xlv.filter = function (match) {
 					var vChar = match.validated;
-					if (vChar == 'A' && document.getElementById('A').checked && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'B' && document.getElementById('B').checked  && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'C' && document.getElementById('C').checked && (match.score >= xlv.cutOff)) return true;
-					else if (vChar == '?' && document.getElementById('Q').checked && (match.score >= xlv.cutOff)) return true;
-					else if (match.autovalidated && document.getElementById('AUTO').checked && (match.score >= xlv.cutOff))  return true;
+					if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'B' && document.getElementById('B').checked  && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'C' && document.getElementById('C').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
 					else return false;
 				};
 

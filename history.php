@@ -54,7 +54,7 @@ header('Content-type: text/html; charset=utf-8');
 				<table id='t1'>
 					<tbody>
 						<?php
-						if ($_SESSION['session_name'] == "adam"){
+						/*if ($_SESSION['session_name'] == "adam"){
 							$url = "xwalk";
 							echo "<tr><td><a id="."HSA SDA Xwalk"." href='./network.php?sid=" . urlencode($url) . "'>" . "sda xwalk" . "</a>" . "</td>";
 							echo "<td><strong>" . "not real" . "</strong></td>";
@@ -62,7 +62,7 @@ header('Content-type: text/html; charset=utf-8');
 							echo "<td>" ."didn't happen" . "</td>";
 							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
 							echo "</tr>\n";
-						}
+						}*/
 						include('../connectionString.php');
 						//open connection
 						$dbconn = pg_connect($connectionString)
