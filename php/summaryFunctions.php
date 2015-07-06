@@ -17,10 +17,50 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 ?>
-<script>
-
-	
+	<script>
 	function linkSummary() {
+		var html = "TEST";
+
+			//~ var links = xlv.proteinLinks.values();
+			//~ var lc = links.length;
+			//~ for (var l = 0; l < lc; l++) {
+				//~ var link = links[l];
+				//~ html += "<u>" + link.fromProtein.name + " - " + link.toProtein.name + "</u><br/>"
+				//~ //inter protein res links
+				//~ var c2 = link.residueLinks.values().length;
+				//~ var lcount = 0;
+				//~ for (var rl = 0; rl < c2; rl++) {
+					//~ var set1 = false;
+					//~ var set2 = false;
+					//~ var set3 = false;
+//~ 
+					//~ var resLink = link.residueLinks.values()[rl];
+					//~ var count = resLink.matches.length;
+					//~ for (var i = 0; i < count; i++) {
+						//~ var match = resLink.matches[i];
+						//~ if (match.search_id == PV.set1)
+							//~ set1 = true;
+						//~ else if (match.search_id == PV.set2)
+							//~ set2 = true;
+						//~ else if (match.search_id == PV.set3)
+							//~ set3 = true;
+					//~ }
+					//~ if (set1 && !set2 && !set3)
+						//~ set1Links.push(resLink);
+					//~ else
+					//~ if (!set1 && set2 && !set3)
+						//~ set2Links.push(resLink);
+					//~ else
+					//~ if (!set1 && !set2 && set3)
+						//~ set3Links.push(resLink);
+					//~ else
+						//~ nonuniqueLinks.push(resLink);
+				//~ }
+			//~ }		
+
+		var wnd = window.open();//"about:blank", "", "_blank");
+		wnd.document.write(html);
+	}
 /*
 		if (PV.set1 !== undefined) {
 			var set1Links = [];
@@ -28,42 +68,7 @@
 			var set3Links = [];
 			var nonuniqueLinks = [];
 
-			var links = XiPV.proteinLinks.values();
-			var lc = links.length;
-			for (var l = 0; l < lc; l++) {
-				var link = links[l];
-				html += "<u>" + link.fromProtein.name + " - " + link.toProtein.name + "</u><br/>"
-				//inter protein res links
-				var c2 = link.residueLinks.values().length;
-				var lcount = 0;
-				for (var rl = 0; rl < c2; rl++) {
-					var set1 = false;
-					var set2 = false;
-					var set3 = false;
 
-					var resLink = link.residueLinks.values()[rl];
-					var count = resLink.matches.length;
-					for (var i = 0; i < count; i++) {
-						var match = resLink.matches[i];
-						if (match.search_id == PV.set1)
-							set1 = true;
-						else if (match.search_id == PV.set2)
-							set2 = true;
-						else if (match.search_id == PV.set3)
-							set3 = true;
-					}
-					if (set1 && !set2 && !set3)
-						set1Links.push(resLink);
-					else
-					if (!set1 && set2 && !set3)
-						set2Links.push(resLink);
-					else
-					if (!set1 && !set2 && set3)
-						set3Links.push(resLink);
-					else
-						nonuniqueLinks.push(resLink);
-				}
-			}
 
 			set1Links.sort(function(a, b) {
 				var result = (a.fromResidue - 0) - (b.fromResidue - 0);
@@ -147,7 +152,7 @@
 		}
 		else
 		{*/
-			var html = "Link summary (after filtering) for search ID: " + xlv.sid + "<br/><br/>";
+		/*	var html = "Link summary (after filtering) for search ID: " + xlv.sid + "<br/><br/>";
 			var links = XiPV.proteinLinks.values();
 			var lc = links.length;
 			for (var l = 0; l < lc; l++) {
@@ -198,8 +203,7 @@
 			PV.html(html);
 		//~ }
 		 
-		var wnd = window.open("about:blank", "", "_blank");
-		wnd.document.write(html);
+
 	}
 
 	function residueSummary() {
@@ -388,5 +392,5 @@
 			}
 			return arr;
 		}
-	}
+	}*/
 </script>

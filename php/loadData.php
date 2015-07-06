@@ -21,7 +21,7 @@
 
 	$startTime = microtime(true);
 	$sid = urldecode($_GET["sid"]);
-$pattern = '/[^0-9,\-(xwalk)]/';
+$pattern = '/[^0-9,\-]/';
 if (preg_match($pattern, $sid)){
 	header();
 	echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
@@ -36,11 +36,11 @@ if (preg_match($pattern, $sid)){
 	$searchesShown = 'searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$agg = $id_rands[$i];
-		if ($agg == "xwalk") {
-			$xwalk = true;
-			$searchesShown = $searchesShown . '"xwalk":"sda xwalk"';
-		}
-		else { 
+		//~ if ($agg == "xwalk") {
+			//~ $xwalk = true;
+			//~ $searchesShown = $searchesShown . '"xwalk":"sda xwalk"';
+		//~ }
+		//~ else { 
 			$dashPos = strpos($agg,'-');
 			$randId = substr($agg, $dashPos + 1);
 			$id = substr($agg, 0, ($dashPos));
@@ -48,7 +48,7 @@ if (preg_match($pattern, $sid)){
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			$name = $line['name'];
 			$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'"';
-		}	
+		//~ }	
 		if (($i + 1) < count($id_rands)){
 				$searchesShown = $searchesShown.',';
 			}
@@ -199,10 +199,10 @@ if (preg_match($pattern, $sid)){
 			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
 	echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
-	if ($xwalk == true) {
-		echo "//**XWALK**\n";
-		include 'xwalk.php';
-	}
+	//~ if ($xwalk == true) {
+		//~ echo "//**XWALK**\n";
+		//~ include 'xwalk.php';
+	//~ }
 	echo "xlv.addMatches([";
 	$waitingForFirstMatch = true;
 	//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);

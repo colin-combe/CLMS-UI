@@ -649,4 +649,7 @@
 			}
 			//]]>
 		</script>
+		<?php
+			include './php/summaryFunctions.php';
+		?>
 </html>
