@@ -57,6 +57,12 @@ if (preg_match($pattern, $sid)){
 
 	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
+	/*$q_makeTempHasProtein =
+		'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
+		. $proteinTempTableName
+		. ' FROM has_protein, ' . $peptidesTempTableName
+		. ' WHERE ' . $peptidesTempTableName
+		. '.peptide_id = has_protein.peptide_id GROUP BY  has_protein.peptide_id, has_protein.protein_id, peptide_position;';*/
 
 	if (strpos($sid,',') === false && $sid != "xwalk") { //if not aggregation of more than one search
 
@@ -145,7 +151,7 @@ if (preg_match($pattern, $sid)){
 			.' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')   OR (spectrum_match.validated LIKE \'?\'))'
 			. ' AND matched_peptide.link_position != -1;';
 			
-		$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
+		$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
 				$proteinTempTableName . ' FROM has_protein, '
 				. $peptidesTempTableName .', protein'
 				.' WHERE ' . $peptidesTempTableName

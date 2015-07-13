@@ -157,17 +157,20 @@
 
 			<div class="container">
 				<h1 class="page-header">
+<!--
 					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
+-->
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 					<p class="btn">Export:</p>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportCSV();">CSV</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportLinksCSV();">Links</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
+					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
-					<button class="btn btn-1 btn-1a" onclick="linkSummary();">Summary</button>
-					<label class="btn" style="margin-left:30px;">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
-					<label class="btn">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
-					<label class="btn">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
+					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
+					<label class="btn" style="padding-left:0px;">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
+					<label class="btn" style="padding-left:0px;">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>
 
