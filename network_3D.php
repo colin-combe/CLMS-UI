@@ -37,6 +37,7 @@
 		<link rel="stylesheet" href="./css/xiNET.css">
 
 		<script type="text/javascript" src="/js/build/ngl.embedded.min.js"></script>
+		
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
@@ -304,14 +305,14 @@
 					name: "allRes"
 				} );
 
-				comp.addRepresentation( "spacefill", {
-					sele: "none",
-					color: new THREE.Color( "fuchsia" ).getHex(),
-					scale: 1.2,
-					transparent: true,
-					opacity: 0.7,
-					name: "focusedRes"
-				} );
+				//~ comp.addRepresentation( "spacefill", {
+					//~ sele: "none",
+					//~ color: new THREE.Color( "fuchsia" ).getHex(),
+					//~ scale: 1.2,
+					//~ transparent: true,
+					//~ opacity: 0.7,
+					//~ name: "focusedRes"
+				//~ } );
 
 				comp.addRepresentation( "spacefill", {
 					sele: "none",
