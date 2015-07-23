@@ -227,6 +227,34 @@ tbody tr:hover td, tbody tr:hover td a{
 	height:100%;
 }
 
+.histoLabel{
+	color:black;
+/*	float:right;
+
+	padding:30px;
+*/
+}
+.dist{
+	height:100px;
+}
+.bar rect {
+  fill: steelblue;
+  shape-rendering: crispEdges;
+}
+
+.bar text {
+  fill: #fff;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+#matrixDiv{
+	height:calc(100% - 320px);
+}
+
 .horizontalSplitter {
     height: 20px;
     background: rgba(9, 29, 66, 1);
@@ -366,7 +394,9 @@ tbody tr:hover td, tbody tr:hover td  {
 	height:calc(100% - 110px);
 }
 .axis{
+/*
 	fill:white;
+*/
 }
 #pepFragDiv{
 	width:400px;

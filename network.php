@@ -391,6 +391,7 @@
 			* xiNET init JS
 			*/
 
+			var xlv;
      		//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
 

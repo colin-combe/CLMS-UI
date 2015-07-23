@@ -20,13 +20,13 @@
 <script>
 
 function residueCount() {
-	var csv = '"ResiduePair","Occurences(in_unique_links)"\r\n';
-	var matches = xlv.matches;//.values();
-	var matchCount = matches.length;
+	var csv = '"Residue(s)","Occurences(in_unique_links)"\r\n';
+	//~ var matches = xlv.matches;//.values();
+	//~ var matchCount = matches.length;
 	var residueCounts = d3.map(); 
 	var residuePairCounts = d3.map(); 
 	
-	var pLinks = this.proteinLinks.values();
+	var pLinks = xlv.proteinLinks.values();
 	var pLinkCount = pLinks.length;
 	for (var pl = 0; pl < pLinkCount; pl++){
 		var resLinks = pLinks[pl].residueLinks.values();
@@ -35,8 +35,9 @@ function residueCount() {
 			var residueLink = resLinks[rl];
 			var filteredMatches = residueLink.getFilteredMatches();
 			if (filteredMatches.length > 0){
+				
 				var linkedRes1 = residueLink.proteinLink.fromProtein.sequence[residueLink.fromResidue - 1];
-				var linkedRes2 = match.pepSeq2[match.linkPos2 - 1];
+				var linkedRes2 = residueLink.proteinLink.toProtein.sequence[residueLink.toResidue - 1];
 				incrementCount(linkedRes1);
 				incrementCount(linkedRes2);
 				
@@ -81,7 +82,7 @@ function residueCount() {
 		var blob = new Blob([csv], {type: "data:text/csv;charset=utf-8" });
 		saveAs(blob, "xiNET-export.csv");
 	} else {	
-		var wnd = window.open("data:text/csv;charset=utf-8;base64," + window.btoa(csv), 'xiNET-export.csv');
+		var wnd = window.open("data:text/csv;charset=utf-8;base64," + window.btoa(csv), 'residueCount.csv');
 	}
 }
 </script>

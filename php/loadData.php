@@ -33,7 +33,7 @@ if (preg_match($pattern, $sid)){
 		
 	$id_rands = explode("," , $sid);
 	$xwalk = false;
-	$searchesShown = 'searchesShown = {';
+	$searchesShown = 'var searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$agg = $id_rands[$i];
 		//~ if ($agg == "xwalk") {

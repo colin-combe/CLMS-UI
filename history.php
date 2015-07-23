@@ -39,14 +39,17 @@ header('Content-type: text/html; charset=utf-8');
 		<div class="container">
 			<h1 class="page-header">
 			<span style="text-transform: uppercase;margin-right:10px;font-size:0.9em;font-weight:bold;"><?php echo $_SESSION['session_name'] ?>&nbsp;</span>
-					<button class="btn btn-1 btn-1a" onclick="window.location = '../util/logout.php';">
+					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
 					</button>
 				<div style='float:right'>
-					<button class="btn btn-1 btn-1a" onclick="aggregate();">
-						Aggregate
-					</button>
-
+					<button class='btn btn-1 btn-1a' onclick='aggregate();'>Aggregate</button>
+					<?php
+						if ($_SESSION['session_name'] == "adam"){
+							echo "<button class='btn btn-1 btn-1a' onclick='aggregate3D();'>3D</button>";
+							echo "<button class='btn btn-1 btn-1a' onclick='aggregateMatrix();'>Matrix</button>";
+						}
+					?>
 				</div>
 
 			</h1>
@@ -54,15 +57,6 @@ header('Content-type: text/html; charset=utf-8');
 				<table id='t1'>
 					<tbody>
 						<?php
-						/*if ($_SESSION['session_name'] == "adam"){
-							$url = "xwalk";
-							echo "<tr><td><a id="."HSA SDA Xwalk"." href='./network.php?sid=" . urlencode($url) . "'>" . "sda xwalk" . "</a>" . "</td>";
-							echo "<td><strong>" . "not real" . "</strong></td>";
-							echo "<td>" . "simulated" . "</td>";
-							echo "<td>" ."didn't happen" . "</td>";
-							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
-							echo "</tr>\n";
-						}*/
 						include('../connectionString.php');
 						//open connection
 						$dbconn = pg_connect($connectionString)
@@ -72,12 +66,24 @@ header('Content-type: text/html; charset=utf-8');
 						// Execute the prepared query
 						$result = pg_execute($dbconn, "my_query", [$_SESSION['session_name']]);
 						while ($line = pg_fetch_array($result, null, PGSQL_ASSOC)) {
-							$url = $line['id'].'-'.$line['random_id'];
-							echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($url) . "'>" . $line['name'] . "</a>" . "</td>";
+							$urlPart = $line['id'].'-'.$line['random_id'];
+							
+							echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($urlPart) . "'>" . $line['name'] . "</a>" . "</td>";
+							
+							$searchFile = $line['file_name'];
+							
+							if ($_SESSION['session_name'] == "adam" && $searchFile == "{HSA-Active.FASTA}"){
+								echo "<td><a id=".$line['name']." href='./network_3D.php?sid=" . urlencode($urlPart) . "'>3D</a>" . "</td>";
+								echo "<td><a id=".$line['name']." href='./matrix.php?sid=" . urlencode($urlPart) . "'>#</a>" . "</td>";
+								
+							}else {
+								echo "<td></td><td></td>";
+							}
+							
 							echo "<td><strong>" . $line['status'] . "</strong></td>";
-							echo "<td>" .$line['file_name'] . "</td>";
+							echo "<td>" .$searchFile. "</td>";
 							echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
-							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $url . "'></td>";
+							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $urlPart . "'></td>";
 							echo "</tr>\n";
 						}
 						?>
@@ -90,7 +96,7 @@ header('Content-type: text/html; charset=utf-8');
 			//<![CDATA[
 
 			var opt1 = {
-				colTypes: ["alpha","none", "alpha", "alpha", "clearCheckboxes"],
+				colTypes: ["alpha","none", "none", "none", "alpha", "alpha", "clearCheckboxes"],
 				pager: {
 				rowsCount: 20
 				}
@@ -108,6 +114,48 @@ header('Content-type: text/html; charset=utf-8');
                 if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
                 else {
                     window.open("./network.php?sid="+values.join(','), "_self");
+                }
+            }
+
+           function aggregate(){
+				var inputs = document.getElementsByClassName('aggregateCheckbox');
+                var values = new Array();
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].checked) {
+                        values.push(inputs[i].value);
+                    }
+                }
+                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
+                else {
+                    window.open("./network.php?sid="+values.join(','), "_self");
+                }
+            }
+
+           function aggregate3D(){
+				var inputs = document.getElementsByClassName('aggregateCheckbox');
+                var values = new Array();
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].checked) {
+                        values.push(inputs[i].value);
+                    }
+                }
+                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
+                else {
+                    window.open("./network_3D.php?sid="+values.join(','), "_self");
+                }
+            }
+
+           function aggregateMatrix(){
+				var inputs = document.getElementsByClassName('aggregateCheckbox');
+                var values = new Array();
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].checked) {
+                        values.push(inputs[i].value);
+                    }
+                }
+                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
+                else {
+                    window.open("./matrix.php?sid="+values.join(','), "_self");
                 }
             }
 
