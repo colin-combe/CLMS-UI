@@ -251,10 +251,43 @@ tbody tr:hover td, tbody tr:hover td a{
   stroke: #000;
   shape-rendering: crispEdges;
 }
+
 #matrixDiv{
-	height:calc(100% - 320px);
+	height:100%;
 }
 
+#sliderDiv{
+	height:100%;
+	position:absolute;
+	top:0px;
+	right:0px;
+/*
+	overflow:hidden;
+*/
+}
+
+
+.selecting circle.selected {
+  stroke: #f00;
+}
+
+.resize path {
+  fill: #666;
+  fill-opacity: .8;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.brush .extent {
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
 .horizontalSplitter {
     height: 20px;
     background: rgba(9, 29, 66, 1);
