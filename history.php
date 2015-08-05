@@ -39,6 +39,9 @@ header('Content-type: text/html; charset=utf-8');
 		<div class="container">
 			<h1 class="page-header">
 			<span style="text-transform: uppercase;margin-right:10px;font-size:0.9em;font-weight:bold;"><?php echo $_SESSION['session_name'] ?>&nbsp;</span>
+					
+					
+					
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
 					</button>
@@ -85,6 +88,7 @@ header('Content-type: text/html; charset=utf-8');
 							echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
 							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $urlPart . "'></td>";
 							echo "</tr>\n";
+							
 						}
 						?>
 					</tbody>

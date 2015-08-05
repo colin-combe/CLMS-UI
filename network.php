@@ -429,7 +429,7 @@
 						var out = ""
 
 						var scoresTable = "<table><tr>";
-					scoresTable += "<th>Id</th>";
+					//~ scoresTable += "<th>Id</th>";
 					scoresTable += "<th>Protein1</th>";
 					scoresTable += "<th>PepPos1</th>";
 					scoresTable += "<th>PepSeq1</th>";
@@ -446,6 +446,8 @@
 						scoresTable += "<th>Manual</th>";
 					}
 						scoresTable += "<th>Group</th>";
+					scoresTable += "<th>Run name</th>";
+					scoresTable += "<th>Scan number</th>";
 					scoresTable += "</tr>";
 
 						out +=  scoresTable;
@@ -546,8 +548,8 @@
 								+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");\">";
 						}
 
-						htmlTableRow += "<td><p>" + match.id
-							+ "</p></td>";
+						//~ htmlTableRow += "<td><p>" + match.id
+							//~ + "</p></td>";
 						htmlTableRow += "<td><p>" + match.protein1
 							+ "</p></td>";
 						htmlTableRow += "<td><p>" + match.pepPos1
@@ -579,6 +581,10 @@
 								+ "</p></td>";
 						}
 						htmlTableRow += "<td><p>" + match.group
+								+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.runName
+								+ "</p></td>";
+						htmlTableRow += "<td><p>" + match.scanNumber
 								+ "</p></td>";
 						htmlTableRow += "</tr>";
 						rows += htmlTableRow;

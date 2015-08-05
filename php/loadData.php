@@ -64,7 +64,7 @@ if (preg_match($pattern, $sid)){
 		. ' WHERE ' . $peptidesTempTableName
 		. '.peptide_id = has_protein.peptide_id GROUP BY  has_protein.peptide_id, has_protein.protein_id, peptide_position;';*/
 
-	if (strpos($sid,',') === false && $sid != "xwalk") { //if not aggregation of more than one search
+	if (strpos($sid,',') === false) { //if not aggregation of more than one search
 
 		$dashPos = strpos($sid,'-');
 		$randId = substr($sid, $dashPos + 1);
@@ -84,23 +84,39 @@ if (preg_match($pattern, $sid)){
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
 			. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
 			. ' spectrum_match.autovalidated, spectrum_match.validated, '
-			. ' spectrum_match.search_id, peptide.sequence AS pepseq  INTO TEMPORARY '
+			. ' spectrum_match.search_id, v_export_materialized.scan_number, v_export_materialized.run_name, peptide.sequence AS pepseq  INTO TEMPORARY '
 			. $peptidesTempTableName
-			. ' FROM matched_peptide, (SELECT * FROM spectrum_match WHERE SEARCH_ID = '
-			. $id
-			. ' AND dynamic_rank = true) spectrum_match, spectrum, search, peptide  WHERE spectrum_match.search_id = '
-			. $id
-			. ' AND spectrum.id = spectrum_match.spectrum_id '
-			. ' AND spectrum_match.search_id = search.id '
-			. ' AND matched_peptide.peptide_id = peptide.id '
-			. ' AND search.random_id = \''.$randId.'\''
-			. ' AND spectrum_match.id = matched_peptide.match_id '
-			. ' AND spectrum_match.is_decoy != true AND '
-			. ' ((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
+			. ' FROM '
+			. '  matched_peptide inner join '
+			. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$id . ' AND dynamic_rank = true AND spectrum_match.is_decoy != true'
+			. ' AND ((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
 			. ' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')  '
-			. ' OR (spectrum_match.validated LIKE \'?\')) '
+			. ' OR (spectrum_match.validated LIKE \'?\')) ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
+			. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
+			. ' inner join search ON spectrum_match.search_id = search.id '
+			. ' inner join v_export_materialized ON spectrum_match.id = v_export_materialized.spectrum_match_id '
+			. ' WHERE search.random_id = \''.$randId.'\''
 			. ' AND matched_peptide.link_position != -1;';
-
+			
+		
+		//~ $q_makeTempMatchedPeptides =
+			//~ 'SELECT matched_peptide.match_id, spectrum_match.score,'
+			//~ . ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
+			//~ . ' spectrum_match.autovalidated, spectrum_match.validated, '
+			//~ . ' spectrum_match.search_id, spectrum.scan_number, run.name, peptide.sequence AS pepseq  INTO TEMPORARY '
+			//~ . $peptidesTempTableName
+			//~ . ' FROM matched_peptide, (SELECT * FROM spectrum_match WHERE SEARCH_ID = '
+			//~ . $id
+			//~ . ' AND dynamic_rank = true) spectrum_match, peptide WHERE spectrum_match.search_id = '
+			//~ . $id
+			//~ . ' AND matched_peptide.peptide_id = peptide.id '
+			//~ . ' AND search.random_id = \''.$randId.'\''
+			//~ . ' AND spectrum_match.id = matched_peptide.match_id '
+			//~ . ' AND spectrum_match.is_decoy != true AND '
+			//~ . ' ((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
+			//~ . ' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')  '
+			//~ . ' OR (spectrum_match.validated LIKE \'?\')) '
+			//~ . ' AND matched_peptide.link_position != -1;';
 
 		$q_makeTempHasProtein =
 			'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
@@ -122,34 +138,51 @@ if (preg_match($pattern, $sid)){
 	else { //its an aggregation of more than one search
 		$sets = explode("," , $sid);
 		$WHERE = ' ';
+		$WHERE_VE = ' '; // v_export_materialized
 		$c = 0;
 		for ($i = 0; $i < count($sets); $i++) {
 			$agg = $sets[$i];
-			if ($agg != "xwalk"){
-				if ($c > 0){
-					$WHERE = $WHERE.' OR ';
-				}
-				$c++;
-				$dashPos = strpos($agg,'-');
-				$randId = substr($agg, $dashPos + 1);
-				$id = substr($agg, 0, ($dashPos));
-				$WHERE = $WHERE.'(spectrum_match.search_id = '.$id.' AND search.random_id = \''.$randId.'\''.') ';
+			if ($c > 0){
+				$WHERE = $WHERE.' OR ';
+				$WHERE_VE = $WHERE_VE.' OR ';
 			}
+			$c++;
+			$dashPos = strpos($agg,'-');
+			$randId = substr($agg, $dashPos + 1);
+			$id = substr($agg, 0, ($dashPos));
+			$WHERE = $WHERE.'(sm.search_id = '.$id.' AND s.random_id = \''.$randId.'\''.') ';
+			$WHERE_VE = $WHERE_VE.'(search_id = '.$id.')';
 		}
 
-
-		$q_makeTempMatchedPeptides = 'SELECT matched_peptide.match_id, spectrum_match.score,'.
-			' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
-			.' spectrum_match.autovalidated, spectrum_match.validated, spectrum_match.search_id, peptide.sequence AS pepSeq  INTO TEMPORARY '
+		$q_makeTempMatchedPeptides =
+			'SELECT matched_peptide.match_id, sm.score,'
+			. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
+			. ' sm.autovalidated, sm.validated, '
+			. ' sm.search_id, v_export_materialized.scan_number, v_export_materialized.run_name, peptide.sequence AS pepseq  INTO TEMPORARY '
 			. $peptidesTempTableName
-			.' FROM matched_peptide, spectrum_match, spectrum, peptide, search WHERE ('.$WHERE.')'
-			.' AND spectrum.id = spectrum_match.spectrum_id '
-			.' AND spectrum_match.search_id = search.id '
-			.' AND peptide.id = matched_peptide.peptide_id '
-			.' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
-			.'((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
-			.' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')   OR (spectrum_match.validated LIKE \'?\'))'
-			. ' AND matched_peptide.link_position != -1;';
+			. ' FROM '
+			. '  matched_peptide inner join '
+			. ' (SELECT sm.* FROM spectrum_match sm INNER JOIN search s ON sm.search_id = s.id WHERE ('.$WHERE.') AND dynamic_rank = true AND sm.is_decoy != true'
+			. ' AND ((sm.autovalidated = true AND (sm.rejected != true  OR sm.rejected is null)) OR'
+			. ' (sm.validated LIKE \'A\') OR (sm.validated LIKE \'B\') OR (sm.validated LIKE \'C\')  '
+			. ' OR (sm.validated LIKE \'?\')) ) sm ON sm.id = matched_peptide.match_id '
+			. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
+			. ' inner join (SELECT * from  v_export_materialized WHERE ('.$WHERE_VE.') AND dynamic_rank = true AND is_decoy != true )  v_export_materialized ON sm.id = v_export_materialized.spectrum_match_id '
+			. ' WHERE  matched_peptide.link_position != -1;';
+
+		/*$q_makeTempMatchedPeptides = 'SELECT matched_peptide.match_id, spectrum_match.score,'
+			. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
+			. ' spectrum_match.autovalidated, spectrum_match.validated, spectrum_match.search_id, spectrum.scan_number, run.name, peptide.sequence AS pepSeq  INTO TEMPORARY '
+			. $peptidesTempTableName
+			. ' FROM matched_peptide, spectrum_match, spectrum, peptide, search WHERE ('.$WHERE.')'
+			. ' AND spectrum.id = spectrum_match.spectrum_id '
+			. ' AND run.run_id = spectrum.run_id '
+			. ' AND spectrum_match.search_id = search.id '
+			. ' AND peptide.id = matched_peptide.peptide_id '
+			. ' AND spectrum_match.id = matched_peptide.match_id AND spectrum_match.is_decoy != true AND '
+			. '((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
+			. ' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')   OR (spectrum_match.validated LIKE \'?\'))'
+			. ' AND matched_peptide.link_position != -1;';*/
 			
 		$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
 				$proteinTempTableName . ' FROM has_protein, '
@@ -220,6 +253,8 @@ if (preg_match($pattern, $sid)){
 			$match_autovalidated = '"'.$line["autovalidated"].'"';
 			$match_validated = '"'.$line["validated"].'"';
 			$search_id = $line["search_id"];
+			$run_name = '"' . $line["run_name"]. '"';
+			$scan_number = '"' . $line["scan_number"]. '"';
 
 			$pep1_link_position = $line['link_position'];
 			$pep1_positions = '[' . $line["positions"] . ']';
@@ -247,7 +282,9 @@ if (preg_match($pattern, $sid)){
 								. $match_score . ','
 								. $search_id . ','
 								. $match_autovalidated . ','
-								. $match_validated
+								. $match_validated . ','
+								. $run_name . ','
+								. $scan_number
 								. "]";
 					//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 					//~ if ($line)
