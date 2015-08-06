@@ -84,9 +84,21 @@ header('Content-type: text/html; charset=utf-8');
 				//~ console.log('^'+xlv.sid+'^');
 				if (document.getElementById('mySearches').checked){
 					params =  "searches=MINE";
+					var opt1 = {
+						colTypes: ["alpha","none", "none", "none", "alpha", "alpha","number","none", "clearCheckboxes"],
+						pager: {
+						rowsCount: 20
+						}
+					}
 				}
 				else {
 					params =  "searches=ALL";
+					var opt1 = {
+						colTypes: ["alpha","none", "none", "none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
+						pager: {
+						rowsCount: 20
+						}
+					}
 				}
 				xmlhttp.open("POST", url, true);
 				//Send the proper header information along with the request
@@ -96,20 +108,18 @@ header('Content-type: text/html; charset=utf-8');
 						//~ console.log(xmlhttp.responseText);
 						document.getElementById("t1").innerHTML = xmlhttp.responseText;
 						dynTable = new DynamicTable("t1", opt1);
-					
+						if (document.getElementById('mySearches').checked){
+							document.getElementsByClassName("tool-8")[0].setAttribute("style", "width:0px;");
+						}
+						else {
+							//~ document.getElementByClassName("tool-8")[0].setAttribute("style", "width:90px;");
+						}
 					}
 				}
 				xmlhttp.send(params);
 			}
 			loadSearchList();
-			
-			var opt1 = {
-				colTypes: ["alpha","none", "none", "none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
-				pager: {
-				rowsCount: 20
-				}
-			}
-	
+				
             function aggregate(){
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
                 var values = new Array();

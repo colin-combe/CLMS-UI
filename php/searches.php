@@ -46,7 +46,11 @@
 		echo "<td>" .$searchFile. "</td>";
 		echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
 		echo "<td>" .$id . "</td>";
-		echo "<td>" .$line['user_name'] . "</td>";
+		if ($searches == "MINE"){
+			echo "<td></td>";
+		} else {
+			echo "<td>" .$line['user_name'] . "</td>";
+		}
 		echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $urlPart . "'></td>";
 		echo "</tr>\n";
 		
