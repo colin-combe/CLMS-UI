@@ -38,9 +38,12 @@ header('Content-type: text/html; charset=utf-8');
 
 		<div class="container">
 			<h1 class="page-header">
-			<span style="text-transform: uppercase;margin-right:10px;font-size:0.9em;font-weight:bold;"><?php echo $_SESSION['session_name'] ?>&nbsp;</span>
+			<span class="headerLabel" style="font-weight:bold;"><?php echo $_SESSION['session_name'] ?>&nbsp;</span>
 					
-					
+					<input type="radio" name="mineOrAll" value="mySearches" id="mySearches" checked onchange="loadSearchList();">
+					<span class="headerLabel">My Searches</span>
+					<input type="radio" name="mineOrAll" value="allSearches" id="allSearches" onchange="loadSearchList();">
+					<span class="headerLabel" >All Searches</span>
 					
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
@@ -58,39 +61,8 @@ header('Content-type: text/html; charset=utf-8');
 			</h1>
 			<div class="tableContainer">
 				<table id='t1'>
-					<tbody>
-						<?php
-						include('../connectionString.php');
-						//open connection
-						$dbconn = pg_connect($connectionString)
-							or die('Could not connect: ' . pg_last_error());
-						$result = pg_prepare($dbconn, "my_query",
-"SELECT search.id, (array_agg(search.submit_date))[1] AS submit_date, (array_agg(search.name))[1] AS name, (array_agg(search.status))[1] AS status, (array_agg(search.random_id))[1] AS random_id, array_agg(sequence_file.file_name) AS file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND users.user_name = $1 AND status != 'hide' GROUP BY search.id ORDER BY submit_date DESC ;");
-						// Execute the prepared query
-						$result = pg_execute($dbconn, "my_query", [$_SESSION['session_name']]);
-						while ($line = pg_fetch_array($result, null, PGSQL_ASSOC)) {
-							$urlPart = $line['id'].'-'.$line['random_id'];
-							
-							echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($urlPart) . "'>" . $line['name'] . "</a>" . "</td>";
-							
-							$searchFile = $line['file_name'];
-							
-							if ($_SESSION['session_name'] == "adam" && $searchFile == "{HSA-Active.FASTA}"){
-								echo "<td><a id=".$line['name']." href='./network_3D.php?sid=" . urlencode($urlPart) . "'>3D</a>" . "</td>";
-								echo "<td><a id=".$line['name']." href='./matrix.php?sid=" . urlencode($urlPart) . "'>#</a>" . "</td>";
-								
-							}else {
-								echo "<td></td><td></td>";
-							}
-							
-							echo "<td><strong>" . $line['status'] . "</strong></td>";
-							echo "<td>" .$searchFile. "</td>";
-							echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
-							echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $urlPart . "'></td>";
-							echo "</tr>\n";
-							
-						}
-						?>
+					<tbody id='tb1'>
+
 					</tbody>
 				</table>
 			</div><!-- tableContainer -->
@@ -98,15 +70,46 @@ header('Content-type: text/html; charset=utf-8');
 
         <script>
 			//<![CDATA[
-
+			
+			var dynTable;
+			
+			function loadSearchList(){
+				
+				DynamicTable.destroy("t1");
+				document.getElementById("t1").innerHTML = "";
+				
+				var xmlhttp = new XMLHttpRequest();
+				var url = "./php/searches.php";
+				var params;
+				//~ console.log('^'+xlv.sid+'^');
+				if (document.getElementById('mySearches').checked){
+					params =  "searches=MINE";
+				}
+				else {
+					params =  "searches=ALL";
+				}
+				xmlhttp.open("POST", url, true);
+				//Send the proper header information along with the request
+				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						//~ console.log(xmlhttp.responseText);
+						document.getElementById("t1").innerHTML = xmlhttp.responseText;
+						dynTable = new DynamicTable("t1", opt1);
+					
+					}
+				}
+				xmlhttp.send(params);
+			}
+			loadSearchList();
+			
 			var opt1 = {
-				colTypes: ["alpha","none", "none", "none", "alpha", "alpha", "clearCheckboxes"],
+				colTypes: ["alpha","none", "none", "none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
 				pager: {
 				rowsCount: 20
 				}
 			}
-			new DynamicTable("t1", opt1);
-
+	
             function aggregate(){
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
                 var values = new Array();

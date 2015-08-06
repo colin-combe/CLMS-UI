@@ -50,10 +50,13 @@
 #t1 .dynamic-table-toolbar .tool-3 .dynamic-table-filter { 
   width: 150px;
 }*/
-#t1 .dynamic-table-toolbar .tool-6 { 
-  width: 150px;
-}
 #t1 .dynamic-table-toolbar .tool-7 { 
+  width: 90px;
+}
+#t1 .dynamic-table-toolbar .tool-8 { 
+  width: 90px;
+}
+#t1 .dynamic-table-toolbar .tool-9 { 
   width: 90px;
 }
 

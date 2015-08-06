@@ -169,7 +169,9 @@ tbody tr:hover td, tbody tr:hover td a{
 	background:white;
 }
 
-
+.headerLabel{
+text-transform: uppercase;margin-right:10px;font-size:0.9em;
+}
 
 /* history page */
 .tableContainer a {
