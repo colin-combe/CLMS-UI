@@ -236,13 +236,20 @@
 								   type="checkbox"
 							/>
 						</label>
-						<label style="margin-left:20px;">Annotations:
+						<label style="margin-left:20px;">Annot.:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
 								<option selected>Custom</option>
 								<option>UniprotKB</option>
 								<option>SuperFamily</option>
 								<option>Lysines</option>
+							</select>
+						</label>						
+						<label style="margin-left:20px;">Link colours:
+							<select id="linkColourSelect" onChange="changeLinkColours();">
+								<option selected>SAS dist.</option>
+								<option>Euc. dist.</option>
+								<option>Search</option>
 							</select>
 						</label>
 					</div>
@@ -401,7 +408,43 @@
 				include './php/loadData.php';
 				include '../annotations.php';
 				?>
+				
+				if (typeof distances !== "undefined"){
+					//~ alert("distances!");
+					var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+					var rc = rLinks.length;
+					for (var j = 0; j < rc; j++) {
+						var resLink = rLinks[j];
+						
+						var d = distances[resLink.fromResidue][resLink.toResidue];
 
+						//~ if (typeof d === 'undefined') {
+							//~ //alert('lost');
+							//~ resLink.colour = 'black';
+						//~ } else {
+							//alert('found');
+							if (d <= 10) {
+								resLink.colour = '#1B7837';
+							}
+							else if (d <= 15) {
+								resLink.colour = '#5AAE61';
+							}
+							else if (d <= 25) {
+								resLink.colour = '#FDB863';
+							}
+							else if (d <= 30) {
+								resLink.colour = '#9970AB';
+							}
+							else {
+								resLink.colour = '#762A83';
+							}
+							//resLink.colour = 'green';
+						//~ }
+					}
+				} else {
+					document.getElementById('linkColourSelect').setAttribute('style','display:none;');
+				}
+				
 				initSlider();
 				changeAnnotations();
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
@@ -615,6 +658,49 @@
 			function changeAnnotations(){
 				var annotationSelect = document.getElementById('annotationsSelect');
 				xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
+			};
+
+			function changeLinkColours(){
+				var linkColourSelect = document.getElementById('linkColourSelect');
+				var selectedOption = linkColourSelect.options[linkColourSelect.selectedIndex].value;
+				var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+				var rc = rLinks.length;
+				alert(selectedOption);
+				if (selectedOption === "Search") {
+					for (var j = 0; j < rc; j++) {
+						rLinks[j].colour = null;
+					}				
+					xlv.checkLinks();
+				} else {				
+					for (var j = 0; j < rc; j++) {
+						var resLink = rLinks[j];
+						var d;
+						if (selectedOption === "Search"){
+							d = distances[resLink.fromResidue][resLink.toResidue];
+						} else {
+							d = distances[resLink.toResidue][resLink.fromResidue];
+						}
+						if (isNan(d)){
+							d = 999;
+						}
+						if (d <= 10) {
+							resLink.colour = '#1B7837';
+						}
+						else if (d <= 15) {
+							resLink.colour = '#5AAE61';
+						}
+						else if (d <= 25) {
+							resLink.colour = '#FDB863';
+						}
+						else if (d <= 30) {
+							resLink.colour = '#9970AB';
+						}
+						else {
+							resLink.colour = '#762A83';
+						}
+						resLink.line.setAttribute("stroke", resLink.colour);
+					}
+				}
 			};
 
 			function initSlider(){

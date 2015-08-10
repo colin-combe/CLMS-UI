@@ -45,6 +45,13 @@ header('Content-type: text/html; charset=utf-8');
 					<input type="radio" name="mineOrAll" value="allSearches" id="allSearches" onchange="loadSearchList();">
 					<span class="headerLabel" >All Searches</span>
 					
+					
+<!--
+					<button class='btn btn-1 btn-1a' onclick='alert("Please do not press this button again.");'>
+						New Search
+					</button>	
+-->
+					
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
 					</button>
