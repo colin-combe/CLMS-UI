@@ -259,9 +259,9 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 }
 
 #sliderDiv{
-	height:80%;
+	height:60%;
 	position:absolute;
-	top:0px;
+	top:76px;
 	right:0px;
 /*
 	overflow:hidden;
@@ -281,9 +281,11 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 }
 
 
+/*
 .selecting circle.selected {
   stroke: #f00;
 }
+*/
 
 .resize path {
   fill: #666;
@@ -299,8 +301,11 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 }
 
 .brush .extent {
+/*
   fill-opacity: .125;
+*/
   shape-rendering: crispEdges;
+  fill:#FDB863;
 }
 .horizontalSplitter {
     height: 20px;

@@ -34,7 +34,8 @@
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
 
-		<script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
+		<script type="text/javascript" src="./vendor/signals.js"></script>
+        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
@@ -48,6 +49,9 @@
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
 -->
+
+		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
+        
 
         <!--xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
@@ -260,6 +264,8 @@
 
 		<script>
 			//<![CDATA[
+			
+						
 			/*
 			 * Horizontal splitter JS
 			 */
@@ -404,43 +410,46 @@
 
 				var targetDiv = document.getElementById('topDiv');
 				xlv = new xiNET.Controller(targetDiv);
+				
 				<?php
 				include './php/loadData.php';
 				include '../annotations.php';
 				?>
 				
 				if (typeof distances !== "undefined"){
-					//~ alert("distances!");
-					var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-					var rc = rLinks.length;
-					for (var j = 0; j < rc; j++) {
-						var resLink = rLinks[j];
-						
-						var d = distances[resLink.fromResidue][resLink.toResidue];
+				
+					this.sliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
+					this.slider = new DistanceSlider("sliderDiv", this);
+					this.stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+	
+					function onDistanceSliderChange(s){
+						var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+						var rc = rLinks.length;
+						for (var j = 0; j < rc; j++) {
+							var resLink = rLinks[j];
+							
+							var d = distances[resLink.fromResidue][resLink.toResidue];
+							console.log(d);
+							var d = parseFloat(d);
 
-						//~ if (typeof d === 'undefined') {
-							//~ //alert('lost');
-							//~ resLink.colour = 'black';
-						//~ } else {
-							//alert('found');
-							if (d <= 10) {
-								resLink.colour = '#1B7837';
+							if (isNaN(d) || d >= s[1]){
+								resLink.colour = 'purple';
 							}
-							else if (d <= 15) {
-								resLink.colour = '#5AAE61';
+							else if (d <= s[0] && d < s[1]) {
+								resLink.colour = 'orange';
 							}
-							else if (d <= 25) {
-								resLink.colour = '#FDB863';
-							}
-							else if (d <= 30) {
-								resLink.colour = '#9970AB';
+							else if (d < s[0]) {
+								resLink.colour = 'green';
 							}
 							else {
-								resLink.colour = '#762A83';
+								resLink.colour = 'red';
 							}
-							//resLink.colour = 'green';
-						//~ }
+						}				
+						
 					}
+					onDistanceSliderChange([25, 35]);
+					this.slider.brushMoved.add(onDistanceSliderChange); //add listener
+					
 				} else {
 					document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 				}
