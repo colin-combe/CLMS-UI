@@ -51,9 +51,12 @@
 	echo $searchesShown."};\n";
 	
 	if ($filename == "HSA-Active.FASTA"){
+		echo "var HSA_Active = true;";
 		include('./php/distances.php');
 	}
-
+	else {
+		echo "var HSA_Active = false;";
+	}
 	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
 	/*$q_makeTempHasProtein =

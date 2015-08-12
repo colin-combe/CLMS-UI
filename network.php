@@ -249,13 +249,17 @@
 								<option>Lysines</option>
 							</select>
 						</label>						
+<!--
 						<label style="margin-left:20px;">Link colours:
+-->
 							<select id="linkColourSelect" onChange="changeLinkColours();">
 								<option selected>SAS dist.</option>
 								<option>Euc. dist.</option>
 								<option>Search</option>
 							</select>
+<!--
 						</label>
+-->
 					</div>
 				</div>
 			</div>
@@ -416,43 +420,77 @@
 				include '../annotations.php';
 				?>
 				
-				if (typeof distances !== "undefined"){
+				if (HSA_Active){
+					/*var distances = [[]];
+					d3.csv("../HSA_dist2.csv", function(eucData){
+						for (var d = 0; d < eucData.length; d++){
+							var euc = eucData[d];
+							linkPos1 = parseInt(euc.FromResidue);	
+							linkPos2 = parseInt(euc.ToResidue);	
+							eucDist = parseFloat(euc.Angstrom);
+							var fromAA = euc.FromAA.trim();
+							var toAA = euc.ToAA.trim();
+							//LYS#SER#TYR#THR
+							//~ if (eucDist <= 34 && (fromAA == 'LYS'
+								//~ || fromAA == 'SER'
+								//~ || fromAA == 'TYR'
+								//~ || fromAA == 'THR'
+								//~ || toAA == 'LYS'
+								//~ || toAA == 'SER'
+								//~ || toAA == 'TYR'
+								//~ || toAA == 'THR')
+								//~ ){
+								if (linkPos1 > linkPos2){
+									var swap = linkPos2;
+									linkPos2 = linkPos1;
+									linkPos1 = swap;
+								}
+								//~ if (!distances[linkPos1]){
+									//~ distances[linkPos1] = [];
+								//~ }
+								if (!distances[linkPos2]){
+									distances[linkPos2] = [];
+								}
+								//console.log(linkPos1 + " " +linkPos2 + " " + eucDist);
+								distances[linkPos2][linkPos1] = eucDist.toFixed(4); 
+							//~ }
+						}
+						console.log(JSON.stringify(distances));
+					});*/
+						var sliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
+						var slider = new DistanceSlider("sliderDiv", this);
+						var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+						slider.brushMoved.add(onDistanceSliderChange); //add listener
+						var scale = d3.scale.threshold()
+							.domain([0, 15, 25])
+							.range(['black', '#5AAE61','#FDB863','#9970AB']);
+						onDistanceSliderChange(scale);
 				
-					this.sliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
-					this.slider = new DistanceSlider("sliderDiv", this);
-					this.stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
-	
-					function onDistanceSliderChange(s){
-						var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-						var rc = rLinks.length;
-						for (var j = 0; j < rc; j++) {
-							var resLink = rLinks[j];
-							
-							var d = distances[resLink.fromResidue][resLink.toResidue];
-							console.log(d);
-							var d = parseFloat(d);
-
-							if (isNaN(d) || d >= s[1]){
-								resLink.colour = 'purple';
-							}
-							else if (d <= s[0] && d < s[1]) {
-								resLink.colour = 'orange';
-							}
-							else if (d < s[0]) {
-								resLink.colour = 'green';
-							}
-							else {
-								resLink.colour = 'red';
-							}
-						}				
-						
-					}
-					onDistanceSliderChange([25, 35]);
-					this.slider.brushMoved.add(onDistanceSliderChange); //add listener
-					
-				} else {
-					document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 				}
+				
+				function onDistanceSliderChange(scale){
+					var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+					var rc = rLinks.length;
+					for (var j = 0; j < rc; j++) {
+						var resLink = rLinks[j];
+						
+						var d = distances[resLink.toResidue][resLink.fromResidue];
+						//console.log(d);
+						var d = parseFloat(d);
+						if (isNaN(d) === true){
+							d = -1;
+						}
+						resLink.colour = scale(d);
+						resLink.line.setAttribute("stroke", resLink.colour);
+					}				
+				}
+					
+	
+					
+					
+				//~ } else {
+					document.getElementById('linkColourSelect').setAttribute('style','display:none;');
+				//~ }
 				
 				initSlider();
 				changeAnnotations();
@@ -511,6 +549,11 @@
 							}else {//must be ResidueLink
 								out += residueLinkToHTML(aLink);
 							}
+							
+							
+							var d = distances[aLink.toResidue][aLink.fromResidue];
+							console.log("D:"+d);
+							
 						}
 
 						out += "</table>";
