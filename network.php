@@ -42,13 +42,11 @@
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 
         <!--spectrum dev-->
-<!--
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
--->
 
 		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
         
@@ -138,7 +136,6 @@
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
-<!--
 
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
@@ -152,7 +149,6 @@
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
--->
 			
 		</div><!-- div limiting movement of floaty panels -->
 
@@ -161,9 +157,11 @@
 
 			<div class="container">
 				<h1 class="page-header">
-<!--
 					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
--->
+					<select id="viewSelect" onChange="">
+						<input>None</input>
+						<input selected>Custom</input>
+					</select>
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
@@ -172,9 +170,11 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
+<!--
 					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="padding-left:0px;">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
 					<label class="btn" style="padding-left:0px;">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
+-->
 				</h1>
    	 		</div>
 
@@ -312,7 +312,7 @@
 			window.onresize = function(event) {
 				main.onmousemove();//event);
 			};
-			var selChkBx = document.getElementById('selectionChkBx');
+			var selChkBx = {};//document.getElementById('selectionChkBx');
 			selChkBx.checked = true;
 			selectionPanel = function (show) {
 				var bd = d3.select('#bottomDiv');
@@ -359,7 +359,7 @@
 				}
 				hChkBx.checked = show;
 			}
-/*			spectrumPanel = function (show) {
+			spectrumPanel = function (show) {
 				var sp = d3.select('#spectrumPanel');
 				if (show) {
 					sp.style('display', 'block');
@@ -403,7 +403,7 @@
 				}
 				xmlhttp.send(params);
 			};
-*/
+
 			/*
 			* xiNET init JS
 			*/
@@ -467,7 +467,10 @@
 						onDistanceSliderChange(scale);
 				
 				}
-				
+				//~ } else {
+					document.getElementById('linkColourSelect').setAttribute('style','display:none;');
+				//~ }		
+						
 				function onDistanceSliderChange(scale){
 					var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
 					var rc = rLinks.length;
@@ -484,14 +487,7 @@
 						resLink.line.setAttribute("stroke", resLink.colour);
 					}				
 				}
-					
-	
-					
-					
-				//~ } else {
-					document.getElementById('linkColourSelect').setAttribute('style','display:none;');
-				//~ }
-				
+								
 				initSlider();
 				changeAnnotations();
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
