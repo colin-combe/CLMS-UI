@@ -140,8 +140,7 @@
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
 				<div class="panelInner">
-					<div id='pepFragDiv'></div>
-					<div id='graphDiv'></div>
+					<svg id='spectrumSVG'></svg>
 					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
 				</div>
 				<div class="dynDiv_resizeDiv_tl"></div>
@@ -158,10 +157,12 @@
 			<div class="container">
 				<h1 class="page-header">
 					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
+<!--
 					<select id="viewSelect" onChange="">
 						<input>None</input>
 						<input selected>Custom</input>
 					</select>
+-->
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
@@ -337,28 +338,28 @@
 			}
 			
 			/* floaty panels JS */
-			var kChkBx = document.getElementById('keyChkBx');
-			kChkBx.checked = false;
-			var hChkBx = document.getElementById('helpChkBx');
-			hChkBx.checked = false;
-			keyPanel = function (show) {
-				var kp = d3.select('#keyPanel');
-				if (show) {
-					kp.style('display', 'block');
-				} else {
-					kp.style('display', 'none');
-				}
-				kChkBx.checked = show;
-			}
-			helpPanel = function (show) {
-				var hp = d3.select('#helpPanel');
-				if (show) {
-					hp.style('display', 'block');
-				} else {
-					hp.style('display', 'none');
-				}
-				hChkBx.checked = show;
-			}
+			//~ var kChkBx = document.getElementById('keyChkBx');
+			//~ kChkBx.checked = false;
+			//~ var hChkBx = document.getElementById('helpChkBx');
+			//~ hChkBx.checked = false;
+			//~ keyPanel = function (show) {
+				//~ var kp = d3.select('#keyPanel');
+				//~ if (show) {
+					//~ kp.style('display', 'block');
+				//~ } else {
+					//~ kp.style('display', 'none');
+				//~ }
+				//~ kChkBx.checked = show;
+			//~ }
+			//~ helpPanel = function (show) {
+				//~ var hp = d3.select('#helpPanel');
+				//~ if (show) {
+					//~ hp.style('display', 'block');
+				//~ } else {
+					//~ hp.style('display', 'none');
+				//~ }
+				//~ hChkBx.checked = show;
+			//~ }
 			spectrumPanel = function (show) {
 				var sp = d3.select('#spectrumPanel');
 				if (show) {
@@ -384,9 +385,8 @@
 			};
 
 			//~ //init spectrum viewer
-			var pepFragDiv = document.getElementById('pepFragDiv');
-			var graphDiv = document.getElementById('graphDiv');
-			spectrumViewer = new SpectrumViewer(pepFragDiv, graphDiv);
+			var spectrumSVG = document.getElementById('spectrumSVG');
+			spectrumViewer = new SpectrumViewer(spectrumSVG);
 
 			function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 				spectrumPanel(true);
@@ -546,9 +546,10 @@
 								out += residueLinkToHTML(aLink);
 							}
 							
-							
-							var d = distances[aLink.toResidue][aLink.fromResidue];
-							console.log("D:"+d);
+							if (HSA_Active){
+								var d = distances[aLink.toResidue][aLink.fromResidue];
+								console.log("D:"+d);
+							}
 							
 						}
 
