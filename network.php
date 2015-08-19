@@ -139,10 +139,7 @@
 
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
-				<div class="panelInner">
-					<svg id='spectrumSVG'></svg>
-					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.graph.resetScales();" >Reset</button>
-				</div>
+				<div class="panelInner" id='spectrumDiv'></div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
@@ -366,27 +363,26 @@
 					sp.style('display', 'block');
 				} else {
 					sp.style('display', 'none');
-					topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+					//topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
 				}
 			}
-			// Drag Event
-			ByRei_dynDiv.api.drag = function () {
-			 var
-			  mode = ByRei_dynDiv.cache.modus,
-			  limit = ByRei_dynDiv.db(1),
-			  status = ByRei_dynDiv.db(2);
 
-			 console.log('Div was dragged...'
-			  + 'ID: ' + ByRei_dynDiv.api.elem
-			  + 'Mode: ' + mode
-			  + 'Status: ' + status
-			  + 'Limit: ' + limit
-			  + '');
-			};
+// Alter Event
+ByRei_dynDiv.api.alter = function() {
+ var
+  mode = ByRei_dynDiv.cache.modus;
+
+ console.log('Div is alter...'
+  + '<br>ID: ' + ByRei_dynDiv.api.elem
+  + '<br>Mode: ' + mode
+  + '');
+  spectrumViewer.redraw();
+};
 
 			//~ //init spectrum viewer
-			var spectrumSVG = document.getElementById('spectrumSVG');
+			var spectrumSVG = document.getElementById('spectrumDiv');
 			spectrumViewer = new SpectrumViewer(spectrumSVG);
+			document.getElementById('spectrumDiv').onresize = spectrumViewer.redraw;
 
 			function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 				spectrumPanel(true);
@@ -544,13 +540,11 @@
 								out += proteinLinkToHTML(aLink);
 							}else {//must be ResidueLink
 								out += residueLinkToHTML(aLink);
-							}
-							
-							if (HSA_Active){
-								var d = distances[aLink.toResidue][aLink.fromResidue];
-								console.log("D:"+d);
-							}
-							
+								if (HSA_Active){
+									var d = distances[aLink.toResidue][aLink.fromResidue];
+									console.log("D:"+d);
+								}							
+							}							
 						}
 
 						out += "</table>";

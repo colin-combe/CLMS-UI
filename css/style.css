@@ -296,7 +296,7 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 
 .axis path, .axis line {
   fill: none;
-  stroke: #000;
+  stroke: #fff;
   shape-rendering: crispEdges;
 }
 
@@ -342,6 +342,7 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 	color:#fff;
 	position:fixed;
 	pointer-events:all;
+	height:400px;
 }
 .dynDiv_moveParentDiv{
 	height:20px;
@@ -446,9 +447,7 @@ tbody tr:hover td, tbody tr:hover td  {
 	height:calc(100% - 110px);
 }
 .axis{
-/*
 	fill:white;
-*/
 }
 #pepFragDiv{
 	width:400px;
