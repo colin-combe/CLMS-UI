@@ -271,29 +271,6 @@
 			}
 
 
-			function getBondName( bond ){
-
-				var resno1, resno2;
-
-				if( arguments.length > 1 ){
-					resno1 = arguments[ 0 ];
-					resno2 = arguments[ 1 ];
-				}else{
-					resno1 = bond.atom1.resno;
-					resno2 = bond.atom2.resno;
-				}
-
-				if( resno1 > resno2 ){
-					var tmp = resno1
-					resno1 = resno2;
-					resno2 = tmp;
-				}
-
-				return resno1 + "|" + resno2;
-
-			}
-				
-
 			function prepareStructure( comp ){
 
 				structure = comp.structure;
@@ -349,7 +326,7 @@
 					}
 					xlRes[ resno2 ].push( resno1 );
 
-					xlBond[ getBondName( resno1, resno2 ) ] = [ resno2, resno1 ];
+					//xlBond[ getBondName( resno1, resno2 ) ] = [ resno2, resno1 ];
 
 				} ;
 
@@ -403,9 +380,9 @@
 					name: "focusedBondRes"
 				} );
 
-				//~ comp.addBufferRepresentation( getLabelBuffer(), {
-					//~ name: "distanceLabel"
-				//~ } );
+				comp.addBufferRepresentation( getLabelBuffer(), {
+					name: "distanceLabel"
+				} );
 
 			}
 
