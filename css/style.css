@@ -226,7 +226,9 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 	float:right;
 	width:50%;
 */
+/*
 	height:100%;
+*/
 }
 
 .histoLabel{
@@ -296,7 +298,7 @@ text-transform: uppercase;margin-right:10px;font-size:0.9em;
 
 .axis path, .axis line {
   fill: none;
-  stroke: #fff;
+  stroke: #000;
   shape-rendering: crispEdges;
 }
 
@@ -442,12 +444,18 @@ tbody tr:hover td, tbody tr:hover td  {
 #spectrumPanel{
 	left: 280px;
 }
+#nglPanel{
+	left: 400px;
+	width:400px;
+}
 #graphDiv{
 
 	height:calc(100% - 110px);
 }
 .axis{
+/*
 	fill:white;
+*/
 }
 #pepFragDiv{
 	width:400px;
