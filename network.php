@@ -76,7 +76,7 @@
 		<div class="dynDiv_setLimit"><!-- div limiting movement of floaty panels -->
 
 			<div class="dynDiv" id="keyPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="keyPanel(false);"></i></div>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showKeyPanel(false);"></i></div>
 				<div class="panelInner">
 					<div id="key"><img id="defaultLinkKey" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
 				</div>					
@@ -87,52 +87,9 @@
 			</div>
 
 			<div class="dynDiv helpPanel" id="helpPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="helpPanel(false);"></i></div>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showHelpPanel(false);"></i></div>
 				<div class="panelInner">
-					<table>
-						<tbody>
-							<tr>
-								<td>Toggle the proteins between a bar and a circle</td>
-								<td>Click on protein</td>
-							</tr>
-							<tr>
-								<td>Zoom</td>
-								<td>Mouse wheel</td>
-							</tr>
-							<tr>
-								<td>Pan</td>
-								<td>Click and drag on background</td>
-							</tr>
-							<tr>
-								<td>Move protein</td>
-								<td>Click and drag on protein</td>
-							</tr>
-							<tr>
-								<td>Expand bar <br>(increases bar length until sequence is visible)</td>
-								<td>Shift_left-click on protein</td>
-							</tr>
-							<tr>
-								<td>Rotate bar</td>
-								<td>Click and drag on handles that appear at end of bar</td>
-							</tr>
-							<tr>
-								<td>Hide/show protein (and all links to it)</td>
-								<td>Right-click on protein</td>
-							</tr>
-							<tr>
-								<td>Hide links between two specific proteins</td>
-								<td>Right click on any link between those proteins</td>
-							</tr>
-							<tr>
-								<td>Show all hidden links</td>
-								<td>Right click on background</td>
-							</tr>
-							<tr>
-								<td>'Flip' self-links</td>
-								<td>Right-click on self-link</td>
-							</tr>
-						</tbody>
-					</table>
+					<?php include "./php/help.php" ?>
 				</div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
@@ -141,8 +98,8 @@
 			</div>
 
 			<div class="dynDiv" id="spectrumPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="spectrumPanel(false);"></i></div>
-				<div class="panelInner" id='spectrumDiv'></div>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
+				<div class="panelInner"><div id='spectrumDiv'></div></div> 
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
@@ -150,7 +107,7 @@
 			</div>
 			
 			<div class="dynDiv" id="nglPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="nglPanel(false);"></i></div>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showNglPanel(false);"></i></div>
 				<div class="panelInner" id='nglDiv'></div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
@@ -165,24 +122,43 @@
 
 			<div class="container">
 				<h1 class="page-header">
-					<i class="fa fa-home" onclick="window.location = './history.php';"></i>
+					<i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
 <!--
-					<select id="viewSelect" onChange="">
-						<input>None</input>
-						<input selected>Custom</input>
-					</select>
+					http://pterkildsen.com/2014/07/13/styling-a-group-of-checkboxes-as-a-dropdown-via-css-and-javascript/
 -->
-					<p class="btn">Layout:</p>
-					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
+					<div class="checkbox-dropdown" style="display:inline-block;" title="Select which views of data to show (includes Selection details and Legend)">
+						<button class="btn btn-1 btn-1a">Views&nbsp;&nbsp;<i class="fa fa-angle-down"></i></button>
+						<ul class="checkbox-dropdown-list">
+							<li>
+								<label style="top:60px;">
+									<input type="checkbox" id="keyChkBx" title="Toggle display of legend/key"
+									onclick="showKeyPanel(this.checked);" />Legend</label></li>
+							<li>
+								<label style="top:100px;">
+									<input type="checkbox" id="selectionChkBx" title="Toggle display of selection details" 
+									onclick="showSelectionPanel(this.checked)"/>Selection</label></li>
+							<li>
+								<label style="top:140px;">
+									<input type="checkbox" id="nglChkBx" title="Toggle display of 3d structure (NGL viewer)" 
+									disabled onclick="showNglPanel(this.checked);"/>3D</label></li>
+							<li>
+								<label style="top:180px;">
+									<input type="checkbox" id="nglChkBx" title="Toggle display of matrix view"
+									disabled onclick="showMatrixPanel(this.checked);"/>Matrix</label></li>
+						</ul>
+					</div>
+					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save Layout</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset Layout</button>
 					<p class="btn">Export:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportLinksCSV();">Links</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
-					<label class="btn">3D<input id="keyChkBx" onclick="nglPanel(this.checked);" type="checkbox"></label>
+<!--
+					<label class="btn">3D<input id="nglChkBx" onclick="nglPanel(this.checked);" type="checkbox"></label>
 					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="padding-left:0px;">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
+-->
 					<label class="btn" style="padding-left:0px;">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>
