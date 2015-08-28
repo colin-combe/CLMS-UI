@@ -25,17 +25,17 @@ function handlePicking( d ){
 
 		if( linkedRes ){
 
-		focusedComp.setSelection( resToSele( d.atom.resno ) );
+			focusedComp.setSelection( resToSele( d.atom.resno ) );
 			linkedComp.setSelection( resToSele( linkedRes ) );
 
-		textElm.setValue( "[" + d.atom.resno + "] " + linkedRes.join( ", " ) );
+			//~ textElm.setValue( "[" + d.atom.resno + "] " + linkedRes.join( ", " ) );
 
 		}else{
 
 			focusedComp.setSelection( "none" );
 			linkedComp.setSelection( "none" );
 
-		textElm.setValue( "none" );
+			//~ textElm.setValue( "none" );
 
 		}
 
@@ -49,13 +49,13 @@ function handlePicking( d ){
 
 			focusedBondComp.setSelection( resToSele( bondedRes ) );
 
-		textElm.setValue( bondedRes.join( ", " ) );
+			//~ textElm.setValue( bondedRes.join( ", " ) );
 
 		}else{
 
 			focusedBondComp.setSelection( "none" );
 
-		textElm.setValue( "none" );
+			//~ textElm.setValue( "none" );
 
 		}
 
@@ -68,7 +68,7 @@ function handlePicking( d ){
 		linkedComp.setSelection( "none" );
 		focusedBondComp.setSelection( "none" );
 
-		textElm.setValue( "none" );
+		//~ textElm.setValue( "none" );
 
 	}
 
@@ -123,21 +123,21 @@ function prepareStructure( comp ){
 		name: "allRes"
 	} );
 
-	comp.addRepresentation( "spacefill", {
-		sele: "none",
-		color: new THREE.Color( "fuchsia" ).getHex(),
-		scale: 1.2,
-		transparent: true,
-		opacity: 0.7,
-		name: "focusedRes"
-	} );
+	//~ comp.addRepresentation( "spacefill", {
+		//~ sele: "none",
+		//~ color: new THREE.Color( "fuchsia" ).getHex(),
+		//~ scale: 1.2,
+		//~ transparent: true,
+		//~ opacity: 0.7,
+		//~ name: "focusedRes"
+	//~ } );
 
-	comp.addRepresentation( "spacefill", {
-		sele: "none",
-		color: new THREE.Color( "fuchsia" ).getHex(),
-		scale: 0.9,
-		name: "linkedRes"
-	} );
+	//~ comp.addRepresentation( "spacefill", {
+		//~ sele: "none",
+		//~ color: new THREE.Color( "fuchsia" ).getHex(),
+		//~ scale: 0.9,
+		//~ name: "linkedRes"
+	//~ } );
 
 	stage.centerView( true );
 	comp.centerView( true );
@@ -164,7 +164,7 @@ function prepareCrosslinkData(){
 		xlRes[ resno2 ].push( resno1 );
 
 		xlBond[ getBondName( resno1, resno2 ) ] = [ resno2, resno1 ];
-			//xlBond[ getBondName( resno1, resno2 ) ] = [ resno2, resno1 ];
+
 		var a1 = structure.getAtoms( resToSele( resno1, true ), true );
 		var a2 = structure.getAtoms( resToSele( resno2, true ), true );
 
@@ -175,9 +175,8 @@ function prepareCrosslinkData(){
 	};
 
 	xlResList = Object.keys( xlRes );
-
-	stage.getRepresentationsByName( "allRes" )
-		.setSelection( resToSele( xlResList ) );
+	//~ stage.getRepresentationsByName( "allRes" )
+		//~ .setSelection( resToSele( xlResList ) );
 
 	strucComp.addRepresentation( "distance", {
 		atomPair: xlPair,
@@ -185,17 +184,18 @@ function prepareCrosslinkData(){
 		labelSize: 0.001,
 		name: "bond"
 		} );
-
+	
+	//'#5AAE61','#FDB863','#9970AB'
 	strucComp.addRepresentation( "distance", {
-		atomPair: xlPair,
+			atomPair: xlPair,
 			sele: "none",
 			color: new THREE.Color( "fuchsia" ).getHex(),
-		labelSize: 2.0,
-			scale: 2.5,
-			transparent: true,
-			opacity: 0.6,
-		name: "focusedBond"
-		} );
+			labelSize: 2.0,
+			scale: 1.5,
+			//~ transparent: true,
+			//~ opacity: 0.6,
+			name: "focusedBond"
+	} );
 
 }
 //]]>								

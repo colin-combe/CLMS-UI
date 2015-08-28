@@ -251,6 +251,7 @@
 			var distSlider = new DistanceSlider("sliderDiv", this);
 			var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
 			distSlider.brushMoved.add(onDistanceSliderChange); //add listener
+			distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
 			var scale = d3.scale.threshold()
 				.domain([0, 15, 25])
 				.range(['black', '#5AAE61','#FDB863','#9970AB']);
@@ -265,31 +266,33 @@
 					onLoad: prepareStructure,
 					sele: ":A"
 				} );
-				stage.signals.atomPicked.add( handlePicking );
+				stage.signals.onPicking.add( handlePicking );
 				
 				/* register callbacks for ngl */
 				
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
-					//~ console.log("SELECTED:", selectedResidueLinks);
-					//~ var rl = selectedResidueLinks.values()[0];
-					//~ if( rl && stage ){
-						//~ console.log( rl.fromResidue, rl.toResidue );
-						//~ stage.getRepresentationsByName( "linkedRes" )
-							//~ .setSelection( rl.fromResidue + " OR " + rl.toResidue );
-					//~ }else{
-						//~ stage.getRepresentationsByName( "linkedRes" )
+					console.log("SELECTED:", selectedLinks);
+					var rl = selectedLinks.values()[0];
+					if( rl && stage ){
+						console.log( rl.fromResidue, rl.toResidue );
+						stage.getRepresentationsByName( "allRes" )
+							.setSelection("(" + rl.fromResidue + " OR " + rl.toResidue + ") AND .CA");
+						stage.getRepresentationsByName( "focusedBond" )
+							.setSelection( resToSele(rl.fromResidue + "|" + rl.toResidue) );
+					}else{
+						//~ stage.getRepresentationsByName( "focusedBond" )
 							//~ .setSelection( "none" );
-					//~ }
-					
-					var selectedLinkCount = selectedLinks.length;
-					for (var i = 0; i < selectedLinkCount; i++) {
-						var aLink = selectedLinkArray[i];
-						if (aLink.residueLinks) {//its a ProteinLink
-							//~ out += proteinLinkToHTML(aLink);
-						}else {//must be ResidueLink
-							//~ out += residueLinkToHTML(aLink);						
-						}							
 					}
+					
+					//~ var selectedLinkCount = selectedLinks.length;
+					//~ for (var i = 0; i < selectedLinkCount; i++) {
+						//~ var aLink = selectedLinkArray[i];
+						//~ if (aLink.residueLinks) {//its a ProteinLink
+							//out += proteinLinkToHTML(aLink);
+						//~ }else {//must be ResidueLink
+							//out += residueLinkToHTML(aLink);						
+						//~ }							
+					//~ }
 					
 				});
 				
@@ -317,14 +320,11 @@
 			var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
 			var rc = rLinks.length;
 			for (var j = 0; j < rc; j++) {
-				var resLink = rLinks[j];
-				
+				var resLink = rLinks[j];				
 				var d = null;
 				if (distances[resLink.toResidue]) {
 					d = distances[resLink.toResidue][resLink.fromResidue];
 				}
-				else {console.log("*:"+resLink.toResidue);}
-				//console.log(d);
 				var d = parseFloat(d);
 				if (isNaN(d) === true){
 					d = -1;
@@ -332,6 +332,37 @@
 				resLink.colour = scale(d);
 				resLink.line.setAttribute("stroke", resLink.colour);
 			}				
+		}
+		function onDistanceSliderChange3D(scale){
+			var domain = scale.domain();
+			var lowerLimit = domain[1];
+			var upperLimit = domain[2];
+			var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+			var rc = rLinks.length;
+			
+			var within = [];
+			
+			for (var j = 0; j < rc; j++) {
+				var resLink = rLinks[j];	
+							
+				var d = null;
+				if (distances[resLink.toResidue]) {
+					d = distances[resLink.toResidue][resLink.fromResidue];
+				}
+				var d = parseFloat(d);
+				if (isNaN(d) === true){
+					d = -1;
+				}
+			
+				if (d > 0 && d < lowerLimit) {
+					within.push(resLink);
+				}
+				
+			}		
+					
+			for (var w = 0; w < within.length; w++){
+				
+			}
 		}
 						
 		/* Init filter bar */
