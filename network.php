@@ -43,7 +43,47 @@
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 		
 		<script type="text/javascript" src="/js/build/ngl.embedded.min.js"></script>
-		
+		<!-- THREE -->
+<!--
+        <script src="../js/three/three.js"></script>
+        <script src="../js/three/Detector.js"></script>
+        <script src="../js/three/controls/TrackballControls.js"></script>
+        <script src="../js/three/loaders/OBJLoader.js"></script>
+        <script src="../js/three/loaders/PLYLoader.js"></script>
+-->
+
+        <!-- LIB -->
+<!--
+        <script src="../js/lib/async.js"></script>
+        <script src="../js/lib/promise-6.0.0.min.js"></script>
+        <script src="../js/lib/sprintf.min.js"></script>
+        <script src="../js/lib/jszip.min.js"></script>
+        <script src="../js/lib/pako.min.js"></script>
+        <script src="../js/lib/lzma.js"></script>
+        <script src="../js/lib/bzip2.js"></script>
+        <script src="../js/lib/chroma.min.js"></script>
+        <script src="../js/lib/svd.js"></script>
+        <script src="../js/lib/signals.min.js"></script>
+-->
+
+        <!-- NGL -->
+<!--
+        <script src="../js/ngl/core.js"></script>
+        <script src="../js/ngl/symmetry.js"></script>
+        <script src="../js/ngl/geometry.js"></script>
+        <script src="../js/ngl/structure.js"></script>
+        <script src="../js/ngl/trajectory.js"></script>
+        <script src="../js/ngl/surface.js"></script>
+        <script src="../js/ngl/script.js"></script>
+        <script src="../js/ngl/parser.js"></script>
+        <script src="../js/ngl/loader.js"></script>
+        <script src="../js/ngl/viewer.js"></script>
+        <script src="../js/ngl/buffer.js"></script>
+        <script src="../js/ngl/representation.js"></script>
+        <script src="../js/ngl/stage.js"></script>
+        <script src="../js/ngl/example.js"></script>
+-->
+        
         <!--spectrum dev-->
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
@@ -73,7 +113,9 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
     </head>
     <body>
-		<div class="dynDiv_setLimit"><!-- div limiting movement of floaty panels -->
+<!--
+		<div class="dynDiv_setLimit">
+-->
 
 			<div class="dynDiv" id="keyPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showKeyPanel(false);"></i></div>
@@ -97,15 +139,6 @@
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
 
-			<div class="dynDiv" id="spectrumPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
-				<div class="panelInner"><div id='spectrumDiv'></div></div> 
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>
-			</div>
-			
 			<div class="dynDiv" id="nglPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showNglPanel(false);"></i></div>
 				<div class="panelInner" id='nglDiv'></div>
@@ -113,9 +146,22 @@
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>
 				<div class="dynDiv_resizeDiv_br"></div>
+			</div>			
+			
+			<div class="dynDiv" id="spectrumPanel">
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
+				<div class="panelInner" id='spectrumDiv'></div> 
+				<div class="dynDiv_resizeDiv_tl"></div>
+				<div class="dynDiv_resizeDiv_tr"></div>
+				<div class="dynDiv_resizeDiv_bl"></div>
+				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
 			
-		</div><!-- div limiting movement of floaty panels -->
+
+			
+<!--
+		</div>
+-->
 
 		<!-- Main -->
 		<div id="main">
@@ -159,14 +205,14 @@
 					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="padding-left:0px;">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
 -->
-					<label class="btn" style="padding-left:0px;">Help<input id="helpChkBx" onclick="helpPanel(this.checked)" type="checkbox"></label>
+					<label class="btn" style="padding-left:0px;">Help<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>
 
 			<div>
 				<div id="topDiv"></div>
-				<div id=splitterDiv class="horizontalSplitter"><i class="fa fa-times-circle" onclick="selectionPanel(false);"></i></div>
-				<div id="bottomDiv"><div id="selectionPanel" class="panelInner"><p>No selection.</p></div></div>
+				<div id=splitterDiv class="horizontalSplitter"><i class="fa fa-times-circle" onclick="showSelectionPanel(false);"></i></div>
+				<div id="bottomDiv"><div id="selectionDiv" class="panelInner"><p>No selection.</p></div></div>
 			</div>
 
 			<div class="controls">

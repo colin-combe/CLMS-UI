@@ -154,15 +154,15 @@
 		var
 		mode = ByRei_dynDiv.cache.modus;
 
-		console.log('Div is alter...'
-		+ '<br>ID: ' + ByRei_dynDiv.api.elem
-		+ '<br>Mode: ' + mode
-		+ '');
+		//~ console.log('Div is alter...'
+		//~ + '<br>ID: ' + ByRei_dynDiv.api.elem
+		//~ + '<br>Mode: ' + mode
+		//~ + '');
 		
-		if (ByRei_dynDiv.api.elem == 2){
+		if (ByRei_dynDiv.api.elem == 3){
 			spectrumViewer.resize();
 		}
-		else if (ByRei_dynDiv.api.elem == 3){
+		else if (ByRei_dynDiv.api.elem == 2){
 			stage.viewer.onWindowResize();
 		}
 		
@@ -173,7 +173,8 @@
 	var spectrumViewer = new SpectrumViewer(spectrumSVG);
 
 	function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
-		spectrumPanel(true);
+		spectrumViewer.clear();
+		showSpectrumPanel(true);
 		var xmlhttp = new XMLHttpRequest();
 		var url = "./php/spectra.php";
 		var params =  "id=" + id;
@@ -383,7 +384,7 @@
 		//register callbacks
 		xlv.linkSelectionCallbacks.push(function (selectedLinks){
 			//console.log("SELECTED:", selectedLinks);
-			var selectionDiv = document.getElementById("selectionPanel");
+			var selectionDiv = document.getElementById("selectionDiv");
 			var selectedLinkArray = selectedLinks.values();
 			var selectedLinkCount = selectedLinkArray.length;
 			if (selectedLinkCount === 0) {
