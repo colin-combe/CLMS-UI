@@ -25,19 +25,17 @@
 	/*
 	 *views dropdown
 	 */ 
-	//~ $(".checkbox-dropdown").click(function () {
-		//~ $(this).toggleClass("is-active");
-	//~ });
-//~ 
-	//~ $(".checkbox-dropdown ul").click(function(e) {
-		//~ e.stopPropagation();
-	//~ }); 
-	var dropdownDiv = document.getElementsByClassName("checkbox-dropdown")[0];
-	dropdownDiv.onclick = function (){
-		dropdownDiv.setAttribute("class", "is-active");
-	};
-	 
-	 
+	// $(".checkbox-dropdown").click(function () {
+		// $(this).toggleClass("is-active");
+	// });
+	// $(".checkbox-dropdown ul").click(function(e) {
+		// e.stopPropagation();
+	// }); 
+	//~ var dropdownDiv = document.getElementsByClassName("checkbox-dropdown")[0];
+	//~ dropdownDiv.onclick = function (){
+		//~ dropdownDiv.setAttribute("class", "is-active");
+	//~ };
+	
 	/*
 	 * Horizontal splitter JS
 	 */
@@ -86,7 +84,7 @@
 	 *  Hide / show floaty panels (including Selection)
 	 *
 	 */		
-	var selChkBx = {};//document.getElementById('selectionChkBx');
+	var selChkBx = document.getElementById('selectionChkBx');
 	selChkBx.checked = true;
 	var showSelectionPanel = function (show) {
 		var bd = d3.select('#bottomDiv');
@@ -137,16 +135,18 @@
 			sp.style('display', 'block');
 		} else {
 			sp.style('display', 'none');
-			//topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
 		}
 	}
-	var showNglPanel = function (show) {
+	function showNglPanel(show) {
 		var np = d3.select('#nglPanel');
 		if (show) {
 			np.style('display', 'block');
 		} else {
 			np.style('display', 'none');
-			//topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+		}
+		document.getElementById('nglChkBx').checked = show;
+		if (!stage){
+			initNGL();
 		}
 	}
 	// Resizing of panels
@@ -222,56 +222,12 @@
 				.domain([0, 15, 25])
 				.range(['black', '#5AAE61','#FDB863','#9970AB']);
 			onDistanceSliderChange(scale);
-				
-			//create 3D network viewer
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-			NGL.init( function(){
-				stage = new NGL.Stage( "nglDiv" );
-				
-				stage.loadFile( "rcsb://1AO6", {
-					onLoad: prepareStructure,
-					sele: ":A"
-				} );
-				stage.signals.onPicking.add( handlePicking );
-				
-				/* register callbacks for ngl */
-				
-				xlv.linkSelectionCallbacks.push(function (selectedLinks){
-					console.log("SELECTED:", selectedLinks);
-					var rl = selectedLinks.values()[0];
-					if( rl && rl.toResidue && stage ){
-						console.log( rl.fromResidue, rl.toResidue );
-						stage.getRepresentationsByName( "allRes" )
-							.setSelection("(" + rl.fromResidue + " OR " + rl.toResidue + ") AND .CA");
-						stage.getRepresentationsByName( "focusedBond" )
-							.setSelection( resToSele(rl.fromResidue + "|" + rl.toResidue) );
-					}else{
-						stage.getRepresentationsByName( "allRes" )
-							.setSelection(resToSele( xlResList ));
-						stage.getRepresentationsByName( "focusedBond" )
-							.setSelection("*");					}
-					
-				});
-				
-				//~ xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
-					//~ console.log("HIGHLIGHTED:", highlightedLinks);
-					//~ var rl = highlightedLinks.values()[0];
-					//~ if( rl && stage ){
-						//~ console.log( rl.fromResidue, rl.toResidue );
-						//~ stage.getRepresentationsByName( "focusedBondRes" )
-							//~ .setSelection( rl.fromResidue + " OR " + rl.toResidue );
-					//~ }else{
-						//~ stage.getRepresentationsByName( "focusedBondRes" )
-							//~ .setSelection( "none" );
-					//~ }
-				//~ });				
-			} );
-					
-			
+							
 		}
-		//~ } else {
+		else {
+			document.getElementById('nglCbLabel').setAttribute('style','display:none;');
+		}		
 		document.getElementById('linkColourSelect').setAttribute('style','display:none;');
-		//~ }		
 			
 		function onDistanceSliderChange(scale){
 			var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();

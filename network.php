@@ -172,6 +172,7 @@
 <!--
 					http://pterkildsen.com/2014/07/13/styling-a-group-of-checkboxes-as-a-dropdown-via-css-and-javascript/
 -->
+<!--
 					<div class="checkbox-dropdown" style="display:inline-block;" title="Select which views of data to show (includes Selection details and Legend)">
 						<button class="btn btn-1 btn-1a">Views&nbsp;&nbsp;<i class="fa fa-angle-down"></i></button>
 						<ul class="checkbox-dropdown-list">
@@ -193,19 +194,23 @@
 									disabled onclick="showMatrixPanel(this.checked);"/>Matrix</label></li>
 						</ul>
 					</div>
-					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save Layout</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset Layout</button>
+-->
+					<p class="btn">Layout:</p>
+					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 					<p class="btn">Export:</p>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportLinksCSV();">Links</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
-<!--
-					<label class="btn">3D<input id="nglChkBx" onclick="nglPanel(this.checked);" type="checkbox"></label>
-					<label class="btn">Key<input id="keyChkBx" onclick="keyPanel(this.checked);" type="checkbox"></label>
-					<label class="btn" style="padding-left:0px;">Selection<input id="selectionChkBx" onclick="selectionPanel(this.checked)" type="checkbox"></label>
--->
-					<label class="btn" style="padding-left:0px;">Help<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
+					<label class="btn" style="display:none;">Legend
+							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
+					<label class="btn" style="margin-left:20px;padding-left:0px;">Selection
+							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label>
+					<label id="nglCbLabel" class="btn" style="padding-left:0px;">3D
+							<input id="nglChkBx" onclick="showNglPanel(this.checked);" type="checkbox"></label>
+					<label class="btn" style="padding-left:0px;display:none;">Help
+							<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>
 

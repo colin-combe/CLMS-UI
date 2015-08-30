@@ -1,8 +1,8 @@
 <script>
 //<![CDATA[
-	
- "use strict";	
- 
+
+ "use strict";
+
 var xlRes = {};
 var xlResList = [];
 var xlBond = {};
@@ -10,7 +10,55 @@ var xlPair = [];
 
 var structure;
 var strucComp;
-	 
+
+function initNGL(){
+	//create 3D network viewer
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	else {
+		NGL.init( function(){
+		stage = new NGL.Stage( "nglDiv" );
+
+		stage.loadFile( "rcsb://1AO6", {
+			onLoad: prepareStructure,
+			sele: ":A"
+		} );
+		//~ stage.signals.onPicking.add( handlePicking );
+
+		/* register callbacks for ngl */
+
+		xlv.linkSelectionCallbacks.push(function (selectedLinks){
+			console.log("SELECTED:", selectedLinks);
+			var rl = selectedLinks.values()[0];
+			if( rl && rl.toResidue && stage ){
+				console.log( rl.fromResidue, rl.toResidue );
+				stage.getRepresentationsByName( "allRes" )
+					.setSelection("(" + rl.fromResidue + " OR " + rl.toResidue + ") AND .CA");
+				stage.getRepresentationsByName( "focusedBond" )
+					.setSelection( rl.fromResidue + " OR " + rl.toResidue );//resToSele(rl.fromResidue + "|" + rl.toResidue) );
+			}else{
+				stage.getRepresentationsByName( "allRes" )
+					.setSelection("none");//resToSele( xlResList ));
+				stage.getRepresentationsByName( "focusedBond" )
+					.setSelection("none");					
+				}
+			});
+		});
+
+		//~ xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
+			//~ console.log("HIGHLIGHTED:", highlightedLinks);
+			//~ var rl = highlightedLinks.values()[0];
+			//~ if( rl && stage ){
+				//~ console.log( rl.fromResidue, rl.toResidue );
+				//~ stage.getRepresentationsByName( "focusedBondRes" )
+					//~ .setSelection( rl.fromResidue + " OR " + rl.toResidue );
+			//~ }else{
+				//~ stage.getRepresentationsByName( "focusedBondRes" )
+					//~ .setSelection( "none" );
+			//~ }
+		//~ });
+	}
+}
+
 function handlePicking( d ){
 
 	var focusedComp = stage.getRepresentationsByName( "focusedRes" );
@@ -114,7 +162,7 @@ function prepareStructure( comp ){
 
 	comp.requestGuiVisibility( false );
 
-	comp.addRepresentation( "cartoon", { color: "residueindex" } );
+	comp.addRepresentation( "cartoon", {color: "#cccccc"});//"residueindex" } );
 
 	comp.addRepresentation( "spacefill", {
 		sele: "none",
@@ -122,33 +170,33 @@ function prepareStructure( comp ){
 		scale: 0.6,
 		name: "allRes"
 	} );
+/*
+	comp.addRepresentation( "spacefill", {
+		sele: "none",
+		color: new THREE.Color( "fuchsia" ).getHex(),
+		scale: 1.2,
+		transparent: true,
+		opacity: 0.7,
+		name: "focusedRes"
+	} );
 
-	//~ comp.addRepresentation( "spacefill", {
-		//~ sele: "none",
-		//~ color: new THREE.Color( "fuchsia" ).getHex(),
-		//~ scale: 1.2,
-		//~ transparent: true,
-		//~ opacity: 0.7,
-		//~ name: "focusedRes"
-	//~ } );
-
-	//~ comp.addRepresentation( "spacefill", {
-		//~ sele: "none",
-		//~ color: new THREE.Color( "fuchsia" ).getHex(),
-		//~ scale: 0.9,
-		//~ name: "linkedRes"
-	//~ } );
-
+	comp.addRepresentation( "spacefill", {
+		sele: "none",
+		color: new THREE.Color( "fuchsia" ).getHex(),
+		scale: 0.9,
+		name: "linkedRes"
+	} );
+*/
 	stage.centerView( true );
 	comp.centerView( true );
-	
+
 	prepareCrosslinkData();
 }
 
 function prepareCrosslinkData(){
-	
+
 	var residueLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-	
+
 	for (var i = 0; i < residueLinks.length; i++){
 		var rl = residueLinks[i];
 		var resno1 = rl.fromResidue;
@@ -175,16 +223,17 @@ function prepareCrosslinkData(){
 	};
 
 	xlResList = Object.keys( xlRes );
-	//~ stage.getRepresentationsByName( "allRes" )
-		//~ .setSelection( resToSele( xlResList ) );
 
+	stage.getRepresentationsByName( "allRes" )
+		.setSelection( resToSele( xlResList ) );
+ /*
 	strucComp.addRepresentation( "distance", {
 		atomPair: xlPair,
 		color: new THREE.Color( "lightgrey" ).getHex(),
 		labelSize: 0.001,
 		name: "bond"
 		} );
-	
+*/
 	//'#5AAE61','#FDB863','#9970AB'
 	strucComp.addRepresentation( "distance", {
 			atomPair: xlPair,
@@ -198,5 +247,5 @@ function prepareCrosslinkData(){
 	} );
 
 }
-//]]>								
+//]]>
 </script>
