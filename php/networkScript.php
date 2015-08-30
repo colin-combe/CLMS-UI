@@ -169,8 +169,8 @@
 	};
 
 	//init spectrum viewer
-	var spectrumSVG = document.getElementById('spectrumDiv');
-	var spectrumViewer = new SpectrumViewer(spectrumSVG);
+	var spectrumDiv = document.getElementById('spectrumDiv');
+	var spectrumViewer = new SpectrumViewer(spectrumDiv);
 
 	function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 		spectrumViewer.clear();
@@ -210,42 +210,7 @@
 		?>
 		
 		if (HSA_Active){
-			/*var distances = [[]];
-			d3.csv("../HSA_dist2.csv", function(eucData){
-				for (var d = 0; d < eucData.length; d++){
-					var euc = eucData[d];
-					linkPos1 = parseInt(euc.FromResidue);	
-					linkPos2 = parseInt(euc.ToResidue);	
-					eucDist = parseFloat(euc.Angstrom);
-					var fromAA = euc.FromAA.trim();
-					var toAA = euc.ToAA.trim();
-					//LYS#SER#TYR#THR
-					//~ if (eucDist <= 34 && (fromAA == 'LYS'
-						//~ || fromAA == 'SER'
-						//~ || fromAA == 'TYR'
-						//~ || fromAA == 'THR'
-						//~ || toAA == 'LYS'
-						//~ || toAA == 'SER'
-						//~ || toAA == 'TYR'
-						//~ || toAA == 'THR')
-						//~ ){
-						if (linkPos1 > linkPos2){
-							var swap = linkPos2;
-							linkPos2 = linkPos1;
-							linkPos1 = swap;
-						}
-						//~ if (!distances[linkPos1]){
-							//~ distances[linkPos1] = [];
-						//~ }
-						if (!distances[linkPos2]){
-							distances[linkPos2] = [];
-						}
-						//console.log(linkPos1 + " " +linkPos2 + " " + eucDist);
-						distances[linkPos2][linkPos1] = eucDist.toFixed(4); 
-					//~ }
-				}
-				console.log(JSON.stringify(distances));
-			});*/
+
 				
 			/*Distance slider */
 			var distSliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
@@ -274,41 +239,32 @@
 				xlv.linkSelectionCallbacks.push(function (selectedLinks){
 					console.log("SELECTED:", selectedLinks);
 					var rl = selectedLinks.values()[0];
-					if( rl && stage ){
+					if( rl && rl.toResidue && stage ){
 						console.log( rl.fromResidue, rl.toResidue );
 						stage.getRepresentationsByName( "allRes" )
 							.setSelection("(" + rl.fromResidue + " OR " + rl.toResidue + ") AND .CA");
 						stage.getRepresentationsByName( "focusedBond" )
 							.setSelection( resToSele(rl.fromResidue + "|" + rl.toResidue) );
 					}else{
-						//~ stage.getRepresentationsByName( "focusedBond" )
-							//~ .setSelection( "none" );
-					}
-					
-					//~ var selectedLinkCount = selectedLinks.length;
-					//~ for (var i = 0; i < selectedLinkCount; i++) {
-						//~ var aLink = selectedLinkArray[i];
-						//~ if (aLink.residueLinks) {//its a ProteinLink
-							//out += proteinLinkToHTML(aLink);
-						//~ }else {//must be ResidueLink
-							//out += residueLinkToHTML(aLink);						
-						//~ }							
-					//~ }
+						stage.getRepresentationsByName( "allRes" )
+							.setSelection(resToSele( xlResList ));
+						stage.getRepresentationsByName( "focusedBond" )
+							.setSelection("*");					}
 					
 				});
 				
-				xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
-					console.log("HIGHLIGHTED:", highlightedLinks);
-					var rl = highlightedLinks.values()[0];
-					if( rl && stage ){
-						console.log( rl.fromResidue, rl.toResidue );
-						stage.getRepresentationsByName( "focusedBondRes" )
-							.setSelection( rl.fromResidue + " OR " + rl.toResidue );
-					}else{
-						stage.getRepresentationsByName( "focusedBondRes" )
-							.setSelection( "none" );
-					}
-				});				
+				//~ xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
+					//~ console.log("HIGHLIGHTED:", highlightedLinks);
+					//~ var rl = highlightedLinks.values()[0];
+					//~ if( rl && stage ){
+						//~ console.log( rl.fromResidue, rl.toResidue );
+						//~ stage.getRepresentationsByName( "focusedBondRes" )
+							//~ .setSelection( rl.fromResidue + " OR " + rl.toResidue );
+					//~ }else{
+						//~ stage.getRepresentationsByName( "focusedBondRes" )
+							//~ .setSelection( "none" );
+					//~ }
+				//~ });				
 			} );
 					
 			

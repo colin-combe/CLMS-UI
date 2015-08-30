@@ -228,7 +228,13 @@ background-color: white;
   stroke: #000;
   shape-rendering: crispEdges;
 }
-
+.peakAnnot{
+	font-size:12px;
+}
+.fragBar{
+	stroke-width:1.3px;
+	stroke-linecap:round;
+}
 #matrixDiv{
 	height:100%;
 }

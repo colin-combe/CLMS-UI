@@ -59,7 +59,7 @@ header('Content-type: text/html; charset=utf-8');
 					<button class='btn btn-1 btn-1a' onclick='aggregate();'>Aggregate</button>
 					<?php
 						if ($_SESSION['session_name'] == "adam"){
-							echo "<button class='btn btn-1 btn-1a' onclick='aggregate3D();'>3D</button>";
+							//~ echo "<button class='btn btn-1 btn-1a' onclick='aggregate3D();'>3D</button>";
 							echo "<button class='btn btn-1 btn-1a' onclick='aggregateMatrix();'>Matrix</button>";
 						}
 					?>

@@ -86,10 +86,10 @@
         
         <!--spectrum dev-->
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
-        <script type="text/javascript" src="../spectrum/src/PeptideFragmentationKey.js"></script>
+        <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotation.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotations.js"></script>
 
 		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
         
