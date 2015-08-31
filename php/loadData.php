@@ -45,11 +45,11 @@
 		$filename = $line['file_name'];
 		$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'-'.$filename.'"';	
 		if (($i + 1) < count($id_rands)){
-				$searchesShown = $searchesShown.',';
-			}
+			$searchesShown = $searchesShown.',';
 		}
+	}
 	echo $searchesShown."};\n";
-	
+		
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;";
 		include('./php/distances.php');

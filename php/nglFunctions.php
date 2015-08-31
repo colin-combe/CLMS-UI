@@ -224,8 +224,8 @@ function prepareCrosslinkData(){
 
 	xlResList = Object.keys( xlRes );
 
-	stage.getRepresentationsByName( "allRes" )
-		.setSelection( resToSele( xlResList ) );
+	//~ stage.getRepresentationsByName( "allRes" )
+		//~ .setSelection( resToSele( xlResList ) );
  /*
 	strucComp.addRepresentation( "distance", {
 		atomPair: xlPair,

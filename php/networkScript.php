@@ -209,8 +209,11 @@
 		include '../annotations.php';
 		?>
 		
+		var s = d3.map(searchesShown);
+		var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
+		document.title = title;
+		
 		if (HSA_Active){
-
 				
 			/*Distance slider */
 			var distSliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
