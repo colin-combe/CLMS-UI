@@ -213,6 +213,10 @@
 		var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
 		document.title = title;
 		
+		if (s.keys().length > 1) {
+			showKeyPanel(true);
+		}
+		
 		if (HSA_Active){
 				
 			/*Distance slider */
@@ -250,6 +254,7 @@
 			}				
 		}
 		function onDistanceSliderChange3D(scale){
+			showKeyPanel(false);
 			var domain = scale.domain();
 			var lowerLimit = domain[1];
 			var upperLimit = domain[2];
