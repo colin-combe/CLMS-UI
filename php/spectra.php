@@ -32,11 +32,12 @@ $result = pg_prepare($dbconn, "my_query",
 $export = pg_execute($dbconn, "my_query", [$id]);
 $fields = pg_num_fields ( $export );
 
+$header = "";
 for ( $i = 0; $i < $fields; $i++ )
 {
     $header .= pg_field_name( $export , $i ) . ",";
 }
-
+$data = "";
 while( $row = pg_fetch_row( $export ) )
 {
     $line = '';
