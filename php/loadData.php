@@ -21,6 +21,13 @@
 
 	$startTime = microtime(true);
 	$sid = urldecode($_GET["sid"]);
+	
+	$showDecoys = urldecode($_GET["decoys"]);
+	$showAll = urldecode($_GET["all"]);
+	
+	echo "// decoys?:".$showDecoys."\n";
+	echo "// all?:".$showAll."\n";
+	
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
 		header();
@@ -85,20 +92,27 @@
 		$q_makeTempMatchedPeptides =
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
 			. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
-			. ' spectrum_match.autovalidated, spectrum_match.validated, '
+			. ' spectrum_match.autovalidated, '
+			. ($showAll ? 
+					'CASE WHEN spectrum_match.validated IS NULL THEN \'?\' ELSE spectrum_match.validated  END AS validated, ' 
+					: 'spectrum_match.validated, ')
 			. ' spectrum_match.search_id, v_export_materialized.scan_number, v_export_materialized.run_name, peptide.sequence AS pepseq  INTO TEMPORARY '
 			. $peptidesTempTableName
 			. ' FROM '
 			. '  matched_peptide inner join '
-			. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$id . ' AND dynamic_rank = true AND spectrum_match.is_decoy != true'
-			. ' AND ((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
+			. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$id . ' AND dynamic_rank = true'
+			. ($showDecoys ? '' : ' AND spectrum_match.is_decoy != true')
+			. ($showAll ? ' AND spectrum_match.score > 1' : ' AND ((spectrum_match.autovalidated = true AND (spectrum_match.rejected != true  OR spectrum_match.rejected is null)) OR'
 			. ' (spectrum_match.validated LIKE \'A\') OR (spectrum_match.validated LIKE \'B\') OR (spectrum_match.validated LIKE \'C\')  '
-			. ' OR (spectrum_match.validated LIKE \'?\')) ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
+			. ' OR (spectrum_match.validated LIKE \'?\'))')
+			. ' ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
 			. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
 			. ' inner join search ON spectrum_match.search_id = search.id '
 			. ' inner join v_export_materialized ON spectrum_match.id = v_export_materialized.spectrum_match_id '
 			. ' WHERE search.random_id = \''.$randId.'\''
 			. ' AND matched_peptide.link_position != -1;';
+		
+		echo "\n//Query:".$q_makeTempMatchedPeptides;
 			
 		$q_makeTempHasProtein =
 			'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
