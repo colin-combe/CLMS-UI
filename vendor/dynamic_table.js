@@ -109,7 +109,7 @@ function DynamicTable(obj, options){
 			filter.type = "text";
 			filter.style.float = "left";
 			filter.className = "dynamic-table-filter";
-			DynamicTableEvent.observe(filter, "keypress", this._filterRows);
+			DynamicTableEvent.observe(filter, "keyup", this._filterRows);
 			this.filters.push(filter);
 
 			// button for sorting
@@ -301,7 +301,7 @@ DynamicTable.prototype.pager = function(page){
  * Filter rows by substring
  */
 DynamicTable.prototype.filterRows = function(evt){
-    if (evt.keyCode == 13){
+    //~ if (evt.keyCode == 13){
 	var tTable = this.table;
 
 //	for (var i = 0; i < this.filters.length; i++){
@@ -341,7 +341,7 @@ DynamicTable.prototype.filterRows = function(evt){
 	this.removeRows(this.rmRows);
 	this.pager(1);	// goto first page
 
-    }//end (evt.keyCode == 13)
+    //~ }//end (evt.keyCode == 13)
 }
 
 /**
