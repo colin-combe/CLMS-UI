@@ -542,6 +542,10 @@ tbody tr:hover td, tbody tr:hover td  {
 #keyPanel{
 	left:40px;
 }
+#keyPanel .panelInner{
+	left:40px;
+	overflow:auto;
+}
 #helpPanel{
 	left: 160px;
 }
@@ -553,6 +557,7 @@ tbody tr:hover td, tbody tr:hover td  {
 #nglPanel{
 	left: 40px;
 	width:400px;
+	height:400px;
 }
 #graphDiv{
 
