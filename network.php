@@ -89,7 +89,7 @@
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotations.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
 
 		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
         
