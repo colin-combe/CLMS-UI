@@ -287,21 +287,6 @@
 			}
 		}
 						
-		/* Init filter bar */
-		initSlider();
-		changeAnnotations();
-		xlv.selfLinksShown = document.getElementById('selfLinks').checked;
-		xlv.ambigShown = document.getElementById('ambig').checked;
-		xlv.filter = function (match) {
-			var vChar = match.validated;
-			if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
-			else if (vChar == 'B' && document.getElementById('B').checked  && (!match.score || match.score >= xlv.cutOff)) return true;
-			else if (vChar == 'C' && document.getElementById('C').checked && (!match.score || match.score >= xlv.cutOff)) return true;
-			else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
-			else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
-			else return false;
-		};
-
 		//register callbacks
 		xlv.linkSelectionCallbacks.push(function (selectedLinks){
 			//console.log("SELECTED:", selectedLinks);
@@ -403,9 +388,25 @@
 			}
 		});
 
-		xlv.initLayout();
-		xlv.checkLinks();
 		xlv.initProteins();
+		xlv.initLayout();
+		//~ xlv.checkLinks();
+		
+		/* Init filter bar */
+		initSlider();
+		changeAnnotations();
+		xlv.selfLinksShown = document.getElementById('selfLinks').checked;
+		xlv.ambigShown = document.getElementById('ambig').checked;
+		xlv.filter = function (match) {
+			var vChar = match.validated;
+			if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+			else if (vChar == 'B' && document.getElementById('B').checked  && (!match.score || match.score >= xlv.cutOff)) return true;
+			else if (vChar == 'C' && document.getElementById('C').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+			else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+			else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
+			else return false;
+		};
+
 
 
 
@@ -519,6 +520,54 @@
 		var cutoffLabel = document.getElementById("cutoffLabel");
 		cutoffLabel.innerHTML = '(' + cut + ')';
 		xlv.setCutOff(cut);
+	}
+
+	function exportSVG(){
+		var svg = xlv.getSVG();
+		var b64svg = window.btoa(svg);
+		
+		//window.open("./php/download.php?content=" + b64svg);
+		
+		/*var http = new XMLHttpRequest();
+		
+		var url = "./php/download.php";
+		var params = "content=" + b64svg;
+		http.open("POST", url, true);
+
+		//Send the proper header information along with the request
+		http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		http.setRequestHeader("Content-length", params.length);
+		http.setRequestHeader("Connection", "close");
+
+		http.onreadystatechange = function() {//Call a function when the state changes.
+			if(http.readyState == 4 && http.status == 200) {
+				console.log(http.responseText);
+			}
+		}
+		http.send(params);*/
+		
+		var path = "./php/download.php";
+		var method = method || "post"; // Set method to post by default if not specified.
+
+		// The rest of this code assumes you are not using a library.
+		// It can be made less wordy if you use one.
+		var form = document.createElement("form");
+		form.setAttribute("method", method);
+		form.setAttribute("action", path);
+
+		//~ for(var key in params) {
+			//~ if(params.hasOwnProperty(key)) {
+				var hiddenField = document.createElement("input");
+				hiddenField.setAttribute("type", "hidden");
+				hiddenField.setAttribute("name", "content");
+				hiddenField.setAttribute("value", b64svg);
+
+				form.appendChild(hiddenField);
+			 //~ }
+		//~ }
+
+		document.body.appendChild(form);
+		form.submit();
 	}
 
 	function residueCount() {

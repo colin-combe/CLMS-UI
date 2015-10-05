@@ -202,7 +202,7 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportLinksCSV();">Links</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportSVG();">SVG</button>
+					<button class="btn btn-1 btn-1a" onclick="exportSVG();">SVG</button>
 					<label class="btn" style="display:none;">Legend
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="margin-left:20px;padding-left:0px;">Selection
