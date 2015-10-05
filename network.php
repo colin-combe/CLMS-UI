@@ -89,7 +89,7 @@
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotations.js"></script>
 
 		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
         
@@ -203,13 +203,13 @@
 					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
 					<button class="btn btn-1 btn-1a" onclick="exportSVG();">SVG</button>
-					<label class="btn" style="display:none;">Legend
+					<label class="btn">Legend
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="margin-left:20px;padding-left:0px;">Selection
 							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label>
 					<label id="nglCbLabel" class="btn" style="padding-left:0px;">3D
 							<input id="nglChkBx" onclick="showNglPanel(this.checked);" type="checkbox"></label>
-					<label class="btn" style="padding-left:0px;display:none;">Help
+					<label class="btn" style="padding-left:0px;">Help
 							<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
 				</h1>
    	 		</div>

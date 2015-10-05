@@ -49,7 +49,7 @@
 	var main = document;//.getElementById("main");
 	splitterDiv.onmousedown = function(evt) {
 		splitterDragging = true;
-	}
+	};
 	main.onmousemove = function(evt) {
 		if (splitterDragging === true || !evt){
 			var element = topDiv;
@@ -76,7 +76,12 @@
 	}
 	main.onmousemove();
 	window.onresize = function(event) {
-		main.onmousemove();//event);
+		if (selChkBx.checked == true) {
+			main.onmousemove();//event);}
+		} else {
+			var topDivHeight = window.innerHeight - top - marginBottom;
+			topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+		}
 	};
 	
 	/*
