@@ -39,7 +39,6 @@
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 		
 	$id_rands = explode("," , $sid);
-	$xwalk = false;
 	$searchesShown = 'var searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$agg = $id_rands[$i];
@@ -56,7 +55,7 @@
 		}
 	}
 	echo $searchesShown."};\n";
-		
+	echo "xlv.sid = ".$id.";\n";	
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;";
 		include('./php/distances.php');
@@ -86,7 +85,7 @@
 				. " WHERE t1.search_id = " . $id . " AND t2.search_id IS NULL;";
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-			echo "xlv.setLayout('" . $line["l"] . "');";
+			//echo "xlv.setLayout('" . $line["l"] . "');";
 		}
 
 		$q_makeTempMatchedPeptides =
