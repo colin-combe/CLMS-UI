@@ -79,6 +79,12 @@
 		if (selChkBx.checked == true) {
 			main.onmousemove();//event);}
 		} else {
+			var element = topDiv;
+			var top = 0;
+			do {
+				top += element.offsetTop  || 0;
+				element = element.offsetParent;
+			} while(element);
 			var topDivHeight = window.innerHeight - top - marginBottom;
 			topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
 		}
