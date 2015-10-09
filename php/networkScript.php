@@ -236,7 +236,7 @@
 			var distSlider = new DistanceSlider("sliderDiv", this);
 			var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
 			distSlider.brushMoved.add(onDistanceSliderChange); //add listener
-			distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
+			//distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
 			var scale = d3.scale.threshold()
 				.domain([0, 15, 25])
 				.range(['black', '#5AAE61','#FDB863','#9970AB']);
@@ -399,15 +399,8 @@
 			}
 		});
 
-		xlv.initProteins();
-		xlv.initLayout();
-		//~ xlv.checkLinks();
-		
-		/* Init filter bar */
+		//probs here
 		initSlider();
-		changeAnnotations();
-		xlv.selfLinksShown = document.getElementById('selfLinks').checked;
-		xlv.ambigShown = document.getElementById('ambig').checked;
 		xlv.filter = function (match) {
 			var vChar = match.validated;
 			if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
@@ -416,7 +409,16 @@
 			else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
 			else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
 			else return false;
-		};
+		};	
+		xlv.checkLinks();
+		xlv.initLayout();
+		xlv.initProteins();
+		
+		/* Init filter bar */
+		changeAnnotations();
+		xlv.selfLinksShown = document.getElementById('selfLinks').checked;
+		xlv.ambigShown = document.getElementById('ambig').checked;
+
 
 
 

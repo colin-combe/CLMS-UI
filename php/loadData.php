@@ -85,7 +85,7 @@
 				. " WHERE t1.search_id = " . $id . " AND t2.search_id IS NULL;";
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-			//echo "xlv.setLayout('" . $line["l"] . "');";
+			echo "xlv.setLayout('" . $line["l"] . "');";
 		}
 
 		$q_makeTempMatchedPeptides =
@@ -206,9 +206,9 @@
 				. '\''.$pid . '\',' 
 				. '\'' . $name . "'" . ',' 
 				. $seq . ',' 
-				. '\'' . str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["description"]))) . "'" .	','
-				. '\'' . str_replace("'", "", $line["accession"]) . '\',' 
-				. '\'' . $line["size"] . '\'' 
+			//	. '\'' . str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["description"]))) . "'" .	','
+				. '\'' . str_replace("'", "", $line["accession"]) . '\'' 
+			//	. '\'' . $line["size"] . '\'' 
 				. ");\n";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	}

@@ -89,7 +89,7 @@
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/PeakAnnotations.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
 
 		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
         
@@ -150,7 +150,18 @@
 			
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
-				<div class="panelInner" id='spectrumDiv'></div> 
+					<div style="height:40px;">
+					<button class="btn btn-1 btn-1a" onclick="exportSVG();">SVG</button>
+				<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
+						<label>losses
+		<input checked id="lossyChkBx" 
+		onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
+				type="checkbox">
+	</label>
+					</div>
+				<div class="panelInner">
+					<div><div  id='spectrumDiv'></div></div>
+				</div> 
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
 				<div class="dynDiv_resizeDiv_bl"></div>

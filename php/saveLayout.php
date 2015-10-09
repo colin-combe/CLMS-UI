@@ -25,6 +25,6 @@ $result = pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_
 // Execute the prepared query
 $sid = $_POST["sid"];
 $layout = addslashes($_POST["layout"]);
-$desc = addslashes($_POST["desc"]);
+//$desc = addslashes($_POST["desc"]);
 $result = pg_execute($dbconn, "my_query", [$sid, $layout, $result]);
 ?>
