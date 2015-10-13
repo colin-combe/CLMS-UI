@@ -1,5 +1,6 @@
 <?php
 	session_start();
+	//you could comment out following 4 lines and have no login authentication. 
 	if (!$_SESSION['session_name']) {
 		header("location:login.html");
 		exit;

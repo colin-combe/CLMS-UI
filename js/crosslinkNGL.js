@@ -1,6 +1,3 @@
-<script>
-//<![CDATA[
-
  "use strict";
 
 var xlRes = {};
@@ -247,5 +244,47 @@ function prepareCrosslinkData(){
 	} );
 
 }
-//]]>
-</script>
+
+
+/*
+		<!-- THREE -->
+<!--
+        <script src="../js/three/three.js"></script>
+        <script src="../js/three/Detector.js"></script>
+        <script src="../js/three/controls/TrackballControls.js"></script>
+        <script src="../js/three/loaders/OBJLoader.js"></script>
+        <script src="../js/three/loaders/PLYLoader.js"></script>
+-->
+
+        <!-- LIB -->
+<!--
+        <script src="../js/lib/async.js"></script>
+        <script src="../js/lib/promise-6.0.0.min.js"></script>
+        <script src="../js/lib/sprintf.min.js"></script>
+        <script src="../js/lib/jszip.min.js"></script>
+        <script src="../js/lib/pako.min.js"></script>
+        <script src="../js/lib/lzma.js"></script>
+        <script src="../js/lib/bzip2.js"></script>
+        <script src="../js/lib/chroma.min.js"></script>
+        <script src="../js/lib/svd.js"></script>
+        <script src="../js/lib/signals.min.js"></script>
+-->
+
+        <!-- NGL -->
+<!--
+        <script src="../js/ngl/core.js"></script>
+        <script src="../js/ngl/symmetry.js"></script>
+        <script src="../js/ngl/geometry.js"></script>
+        <script src="../js/ngl/structure.js"></script>
+        <script src="../js/ngl/trajectory.js"></script>
+        <script src="../js/ngl/surface.js"></script>
+        <script src="../js/ngl/script.js"></script>
+        <script src="../js/ngl/parser.js"></script>
+        <script src="../js/ngl/loader.js"></script>
+        <script src="../js/ngl/viewer.js"></script>
+        <script src="../js/ngl/buffer.js"></script>
+        <script src="../js/ngl/representation.js"></script>
+        <script src="../js/ngl/stage.js"></script>
+        <script src="../js/ngl/example.js"></script>
+-->
+*/

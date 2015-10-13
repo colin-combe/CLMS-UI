@@ -38,63 +38,20 @@
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
-       	<script type="text/javascript" src="./vendor/FileSaver.js"></script>
-        <script type="text/javascript" src="./vendor/Blob.js"></script>
-        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
+       	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 		
 		<script type="text/javascript" src="/js/build/ngl.embedded.min.js"></script>
-		<!-- THREE -->
-<!--
-        <script src="../js/three/three.js"></script>
-        <script src="../js/three/Detector.js"></script>
-        <script src="../js/three/controls/TrackballControls.js"></script>
-        <script src="../js/three/loaders/OBJLoader.js"></script>
-        <script src="../js/three/loaders/PLYLoader.js"></script>
--->
-
-        <!-- LIB -->
-<!--
-        <script src="../js/lib/async.js"></script>
-        <script src="../js/lib/promise-6.0.0.min.js"></script>
-        <script src="../js/lib/sprintf.min.js"></script>
-        <script src="../js/lib/jszip.min.js"></script>
-        <script src="../js/lib/pako.min.js"></script>
-        <script src="../js/lib/lzma.js"></script>
-        <script src="../js/lib/bzip2.js"></script>
-        <script src="../js/lib/chroma.min.js"></script>
-        <script src="../js/lib/svd.js"></script>
-        <script src="../js/lib/signals.min.js"></script>
--->
-
-        <!-- NGL -->
-<!--
-        <script src="../js/ngl/core.js"></script>
-        <script src="../js/ngl/symmetry.js"></script>
-        <script src="../js/ngl/geometry.js"></script>
-        <script src="../js/ngl/structure.js"></script>
-        <script src="../js/ngl/trajectory.js"></script>
-        <script src="../js/ngl/surface.js"></script>
-        <script src="../js/ngl/script.js"></script>
-        <script src="../js/ngl/parser.js"></script>
-        <script src="../js/ngl/loader.js"></script>
-        <script src="../js/ngl/viewer.js"></script>
-        <script src="../js/ngl/buffer.js"></script>
-        <script src="../js/ngl/representation.js"></script>
-        <script src="../js/ngl/stage.js"></script>
-        <script src="../js/ngl/example.js"></script>
--->
-        
-        <!--spectrum dev-->
+		<script type="text/javascript" src="./vendor/spectrum.js"></script>
+        <!--spectrum dev
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
-
-		<script type="text/javascript" src="../distance-slider/DistanceSlider.js"></script>
-        
-
-        <!--xiNET dev-->
+		-->
+		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
+		<!--<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+        xiNET dev-->
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/TouchEvents.js"></script>
@@ -110,7 +67,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
+               
     </head>
     <body>
 <!--
@@ -183,37 +140,15 @@
 <!--
 					http://pterkildsen.com/2014/07/13/styling-a-group-of-checkboxes-as-a-dropdown-via-css-and-javascript/
 -->
-<!--
-					<div class="checkbox-dropdown" style="display:inline-block;" title="Select which views of data to show (includes Selection details and Legend)">
-						<button class="btn btn-1 btn-1a">Views&nbsp;&nbsp;<i class="fa fa-angle-down"></i></button>
-						<ul class="checkbox-dropdown-list">
-							<li>
-								<label style="top:60px;">
-									<input type="checkbox" id="keyChkBx" title="Toggle display of legend/key"
-									onclick="showKeyPanel(this.checked);" />Legend</label></li>
-							<li>
-								<label style="top:100px;">
-									<input type="checkbox" id="selectionChkBx" title="Toggle display of selection details" 
-									onclick="showSelectionPanel(this.checked)"/>Selection</label></li>
-							<li>
-								<label style="top:140px;">
-									<input type="checkbox" id="nglChkBx" title="Toggle display of 3d structure (NGL viewer)" 
-									disabled onclick="showNglPanel(this.checked);"/>3D</label></li>
-							<li>
-								<label style="top:180px;">
-									<input type="checkbox" id="nglChkBx" title="Toggle display of matrix view"
-									disabled onclick="showMatrixPanel(this.checked);"/>Matrix</label></li>
-						</ul>
-					</div>
--->
+
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 					<p class="btn">Export:</p>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportLinksCSV();">Links</button>
-					<button class="btn btn-1 btn-1a" onclick="xlv.exportMatchesCSV();">Matches</button>
-					<button class="btn btn-1 btn-1a" onclick="residueCount();">Residues</button>
-					<button class="btn btn-1 btn-1a" onclick="exportSVG();">SVG</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadLinks();">Links</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadMatches();">Matches</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadResidueCount();">Residues</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadSVG();">SVG</button>
 					<label class="btn">Legend
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="margin-left:20px;padding-left:0px;">Selection
@@ -228,7 +163,12 @@
 			<div>
 				<div id="topDiv"></div>
 				<div id=splitterDiv class="horizontalSplitter"><i class="fa fa-times-circle" onclick="showSelectionPanel(false);"></i></div>
-				<div id="bottomDiv"><div id="selectionDiv" class="panelInner"><p>No selection.</p></div></div>
+				<div id="bottomDiv">
+					<div id="selectionDiv" class="panelInner">
+						<p>No selection.</p>
+						<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top rght of the window. </p>
+					</div>
+				</div>
 			</div>
 
 			<div class="controls">
@@ -287,7 +227,7 @@
 								   type="checkbox"
 							/>
 						</label>
-						<label style="margin-left:20px;">Annot.:
+						<label style="margin-left:20px;">Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
 								<option selected>Custom</option>
@@ -312,8 +252,176 @@
 			</div>
 
 		</div><!-- MAIN -->
+        
+        <script type="text/javascript" src="./js/networkFrame.js"></script>
+		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
+        <script>	
+		//<![CDATA[
+			
+			"use strict";
+			
+			showSelectionPanel(false);	
+			// for NGL
+			var stage;
+			// for xiNET
+			var xlv;
+			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
+			window.addEventListener("load", function() {
 
-		<?php
-			include './php/networkScript.php';
-		?>
+				var targetDiv = document.getElementById('topDiv');
+				xlv = new xiNET.Controller(targetDiv);
+				<?php
+					include './php/loadData.php';
+					if (file_exists('../annotations.php')){
+						 include '../annotations.php';
+					}
+				?>
+				
+				var s = d3.map(searchesShown);
+				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
+				document.title = title;
+				
+				if (s.keys().length > 1) {
+					showKeyPanel(true);
+				}
+				
+				if (HSA_Active){
+						
+					/*Distance slider */
+					var distSliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
+					var distSlider = new DistanceSlider("sliderDiv", this);
+					var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+					distSlider.brushMoved.add(onDistanceSliderChange); //add listener
+					//distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
+					var scale = d3.scale.threshold()
+						.domain([0, 15, 25])
+						.range(['black', '#5AAE61','#FDB863','#9970AB']);
+					onDistanceSliderChange(scale);
+									
+				}
+				else {
+					document.getElementById('nglCbLabel').setAttribute('style','display:none;');
+				}		
+				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
+					
+								
+				//register callbacks
+				xlv.linkSelectionCallbacks.push(function (selectedLinks){
+					//console.log("SELECTED:", selectedLinks);
+					var selectionDiv = document.getElementById("selectionDiv");
+					var selectedLinkArray = selectedLinks.values();
+					var selectedLinkCount = selectedLinkArray.length;
+					if (selectedLinkCount === 0) {
+						selectionDiv.innerHTML = "<p>No selection.</p>";
+					}
+					else {
+						var out = ""
+
+						var scoresTable = "<table><tr>";
+						//~ scoresTable += "<th>Id</th>";
+						scoresTable += "<th>Protein1</th>";
+						scoresTable += "<th>PepPos1</th>";
+						scoresTable += "<th>PepSeq1</th>";
+						scoresTable += "<th>LinkPos1</th>";
+						scoresTable += "<th>Protein2</th>";
+						scoresTable += "<th>PepPos2</th>";
+						scoresTable += "<th>PepSeq2</th>";
+						scoresTable += "<th>LinkPos2</th>";
+						scoresTable += "<th>Score</th>";
+						if (xlv.autoValidatedFound === true){
+							scoresTable += "<th>Auto</th>";
+						}
+						if (xlv.manualValidatedFound === true){
+							scoresTable += "<th>Manual</th>";
+						}
+							scoresTable += "<th>Group</th>";
+						scoresTable += "<th>Run name</th>";
+						scoresTable += "<th>Scan number</th>";
+						scoresTable += "</tr>";
+
+						out +=  scoresTable;
+
+						for (var i = 0; i < selectedLinkCount; i++) {
+							var aLink = selectedLinkArray[i];
+							if (aLink.residueLinks) {//its a ProteinLink
+								out += proteinLinkToHTML(aLink);
+							}else {//must be ResidueLink
+								out += residueLinkToHTML(aLink);						
+							}							
+						}
+
+						out += "</table>";
+
+						selectionDiv.innerHTML = out;
+					}
+				});
+
+				xlv.legendCallbacks.push(function (linkColours, domainColours) {
+					var coloursKeyDiv = document.getElementById('key');
+					if ((linkColours && linkColours.domain().length > 0) || (domainColours && domainColours.domain().length > 0)){
+						var table = "<table>";
+						var domain, range;
+						if (linkColours){
+							domain = linkColours.domain();
+							range = linkColours.range();
+							for (var i = 0; i < domain.length; i ++){
+								var temp = new RGBColor(range[i%20]);
+								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
+										+ temp.toRGB() + ";'></div></td><td>"
+										+ searchesShown[domain[i]] +"</td></tr>";
+							}	
+							table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
+										+ "#000;" + ";'></div></td><td>"
+										+ "Not unique" +"</td></tr>";
+							
+						}
+						if (domainColours) {
+							domain = domainColours.domain();
+							range = domainColours.range();
+							//table += "<tr style='height:10px;'></tr>";
+							for (var i = 0; i < domain.length; i ++){
+								//make opaque version of transparent colour on white
+								//~ http://stackoverflow.com/questions/2049230/convert-rgba-color-to-rgb
+								var temp = new RGBColor(range[i%20]);
+								var opaque = {};
+								opaque.r = ((1 - 0.6) * 1) + (0.6 * (temp.r / 255));
+								opaque.g = ((1 - 0.6) * 1) + (0.6 * (temp.g / 255));
+								opaque.b = ((1 - 0.6) * 1) + (0.6 * (temp.b / 255));
+								var col = "rgb(" +Math.floor(opaque.r * 255 ) +","
+									+ Math.floor(opaque.g * 255) +","+Math.floor(opaque.b * 255)+ ")";
+								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:30px;background:"
+										+ col + ";border:1px solid "
+										+ range[i%20] + ";'></div></td><td>"
+										+ domain[i] +"</td></tr>";
+							}
+						}
+						table = table += "</table>";
+						coloursKeyDiv.innerHTML = table;
+					}
+					else {
+						coloursKeyDiv.innerHTML = '<img id="defaultLinkKey" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png">';
+					}
+				});
+
+				//all this init stuff needs looked at and tidied up
+				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
+				xlv.ambigShown = document.getElementById('ambig').checked;
+				initSlider();
+				xlv.filter = function (match) {
+					var vChar = match.validated;
+					if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'B' && document.getElementById('B').checked  && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (vChar == 'C' && document.getElementById('C').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
+					else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
+					else return false;
+				};	
+				xlv.checkLinks();
+				xlv.initLayout();
+				xlv.initProteins();				
+				changeAnnotations();
+			});
+			
+		//]]>			
+		</script>
 </html>

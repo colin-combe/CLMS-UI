@@ -17,15 +17,12 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-header('Content-Type: application/svg');
-header('Content-Disposition: attachment; filename=xiNET_output.svg');
-header('Pragma: no-cache');
-
+$contentType = $_POST["contentType"];
+$fileName = $_POST["fileName"];
 $data = base64_decode ($_POST["content"], true);
 
+header('Content-Type:'.$contentType);
+header('Content-Disposition: attachment; filename='.$fileName);
+header('Pragma: no-cache');
 echo $data;
-
-
-
-
 ?>
