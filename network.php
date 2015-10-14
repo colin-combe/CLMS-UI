@@ -41,17 +41,17 @@
        	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 		
 		<script type="text/javascript" src="/js/build/ngl.embedded.min.js"></script>
-		<!--<script type="text/javascript" src="./vendor/spectrum.js"></script>
-        spectrum dev-->
+		<script type="text/javascript" src="./vendor/spectrum.js"></script>
+        <!--spectrum dev
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
 		
 		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
-		<!--<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
-        xiNET dev-->
+		<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+        <!--xiNET dev
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/TouchEvents.js"></script>
@@ -66,7 +66,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/model/ResidueLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>-->
                
     </head>
     <body>
