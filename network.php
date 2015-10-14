@@ -107,6 +107,7 @@
 			
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
+<!--
 					<div style="height:40px;">
 					<button class="btn btn-1 btn-1a" onclick="exportSVG();">SVG</button>
 				<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
@@ -116,6 +117,8 @@
 				type="checkbox">
 	</label>
 					</div>
+-->
+				
 				<div class="panelInner">
 					<div><div  id='spectrumDiv'></div></div>
 				</div> 
@@ -404,9 +407,6 @@
 				});
 
 				//all this init stuff needs looked at and tidied up
-				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
-				xlv.ambigShown = document.getElementById('ambig').checked;
-				initSlider();
 				xlv.filter = function (match) {
 					var vChar = match.validated;
 					if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
@@ -420,6 +420,9 @@
 				xlv.initLayout();
 				xlv.initProteins();				
 				changeAnnotations();
+				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
+				xlv.ambigShown = document.getElementById('ambig').checked;
+				initSlider();
 			});
 			
 		//]]>			
