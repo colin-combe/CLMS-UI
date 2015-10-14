@@ -317,6 +317,10 @@ function downloadSVG(){
 	var svg = xlv.getSVG();
 	download(svg, 'application/svg', 'xiNET-output.svg');//+s.keys().toString());
 }
+function downloadSpectrumSVG(){
+	var svg = spectrumViewer.getSVG();
+	download(svg, 'application/svg', 'spectrum.svg');//+s.keys().toString());
+}
 					
 function download(content, contentType, fileName) {
 	var b64svg = window.btoa(content);

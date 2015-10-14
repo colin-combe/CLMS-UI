@@ -41,14 +41,14 @@
        	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 		
 		<script type="text/javascript" src="/js/build/ngl.embedded.min.js"></script>
-		<script type="text/javascript" src="./vendor/spectrum.js"></script>
-        <!--spectrum dev
+		<!--<script type="text/javascript" src="./vendor/spectrum.js"></script>
+        spectrum dev-->
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
-		-->
+		
 		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
 		<!--<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
         xiNET dev-->
@@ -107,17 +107,20 @@
 			
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
+
+				<div style="height:40px;">
+					<label>losses
+						<input id="lossyChkBx" 
+							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
+						type="checkbox">
+					</label>
 <!--
-					<div style="height:40px;">
-					<button class="btn btn-1 btn-1a" onclick="exportSVG();">SVG</button>
-				<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
-						<label>losses
-		<input checked id="lossyChkBx" 
-		onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
-				type="checkbox">
-	</label>
-					</div>
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 -->
+					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">SVG</button>
+					
+				</div>
+
 				
 				<div class="panelInner">
 					<div><div  id='spectrumDiv'></div></div>
@@ -145,7 +148,7 @@
 -->
 
 					<p class="btn">Layout:</p>
-					<button class="btn btn-1 btn-1a" onclick="saveLayout();">Save</button>
+					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 					<p class="btn">Export:</p>
 					<button class="btn btn-1 btn-1a" onclick="downloadLinks();">Links</button>
@@ -286,6 +289,7 @@
 				
 				if (s.keys().length > 1) {
 					showKeyPanel(true);
+					document.getElementById('save').setAttribute('style','display:none;');
 				}
 				
 				if (HSA_Active){

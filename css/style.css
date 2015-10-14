@@ -539,13 +539,15 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 #keyPanel, #helpPanel, #spectrumPanel, #nglPanel {
 	display:none;
-	top:100px;
+	top:80px;
 }
 #keyPanel{
-	left:40px;
+	left:10px;
 }
 #keyPanel .panelInner{
+/*
 	left:40px;
+*/
 	overflow:auto;
 }
 #helpPanel{
@@ -553,8 +555,8 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 #spectrumPanel{
 	left: 280px;
-	width:400px;
-	height:400px;
+	width:600px;
+	height:500px;
 }
 #nglPanel{
 	left: 40px;
