@@ -190,8 +190,8 @@ function onDistanceSliderChange(scale){
 	for (var j = 0; j < rc; j++) {
 		var resLink = rLinks[j];
 		var d = null;
-		if (distances[resLink.toResidue]) {
-			d = distances[resLink.toResidue][resLink.fromResidue];
+		if (xlv.distances[resLink.toResidue]) {
+			d = xlv.distances[resLink.toResidue][resLink.fromResidue];
 		}
 		var d = parseFloat(d);
 		if (isNaN(d) === true){
