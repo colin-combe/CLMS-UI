@@ -335,7 +335,9 @@ height: calc(100% - 40px);
 }
 .bar rect {
   fill: steelblue;
+/*
   shape-rendering: crispEdges;
+*/
 }
 
 .bar text {
@@ -345,7 +347,9 @@ height: calc(100% - 40px);
 .axis path, .axis line {
   fill: none;
   stroke: #000;
+/*
   shape-rendering: crispEdges;
+*/
 }
 .peakAnnot{
 	font-size:12px;
