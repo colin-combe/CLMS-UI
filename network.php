@@ -123,7 +123,7 @@
 
 				
 				<div class="panelInner">
-					<div><div  id='spectrumDiv'></div></div>
+					<div  id='spectrumDiv'></div>
 				</div> 
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
