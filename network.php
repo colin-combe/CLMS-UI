@@ -40,7 +40,10 @@
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
 		
-		<script type="text/javascript" src="/js/build/ngl.embedded.min.js"></script>
+		<script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
+		<script type="text/javascript" src="./vendor/crosslink.js"></script>
+		
+		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
 		<script type="text/javascript" src="./vendor/spectrum.js"></script>
         <!--spectrum dev
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
@@ -49,7 +52,6 @@
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
 		
-		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
 		<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
         <!--xiNET dev
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
@@ -261,6 +263,9 @@
         
         <script type="text/javascript" src="./js/networkFrame.js"></script>
 		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
+<!--
+        <script type="text/javascript" src="./js/crosslink.ngl"></script>
+-->
         <script>	
 		//<![CDATA[
 			
@@ -268,6 +273,7 @@
 			
 			showSelectionPanel(false);	
 			// for NGL
+			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";  
 			var stage;
 			// for xiNET
 			var xlv;

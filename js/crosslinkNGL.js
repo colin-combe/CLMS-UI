@@ -1,4 +1,59 @@
- "use strict";
+function initNGL(){
+	//create 3D network viewer
+	if ( ! Detector.webgl ) alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
+	else {
+		stage = new NGL.Stage( "nglDiv" );
+		stage.loadFile( "rcsb://1AO6", { sele: ":A" } ).then( function(
+		structureComp ){
+
+			var xlList = xlv.proteinLinks.values()[0].residueLinks.values();
+			
+			var xlRepr = new CrosslinkRepresentation(
+				stage, structureComp, xlList
+			);
+
+			//
+
+			function handlePicking( pickingData ){
+
+				if( pickingData.residue ){
+
+					xlRepr.setHighlightedResidues( [ pickingData.residue ] );
+					xlRepr.setHighlightedLinks(
+						xlRepr.xlData.getLinks( pickingData.residue )
+					);
+
+				}else if( pickingData.link ){
+
+					xlRepr.setHighlightedResidues( [
+						pickingData.link.fromResidue, pickingData.link.toResidue
+					] );
+					xlRepr.setHighlightedLinks( [ pickingData.link ] );
+
+				}else{
+
+					xlRepr.setHighlightedResidues( false );
+					xlRepr.setHighlightedLinks( false );
+
+				}
+
+			}
+
+			xlRepr.signals.onPicking.add( handlePicking );
+
+		} );
+
+	}
+}
+
+
+
+
+
+
+
+
+/* "use strict";
 
 var xlRes = {};
 var xlResList = [];
@@ -10,7 +65,7 @@ var strucComp;
 
 function initNGL(){
 	//create 3D network viewer
-	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	if ( ! Detector.webgl ) {alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
 	else {
 		NGL.init( function(){
 		stage = new NGL.Stage( "nglDiv" );
@@ -21,7 +76,7 @@ function initNGL(){
 		} );
 		//~ stage.signals.onPicking.add( handlePicking );
 
-		/* register callbacks for ngl */
+		 //~ register callbacks for ngl
 
 		xlv.linkSelectionCallbacks.push(function (selectedLinks){
 			console.log("SELECTED:", selectedLinks);
@@ -41,21 +96,23 @@ function initNGL(){
 			});
 		});
 
-		//~ xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
-			//~ console.log("HIGHLIGHTED:", highlightedLinks);
-			//~ var rl = highlightedLinks.values()[0];
-			//~ if( rl && stage ){
-				//~ console.log( rl.fromResidue, rl.toResidue );
-				//~ stage.getRepresentationsByName( "focusedBondRes" )
-					//~ .setSelection( rl.fromResidue + " OR " + rl.toResidue );
-			//~ }else{
-				//~ stage.getRepresentationsByName( "focusedBondRes" )
-					//~ .setSelection( "none" );
-			//~ }
-		//~ });
+		// xlv.linkHighlightsCallbacks.push(function (highlightedLinks){
+			// console.log("HIGHLIGHTED:", highlightedLinks);
+			// var rl = highlightedLinks.values()[0];
+			// if( rl && stage ){
+				// console.log( rl.fromResidue, rl.toResidue );
+				// stage.getRepresentationsByName( "focusedBondRes" )
+					// .setSelection( rl.fromResidue + " OR " + rl.toResidue );
+			// }else{
+				// stage.getRepresentationsByName( "focusedBondRes" )
+					// .setSelection( "none" );
+			// }
+		// });
 	}
 }
 
+
+/*
 function handlePicking( d ){
 
 	var focusedComp = stage.getRepresentationsByName( "focusedRes" );
@@ -167,23 +224,23 @@ function prepareStructure( comp ){
 		scale: 0.6,
 		name: "allRes"
 	} );
-/*
-	comp.addRepresentation( "spacefill", {
-		sele: "none",
-		color: new THREE.Color( "fuchsia" ).getHex(),
-		scale: 1.2,
-		transparent: true,
-		opacity: 0.7,
-		name: "focusedRes"
-	} );
 
-	comp.addRepresentation( "spacefill", {
-		sele: "none",
-		color: new THREE.Color( "fuchsia" ).getHex(),
-		scale: 0.9,
-		name: "linkedRes"
-	} );
-*/
+	//~ comp.addRepresentation( "spacefill", {
+		//~ sele: "none",
+		//~ color: new THREE.Color( "fuchsia" ).getHex(),
+		//~ scale: 1.2,
+		//~ transparent: true,
+		//~ opacity: 0.7,
+		//~ name: "focusedRes"
+	//~ } );
+//~ 
+	//~ comp.addRepresentation( "spacefill", {
+		//~ sele: "none",
+		//~ color: new THREE.Color( "fuchsia" ).getHex(),
+		//~ scale: 0.9,
+		//~ name: "linkedRes"
+	//~ } );
+
 	stage.centerView( true );
 	comp.centerView( true );
 
@@ -223,14 +280,14 @@ function prepareCrosslinkData(){
 
 	//~ stage.getRepresentationsByName( "allRes" )
 		//~ .setSelection( resToSele( xlResList ) );
- /*
-	strucComp.addRepresentation( "distance", {
-		atomPair: xlPair,
-		color: new THREE.Color( "lightgrey" ).getHex(),
-		labelSize: 0.001,
-		name: "bond"
-		} );
-*/
+ 
+	//~ strucComp.addRepresentation( "distance", {
+		//~ atomPair: xlPair,
+		//~ color: new THREE.Color( "lightgrey" ).getHex(),
+		//~ labelSize: 0.001,
+		//~ name: "bond"
+		//~ } );
+
 	//'#5AAE61','#FDB863','#9970AB'
 	strucComp.addRepresentation( "distance", {
 			atomPair: xlPair,

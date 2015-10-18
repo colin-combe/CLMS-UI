@@ -140,6 +140,18 @@ function showNglPanel(show) {
 	document.getElementById('nglChkBx').checked = show;
 	if (!stage){
 		initNGL();
+		//~ var residueLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+		//~ var stage;
+		//~ var xlRepr;
+//~ 
+		//~ NGL.init( function(){
+				//~ stage = new NGL.Stage( "nglDiv" );
+				//~ stage.loadFile( "rcsb://1AO6", { sele: ":A" } ).then(
+				//~ function( comp ){
+					//~ xlRepr = new CrosslinkRepresentation( stage, comp, residueLinks
+				//~ );
+			//~ } );
+		//~ } );
 	}
 }
 // Resizing of panels
@@ -156,7 +168,7 @@ ByRei_dynDiv.api.alter = function() {
 		spectrumViewer.resize();
 	}
 	else if (ByRei_dynDiv.api.elem == 2){
-		stage.viewer.onWindowResize();
+		//stage.handleResize();
 	}
 
 };
