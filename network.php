@@ -44,13 +44,13 @@
 		<script type="text/javascript" src="./vendor/crosslink.js"></script>
 		
 		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
-		<script type="text/javascript" src="./vendor/spectrum.js"></script>
-        <!--spectrum dev
+		<!--<script type="text/javascript" src="./vendor/spectrum.js"></script>
+        spectrum dev-->
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
 		
 		<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
         <!--xiNET dev
@@ -111,15 +111,13 @@
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
 
 				<div style="height:40px;">
-					<label>losses
+					<label>loss labels
 						<input id="lossyChkBx" 
 							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
 						type="checkbox">
 					</label>
-<!--
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
--->
-					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">SVG</button>
+					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset zoom</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download SVG</button>
 					
 				</div>
 
@@ -261,7 +259,8 @@
 
 		</div><!-- MAIN -->
         
-        <script type="text/javascript" src="./js/networkFrame.js"></script>
+        <script type="text/javascript" src="./js/SelectionPanel.js"></script>
+		<script type="text/javascript" src="./js/networkFrame.js"></script>
 		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
 <!--
         <script type="text/javascript" src="./js/crosslink.ngl"></script>
@@ -271,7 +270,7 @@
 			
 			"use strict";
 			
-			showSelectionPanel(false);	
+			showSelectionPanel(true);	
 			// for NGL
 			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";  
 			var stage;
@@ -312,62 +311,14 @@
 					onDistanceSliderChange(scale);
 									
 				}
-				else {
+				//~ else {
 					document.getElementById('nglCbLabel').setAttribute('style','display:none;');
-				}		
+				//~ }		
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					
 								
 				//register callbacks
-				xlv.linkSelectionCallbacks.push(function (selectedLinks){
-					//console.log("SELECTED:", selectedLinks);
-					var selectionDiv = document.getElementById("selectionDiv");
-					var selectedLinkArray = selectedLinks.values();
-					var selectedLinkCount = selectedLinkArray.length;
-					if (selectedLinkCount === 0) {
-						selectionDiv.innerHTML = "<p>No selection.</p>";
-					}
-					else {
-						var out = ""
-
-						var scoresTable = "<table><tr>";
-						//~ scoresTable += "<th>Id</th>";
-						scoresTable += "<th>Protein1</th>";
-						scoresTable += "<th>PepPos1</th>";
-						scoresTable += "<th>PepSeq1</th>";
-						scoresTable += "<th>LinkPos1</th>";
-						scoresTable += "<th>Protein2</th>";
-						scoresTable += "<th>PepPos2</th>";
-						scoresTable += "<th>PepSeq2</th>";
-						scoresTable += "<th>LinkPos2</th>";
-						scoresTable += "<th>Score</th>";
-						if (xlv.autoValidatedFound === true){
-							scoresTable += "<th>Auto</th>";
-						}
-						if (xlv.manualValidatedFound === true){
-							scoresTable += "<th>Manual</th>";
-						}
-							scoresTable += "<th>Group</th>";
-						scoresTable += "<th>Run name</th>";
-						scoresTable += "<th>Scan number</th>";
-						scoresTable += "</tr>";
-
-						out +=  scoresTable;
-
-						for (var i = 0; i < selectedLinkCount; i++) {
-							var aLink = selectedLinkArray[i];
-							if (aLink.residueLinks) {//its a ProteinLink
-								out += proteinLinkToHTML(aLink);
-							}else {//must be ResidueLink
-								out += residueLinkToHTML(aLink);						
-							}							
-						}
-
-						out += "</table>";
-
-						selectionDiv.innerHTML = out;
-					}
-				});
+				xlv.linkSelectionCallbacks.push(selectionPanel.updateTable);
 
 				xlv.legendCallbacks.push(function (linkColours, domainColours) {
 					var coloursKeyDiv = document.getElementById('key');

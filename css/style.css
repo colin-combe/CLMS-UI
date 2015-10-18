@@ -92,7 +92,7 @@ td:first-child{
 td:last-child{
 	padding-right:20px;
 }
-tbody tr:hover td, tbody tr:hover td a{
+tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
     color: #fff;
     background-color: #091D42;
     -webkit-transition: all 200ms ease;
@@ -458,12 +458,46 @@ height: calc(100% - 40px);
 .dynDiv_moveParentDiv{
 	height:20px;
 	background:#091D42;
+/*
+	background-image:url("../images/mv.png");
+*/
 }
 .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
 	width:20px;
 	height:20px;
 	background:#091D42;
 	border:none;
+}
+.dynDiv_resizeDiv_tl {
+/*
+ top: -1px;
+ left: -1px;
+*/
+ background-image:url("../images/tl.png");
+}
+
+.dynDiv_resizeDiv_tr {
+/*
+ top: -1px;
+ left: -1px;
+*/
+ background-image:url("../images/tr.png");
+}
+.dynDiv_resizeDiv_bl {
+/*
+ top: -1px;
+ left: -1px;
+*/
+ background-image:url("../images/bl.png");
+}
+.dynDiv_resizeDiv_br {
+/*
+ top: -1px;
+*/
+/*
+ left: -1px;
+*/
+ background-image:url("../images/br.png");
 }
 
 .panelInner{

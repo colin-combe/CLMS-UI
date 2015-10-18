@@ -33,7 +33,7 @@
 		
 		if ($searchFile == "{HSA-Active.FASTA}"){
 			echo "<td></td>";//"<td><a id=".$line['name']." href='./network_3D.php?sid=" . urlencode($urlPart) . "'>3D</a>" . "</td>";
-			echo "<td><a id=".$line['name']." href='./matrix.php?sid=" . urlencode($urlPart) . "'>#</a>" . "</td>";
+			echo "<td></td>";//<a id=".$line['name']." href='./matrix.php?sid=" . urlencode($urlPart) . "'>#</a>" . "</td>";
 			
 		}else {
 			echo "<td></td><td></td>";

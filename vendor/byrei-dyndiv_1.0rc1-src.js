@@ -794,9 +794,11 @@ var ByRei_dynDiv = {
           if (pos_y < ByRei_dynDiv.limit.min.top)  {new_top  = ByRei_dynDiv.db(5) + ByRei_dynDiv.limit.min.top;}
           else if (pos_y > ByRei_dynDiv.limit.max.top)  {new_top  = ByRei_dynDiv.db(5) + ByRei_dynDiv.limit.max.top;}
       }
-
+	  var height = window.innerHeight
+		|| document.documentElement.clientHeight
+		|| document.body.clientHeight;
       if (!isNaN(new_left)) {ByRei_dynDiv.set.left(ByRei_dynDiv.cache.obj,new_left);}
-      if (!isNaN(new_top))  {ByRei_dynDiv.set.top(ByRei_dynDiv.cache.obj,new_top);}
+      if (!isNaN(new_top) && new_top > 0 && (new_top - 30) < height)  {ByRei_dynDiv.set.top(ByRei_dynDiv.cache.obj,new_top);}
   }
  },
 
