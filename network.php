@@ -116,7 +116,7 @@
 							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
 						type="checkbox">
 					</label>
-					<button class="btn btn-1 btn-1a" onclick="spectrimViewer.resize();">Reset zoom</button>
+					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download SVG</button>
 					
 				</div>
