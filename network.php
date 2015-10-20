@@ -100,6 +100,18 @@
 
 			<div class="dynDiv" id="nglPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showNglPanel(false);"></i></div>
+				
+				<div style="height:40px;">
+					<label  class="btn">Distance labels
+						<input id="lossyChkBx" 
+							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
+						type="checkbox">
+					</label>
+					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadNGLImage();">Download image</button>
+					
+				</div>
+				
 				<div class="panelInner" id='nglDiv'></div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
@@ -111,13 +123,13 @@
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
 
 				<div style="height:40px;">
-					<label>loss labels
+					<label  class="btn">loss labels
 						<input id="lossyChkBx" 
 							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
 						type="checkbox">
 					</label>
 					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download SVG</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>
 					
 				</div>
 
@@ -150,11 +162,11 @@
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
-					<p class="btn">Export:</p>
+					<p class="btn">Download:</p>
 					<button class="btn btn-1 btn-1a" onclick="downloadLinks();">Links</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadMatches();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadResidueCount();">Residues</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadSVG();">SVG</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadSVG();">Image</button>
 					<label class="btn">Legend
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="margin-left:20px;padding-left:0px;">Selection

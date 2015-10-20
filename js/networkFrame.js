@@ -58,7 +58,7 @@ main.onmouseup = function(evt) {
 }
 main.onmousemove();
 window.onresize = function(event) {
-	if (selChkBx.checked == true) {
+	if (document.getElementById('selChkBx').checked == true) {
 		main.onmousemove();//event);}
 	} else {
 		var element = topDiv;
@@ -161,18 +161,18 @@ ByRei_dynDiv.api.alter = function() {
 	var
 	mode = ByRei_dynDiv.cache.modus;
 
-	//~ console.log('Div is alter...'
-	//~ + '<br>ID: ' + ByRei_dynDiv.api.elem
-	//~ + '<br>Mode: ' + mode
-	//~ + '');
-
-	if (ByRei_dynDiv.api.elem == 3){
-		spectrumViewer.resize();
+	console.log('Div is alter...'
+	+ '<br>ID: ' + ByRei_dynDiv.api.elem
+	+ '<br>Mode: ' + mode
+	+ '');
+	if (mode != "moveparent") {
+		if (ByRei_dynDiv.api.elem == 3){
+			spectrumViewer.resize();
+		}
+		else if (ByRei_dynDiv.api.elem == 2){
+			//stage.handleResize();
+		}
 	}
-	else if (ByRei_dynDiv.api.elem == 2){
-		//stage.handleResize();
-	}
-
 };
 
 //init spectrum viewer

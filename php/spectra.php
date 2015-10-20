@@ -25,7 +25,7 @@ $dbconn = pg_connect($connectionString)
         or die('Could not connect: ' . pg_last_error());
 // Prepare a query for execution
 $result = pg_prepare($dbconn, "my_query", 
-'SELECT expmz, absoluteintesity as absolute_intensity, fragment_name, isprimarymatch, matchedpeptide  FROM v_spec_viewer_advanced_materialized WHERE spectrum_match_id = $1;') 
+'SELECT expmz, absoluteintesity as absolute_intensity, fragment_name, isprimarymatch, matchedpeptide, sequence  FROM v_spec_viewer_advanced_materialized WHERE spectrum_match_id = $1;') 
  or die(pg_last_error());
 // Execute the prepared query
 //error_log("spec id:".$id);
