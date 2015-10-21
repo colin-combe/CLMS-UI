@@ -273,10 +273,8 @@
         
         <script type="text/javascript" src="./js/SelectionPanel.js"></script>
 		<script type="text/javascript" src="./js/networkFrame.js"></script>
+		<script type="text/javascript" src="./js/downloads.js"></script>
 		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
-<!--
-        <script type="text/javascript" src="./js/crosslink.ngl"></script>
--->
         <script>	
 		//<![CDATA[
 			
@@ -300,7 +298,7 @@
 					}
 				?>
 				
-				var s = d3.map(searchesShown);
+				var s = d3.map(xlv.searchesShown);
 				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
 				document.title = title;
 				
@@ -344,7 +342,7 @@
 								var temp = new RGBColor(range[i%20]);
 								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
 										+ temp.toRGB() + ";'></div></td><td>"
-										+ searchesShown[domain[i]] +"</td></tr>";
+										+ xlv.searchesShown[domain[i]] +"</td></tr>";
 							}	
 							table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
 										+ "#000;" + ";'></div></td><td>"

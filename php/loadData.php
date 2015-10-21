@@ -39,7 +39,7 @@
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 		
 	$id_rands = explode("," , $sid);
-	$searchesShown = 'var searchesShown = {';
+	$searchesShown = 'xlv.searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$agg = $id_rands[$i];
 		$dashPos = strpos($agg,'-');
