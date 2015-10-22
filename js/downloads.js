@@ -201,5 +201,5 @@ function getResidueCount() {
 			residueCounts.set(res, c);
 		}
 	}
-	download(csv, 'text/csv', 'residueCount.csv');
+	return csv;
 }
