@@ -68,7 +68,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/model/ResidueLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>-->
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script> -->
                
     </head>
     <body>
