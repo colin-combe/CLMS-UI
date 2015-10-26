@@ -288,7 +288,6 @@
 			var xlv;
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
-
 				var targetDiv = document.getElementById('topDiv');
 				xlv = new xiNET.Controller(targetDiv);
 				<?php
@@ -394,6 +393,9 @@
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
 				xlv.ambigShown = document.getElementById('ambig').checked;
 				initSlider();
+				
+				window.onresize();
+				
 			});
 			
 		//]]>			

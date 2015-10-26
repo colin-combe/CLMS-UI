@@ -56,7 +56,7 @@ main.onmousemove = function(evt) {
 main.onmouseup = function(evt) {
 	splitterDragging = false;
 }
-main.onmousemove();
+
 window.onresize = function(event) {
 	if (document.getElementById('selectionChkBx').checked == true) {
 		main.onmousemove();//event);}
