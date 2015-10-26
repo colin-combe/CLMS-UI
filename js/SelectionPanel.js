@@ -25,13 +25,16 @@ function SelectionPanel (targetDiv){
 	d3.select(targetDiv).selectAll("*").remove();
 	this.targetDiv = targetDiv;
 }
+
 SelectionPanel.prototype.updateTable = function(selectedLinks){
 	//console.log("SELECTED:", selectedLinks);
 	var selectionDiv = document.getElementById("selectionDiv");
 	var selectedLinkArray = selectedLinks.values();
 	var selectedLinkCount = selectedLinkArray.length;
 	if (selectedLinkCount === 0) {
-		selectionDiv.innerHTML = "<p>No selection.</p>";
+		selectionDiv.innerHTML = "<p>No selection.</p>" + 
+			"<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window.</p>";
+					
 	}
 	else {
 		var out = ""

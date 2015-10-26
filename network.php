@@ -103,8 +103,8 @@
 				
 				<div style="height:40px;">
 					<label  class="btn">Distance labels
-						<input id="lossyChkBx" 
-							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
+						<input id="distChkBx" 
+							onclick="spectrumViewer.showLossy(document.getElementById('distChkBx').checked)" 
 						type="checkbox">
 					</label>
 					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
