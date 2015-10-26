@@ -82,16 +82,16 @@ td{
     text-align: left;
 }
 th:first-child{
-	padding-left:20px;
+	padding-left:10px;
 }
 th:last-child{
-	padding-right:20px;
+	padding-right:10px;
 }
 td:first-child{
-	padding-left:20px;
+	padding-left:10px;
 }
 td:last-child{
-	padding-right:20px;
+	padding-right:10px;
 }
 tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
     color: #fff;
