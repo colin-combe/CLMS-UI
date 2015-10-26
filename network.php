@@ -44,13 +44,13 @@
 		<script type="text/javascript" src="./vendor/crosslink.js"></script>
 		
 		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
-		<!--<script type="text/javascript" src="./vendor/spectrum.js"></script>
-        spectrum dev-->
+		<script type="text/javascript" src="./vendor/spectrum.js"></script>
+        <!--spectrum dev
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
 		
 		<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
         <!--xiNET dev
