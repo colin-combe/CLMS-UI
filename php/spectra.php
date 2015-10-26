@@ -16,7 +16,10 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
-
+//
+//  spectra.php
+//
+//  authors: Colin Combe
 
 include('../../connectionString.php');
 $id = $_POST["id"];

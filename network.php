@@ -120,7 +120,7 @@
 			</div>			
 			
 			<div class="dynDiv" id="spectrumPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);"></i></div>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);selectionPanel.clearTableHighlights();"></i></div>
 
 				<div style="height:40px;">
 					<label  class="btn">loss labels

@@ -403,17 +403,11 @@ height: calc(100% - 40px);
   fill: none;
   stroke: #000;
   stroke-width: 1.2px;
-/*
-  shape-rendering: crispEdges;
-*/
 }
 
 .brush .extent {
 /*
   fill-opacity: .125;
-*/
-/*
-  shape-rendering: crispEdges;
 */
   fill:#FDB863;
 }

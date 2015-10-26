@@ -23,6 +23,7 @@ function SelectionPanel (targetDiv){
 	}
 	//avoids prob with 'save - web page complete'
 	d3.select(targetDiv).selectAll("*").remove();
+	
 	this.targetDiv = targetDiv;
 }
 
@@ -79,7 +80,7 @@ SelectionPanel.prototype.updateTable = function(selectedLinks){
 }
 
 SelectionPanel.prototype.clearTableHighlights = function(){
-
+	d3.select(this.targetDiv).selectAll("tr").classed('spectrumShown', false);
 }
 
 
@@ -105,7 +106,7 @@ SelectionPanel.residueLinkToHTML = function(residueLink){
 		var htmlTableRow = "<tr>";
 		if (typeof loadSpectra == "function"){
 			htmlTableRow = "<tr id='match" + match.id + "' onclick=\"loadSpectra('"+match.id+"','"+match.pepSeq1+"',"
-				+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");"
+				+match.linkPos1+",'"+match.pepSeq2+"',"+match.linkPos2+");selectionPanel.clearTableHighlights();"
 				+ "d3.selectAll('#match"+match.id+"').attr('class','spectrumShown');\">";
 		}
 
