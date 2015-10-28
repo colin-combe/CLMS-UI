@@ -22,8 +22,8 @@
 	$startTime = microtime(true);
 	$sid = urldecode($_GET["sid"]);
 	
-	//~ $showDecoys = urldecode($_GET["decoys"]);
-	//~ $showAll = urldecode($_GET["all"]);
+	$showDecoys = false;//urldecode($_GET["decoys"]);
+	$showAll = false;//urldecode($_GET["all"]);
 	//~ 
 	//~ echo "// decoys?:".$showDecoys."\n";
 	//~ echo "// all?:".$showAll."\n";
