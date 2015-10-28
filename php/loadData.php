@@ -22,11 +22,11 @@
 	$startTime = microtime(true);
 	$sid = urldecode($_GET["sid"]);
 	
-	$showDecoys = urldecode($_GET["decoys"]);
-	$showAll = urldecode($_GET["all"]);
-	
-	echo "// decoys?:".$showDecoys."\n";
-	echo "// all?:".$showAll."\n";
+	//~ $showDecoys = urldecode($_GET["decoys"]);
+	//~ $showAll = urldecode($_GET["all"]);
+	//~ 
+	//~ echo "// decoys?:".$showDecoys."\n";
+	//~ echo "// all?:".$showAll."\n";
 	
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
