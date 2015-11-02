@@ -17,6 +17,9 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 function SelectionPanel (targetDiv){
+    console.log ("sp this", this);
+    var self = this;
+    
 	// targetDiv could be div itself or id of div - lets deal with that
 	if (typeof targetDiv === "string"){
 		targetDiv = document.getElementById(targetDiv);
@@ -25,19 +28,128 @@ function SelectionPanel (targetDiv){
 	d3.select(targetDiv).selectAll("*").remove();
 	
 	this.targetDiv = targetDiv;
+    this.selectionShown = false;
+    
+    this.show = function (showMe) {
+        console.log ("sp show this", this);
+        this.selectionShown = showMe;
+        var bd = d3.select('#bottomDiv');
+        var splt = d3.select('#splitterDiv');
+        if (showMe) {
+            bd.style('display', 'block');
+            splt.style('display', 'block');
+            main.onmousemove();
+        } else {
+            bd.style('display', 'none');
+            splt.style('display', 'none');
+            var element = topDiv;
+            var top = 0;
+            do {
+                top += element.offsetTop  || 0;
+                element = element.offsetParent;
+            } while(element);
+            var topDivHeight = window.innerHeight - top - marginBottom;
+            topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+        }
+        //document.getElementById('selectionChkBx').checked = show;
+    }
+    
+    this.isShown = function () {
+        return this.selectionShown;
+    }
+    
+    this.updateTable = function(selectedLinks){
+        //console.log("SELECTED:", selectedLinks);
+        var selectionDiv = document.getElementById("selectionDiv");
+        var selectedLinkArray = selectedLinks.values();
+        var selectedLinkCount = selectedLinkArray.length;
+
+        var bd = d3.select('#bottomDiv');
+        var splt = d3.select('#splitterDiv');
+
+        if (selectedLinkCount === 0) {
+            //selectionDiv.innerHTML = "<p>No selection.</p>" + 
+            //	"<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window.</p>";
+            console.log ("this updateTable", this);
+            self.show (false);
+            //this.showSelectionPanel(false);
+
+        }
+        else {
+
+            if (selectionShown == false) {
+                //showSelectionPanel(true);
+                self.show (true);
+            }
+
+
+            var out = ""
+
+            var scoresTable = "<table><tr>";
+            //~ scoresTable += "<th>Id</th>";
+            scoresTable += "<th>Protein1</th>";
+            scoresTable += "<th>PepPos1</th>";
+            scoresTable += "<th>PepSeq1</th>";
+            scoresTable += "<th>LinkPos1</th>";
+            scoresTable += "<th>Protein2</th>";
+            scoresTable += "<th>PepPos2</th>";
+            scoresTable += "<th>PepSeq2</th>";
+            scoresTable += "<th>LinkPos2</th>";
+            scoresTable += "<th>Score</th>";
+            if (xlv.autoValidatedFound === true){
+                scoresTable += "<th>Auto</th>";
+            }
+            if (xlv.manualValidatedFound === true){
+                scoresTable += "<th>Manual</th>";
+            }
+                scoresTable += "<th>Group</th>";
+            scoresTable += "<th>Run name</th>";
+            scoresTable += "<th>Scan number</th>";
+            scoresTable += "</tr>";
+
+            out +=  scoresTable;
+
+            for (var i = 0; i < selectedLinkCount; i++) {
+                var aLink = selectedLinkArray[i];
+                if (aLink.residueLinks) {//its a ProteinLink
+                    out += SelectionPanel.proteinLinkToHTML(aLink);
+                }else {//must be ResidueLink
+                    out += SelectionPanel.residueLinkToHTML(aLink);						
+                }							
+            }
+
+            out += "</table>";
+
+            selectionDiv.innerHTML = out;
+        }
+    }
 }
 
+/*
 SelectionPanel.prototype.updateTable = function(selectedLinks){
 	//console.log("SELECTED:", selectedLinks);
 	var selectionDiv = document.getElementById("selectionDiv");
 	var selectedLinkArray = selectedLinks.values();
 	var selectedLinkCount = selectedLinkArray.length;
+    
+    var bd = d3.select('#bottomDiv');
+	var splt = d3.select('#splitterDiv');
+    
 	if (selectedLinkCount === 0) {
-		selectionDiv.innerHTML = "<p>No selection.</p>" + 
-			"<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window.</p>";
+		//selectionDiv.innerHTML = "<p>No selection.</p>" + 
+		//	"<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window.</p>";
+        console.log ("this updateTable", this);
+        this.show (true);
+        //this.showSelectionPanel(false);
 					
 	}
 	else {
+        
+        if (selectionShown == false) {
+            showSelectionPanel(true);
+        }
+        
+
 		var out = ""
 
 		var scoresTable = "<table><tr>";
@@ -78,6 +190,34 @@ SelectionPanel.prototype.updateTable = function(selectedLinks){
 		selectionDiv.innerHTML = out;
 	}
 }
+*/
+
+/*
+SelectionPanel.prototype.show = function (show) {
+    console.log ("sp show this", this);
+    selectionShown = show;
+	var bd = d3.select('#bottomDiv');
+	var splt = d3.select('#splitterDiv');
+	if (show) {
+		bd.style('display', 'block');
+		splt.style('display', 'block');
+		main.onmousemove();
+	} else {
+		bd.style('display', 'none');
+		splt.style('display', 'none');
+		var element = topDiv;
+		var top = 0;
+		do {
+			top += element.offsetTop  || 0;
+			element = element.offsetParent;
+		} while(element);
+		var topDivHeight = window.innerHeight - top - marginBottom;
+		topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
+	}
+	//document.getElementById('selectionChkBx').checked = show;
+}
+*/
+
 
 SelectionPanel.prototype.clearTableHighlights = function(){
 	d3.select(this.targetDiv).selectAll("tr").classed('spectrumShown', false);
