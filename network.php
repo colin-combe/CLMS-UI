@@ -24,6 +24,13 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        
+        <meta http-equiv="cache-control" content="max-age=0" />
+        <meta http-equiv="cache-control" content="no-cache" />
+        <meta http-equiv="expires" content="0" />
+        <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+        <meta http-equiv="pragma" content="no-cache" />
+        
 		<meta name="description" content="common platform for downstream analysis of CLMS data" />
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="apple-mobile-web-app-capable" content="yes">
@@ -169,8 +176,8 @@
 					<button class="btn btn-1 btn-1a" onclick="downloadSVG();">Image</button>
 					<label class="btn">Legend
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
-					<label class="btn" style="margin-left:20px;padding-left:0px;">Selection
-							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label>
+					<!-- <label class="btn" style="margin-left:20px;padding-left:0px;">Selection
+							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label> -->
 					<label id="nglCbLabel" class="btn" style="padding-left:0px;">3D
 							<input id="nglChkBx" onclick="showNglPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="padding-left:0px;">Help
@@ -180,7 +187,7 @@
 
 			<div>
 				<div id="topDiv"></div>
-				<div id=splitterDiv class="horizontalSplitter"><i class="fa fa-times-circle" onclick="showSelectionPanel(false);"></i></div>
+				<div id=splitterDiv class="horizontalSplitter"></div>
 				<div id="bottomDiv">
 					<div id="selectionDiv" class="panelInner">
 						<p>No selection.</p>
@@ -280,7 +287,7 @@
 			
 			"use strict";
 			
-			showSelectionPanel(true);	
+			//showSelectionPanel(false);	
 			// for NGL
 			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";  
 			var stage;

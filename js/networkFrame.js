@@ -58,7 +58,9 @@ main.onmouseup = function(evt) {
 }
 
 window.onresize = function(event) {
-	if (document.getElementById('selectionChkBx').checked == true) {
+	//if (document.getElementById('selectionChkBx').checked == true) {
+    //if (selectionShown == true) {
+    if (selectionPanel.isShown() == true) {
 		main.onmousemove();//event);}
 	} else {
 		var element = topDiv;
@@ -79,8 +81,15 @@ window.onresize = function(event) {
  */
 //~ var selChkBx = document.getElementById('selectionChkBx');
 //~ selChkBx.checked = false;
+var selectionShown = false;
 var selectionPanel = new SelectionPanel("selectionDiv");
+console.log ("sp returns", selectionPanel);
+if (selectionPanel.isShown() == false) {
+    selectionPanel.show (true);
+}
+/*
 var showSelectionPanel = function (show) {
+    selectionShown = show;
 	var bd = d3.select('#bottomDiv');
 	var splt = d3.select('#splitterDiv');
 	if (show) {
@@ -99,8 +108,10 @@ var showSelectionPanel = function (show) {
 		var topDivHeight = window.innerHeight - top - marginBottom;
 		topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
 	}
-	document.getElementById('selectionChkBx').checked = show;
+	//document.getElementById('selectionChkBx').checked = show;
 }
+*/
+
 
 var kChkBx = document.getElementById('keyChkBx');
 kChkBx.checked = false;
