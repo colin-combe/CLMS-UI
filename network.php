@@ -204,7 +204,9 @@
 
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
+<!--
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
+-->
 					<p class="btn">Download:</p>
 					<button class="btn btn-1 btn-1a" onclick="downloadLinks();">Links</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadMatches();">Matches</button>
@@ -280,14 +282,14 @@
 						<label>Self-Links
 							<input checked="checked"
 								   id="selfLinks"
-								   onclick="xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
+								   onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
 								   type="checkbox"
 							/>
 						</label>
 						<label>&nbsp;&nbsp;Ambiguous
 							<input checked="checked"
 								   id="ambig"
-								   onclick="xlv.showAmbig(document.getElementById('ambig').checked)"
+								   onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
 								   type="checkbox"
 							/>
 						</label>
@@ -328,26 +330,39 @@
 			
             var CLMSUI = CLMSUI || {};
             
+			            
+            
 			//showSelectionPanel(false);	
 			// for NGL
 			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";  
 			var stage;
 			// for xiNET
-			var xlv;
+			var tempModelMaker;
 
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
 				var targetDiv = document.getElementById('topDiv');
-				xlv = new xiNET.Controller(targetDiv);
+				tempModelMaker = new xiNET.Controller(targetDiv);
 				<?php
 					include './php/loadData.php';
 					if (file_exists('../annotations.php')){
-						 include '../annotations.php';
+						// include '../annotations.php';
 					}
 				?>
 				
+				CLMSUI.clmsModel = Backbone.Model.extend();
+				CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
+						interactors: tempModelMaker.proteins, 
+						proteinLinks: tempModelMaker.proteinLinks
+				});
+            
+				CLMSUI.distancesModel = Backbone.Model.extend();
+				CLMSUI.distancesInst = new CLMSUI.distancesModel ({ 
+						distances: distances
+				});
+            
                 // Showing multiple searches at once
-				var s = d3.map(xlv.searchesShown);
+				var s = d3.map(CLMSUI.searchesShown);
 				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
 				document.title = title;
 				
@@ -384,7 +399,7 @@
                     distoViewer.redraw (xlv.distances, xlv);
                 }
                 
-                
+                /*
                 
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(selectionPanel.updateTable);
@@ -454,7 +469,7 @@
 				xlv.ambigShown = document.getElementById('ambig').checked;
 				initSlider();
 				
-				window.onresize();
+				window.onresize();*/
 				
 			});
 			

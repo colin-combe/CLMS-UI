@@ -39,7 +39,7 @@
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 		
 	$id_rands = explode("," , $sid);
-	$searchesShown = 'xlv.searchesShown = {';
+	$searchesShown = 'CLMSUI.searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$agg = $id_rands[$i];
 		$dashPos = strpos($agg,'-');
@@ -55,7 +55,7 @@
 		}
 	}
 	echo $searchesShown."};\n";
-	echo "xlv.sid = ".$id.";\n";	
+	echo "CLMSUI.sid = ".$id.";\n";	
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;";
 		include('./php/distances.php');
@@ -202,7 +202,7 @@
 			$pid = $line["accession"];
 		}
 
-		echo 'xlv.addProtein (' 
+		echo 'tempModelMaker.addProtein (' 
 				. '\''.$pid . '\',' 
 				. '\'' . $name . "'" . ',' 
 				. $seq . ',' 
@@ -218,7 +218,7 @@
 			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
 	echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
-	echo "xlv.addMatches([";
+	echo "tempModelMaker.addMatches([";
 	$waitingForFirstMatch = true;
 	//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
