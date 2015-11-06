@@ -87,6 +87,7 @@
         <script type="text/javascript" src="./vendor/backbone.js"></script>
         
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
+        <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./vendor/distogramBB.js"></script>
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
     </head>
@@ -164,22 +165,12 @@
 			
         
             <div class="dynDiv" id="distoPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showDistoPanel(false);"></i></div>
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" id="distoHide" onclick="showDistoPanel(false);"></i></div>
 				
-                <!--
 				<div style="height:40px;">
-
-					<label  class="btn">Distance labels
-						<input id="distChkBx" 
-							onclick="spectrumViewer.showLossy(document.getElementById('distChkBx').checked)" 
-						type="checkbox">
-					</label>
-   
-					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadNGLImage();">Download image</button>
-					
+					<button class="btn btn-1 btn-1a" id="distoDownload" onclick="">Download image</button>			
 				</div>
-				-->
+				
 				<div class="panelInner" id='distoDiv'></div>
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>

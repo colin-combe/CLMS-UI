@@ -602,11 +602,10 @@ tbody tr:hover td, tbody tr:hover td  {
 	left: 40px;
 	width:500px;
 	height:300px;
-    background: rgba(224,224,255, 0.9);
-	
 }
 #distoDiv {
     /*overflow:auto;*/
+     background: rgba(224,224,255, 0.9);
 }
 /*
 #graphDiv{

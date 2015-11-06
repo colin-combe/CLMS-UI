@@ -162,7 +162,14 @@ CLMSUI.rangeModel = Backbone.Model.extend ({
 });
 CLMSUI.rangeModelInst = new CLMSUI.rangeModel ({ scale: d3.scale.linear() });
 
-var distoViewer = new CLMSUI.DistogramBB ({el: "#distoDiv", model: CLMSUI.rangeModelInst});
+var distoViewer = new CLMSUI.DistogramBB ({
+    el: "#distoPanel", 
+    model: CLMSUI.rangeModelInst,
+    events: {
+        "click #distoDownload": "downloadSVG",
+        "click #distoHide": "hideView"
+    }
+});
 
 
 var showDistoPanel = function (show) {
