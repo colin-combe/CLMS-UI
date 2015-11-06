@@ -40,6 +40,8 @@
 		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
+        
+        <link rel="stylesheet" href="./css/c3.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -50,7 +52,8 @@
 		<script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
 		<script type="text/javascript" src="./vendor/crosslink.js"></script>
 		
-		<script type="text/javascript" src="./vendor/DistanceSlider.js"></script>
+		<!-- <script type="text/javascript" src="./vendor/DistanceSlider.js"></script> -->
+
 		<script type="text/javascript" src="./vendor/spectrum.js"></script>
         <!--spectrum dev
         <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
@@ -77,6 +80,15 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script> -->
                
+        <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
+        <script type="text/javascript" src="./vendor/c3.js"></script>
+        <script type="text/javascript" src="./vendor/underscore.js"></script>
+        <script type="text/javascript" src="./vendor/zepto.js"></script>
+        <script type="text/javascript" src="./vendor/backbone.js"></script>
+        
+        <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
+        <script type="text/javascript" src="./vendor/distogramBB.js"></script>
+        <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
     </head>
     <body>
 <!--
@@ -150,6 +162,30 @@
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
 			
+        
+            <div class="dynDiv" id="distoPanel">
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showDistoPanel(false);"></i></div>
+				
+                <!--
+				<div style="height:40px;">
+
+					<label  class="btn">Distance labels
+						<input id="distChkBx" 
+							onclick="spectrumViewer.showLossy(document.getElementById('distChkBx').checked)" 
+						type="checkbox">
+					</label>
+   
+					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
+					<button class="btn btn-1 btn-1a" onclick="downloadNGLImage();">Download image</button>
+					
+				</div>
+				-->
+				<div class="panelInner" id='distoDiv'></div>
+				<div class="dynDiv_resizeDiv_tl"></div>
+				<div class="dynDiv_resizeDiv_tr"></div>
+				<div class="dynDiv_resizeDiv_bl"></div>
+				<div class="dynDiv_resizeDiv_br"></div>
+			</div>	
 
 			
 <!--
@@ -180,8 +216,11 @@
 							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label> -->
 					<label id="nglCbLabel" class="btn" style="padding-left:0px;">3D
 							<input id="nglChkBx" onclick="showNglPanel(this.checked);" type="checkbox"></label>
+                    <label id="distoCbLabel" class="btn" style="padding-left:0px;">Distogram
+							<input id="distoChkBx" onclick="showDistoPanel(this.checked);" type="checkbox"></label>
 					<label class="btn" style="padding-left:0px;">Help
 							<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
+                    
 				</h1>
    	 		</div>
 
@@ -200,33 +239,33 @@
 					<label>A
 						<input checked="checked"
 								   id="A"
-								   onclick="xlv.checkLinks();"
+								   onclick="CLMSUI.filterFunc();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>B
 						<input checked="checked"
 								   id="B"
-								   onclick="xlv.checkLinks();"
+								   onclick="CLMSUI.filterFunc();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>C
 						<input checked="checked"
 								   id="C"
-								   onclick="xlv.checkLinks();"
+								   onclick="CLMSUI.filterFunc();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>?
 						<input id="Q"
-								   onclick="xlv.checkLinks();"
+								   onclick="CLMSUI.filterFunc();"
 								   type="checkbox"
 							/>
 					</label>
 					<label>auto
 						<input id="AUTO"
-								   onclick="xlv.checkLinks();"
+								   onclick="CLMSUI.filterFunc();"
 								   type="checkbox"
 							/>
 					</label>
@@ -287,12 +326,15 @@
 			
 			"use strict";
 			
+            var CLMSUI = CLMSUI || {};
+            
 			//showSelectionPanel(false);	
 			// for NGL
 			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";  
 			var stage;
 			// for xiNET
 			var xlv;
+
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
 				var targetDiv = document.getElementById('topDiv');
@@ -304,6 +346,7 @@
 					}
 				?>
 				
+                // Showing multiple searches at once
 				var s = d3.map(xlv.searchesShown);
 				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
 				document.title = title;
@@ -317,22 +360,32 @@
 						
 					/*Distance slider */
 					var distSliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
-					var distSlider = new DistanceSlider("sliderDiv", this);
-					var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+      
+					var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
 					distSlider.brushMoved.add(onDistanceSliderChange); //add listener
 					//distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
 					var scale = d3.scale.threshold()
 						.domain([0, 15, 25])
 						.range(['black', '#5AAE61','#FDB863','#9970AB']);
 					onDistanceSliderChange(scale);
-									
+                    CLMSUI.rangeModelInst.set ("scale", scale);
+                    
+                    var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+					//distoViewer.setData(xlv.distances,xlv);				
 				}
-				//~ else {
+				else {
 					document.getElementById('nglCbLabel').setAttribute('style','display:none;');
-				//~ }		
+					document.getElementById('distoCbLabel').setAttribute('style','display:none;');
+				}		
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					
-								
+				CLMSUI.filterFunc = function () {
+                    xlv.checkLinks();
+                    distoViewer.redraw (xlv.distances, xlv);
+                }
+                
+                
+                
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(selectionPanel.updateTable);
 

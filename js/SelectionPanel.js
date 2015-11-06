@@ -17,7 +17,6 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 function SelectionPanel (targetDiv){
-    console.log ("sp this", this);
     var self = this;
     
 	// targetDiv could be div itself or id of div - lets deal with that
@@ -31,8 +30,7 @@ function SelectionPanel (targetDiv){
     this.selectionShown = false;
     
     this.show = function (showMe) {
-        console.log ("sp show this", this);
-        this.selectionShown = showMe;
+        self.selectionShown = showMe;
         var bd = d3.select('#bottomDiv');
         var splt = d3.select('#splitterDiv');
         if (showMe) {
@@ -55,7 +53,7 @@ function SelectionPanel (targetDiv){
     }
     
     this.isShown = function () {
-        return this.selectionShown;
+        return self.selectionShown;
     }
     
     this.updateTable = function(selectedLinks){
@@ -70,7 +68,6 @@ function SelectionPanel (targetDiv){
         if (selectedLinkCount === 0) {
             //selectionDiv.innerHTML = "<p>No selection.</p>" + 
             //	"<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window.</p>";
-            console.log ("this updateTable", this);
             self.show (false);
             //this.showSelectionPanel(false);
 
