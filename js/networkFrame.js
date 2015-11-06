@@ -83,32 +83,10 @@ window.onresize = function(event) {
 //~ selChkBx.checked = false;
 var selectionShown = false;
 var selectionPanel = new SelectionPanel("selectionDiv");
-console.log ("sp returns", selectionPanel);
+
+/*
 if (selectionPanel.isShown() == false) {
     selectionPanel.show (true);
-}
-/*
-var showSelectionPanel = function (show) {
-    selectionShown = show;
-	var bd = d3.select('#bottomDiv');
-	var splt = d3.select('#splitterDiv');
-	if (show) {
-		bd.style('display', 'block');
-		splt.style('display', 'block');
-		main.onmousemove();
-	} else {
-		bd.style('display', 'none');
-		splt.style('display', 'none');
-		var element = topDiv;
-		var top = 0;
-		do {
-			top += element.offsetTop  || 0;
-			element = element.offsetParent;
-		} while(element);
-		var topDivHeight = window.innerHeight - top - marginBottom;
-		topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
-	}
-	//document.getElementById('selectionChkBx').checked = show;
 }
 */
 
@@ -167,6 +145,38 @@ function showNglPanel(show) {
 		//~ } );
 	}
 }
+
+//init distogram viewer
+var distoDiv = document.getElementById('distoDiv');
+
+//var distoViewer = new Distogram(distoDiv);
+
+// DO TOMORROW
+var CLMSUI = CLMSUI || {};
+CLMSUI.rangeModel = Backbone.Model.extend ({
+    initialize: function () {
+        this
+            .set ("active", false)
+        ;
+    }
+});
+CLMSUI.rangeModelInst = new CLMSUI.rangeModel ({ scale: d3.scale.linear() });
+
+var distoViewer = new CLMSUI.DistogramBB ({el: "#distoDiv", model: CLMSUI.rangeModelInst});
+
+
+var showDistoPanel = function (show) {
+	var sp = d3.select('#distoPanel');
+	sp.style('display', show ? 'block' : 'none');
+
+    distoChkBx.checked = show;
+    if (show) {
+        distoViewer.relayout(); 
+        CLMSUI.filterFunc();
+    }
+}
+
+
 // Resizing of panels
 ByRei_dynDiv.api.alter = function() {
 	var
@@ -320,4 +330,5 @@ function sliderChanged(){
 	var cutoffLabel = document.getElementById("cutoffLabel");
 	cutoffLabel.innerHTML = '(' + cut + ')';
 	xlv.setCutOff(cut);
+    CLMSUI.filterFunc();    // this is calling xlv redraw as well
 }

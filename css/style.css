@@ -572,7 +572,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #helpPanel, #spectrumPanel, #nglPanel {
+#keyPanel, #helpPanel, #spectrumPanel, #nglPanel, #distoPanel {
 	display:none;
 	top:80px;
 }
@@ -598,9 +598,20 @@ tbody tr:hover td, tbody tr:hover td  {
 	width:400px;
 	height:400px;
 }
+#distoPanel{
+	left: 40px;
+	width:500px;
+	height:300px;
+    background: rgba(224,224,255, 0.9);
+	
+}
+#distoDiv {
+    /*overflow:auto;*/
+}
+/*
 #graphDiv{
 
 	height:calc(100% - 110px);
-}
+}*/
 
 
