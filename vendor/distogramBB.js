@@ -13,16 +13,31 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
     events: {},
     
     initialize: function () {
-        
         var defaultOptions = {xlabel: "Distance", ylabel: "Count", title: "Cross Links"};
         for (var attrname in this.myOptions) { defaultOptions[attrname] = this.myOptions[attrname]; }
         this.options = defaultOptions;
         
-        // this.el is the dom element this should be getting added to, replaces targetDiv
-        var chartDiv = d3.select(this.el).select("div.panelInner");
-        chartDiv.style("position","relative").selectAll("*").remove();   
-        var bid = "#" + chartDiv.attr("id");
         var self = this;
+                
+        // this.el is the dom element this should be getting added to, replaces targetDiv
+        var mainDivSel = d3.select(this.el);
+        
+        mainDivSel.append("div").style("height", "40px")
+            .append ("button")
+            .attr("class", "btn btn-1 btn-1a downloadButton")
+            .text ("Download Image")
+        ;
+        
+        var chartDiv = mainDivSel.append("div")
+            .attr("class", "panelInner")
+            .attr("id", "distoDiv")
+            .style("position","relative")
+        ;
+        CLMSUI.utils.addFourCorners (mainDivSel);
+        
+        chartDiv.selectAll("*").remove();   
+        var bid = "#" + chartDiv.attr("id");
+
         
         this.chart = c3.generate({
             bindto: bid,
@@ -34,8 +49,8 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
                 ]
                 ,type: 'bar'
                 ,color: function (colour, d) {
-                    if (d.id && self.model.get("active") && self.model.get("scale")) {
-                        return self.model.get("scale")(d.x);
+                    if (d.id && self.model.get("rangeModel").get("active") && self.model.get("rangeModel").get("scale")) {
+                        return self.model.get("rangeModel").get("scale")(d.x);
                     }
                     return colour;
                 }
@@ -77,8 +92,8 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
         
         console.log ("model", this.model.attributes);
         
-        this.listenTo (this.model, "change:filter", this.render);
-        this.listenTo (this.model, "change:scale", this.relayout);
+        //this.listenTo (this.model, "change:filter", this.render);
+        this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout);
     },
     
     downloadSVG: function (evt) {
@@ -87,18 +102,16 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
     },
     
     hideView: function() {
-        console.log ("mousey over");
+        console.log ("mousey over me");
     },
     
-    render: function (model, distances) {
+    render: function () {
         
-        // 1-line hack till xlv is backbonealised
-        var xlv = model;
-        
-        var allProtProtLinks = xlv.proteinLinks.values();
+        var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
         var allCrossLinks = allProtProtLinks[0].residueLinks.values();
-
-        console.log ("distances", distances);
+        var distances = this.model.get("distancesModel").get("distances");
+        
+        //console.log ("distances", distances);
         var distArr = [];       
         for (var i =0; i < allCrossLinks.length; i ++) {
             var crossLink = allCrossLinks[i];
@@ -134,9 +147,9 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
 
         // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
         var maxAxes = {};
-        if (+xlv.cutOff <= xlv.scores.min) {
-            maxAxes.y = maxY;
-        }
+        //if (+xlv.cutOff <= xlv.scores.min) {
+        //    maxAxes.y = maxY;
+        //}
         
         //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
         
@@ -153,12 +166,6 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
         //console.log ("data", distArr, binnedData);
         
         return this;
-    },
-    
-    redraw: function (distances, xlv) {
-        this.render (xlv, distances);   // deliberate swap round
-        //var svg = CLMSUI.utils.getSVG (d3.select(this.el).select("svg"));
-        //console.log ("svg", svg);
     },
     
     relayout: function () {

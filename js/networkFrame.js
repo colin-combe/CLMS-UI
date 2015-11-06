@@ -18,6 +18,8 @@
 
 "use strict";
 
+var CLMSUI = CLMSUI || {};
+
 /*
  * Horizontal splitter JS
  */
@@ -147,12 +149,8 @@ function showNglPanel(show) {
 }
 
 //init distogram viewer
-var distoDiv = document.getElementById('distoDiv');
+//var distoDiv = document.getElementById('distoDiv');
 
-//var distoViewer = new Distogram(distoDiv);
-
-// DO TOMORROW
-var CLMSUI = CLMSUI || {};
 CLMSUI.rangeModel = Backbone.Model.extend ({
     initialize: function () {
         this
@@ -161,15 +159,23 @@ CLMSUI.rangeModel = Backbone.Model.extend ({
     }
 });
 CLMSUI.rangeModelInst = new CLMSUI.rangeModel ({ scale: d3.scale.linear() });
+console.log ("CLMSUI CLMS Model", CLMSUI.clmsModelInst);
+
+var compositeModel = new Backbone.Model ({
+    distancesModel: CLMSUI.distancesInst,
+    clmsModel: CLMSUI.clmsModelInst,
+    rangeModel: CLMSUI.rangeModelInst
+});
+
 
 var distoViewer = new CLMSUI.DistogramBB ({
     el: "#distoPanel", 
-    model: CLMSUI.rangeModelInst,
+    model: compositeModel,
     events: {
-        "click #distoDownload": "downloadSVG",
-        "click #distoHide": "hideView"
+        "click .downloadButton": "downloadSVG",
+        "click #distoHide": "hideView",
     }
-});
+}, {cats: "meow"});
 
 
 var showDistoPanel = function (show) {
@@ -336,6 +342,6 @@ function sliderChanged(){
 	cut = cut.toFixed(sliderDecimalPlaces);
 	var cutoffLabel = document.getElementById("cutoffLabel");
 	cutoffLabel.innerHTML = '(' + cut + ')';
-	xlv.setCutOff(cut);
+	//xlv.setCutOff(cut);
     CLMSUI.filterFunc();    // this is calling xlv redraw as well
 }
