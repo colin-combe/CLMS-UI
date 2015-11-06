@@ -226,21 +226,21 @@ function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
 };
 
 function onDistanceSliderChange(scale){
-	var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-	var rc = rLinks.length;
-	for (var j = 0; j < rc; j++) {
-		var resLink = rLinks[j];
-		var d = null;
-		if (xlv.distances[resLink.toResidue]) {
-			d = xlv.distances[resLink.toResidue][resLink.fromResidue];
-		}
-		var d = parseFloat(d);
-		if (isNaN(d) === true){
-			d = -1;
-		}
-		resLink.colour = scale(d);
-		resLink.line.setAttribute("stroke", resLink.colour);
-	}
+	//~ var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
+	//~ var rc = rLinks.length;
+	//~ for (var j = 0; j < rc; j++) {
+		//~ var resLink = rLinks[j];
+		//~ var d = null;
+		//~ if (xlv.distances[resLink.toResidue]) {
+			//~ d = xlv.distances[resLink.toResidue][resLink.fromResidue];
+		//~ }
+		//~ var d = parseFloat(d);
+		//~ if (isNaN(d) === true){
+			//~ d = -1;
+		//~ }
+		//~ resLink.colour = scale(d);
+		//~ resLink.line.setAttribute("stroke", resLink.colour);
+	//~ }
 }
 
 function onDistanceSliderChange3D(scale){
