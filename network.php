@@ -87,6 +87,7 @@
         <script type="text/javascript" src="./vendor/backbone.js"></script>
         
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
+        <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./vendor/distogramBB.js"></script>
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
     </head>
@@ -164,27 +165,20 @@
 			
         
             <div class="dynDiv" id="distoPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showDistoPanel(false);"></i></div>
-				
-                <!--
+				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" id="distoHide" onclick="showDistoPanel(false);"></i></div>
+				<!--
 				<div style="height:40px;">
-
-					<label  class="btn">Distance labels
-						<input id="distChkBx" 
-							onclick="spectrumViewer.showLossy(document.getElementById('distChkBx').checked)" 
-						type="checkbox">
-					</label>
-   
-					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadNGLImage();">Download image</button>
-					
+					<button class="btn btn-1 btn-1a" id="distoDownload">Download image</button>			
 				</div>
-				-->
-				<div class="panelInner" id='distoDiv'></div>
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>
+                -->
+				
+				<!-- <div class="panelInner" id='distoDiv'></div> -->
+                <!--
+                    <div class="dynDiv_resizeDiv_tl"></div>
+                    <div class="dynDiv_resizeDiv_tr"></div>
+                    <div class="dynDiv_resizeDiv_bl"></div>
+                    <div class="dynDiv_resizeDiv_br"></div>
+                -->
 			</div>	
 
 			
@@ -319,10 +313,7 @@
 
 		</div><!-- MAIN -->
         
-        <script type="text/javascript" src="./js/SelectionPanel.js"></script>
-		<script type="text/javascript" src="./js/networkFrame.js"></script>
-		<script type="text/javascript" src="./js/downloads.js"></script>
-		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
+
         <script>	
 		//<![CDATA[
 			
@@ -338,28 +329,31 @@
 			var stage;
 			// for xiNET
 			var tempModelMaker;
+            
+            var targetDiv = document.getElementById('topDiv');
+				
+            tempModelMaker = new xiNET.Controller(targetDiv);
+            <?php
+                include './php/loadData.php';
+                if (file_exists('../annotations.php')){
+                    // include '../annotations.php';
+                }
+            ?>
+
+            CLMSUI.clmsModel = Backbone.Model.extend();
+            CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
+                    interactors: tempModelMaker.proteins, 
+                    proteinLinks: tempModelMaker.proteinLinks
+            });
+
+            CLMSUI.distancesModel = Backbone.Model.extend();
+            CLMSUI.distancesInst = new CLMSUI.distancesModel ({ 
+                    distances: distances
+            });
 
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
-				var targetDiv = document.getElementById('topDiv');
-				tempModelMaker = new xiNET.Controller(targetDiv);
-				<?php
-					include './php/loadData.php';
-					if (file_exists('../annotations.php')){
-						// include '../annotations.php';
-					}
-				?>
 				
-				CLMSUI.clmsModel = Backbone.Model.extend();
-				CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
-						interactors: tempModelMaker.proteins, 
-						proteinLinks: tempModelMaker.proteinLinks
-				});
-            
-				CLMSUI.distancesModel = Backbone.Model.extend();
-				CLMSUI.distancesInst = new CLMSUI.distancesModel ({ 
-						distances: distances
-				});
             
                 // Showing multiple searches at once
 				var s = d3.map(CLMSUI.searchesShown);
@@ -395,8 +389,8 @@
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					
 				CLMSUI.filterFunc = function () {
-                    xlv.checkLinks();
-                    distoViewer.redraw (xlv.distances, xlv);
+                    //xlv.checkLinks(); // needs fixed.
+                    distoViewer.render ();
                 }
                 
                 /*
@@ -475,4 +469,9 @@
 			
 		//]]>			
 		</script>
+    
+            <script type="text/javascript" src="./js/SelectionPanel.js"></script>
+		<script type="text/javascript" src="./js/networkFrame.js"></script>
+		<script type="text/javascript" src="./js/downloads.js"></script>
+		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
 </html>

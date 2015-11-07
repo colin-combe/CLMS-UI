@@ -8,19 +8,36 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.DistogramBB = Backbone.View.extend ({
     tagName: "div",
-    className: "panelInner",
+    //className: "panelInner",
+    className: "dynDiv",
     events: {},
     
     initialize: function () {
-        
         var defaultOptions = {xlabel: "Distance", ylabel: "Count", title: "Cross Links"};
         for (var attrname in this.myOptions) { defaultOptions[attrname] = this.myOptions[attrname]; }
         this.options = defaultOptions;
         
-        // this.el is the dom element this should be getting added to, replaces targetDiv
-        d3.select(this.el).style("position","relative").selectAll("*").remove();   
-        var bid = "#" + d3.select(this.el).attr("id");
         var self = this;
+                
+        // this.el is the dom element this should be getting added to, replaces targetDiv
+        var mainDivSel = d3.select(this.el);
+        
+        mainDivSel.append("div").style("height", "40px")
+            .append ("button")
+            .attr("class", "btn btn-1 btn-1a downloadButton")
+            .text ("Download Image")
+        ;
+        
+        var chartDiv = mainDivSel.append("div")
+            .attr("class", "panelInner")
+            .attr("id", "distoDiv")
+            .style("position","relative")
+        ;
+        CLMSUI.utils.addFourCorners (mainDivSel);
+        
+        chartDiv.selectAll("*").remove();   
+        var bid = "#" + chartDiv.attr("id");
+
         
         this.chart = c3.generate({
             bindto: bid,
@@ -32,8 +49,8 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
                 ]
                 ,type: 'bar'
                 ,color: function (colour, d) {
-                    if (d.id && self.model.get("active") && self.model.get("scale")) {
-                        return self.model.get("scale")(d.x);
+                    if (d.id && self.model.get("rangeModel").get("active") && self.model.get("rangeModel").get("scale")) {
+                        return self.model.get("rangeModel").get("scale")(d.x);
                     }
                     return colour;
                 }
@@ -75,22 +92,27 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
         
         console.log ("model", this.model.attributes);
         
-        this.listenTo (this.model, "change:filter", this.render);
-        this.listenTo (this.model, "change:scale", this.relayout);
+        //this.listenTo (this.model, "change:filter", this.render);
+        this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout);
     },
     
-    render: function (model, distances) {
+    downloadSVG: function (evt) {
+        var svgString = CLMSUI.utils.getSVG (d3.select(this.el).select("svg"));
+        download (svgString, 'application/svg', 'distogram.svg');
+    },
+    
+    hideView: function() {
+        console.log ("mousey over me");
+    },
+    
+    render: function () {
         
-        // 1-line hack till xlv is backbonealised
-        var xlv = model;
-        
-        var allProtProtLinks = xlv.proteinLinks.values();
+        var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
         var allCrossLinks = allProtProtLinks[0].residueLinks.values();
-
-        //console.log ("distances", distances);
-        var distArr = [];
-        var filteringDone = (+xlv.cutOff > xlv.scores.min);
+        var distances = this.model.get("distancesModel").get("distances");
         
+        //console.log ("distances", distances);
+        var distArr = [];       
         for (var i =0; i < allCrossLinks.length; i ++) {
             var crossLink = allCrossLinks[i];
             if (crossLink.check() === true) {    // check() seems to cause full crosslink view to be drawn
@@ -98,7 +120,6 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
                 var fromRes = crossLink.fromResidue;
                 var highRes = Math.max (toRes, fromRes);
                 var lowRes = Math.min (toRes, fromRes);
-                //console.log ("h", highRes, distances[highRes]); // sometimes some nulls at the start of each subarray were meaning values werent existing?
                 var dist = distances[highRes] ? distances[highRes][lowRes] : null;
                 if (dist !== null) {
                     distArr.push (+dist);   // + is to stop it being a string
@@ -124,13 +145,13 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
         var maxY = d3.max (countData);
         countData.unshift (this.options.title);
 
-        //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
-
         // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
         var maxAxes = {};
-        if (!filteringDone) {
-            maxAxes.y = maxY;
-        }
+        //if (+xlv.cutOff <= xlv.scores.min) {
+        //    maxAxes.y = maxY;
+        //}
+        
+        //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
         
         //console.log ("thresholds", thresholds);
         //console.log ("maxAxes", maxAxes);
@@ -145,10 +166,6 @@ CLMSUI.DistogramBB = Backbone.View.extend ({
         //console.log ("data", distArr, binnedData);
         
         return this;
-    },
-    
-    redraw: function (distances, xlv) {
-        this.render (xlv, distances);   // deliberate swap round
     },
     
     relayout: function () {
