@@ -159,35 +159,41 @@ CLMSUI.rangeModel = Backbone.Model.extend ({
     }
 });
 CLMSUI.rangeModelInst = new CLMSUI.rangeModel ({ scale: d3.scale.linear() });
-console.log ("CLMSUI CLMS Model", CLMSUI.clmsModelInst);
 
 var compositeModel = new Backbone.Model ({
     distancesModel: CLMSUI.distancesInst,
     clmsModel: CLMSUI.clmsModelInst,
-    rangeModel: CLMSUI.rangeModelInst
+    rangeModel: CLMSUI.rangeModelInst,
+    filterModel: CLMSUI.filterModelInst
 });
 
 
-var distoViewer = new CLMSUI.DistogramBB ({
-    el: "#distoPanel", 
-    model: compositeModel,
-    events: {
-        "click .downloadButton": "downloadSVG",
-        "click #distoHide": "hideView",
-    }
-}, {cats: "meow"});
-
-
+// Not needed, as view/checkbox communication and syncing done via a backbone event
+// http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
+/*
 var showDistoPanel = function (show) {
 	var sp = d3.select('#distoPanel');
 	sp.style('display', show ? 'block' : 'none');
 
     distoChkBx.checked = show;
     if (show) {
-        distoViewer.relayout(); 
-        CLMSUI.filterFunc();
+        distoViewer.relayout(); // need to resize first sometimes so render gets correct width/height coords
+        distoViewer.render();
     }
 }
+*/
+
+var distoViewer = new CLMSUI.DistogramBB ({
+    el: "#distoPanel", 
+    model: compositeModel,
+    events: {
+        "click .downloadButton": "downloadSVG"
+        ,"click .closeButton": "hideView"
+    },
+    displayEventName: "distoShow"
+});
+
+
 
 
 // Resizing of panels

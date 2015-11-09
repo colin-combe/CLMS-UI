@@ -90,6 +90,8 @@
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./vendor/distogramBB.js"></script>
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
+        <script type="text/javascript" src="./js/FilterViewBB.js"></script>
+        <script type="text/javascript" src="./js/FilterModelBB.js"></script>
     </head>
     <body>
 <!--
@@ -165,7 +167,7 @@
 			
         
             <div class="dynDiv" id="distoPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" id="distoHide" onclick="showDistoPanel(false);"></i></div>
+				<!-- <div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" id="distoHide" onclick="showDistoPanel(false);"></i></div> -->
 				<!--
 				<div style="height:40px;">
 					<button class="btn btn-1 btn-1a" id="distoDownload">Download image</button>			
@@ -212,8 +214,11 @@
 							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label> -->
 					<label id="nglCbLabel" class="btn" style="padding-left:0px;">3D
 							<input id="nglChkBx" onclick="showNglPanel(this.checked);" type="checkbox"></label>
+                    <!--
                     <label id="distoCbLabel" class="btn" style="padding-left:0px;">Distogram
 							<input id="distoChkBx" onclick="showDistoPanel(this.checked);" type="checkbox"></label>
+                    -->
+                    <span id="distoPlaceholder"></span>
 					<label class="btn" style="padding-left:0px;">Help
 							<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
                     
@@ -226,12 +231,14 @@
 				<div id="bottomDiv">
 					<div id="selectionDiv" class="panelInner">
 						<p>No selection.</p>
-						<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top rght of the window. </p>
+						<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window. </p>
 					</div>
 				</div>
 			</div>
 
 			<div class="controls">
+                    <span id="filterPlaceholder"></span>
+                          <!--
 					<label>A
 						<input checked="checked"
 								   id="A"
@@ -265,14 +272,19 @@
 								   type="checkbox"
 							/>
 					</label>
+                        -->
+                    <!--
 					<div id="scoreSlider">
 						<p class="scoreLabel" id="scoreLabel1"></p>
 						<input id="slide" type="range" min="0" max="100" step="1" value="0" oninput="sliderChanged()"/>
 						<p class="scoreLabel" id="scoreLabel2"></p>
 						<p id="cutoffLabel">(cut-off)</p>
-					</div> <!-- outlined scoreSlider -->
-
+					</div> 
+                    -->
+                    <!-- outlined scoreSlider -->
+                
 					<div style='float:right'>
+                        <!--
 						<label>Self-Links
 							<input checked="checked"
 								   id="selfLinks"
@@ -287,6 +299,7 @@
 								   type="checkbox"
 							/>
 						</label>
+                        -->
 						<label style="margin-left:20px;">Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
@@ -321,6 +334,10 @@
 			
             var CLMSUI = CLMSUI || {};
             
+            // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
+            CLMSUI.vent = {};
+            _.extend (CLMSUI.vent, Backbone.Events);
+            
 			            
             
 			//showSelectionPanel(false);	
@@ -350,6 +367,8 @@
             CLMSUI.distancesInst = new CLMSUI.distancesModel ({ 
                     distances: distances
             });
+            
+            CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({});
 
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
@@ -364,6 +383,20 @@
 					showKeyPanel(true);
 					document.getElementById('save').setAttribute('style','display:none;');
 				}
+                
+
+                var filterViewGroup = new CLMSUI.FilterViewBB ({
+                    el: "#filterPlaceholder", 
+                    model: CLMSUI.filterModelInst,
+                    events: {
+                        "click input.filterTypeToggle": "filter",
+                        "click input.filterSpecialToggle": "filterSpecial",
+                        "input #slide": "sliderChanged"
+                    },
+                });
+                
+                // Generate distogram checkbox view here
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoPlaceholder"), {label:"Distogram", eventName:"distoShow"});
 				
 				if (HSA_Active){
 						
