@@ -552,10 +552,22 @@ tbody tr:hover td, tbody tr:hover td  {
     -o-user-select: none;
     user-select: none;
 }
-#scoreSlider, .scoreLabel,#cutoffLabel  {
+#scoreSlider  {
     vertical-align: top;
     position: relative;
     display: inline-block;
+    border-left: 1px solid #bbb;
+    border-right: 1px solid #bbb;
+    padding: 0em 0.5em;
+    margin: 0em 0.5em;
+}
+#scoreSlider p {
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+}
+#scoreSlider #cutoffLabel {
+    min-width: 4em;
 }
 #slide {
     background: none;
@@ -607,6 +619,11 @@ tbody tr:hover td, tbody tr:hover td  {
     /*overflow:auto;*/
      background: rgba(224,224,255, 0.9);
 }
+
+#filterPlaceholder label, #filterPlaceholder p {
+    padding-right: 0.6em;
+}
+
 /*
 #graphDiv{
 

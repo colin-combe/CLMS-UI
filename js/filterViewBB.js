@@ -45,6 +45,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
         
         var slider = mainDivSel.append ("div").attr("id", "scoreSlider");
+        slider.append("p").text("Score:");
+        slider.append("p").attr("id", "cutoffLabel").text("cut-off");
         slider.append("p").attr("class", "scoreLabel").attr("id", "scoreLabel1");
         slider.append("input").attr({
             "id": "slide", 
@@ -55,7 +57,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             "value": self.model.get("cutoff")
         });
         slider.append("p").attr("class","scoreLabel").attr("id", "scoreLabel2");
-        slider.append("p").attr("id", "cutoffLabel").text("(cut-off)");
+        
         
         mainDivSel.selectAll("label")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
@@ -72,13 +74,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
 		// onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
  
+        if (self.model.get("scores") === null){
+            slider.style('display', 'none');
+        } else {
+            d3.select('#scoreLabel1').html ('['+this.getMinScore());
+            d3.select('#scoreLabel2').html (this.getMaxScore()+']');
+            this.sliderChanged ({target: d3.select("#slide").node()});
+            slider.style('display', 'inline-block');
+        }
+        
         this.displayEventName = viewOptions.displayEventName;
-
-      
 
         /*
         //this.listenTo (this.model, "change:filter", this.render);
-        this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout);
 
         if (viewOptions.displayEventName) {
             this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible)
@@ -100,21 +108,26 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.model.set (id, target.checked);
     },
     
+    sliderDecimalPlaces: 1,
+    
+    getMaxScore: function () {
+        var scores = this.model.get("scores");
+        return scores ? CLMSUI.utils.dpNumber (scores.max, this.sliderDecimalPlaces, Math.ceil) : 0;
+    },
+    
+    getMinScore: function () {
+        var scores = this.model.get("scores");
+        return scores ? CLMSUI.utils.dpNumber (scores.min, this.sliderDecimalPlaces, Math.floor) : 0;
+    },
+    
     sliderChanged: function (evt) {
         var slide = evt.target;
-        var sliderDecimalPlaces = 2;
-        var powerOfTen = Math.pow(10, sliderDecimalPlaces);
-
-        var cut = ((slide.value / 100)
-        //            * (getMaxScore() - getMinScore()))
-         //           + (getMinScore() / 1)
-                   );
-        cut = cut.toFixed(sliderDecimalPlaces);
-        //var cutoffLabel = document.getElementById("cutoffLabel");
-        //cutoffLabel.innerHTML = '(' + cut + ')';
-        //xlv.setCutOff(cut);
-        //CLMSUI.filterFunc();    // this is calling xlv redraw as well
-        this.model.set ("cutoff", cut); // FIX with above c ode
+        var min = this.getMinScore();
+        var max = this.getMaxScore()
+        var cut = ((slide.value / 100) * (max - min)) + (min / 1);
+        cut = cut.toFixed (this.sliderDecimalPlaces);
+        d3.select("#cutoffLabel").text(cut);
+        this.model.set ("cutoff", cut);
     },
     
     render: function () {

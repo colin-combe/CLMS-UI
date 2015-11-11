@@ -368,7 +368,11 @@
                     distances: distances
             });
             
-            CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({});
+            CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({
+                scores: tempModelMaker.scores
+            });
+            
+            console.log ("CLMSUI", CLMSUI, "xinet", tempModelMaker);
 
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
@@ -503,7 +507,7 @@
 		//]]>			
 		</script>
     
-            <script type="text/javascript" src="./js/SelectionPanel.js"></script>
+        <script type="text/javascript" src="./js/SelectionPanel.js"></script>
 		<script type="text/javascript" src="./js/networkFrame.js"></script>
 		<script type="text/javascript" src="./js/downloads.js"></script>
 		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>

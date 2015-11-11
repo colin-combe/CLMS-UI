@@ -311,6 +311,7 @@ function changeAnnotations(){
 
 
 /*Score slider*/
+/*
 function initSlider(){
 	if (xlv.scores === null){
 		d3.select('#scoreSlider').style('display', 'none');
@@ -322,7 +323,8 @@ function initSlider(){
 		d3.select('#scoreSlider').style('display', 'inline-block');
 	}
 };
-
+*/
+/*
 var sliderDecimalPlaces = 1;
 function getMinScore(){
 	if (xlv.scores){
@@ -338,6 +340,8 @@ function getMaxScore(){
 				.toFixed(sliderDecimalPlaces);
 	}
 }
+*/
+/*
 function sliderChanged(){
 	var slide = document.getElementById('slide');
 	var powerOfTen = Math.pow(10, sliderDecimalPlaces);
@@ -351,3 +355,4 @@ function sliderChanged(){
 	//xlv.setCutOff(cut);
     CLMSUI.filterFunc();    // this is calling xlv redraw as well
 }
+*/

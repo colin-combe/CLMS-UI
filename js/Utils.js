@@ -80,6 +80,11 @@ CLMSUI.utils = {
             label: options.label,
             eventName: options.eventName
         });        
-    }
+    },
+    
+    dpNumber: function (num, decimalPlaces, roundFunc) {
+        var powerOfTen = Math.pow (10, decimalPlaces);
+        return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
+    },
     
 };
