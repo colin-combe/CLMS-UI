@@ -51,7 +51,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         slider.append("input").attr({
             "id": "slide", 
             "type": "range",
-            "min" : 0,
+            "min" : 0,  // these don't need to be taken from model. We pick 0-100 and modify those values with model data later when needed
             "max": 100,
             "step": 1,
             "value": self.model.get("cutoff")

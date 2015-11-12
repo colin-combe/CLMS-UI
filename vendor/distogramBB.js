@@ -9,7 +9,13 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.DistogramBB = Backbone.View.extend({
     tagName: "div",
     className: "dynDiv",
-    events: {},
+    events: {
+        // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
+        // and dragend not supported by zepto, fallback to d3 instead (see later)
+        // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
+        "click .downloadButton": "downloadSVG",
+        "click .closeButton": "hideView"
+    },
 
     initialize: function (viewOptions) {
         console.log("arg options", viewOptions);
@@ -28,8 +34,13 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         var mainDivSel = d3.select(this.el);
 
         // Set up some html scaffolding in d3
-        //CLMSUI.utils.addDynDivParentBar(mainDivSel);
         CLMSUI.utils.addDynDivScaffolding(mainDivSel);
+        
+        // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
+        var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });
+        mainDivSel.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
+            .call (drag)
+        ;
 
         mainDivSel.append("div").style("height", "40px")
             .append("button")
@@ -39,7 +50,9 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         var chartDiv = mainDivSel.append("div")
             .attr("class", "panelInner")
             .attr("id", "distoDiv")
-            .style("position", "relative");
+            .style("position", "relative")
+            .style("height", "calc( 100% - 40px )")
+        ;
         //CLMSUI.utils.addFourCorners(mainDivSel);
 
         chartDiv.selectAll("*").remove();
@@ -56,9 +69,12 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                     [this.options.title]
                 ],
                 type: 'bar',
+                colors: {
+                    Random: "#aaa"
+                },
                 color: function (colour, d) {
                     var rm = self.model.get("rangeModel");
-                    if (d.id && rm.get("active") && rm.get("scale")) {
+                    if (d.id && d.id !== "Random" && rm.get("active") && rm.get("scale")) {
                         return rm.get("scale")(d.x);
                     }
                     return colour;
@@ -86,7 +102,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 }
             },
             legend: {
-                hide: [this.options.title]
+                //hide: [this.options.title]
             },
             padding: {
                 left: 45
@@ -157,7 +173,9 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 }
             }
         }
-
+        
+        var randArr = CLMSUI.modelUtils.generateRandomDistribution (allCrossLinks.length, distances);
+        console.log ("random", randArr);
 
         var extent = d3.extent(distArr);
         //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
@@ -165,20 +183,39 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         if (thresholds.length === 0) {
             thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
         }
-        var binnedData = d3.layout.histogram()
-            .bins(thresholds)
-            (distArr);
+        
+        var seriesArr = [distArr, randArr];
+        
+        var countArrays = seriesArr.map (function (series, i) {
+            var binnedData = d3.layout.histogram()
+                .bins(thresholds)
+                (series)
+            ;
 
-        var countData = binnedData.map(function (nestedArr) {
-            return nestedArr.y;
+            var countData = binnedData.map(function (nestedArr) {
+                return nestedArr.y;
+            });
+                  
+            return countData;
         });
-        var maxY = d3.max(countData);
-        countData.unshift(this.options.title);
+        
+       
+        var maxY = d3.max(countArrays[0]);  // max calced on real data only
+        // if max y needs to be calculated across all series
+        //var maxY = d3.max(countArrays, function(array) {
+        //    return d3.max(array);
+        //});
+        
+        // add titles to front of arrays as c3 demands
+        var seriesTitles = [this.options.title, "Random"];
+        countArrays.forEach (function (countArray,i) { countArray.unshift (seriesTitles[i]); })
+        
 
         // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
         var maxAxes = {};
+            console.log ("maxy", maxY);
         //if (+xlv.cutOff <= xlv.scores.min) {
-        //    maxAxes.y = maxY;
+            maxAxes.y = maxY;
         //}
 
         //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
@@ -187,10 +224,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         //console.log ("maxAxes", maxAxes);
         this.chart.axis.max(maxAxes)
         this.chart.load({
-            columns: [
-                //xNames,
-                countData
-            ]
+            columns: countArrays
         });
 
         //console.log ("data", distArr, binnedData);
@@ -199,6 +233,10 @@ CLMSUI.DistogramBB = Backbone.View.extend({
     },
 
     relayout: function () {
+        // fix c3 setting max-height to current height so it never gets bigger y-wise
+        // See https://github.com/masayuki0812/c3/issues/1450
+        d3.select(this.el).select(".c3").style("max-height", "none");   
+        
         this.chart.resize();
 
         return this;
@@ -209,7 +247,10 @@ CLMSUI.DistogramBB = Backbone.View.extend({
     remove: function () {
         // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
         this.chart = this.chart.destroy();
-
+        
+        // remove drag listener
+        d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null); 
+        
         // this line destroys the containing backbone view and it's events
         Backbone.View.prototype.remove.call(this);
     }

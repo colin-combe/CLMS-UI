@@ -186,10 +186,6 @@ var showDistoPanel = function (show) {
 var distoViewer = new CLMSUI.DistogramBB ({
     el: "#distoPanel", 
     model: compositeModel,
-    events: {
-        "click .downloadButton": "downloadSVG"
-        ,"click .closeButton": "hideView"
-    },
     displayEventName: "distoShow"
 });
 
@@ -198,13 +194,9 @@ var distoViewer = new CLMSUI.DistogramBB ({
 
 // Resizing of panels
 ByRei_dynDiv.api.alter = function() {
-	var
-	mode = ByRei_dynDiv.cache.modus;
-
-	console.log('Div is alter...'
-	+ '<br>ID: ' + ByRei_dynDiv.api.elem
-	+ '<br>Mode: ' + mode
-	+ '');
+	var mode = ByRei_dynDiv.cache.modus;
+	console.log('Div is alter...',  'ID', ByRei_dynDiv.api.elem, 'elem',  ByRei_dynDiv.api, 'Mode', mode);
+    
 	if (mode != "moveparent") {
 		if (ByRei_dynDiv.api.elem == 3){
 			spectrumViewer.resize();

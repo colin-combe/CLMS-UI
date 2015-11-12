@@ -88,6 +88,7 @@
         
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
+        <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./vendor/distogramBB.js"></script>
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
         <script type="text/javascript" src="./js/FilterViewBB.js"></script>
