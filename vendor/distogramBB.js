@@ -22,11 +22,14 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         var defaultOptions = {
             xlabel: "Distance",
             ylabel: "Count",
-            title: "Cross Links"
+            seriesName: "Cross Links",
+            chartTitle: "Distogram"
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
+        this.precalcedDistributions = {};
         this.displayEventName = viewOptions.displayEventName;
+        this.maxX = 80;
 
         var self = this;
 
@@ -66,7 +69,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 //x: 'x',
                 columns: [
                     //['x'],
-                    [this.options.title]
+                    [this.options.seriesName]
                 ],
                 type: 'bar',
                 colors: {
@@ -102,10 +105,11 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 }
             },
             legend: {
-                //hide: [this.options.title]
+                //hide: [this.options.seriesName]
             },
             padding: {
-                left: 45
+                //left: 40, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
+                right: 20
             },
             tooltip: {
                 format: {
@@ -116,13 +120,19 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                         return name + " " + self.options.ylabel;
                     }
                 }
+            },
+            title: {
+                text: this.options.chartTitle
             }
         });
 
         console.log("this", this);
 
         this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-        this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout);
+        this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+        this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
+        
+        this.recalcRandomBinning();
 
         if (viewOptions.displayEventName) {
             this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible)
@@ -173,27 +183,33 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 }
             }
         }
-        
-        var randArr = CLMSUI.modelUtils.generateRandomDistribution (allCrossLinks.length, distances);
-        console.log ("random", randArr);
+
+        //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
+        //var randArr = this.model.get("distancesModel").get("flattenedDistances");
+        //console.log ("random", randArr);
 
         var extent = d3.extent(distArr);
         //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-        var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), 41);
+        var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.maxX);
         if (thresholds.length === 0) {
             thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
         }
         
-        var seriesArr = [distArr, randArr];
+        var self = this;
+        var seriesArr = [
+            {data: distArr, name: this.options.seriesName, scale: 1.0},
+            {data: [1] /*should be precalced*/, name: "Random", scale: distArr.length / (this.randArrLength || distArr.length)}
+        ];
         
-        var countArrays = seriesArr.map (function (series, i) {
-            var binnedData = d3.layout.histogram()
-                .bins(thresholds)
-                (series)
+        var countArrays = seriesArr.map (function (series) {
+            
+            var binnedData = self.precalcedDistributions[series.name]
+                ? self.precalcedDistributions[series.name]
+                : d3.layout.histogram().bins(thresholds)(series.data)
             ;
 
             var countData = binnedData.map(function (nestedArr) {
-                return nestedArr.y;
+                return nestedArr.y * series.scale;
             });
                   
             return countData;
@@ -206,9 +222,9 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         //    return d3.max(array);
         //});
         
-        // add titles to front of arrays as c3 demands
-        var seriesTitles = [this.options.title, "Random"];
-        countArrays.forEach (function (countArray,i) { countArray.unshift (seriesTitles[i]); })
+        // add names to front of arrays as c3 demands
+       
+        countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); })
         
 
         // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
@@ -230,6 +246,19 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         //console.log ("data", distArr, binnedData);
 
         return this;
+    },
+    
+    recalcRandomBinning: function () {
+        console.log ("precalcing random bins for distogram view");
+        var randArr = this.model.get("distancesModel").flattenedDistances();
+        var thresholds = d3.range(0, this.maxX);
+        var binnedData = d3.layout.histogram()
+            .bins(thresholds)
+            (randArr)
+        ;
+        this.randArrLength = randArr.length;
+        this.precalcedDistributions = this.precalcedDistributions || {};
+        this.precalcedDistributions["Random"] = binnedData;
     },
 
     relayout: function () {

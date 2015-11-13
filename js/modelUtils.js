@@ -2,7 +2,6 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.modelUtils = {
     generateRandomDistribution: function (count, distanceMatrix) {
-        console.log ("count", count, "dm", distanceMatrix);
         var rd = [];
         var matSize = distanceMatrix.length;
         
@@ -23,5 +22,13 @@ CLMSUI.modelUtils = {
         }
         
         return rd;
-    }
+    },
+    
+    flattenDistanceMatrix: function (distanceMatrix) {
+        var distanceList =  [].concat.apply([], distanceMatrix);
+        distanceList = distanceList.filter(function(d) { return d !== null; });
+        return distanceList;
+    },
+    
+    
 };

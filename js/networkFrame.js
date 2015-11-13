@@ -186,7 +186,11 @@ var showDistoPanel = function (show) {
 var distoViewer = new CLMSUI.DistogramBB ({
     el: "#distoPanel", 
     model: compositeModel,
-    displayEventName: "distoShow"
+    displayEventName: "distoShow",
+    myOptions: {
+        chartTitle: "Distogram Plot",
+        seriesName: "Cross Links"
+    }
 });
 
 

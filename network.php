@@ -364,10 +364,19 @@
                     proteinLinks: tempModelMaker.proteinLinks
             });
 
-            CLMSUI.distancesModel = Backbone.Model.extend();
-            CLMSUI.distancesInst = new CLMSUI.distancesModel ({ 
-                    distances: distances
+            CLMSUI.distancesModel = Backbone.Model.extend({
+                flattenedDistances: function () {
+                    return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
+                }
             });
+            CLMSUI.distancesInst = new CLMSUI.distancesModel ({});
+            /*
+            CLMSUI.distancesInst.listenTo (CLMSUI.distancesInst, "change:distances", function (model, newDistances) {
+                console.log ("model calling own flattenedDistances set method");
+                model.set ("flattenedDistances", CLMSUI.modelUtils.flattenDistanceMatrix (newDistances));
+            });
+            */
+            CLMSUI.distancesInst.set("distances", distances);
             
             CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({
                 scores: tempModelMaker.scores
