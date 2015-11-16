@@ -23,13 +23,13 @@ CLMSUI.DistogramBB = Backbone.View.extend({
             xlabel: "Distance",
             ylabel: "Count",
             seriesName: "Cross Links",
-            chartTitle: "Distogram"
+            chartTitle: "Distogram",
+            maxX: 80
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
         this.precalcedDistributions = {};
         this.displayEventName = viewOptions.displayEventName;
-        this.maxX = 80;
 
         var self = this;
 
@@ -51,8 +51,8 @@ CLMSUI.DistogramBB = Backbone.View.extend({
             .text("Download Image");
 
         var chartDiv = mainDivSel.append("div")
-            .attr("class", "panelInner")
-            .attr("id", "distoDiv")
+            .attr("class", "panelInner distoDiv")
+            .attr("id", "currentSampleDistogram")
             .style("position", "relative")
             .style("height", "calc( 100% - 40px )")
         ;
@@ -69,7 +69,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 //x: 'x',
                 columns: [
                     //['x'],
-                    [this.options.seriesName]
+                    [this.options.seriesName],
                 ],
                 type: 'bar',
                 colors: {
@@ -80,12 +80,15 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                     if (d.id && d.id !== "Random" && rm.get("active") && rm.get("scale")) {
                         return rm.get("scale")(d.x);
                     }
+                    else if (!d.id && d !== "Random") {
+                        return rm.get("scale").range()[2];
+                    }
                     return colour;
                 }
             },
             bar: {
                 width: {
-                    ratio: 0.9 // this makes bar width 50% of length between ticks
+                    ratio: 0.8 // this makes bar width 50% of length between ticks
                         // need to poke c3.js code to see why the bars are initally zero width (whatever it calculates from is zero too I suspect)
                 }
                 //width: 8 // this makes bar width 8px
@@ -93,14 +96,16 @@ CLMSUI.DistogramBB = Backbone.View.extend({
             axis: {
                 x: {
                     label: this.options.xlabel //,
-                        //max: 40
+                        //max: this.options.maxX
                 },
                 y: {
                     label: this.options.ylabel,
                     tick: { // blank non-whole numbers on y axis with this function
-                        format: function (n) {
-                            return (n == Math.floor(n)) ? n : "";
-                        }
+                        // except this does the same for tooltips, so non-whole numbers dont get shown in tooltips unless tooltip.value overridden below
+                        //format: function (n) {
+                        //    console.log ("tooltipping", n);
+                        //    return (n == Math.floor(n)) ? n : "";
+                        //}
                     }
                 }
             },
@@ -112,12 +117,20 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 right: 20
             },
             tooltip: {
+                grouped: true,
                 format: {
                     title: function (x) {
                         return self.options.xlabel + " " + x;
                     },
-                    name: function (name, ratio, id, index) {
+                    name: function (name/*, ratio, id, index*/) {
                         return name + " " + self.options.ylabel;
+                    },
+                    value: function (value, ratio, id) {
+                        var v = value.toFixed (id === "Random" ? 1 : 0);
+                        if (id !== "Random") {
+                            v += "<span style='visibility:hidden; margin: 0'>.0</span>";
+                        }
+                        return v;
                     }
                 }
             },
@@ -135,11 +148,11 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         this.recalcRandomBinning();
 
         if (viewOptions.displayEventName) {
-            this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible)
+            this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
         }
     },
 
-    downloadSVG: function (evt) {
+    downloadSVG: function () {
         var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
         download(svgString, 'application/svg', 'distogram.svg');
     },
@@ -190,7 +203,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
 
         var extent = d3.extent(distArr);
         //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-        var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.maxX);
+        var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.options.maxX);
         if (thresholds.length === 0) {
             thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
         }
@@ -224,7 +237,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         
         // add names to front of arrays as c3 demands
        
-        countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); })
+        countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); });
         
 
         // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
@@ -238,7 +251,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
 
         //console.log ("thresholds", thresholds);
         //console.log ("maxAxes", maxAxes);
-        this.chart.axis.max(maxAxes)
+        this.chart.axis.max(maxAxes);
         this.chart.load({
             columns: countArrays
         });
@@ -251,7 +264,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
     recalcRandomBinning: function () {
         console.log ("precalcing random bins for distogram view");
         var randArr = this.model.get("distancesModel").flattenedDistances();
-        var thresholds = d3.range(0, this.maxX);
+        var thresholds = d3.range(0, this.options.maxX);
         var binnedData = d3.layout.histogram()
             .bins(thresholds)
             (randArr)

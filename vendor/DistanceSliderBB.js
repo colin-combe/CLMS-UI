@@ -30,6 +30,7 @@ CLMSUI.DistanceSliderBB = Backbone.View.extend ({
         
         this.height = this.cy - margin.top - margin.bottom;
 
+        this.colourRange = ['black','#5AAE61','#FDB863','#9970AB'];
 
         this.y = d3.scale.linear()
             .domain([35, 0])
@@ -62,19 +63,29 @@ CLMSUI.DistanceSliderBB = Backbone.View.extend ({
             //~ .attr("r", 3.5);
 
         this.upperRange = svg.append("rect").attr("x", 0).attr("y", -10)
-                    .attr("width", 50).attr("fill","#9970AB");
+                    .attr("width", 50).attr("fill",self.colourRange[3]);
         this.lowerRange = svg.append("rect").attr("x", 0)
-                    .attr("width", 50).attr("fill","#5AAE61");
+                    .attr("width", 50).attr("fill",self.colourRange[1]);
 
 
         var brushg = svg.append("g")
             .attr("class", "brush")
             .call(this.brush);
 
-        brushg.selectAll(".resize").append("path")
-            .attr("transform", "translate(50,0)")
-            //~ .attr("r", "20");
-            .attr("d", "M0 0 L20 20 L20 -20 z")
+        brushg.selectAll(".resize")
+            .append("path")
+                .attr("transform", "translate(50,0)")
+                //~ .attr("r", "20");
+                .attr("d", "M0 0 L20 20 L20 -20 z")
+        ;
+        
+        brushg.selectAll(".resize")
+            .append("path")
+                .attr ("class", "bevel")
+                .attr("transform", "translate(50,0)")
+                //~ .attr("r", "20");
+                .attr("d", "M0 0 L20 -20")
+        ;
 
         brushg.selectAll("rect")
             .attr("width", 50);
@@ -105,7 +116,7 @@ CLMSUI.DistanceSliderBB = Backbone.View.extend ({
 	  
 		var scale = d3.scale.threshold()
 		  .domain([0, s[0], s[1]])
-		  .range(['black','#5AAE61','#FDB863','#9970AB'])
+		  .range(this.colourRange)
         ;
 	  
         this.brushMoved.dispatch(scale);

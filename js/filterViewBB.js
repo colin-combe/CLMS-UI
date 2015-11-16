@@ -32,6 +32,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
+        
+        mainDivSel.append("span").attr("class", "sideOn").text("Filters");
+        
         mainDivSel.selectAll("label")
             .data(this.options.toggles, function(d) { return d.id; })
             .enter()
@@ -44,19 +47,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
         
-        var slider = mainDivSel.append ("div").attr("id", "scoreSlider");
+        var slider = mainDivSel.append ("div").attr("class", "scoreSlider");
         slider.append("p").text("Score:");
-        slider.append("p").attr("id", "cutoffLabel").text("cut-off");
-        slider.append("p").attr("class", "scoreLabel").attr("id", "scoreLabel1");
+        slider.append("p").attr("class", "cutoffLabel").text("cut-off");
+        slider.append("p").attr("class", "scoreLabel");
         slider.append("input").attr({
-            "id": "slide", 
+            "class": "sliderInput", 
             "type": "range",
             "min" : 0,  // these don't need to be taken from model. We pick 0-100 and modify those values with model data later when needed
             "max": 100,
             "step": 1,
             "value": self.model.get("cutoff")
         });
-        slider.append("p").attr("class","scoreLabel").attr("id", "scoreLabel2");
+        slider.append("p").attr("class","scoreLabel");
         
         
         mainDivSel.selectAll("label")
@@ -77,9 +80,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         if (self.model.get("scores") === null){
             slider.style('display', 'none');
         } else {
-            d3.select('#scoreLabel1').html ('['+this.getMinScore());
-            d3.select('#scoreLabel2').html (this.getMaxScore()+']');
-            this.sliderChanged ({target: d3.select("#slide").node()});
+            var vals = ['['+this.getMinScore(), this.getMaxScore()+']'];
+            mainDivSel.selectAll(".scoreLabel").data(vals).html(function(d) { return d; }); // min and max labels
+                         
+            this.sliderChanged ({target: slider.select(".sliderInput").node()});
             slider.style('display', 'inline-block');
         }
         
@@ -121,12 +125,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
     
     sliderChanged: function (evt) {
+        console.log ("evt", evt);
         var slide = evt.target;
         var min = this.getMinScore();
-        var max = this.getMaxScore()
+        var max = this.getMaxScore();
         var cut = ((slide.value / 100) * (max - min)) + (min / 1);
         cut = cut.toFixed (this.sliderDecimalPlaces);
-        d3.select("#cutoffLabel").text(cut);
+        d3.select(this.el).select(".cutoffLabel").text(cut);
         this.model.set ("cutoff", cut);
     },
     

@@ -405,7 +405,7 @@
                     events: {
                         "click input.filterTypeToggle": "filter",
                         "click input.filterSpecialToggle": "filterSpecial",
-                        "input #slide": "sliderChanged"
+                        "input .sliderInput": "sliderChanged"
                     },
                 });
                 
@@ -419,14 +419,16 @@
       
 					var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
 					distSlider.brushMoved.add(onDistanceSliderChange); //add listener
+                    distSlider.brushmove();
+
 					//distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
-					var scale = d3.scale.threshold()
-						.domain([0, 15, 25])
-						.range(['black', '#5AAE61','#FDB863','#9970AB']);
-					onDistanceSliderChange(scale);
-                    CLMSUI.rangeModelInst.set ("scale", scale);
+					//var scale = d3.scale.threshold()
+					//	.domain([0, 15, 25])
+					//	.range(distSlider.colourRange.slice(0));   // nasty access of view data, but only have to do it until xlv is backboned. Edit: Actually can ignore now.
+					//onDistanceSliderChange(scale);
+                    //CLMSUI.rangeModelInst.set ("scale", scale);
                     
-                    var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+                    //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
 					//distoViewer.setData(xlv.distances,xlv);				
 				}
 				else {
@@ -435,10 +437,12 @@
 				}		
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					
+                /*
 				CLMSUI.filterFunc = function () {
                     //xlv.checkLinks(); // needs fixed.
                     distoViewer.render ();
                 }
+                */
                 
                 /*
                 

@@ -188,8 +188,8 @@ var distoViewer = new CLMSUI.DistogramBB ({
     model: compositeModel,
     displayEventName: "distoShow",
     myOptions: {
-        chartTitle: "Distogram Plot",
-        seriesName: "Cross Links"
+        chartTitle: "Cross-Link Distogram",
+        seriesName: "Actual"
     }
 });
 
