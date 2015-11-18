@@ -146,7 +146,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
 		var minDim = Math.min (width, height);
 		
 		
-		var canvasScale = minDim / (seqLength * 2);
+		var canvasScale = minDim / (seqLength /* * 2 */);
 		self.canvas.attr("width",  minDim / canvasScale)
 			.attr("height", minDim / canvasScale)
 			.style("-ms-transform","scale("+canvasScale+")")
@@ -200,8 +200,8 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         // That's how you define the value of a pixel //
         // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
 
-        function drawPixel (cd, x, y, r, g, b, a) {
-            var index = (x + y * cx) * 4;
+        function drawPixel (cd, pixi, r, g, b, a) {
+            var index = pixi * 4;
 
             cd[index] = r;
             cd[index + 1] = g;
@@ -264,8 +264,10 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         */
         
         if (cx > 0) {
-            var canvasData = ctx.getImageData (0, 0, self.canvas.attr("width"), self.canvas.attr("height"));
-            console.log ("canvas", self.canvas.attr("width"), self.canvas.attr("height"));
+            var pw = self.canvas.attr("width");
+            var canvasData = ctx.getImageData (0, 0, pw, self.canvas.attr("height"));
+            var cd = canvasData.data;
+
             var colourArrays = [self.dubiousUnlinked, self.withinUnlinked].map (function (col) {
                 return d3.rgb (col);
             });
@@ -278,7 +280,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
                         var distance = row[j];
                         if (distance && distance < max) {
                             var col = (distance > min ? colourArrays[0] : colourArrays[1]);
-                            drawPixel (canvasData.data, ixStep, (seqLength - j), col.r, col.g, col.b, 255);
+                            drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                         }
                     }
                 }
