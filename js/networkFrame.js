@@ -193,6 +193,13 @@ var distoViewer = new CLMSUI.DistogramBB ({
     }
 });
 
+var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
+    el: "#matrixPanel", 
+    model: compositeModel,
+    displayEventName: "matrixShow"
+});
+
+
 
 
 

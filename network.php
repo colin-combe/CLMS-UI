@@ -93,6 +93,7 @@
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
         <script type="text/javascript" src="./js/FilterViewBB.js"></script>
         <script type="text/javascript" src="./js/FilterModelBB.js"></script>
+        <script type="text/javascript" src="./js/matrix.js"></script>
     </head>
     <body>
 <!--
@@ -183,6 +184,9 @@
                     <div class="dynDiv_resizeDiv_br"></div>
                 -->
 			</div>	
+        
+            <div class="dynDiv" id="matrixPanel">
+            </div>
 
 			
 <!--
@@ -219,7 +223,8 @@
                     <label id="distoCbLabel" class="btn" style="padding-left:0px;">Distogram
 							<input id="distoChkBx" onclick="showDistoPanel(this.checked);" type="checkbox"></label>
                     -->
-                    <span id="distoPlaceholder"></span>
+                    <span id="distoChkBxPlaceholder"></span>
+                    <span id="matrixChkBxPlaceholder"></span>
 					<label class="btn" style="padding-left:0px;">Help
 							<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
                     
@@ -402,15 +407,12 @@
                 var filterViewGroup = new CLMSUI.FilterViewBB ({
                     el: "#filterPlaceholder", 
                     model: CLMSUI.filterModelInst,
-                    events: {
-                        "click input.filterTypeToggle": "filter",
-                        "click input.filterSpecialToggle": "filterSpecial",
-                        "input .sliderInput": "sliderChanged"
-                    },
+                    events: {}
                 });
                 
                 // Generate distogram checkbox view here
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoPlaceholder"), {label:"Distogram", eventName:"distoShow"});
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow"});
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow"});
 				
 				if (HSA_Active){
 						
@@ -433,7 +435,8 @@
 				}
 				else {
 					document.getElementById('nglCbLabel').setAttribute('style','display:none;');
-					document.getElementById('distoCbLabel').setAttribute('style','display:none;');
+					document.getElementById('distoChkBxPlaceholder').setAttribute('style','display:none;');
+                    document.getElementById('matrixChkBxPlaceholder').setAttribute('style','display:none;');
 				}		
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					

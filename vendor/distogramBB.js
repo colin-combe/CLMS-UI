@@ -84,6 +84,15 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                         return rm.get("scale").range()[2];
                     }
                     return colour;
+                },
+                selection: {
+                    enabled: true,
+                    grouped: true,
+                    multiple: true,
+                    draggable: true
+                },
+                ondragend: function (extent) {
+                    console.log ("extent", extent);
                 }
             },
             bar: {

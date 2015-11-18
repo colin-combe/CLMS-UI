@@ -9,7 +9,11 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.FilterViewBB = Backbone.View.extend({
     tagName: "span",
     className: "filterGroup",
-    events: {},
+    events: {         
+        "click input.filterTypeToggle": "filter",
+        "click input.filterSpecialToggle": "filterSpecial",
+        "input .sliderInput": "sliderChanged"
+    },
 
     initialize: function (viewOptions) {
         console.log("arg options", viewOptions);
