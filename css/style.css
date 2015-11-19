@@ -345,13 +345,6 @@ height: calc(100% - 40px);
   fill: #fff;
 }
 
-.axis path, .axis line {
-  fill: none;
-  stroke: #000;
-/*
-  shape-rendering: crispEdges;
-*/
-}
 .peakAnnot{
 	font-size:12px;
 }
@@ -625,6 +618,13 @@ tbody tr:hover td, tbody tr:hover td  {
 	left: 80px;
 	width:500px;
 	height:400px;
+}
+#matrixPanel svg {
+    height: 100%;
+    width: 100%;
+}
+#matrixPanel text {
+    text-anchor: middle;
 }
 .distoDiv {
     /*overflow:auto;*/

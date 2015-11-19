@@ -19,19 +19,21 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         var self = this;
 
         var defaultOptions = {
-            xlabel: "Distance",
-            ylabel: "Count",
+            xlabel: "Residue Index 1",
+            ylabel: "Residue Index 2",
             seriesName: "Cross Links",
-            chartTitle: "Distogram",
-            maxX: 80
+            chartTitle: "Cross-Link Matrix",
+            maxX: 80,
+            background: "white"
         };
+        
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
         
         this.margin = {
-		 "top":    this.options.title  ? 30 : 20,
-		 "right":  50,
-		 "bottom": this.options.xlabel ? 60 : 40,
-		 "left":   this.options.ylabel ? 90 : 60
+            top:    this.options.chartTitle  ? 30 : 0,
+            right:  20,
+            bottom: this.options.xlabel ? 45 : 25,
+            left:   this.options.ylabel ? 70 : 50
         };
         
         this.displayEventName = viewOptions.displayEventName;
@@ -46,55 +48,81 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         CLMSUI.utils.addDynDivScaffolding(elem);
         
         // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
-        var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });
+        var panelDrag = d3.behavior.drag().on ("dragend", function() { self.resize(); });
         elem.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
-            .call (drag)
+            .call (panelDrag)
         ;
         
         var chartDiv = elem.append("div")
             .attr("class", "panelInner")
             .attr("id", "currentSampleMatrix")
             .style("position", "relative")
-            //.style("height", "calc( 100% - 40px )")
+        ;      
+        chartDiv.selectAll("*").remove();
+        
+        // Canvas element
+        var canvasViewport = chartDiv.append("div")
+            .attr ("class", "viewport")
+            .style ("overflow", "hidden")
+            .style("position", "absolute")
         ;
         
-        chartDiv.selectAll("*").remove();
-        this.canvas = chartDiv.append("canvas");
-        this.canvas.style("position", "absolute").style("z-index", 0);
-        this.svg = chartDiv.append("svg")
-            .style("position", "absolute")
-            .style("top", "0px")
-            .style("left", "0px")
-            .style("z-index", "1")
+        this.canvas = canvasViewport.append("canvas");
+        var czoom = d3.behavior.zoom().scaleExtent([1, 8]).on("zoom", function() { self.canvasZoom (self); });
+        this.userScale = 1;
+        this.userOrigin = [0, 0];
+        this.canvas
+            .style("position", "relative")
+            .call(czoom)
         ;
+        
+        // SVG element
+        this.svg = chartDiv.append("svg");
 
+        // Stats div, needs removed or improved
+        this.stats = chartDiv.append("div").attr("id","statsDiv");
+
+        
+        // Scales and axes setup
+        this.x = d3.scale.linear();
+        this.y = d3.scale.linear();
+        
+        this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
+        this.yAxis = d3.svg.axis().scale(this.y).orient("left");
+        
         this.vis = this.svg.append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         ;
-        //this.sliderDiv = chartDiv.append("div").attr("id","sliderDiv");
-        //this.slider = new DistanceSlider("sliderDiv", this);
-        this.stats = chartDiv.append("div").attr("id","statsDiv");
 
         // Add the x-axis label
-        if (this.options.xlabel) {
-            this.vis.append("text")
+        //if (this.options.xlabel) {
+            this.vis.append("g").append("text")
                 .attr("class", "axis")
                 .text(this.options.xlabel)
-                .attr("x", self.el.clientWidth/2)
-                .attr("y", self.el.clientHeight)
-                .attr("dy","2.4em")
-                .style("text-anchor","middle");
-        }
+                .attr("dy","0em")
+            ;
+        //}
 
         // add y-axis label
-        if (this.options.ylabel) {
+        //if (this.options.ylabel) {
             this.vis.append("g").append("text")
                 .attr("class", "axis")
                 .text(this.options.ylabel)
-                .style("text-anchor","middle")
-                .attr("transform","translate(" + -90 + " " + self.el.clientHeight/2+") rotate(-90)");
-        }
+                .attr("dy","1em")
+            ;
+        //}
         
+        this.vis.append("g")
+			.attr("class", "y axis")
+			.call(self.yAxis)
+        ;
+        
+        this.vis.append("g")
+			.attr("class", "x axis")
+			.call(self.xAxis)
+        ;
+        
+        // colours
         this.dubiousUnlinked = "#eeeeee";
         this.withinUnlinked = "#ccebc5";//"#e6f5c9";//#a6dba0";//"#b2df8a";//
 
@@ -127,82 +155,48 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         }
     },
     
+    canvasZoom: function (self) {
+        console.log ("zoom event", d3.event.scale, d3.event.translate);
+        self.userScale = d3.event.scale;
+        self.userOrigin = d3.event.translate.slice();
+        self.resize();
+    },
+    
     render: function () {
+
+        this.resize();
+        
         var self = this;
         var distances = this.model.get("distancesModel").get("distances");
         var seqLength = distances.length - 1;
         var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
         var residueLinks = allProtProtLinks[0].residueLinks.values();
-
-		var cx = Math.max (0, self.el.clientWidth - 160);
-		var cy = self.el.clientHeight;
         
-		self.svg.attr("width", cx).attr("height", cy);
-		self.vis.attr("width", cx).attr("height", cy).selectAll("*").remove();
-		
-		var width = Math.max (0, self.el.clientWidth - self.margin.left - self.margin.right);
-		var height = Math.max (0, cy - self.margin.top  - self.margin.bottom);
-		//its going to be square and fit in containing div
-		var minDim = Math.min (width, height);
-		
-		
-		var canvasScale = minDim / (seqLength /* * 2 */);
-		self.canvas.attr("width",  minDim / canvasScale)
-			.attr("height", minDim / canvasScale)
-			.style("-ms-transform","scale("+canvasScale+")")
-			.style("-ms-transform-origin", "0 0")
-			.style("-moz-transform","scale("+canvasScale+")")
-			.style("-moz-transform-origin", "0 0")
-			.style("-o-transform","scale("+canvasScale+")")
-			.style("-o-transform-origin", "0 0")
-			.style("-webkit-transform","scale("+canvasScale+")")
-			.style("-webkit-transform-origin", "0 0")
-			.style("transform","scale("+canvasScale+")")
-			.style("transform-origin", "0 0")
-			.style("top", (self.margin.top) + "px")
-			.style("left", (self.margin.left) + "px");
-		
-		var ctx = self.canvas[0][0].getContext("2d");
-		ctx.fillStyle = "white";
-		ctx.fillRect(0, 0, minDim / canvasScale, minDim / canvasScale);
-		
-		self.x = d3.scale.linear()
-		  .domain([1, seqLength])
-		  .range([0, minDim]);
+        var sizeData = this.getSizeData(); 
+		//var minDim = sizeData.minDim;
 
-		// y-scale (inverted domain)
-		self.y = d3.scale.linear()
-			.domain([seqLength, 1])
-			.range([0, minDim]);
+		self.canvas
+            .attr("width",  seqLength)
+			.attr("height", seqLength)
+        ;
 		
-		self.vis.append("g")
-			.attr("class", "y axis")
-			.call(d3.svg.axis().scale(self.y).orient("left"))
-        ;
-
-		self.vis.append("g")
-			.attr("class", "x axis")
-			.attr("transform", "translate(0," + height + ")")
-			.call(d3.svg.axis().scale(self.x).orient("bottom"))
-        ;
+		var ctx = self.canvas.node().getContext("2d");
+		ctx.fillStyle = self.options.background;
+		ctx.fillRect(0, 0, self.canvas.node().width, self.canvas.node().height);
 
 		var xStep = 1;//minDim / seqLength;
 		var yStep = 1;//minDim / seqLength;
 		
-        var rangeDomain = self.model.get("rangeModel").get("scale").domain();
-		var sliderExtent = rangeDomain.slice(1);
-		
-		
         
-        var min = sliderExtent[0];
-        var max = sliderExtent[1];
+        var rangeDomain = self.model.get("rangeModel").get("scale").domain();
+        var min = rangeDomain[1];
+        var max = rangeDomain[2];
         
         // That's how you define the value of a pixel //
         // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
 
         function drawPixel (cd, pixi, r, g, b, a) {
             var index = pixi * 4;
-
             cd[index] = r;
             cd[index + 1] = g;
             cd[index + 2] = b;
@@ -263,7 +257,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         }
         */
         
-        if (cx > 0) {
+        if (sizeData.cx > 0) {
             var pw = self.canvas.attr("width");
             var canvasData = ctx.getImageData (0, 0, pw, self.canvas.attr("height"));
             var cd = canvasData.data;
@@ -294,20 +288,20 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         console.log ("CLMSUI.times", CLMSUI.times);
         
         
-
 		var rlCount = residueLinks.length;
         console.log ("rlcount", rlCount);
 		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 		for (var rl = 0; rl < rlCount; rl++) {
 			var crossLink = residueLinks[rl];
-            var fromDist = distances[crossLink.fromResidue];
-            var fromDistTo = fromDist ? fromDist[crossLink.toResidue] : undefined;
+            var fromDistArr = distances[crossLink.fromResidue];
+            var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
+            //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
 
-            if (fromDist && fromDistTo && fromDistTo < sliderExtent[0]){
+            if (dist && dist < min){
                 ctx.fillStyle = self.withinLinked;
                 sasIn++;
             }
-            else if (fromDist && fromDistTo && fromDistTo < sliderExtent[1]){
+            else if (dist && dist < max){
                 ctx.fillStyle =  self.dubiousLinked;
                 sasMid++;
             }
@@ -317,13 +311,13 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
             }
             ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
             
-            var toDist = distances[crossLink.toResidue];
-            var toDistFrom = toDist ? toDist[crossLink.fromResidue] : undefined;
-            if (toDist && toDistFrom && toDistFrom < sliderExtent[0]){
+            var toDistArr = distances[crossLink.toResidue];
+            dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
+            if (dist && dist < min){
                 ctx.fillStyle = self.withinLinked;
                 eucIn++;
             }
-            else if (toDist && toDistFrom && toDistFrom < sliderExtent[1]){
+            else if (dist && dist < max){
                 ctx.fillStyle = self.dubiousLinked;
                 eucMid++;
             }
@@ -335,8 +329,90 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
 		}
     
         
-		self.stats.html(sasIn + "\t" + sasMid + "\t" + sasOut);
+		self.stats.html(sasIn + "\t" + sasMid + "\t" + sasOut+"<br>"+eucIn + "\t" + eucMid + "\t" + eucOut);
 		console.log(">>"+eucIn + "\t" + eucMid + "\t" + eucOut);
+    },
+    
+    getSizeData: function () {
+        var self = this;
+        //var cx = self.el.clientWidth;
+		//var cy = self.el.clientHeight;
+        var cx = this.svg.node().clientWidth;
+		var cy = this.svg.node().clientHeight;
+        var width = Math.max (0, cx - self.margin.left - self.margin.right);
+		var height = Math.max (0, cy - self.margin.top  - self.margin.bottom);
+		//its going to be square and fit in containing div
+		var minDim = Math.min (width, height);
+        return {cx: cx, cy: cy, width: width, height: height, minDim: minDim};
+    },
+    
+    resize: function () {
+        var self = this;
+        var distances = this.model.get("distancesModel").get("distances");
+        var seqLength = distances.length - 1;
+        
+        var sizeData = this.getSizeData(); 
+		//self.svg.attr("width", sizeData.cx).attr("height", sizeData.cy);
+		var minDim = sizeData.minDim;
+        
+        		
+        d3.select(this.el).select(".viewport")
+            .attr("width",  minDim)
+			.attr("height", minDim)
+        ;
+		
+		var canvasScale = minDim / seqLength;
+        canvasScale *= this.userScale;
+        var scaleString = "scale("+canvasScale+")";
+        var originString = "0 0";
+        var translateString = "translate("+this.userOrigin[0]+"px,"+ this.userOrigin[1]+"px)";
+        var transformString = translateString + " " + scaleString;
+        console.log ("transformString", transformString);
+		self.canvas
+			.style("-ms-transform", transformString)
+			.style("-ms-transform-origin", originString)
+			.style("-moz-transform", transformString)
+			.style("-moz-transform-origin", originString)
+			.style("-o-transform", transformString)
+			.style("-o-transform-origin", originString)
+			.style("-webkit-transform", transformString)
+			.style("-webkit-transform-origin", originString)
+			.style("transform", transformString)
+			.style("transform-origin", originString)
+			.style("top", (self.margin.top) + "px")
+			.style("left", (self.margin.left) + "px")
+        ;
+        
+        var labelCoords = [
+            {x: sizeData.minDim / 2, y: sizeData.minDim + this.margin.bottom, rot: 0}, 
+            {x: -this.margin.left, y: sizeData.minDim / 2, rot: -90}
+        ];
+        this.vis.selectAll("g text.axis")
+            .data (labelCoords)
+            .attr ("transform", function(d) {
+                return "translate("+d.x+" "+d.y+") rotate("+d.rot+")";
+            })
+        ;
+        
+        self.x
+            .domain([1, seqLength])
+            .range([0, minDim])
+        ;
+
+		// y-scale (inverted domain)
+		self.y
+			.domain([seqLength, 1])
+			.range([0, minDim])
+        ;
+		
+		self.vis.select(".y")
+			.call(self.yAxis)
+        ;
+
+		self.vis.select(".x")
+			.attr("transform", "translate(0," + sizeData.minDim + ")")
+			.call(self.xAxis)
+        ;
     },
     
        // removes view
