@@ -495,7 +495,7 @@ height: calc(100% - 40px);
 }
 
 .panelInner{
-	overflow: none;   
+	overflow: hidden;   
 	height:100%;
 	width:100%;
     color: #fff;
@@ -644,10 +644,6 @@ tbody tr:hover td, tbody tr:hover td  {
     display: inline-block;
 }
 
-/*
-#graphDiv{
-
-	height:calc(100% - 110px);
-}*/
-
-
+.viewport {
+    overflow: hidden;
+}
