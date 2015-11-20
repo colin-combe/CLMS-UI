@@ -16,7 +16,10 @@
 }
 
 #matrixPanel canvas {
-    image-rendering: pixelated;
+    /*image-rendering: pixelated;*/
+    image-rendering: -moz-crisp-edges;          /* Firefox */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE */
+    image-rendering: pixelated;                 /* Opera 'n' Chrome */
     -ms-transform-origin: 0 0;
 	-moz-transform-origin: 0 0;
 	-o-transform-origin: 0 0;

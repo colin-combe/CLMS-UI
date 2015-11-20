@@ -48,7 +48,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         CLMSUI.utils.addDynDivScaffolding(elem);
         
         // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
-        var panelDrag = d3.behavior.drag().on ("dragend", function() { self.resize(); });
+        var panelDrag = d3.behavior.drag().on ("drag", function() { self.resize(); });
         elem.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
             .call (panelDrag)
         ;
@@ -83,7 +83,6 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
             .call(self.cpanzoom)
         ;
         
-        var originString = "0 0";
         this.canvas = canvasViewport.append("canvas");
 
         
@@ -177,10 +176,16 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
     },
     
     canvasPanAndZoom: function (self) {
-        console.log ("x domain pz", this.x.domain(), this.x.range());
-        //console.log ("zoom event", d3.event.scale, d3.event.translate);
+        var sizeData = this.getSizeData();
+        var minDim = sizeData.minDim;
+        // bounded zoom behavior from https://gist.github.com/shawnbot/6518285
+        var tx = Math.min(0, Math.max(d3.event.translate[0], minDim - (minDim * d3.event.scale)));
+        var ty = Math.min(0, Math.max(d3.event.translate[1], minDim - (minDim * d3.event.scale)));
+        self.cpanzoom.translate ([tx, ty]);
+        
         self.userScale = d3.event.scale;
-        self.userOrigin = d3.event.translate.slice();   // slice: copy array so it doesn't change on us unexpectedly
+        self.userOrigin = [tx,ty];// d3.event.translate.slice();   // slice: copy array so it doesn't change on us unexpectedly
+        
         self.panZoom();
     },
     
@@ -193,10 +198,9 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         var seqLength = distances.length - 1;
         var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
         var residueLinks = allProtProtLinks[0].residueLinks.values();
-        
-        var sizeData = this.getSizeData(); 
-		//var minDim = sizeData.minDim;
 
+        // make underlying canvas big enough to hold 1 pixel per residue pair
+        // it gets rescaled in the resize function to fit a particular size on the screen
 		self.canvas
             .attr("width",  seqLength)
 			.attr("height", seqLength)
@@ -279,7 +283,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         }
         */
         
-        if (sizeData.cx > 0) {
+        //if (sizeData.cx > 0) {
             var pw = self.canvas.attr("width");
             var canvasData = ctx.getImageData (0, 0, pw, self.canvas.attr("height"));
             var cd = canvasData.data;
@@ -302,7 +306,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
                 }
             }
             ctx.putImageData(canvasData, 0, 0);
-        }
+        //}
         
         
         var end = performance.now();
@@ -311,7 +315,6 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         
         
 		var rlCount = residueLinks.length;
-        console.log ("rlcount", rlCount);
 		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 		for (var rl = 0; rl < rlCount; rl++) {
 			var crossLink = residueLinks[rl];
@@ -383,12 +386,12 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
 		
         // rescale and position canvas according to pan/zoom settings and available space
-		var canvasScale = minDim / sizeData.seqLength;
-        canvasScale *= this.userScale;
-        var scaleString = "scale("+canvasScale+")";
+		var baseScale = sizeData.minDim / sizeData.seqLength;
+        var scale = baseScale * this.userScale;
+        var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.userOrigin[0]+"px,"+ this.userOrigin[1]+"px)";
+        //var translateString = "translate("+(baseScale * this.userOrigin[0])+"px,"+ (baseScale * this.userOrigin[1])+"px)";
         var transformString = translateString + " " + scaleString;
-        console.log ("transformString", transformString);
 		self.canvas
 			.style("-ms-transform", transformString)
 			.style("-moz-transform", transformString)
@@ -421,6 +424,8 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
 			.range([0, minDim])
         ;
         
+        
+        
         this.cpanzoom.x(this.x).y(this.y);
 		
 		this.vis.select(".y")
@@ -440,10 +445,11 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         var sizeData = this.getSizeData(); 
         
         // rescale and position canvas according to pan/zoom settings and available space
-		var canvasScale = sizeData.minDim / sizeData.seqLength;
-        canvasScale *= this.userScale;
-        var scaleString = "scale("+canvasScale+")";
+		var baseScale = sizeData.minDim / sizeData.seqLength;
+        var scale = baseScale * this.userScale;
+        var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.userOrigin[0]+"px,"+ this.userOrigin[1]+"px)";
+        //var translateString = "translate("+(baseScale * this.userOrigin[0])+"px,"+ (baseScale * this.userOrigin[1])+"px)";
         var transformString = translateString + " " + scaleString;
         console.log ("transformString", transformString);
 		self.canvas
