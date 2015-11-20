@@ -41,6 +41,7 @@
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
         
+        <link rel="stylesheet" href="./css/matrix.css">
         <link rel="stylesheet" href="./css/c3.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>

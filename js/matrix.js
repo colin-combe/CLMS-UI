@@ -84,22 +84,11 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
         
         var originString = "0 0";
-        this.canvas = canvasViewport
-            .append("canvas")
-            .style ("image-rendering", "pixelated")
-			.style("-ms-transform-origin", originString)
-			.style("-moz-transform-origin", originString)
-			.style("-o-transform-origin", originString)
-			.style("-webkit-transform-origin", originString)
-			.style("transform-origin", originString)
-        ;
+        this.canvas = canvasViewport.append("canvas");
 
         
         // SVG element
         this.svg = chartDiv.append("svg");
-
-        // Stats div, needs removed or improved
-        this.stats = chartDiv.append("div").attr("id","statsDiv");
 
         
         // Axes setup
@@ -361,9 +350,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
             ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
 		}
     
-        
-		self.stats.html(sasIn + "\t" + sasMid + "\t" + sasOut+"<br>"+eucIn + "\t" + eucMid + "\t" + eucOut);
-		console.log(">>"+eucIn + "\t" + eucMid + "\t" + eucOut);
+		console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
     },
     
     getSizeData: function () {
@@ -376,17 +363,17 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
 		var height = Math.max (0, cy - self.margin.top  - self.margin.bottom);
 		//its going to be square and fit in containing div
 		var minDim = Math.min (width, height);
-        return {cx: cx, cy: cy, width: width, height: height, minDim: minDim};
+        
+        var distances = this.model.get("distancesModel").get("distances");
+        var seqLength = distances.length - 1;
+        return {cx: cx, cy: cy, width: width, height: height, minDim: minDim, seqLength: seqLength};
     },
     
     // called when things need repositioned, but not re-rendered from data
     resize: function () {
         var self = this;
-        var distances = this.model.get("distancesModel").get("distances");
-        var seqLength = distances.length - 1;
         
         var sizeData = this.getSizeData(); 
-		//self.svg.attr("width", sizeData.cx).attr("height", sizeData.cy);
 		var minDim = sizeData.minDim;
         		
         // fix viewport size, used .attr, but setting the size on the child canvas element expanded it, some style > attr thing
@@ -396,7 +383,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
 		
         // rescale and position canvas according to pan/zoom settings and available space
-		var canvasScale = minDim / seqLength;
+		var canvasScale = minDim / sizeData.seqLength;
         canvasScale *= this.userScale;
         var scaleString = "scale("+canvasScale+")";
         var translateString = "translate("+this.userOrigin[0]+"px,"+ this.userOrigin[1]+"px)";
@@ -412,8 +399,8 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         
         // reposition labels
         var labelCoords = [
-            {x: sizeData.minDim / 2, y: sizeData.minDim + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.minDim / 2, rot: -90}
+            {x: minDim / 2, y: minDim + this.margin.bottom, rot: 0}, 
+            {x: -this.margin.left, y: minDim / 2, rot: -90}
         ];
         this.vis.selectAll("g text.axis")
             .data (labelCoords)
@@ -424,13 +411,13 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         
         
         this.x
-            //.domain([1, seqLength])
+            //.domain([1, sizeData.seqLength])
             .range([0, minDim])
         ;
 
 		// y-scale (inverted domain)
 		this.y
-			//.domain([seqLength, 1])
+			//.domain([sizeData.seqLength, 1])
 			.range([0, minDim])
         ;
         
@@ -450,15 +437,10 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
     panZoom: function () {
         
         var self = this;
-        var distances = this.model.get("distancesModel").get("distances");
-        var seqLength = distances.length - 1;
-        
         var sizeData = this.getSizeData(); 
-		//self.svg.attr("width", sizeData.cx).attr("height", sizeData.cy);
-		var minDim = sizeData.minDim;
         
         // rescale and position canvas according to pan/zoom settings and available space
-		var canvasScale = minDim / seqLength;
+		var canvasScale = sizeData.minDim / sizeData.seqLength;
         canvasScale *= this.userScale;
         var scaleString = "scale("+canvasScale+")";
         var translateString = "translate("+this.userOrigin[0]+"px,"+ this.userOrigin[1]+"px)";
@@ -477,7 +459,6 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
 
 		this.vis.select(".x")
-			.attr("transform", "translate(0," + sizeData.minDim + ")")
 			.call(self.xAxis)
         ;
     },
