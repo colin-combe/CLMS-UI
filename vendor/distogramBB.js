@@ -187,7 +187,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         console.log ("re rendering distogram");
 
         var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-        var allCrossLinks = allProtProtLinks[0].residueLinks.values();
+        var allCrossLinks = allProtProtLinks[0].crossLinks.values();
         var distances = this.model.get("distancesModel").get("distances");
 
         //console.log ("distances", distances);
