@@ -4,6 +4,8 @@
 //
 //		distogram/Distogram.js
 
+"use strict";
+
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.DistogramBB = Backbone.View.extend({
@@ -187,14 +189,17 @@ CLMSUI.DistogramBB = Backbone.View.extend({
         console.log ("re rendering distogram");
 
         var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-        var allCrossLinks = allProtProtLinks[0].residueLinks.values();
+        var pp1 = allProtProtLinks.next().value;
+        var allCrossLinks = pp1.crossLinks.values();
         var distances = this.model.get("distancesModel").get("distances");
 
         //console.log ("distances", distances);
         var distArr = [];
-        for (var i = 0; i < allCrossLinks.length; i++) {
-            var crossLink = allCrossLinks[i];
-            if (crossLink.check() === true) { // check() seems to cause full crosslink view to be drawn
+        for (let crossLink of allCrossLinks) {
+        //for (var i = 0; i < allCrossLinks.length; i++) {
+            //~ var crossLink = allCrossLinks[i];
+            //console.log(">>"+crossLink);
+            //if (crossLink.check() === true) { // check() seems to cause full crosslink view to be drawn
                 var toRes = crossLink.toResidue;
                 var fromRes = crossLink.fromResidue;
                 var highRes = Math.max(toRes, fromRes);
@@ -203,7 +208,7 @@ CLMSUI.DistogramBB = Backbone.View.extend({
                 if (dist !== null) {
                     distArr.push(+dist); // + is to stop it being a string
                 }
-            }
+            //~ }
         }
 
         //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
