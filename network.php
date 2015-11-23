@@ -62,16 +62,16 @@
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
-		
+		<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
 		<!--<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
-        xiNET dev -->
+        xiNET dev 
         <script type="text/javascript" src="../CLMS-model/src/controller/Init.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Match.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Protein.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Annotation.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/CrossLink.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/controller/xiNET_Storage.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/controller/xiNET_Storage.js"></script>-->
                
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>

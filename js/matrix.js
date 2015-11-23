@@ -4,6 +4,8 @@
 //
 //		graph/Matrix.js
 
+"use strict";
+
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.times = [];
@@ -192,7 +194,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         var distances = this.model.get("distancesModel").get("distances");
         var seqLength = distances.length - 1;
         var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-        var residueLinks = allProtProtLinks[0].residueLinks.values();
+        var residueLinks = allProtProtLinks.next().value.crossLinks.values();
         
         var sizeData = this.getSizeData(); 
 		//var minDim = sizeData.minDim;
@@ -310,11 +312,12 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         console.log ("CLMSUI.times", CLMSUI.times);
         
         
-		var rlCount = residueLinks.length;
-        console.log ("rlcount", rlCount);
+		//var rlCount = residueLinks.length;
+        //console.log ("rlcount", rlCount);
 		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
-		for (var rl = 0; rl < rlCount; rl++) {
-			var crossLink = residueLinks[rl];
+		for (let crossLink of residueLinks) {
+		//~ for (var rl = 0; rl < rlCount; rl++) {
+			//var crossLink = residueLinks[rl];
             var fromDistArr = distances[crossLink.fromResidue];
             var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
             //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
