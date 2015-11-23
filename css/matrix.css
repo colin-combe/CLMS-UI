@@ -2,7 +2,7 @@
     overflow: hidden;
 }
 
-#matrixPanel{
+#matrixPanel {
 	left: 80px;
 	width:500px;
 	height:400px;
@@ -25,4 +25,15 @@
 	-o-transform-origin: 0 0;
 	-webkit-transform-origin: 0 0;
 	transform-origin: 0 0;
+}
+
+#matrixPanel .viewDiv {
+    width: auto;
+    height: 100%;
+}
+
+#matrixPanel .buttonColumn {
+    width: 200px;
+    float: right;
+    height: 50px;
 }

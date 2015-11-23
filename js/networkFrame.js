@@ -183,7 +183,7 @@ var showDistoPanel = function (show) {
 }
 */
 
-var distoViewer = new CLMSUI.DistogramBB ({
+var distoViewer = new window.CLMSUI.DistogramBB ({
     el: "#distoPanel", 
     model: compositeModel,
     displayEventName: "distoShow",
@@ -193,7 +193,7 @@ var distoViewer = new CLMSUI.DistogramBB ({
     }
 });
 
-var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
+var matrixViewer = new window.CLMSUI.DistanceMatrixViewBB ({
     el: "#matrixPanel", 
     model: compositeModel,
     displayEventName: "matrixShow"

@@ -4,13 +4,12 @@
 //
 //		graph/Matrix.js
 
-"use strict";
+(function(win) {
+    "use strict";
 
-var CLMSUI = CLMSUI || {};
-
-CLMSUI.times = [];
-
-CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
+    win.CLMSUI = win.CLMSUI || {};
+    
+    win.CLMSUI.DistanceMatrixViewBB = Backbone.View.extend({
     tagName: "div",
     events: {
         "click .closeButton": "hideView"
@@ -47,7 +46,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         var elem = d3.select(this.el);
         
         // Set up some html scaffolding in d3
-        CLMSUI.utils.addDynDivScaffolding(elem);
+        win.CLMSUI.utils.addDynDivScaffolding(elem);
         
         // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
         var panelDrag = d3.behavior.drag().on ("drag", function() { self.resize(); });
@@ -57,10 +56,19 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         
         var chartDiv = elem.append("div")
             .attr("class", "panelInner")
-            .attr("id", "currentSampleMatrix")
             .style("position", "relative")
         ;      
         chartDiv.selectAll("*").remove();
+        
+        /*
+        chartDiv.append("div")
+            .attr("class", "buttonColumn")
+        ;
+        */
+        var viewDiv = chartDiv.append("div")
+            .attr("class", "viewDiv")
+        ;
+
         
         
         // Scales
@@ -74,7 +82,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
         
         // Canvas viewport and element
-        var canvasViewport = chartDiv.append("div")
+        var canvasViewport = viewDiv.append("div")
             .attr ("class", "viewport")
             .style("position", "absolute")
             .style("top", this.margin.top + "px")
@@ -87,7 +95,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
 
         
         // SVG element
-        this.svg = chartDiv.append("svg");
+        this.svg = viewDiv.append("svg");
 
         
         // Axes setup
@@ -139,7 +147,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
         
         if (viewOptions.displayEventName) {
-            this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
+            this.listenTo (win.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
         }
         
         //this.distancesChanged ();
@@ -160,7 +168,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
     },
     
     hideView: function () {
-        CLMSUI.vent.trigger (this.displayEventName, false);
+        win.CLMSUI.vent.trigger (this.displayEventName, false);
     },
 
     setVisible: function (show) {
@@ -179,6 +187,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         var sizeData = this.getSizeData();
         var minDim = sizeData.minDim;
         // bounded zoom behavior from https://gist.github.com/shawnbot/6518285
+        // (d3 events translate and scale values are just copied from zoomStatus)
         var tx = Math.min(0, Math.max(d3.event.translate[0], minDim - (minDim * d3.event.scale)));
         var ty = Math.min(0, Math.max(d3.event.translate[1], minDim - (minDim * d3.event.scale)));
         self.zoomStatus.translate ([tx, ty]);
@@ -311,14 +320,16 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         
         
         var end = performance.now();
-        CLMSUI.times.push(Math.round(end-start))
-        console.log ("CLMSUI.times", CLMSUI.times);
+        //CLMSUI.times.push(Math.round(end-start));
+        //console.log ("CLMSUI.times", CLMSUI.times);
         
         
 
 		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
-		for (let crossLink of residueLinks) {
-		//~ for (var rl = 0; rl < rlCount; rl++) {
+		//for (let crossLink of residueLinks) {
+        for (var crossLink of residueLinks) {
+        //var rlCount = residueLinks.length;
+		//for (var rl = 0; rl < rlCount; rl++) {
 			//var crossLink = residueLinks[rl];
             var fromDistArr = distances[crossLink.fromResidue];
             var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
@@ -392,8 +403,6 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
 		
  
-
-        
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
         this.x
@@ -407,21 +416,20 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
 			.range([0, minDim])
         ;
         
-        // store current pan/zoom values
+        // then store the current pan/zoom values
         var curt = this.zoomStatus.translate();
         var curs = this.zoomStatus.scale();
-        //console.log ("cs", curt, curs);
+        
         // reset reference x and y scales in zoomStatus object to be x and y scales above
         this.zoomStatus.x(this.x).y(this.y);
-        // feed current pan/zoom values back into zoomStatus object
-        // (as setting .x and .y above resets them)
-        // this adjusts domains of x and y scales
-        console.log ("cur", curs, curt);
+
         // modify translate coordinates by change (delta) in display size
         curt[0] *= deltaz;
         curt[1] *= deltaz;
+        // feed current pan/zoom values back into zoomStatus object
+        // (as setting .x and .y above resets them inside zoomStatus)
+        // this adjusts domains of x and y scales
         this.zoomStatus.scale(curs).translate(curt);
-        
         
         // Basically the point is to readjust the axes when the display space is resized, but preserving their current zoom/pan settings
         // separately from the scaling due to the resizing
@@ -475,7 +483,7 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         ;
     },
     
-       // removes view
+    // removes view
     // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
     remove: function () {
         // remove drag listener
@@ -485,3 +493,5 @@ CLMSUI.DistanceMatrixViewBB = Backbone.View.extend ({
         Backbone.View.prototype.remove.call(this);
     }
 });
+    
+} (this));
