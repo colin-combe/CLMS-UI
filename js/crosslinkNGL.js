@@ -3,8 +3,16 @@ function initNGL(){
 	if ( ! Detector.webgl ) alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
 	else {
 		stage = new NGL.Stage( "nglDiv" );
-		stage.loadFile( "rcsb://1AO6", { sele: ":A" } ).then( function(
-		structureComp ){
+		stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
+		
+		.then( function( o ){
+                    o.addRepresentation( "cartoon" );
+                    o.addRepresentation( "licorice" );
+                    o.centerView();
+                } );
+		
+		//.then( function(
+		/*structureComp ){
 
 			var xlList = xlv.proteinLinks.values()[0].residueLinks.values();
 			
@@ -41,7 +49,7 @@ function initNGL(){
 
 			xlRepr.signals.onPicking.add( handlePicking );
 
-		} );
+		} );*/
 
 	}
 }
