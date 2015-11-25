@@ -60,11 +60,17 @@
         ;      
         chartDiv.selectAll("*").remove();
         
-        /*
+        
         chartDiv.append("div")
             .attr("class", "buttonColumn")
+            .attr ("id", "matrixButtons")
         ;
-        */
+        this.buttonView = new win.CLMSUI.MatrixFilterViewBB ({
+            el: "#matrixButtons",
+            model: this.model
+        });
+        
+        
         var viewDiv = chartDiv.append("div")
             .attr("class", "viewDiv")
         ;
@@ -135,16 +141,18 @@
         ;
         
         // colours
-        this.dubiousUnlinked = "#eeeeee";
-        this.withinUnlinked = "#ccebc5";//"#e6f5c9";//#a6dba0";//"#b2df8a";//
-
         this.overLinked = "red";//"#e7298a";//"#7570b3";
-        this.dubiousLinked = "#1f78b4";//"#d95f02";
+        this.dubiousLinked = "blue";//"#d95f02";
         this.withinLinked = "black";
         
         this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.model.get("rangeModel"), "change:scale", this.render); 
         this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
+        this.listenTo (win.CLMSUI.vent, "filterEster", function(filterVal) {
+            this.filterVal = filterVal;
+            console.log ("filterEster fired", arguments);
+            this.render();
+        });
         
         if (viewOptions.displayEventName) {
             this.listenTo (win.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
@@ -172,7 +180,6 @@
     },
 
     setVisible: function (show) {
-        console.log("event display in matrix", show);
         d3.select(this.el).style('display', show ? 'block' : 'none');
 
         if (show) {
@@ -194,6 +201,45 @@
         
         self.panZoom();
     },
+        
+    // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
+    // the four 'nh ester' amino acids
+    // lys = k, ser = s, thr = t, tyr = y
+    esterMap: {"K": true, "S": true, "T": true, "Y": true},
+    esterBool: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map (function(n) { return {"K": true, "S": true, "T": true, "Y": true}[n]; }),
+        
+    getEsterLinkType: function (crossLink) {
+        var toResIndex = crossLink.toResidue;
+        var fromResIndex = crossLink.fromResidue;
+        //console.log ("res", crossLink);
+        var pLink = crossLink.proteinLink;
+        var pLinkId = pLink.id;
+        
+        // might need to query protein model at this point if from and to prot data stops getting attached to residues
+        
+        var fromProt = pLink.fromProtein;
+        var toProt = pLink.toProtein;
+        
+        var fromResType = this.getResidueType (fromProt, fromResIndex);
+        var toResType = this.getResidueType (toProt, toResIndex);
+        
+        //console.log ("ft", fromResType, toResType);
+        
+        // http://jsperf.com/letter-match says using a map is quickest, have a poke if you disagree
+        var fromEster = this.esterBool[fromResType.charCodeAt(0) - 65]; //this.esterMap[fromResType];
+        var toEster = this.esterBool[toResType.charCodeAt(0) - 65]; //this.esterMap[toResType];
+        
+        return (fromEster ? 1 : 0) + (toEster ? 1 : 0);
+        
+    },
+        
+    getResidueType: function (protein, resIndex, seqAlignFunc) {
+        var seq = protein.sequence;
+        // eventually some sequence alignment stuff will be done
+        resIndex = seqAlignFunc ? seqAlignFunc (resIndex) : resIndex;
+        // Is the sequence starting at 1, do the resIndex's start at 1?
+        return seq[resIndex - 1];
+    },
     
     render: function () {
 
@@ -204,10 +250,8 @@
         var seqLength = distances.length - 1;
         var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
 
-        var proteins = this.model.get("clmsModel").get("interactors");
+        //var proteins = this.model.get("clmsModel").get("interactors");
         var residueLinks = allProtProtLinks.next().value.crossLinks.values();
-        
-        console.log ("interactors", this.model.get("clmsModel"));
 
         // make underlying canvas big enough to hold 1 pixel per residue pair
         // it gets rescaled in the resize function to fit a particular size on the screen
@@ -241,9 +285,23 @@
         
         var start = performance.now();
         
+        var rangeColours = self.model.get("rangeModel").get("scale").range();
+        var cols = rangeColours.slice (1,3);
+        var colourArray = cols.map (function(col) {
+            col = d3.hsl(col);
+            col.s = 0.4;
+            col.l = 0.85;
+            return col.rgb();
+        });
+        /*
+        var colourArray = [withinUnlinked, dubiousUnlinked].map (function (col) {
+            return d3.rgb (col);
+        });
+        */
+        
         // two sets of nested loops, one per style
         /*
-        ctx.fillStyle = self.withinUnlinked;
+        ctx.fillStyle = colourArray[0];
 		
 		for (var i = 1; i < seqLength + 1; i++){
 			var row = distances[i];
@@ -260,7 +318,7 @@
 		}
         
 
-		ctx.fillStyle = self.dubiousUnlinked;
+		ctx.fillStyle = colourArray[1];
 		
 		for (var i = 1; i < seqLength + 1; i++){
 			var row = distances[i];
@@ -285,7 +343,7 @@
                 for (var j = 1; j < row.length; j++){   // was seqLength     
                     var distance = row[j];
                     if (distance && distance < max) {
-                        ctx.fillStyle = (distance > min ? self.dubiousUnlinked : self.withinUnlinked);
+                        ctx.fillStyle = (distance > min ? colourArray[1] : colourArray[0]);
                         ctx.fillRect (ixStep, (seqLength - j) * yStep , xStep, yStep);
                     }
                 }
@@ -298,18 +356,14 @@
             var canvasData = ctx.getImageData (0, 0, pw, self.canvas.attr("height"));
             var cd = canvasData.data;
 
-            var colourArrays = [self.dubiousUnlinked, self.withinUnlinked].map (function (col) {
-                return d3.rgb (col);
-            });
-
             for (var i = 1; i < seqLength + 1; i++){
                 var row = distances[i];
-                if (row){
+                if (row) {
                     var ixStep = (i - 1);
                     for (var j = 1; j < row.length; j++){   // was seqLength     
                         var distance = row[j];
                         if (distance && distance < max) {
-                            var col = (distance > min ? colourArrays[0] : colourArrays[1]);
+                            var col = (distance > min ? colourArray[1] : colourArray[0]);
                             drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                         }
                     }
@@ -326,44 +380,49 @@
         
 
 		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
+        console.log ("self filter", self.filterVal);
 		//for (let crossLink of residueLinks) {
         for (var crossLink of residueLinks) {
         //var rlCount = residueLinks.length;
 		//for (var rl = 0; rl < rlCount; rl++) {
 			//var crossLink = residueLinks[rl];
-            var fromDistArr = distances[crossLink.fromResidue];
-            var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
-            //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
-
-            if (dist && dist < min){
-                ctx.fillStyle = self.withinLinked;
-                sasIn++;
-            }
-            else if (dist && dist < max){
-                ctx.fillStyle =  self.dubiousLinked;
-                sasMid++;
-            }
-            else {
-                ctx.fillStyle =  self.overLinked;
-                sasOut++;
-            }
-            ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
+            var est = this.getEsterLinkType (crossLink);
+            if (self.filterVal == undefined || est === self.filterVal) {
             
-            var toDistArr = distances[crossLink.toResidue];
-            dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
-            if (dist && dist < min){
-                ctx.fillStyle = self.withinLinked;
-                eucIn++;
+                var fromDistArr = distances[crossLink.fromResidue];
+                var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
+                //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
+
+                if (dist && dist < min){
+                    ctx.fillStyle = self.withinLinked;
+                    sasIn++;
+                }
+                else if (dist && dist < max){
+                    ctx.fillStyle =  self.dubiousLinked;
+                    sasMid++;
+                }
+                else {
+                    ctx.fillStyle =  self.overLinked;
+                    sasOut++;
+                }
+                ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
+
+                var toDistArr = distances[crossLink.toResidue];
+                dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
+                if (dist && dist < min){
+                    ctx.fillStyle = self.withinLinked;
+                    eucIn++;
+                }
+                else if (dist && dist < max){
+                    ctx.fillStyle = self.dubiousLinked;
+                    eucMid++;
+                }
+                else {
+                    ctx.fillStyle = self.overLinked;
+                    eucOut++;
+                }
+                ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
             }
-            else if (dist && dist < max){
-                ctx.fillStyle = self.dubiousLinked;
-                eucMid++;
-            }
-            else {
-                ctx.fillStyle = self.overLinked;
-                eucOut++;
-            }
-            ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
 		}
     
 		console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
@@ -393,7 +452,7 @@
         var sizeData = this.getSizeData(); 
 		var minDim = sizeData.minDim;
         var deltaz = this.last ? (minDim / this.last) : 1;
-        console.log ("deltaz", deltaz);
+        //console.log ("deltaz", deltaz);
         this.last = minDim;
         		
         // fix viewport new size, previously used .attr, but then setting the size on the child canvas element expanded it, some style trumps attr thing
@@ -415,6 +474,10 @@
 			.domain([sizeData.seqLength, 1])
 			.range([0, minDim])
         ;
+        
+        var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks and labels
+        self.xAxis.ticks (approxTicks);
+        self.yAxis.ticks (approxTicks);
         
         // then store the current pan/zoom values
         var curt = this.zoomStatus.translate();
@@ -463,7 +526,7 @@
         var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.zoomStatus.translate()[0]+"px,"+ this.zoomStatus.translate()[1]+"px)";
         var transformString = translateString + " " + scaleString;
-        console.log ("transformString", transformString);
+        //console.log ("transformString", transformString);
 		this.canvas
 			.style("-ms-transform", transformString)
 			.style("-moz-transform", transformString)
@@ -493,5 +556,46 @@
         Backbone.View.prototype.remove.call(this);
     }
 });
+    
+     win.CLMSUI.MatrixFilterViewBB = Backbone.View.extend ({
+        tagName: "div",
+        events: {
+            "click .esterRButton": "changeEsterTypeFilter"
+        },
+        initialize: function (viewOptions) {
+            var self = this;
+            var defaultOptions = {};
+            this.options = _.extend(defaultOptions, viewOptions.myOptions);    
+            this.render();
+        },
+         
+         render: function () {
+            console.log ("yo, in buttons render");
+             var possEsterStates = [0,1,2];
+             var labels = ["No NHEster Residues", "Single NHEster Residue Link", "Double NHEster Residue Link"];
+             var con = d3.select(this.el);
+             
+             con.append("p").text("NHEster Filter");
+             
+             var sel = con.selectAll("label.esterBox").data(possEsterStates);
+             var labs = sel.enter()
+                .append ("label")
+                .attr("class", "esterBox")
+             ;
+             labs 
+                .append ("input")
+                .attr("type", "radio")
+                .attr("name", "allSame")
+                .attr("value", function(d) { return d; })
+                .attr("class", "esterRButton")
+             ;
+             labs.append("span").text(function(d,i) { return labels[i]; });
+         },
+         
+         changeEsterTypeFilter: function (evt) {
+             var filterVal = +evt.currentTarget.value;
+            win.CLMSUI.vent.trigger ("filterEster", filterVal);
+         }
+     });
     
 } (this));
