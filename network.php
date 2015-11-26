@@ -355,11 +355,12 @@
                     // include '../annotations.php';
                 }
             ?>
-
+			CLMSUI.xlv = tempModelMaker;
             CLMSUI.clmsModel = Backbone.Model.extend();
             CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
                     interactors: tempModelMaker.proteins, 
-                    proteinLinks: tempModelMaker.proteinLinks
+                    proteinLinks: tempModelMaker.proteinLinks,
+                    crossLinks: tempModelMaker.crosslinks
             });
 
             CLMSUI.distancesModel = Backbone.Model.extend({

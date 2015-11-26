@@ -1,3 +1,4 @@
+
 function initNGL(){
 	//create 3D network viewer
 	if ( ! Detector.webgl ) alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
@@ -5,16 +6,158 @@ function initNGL(){
 		stage = new NGL.Stage( "nglDiv" );
 		stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
 		
-		.then( function( o ){
-                    o.addRepresentation( "cartoon" );
-                    o.addRepresentation( "licorice" );
-                    o.centerView();
-                } );
 		
-		//.then( function(
-		/*structureComp ){
+		.then( function(
+		structureComp ){
 
-			var xlList = xlv.proteinLinks.values()[0].residueLinks.values();
+			var xlList = new Array(CLMSUI.xlv.proteinLinks.values().next().value.crossLinks.values());
+			
+			var xlRepr = new CrosslinkRepresentation(
+				stage, structureComp, xlList
+			);
+
+
+}}};
+
+var CrosslinkWidget = function( structureComp, csvData ){
+
+    var container = new UI.Panel();
+
+    var linkList = [];
+
+    csvData.data.forEach( function( row ){
+
+        linkList.push( {
+            fromResidue: parseInt( row[ 0 ] ),
+            toResidue: parseInt( row[ 2 ] )
+        } );
+
+    } );
+
+    linkList = transformLinkList( linkList, "A" );
+
+    var crosslinkData = new CrosslinkData( linkList );
+
+    var xlRepr = new CrosslinkRepresentation(
+        stage, structureComp, crosslinkData, {
+            // highlightedColor: "lightgreen",
+            // sstrucColor: "wheat",
+            // displayedDistanceColor: "tomato"
+        }
+    );
+
+    setTimeout( function(){
+
+        var newLinkList = [];
+
+        for( var i = 0, il = linkList.length; i < il; ++i ){
+            if( i < 10 ){
+                newLinkList.push( linkList[ i ] );
+            }
+        }
+
+        crosslinkData.setLinkList( newLinkList );
+
+    }, 2000 );
+
+    setTimeout( function(){
+
+        crosslinkData.setLinkList( linkList );
+
+    }, 5000 );
+
+    //
+
+    function handlePicking( pickingData ){
+
+        if( pickingData.residue ){
+
+            xlRepr.setHighlightedResidues( [ pickingData.residue ] );
+            xlRepr.setHighlightedLinks(
+                xlRepr.crosslinkData.getLinks( pickingData.residue )
+            );
+
+        }else if( pickingData.link ){
+
+            xlRepr.setHighlightedResidues( [
+                pickingData.link.residueA, pickingData.link.residueB
+            ] );
+            xlRepr.setHighlightedLinks( [ pickingData.link ] );
+
+        }else{
+
+            xlRepr.setHighlightedResidues( false );
+            xlRepr.setHighlightedLinks( false );
+
+        }
+
+    }
+
+    xlRepr.signals.onPicking.add( handlePicking );
+
+    //
+
+    var colorOptions = {};
+    for( var name in xlRepr.colorOptions ){
+        colorOptions[ name ] = name;
+    }
+
+    var colorSelect = new UI.Select()
+        .setOptions( colorOptions )
+        .setValue( "linkCount" )
+        .onChange( function(){
+            var color = xlRepr.colorOptions[ colorSelect.getValue() ];
+            if( color ){
+                stage.getRepresentationsByName( "allRes" )
+                    .setColor( color );
+            }
+        } );
+
+    var displayedColor = new UI.ColorPopupMenu( "displayedColor" )
+        .setValue( xlRepr.displayedResiduesColor )
+        .onChange( function(){
+            xlRepr.setParameters( {
+                displayedColor: displayedColor.getValue()
+            } );
+        } );
+
+    var labelVisible = new UI.Checkbox()
+        .setValue( xlRepr.displayedDistanceVisible )
+        .onChange( function(){
+            xlRepr.setParameters( {
+                displayedDistanceVisible: labelVisible.getValue()
+            } );
+        } );
+
+    container.add(
+        new UI.Text( "color" ).setMarginRight( "10px" ),
+        colorSelect,
+        new UI.Break(),
+        new UI.Text( "displayed color" ).setMarginRight( "10px" ),
+        displayedColor,
+        new UI.Break(),
+        new UI.Text( "label visible" ).setMarginRight( "10px" ),
+        labelVisible
+    );
+
+    return container;
+
+};
+
+
+
+/* function initNGL(){
+	//create 3D network viewer
+	if ( ! Detector.webgl ) alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
+	else {
+		stage = new NGL.Stage( "nglDiv" );
+		stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
+		
+		
+		.then( function(
+		structureComp ){
+
+			var xlList = new Array(CLMSUI.xlv.proteinLinks.values().next().value.crossLinks.values());
 			
 			var xlRepr = new CrosslinkRepresentation(
 				stage, structureComp, xlList
@@ -47,9 +190,9 @@ function initNGL(){
 
 			}
 
-			xlRepr.signals.onPicking.add( handlePicking );
+			xlRepr.signals.onPicking.add( handlePicking ); 
 
-		} );*/
+		} );
 
 	}
 }
