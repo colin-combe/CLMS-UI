@@ -1,146 +1,159 @@
-/*
 function initNGL(){
 	//create 3D network viewer
-	if ( ! Detector.webgl ) alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
+	if ( ! Detector.webgl ) {
+		alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage(); // the Detector message messes up web page layout
+	}
 	else {
 		stage = new NGL.Stage( "nglDiv" );
 		stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
-		
-		
+
+
 		.then( function(
 		structureComp ){
 
-			var xlList = new Array(CLMSUI.xlv.proteinLinks.values().next().value.crossLinks.values());
+			var linkList = [];
 			
+			for(var crossLink of CLMSUI.xlv.crossinks.values()){
+
+				linkList.push( {
+					fromResidue: crossLink.fromResidue,
+					toResidue: crossLink.toResidue
+				} );
+
+			}
+			
+			linkList = transformLinkList( linkList, "A" );
+			
+			var crosslinkData = new CrosslinkData( linkList );
+
 			var xlRepr = new CrosslinkRepresentation(
-				stage, structureComp, xlList
+				stage, structureComp, crosslinkData
 			);
+		});
 
-
-}}};
+	}
+};
 
 var CrosslinkWidget = function( structureComp, csvData ){
 
-    var container = new UI.Panel();
+	var linkList = [];
 
-    var linkList = [];
+	csvData.data.forEach( function( row ){
 
-    csvData.data.forEach( function( row ){
+		linkList.push( {
+			fromResidue: parseInt( row[ 0 ] ),
+			toResidue: parseInt( row[ 2 ] )
+		} );
 
-        linkList.push( {
-            fromResidue: parseInt( row[ 0 ] ),
-            toResidue: parseInt( row[ 2 ] )
-        } );
+	} );
 
-    } );
+	linkList = transformLinkList( linkList, "A" );
 
-    linkList = transformLinkList( linkList, "A" );
+	var crosslinkData = new CrosslinkData( linkList );
 
-    var crosslinkData = new CrosslinkData( linkList );
+	var xlRepr = new CrosslinkRepresentation(
+		stage, structureComp, crosslinkData, {
+			// highlightedColor: "lightgreen",
+			// sstrucColor: "wheat",
+			// displayedDistanceColor: "tomato"
+		}
+	);
 
-    var xlRepr = new CrosslinkRepresentation(
-        stage, structureComp, crosslinkData, {
-            // highlightedColor: "lightgreen",
-            // sstrucColor: "wheat",
-            // displayedDistanceColor: "tomato"
-        }
-    );
+	setTimeout( function(){
 
-    setTimeout( function(){
+		var newLinkList = [];
 
-        var newLinkList = [];
+		for( var i = 0, il = linkList.length; i < il; ++i ){
+			if( i < 10 ){
+				newLinkList.push( linkList[ i ] );
+			}
+		}
 
-        for( var i = 0, il = linkList.length; i < il; ++i ){
-            if( i < 10 ){
-                newLinkList.push( linkList[ i ] );
-            }
-        }
+		crosslinkData.setLinkList( newLinkList );
 
-        crosslinkData.setLinkList( newLinkList );
+	}, 2000 );
 
-    }, 2000 );
+	setTimeout( function(){
 
-    setTimeout( function(){
+		crosslinkData.setLinkList( linkList );
 
-        crosslinkData.setLinkList( linkList );
+	}, 5000 );
 
-    }, 5000 );
+	//
 
-    //
+	function handlePicking( pickingData ){
 
-    function handlePicking( pickingData ){
+		if( pickingData.residue ){
 
-        if( pickingData.residue ){
+			xlRepr.setHighlightedResidues( [ pickingData.residue ] );
+			xlRepr.setHighlightedLinks(
+				xlRepr.crosslinkData.getLinks( pickingData.residue )
+			);
 
-            xlRepr.setHighlightedResidues( [ pickingData.residue ] );
-            xlRepr.setHighlightedLinks(
-                xlRepr.crosslinkData.getLinks( pickingData.residue )
-            );
+		}else if( pickingData.link ){
 
-        }else if( pickingData.link ){
+			xlRepr.setHighlightedResidues( [
+				pickingData.link.residueA, pickingData.link.residueB
+			] );
+			xlRepr.setHighlightedLinks( [ pickingData.link ] );
 
-            xlRepr.setHighlightedResidues( [
-                pickingData.link.residueA, pickingData.link.residueB
-            ] );
-            xlRepr.setHighlightedLinks( [ pickingData.link ] );
+		}else{
 
-        }else{
+			xlRepr.setHighlightedResidues( false );
+			xlRepr.setHighlightedLinks( false );
 
-            xlRepr.setHighlightedResidues( false );
-            xlRepr.setHighlightedLinks( false );
+		}
 
-        }
+	}
 
-    }
+	xlRepr.signals.onPicking.add( handlePicking );
 
-    xlRepr.signals.onPicking.add( handlePicking );
+	//
 
-    //
+	var colorOptions = {};
+	for( var name in xlRepr.colorOptions ){
+		colorOptions[ name ] = name;
+	}
 
-    var colorOptions = {};
-    for( var name in xlRepr.colorOptions ){
-        colorOptions[ name ] = name;
-    }
+	var colorSelect = new UI.Select()
+		.setOptions( colorOptions )
+		.setValue( "linkCount" )
+		.onChange( function(){
+			var color = xlRepr.colorOptions[ colorSelect.getValue() ];
+			if( color ){
+				stage.getRepresentationsByName( "allRes" )
+					.setColor( color );
+			}
+		} );
 
-    var colorSelect = new UI.Select()
-        .setOptions( colorOptions )
-        .setValue( "linkCount" )
-        .onChange( function(){
-            var color = xlRepr.colorOptions[ colorSelect.getValue() ];
-            if( color ){
-                stage.getRepresentationsByName( "allRes" )
-                    .setColor( color );
-            }
-        } );
+	var displayedColor = new UI.ColorPopupMenu( "displayedColor" )
+		.setValue( xlRepr.displayedResiduesColor )
+		.onChange( function(){
+			xlRepr.setParameters( {
+				displayedColor: displayedColor.getValue()
+			} );
+		} );
 
-    var displayedColor = new UI.ColorPopupMenu( "displayedColor" )
-        .setValue( xlRepr.displayedResiduesColor )
-        .onChange( function(){
-            xlRepr.setParameters( {
-                displayedColor: displayedColor.getValue()
-            } );
-        } );
+	var labelVisible = new UI.Checkbox()
+		.setValue( xlRepr.displayedDistanceVisible )
+		.onChange( function(){
+			xlRepr.setParameters( {
+				displayedDistanceVisible: labelVisible.getValue()
+			} );
+		} );
 
-    var labelVisible = new UI.Checkbox()
-        .setValue( xlRepr.displayedDistanceVisible )
-        .onChange( function(){
-            xlRepr.setParameters( {
-                displayedDistanceVisible: labelVisible.getValue()
-            } );
-        } );
+	container.add(
+		new UI.Text( "color" ).setMarginRight( "10px" ),
+		colorSelect,
+		new UI.Break(),
+		new UI.Text( "displayed color" ).setMarginRight( "10px" ),
+		displayedColor,
+		new UI.Break(),
+		new UI.Text( "label visible" ).setMarginRight( "10px" ),
+		labelVisible
+	);
 
-    container.add(
-        new UI.Text( "color" ).setMarginRight( "10px" ),
-        colorSelect,
-        new UI.Break(),
-        new UI.Text( "displayed color" ).setMarginRight( "10px" ),
-        displayedColor,
-        new UI.Break(),
-        new UI.Text( "label visible" ).setMarginRight( "10px" ),
-        labelVisible
-    );
-
-    return container;
+	return container;
 
 };
 
@@ -152,13 +165,13 @@ var CrosslinkWidget = function( structureComp, csvData ){
 	else {
 		stage = new NGL.Stage( "nglDiv" );
 		stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
-		
-		
+
+
 		.then( function(
 		structureComp ){
 
 			var xlList = new Array(CLMSUI.xlv.proteinLinks.values().next().value.crossLinks.values());
-			
+
 			var xlRepr = new CrosslinkRepresentation(
 				stage, structureComp, xlList
 			);
@@ -190,7 +203,7 @@ var CrosslinkWidget = function( structureComp, csvData ){
 
 			}
 
-			xlRepr.signals.onPicking.add( handlePicking ); 
+			xlRepr.signals.onPicking.add( handlePicking );
 
 		} );
 
@@ -242,7 +255,7 @@ function initNGL(){
 				stage.getRepresentationsByName( "allRes" )
 					.setSelection("none");//resToSele( xlResList ));
 				stage.getRepresentationsByName( "focusedBond" )
-					.setSelection("none");					
+					.setSelection("none");
 				}
 			});
 		});
@@ -384,7 +397,7 @@ function prepareStructure( comp ){
 		//~ opacity: 0.7,
 		//~ name: "focusedRes"
 	//~ } );
-//~ 
+//~
 	//~ comp.addRepresentation( "spacefill", {
 		//~ sele: "none",
 		//~ color: new THREE.Color( "fuchsia" ).getHex(),
@@ -422,7 +435,7 @@ function prepareCrosslinkData(){
 		var a2 = structure.getAtoms( resToSele( resno2, true ), true );
 
 		if( a1 && a2 ){
-		    xlPair.push( [ resToSele( resno1 ), resToSele( resno2 ) ] );
+			xlPair.push( [ resToSele( resno1 ), resToSele( resno2 ) ] );
 		}
 
 	};
@@ -431,7 +444,7 @@ function prepareCrosslinkData(){
 
 	//~ stage.getRepresentationsByName( "allRes" )
 		//~ .setSelection( resToSele( xlResList ) );
- 
+
 	//~ strucComp.addRepresentation( "distance", {
 		//~ atomPair: xlPair,
 		//~ color: new THREE.Color( "lightgrey" ).getHex(),
@@ -457,42 +470,42 @@ function prepareCrosslinkData(){
 /*
 		<!-- THREE -->
 <!--
-        <script src="../js/three/three.js"></script>
-        <script src="../js/three/Detector.js"></script>
-        <script src="../js/three/controls/TrackballControls.js"></script>
-        <script src="../js/three/loaders/OBJLoader.js"></script>
-        <script src="../js/three/loaders/PLYLoader.js"></script>
+		<script src="../js/three/three.js"></script>
+		<script src="../js/three/Detector.js"></script>
+		<script src="../js/three/controls/TrackballControls.js"></script>
+		<script src="../js/three/loaders/OBJLoader.js"></script>
+		<script src="../js/three/loaders/PLYLoader.js"></script>
 -->
 
-        <!-- LIB -->
+		<!-- LIB -->
 <!--
-        <script src="../js/lib/async.js"></script>
-        <script src="../js/lib/promise-6.0.0.min.js"></script>
-        <script src="../js/lib/sprintf.min.js"></script>
-        <script src="../js/lib/jszip.min.js"></script>
-        <script src="../js/lib/pako.min.js"></script>
-        <script src="../js/lib/lzma.js"></script>
-        <script src="../js/lib/bzip2.js"></script>
-        <script src="../js/lib/chroma.min.js"></script>
-        <script src="../js/lib/svd.js"></script>
-        <script src="../js/lib/signals.min.js"></script>
+		<script src="../js/lib/async.js"></script>
+		<script src="../js/lib/promise-6.0.0.min.js"></script>
+		<script src="../js/lib/sprintf.min.js"></script>
+		<script src="../js/lib/jszip.min.js"></script>
+		<script src="../js/lib/pako.min.js"></script>
+		<script src="../js/lib/lzma.js"></script>
+		<script src="../js/lib/bzip2.js"></script>
+		<script src="../js/lib/chroma.min.js"></script>
+		<script src="../js/lib/svd.js"></script>
+		<script src="../js/lib/signals.min.js"></script>
 -->
 
-        <!-- NGL -->
+		<!-- NGL -->
 <!--
-        <script src="../js/ngl/core.js"></script>
-        <script src="../js/ngl/symmetry.js"></script>
-        <script src="../js/ngl/geometry.js"></script>
-        <script src="../js/ngl/structure.js"></script>
-        <script src="../js/ngl/trajectory.js"></script>
-        <script src="../js/ngl/surface.js"></script>
-        <script src="../js/ngl/script.js"></script>
-        <script src="../js/ngl/parser.js"></script>
-        <script src="../js/ngl/loader.js"></script>
-        <script src="../js/ngl/viewer.js"></script>
-        <script src="../js/ngl/buffer.js"></script>
-        <script src="../js/ngl/representation.js"></script>
-        <script src="../js/ngl/stage.js"></script>
-        <script src="../js/ngl/example.js"></script>
+		<script src="../js/ngl/core.js"></script>
+		<script src="../js/ngl/symmetry.js"></script>
+		<script src="../js/ngl/geometry.js"></script>
+		<script src="../js/ngl/structure.js"></script>
+		<script src="../js/ngl/trajectory.js"></script>
+		<script src="../js/ngl/surface.js"></script>
+		<script src="../js/ngl/script.js"></script>
+		<script src="../js/ngl/parser.js"></script>
+		<script src="../js/ngl/loader.js"></script>
+		<script src="../js/ngl/viewer.js"></script>
+		<script src="../js/ngl/buffer.js"></script>
+		<script src="../js/ngl/representation.js"></script>
+		<script src="../js/ngl/stage.js"></script>
+		<script src="../js/ngl/example.js"></script>
 -->
 */
