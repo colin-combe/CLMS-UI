@@ -1,4 +1,4 @@
-
+/*
 function initNGL(){
 	//create 3D network viewer
 	if ( ! Detector.webgl ) alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage();
@@ -18,7 +18,7 @@ function initNGL(){
 
 
 }}};
-/*
+
 var CrosslinkWidget = function( structureComp, csvData ){
 
     var container = new UI.Panel();
