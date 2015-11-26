@@ -30,10 +30,16 @@
 #matrixPanel .viewDiv {
     width: auto;
     height: 100%;
+    margin-right: 200px;    /* should match width of button column below */
 }
 
 #matrixPanel .buttonColumn {
     width: 200px;
     float: right;
-    height: 50px;
+    padding-left: 0.5em;
+    border-left: 1px solid grey;
+}
+
+.buttonColumn label {
+    display: block;
 }
