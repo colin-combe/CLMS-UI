@@ -27,7 +27,11 @@ function initNGL(){
 			var crosslinkData = new CrosslinkData( linkList );
 
 			var xlRepr = new CrosslinkRepresentation(
-				stage, structureComp, crosslinkData
+				stage, structureComp, crosslinkData, {
+					highlightedColor: "lightgreen",
+					sstrucColor: "wheat",
+					displayedDistanceColor: "tomato"
+				}
 			);
 		});
 
