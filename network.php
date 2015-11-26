@@ -361,7 +361,7 @@
                     interactors: tempModelMaker.proteins, //map
                     proteinLinks: tempModelMaker.proteinLinks, //map
                     crossLinks: tempModelMaker.crosslinks, //map
-                    matches: tempModelMaker.crosslinks //array
+                    matches: tempModelMaker.matches //array
             });
 
             CLMSUI.distancesModel = Backbone.Model.extend({
