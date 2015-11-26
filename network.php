@@ -42,6 +42,7 @@
 		<link rel="stylesheet" href="./css/xiNET.css">
         
         <link rel="stylesheet" href="./css/matrix.css">
+        <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
@@ -87,6 +88,8 @@
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/filterModelBB.js"></script>
         <script type="text/javascript" src="./js/matrix.js"></script>
+        <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
+        <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
     </head>
     <body>
 <!--

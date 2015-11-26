@@ -176,7 +176,9 @@ body, input, select, textarea {
 
 
 .headerLabel{
-	text-transform: uppercase;margin-right:10px;font-size:0.9em;
+	text-transform: uppercase;
+    margin-right:10px;
+    font-size:0.9em;
 }
 
 /* history page */
@@ -352,27 +354,12 @@ height: calc(100% - 40px);
 	stroke-width:1.3px;
 	stroke-linecap:round;
 }
-#matrixDiv{
-	height:100%;
-}
 
 #sliderDiv{
 	height:60%;
 	position:absolute;
 	top:76px;
 	right:0px;
-/*
-	overflow:hidden;
-*/
-}
-
-#statsDiv{
-/*
-	height:80%;
-*/
-	position:absolute;
-	bottom:50px;
-	right:50px;
 /*
 	overflow:hidden;
 */
@@ -631,5 +618,16 @@ tbody tr:hover td, tbody tr:hover td  {
     -o-transform:rotate(270deg); /* Opera */
     transform:rotate(270deg);
     display: inline-block;
+}
+
+label.verticalFlow {
+    display: block;
+}
+
+label.horizontalFlow {
+    display: inline;
+    padding-left: 0.2em;
+    border-left: 1px solid grey;
+    margin-left: 0.2em;
 }
 
