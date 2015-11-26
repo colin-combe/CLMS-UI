@@ -360,7 +360,7 @@
             CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
                     interactors: tempModelMaker.proteins, //map
                     proteinLinks: tempModelMaker.proteinLinks, //map
-                    crossLinks: tempModelMaker.crosslinks, //map
+                    crossLinks: tempModelMaker.crossLinks, //map
                     matches: tempModelMaker.matches //array
             });
 

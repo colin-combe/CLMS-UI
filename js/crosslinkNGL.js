@@ -13,7 +13,7 @@ function initNGL(){
 
 			var linkList = [];
 			
-			for(var crossLink of CLMSUI.xlv.crossinks.values()){
+			for(var crossLink of CLMSUI.xlv.crossLinks.values()){
 
 				linkList.push( {
 					fromResidue: crossLink.fromResidue,
