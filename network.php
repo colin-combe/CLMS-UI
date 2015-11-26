@@ -358,9 +358,10 @@
 			CLMSUI.xlv = tempModelMaker;
             CLMSUI.clmsModel = Backbone.Model.extend();
             CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
-                    interactors: tempModelMaker.proteins, 
-                    proteinLinks: tempModelMaker.proteinLinks,
-                    crossLinks: tempModelMaker.crosslinks
+                    interactors: tempModelMaker.proteins, //map
+                    proteinLinks: tempModelMaker.proteinLinks, //map
+                    crossLinks: tempModelMaker.crosslinks, //map
+                    matches: tempModelMaker.crosslinks //array
             });
 
             CLMSUI.distancesModel = Backbone.Model.extend({
