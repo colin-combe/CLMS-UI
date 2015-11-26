@@ -18,7 +18,7 @@ function initNGL(){
 
 
 }}};
-
+/*
 var CrosslinkWidget = function( structureComp, csvData ){
 
     var container = new UI.Panel();
