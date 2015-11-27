@@ -213,7 +213,7 @@ ByRei_dynDiv.api.alter = function() {
 			spectrumViewer.resize();
 		}
 		else if (ByRei_dynDiv.api.elem == 2){
-			//stage.handleResize();
+			stage.handleResize();
 		}
 	}
 };
