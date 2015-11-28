@@ -123,30 +123,6 @@ var showSpectrumPanel = function (show) {
 		sp.style('display', 'none');
 	}
 }
-function showNglPanel(show) {
-	var np = d3.select('#nglPanel');
-	if (show) {
-		np.style('display', 'block');
-	} else {
-		np.style('display', 'none');
-	}
-	document.getElementById('nglChkBx').checked = show;
-	if (!stage){
-		initNGL();
-		//~ var residueLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-		//~ var stage;
-		//~ var xlRepr;
-//~ 
-		//~ NGL.init( function(){
-				//~ stage = new NGL.Stage( "nglDiv" );
-				//~ stage.loadFile( "rcsb://1AO6", { sele: ":A" } ).then(
-				//~ function( comp ){
-					//~ xlRepr = new CrosslinkRepresentation( stage, comp, residueLinks
-				//~ );
-			//~ } );
-		//~ } );
-	}
-}
 
 //init distogram viewer
 //var distoDiv = document.getElementById('distoDiv');
@@ -199,6 +175,12 @@ var matrixViewer = new window.CLMSUI.DistanceMatrixViewBB ({
     displayEventName: "matrixShow"
 });
 
+var nglViewer = new window.CLMSUI.NGLViewBB ({
+    el: "#nglPanel", 
+    model: compositeModel,
+    displayEventName: "nglShow"
+});
+
 
 
 
@@ -212,9 +194,9 @@ ByRei_dynDiv.api.alter = function() {
 		if (ByRei_dynDiv.api.elem == 3){
 			spectrumViewer.resize();
 		}
-		else if (ByRei_dynDiv.api.elem == 2){
-			stage.handleResize();
-		}
+		//~ else if (ByRei_dynDiv.api.elem == 2){
+			//~ stage.handleResize();
+		//~ }
 	}
 };
 
