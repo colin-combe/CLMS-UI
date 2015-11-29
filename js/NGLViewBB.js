@@ -98,7 +98,7 @@
 
 					var linkList = [];
 					
-					for(var crossLink of CLMSUI.xlv.crossLinks.values()){
+					for(var crossLink of self.model.get("clmsModel").get("crossLinks").values()){
 
 						linkList.push( {
 							fromResidue: crossLink.fromResidue,
