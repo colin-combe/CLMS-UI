@@ -81,10 +81,10 @@
         <script type="text/javascript" src="../CLMS-model/src/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/controller/xiNET_Storage.js"></script>-->
                 
-<!--
-        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
--->
-		<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>
+       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+
+	<!-- 	<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>-->
+
     
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
@@ -265,8 +265,8 @@
                 }
             ?>
 			CLMSUI.xlv = tempModelMaker;
-            CLMSUI.clmsModel = Backbone.Model.extend();
-            CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
+            //~ CLMSUI.clmsModel = Backbone.Model.extend();
+            CLMSUI.clmsModelInst = new window.CLMS.DataModelBB ({ 
                     interactors: tempModelMaker.proteins, //map
                     proteinLinks: tempModelMaker.proteinLinks, //map
                     crossLinks: tempModelMaker.crossLinks, //map
