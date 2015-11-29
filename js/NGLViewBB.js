@@ -123,7 +123,7 @@
 			}        
 
             this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-            this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+            //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
                        
             if (viewOptions.displayEventName) {
                 this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
