@@ -32,10 +32,10 @@ var topDiv = document.getElementById("topDiv");
 var bottomDiv = document.getElementById("bottomDiv");
 var main = document;//.getElementById("main");
 splitterDiv.onmousedown = function(evt) {
-	splitterDragging = true;
+	CLMSUI.splitterDragging = true;
 };
 main.onmousemove = function(evt) {
-	if (splitterDragging === true || !evt){
+	if (CLMSUI.splitterDragging === true || !evt){
 		var element = topDiv;
 		var top = 0;
 		do {
@@ -124,9 +124,6 @@ var showSpectrumPanel = function (show) {
 	}
 }
 
-//init distogram viewer
-//var distoDiv = document.getElementById('distoDiv');
-
 CLMSUI.rangeModel = Backbone.Model.extend ({
     initialize: function () {
         this
@@ -144,20 +141,13 @@ var compositeModel = new Backbone.Model ({
 });
 
 
-// Not needed, as view/checkbox communication and syncing done via a backbone event
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
-/*
-var showDistoPanel = function (show) {
-	var sp = d3.select('#distoPanel');
-	sp.style('display', show ? 'block' : 'none');
 
-    distoChkBx.checked = show;
-    if (show) {
-        distoViewer.relayout(); // need to resize first sometimes so render gets correct width/height coords
-        distoViewer.render();
-    }
-}
-*/
+var crosslinkViewer = new window.CLMS.CrosslinkViewerBB ({
+    el: "#topDiv", 
+    model: compositeModel,
+    displayEventName: "crosslinkViewerShow"
+});
 
 var distoViewer = new window.CLMSUI.DistogramBB ({
     el: "#distoPanel", 
@@ -180,25 +170,6 @@ var nglViewer = new window.CLMSUI.NGLViewBB ({
     model: compositeModel,
     displayEventName: "nglShow"
 });
-
-
-
-
-
-// Resizing of panels
-ByRei_dynDiv.api.alter = function() {
-	var mode = ByRei_dynDiv.cache.modus;
-	console.log('Div is alter...',  'ID', ByRei_dynDiv.api.elem, 'elem',  ByRei_dynDiv.api, 'Mode', mode);
-    
-	if (mode != "moveparent") {
-		if (ByRei_dynDiv.api.elem == 3){
-			spectrumViewer.resize();
-		}
-		//~ else if (ByRei_dynDiv.api.elem == 2){
-			//~ stage.handleResize();
-		//~ }
-	}
-};
 
 //init spectrum viewer
 var spectrumDiv = document.getElementById('spectrumDiv');

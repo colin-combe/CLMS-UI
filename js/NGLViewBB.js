@@ -16,7 +16,8 @@
             // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
             // and dragend not supported by zepto, fallback to d3 instead (see later)
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
-            "click .downloadButton": "downloadSVG",
+            "click .centreButton": "centerView",
+            "click .downloadButton": "downloadImage",
             "click .closeButton": "hideView"
         },
 
@@ -130,9 +131,9 @@
             }
         },
 
-        downloadSVG: function () {
-            //~ var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
-            //~ download(svgString, 'application/svg', 'distogram.svg');
+        downloadImage: function () {
+            //~ var svgString = this.stage.screenshot();//need to get viewer
+            //~ download(svgString, 'application', 'ngl.png');
         },
 
         hideView: function () {
@@ -160,21 +161,13 @@
             return this;
         },
 
-        recalcRandomBinning: function () {
-            console.log ("precalcing random bins for distogram view");
-            var randArr = this.model.get("distancesModel").flattenedDistances();
-            var thresholds = d3.range(0, this.options.maxX);
-            var binnedData = d3.layout.histogram()
-                .bins(thresholds)
-                (randArr)
-            ;
-            this.randArrLength = randArr.length;
-            this.precalcedDistributions = this.precalcedDistributions || {};
-            this.precalcedDistributions["Random"] = binnedData;
-        },
-
         relayout: function () {
 			this.stage.handleResize();
+            return this;
+        },
+		
+		centerView: function () {
+			this.stage.centerView();
             return this;
         },
 

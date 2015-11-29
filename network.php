@@ -63,8 +63,8 @@
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
 		<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
-		<!--<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
-        xiNET dev 
+		<!--
+        CLMS-model dev 
         <script type="text/javascript" src="../CLMS-model/src/controller/Init.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Match.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Protein.js"></script>
@@ -72,13 +72,20 @@
         <script type="text/javascript" src="../CLMS-model/src/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/controller/xiNET_Storage.js"></script>-->
-               
+          
+        
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
         
+                   
+<!--
+        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+-->
+		<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>
+    
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
@@ -116,24 +123,6 @@
 			</div>
 
 			<div class="dynDiv" id="nglPanel">
-				<!-- <div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showNglPanel(false);"></i></div>
-				
-				<div style="height:40px;">
-					<label  class="btn">Distance labels
-						<input id="distChkBx" 
-							onclick="spectrumViewer.showLossy(document.getElementById('distChkBx').checked)" 
-						type="checkbox">
-					</label>
-					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadNGLImage();">Download image</button>
-					
-				</div>
-				
-				<div class="panelInner" id='nglDiv'></div>
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div> -->
 			</div>			
 			
 			<div class="dynDiv" id="spectrumPanel">
@@ -210,8 +199,6 @@
 				<div id=splitterDiv class="horizontalSplitter"></div>
 				<div id="bottomDiv">
 					<div id="selectionDiv" class="panelInner">
-						<p>No selection.</p>
-						<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window. </p>
 					</div>
 				</div>
 			</div>
@@ -434,8 +421,8 @@
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
 				xlv.ambigShown = document.getElementById('ambig').checked;
 				initSlider();
-				
-				window.onresize();*/
+				*/
+				window.onresize();
 				
 			});
 			

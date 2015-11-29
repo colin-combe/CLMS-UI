@@ -1,3 +1,5 @@
+//not used now
+
 function initNGL(){
 	//create 3D network viewer
 	if ( ! Detector.webgl ) {
