@@ -63,9 +63,17 @@
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
-		<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
-		<!--<script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
-        xiNET dev 
+	      
+        
+        <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
+        <script type="text/javascript" src="./vendor/c3.js"></script>
+        <script type="text/javascript" src="./vendor/underscore.js"></script>
+        <script type="text/javascript" src="./vendor/zepto.js"></script>
+        <script type="text/javascript" src="./vendor/backbone.js"></script>
+        
+       	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
+		<!--
+        CLMS-model dev 
         <script type="text/javascript" src="../CLMS-model/src/controller/Init.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Match.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/Protein.js"></script>
@@ -73,13 +81,12 @@
         <script type="text/javascript" src="../CLMS-model/src/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/controller/xiNET_Storage.js"></script>-->
-               
-        <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
-        <script type="text/javascript" src="./vendor/c3.js"></script>
-        <script type="text/javascript" src="./vendor/underscore.js"></script>
-        <script type="text/javascript" src="./vendor/zepto.js"></script>
-        <script type="text/javascript" src="./vendor/backbone.js"></script>
-        
+                
+       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+
+	<!-- 	<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>-->
+
+    
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
@@ -90,7 +97,10 @@
         <script type="text/javascript" src="./js/matrix.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
+        <script type="text/javascript" src="./js/matrix.js"></script>   
+		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
     </head>
+
     <body>
 <!--
 		<div class="dynDiv_setLimit">
@@ -119,24 +129,6 @@
 			</div>
 
 			<div class="dynDiv" id="nglPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showNglPanel(false);"></i></div>
-				
-				<div style="height:40px;">
-					<label  class="btn">Distance labels
-						<input id="distChkBx" 
-							onclick="spectrumViewer.showLossy(document.getElementById('distChkBx').checked)" 
-						type="checkbox">
-					</label>
-					<button class="btn btn-1 btn-1a" onclick="stage.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadNGLImage();">Download image</button>
-					
-				</div>
-				
-				<div class="panelInner" id='nglDiv'></div>
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>
 			</div>			
 			
 			<div class="dynDiv" id="spectrumPanel">
@@ -165,20 +157,6 @@
 			
         
             <div class="dynDiv" id="distoPanel">
-				<!-- <div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" id="distoHide" onclick="showDistoPanel(false);"></i></div> -->
-				<!--
-				<div style="height:40px;">
-					<button class="btn btn-1 btn-1a" id="distoDownload">Download image</button>			
-				</div>
-                -->
-				
-				<!-- <div class="panelInner" id='distoDiv'></div> -->
-                <!--
-                    <div class="dynDiv_resizeDiv_tl"></div>
-                    <div class="dynDiv_resizeDiv_tr"></div>
-                    <div class="dynDiv_resizeDiv_bl"></div>
-                    <div class="dynDiv_resizeDiv_br"></div>
-                -->
 			</div>	
         
             <div class="dynDiv" id="matrixPanel">
@@ -213,12 +191,7 @@
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
 					<!-- <label class="btn" style="margin-left:20px;padding-left:0px;">Selection
 							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label> -->
-					<label id="nglCbLabel" class="btn" style="padding-left:0px;">3D
-							<input id="nglChkBx" onclick="showNglPanel(this.checked);" type="checkbox"></label>
-                    <!--
-                    <label id="distoCbLabel" class="btn" style="padding-left:0px;">Distogram
-							<input id="distoChkBx" onclick="showDistoPanel(this.checked);" type="checkbox"></label>
-                    -->
+					<span id="nglChkBxPlaceholder"></span>
                     <span id="distoChkBxPlaceholder"></span>
                     <span id="matrixChkBxPlaceholder"></span>
 					<label class="btn" style="padding-left:0px;">Help
@@ -232,76 +205,15 @@
 				<div id=splitterDiv class="horizontalSplitter"></div>
 				<div id="bottomDiv">
 					<div id="selectionDiv" class="panelInner">
-						<p>No selection.</p>
-						<p>To hide this panel click the X in its top right corner or uncheck the selection checkbox in the top right of the window. </p>
 					</div>
 				</div>
 			</div>
 
 			<div class="controls">
                     <span id="filterPlaceholder"></span>
-                          <!--
-					<label>A
-						<input checked="checked"
-								   id="A"
-								   onclick="CLMSUI.filterFunc();"
-								   type="checkbox"
-							/>
-					</label>
-					<label>B
-						<input checked="checked"
-								   id="B"
-								   onclick="CLMSUI.filterFunc();"
-								   type="checkbox"
-							/>
-					</label>
-					<label>C
-						<input checked="checked"
-								   id="C"
-								   onclick="CLMSUI.filterFunc();"
-								   type="checkbox"
-							/>
-					</label>
-					<label>?
-						<input id="Q"
-								   onclick="CLMSUI.filterFunc();"
-								   type="checkbox"
-							/>
-					</label>
-					<label>auto
-						<input id="AUTO"
-								   onclick="CLMSUI.filterFunc();"
-								   type="checkbox"
-							/>
-					</label>
-                        -->
-                    <!--
-					<div id="scoreSlider">
-						<p class="scoreLabel" id="scoreLabel1"></p>
-						<input id="slide" type="range" min="0" max="100" step="1" value="0" oninput="sliderChanged()"/>
-						<p class="scoreLabel" id="scoreLabel2"></p>
-						<p id="cutoffLabel">(cut-off)</p>
-					</div> 
-                    -->
-                    <!-- outlined scoreSlider -->
                 
 					<div style='float:right'>
-                        <!--
-						<label>Self-Links
-							<input checked="checked"
-								   id="selfLinks"
-								   onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
-								   type="checkbox"
-							/>
-						</label>
-						<label>&nbsp;&nbsp;Ambiguous
-							<input checked="checked"
-								   id="ambig"
-								   onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
-								   type="checkbox"
-							/>
-						</label>
-                        -->
+
 						<label style="margin-left:20px;">Annotations:
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
@@ -359,8 +271,8 @@
                 }
             ?>
 			CLMSUI.xlv = tempModelMaker;
-            CLMSUI.clmsModel = Backbone.Model.extend();
-            CLMSUI.clmsModelInst = new CLMSUI.clmsModel ({ 
+            //~ CLMSUI.clmsModel = Backbone.Model.extend();
+            CLMSUI.clmsModelInst = new window.CLMS.DataModelBB ({ 
                     interactors: tempModelMaker.proteins, //map
                     proteinLinks: tempModelMaker.proteinLinks, //map
                     crossLinks: tempModelMaker.crossLinks, //map
@@ -409,6 +321,7 @@
                 });
                 
                 // Generate distogram checkbox view here
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow"});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow"});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow"});
 				
@@ -514,8 +427,8 @@
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
 				xlv.ambigShown = document.getElementById('ambig').checked;
 				initSlider();
-				
-				window.onresize();*/
+				*/
+				window.onresize();
 				
 			});
 			
@@ -525,5 +438,4 @@
         <script type="text/javascript" src="./js/SelectionPanel.js"></script>
 		<script type="text/javascript" src="./js/networkFrame.js"></script>
 		<script type="text/javascript" src="./js/downloads.js"></script>
-		<script type="text/javascript" src="./js/crosslinkNGL.js"></script>
 </html>

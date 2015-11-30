@@ -32,10 +32,10 @@ var topDiv = document.getElementById("topDiv");
 var bottomDiv = document.getElementById("bottomDiv");
 var main = document;//.getElementById("main");
 splitterDiv.onmousedown = function(evt) {
-	splitterDragging = true;
+	CLMSUI.splitterDragging = true;
 };
 main.onmousemove = function(evt) {
-	if (splitterDragging === true || !evt){
+	if (CLMSUI.splitterDragging === true || !evt){
 		var element = topDiv;
 		var top = 0;
 		do {
@@ -123,33 +123,6 @@ var showSpectrumPanel = function (show) {
 		sp.style('display', 'none');
 	}
 }
-function showNglPanel(show) {
-	var np = d3.select('#nglPanel');
-	if (show) {
-		np.style('display', 'block');
-	} else {
-		np.style('display', 'none');
-	}
-	document.getElementById('nglChkBx').checked = show;
-	if (!stage){
-		initNGL();
-		//~ var residueLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-		//~ var stage;
-		//~ var xlRepr;
-//~ 
-		//~ NGL.init( function(){
-				//~ stage = new NGL.Stage( "nglDiv" );
-				//~ stage.loadFile( "rcsb://1AO6", { sele: ":A" } ).then(
-				//~ function( comp ){
-					//~ xlRepr = new CrosslinkRepresentation( stage, comp, residueLinks
-				//~ );
-			//~ } );
-		//~ } );
-	}
-}
-
-//init distogram viewer
-//var distoDiv = document.getElementById('distoDiv');
 
 CLMSUI.rangeModelInst = new CLMSUI.modelUtils.RangeModel ({ scale: d3.scale.linear() });
 CLMSUI.tooltipModelInst = new CLMSUI.TooltipModelBB ();
@@ -163,7 +136,6 @@ var compositeModel = new Backbone.Model ({
 });
 
 
-// Not needed, as view/checkbox communication and syncing done via a backbone event
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
 /*
 var showDistoPanel = function (show) {
@@ -181,6 +153,12 @@ d3.select("body").append("div").attr("id", "tooltip2").attr("class", "CLMStoolti
 var tooltipView = new window.CLMSUI.TooltipViewBB ({
     el: "#tooltip2",
     model: CLMSUI.tooltipModelInst
+});
+
+var crosslinkViewer = new window.CLMS.CrosslinkViewerBB ({
+    el: "#topDiv", 
+    model: compositeModel,
+    displayEventName: "crosslinkViewerShow"
 });
 
 var distoViewer = new window.CLMSUI.DistogramBB ({
@@ -246,6 +224,13 @@ ByRei_dynDiv.api.alter = function() {
 		}
 	}
 };
+
+var nglViewer = new window.CLMSUI.NGLViewBB ({
+    el: "#nglPanel", 
+    model: compositeModel,
+    displayEventName: "nglShow"
+});
+
 
 //init spectrum viewer
 var spectrumDiv = document.getElementById('spectrumDiv');

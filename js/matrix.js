@@ -1,6 +1,7 @@
 //		a matrix viewer
 //
-//		Colin Combe, Rappsilber Laboratory, 2015
+//		Colin Combe, Martin Graham
+//		Rappsilber Laboratory, 2015
 //
 //		graph/Matrix.js
 
