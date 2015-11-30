@@ -175,6 +175,7 @@
         var y = sd.seqLength - evt.offsetY;
         var a = Math.max (x,y);
         var b = Math.min (x,y);
+        var self = this;
         
         var distances = this.model.get("distancesModel").get("distances");
         //var dist = (x > y) ? (distances[x] !== null ? distances[x][y] : null) : (distances[y] !== null ? distances[y][x] : null);
@@ -183,6 +184,10 @@
 
         //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
         var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSpiral (residueLinks, b, a, 2);
+        neighbourhood = neighbourhood.filter (function(clid) {
+            var est = CLMSUI.modelUtils.getEsterLinkType (residueLinks.get(clid));
+            return (self.filterVal === undefined || est >= self.filterVal);
+        });
         var rdata = neighbourhood.map (function (clid) {
             var rids = clid.split("-");
             var x = rids[0];

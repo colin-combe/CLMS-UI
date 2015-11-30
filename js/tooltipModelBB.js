@@ -9,7 +9,7 @@
             this
                 .set("location", null)
                 .set("header", "Tooltip")
-                .set("contents", ["Lucky", "dip"])
+                .set("contents", ["Can show", "single items", "lists or", "tables"])
             ;
         }
     });
