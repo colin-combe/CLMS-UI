@@ -169,8 +169,34 @@
     },
         
     invokeTooltip: function (evt) {
-        console.log ("tt evt", evt, this.model);
-        //this.model.get("tooltipModel").set("header", "wheee!").set("contents", "wazzup"+evt.pageX).set("event", evt);
+        var sd = this.getSizeData();
+        var x = evt.offsetX + 1;
+        var y = sd.seqLength - evt.offsetY;
+        var a = Math.max (x,y);
+        var b = Math.min (x,y);
+        
+        var distances = this.model.get("distancesModel").get("distances");
+        //var dist = (x > y) ? (distances[x] !== null ? distances[x][y] : null) : (distances[y] !== null ? distances[y][x] : null);
+        var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+        var residueLinks = allProtProtLinks.next().value.crossLinks;
+
+        //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
+        var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSpiral (residueLinks, b, a, 2);
+        var rdata = neighbourhood.map (function (clid) {
+            var rids = clid.split("-");
+            var x = rids[0];
+            var y = rids[1];
+            var dist = (x > y) ? (distances[x] !== null ? distances[x][y] : null) : (distances[y] !== null ? distances[y][x] : null);
+            return [rids[0], rids[1], dist];
+        });
+        if (neighbourhood.length > 0) {
+            rdata.splice (0, 0, ["From", "To", "Distance"]);
+        } else {
+            rdata = null;
+        }
+        
+        this.model.get("tooltipModel").set("header", "Cross Links").set("contents", rdata).set("location", evt);
+        this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
     },
     
     zoomHandler: function (self) {

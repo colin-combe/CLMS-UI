@@ -6,6 +6,7 @@
     opacity: 0.9;
     z-index: 1001;
     max-width: 300px;
+    line-height: 1em;
 }
 
 .CLMStooltip h2 {
@@ -29,4 +30,25 @@
     border-top-width: 1px;
     border-bottom-width: 0px;
     margin: 2px 0px;
+}
+
+.CLMStooltip ul {
+    margin-left: 1em;
+}
+
+.CLMStooltip table {
+    border-collapse: collapse;
+    background: none;
+}
+
+.CLMStooltip table tr:nth-child(2n) {
+    background: rgba(255,255,255,0.25);
+}
+
+.CLMStooltip table tr td {
+    font-weight: bold;
+}
+
+.CLMStooltip table tr th {
+    height: 1em;
 }

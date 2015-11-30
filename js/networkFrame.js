@@ -177,9 +177,9 @@ var showDistoPanel = function (show) {
     }
 }
 */
-d3.select("body").append("div").attr("id", "tooltip");
+d3.select("body").append("div").attr("id", "tooltip2").attr("class", "CLMStooltip");
 var tooltipView = new window.CLMSUI.TooltipViewBB ({
-    el: "#tooltip",
+    el: "#tooltip2",
     model: CLMSUI.tooltipModelInst
 });
 

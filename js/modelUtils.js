@@ -66,7 +66,56 @@ CLMSUI.modelUtils = {
         // Is the sequence starting at 1, do the resIndex's start at 1?
         return seq[resIndex - 1];
     },
+     
+    findResidueIDsInSquare : function (residueMap, sr1, er1, sr2, er2) {
+        var a = [];
+        for (var n = sr1; n <= er1; n++) {
+            for (var m = sr2; m <= er2; m++) {
+                var k = n+"-"+m;
+                if (residueMap.get(k)) {
+                    a.push (k);
+                }
+            }
+        }
+        return a;
+    },
     
+    findResidueIDsInSpiral : function (residueMap, cx, cy, side) {
+        var a = [];
+        var x = cx;
+        var y = cy;
+        var moves = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+        var b = 1;
+        for (var n = 0; n < side; n++) {
+    
+            for (var m = 0; m < moves.length; m++) {
+                for (var l = 0; l < b; l++) {
+                    var k = x+"-"+y;
+                    if (residueMap.get(k)) {
+                        a.push (k);
+                    }
+                    //console.log ("["+x+", "+y+"]");    
+                    x += moves[m][0];
+                    y += moves[m][1];
+                }
+                if (m == 1) {
+                    b++;
+                }
+            }
+            b++;
+        }
+        // tidy up last leg of spiral
+        for (var n = 0; n < b; n++) {
+            var k = x+"-"+y;
+            if (residueMap.get(k)) {
+                a.push (k);
+            }
+            //console.log ("["+x+", "+y+"]");    
+            x += moves[0][0];
+            y += moves[0][1];
+        }
+        return a;
+    },
     
     RangeModel: Backbone.Model.extend ({
         initialize: function () {
