@@ -4,24 +4,23 @@
 //
 //		distogram/Distogram.js
 
-(function(win) {
+(function(global) {
     "use strict";
 
-    win.CLMSUI = win.CLMSUI || {};
+    global.CLMSUI = global.CLMSUI || {};
     
-    win.CLMSUI.MinigramBB = Backbone.View.extend({
-        tagName: "div",
-        className: "dynDiv",
+    global.CLMSUI.MinigramBB = global.Backbone.View.extend ({
         events: {
-            // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
-            // and dragend not supported by zepto, fallback to d3 instead (see later)
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
         },
 
         initialize: function (viewOptions) {
             console.log("arg options", viewOptions);
             var defaultOptions = {
-                maxX: 80
+                maxX: 80,
+                height: 60,
+                width: 180,
+                xAxisHeight: 20
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -32,11 +31,12 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
 
-            var chartDiv = mainDivSel.append("div").style("height", "20px")
-                .attr("id", "currentSampleDistogram")
+            var chartDiv = mainDivSel.append("div")
+                .attr("id", this.el.id+"c3Chart")
+                .attr("class", "c3minigram")
             ;
-
-            chartDiv.selectAll("*").remove();
+            
+            console.log ("mainDivSel", mainDivSel, chartDiv, this.el, this.el.id);
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
@@ -62,92 +62,104 @@
                         draggable: true
                     },
                     */
+                    
                     /*
                     ondragend: function (extent) {
                         console.log ("extent", extent);
                     }
                     */
                 },
+                size: {
+                    width: this.options.width,
+                    height: this.options.height
+                },
+                padding: {
+                    bottom: 0,
+                },
                 bar: {
                     width: {
                         ratio: 0.8 // this makes bar width 50% of length between ticks
                             // need to poke c3.js code to see why the bars are initally zero width (whatever it calculates from is zero too I suspect)
                     }
-                    //width: 8 // this makes bar width 8px
                 },
                 tooltip: {
-                    grouped: true,
-                    format: {
-                        title: function (x) {
-                            return self.options.xlabel + " " + x;
-                        },
-                        name: function (name/*, ratio, id, index*/) {
-                            return name + " " + self.options.ylabel;
-                        },
-                        value: function (value, ratio, id) {
-                            var v = value.toFixed (id === "Random" ? 1 : 0);
-                            if (id !== "Random") {
-                                v += "<span style='visibility:hidden; margin: 0'>.0</span>";
-                            }
-                            return v;
+                    show: false    // minidist is too small, tooltip obscures everything
+                },
+                legend: {
+                    show: false
+                },
+                axis: {
+                    y: {
+                        show: false
+                    }, 
+                    x: {
+                        height: this.options.xAxisHeight,
+                        show: true
+                    }
+                },
+                subchart: {
+                    show: true,
+                    onbrush: function (domain) {
+                        console.log ("dom", domain);
+                    },
+                    size: {
+                        height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
+                    },  
+                    axis: {
+                        x: {
+                            show: true
                         }
                     }
                 }
             });
-
-            console.log("this", this);
-
-            this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-            this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
-            this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
+            
+           
+            this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
+            
+            var brush = d3.select(this.el).selectAll("svg .c3-brush");
+            
+            brush.selectAll(".resize.e").append("path")
+                .attr ("transform", "translate(0,0) scale(2)")
+                .attr ("d", "M 0 0 V 10 L 5 5 Z")
+            ;
+            
+            brush.selectAll(".resize.w").append("path")
+                .attr ("transform", "translate(-0,0) scale(2)")
+                .attr ("d", "M 0 0 V 10 L -5 5 Z")
+            ;
+            
+            
+            //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
 
             this.recalcRandomBinning();
+            //this.render();
+            return this;
+        },
+        
+        setDataFunc: function (dataFunc) {
+            this.dataFunc = dataFunc;
+            return this;    
         },
 
         render: function () {
-
-            console.log ("re rendering distogram");
-
-            var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-            var pp1 = allProtProtLinks.next().value;
-            console.log ("all", pp1);
-            var allCrossLinks = pp1.crossLinks.values();
-            var distances = this.model.get("distancesModel").get("distances");
-
-            //console.log ("distances", distances);
-            var distArr = [];
-            //for (let crossLink of allCrossLinks) {
-            //for (var i = 0; i < allCrossLinks.length; i++) {
-            for (var crossLink of allCrossLinks) {
-                //var crossLink = allCrossLinks[i];
-                //console.log(">>"+crossLink);
-                //if (crossLink.check() === true) { // check() seems to cause full crosslink view to be drawn
-                    var toRes = crossLink.toResidue;
-                    var fromRes = crossLink.fromResidue;
-                    var highRes = Math.max(toRes, fromRes);
-                    var lowRes = Math.min(toRes, fromRes);
-                    var dist = distances[highRes] ? distances[highRes][lowRes] : null;
-                    if (dist !== null) {
-                        distArr.push(+dist); // + is to stop it being a string
-                    }
-                //~ }
-            }
-
+                   
+            var valArr = this.dataFunc();
             //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
             //var randArr = this.model.get("distancesModel").get("flattenedDistances");
             //console.log ("random", randArr);
 
-            var extent = d3.extent(distArr);
+            var extent = d3.extent(valArr);
+            console.log ("valArr", valArr);
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.options.maxX);
+            var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
 
             var self = this;
             var seriesArr = [
-                {data: distArr, name: this.options.seriesName, scale: 1.0},
-                {data: [1] /*should be precalced*/, name: "Random", scale: distArr.length / (this.randArrLength || distArr.length)}
+                {data: valArr, name: this.options.seriesName, scale: 1.0},
+                {data: [1] /*should be precalced*/, name: "Random", scale: valArr.length / (this.randArrLength || valArr.length)}
             ];
 
             var countArrays = seriesArr.map (function (series) {
@@ -227,7 +239,7 @@
             this.chart = this.chart.destroy();
 
             // this line destroys the containing backbone view and it's events
-            Backbone.View.prototype.remove.call(this);
+            global.Backbone.View.prototype.remove.call(this);
         }
 
     });

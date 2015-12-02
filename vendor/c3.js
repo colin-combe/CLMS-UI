@@ -1314,7 +1314,7 @@
             target = config;
             keys = key.split('_');
             read = find();
-    //        console.log("CONFIG : ", key, read);
+            //console.log("CONFIG : ", key, read);
             if (isDefined(read)) {
                 this_config[key] = read;
             }
@@ -4432,6 +4432,7 @@
         return tickValues ? tickValues : axis ? axis.tickValues() : undefined;
     };
     Axis.prototype.getXAxisTickValues = function getXAxisTickValues() {
+        var v = this.getTickValues(this.owner.config.axis_x_tick_values, this.owner.xAxis);;
         return this.getTickValues(this.owner.config.axis_x_tick_values, this.owner.xAxis);
     };
     Axis.prototype.getYAxisTickValues = function getYAxisTickValues() {
@@ -5464,7 +5465,7 @@
 
         // Add extent rect for Brush
         context.append("g")
-            .attr("clip-path", $$.clipPath)
+            .attr("clip-path", /*$$.clipPath*/ $$.clipPathForSubchart)
             .attr("class", CLASS.brush)
             .call($$.brush);
 

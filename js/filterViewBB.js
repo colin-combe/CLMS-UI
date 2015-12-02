@@ -51,7 +51,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
         
-        var slider = mainDivSel.append ("div").attr("class", "scoreSlider");
+        var slider = mainDivSel.append ("div").attr("class", "scoreSlider").attr("id",this.el.id+"SliderHolder");
+        /*
         slider.append("p").text("Score:");
         slider.append("p").attr("class", "cutoffLabel").text("cut-off");
         slider.append("p").attr("class", "scoreLabel");
@@ -64,7 +65,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             "value": self.model.get("cutoff")
         });
         slider.append("p").attr("class","scoreLabel");
-        
+        */
         
         mainDivSel.selectAll("label")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
@@ -131,12 +132,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     sliderChanged: function (evt) {
         console.log ("evt", evt);
         var slide = evt.target;
-        var min = this.getMinScore();
-        var max = this.getMaxScore();
-        var cut = ((slide.value / 100) * (max - min)) + (min / 1);
-        cut = cut.toFixed (this.sliderDecimalPlaces);
-        d3.select(this.el).select(".cutoffLabel").text(cut);
-        this.model.set ("cutoff", cut);
+        if (slide) {
+            var min = this.getMinScore();
+            var max = this.getMaxScore();
+            var cut = ((slide.value / 100) * (max - min)) + (min / 1);
+            cut = cut.toFixed (this.sliderDecimalPlaces);
+            d3.select(this.el).select(".cutoffLabel").text(cut);
+            this.model.set ("cutoff", cut);
+        }
     },
     
     render: function () {

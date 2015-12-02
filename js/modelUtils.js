@@ -30,6 +30,28 @@ CLMSUI.modelUtils = {
         return distanceList;
     },
     
+    flattenCrossLinkMatrix: function (crossLinks, distances) {
+        var distArr = [];
+        for (var crossLink of crossLinks) {
+            //if (crossLink.check() === true) { // check() seems to cause full crosslink view to be drawn
+                var toRes = crossLink.toResidue;
+                var fromRes = crossLink.fromResidue;
+                var highRes = Math.max(toRes, fromRes);
+                var lowRes = Math.min(toRes, fromRes);
+                var dist = distances[highRes] ? distances[highRes][lowRes] : null;
+                if (dist !== null) {
+                    distArr.push(+dist); // + is to stop it being a string
+                }
+            //~ }
+        }
+
+        return distArr;
+    },
+    
+    flattenMatches: function (matchesArr) {
+        return matchesArr.map (function(m) { return m.score; });    
+    },
+    
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
     // lys = k, ser = s, thr = t, tyr = y

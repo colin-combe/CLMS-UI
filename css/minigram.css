@@ -1,0 +1,31 @@
+.c3minigram .c3-brush .extent {
+  fill-opacity: 0.2; 
+}
+
+.c3minigram .c3-brush .resize path {
+    fill: black;
+    fill-opacity: 0.7;
+    stroke: white;
+    stroke-opacity: 0.7;
+    stroke-width: 0.5px;
+    
+}
+
+/*
+.c3minigram .c3-brush .resize.e rect{
+    transform: translate(3px,0px)
+}
+
+.c3minigram .c3-brush .resize.w rect{
+    transform: translate(-3px,0px)
+}
+
+.c3minigram .c3-brush .resize rect {
+    visibility:visible !important;
+    fill: black;
+    fill-opacity: 0.7;
+    stroke: white;
+    stroke-opacity: 0.7;
+    
+}
+*/
