@@ -132,8 +132,9 @@
         },
 
         downloadImage: function () {
-            //~ var svgString = this.stage.screenshot();//need to get viewer
-            //~ download(svgString, 'application', 'ngl.png');
+			this.stage.exportImage( 1, true, false, false );
+            //~ var png = NGL.screenshot(this.stage.viewer);
+            //~ download(png , 'image/png', 'ngl.png');
         },
 
         hideView: function () {
