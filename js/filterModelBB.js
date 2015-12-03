@@ -10,14 +10,15 @@ CLMSUI.FilterModelBB = Backbone.Model.extend ({
             .set ("AUTO", false)
             .set ("selfLinks", true)
             .set ("ambig", true)
-            .set ("cutoff", 0)
+            .set ("cutoffMin", 0)
+            .set ("cutoffMax", 0)
         ;
         
     },
     
     filter: function (match) {
         var vChar = match.validated;
-        var scorePass = (!match.score || match.score >= this.get("cutOff"))
+        var scorePass = (!match.score || (match.score >= this.get("cutoffMin") && match.score <= this.get("cutoffMax")));
         
         if (vChar == 'A' && this.get("A") && scorePass) return true;
         if (vChar == 'B' && this.get("B") && scorePass) return true;

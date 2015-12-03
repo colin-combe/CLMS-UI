@@ -39,6 +39,11 @@ CLMSUI.utils = {
         CLMSUI.utils.addFourCorners (d3DivSelection);
     },
     
+    // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
+    isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
+        return (zeptoElem.css('display') != 'none' && zeptoElem.css('visibility') != 'hidden' && zeptoElem.height()>0);
+    },
+    
     checkBoxView: Backbone.View.extend ({
         tagName: "span",
         className: "buttonPlaceholder",

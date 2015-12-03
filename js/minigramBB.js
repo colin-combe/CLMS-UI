@@ -29,7 +29,7 @@
             var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
-            var mainDivSel = d3.select(this.el);
+            var mainDivSel = d3.select(this.el).attr("class", "minigram");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("id", this.el.id+"c3Chart")
@@ -100,7 +100,10 @@
                 subchart: {
                     show: true,
                     onbrush: function (domain) {
-                        console.log ("dom", domain);
+                        self.model
+                            .set("domainStart", domain[0])
+                            .set("domainEnd", domain[1])
+                        ;
                     },
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
@@ -113,40 +116,25 @@
                 }
             });
             
-           
             this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
             
             var brush = d3.select(this.el).selectAll("svg .c3-brush");
-            
-            brush.selectAll(".resize.e").append("path")
-                .attr ("transform", "translate(0,0) scale(2)")
+            var flip = {"e":1, "w":-1};
+            brush.selectAll(".resize").append("path")
+                .attr ("transform", function(d) { return "translate(0,0) scale("+(2*flip[d])+",2)"; })
                 .attr ("d", "M 0 0 V 10 L 5 5 Z")
-            ;
-            
-            brush.selectAll(".resize.w").append("path")
-                .attr ("transform", "translate(-0,0) scale(2)")
-                .attr ("d", "M 0 0 V 10 L -5 5 Z")
-            ;
-            
-            
-            //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-
+            ;   
+  
             this.recalcRandomBinning();
-            //this.render();
+            
+            this.render();
+            
             return this;
-        },
-        
-        setDataFunc: function (dataFunc) {
-            this.dataFunc = dataFunc;
-            return this;    
         },
 
         render: function () {
                    
-            var valArr = this.dataFunc();
-            //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
-            //var randArr = this.model.get("distancesModel").get("flattenedDistances");
-            //console.log ("random", randArr);
+            var valArr = this.model.data();
 
             var extent = d3.extent(valArr);
             console.log ("valArr", valArr);
@@ -210,8 +198,8 @@
         },
 
         recalcRandomBinning: function () {
-            console.log ("precalcing random bins for distogram view");
-            var randArr = this.model.get("distancesModel").flattenedDistances();
+            console.log ("precalcing random bins for minigram view");
+            var randArr = [2,3,4];
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)

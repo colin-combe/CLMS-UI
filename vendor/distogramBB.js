@@ -4,12 +4,12 @@
 //
 //		distogram/Distogram.js
 
-(function(win) {
+(function(global) {
     "use strict";
 
-    win.CLMSUI = win.CLMSUI || {};
+    global.CLMSUI = global.CLMSUI || {};
     
-    win.CLMSUI.DistogramBB = Backbone.View.extend({
+    global.CLMSUI.DistogramBB = global.Backbone.View.extend({
         events: {
             // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
             // and dragend not supported by zepto, fallback to d3 instead (see later)
@@ -38,7 +38,7 @@
             var mainDivSel = d3.select(this.el);
 
             // Set up some html scaffolding in d3
-            win.CLMSUI.utils.addDynDivScaffolding(mainDivSel);
+            global.CLMSUI.utils.addDynDivScaffolding(mainDivSel);
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
             var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });
@@ -158,17 +158,17 @@
             this.recalcRandomBinning();
 
             if (viewOptions.displayEventName) {
-                this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
+                this.listenTo (global.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
             }
         },
 
         downloadSVG: function () {
-            var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
+            var svgString = global.CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
             download(svgString, 'application/svg', 'distogram.svg');
         },
 
         hideView: function () {
-            win.CLMSUI.vent.trigger (this.displayEventName, false);
+            global.CLMSUI.vent.trigger (this.displayEventName, false);
         },
 
         setVisible: function (show) {
@@ -184,79 +184,83 @@
         },
 
         render: function () {
+            
+            if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
 
-            console.log ("re rendering distogram");
+                console.log ("re rendering distogram");
 
-            var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-            var pp1 = allProtProtLinks.next().value;
-            console.log ("all", pp1);
-            var allCrossLinks = pp1.crossLinks.values();
-            var distances = this.model.get("distancesModel").get("distances");
+                var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+                var pp1 = allProtProtLinks.next().value;
+                //console.log ("all", pp1);
+                var allCrossLinks = pp1.crossLinks.values();
+                var distances = this.model.get("distancesModel").get("distances");
 
-            //console.log ("distances", distances);
-            var distArr = CLMSUI.modelUtils.flattenCrossLinkMatrix (allCrossLinks, distances);
-            console.log ("distArr", distArr);
+                //console.log ("distances", distances);
+                var distArr = global.CLMSUI.modelUtils.flattenCrossLinkMatrix (allCrossLinks, distances);
+                //console.log ("distArr", distArr);
 
-            //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
-            //var randArr = this.model.get("distancesModel").get("flattenedDistances");
-            //console.log ("random", randArr);
+                //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
+                //var randArr = this.model.get("distancesModel").get("flattenedDistances");
+                //console.log ("random", randArr);
 
-            var extent = d3.extent(distArr);
-            //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.options.maxX);
-            if (thresholds.length === 0) {
-                thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
-            }
+                var extent = d3.extent(distArr);
+                //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
+                var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.options.maxX);
+                if (thresholds.length === 0) {
+                    thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
+                }
 
-            var self = this;
-            var seriesArr = [
-                {data: distArr, name: this.options.seriesName, scale: 1.0},
-                {data: [1] /*should be precalced*/, name: "Random", scale: distArr.length / (this.randArrLength || distArr.length)}
-            ];
+                var self = this;
+                var seriesArr = [
+                    {data: distArr, name: this.options.seriesName, scale: 1.0},
+                    {data: [1] /*should be precalced*/, name: "Random", scale: distArr.length / (this.randArrLength || distArr.length)}
+                ];
 
-            var countArrays = seriesArr.map (function (series) {
+                var countArrays = seriesArr.map (function (series) {
 
-                var binnedData = self.precalcedDistributions[series.name]
-                    ? self.precalcedDistributions[series.name]
-                    : d3.layout.histogram().bins(thresholds)(series.data)
-                ;
+                    var binnedData = self.precalcedDistributions[series.name]
+                        ? self.precalcedDistributions[series.name]
+                        : d3.layout.histogram().bins(thresholds)(series.data)
+                    ;
 
-                var countData = binnedData.map(function (nestedArr) {
-                    return nestedArr.y * series.scale;
+                    var countData = binnedData.map(function (nestedArr) {
+                        return nestedArr.y * series.scale;
+                    });
+
+                    return countData;
                 });
 
-                return countData;
-            });
+
+                var maxY = d3.max(countArrays[0]);  // max calced on real data only
+                // if max y needs to be calculated across all series
+                //var maxY = d3.max(countArrays, function(array) {
+                //    return d3.max(array);
+                //});
+
+                // add names to front of arrays as c3 demands
+
+                countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); });
 
 
-            var maxY = d3.max(countArrays[0]);  // max calced on real data only
-            // if max y needs to be calculated across all series
-            //var maxY = d3.max(countArrays, function(array) {
-            //    return d3.max(array);
-            //});
+                // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
+                var maxAxes = {};
+                    console.log ("maxy", maxY);
+                //if (+xlv.cutOff <= xlv.scores.min) {
+                    maxAxes.y = maxY;
+                //}
 
-            // add names to front of arrays as c3 demands
+                //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
 
-            countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); });
+                //console.log ("thresholds", thresholds);
+                //console.log ("maxAxes", maxAxes);
+                //this.chart.axis.max(maxAxes);
+                this.chart.internal.config.axis_y_max = maxAxes.y;
+                this.chart.load({
+                    columns: countArrays
+                });
 
-
-            // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
-            var maxAxes = {};
-                console.log ("maxy", maxY);
-            //if (+xlv.cutOff <= xlv.scores.min) {
-                maxAxes.y = maxY;
-            //}
-
-            //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
-
-            //console.log ("thresholds", thresholds);
-            //console.log ("maxAxes", maxAxes);
-            this.chart.axis.max(maxAxes);
-            this.chart.load({
-                columns: countArrays
-            });
-
-            //console.log ("data", distArr, binnedData);
+                //console.log ("data", distArr, binnedData);
+            }
 
             return this;
         },

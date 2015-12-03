@@ -321,11 +321,24 @@
                     model: CLMSUI.filterModelInst
                 });
                 
-                var mdModelBB = new Backbone.Model ({
+                // I want MinigramBB to be model agnostic so I can re-use it in other places
+                // So the connections to particular models are done through a mediator model (dunno if that's the right word)
+                var MinigramModelBB = Backbone.Model.extend ({
+                    data: function() { return CLMSUI.modelUtils.flattenMatches (this.get("clmsModel").get("matches")); },
+                    initialize: function () {
+                        this.on ("change:domainStart", function (model, val) { console.log ("dom start changed");this.get("filterModel").set("cutoffMin", val); }, this);
+                        this.on ("change:domainEnd", function (model, val) { console.log ("dom end changed"); this.get("filterModel").set("cutoffMax", val); }, this);
+                    }
+                });
+                
+                var mdModelBB = new MinigramModelBB ({
                     filterModel: CLMSUI.filterModelInst,
                     clmsModel: CLMSUI.clmsModelInst,
-                    distancesModel: CLMSUI.distancesInst
+                    domainStart: 0,
+                    domainEnd: 100,
                 });
+
+
                 var miniDist = new CLMSUI.MinigramBB ({
                     el: "#filterPlaceholderSliderHolder",
                     model: mdModelBB,
@@ -333,15 +346,18 @@
                         maxX: 0,    // let data decide
                         seriesName: "matches",
                         xlabel: "Distance",
-                        ylabel: "Count"
+                        ylabel: "Count",
+                        height: 50
                     }
                 });
+                
                 miniDist
-                    .listenTo (CLMSUI.clmsModelInst, "change:matches", miniDist.render)    // if the matches changes (likely?) need to re-render the view too
-                    .listenTo (miniDist.model.get("filterModel"), "change", miniDist.render)  
-                    .setDataFunc (function() { return CLMSUI.modelUtils.flattenMatches (this.model.get("clmsModel").get("matches")); })
-                    .render()
+                    .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
+                    //.listenTo (this.model.get("filterModel"), "change", this.render)
                 ;
+            
+                console.log ("miniDist", miniDist);
+            
                 
                 // Generate distogram checkbox view here
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow"});

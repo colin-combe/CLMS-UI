@@ -11,8 +11,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     className: "filterGroup",
     events: {         
         "click input.filterTypeToggle": "filter",
-        "click input.filterSpecialToggle": "filterSpecial",
-        "input .sliderInput": "sliderChanged"
+        "click input.filterSpecialToggle": "filterSpecial"
     },
 
     initialize: function (viewOptions) {
@@ -51,21 +50,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
         
-        var slider = mainDivSel.append ("div").attr("class", "scoreSlider").attr("id",this.el.id+"SliderHolder");
-        /*
-        slider.append("p").text("Score:");
-        slider.append("p").attr("class", "cutoffLabel").text("cut-off");
-        slider.append("p").attr("class", "scoreLabel");
-        slider.append("input").attr({
-            "class": "sliderInput", 
-            "type": "range",
-            "min" : 0,  // these don't need to be taken from model. We pick 0-100 and modify those values with model data later when needed
-            "max": 100,
-            "step": 1,
-            "value": self.model.get("cutoff")
-        });
-        slider.append("p").attr("class","scoreLabel");
-        */
+        
+        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");  
+        // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
+        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel' style='text-align:right'></P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'></P>");
+        sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));       
         
         mainDivSel.selectAll("label")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
@@ -83,24 +72,29 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		// onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
  
         if (self.model.get("scores") === null){
-            slider.style('display', 'none');
+            sliderSection.style('display', 'none');
         } else {
-            var vals = ['['+this.getMinScore(), this.getMaxScore()+']'];
-            mainDivSel.selectAll(".scoreLabel").data(vals).html(function(d) { return d; }); // min and max labels
-                         
-            this.sliderChanged ({target: slider.select(".sliderInput").node()});
-            slider.style('display', 'inline-block');
+            sliderSection.style('display', 'inline-block');
         }
         
         this.displayEventName = viewOptions.displayEventName;
 
         /*
-        //this.listenTo (this.model, "change:filter", this.render);
+        //this.listenTo (this.model, "change", this.render);
 
         if (viewOptions.displayEventName) {
             this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible)
         }
         */
+        
+        this.listenTo (this.model, "change:cutoffMin", function(model, val) {
+            val = CLMSUI.utils.dpNumber (val, this.sliderDecimalPlaces, Math.floor); 
+            mainDivSel.select(".cutoffLabel.vmin").html("&gt;"+val); // min label
+        });
+        this.listenTo (this.model, "change:cutoffMax", function(model, val) {
+            val = CLMSUI.utils.dpNumber (val, this.sliderDecimalPlaces, Math.ceil); 
+            mainDivSel.select(".cutoffLabel.vmax").html("&lt;"+val); // max label
+        });
     },
     
     filter: function (evt) {
@@ -115,33 +109,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         var target = evt.target;
         var id = target.id;
         this.model.set (id, target.checked);
-    },
+    }, 
     
     sliderDecimalPlaces: 1,
-    
-    getMaxScore: function () {
-        var scores = this.model.get("scores");
-        return scores ? CLMSUI.utils.dpNumber (scores.max, this.sliderDecimalPlaces, Math.ceil) : 0;
-    },
-    
-    getMinScore: function () {
-        var scores = this.model.get("scores");
-        return scores ? CLMSUI.utils.dpNumber (scores.min, this.sliderDecimalPlaces, Math.floor) : 0;
-    },
-    
-    sliderChanged: function (evt) {
-        console.log ("evt", evt);
-        var slide = evt.target;
-        if (slide) {
-            var min = this.getMinScore();
-            var max = this.getMaxScore();
-            var cut = ((slide.value / 100) * (max - min)) + (min / 1);
-            cut = cut.toFixed (this.sliderDecimalPlaces);
-            d3.select(this.el).select(".cutoffLabel").text(cut);
-            this.model.set ("cutoff", cut);
-        }
-    },
-    
+          
     render: function () {
         return this;
     },
