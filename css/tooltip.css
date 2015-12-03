@@ -1,0 +1,54 @@
+.CLMStooltip {
+    position: absolute;
+    border: 2px solid #444;
+    border-radius: 10px;
+    background: #add;
+    opacity: 0.9;
+    z-index: 1001;
+    max-width: 300px;
+    line-height: 1em;
+}
+
+.CLMStooltip h2 {
+    padding: 2px 4px 4px 4px;
+    font-size: 12pt;
+    margin: 0px;
+    border-radius: 8px 8px 0px 0px;
+    color: #000;
+    background: #1c94c4;
+}
+
+.CLMStooltip p {
+    padding: 6px 4px 4px 4px;
+    margin: 0px;
+    font-size: 10pt;
+    color: #222;
+}
+
+.CLMStooltip hr {
+    border-style: solid;
+    border-top-width: 1px;
+    border-bottom-width: 0px;
+    margin: 2px 0px;
+}
+
+.CLMStooltip ul {
+    margin-left: 1em;
+}
+
+.CLMStooltip table {
+    border-collapse: collapse;
+    background: none;
+}
+
+.CLMStooltip table tr:nth-child(2n) {
+    background: rgba(255,255,255,0.25);
+}
+
+.CLMStooltip table tr td {
+    font-weight: bold;
+}
+
+.CLMStooltip table tr th {
+    height: 1em;
+}

@@ -4,8 +4,8 @@
 
 #matrixPanel {
 	left: 80px;
-	width:500px;
-	height:400px;
+	width:600px;
+	height:350px;
 }
 #matrixPanel svg {
     height: 100%;
@@ -40,6 +40,6 @@
     border-left: 1px solid grey;
 }
 
-.buttonColumn label {
-    display: block;
+.matrixHeader {
+    text-transform: uppercase;
 }

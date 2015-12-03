@@ -13,7 +13,8 @@
     win.CLMSUI.DistanceMatrixViewBB = Backbone.View.extend({
     tagName: "div",
     events: {
-        "click .closeButton": "hideView"
+        "click .closeButton": "hideView",
+        "mousemove canvas": "invokeTooltip"
     },
     initialize: function (viewOptions) {
         //to contain registered callback functions
@@ -23,9 +24,7 @@
         var defaultOptions = {
             xlabel: "Residue Index 1",
             ylabel: "Residue Index 2",
-            seriesName: "Cross Links",
             chartTitle: "Cross-Link Matrix",
-            maxX: 80,
             background: "white"
         };
         
@@ -44,7 +43,7 @@
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
         //avoids prob with 'save - web page complete'
-        var elem = d3.select(this.el);
+        var elem = d3.select(this.el); 
         
         // Set up some html scaffolding in d3
         win.CLMSUI.utils.addDynDivScaffolding(elem);
@@ -60,28 +59,16 @@
             .style("position", "relative")
         ;      
         chartDiv.selectAll("*").remove();
-        
-        
-        chartDiv.append("div")
-            .attr("class", "buttonColumn")
-            .attr ("id", "matrixButtons")
-        ;
-        this.buttonView = new win.CLMSUI.MatrixFilterViewBB ({
-            el: "#matrixButtons",
-            model: this.model
-        });
-        
+
         
         var viewDiv = chartDiv.append("div")
             .attr("class", "viewDiv")
         ;
 
         
-        
         // Scales
         this.x = d3.scale.linear();
         this.y = d3.scale.linear();
-        
         
         this.zoomStatus = d3.behavior.zoom()
             .scaleExtent([1, 8])
@@ -104,32 +91,14 @@
         // SVG element
         this.svg = viewDiv.append("svg");
 
+        this.vis = this.svg.append("g")
+            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
+        ;
+        
         
         // Axes setup
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
         this.yAxis = d3.svg.axis().scale(this.y).orient("left");
-        
-        this.vis = this.svg.append("g")
-            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
-        ;
-
-        // Add the x-axis label
-        //if (this.options.xlabel) {
-            this.vis.append("g").append("text")
-                .attr("class", "axis")
-                .text(this.options.xlabel)
-                .attr("dy","0em")
-            ;
-        //}
-
-        // add y-axis label
-        //if (this.options.ylabel) {
-            this.vis.append("g").append("text")
-                .attr("class", "axis")
-                .text(this.options.ylabel)
-                .attr("dy","1em")
-            ;
-        //}
         
         this.vis.append("g")
 			.attr("class", "y axis")
@@ -141,19 +110,31 @@
 			//.call(self.xAxis)
         ;
         
+        
+        // Add labels
+        var labelInfo = [
+            {class: "axis", text: this.options.xlabel, dy: "0em"},
+            {class: "axis", text: this.options.ylabel, dy: "1em"},
+            {class: "matrixHeader", text: this.options.chartTitle, dy: "-0.5em"},
+        ];
+
+        this.vis.selectAll("g.label")
+            .data(labelInfo)
+            .enter()
+            .append ("g").attr("class", "label")
+            .append("text")
+                .attr("class", function(d) { return d.class; })
+                .text(function(d) { return d.text; })
+                .attr("dy", function(d) { return d.dy; })
+        ;
+
+        
         // colours
-        this.overLinked = "red";//"#e7298a";//"#7570b3";
-        this.dubiousLinked = "blue";//"#d95f02";
-        this.withinLinked = "black";
+        this.resLinkColours = ["black", "blue", "red"];
         
         this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.model.get("rangeModel"), "change:scale", this.render); 
         this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
-        this.listenTo (win.CLMSUI.vent, "filterEster", function(filterVal) {
-            this.filterVal = filterVal;
-            console.log ("filterEster fired", arguments);
-            this.render();
-        });
         
         if (viewOptions.displayEventName) {
             this.listenTo (win.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
@@ -184,11 +165,44 @@
         d3.select(this.el).style('display', show ? 'block' : 'none');
 
         if (show) {
-            this
-                //.relayout() // need to resize first sometimes so render gets correct width/height coords
-                .render()
-            ;
+            this.render();
         }
+    },
+        
+    invokeTooltip: function (evt) {
+        var sd = this.getSizeData();
+        var x = evt.offsetX + 1;
+        var y = sd.seqLength - evt.offsetY;
+        var a = Math.max (x,y);
+        var b = Math.min (x,y);
+        var self = this;
+        
+        var distances = this.model.get("distancesModel").get("distances");
+        //var dist = (x > y) ? (distances[x] !== null ? distances[x][y] : null) : (distances[y] !== null ? distances[y][x] : null);
+        var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+        var residueLinks = allProtProtLinks.next().value.crossLinks;
+
+        //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
+        var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSpiral (residueLinks, b, a, 2);
+        neighbourhood = neighbourhood.filter (function(clid) {
+            var est = CLMSUI.modelUtils.getEsterLinkType (residueLinks.get(clid));
+            return (self.filterVal === undefined || est >= self.filterVal);
+        });
+        var rdata = neighbourhood.map (function (clid) {
+            var rids = clid.split("-");
+            var x = rids[0];
+            var y = rids[1];
+            var dist = (x > y) ? (distances[x] !== null ? distances[x][y] : null) : (distances[y] !== null ? distances[y][x] : null);
+            return [rids[0], rids[1], dist];
+        });
+        if (neighbourhood.length > 0) {
+            rdata.splice (0, 0, ["From", "To", "Distance"]);
+        } else {
+            rdata = null;
+        }
+        
+        this.model.get("tooltipModel").set("header", "Cross Links").set("contents", rdata).set("location", evt);
+        this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
     },
     
     zoomHandler: function (self) {
@@ -201,45 +215,6 @@
         self.zoomStatus.translate ([tx, ty]);
         
         self.panZoom();
-    },
-        
-    // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
-    // the four 'nh ester' amino acids
-    // lys = k, ser = s, thr = t, tyr = y
-    esterMap: {"K": true, "S": true, "T": true, "Y": true},
-    esterBool: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map (function(n) { return {"K": true, "S": true, "T": true, "Y": true}[n]; }),
-        
-    getEsterLinkType: function (crossLink) {
-        var toResIndex = crossLink.toResidue;
-        var fromResIndex = crossLink.fromResidue;
-        //console.log ("res", crossLink);
-        var pLink = crossLink.proteinLink;
-        var pLinkId = pLink.id;
-        
-        // might need to query protein model at this point if from and to prot data stops getting attached to residues
-        
-        var fromProt = pLink.fromProtein;
-        var toProt = pLink.toProtein;
-        
-        var fromResType = this.getResidueType (fromProt, fromResIndex);
-        var toResType = this.getResidueType (toProt, toResIndex);
-        
-        //console.log ("ft", fromResType, toResType);
-        
-        // http://jsperf.com/letter-match says using a map is quickest, have a poke if you disagree
-        var fromEster = this.esterBool[fromResType.charCodeAt(0) - 65]; //this.esterMap[fromResType];
-        var toEster = this.esterBool[toResType.charCodeAt(0) - 65]; //this.esterMap[toResType];
-        
-        return (fromEster ? 1 : 0) + (toEster ? 1 : 0);
-        
-    },
-        
-    getResidueType: function (protein, resIndex, seqAlignFunc) {
-        var seq = protein.sequence;
-        // eventually some sequence alignment stuff will be done
-        resIndex = seqAlignFunc ? seqAlignFunc (resIndex) : resIndex;
-        // Is the sequence starting at 1, do the resIndex's start at 1?
-        return seq[resIndex - 1];
     },
     
     render: function () {
@@ -378,32 +353,30 @@
         //CLMSUI.times.push(Math.round(end-start));
         //console.log ("CLMSUI.times", CLMSUI.times);
         
-        
-
 		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
-        console.log ("self filter", self.filterVal);
+        var modelUtils = win.CLMSUI.modelUtils;
 		//for (let crossLink of residueLinks) {
         for (var crossLink of residueLinks) {
         //var rlCount = residueLinks.length;
 		//for (var rl = 0; rl < rlCount; rl++) {
 			//var crossLink = residueLinks[rl];
-            var est = this.getEsterLinkType (crossLink);
-            if (self.filterVal == undefined || est === self.filterVal) {
+            var est = modelUtils.getEsterLinkType (crossLink);
+            if (self.filterVal === undefined || est >= self.filterVal) {
             
                 var fromDistArr = distances[crossLink.fromResidue];
                 var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
                 //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
 
                 if (dist && dist < min){
-                    ctx.fillStyle = self.withinLinked;
+                    ctx.fillStyle = self.resLinkColours[0];
                     sasIn++;
                 }
                 else if (dist && dist < max){
-                    ctx.fillStyle =  self.dubiousLinked;
+                    ctx.fillStyle = self.resLinkColours[1];
                     sasMid++;
                 }
                 else {
-                    ctx.fillStyle =  self.overLinked;
+                    ctx.fillStyle = self.resLinkColours[2];
                     sasOut++;
                 }
                 ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
@@ -411,15 +384,15 @@
                 var toDistArr = distances[crossLink.toResidue];
                 dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
                 if (dist && dist < min){
-                    ctx.fillStyle = self.withinLinked;
+                    ctx.fillStyle = self.resLinkColours[0];
                     eucIn++;
                 }
                 else if (dist && dist < max){
-                    ctx.fillStyle = self.dubiousLinked;
+                    ctx.fillStyle = self.resLinkColours[1];
                     eucMid++;
                 }
                 else {
-                    ctx.fillStyle = self.overLinked;
+                    ctx.fillStyle = self.resLinkColours[2];
                     eucOut++;
                 }
                 ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
@@ -505,9 +478,10 @@
         // reposition labels
         var labelCoords = [
             {x: minDim / 2, y: minDim + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: minDim / 2, rot: -90}
+            {x: -this.margin.left, y: minDim / 2, rot: -90},
+            {x: minDim / 2, y: 0, rot: 0}
         ];
-        this.vis.selectAll("g text.axis")
+        this.vis.selectAll("g.label text")
             .data (labelCoords)
             .attr ("transform", function(d) {
                 return "translate("+d.x+" "+d.y+") rotate("+d.rot+")";
@@ -557,46 +531,5 @@
         Backbone.View.prototype.remove.call(this);
     }
 });
-    
-     win.CLMSUI.MatrixFilterViewBB = Backbone.View.extend ({
-        tagName: "div",
-        events: {
-            "click .esterRButton": "changeEsterTypeFilter"
-        },
-        initialize: function (viewOptions) {
-            var self = this;
-            var defaultOptions = {};
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);    
-            this.render();
-        },
-         
-         render: function () {
-            console.log ("yo, in buttons render");
-             var possEsterStates = [0,1,2];
-             var labels = ["No NHEster Residues", "Single NHEster Residue Link", "Double NHEster Residue Link"];
-             var con = d3.select(this.el);
-             
-             con.append("p").text("NHEster Filter");
-             
-             var sel = con.selectAll("label.esterBox").data(possEsterStates);
-             var labs = sel.enter()
-                .append ("label")
-                .attr("class", "esterBox")
-             ;
-             labs 
-                .append ("input")
-                .attr("type", "radio")
-                .attr("name", "allSame")
-                .attr("value", function(d) { return d; })
-                .attr("class", "esterRButton")
-             ;
-             labs.append("span").text(function(d,i) { return labels[i]; });
-         },
-         
-         changeEsterTypeFilter: function (evt) {
-             var filterVal = +evt.currentTarget.value;
-            win.CLMSUI.vent.trigger ("filterEster", filterVal);
-         }
-     });
     
 } (this));

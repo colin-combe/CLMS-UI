@@ -10,8 +10,6 @@
     win.CLMSUI = win.CLMSUI || {};
     
     win.CLMSUI.DistogramBB = Backbone.View.extend({
-        tagName: "div",
-        className: "dynDiv",
         events: {
             // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
             // and dragend not supported by zepto, fallback to d3 instead (see later)
@@ -196,23 +194,8 @@
             var distances = this.model.get("distancesModel").get("distances");
 
             //console.log ("distances", distances);
-            var distArr = [];
-            //for (let crossLink of allCrossLinks) {
-            //for (var i = 0; i < allCrossLinks.length; i++) {
-            for (var crossLink of allCrossLinks) {
-                //var crossLink = allCrossLinks[i];
-                //console.log(">>"+crossLink);
-                //if (crossLink.check() === true) { // check() seems to cause full crosslink view to be drawn
-                    var toRes = crossLink.toResidue;
-                    var fromRes = crossLink.fromResidue;
-                    var highRes = Math.max(toRes, fromRes);
-                    var lowRes = Math.min(toRes, fromRes);
-                    var dist = distances[highRes] ? distances[highRes][lowRes] : null;
-                    if (dist !== null) {
-                        distArr.push(+dist); // + is to stop it being a string
-                    }
-                //~ }
-            }
+            var distArr = CLMSUI.modelUtils.flattenCrossLinkMatrix (allCrossLinks, distances);
+            console.log ("distArr", distArr);
 
             //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
             //var randArr = this.model.get("distancesModel").get("flattenedDistances");

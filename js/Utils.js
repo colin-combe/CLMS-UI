@@ -52,7 +52,7 @@ CLMSUI.utils = {
                 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
-            var myid = "#" + sel.attr("id")
+            var myid = "#" + sel.attr("id");
             sel.append("label")
                 .attr("class", "btn")
                 .style("padding-left", "0px")
@@ -69,7 +69,7 @@ CLMSUI.utils = {
             d3.select(this.el).select("input").property("checked", boolVal);
         },
         
-        checkboxClicked: function (args) {
+        checkboxClicked: function () {
             CLMSUI.vent.trigger (this.eventName, d3.select(this.el).select("input").property("checked"));
         }
     }),
@@ -86,5 +86,62 @@ CLMSUI.utils = {
         var powerOfTen = Math.pow (10, decimalPlaces);
         return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
     },
+    
+    RadioButtonFilterViewBB: Backbone.View.extend ({
+        tagName: "div",
+        events: {
+            "click .singleRadioButton": "changeFilter"
+        },
+        initialize: function (initData) {
+            var defaultOptions = {
+                states: [0,1],
+                labels: ["Option 1", "Option 2"],
+                header: "A Filter",
+                eventName: undefined,
+                labelGroupFlow: "horizontalFlow"
+            };
+            this.options = _.extend(defaultOptions, initData.myOptions);   
+            if (this.options.eventName) {
+                this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
+            }
+            this.render();
+        },
+         
+         render: function () {
+             var self = this;
+             var con = d3.select(this.el);           
+             con.append("p").attr("class", "headerLabel").text(this.options.header);
+             
+             var sel = con.selectAll("label.singleChoice").data(this.options.states);
+             var labs = sel.enter()
+                .append ("label")
+                .attr("class", "singleChoice "+self.options.labelGroupFlow)
+             ;
+             labs 
+                .append ("input")
+                .attr("type", "radio")
+                .attr("name", self.el.id + "RBGroup")
+                .attr("value", function(d) { return d; })
+                .attr("class", "singleRadioButton")
+                //.property("checked", function(d,i) { return i == self.options.presetIndex; })
+             ;
+            var labels = this.options.labels;
+             labs.append("span").text(function(d,i) { return labels[i]; });
+         },
+        
+        showState : function (filterVal) {
+            //console.log ("in show state rb", filterVal);
+            var self = this;
+            d3.select(this.el).selectAll("input.singleRadioButton")
+                .property("checked", function(d,i) { return self.options.states[i] == filterVal; })
+            ;
+        },
+         
+         changeFilter: function (evt) {
+             if (this.options.eventName) {
+                CLMSUI.vent.trigger (this.options.eventName, +evt.currentTarget.value);
+             }
+         }
+     }),
     
 };

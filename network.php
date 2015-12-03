@@ -42,7 +42,9 @@
 		<link rel="stylesheet" href="./css/xiNET.css">
         
         <link rel="stylesheet" href="./css/matrix.css">
+        <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
+        <link rel="stylesheet" href="./css/minigram.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -93,8 +95,14 @@
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/filterModelBB.js"></script>
+        <script type="text/javascript" src="./js/matrix.js"></script>
+        <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
+        <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
         <script type="text/javascript" src="./js/matrix.js"></script>   
-		<script type="text/javascript" src="./js/NGLViewBB.js"></script></head>
+        <script type="text/javascript" src="./js/minigramBB.js"></script>   
+		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
+    </head>
+
     <body>
 <!--
 		<div class="dynDiv_setLimit">
@@ -307,12 +315,33 @@
 					document.getElementById('save').setAttribute('style','display:none;');
 				}
                 
-
+                
                 var filterViewGroup = new CLMSUI.FilterViewBB ({
                     el: "#filterPlaceholder", 
-                    model: CLMSUI.filterModelInst,
-                    events: {}
+                    model: CLMSUI.filterModelInst
                 });
+                
+                var mdModelBB = new Backbone.Model ({
+                    filterModel: CLMSUI.filterModelInst,
+                    clmsModel: CLMSUI.clmsModelInst,
+                    distancesModel: CLMSUI.distancesInst
+                });
+                var miniDist = new CLMSUI.MinigramBB ({
+                    el: "#filterPlaceholderSliderHolder",
+                    model: mdModelBB,
+                    myOptions: {
+                        maxX: 0,    // let data decide
+                        seriesName: "matches",
+                        xlabel: "Distance",
+                        ylabel: "Count"
+                    }
+                });
+                miniDist
+                    .listenTo (CLMSUI.clmsModelInst, "change:matches", miniDist.render)    // if the matches changes (likely?) need to re-render the view too
+                    .listenTo (miniDist.model.get("filterModel"), "change", miniDist.render)  
+                    .setDataFunc (function() { return CLMSUI.modelUtils.flattenMatches (this.model.get("clmsModel").get("matches")); })
+                    .render()
+                ;
                 
                 // Generate distogram checkbox view here
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow"});
