@@ -9,13 +9,12 @@
 
     global.CLMSUI = global.CLMSUI || {};
     
-    global.CLMSUI.MinigramBB = global.Backbone.View.extend ({
+    global.CLMSUI.MinigramViewBB = global.Backbone.View.extend ({
         events: {
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
         },
 
         initialize: function (viewOptions) {
-            console.log("arg options", viewOptions);
             var defaultOptions = {
                 maxX: 80,
                 height: 60,
@@ -100,13 +99,8 @@
                 subchart: {
                     show: true,
                     onbrush: function (domain) {
-                        self.model
-                            .set ({
-                                "domainStart": domain[0],
-                                "domainEnd": domain[1]
-                            })
-                            .trigger("dualChange", self, domain)  // fire this, and listeners can listen to this event to pick up both changes at once rather than separately
-                        ; 
+                        // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
+                        self.model.set ({"domainStart": domain[0], "domainEnd": domain[1]}); 
                     },
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
@@ -140,7 +134,6 @@
             var valArr = this.model.data();
 
             var extent = d3.extent(valArr);
-            console.log ("valArr", valArr);
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
             var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
             if (thresholds.length === 0) {
@@ -181,7 +174,7 @@
 
             // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
             var maxAxes = {};
-                console.log ("maxy", maxY);
+                //console.log ("maxy", maxY);
             //if (+xlv.cutOff <= xlv.scores.min) {
                 maxAxes.y = maxY;
             //}
