@@ -61,12 +61,6 @@
                         draggable: true
                     },
                     */
-                    
-                    /*
-                    ondragend: function (extent) {
-                        console.log ("extent", extent);
-                    }
-                    */
                 },
                 size: {
                     width: this.options.width,
@@ -74,6 +68,9 @@
                 },
                 padding: {
                     bottom: 0,
+                    left: 0,
+                    top: 0,
+                    right: 0,
                 },
                 bar: {
                     width: {
@@ -99,6 +96,8 @@
                 subchart: {
                     show: true,
                     onbrush: function (domain) {
+                        // eventually do snapping: http://bl.ocks.org/mbostock/6232620
+                        
                         // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
                         self.model.set ({"domainStart": domain[0], "domainEnd": domain[1]}); 
                     },

@@ -130,7 +130,8 @@
 
         
         // colours
-        this.resLinkColours = ["black", "blue", "red"];
+        //this.resLinkColours = ["black", "blue", "red"];
+        this.resLinkColours = ["green", "orange", "black"];
         
         this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.model.get("rangeModel"), "change:scale", this.render); 
@@ -220,6 +221,7 @@
     render: function () {
 
         if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            console.log ("re-rendering matrix view");
             this.resize();
 
             var self = this;
@@ -348,7 +350,15 @@
                 }
                 ctx.putImageData(canvasData, 0, 0);
             //}
-
+            /*
+            var clinkCols = rangeColours.slice (1,4);
+            this.resLinkColours = clinkCols.map (function(col) {
+                col = d3.hsl(col);
+                col.s = 1;
+                //col.l = 0.3;
+                return col.rgb();
+            });
+            */
 
             var end = performance.now();
             //CLMSUI.times.push(Math.round(end-start));
@@ -357,6 +367,8 @@
             var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
             var modelUtils = global.CLMSUI.modelUtils;
             //for (let crossLink of residueLinks) {
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 0.5;
             for (var crossLink of residueLinks) {
             //var rlCount = residueLinks.length;
             //for (var rl = 0; rl < rlCount; rl++) {
@@ -381,6 +393,7 @@
                         sasOut++;
                     }
                     ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
+                    
 
                     var toDistArr = distances[crossLink.toResidue];
                     dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
@@ -397,10 +410,11 @@
                         eucOut++;
                     }
                     ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
+                    //ctx.strokeRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
                 }
             }
 
-            console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
+            //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
         }
     },
     
