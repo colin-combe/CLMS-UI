@@ -324,16 +324,15 @@
                 // I want MinigramBB to be model agnostic so I can re-use it in other places
                 // So the connections to particular models are done through a mediator model (dunno if that's the right word)
                 var MinigramModelBB = Backbone.Model.extend ({
-                    data: function() { return CLMSUI.modelUtils.flattenMatches (this.get("clmsModel").get("matches")); },
+                    data: function() { return CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches")); },
                     initialize: function () {
-                        this.on ("change:domainStart", function (model, val) { console.log ("dom start changed");this.get("filterModel").set("cutoffMin", val); }, this);
-                        this.on ("change:domainEnd", function (model, val) { console.log ("dom end changed"); this.get("filterModel").set("cutoffMax", val); }, this);
+                        this.on ("dualChange", function (model, val) {
+                            CLMSUI.filterModelInst.set("cutoff", val.slice());  // slice copies array so change:cutoff will be triggered in listeners to this
+                        }, this);
                     }
                 });
                 
                 var mdModelBB = new MinigramModelBB ({
-                    filterModel: CLMSUI.filterModelInst,
-                    clmsModel: CLMSUI.clmsModelInst,
                     domainStart: 0,
                     domainEnd: 100,
                 });
@@ -354,9 +353,7 @@
                 miniDist
                     .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
                     //.listenTo (this.model.get("filterModel"), "change", this.render)
-                ;
-            
-                console.log ("miniDist", miniDist);
+                ;       
             
                 
                 // Generate distogram checkbox view here

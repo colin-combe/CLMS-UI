@@ -503,7 +503,6 @@
         var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.zoomStatus.translate()[0]+"px,"+ this.zoomStatus.translate()[1]+"px)";
         var transformString = translateString + " " + scaleString;
-        //console.log ("transformString", transformString);
 		this.canvas
 			.style("-ms-transform", transformString)
 			.style("-moz-transform", transformString)

@@ -2,29 +2,24 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.FilterModelBB = Backbone.Model.extend ({
     initialize: function () {
-        this
-            .set ("A", true)
-            .set ("B", true)
-            .set ("C", true)
-            .set ("Q", false)
-            .set ("AUTO", false)
-            .set ("selfLinks", true)
-            .set ("ambig", true)
-            .set ("cutoffMin", 0)
-            .set ("cutoffMax", 0)
-        ;
-        
+        this.set ({
+            "A": true, "B": true, "C": true, "Q": false,
+            "AUTO": false,
+            "selfLinks": true, "ambig": true,
+            "cutoff": [0,100]
+        });   
     },
     
     filter: function (match) {
         var vChar = match.validated;
-        var scorePass = (!match.score || (match.score >= this.get("cutoffMin") && match.score <= this.get("cutoffMax")));
+        var scorePass = (!match.score || (match.score >= this.get("cutoff")[0] && match.score <= this.get("cutoff")[1]));
+        if (!scorePass) { return false; }
         
-        if (vChar == 'A' && this.get("A") && scorePass) return true;
-        if (vChar == 'B' && this.get("B") && scorePass) return true;
-        if (vChar == 'C' && this.get("C") && scorePass) return true;
-        if (vChar == '?' && this.get("Q") && scorePass) return true;
-        if (match.autovalidated && this.get("AUTO") && scorePass) return true;
+        if (vChar == 'A' && this.get("A")) return true;
+        if (vChar == 'B' && this.get("B")) return true;
+        if (vChar == 'C' && this.get("C")) return true;
+        if (vChar == '?' && this.get("Q")) return true;
+        if (match.autovalidated && this.get("AUTO")) return true;
         return false;
     }
 });

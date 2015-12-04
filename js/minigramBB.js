@@ -101,9 +101,12 @@
                     show: true,
                     onbrush: function (domain) {
                         self.model
-                            .set("domainStart", domain[0])
-                            .set("domainEnd", domain[1])
-                        ;
+                            .set ({
+                                "domainStart": domain[0],
+                                "domainEnd": domain[1]
+                            })
+                            .trigger("dualChange", self, domain)  // fire this, and listeners can listen to this event to pick up both changes at once rather than separately
+                        ; 
                     },
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars

@@ -15,7 +15,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 
     initialize: function (viewOptions) {
-        console.log("arg options", viewOptions);
         var defaultOptions = {
             toggles: [
                 {"label":"A", "id":"A"},
@@ -87,13 +86,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }
         */
         
-        this.listenTo (this.model, "change:cutoffMin", function(model, val) {
-            val = CLMSUI.utils.dpNumber (val, this.sliderDecimalPlaces, Math.floor); 
-            mainDivSel.select(".cutoffLabel.vmin").html("&gt;"+val); // min label
-        });
-        this.listenTo (this.model, "change:cutoffMax", function(model, val) {
-            val = CLMSUI.utils.dpNumber (val, this.sliderDecimalPlaces, Math.ceil); 
-            mainDivSel.select(".cutoffLabel.vmax").html("&lt;"+val); // max label
+        this.listenTo (this.model, "change:cutoff", function(model, val) {
+            var min = CLMSUI.utils.dpNumber (val[0], this.sliderDecimalPlaces, Math.floor); 
+            mainDivSel.select(".cutoffLabel.vmin").html("&gt;"+min); // min label
+            
+            var max = CLMSUI.utils.dpNumber (val[1], this.sliderDecimalPlaces, Math.ceil); 
+            mainDivSel.select(".cutoffLabel.vmax").html("&lt;"+max); // max label
         });
     },
     

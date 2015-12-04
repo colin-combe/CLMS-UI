@@ -19,7 +19,6 @@
         },
 
         initialize: function (viewOptions) {
-            console.log("arg options", viewOptions);
             var defaultOptions = {
                 xlabel: "Distance",
                 ylabel: "Count",
@@ -123,8 +122,9 @@
                     //hide: [this.options.seriesName]
                 },
                 padding: {
-                    //left: 40, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
-                    right: 20
+                    left: 40, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
+                    right: 20,
+                    top: 0
                 },
                 tooltip: {
                     grouped: true,
@@ -149,8 +149,6 @@
                 }
             });
 
-            console.log("this", this);
-
             this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
             this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
@@ -172,7 +170,6 @@
         },
 
         setVisible: function (show) {
-            console.log("event display in distogram", show);
             d3.select(this.el).style('display', show ? 'block' : 'none');
 
             if (show) {
@@ -238,23 +235,15 @@
                 //});
 
                 // add names to front of arrays as c3 demands
-
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); });
-
-
-                // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
-                var maxAxes = {};
-                    console.log ("maxy", maxY);
-                //if (+xlv.cutOff <= xlv.scores.min) {
-                    maxAxes.y = maxY;
-                //}
 
                 //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
 
                 //console.log ("thresholds", thresholds);
-                //console.log ("maxAxes", maxAxes);
-                //this.chart.axis.max(maxAxes);
-                this.chart.internal.config.axis_y_max = maxAxes.y;
+                var curMaxY = this.chart.axis.max();
+                if (curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                    this.chart.axis.max({y: maxY});
+                }
                 this.chart.load({
                     columns: countArrays
                 });
