@@ -9,13 +9,12 @@
 
     global.CLMSUI = global.CLMSUI || {};
     
-    global.CLMSUI.MinigramBB = global.Backbone.View.extend ({
+    global.CLMSUI.MinigramViewBB = global.Backbone.View.extend ({
         events: {
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
         },
 
         initialize: function (viewOptions) {
-            console.log("arg options", viewOptions);
             var defaultOptions = {
                 maxX: 80,
                 height: 60,
@@ -29,7 +28,7 @@
             var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
-            var mainDivSel = d3.select(this.el);
+            var mainDivSel = d3.select(this.el).attr("class", "minigram");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("id", this.el.id+"c3Chart")
@@ -62,12 +61,6 @@
                         draggable: true
                     },
                     */
-                    
-                    /*
-                    ondragend: function (extent) {
-                        console.log ("extent", extent);
-                    }
-                    */
                 },
                 size: {
                     width: this.options.width,
@@ -75,6 +68,9 @@
                 },
                 padding: {
                     bottom: 0,
+                    left: 0,
+                    top: 0,
+                    right: 0,
                 },
                 bar: {
                     width: {
@@ -100,7 +96,10 @@
                 subchart: {
                     show: true,
                     onbrush: function (domain) {
-                        console.log ("dom", domain);
+                        // eventually do snapping: http://bl.ocks.org/mbostock/6232620
+                        
+                        // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
+                        self.model.set ({"domainStart": domain[0], "domainEnd": domain[1]}); 
                     },
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
@@ -113,43 +112,27 @@
                 }
             });
             
-           
             this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
             
             var brush = d3.select(this.el).selectAll("svg .c3-brush");
-            
-            brush.selectAll(".resize.e").append("path")
-                .attr ("transform", "translate(0,0) scale(2)")
+            var flip = {"e":1, "w":-1};
+            brush.selectAll(".resize").append("path")
+                .attr ("transform", function(d) { return "translate(0,0) scale("+(2*flip[d])+",2)"; })
                 .attr ("d", "M 0 0 V 10 L 5 5 Z")
-            ;
-            
-            brush.selectAll(".resize.w").append("path")
-                .attr ("transform", "translate(-0,0) scale(2)")
-                .attr ("d", "M 0 0 V 10 L -5 5 Z")
-            ;
-            
-            
-            //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-
+            ;   
+  
             this.recalcRandomBinning();
-            //this.render();
+            
+            this.render();
+            
             return this;
-        },
-        
-        setDataFunc: function (dataFunc) {
-            this.dataFunc = dataFunc;
-            return this;    
         },
 
         render: function () {
                    
-            var valArr = this.dataFunc();
-            //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
-            //var randArr = this.model.get("distancesModel").get("flattenedDistances");
-            //console.log ("random", randArr);
+            var valArr = this.model.data();
 
             var extent = d3.extent(valArr);
-            console.log ("valArr", valArr);
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
             var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
             if (thresholds.length === 0) {
@@ -190,7 +173,7 @@
 
             // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
             var maxAxes = {};
-                console.log ("maxy", maxY);
+                //console.log ("maxy", maxY);
             //if (+xlv.cutOff <= xlv.scores.min) {
                 maxAxes.y = maxY;
             //}
@@ -210,8 +193,8 @@
         },
 
         recalcRandomBinning: function () {
-            console.log ("precalcing random bins for distogram view");
-            var randArr = this.model.get("distancesModel").flattenedDistances();
+            console.log ("precalcing random bins for minigram view");
+            var randArr = [2,3,4];
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)

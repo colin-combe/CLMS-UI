@@ -99,7 +99,7 @@
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
         <script type="text/javascript" src="./js/matrix.js"></script>   
-        <script type="text/javascript" src="./js/minigramBB.js"></script>   
+        <script type="text/javascript" src="./js/minigramViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
     </head>
 
@@ -321,27 +321,36 @@
                     model: CLMSUI.filterModelInst
                 });
                 
-                var mdModelBB = new Backbone.Model ({
-                    filterModel: CLMSUI.filterModelInst,
-                    clmsModel: CLMSUI.clmsModelInst,
-                    distancesModel: CLMSUI.distancesInst
-                });
-                var miniDist = new CLMSUI.MinigramBB ({
+
+                
+                var miniDistModelInst = new CLMSUI.modelUtils.MinigramModelBB ();
+                miniDistModelInst.data = function() { return CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches")); };
+
+                var miniDistView = new CLMSUI.MinigramViewBB ({
                     el: "#filterPlaceholderSliderHolder",
-                    model: mdModelBB,
+                    model: miniDistModelInst,
                     myOptions: {
                         maxX: 0,    // let data decide
                         seriesName: "matches",
                         xlabel: "Distance",
-                        ylabel: "Count"
+                        ylabel: "Count",
+                        height: 50
                     }
                 });
-                miniDist
-                    .listenTo (CLMSUI.clmsModelInst, "change:matches", miniDist.render)    // if the matches changes (likely?) need to re-render the view too
-                    .listenTo (miniDist.model.get("filterModel"), "change", miniDist.render)  
-                    .setDataFunc (function() { return CLMSUI.modelUtils.flattenMatches (this.model.get("clmsModel").get("matches")); })
-                    .render()
-                ;
+                
+                
+                // When the range changes on the mini histogram model pass the values onto the filter model
+                CLMSUI.filterModelInst.listenTo (miniDistModelInst, "change", function (model) {
+                    this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
+                }, this);
+                
+                // If the ClmsModel matches attribute changes then tell the mini histogram view
+                miniDistView
+                    .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
+                    // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
+                    //.listenTo (this.model.get("filterModel"), "change", this.render)  
+                ;       
+            
                 
                 // Generate distogram checkbox view here
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow"});

@@ -16,12 +16,9 @@
             this.mouseOffset = 10;
             
             this.listenTo (this.model, "change:location", this.setPosition); 
-            this.listenTo (this.model, "change:contents", this.render);           
-            this.listenTo (this.model, "change:header", this.render);           
+            this.listenTo (this.model, "change:contents change:header", this.render);                  
         },
-        render : function() {
-            //console.log ("yo tooltip render", arguments);
-            
+        render : function() {     
             var contents = this.model.get("contents");
             if (contents === null) {
                 this.setToFade();

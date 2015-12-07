@@ -147,17 +147,17 @@
 
             if (show) {
                 this
-                    .relayout() // need to resize first sometimes so render gets correct width/height coords
+                    //.relayout() // need to resize first sometimes so render gets correct width/height coords
                     .render()
                 ;
             }
         },
 
         render: function () {
-
-            console.log ("re rendering NGL view");
-	
-			this.stage.handleResize();
+            if (win.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                console.log ("re rendering NGL view");
+                this.stage.handleResize();
+            }
 
             return this;
         },

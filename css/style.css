@@ -607,10 +607,6 @@ tbody tr:hover td, tbody tr:hover td  {
      background: rgba(224,224,255, 0.9);
 }
 
-#filterPlaceholder label, #filterPlaceholder p {
-    padding-right: 0.6em;
-}
-
 .sideOn {
     -ms-transform:rotate(270deg); /* IE 9 */
     -moz-transform:rotate(270deg); /* Firefox */

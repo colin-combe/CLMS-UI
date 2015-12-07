@@ -146,4 +146,12 @@ CLMSUI.modelUtils = {
             ;
         }
     }),
+    
+        // I want MinigramBB to be model agnostic so I can re-use it in other places
+    MinigramModelBB: Backbone.Model.extend ({
+        data: function() { return [1,2,3,4]; },
+        initialize: function (options) {
+            this.set ({domainStart: 0, domainEnd: 100});
+        }
+    }),
 };

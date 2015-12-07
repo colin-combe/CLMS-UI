@@ -5,12 +5,12 @@
 //
 //		graph/Matrix.js
 
-(function(win) {
+(function(global) {
     "use strict";
 
-    win.CLMSUI = win.CLMSUI || {};
+    global.CLMSUI = global.CLMSUI || {};
     
-    win.CLMSUI.DistanceMatrixViewBB = Backbone.View.extend({
+    global.CLMSUI.DistanceMatrixViewBB = global.Backbone.View.extend({
     tagName: "div",
     events: {
         "click .closeButton": "hideView",
@@ -46,7 +46,7 @@
         var elem = d3.select(this.el); 
         
         // Set up some html scaffolding in d3
-        win.CLMSUI.utils.addDynDivScaffolding(elem);
+        global.CLMSUI.utils.addDynDivScaffolding(elem);
         
         // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
         var panelDrag = d3.behavior.drag().on ("drag", function() { self.resize(); });
@@ -130,14 +130,15 @@
 
         
         // colours
-        this.resLinkColours = ["black", "blue", "red"];
+        //this.resLinkColours = ["black", "blue", "red"];
+        this.resLinkColours = ["green", "orange", "black"];
         
         this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.model.get("rangeModel"), "change:scale", this.render); 
         this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
         
         if (viewOptions.displayEventName) {
-            this.listenTo (win.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
+            this.listenTo (global.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
         }
         
         //this.distancesChanged ();
@@ -158,7 +159,7 @@
     },
     
     hideView: function () {
-        win.CLMSUI.vent.trigger (this.displayEventName, false);
+        global.CLMSUI.vent.trigger (this.displayEventName, false);
     },
 
     setVisible: function (show) {
@@ -183,9 +184,9 @@
         var residueLinks = allProtProtLinks.next().value.crossLinks;
 
         //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
-        var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSpiral (residueLinks, b, a, 2);
+        var neighbourhood = global.CLMSUI.modelUtils.findResidueIDsInSpiral (residueLinks, b, a, 2);
         neighbourhood = neighbourhood.filter (function(clid) {
-            var est = CLMSUI.modelUtils.getEsterLinkType (residueLinks.get(clid));
+            var est = global.CLMSUI.modelUtils.getEsterLinkType (residueLinks.get(clid));
             return (self.filterVal === undefined || est >= self.filterVal);
         });
         var rdata = neighbourhood.map (function (clid) {
@@ -219,187 +220,202 @@
     
     render: function () {
 
-        this.resize();
-        
-        var self = this;
-        var distances = this.model.get("distancesModel").get("distances");
-        var seqLength = distances.length - 1;
-        var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+        if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            console.log ("re-rendering matrix view");
+            this.resize();
 
-        //var proteins = this.model.get("clmsModel").get("interactors");
-        var residueLinks = allProtProtLinks.next().value.crossLinks.values();
+            var self = this;
+            var distances = this.model.get("distancesModel").get("distances");
+            var seqLength = distances.length - 1;
+            var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
 
-        // make underlying canvas big enough to hold 1 pixel per residue pair
-        // it gets rescaled in the resize function to fit a particular size on the screen
-		self.canvas
-            .attr("width",  seqLength)
-			.attr("height", seqLength)
-        ;
-		
-		var ctx = self.canvas.node().getContext("2d");
-		ctx.fillStyle = self.options.background;
-		ctx.fillRect(0, 0, self.canvas.node().width, self.canvas.node().height);
+            //var proteins = this.model.get("clmsModel").get("interactors");
+            var residueLinks = allProtProtLinks.next().value.crossLinks.values();
 
-		var xStep = 1;//minDim / seqLength;
-		var yStep = 1;//minDim / seqLength;
-		
-        
-        var rangeDomain = self.model.get("rangeModel").get("scale").domain();
-        var min = rangeDomain[1];
-        var max = rangeDomain[2];
-        
-        // That's how you define the value of a pixel //
-        // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
+            // make underlying canvas big enough to hold 1 pixel per residue pair
+            // it gets rescaled in the resize function to fit a particular size on the screen
+            self.canvas
+                .attr("width",  seqLength)
+                .attr("height", seqLength)
+            ;
 
-        function drawPixel (cd, pixi, r, g, b, a) {
-            var index = pixi * 4;
-            cd[index] = r;
-            cd[index + 1] = g;
-            cd[index + 2] = b;
-            cd[index + 3] = a;
-        }
-        
-        var start = performance.now();
-        
-        var rangeColours = self.model.get("rangeModel").get("scale").range();
-        var cols = rangeColours.slice (1,3);
-        var colourArray = cols.map (function(col) {
-            col = d3.hsl(col);
-            col.s = 0.4;
-            col.l = 0.85;
-            return col.rgb();
-        });
-        /*
-        var colourArray = [withinUnlinked, dubiousUnlinked].map (function (col) {
-            return d3.rgb (col);
-        });
-        */
-        
-        // two sets of nested loops, one per style
-        /*
-        ctx.fillStyle = colourArray[0];
-		
-		for (var i = 1; i < seqLength + 1; i++){
-			var row = distances[i];
-            
-			if (row){
-                var ixStep = (i - 1) * xStep;
-				for (var j = 1; j < row.length; j++){   // was seqLength
-					var distance = row[j];
-					if (distance && distance < min) {
-						ctx.fillRect(ixStep, (seqLength - j) * yStep , xStep, yStep);
-					}
-				}
-			}
-		}
-        
+            var ctx = self.canvas.node().getContext("2d");
+            ctx.fillStyle = self.options.background;
+            ctx.fillRect(0, 0, self.canvas.node().width, self.canvas.node().height);
 
-		ctx.fillStyle = colourArray[1];
-		
-		for (var i = 1; i < seqLength + 1; i++){
-			var row = distances[i];
-			if (row){
-                var ixStep = (i - 1) * xStep;
-				for (var j = 1; j < row.length; j++){   // was seqLength     
-					var distance = row[j];
-					if (distance && distance > min && distance < max) {    // being anal, but if distance == min, neither this nor the previous loop will draw anything
-						ctx.fillRect(ixStep, (seqLength - j) * yStep , xStep, yStep);
-					}
-				}
-			}
-		}
-        */
-        
-        // one loop, style is chosen per cell
-        /*
-        for (var i = 1; i < seqLength + 1; i++){
-            var row = distances[i];
-            if (row){
-                var ixStep = (i - 1) * xStep;
-                for (var j = 1; j < row.length; j++){   // was seqLength     
-                    var distance = row[j];
-                    if (distance && distance < max) {
-                        ctx.fillStyle = (distance > min ? colourArray[1] : colourArray[0]);
-                        ctx.fillRect (ixStep, (seqLength - j) * yStep , xStep, yStep);
-                    }
-                }
+            var xStep = 1;//minDim / seqLength;
+            var yStep = 1;//minDim / seqLength;
+
+
+            var rangeDomain = self.model.get("rangeModel").get("scale").domain();
+            var min = rangeDomain[1];
+            var max = rangeDomain[2];
+
+            // That's how you define the value of a pixel //
+            // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
+
+            function drawPixel (cd, pixi, r, g, b, a) {
+                var index = pixi * 4;
+                cd[index] = r;
+                cd[index + 1] = g;
+                cd[index + 2] = b;
+                cd[index + 3] = a;
             }
-        }
-        */
-        
-        //if (sizeData.cx > 0) {
-            var pw = self.canvas.attr("width");
-            var canvasData = ctx.getImageData (0, 0, pw, self.canvas.attr("height"));
-            var cd = canvasData.data;
+
+            var start = performance.now();
+
+            var rangeColours = self.model.get("rangeModel").get("scale").range();
+            var cols = rangeColours.slice (1,3);
+            var colourArray = cols.map (function(col) {
+                col = d3.hsl(col);
+                col.s = 0.4;
+                col.l = 0.85;
+                return col.rgb();
+            });
+            /*
+            var colourArray = [withinUnlinked, dubiousUnlinked].map (function (col) {
+                return d3.rgb (col);
+            });
+            */
+
+            // two sets of nested loops, one per style
+            /*
+            ctx.fillStyle = colourArray[0];
 
             for (var i = 1; i < seqLength + 1; i++){
                 var row = distances[i];
-                if (row) {
-                    var ixStep = (i - 1);
-                    for (var j = 1; j < row.length; j++){   // was seqLength     
+
+                if (row){
+                    var ixStep = (i - 1) * xStep;
+                    for (var j = 1; j < row.length; j++){   // was seqLength
                         var distance = row[j];
-                        if (distance && distance < max) {
-                            var col = (distance > min ? colourArray[1] : colourArray[0]);
-                            drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                        if (distance && distance < min) {
+                            ctx.fillRect(ixStep, (seqLength - j) * yStep , xStep, yStep);
                         }
                     }
                 }
             }
-            ctx.putImageData(canvasData, 0, 0);
-        //}
-        
-        
-        var end = performance.now();
-        //CLMSUI.times.push(Math.round(end-start));
-        //console.log ("CLMSUI.times", CLMSUI.times);
-        
-		var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
-        var modelUtils = win.CLMSUI.modelUtils;
-		//for (let crossLink of residueLinks) {
-        for (var crossLink of residueLinks) {
-        //var rlCount = residueLinks.length;
-		//for (var rl = 0; rl < rlCount; rl++) {
-			//var crossLink = residueLinks[rl];
-            var est = modelUtils.getEsterLinkType (crossLink);
-            if (self.filterVal === undefined || est >= self.filterVal) {
-            
-                var fromDistArr = distances[crossLink.fromResidue];
-                var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
-                //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
 
-                if (dist && dist < min){
-                    ctx.fillStyle = self.resLinkColours[0];
-                    sasIn++;
-                }
-                else if (dist && dist < max){
-                    ctx.fillStyle = self.resLinkColours[1];
-                    sasMid++;
-                }
-                else {
-                    ctx.fillStyle = self.resLinkColours[2];
-                    sasOut++;
-                }
-                ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
 
-                var toDistArr = distances[crossLink.toResidue];
-                dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
-                if (dist && dist < min){
-                    ctx.fillStyle = self.resLinkColours[0];
-                    eucIn++;
+            ctx.fillStyle = colourArray[1];
+
+            for (var i = 1; i < seqLength + 1; i++){
+                var row = distances[i];
+                if (row){
+                    var ixStep = (i - 1) * xStep;
+                    for (var j = 1; j < row.length; j++){   // was seqLength     
+                        var distance = row[j];
+                        if (distance && distance > min && distance < max) {    // being anal, but if distance == min, neither this nor the previous loop will draw anything
+                            ctx.fillRect(ixStep, (seqLength - j) * yStep , xStep, yStep);
+                        }
+                    }
                 }
-                else if (dist && dist < max){
-                    ctx.fillStyle = self.resLinkColours[1];
-                    eucMid++;
-                }
-                else {
-                    ctx.fillStyle = self.resLinkColours[2];
-                    eucOut++;
-                }
-                ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
             }
-		}
-    
-		console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
+            */
+
+            // one loop, style is chosen per cell
+            /*
+            for (var i = 1; i < seqLength + 1; i++){
+                var row = distances[i];
+                if (row){
+                    var ixStep = (i - 1) * xStep;
+                    for (var j = 1; j < row.length; j++){   // was seqLength     
+                        var distance = row[j];
+                        if (distance && distance < max) {
+                            ctx.fillStyle = (distance > min ? colourArray[1] : colourArray[0]);
+                            ctx.fillRect (ixStep, (seqLength - j) * yStep , xStep, yStep);
+                        }
+                    }
+                }
+            }
+            */
+
+            //if (sizeData.cx > 0) {
+                var pw = self.canvas.attr("width");
+                var canvasData = ctx.getImageData (0, 0, pw, self.canvas.attr("height"));
+                var cd = canvasData.data;
+
+                for (var i = 1; i < seqLength + 1; i++){
+                    var row = distances[i];
+                    if (row) {
+                        var ixStep = (i - 1);
+                        for (var j = 1; j < row.length; j++){   // was seqLength     
+                            var distance = row[j];
+                            if (distance && distance < max) {
+                                var col = (distance > min ? colourArray[1] : colourArray[0]);
+                                drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                            }
+                        }
+                    }
+                }
+                ctx.putImageData(canvasData, 0, 0);
+            //}
+            /*
+            var clinkCols = rangeColours.slice (1,4);
+            this.resLinkColours = clinkCols.map (function(col) {
+                col = d3.hsl(col);
+                col.s = 1;
+                //col.l = 0.3;
+                return col.rgb();
+            });
+            */
+
+            var end = performance.now();
+            //CLMSUI.times.push(Math.round(end-start));
+            //console.log ("CLMSUI.times", CLMSUI.times);
+
+            var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
+            var modelUtils = global.CLMSUI.modelUtils;
+            //for (let crossLink of residueLinks) {
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 0.5;
+            for (var crossLink of residueLinks) {
+            //var rlCount = residueLinks.length;
+            //for (var rl = 0; rl < rlCount; rl++) {
+                //var crossLink = residueLinks[rl];
+                var est = modelUtils.getEsterLinkType (crossLink);
+                if (self.filterVal === undefined || est >= self.filterVal) {
+
+                    var fromDistArr = distances[crossLink.fromResidue];
+                    var dist = fromDistArr ? fromDistArr[crossLink.toResidue] : undefined;
+                    //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
+
+                    if (dist && dist < min){
+                        ctx.fillStyle = self.resLinkColours[0];
+                        sasIn++;
+                    }
+                    else if (dist && dist < max){
+                        ctx.fillStyle = self.resLinkColours[1];
+                        sasMid++;
+                    }
+                    else {
+                        ctx.fillStyle = self.resLinkColours[2];
+                        sasOut++;
+                    }
+                    ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
+                    
+
+                    var toDistArr = distances[crossLink.toResidue];
+                    dist = toDistArr ? toDistArr[crossLink.fromResidue] : undefined;
+                    if (dist && dist < min){
+                        ctx.fillStyle = self.resLinkColours[0];
+                        eucIn++;
+                    }
+                    else if (dist && dist < max){
+                        ctx.fillStyle = self.resLinkColours[1];
+                        eucMid++;
+                    }
+                    else {
+                        ctx.fillStyle = self.resLinkColours[2];
+                        eucOut++;
+                    }
+                    ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
+                    //ctx.strokeRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
+                }
+            }
+
+            //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
+        }
     },
     
     getSizeData: function () {
@@ -501,7 +517,6 @@
         var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.zoomStatus.translate()[0]+"px,"+ this.zoomStatus.translate()[1]+"px)";
         var transformString = translateString + " " + scaleString;
-        //console.log ("transformString", transformString);
 		this.canvas
 			.style("-ms-transform", transformString)
 			.style("-moz-transform", transformString)
