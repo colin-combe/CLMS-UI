@@ -99,6 +99,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         console.log ("this filterBB filter", evt);   
         var target = evt.target;
         var id = target.id;
+        console.log ("filter set", id, target.checked);
         this.model.set (id, target.checked);
     },
     

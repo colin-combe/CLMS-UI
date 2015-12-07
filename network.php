@@ -45,6 +45,7 @@
         <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
         <link rel="stylesheet" href="./css/minigram.css">
+        <link rel="stylesheet" href="./css/ddMenuViewBB.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -100,6 +101,7 @@
         <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
         <script type="text/javascript" src="./js/matrix.js"></script>   
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>   
+        <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
     </head>
 
@@ -184,11 +186,15 @@
 <!--
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 -->
+                    <!--
 					<p class="btn">Download:</p>
 					<button class="btn btn-1 btn-1a" onclick="downloadLinks();">Links</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadMatches();">Matches</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadResidueCount();">Residues</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadSVG();">Image</button>
+                    -->
+                    <p id="expDropdownPlaceholder"></p>
+                    <p id="viewDropdownPlaceholder"></p>
 					<label class="btn">Legend
 							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
 					<!-- <label class="btn" style="margin-left:20px;padding-left:0px;">Selection
@@ -324,15 +330,19 @@
 
                 
                 var miniDistModelInst = new CLMSUI.modelUtils.MinigramModelBB ();
-                miniDistModelInst.data = function() { return CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches")); };
+                miniDistModelInst.data = function() {
+                    var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
+                    return [matches, []];
+                };
 
                 var miniDistView = new CLMSUI.MinigramViewBB ({
                     el: "#filterPlaceholderSliderHolder",
                     model: miniDistModelInst,
                     myOptions: {
                         maxX: 0,    // let data decide
-                        seriesName: "matches",
-                        xlabel: "Distance",
+                        seriesNames: ["Matches", "Decoys"],
+                        scaleOthersTo: "Matches",
+                        xlabel: "Score",
                         ylabel: "Count",
                         height: 50
                     }
@@ -356,6 +366,18 @@
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow"});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow"});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow"});
+                /*
+                var viewDropDownMenu = new CLMSUI.DropDownMenuViewBB ({
+                    el: "#viewDropdownPlaceholder",
+                    model: CLMSUI.clmsModelInst,
+                    myOptions: {
+                        title: "View",
+                        menu: [
+                            {name: "3d", id: "#nglCbLabel"}
+                        ]
+                    }
+                })
+                */
 				
 				if (HSA_Active){
 						
@@ -383,13 +405,25 @@
 				}		
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					
+                var expDropDownMenu = new CLMSUI.DropDownMenuViewBB ({
+                    el: "#expDropdownPlaceholder",
+                    model: CLMSUI.clmsModelInst,
+                    myOptions: {
+                        title: "Export",
+                        menu: [
+                            {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches}, 
+                            {name: "Residues", func: downloadResidueCount}, {name: "SVG", func: downloadSVG}
+                        ]
+                    }
+                })
                 /*
 				CLMSUI.filterFunc = function () {
                     //xlv.checkLinks(); // needs fixed.
                     distoViewer.render ();
                 }
                 */
-                
+                //filteredModel.set("matches") = rawModel.get("matches").filter(function(match) { return CLMSUI.filterModelInst.filter (match); });
+                // then bung crosslinks on top either with own filter or build from matches ^^^
                 /*
                 
 				//register callbacks

@@ -149,4 +149,8 @@ CLMSUI.utils = {
          }
      }),
     
+    dataAggregator: function () {
+        
+    },
+    
 };
