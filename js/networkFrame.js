@@ -92,11 +92,9 @@ if (selectionPanel.isShown() == false) {
 }
 */
 
-
+/*
 var kChkBx = document.getElementById('keyChkBx');
 kChkBx.checked = false;
-var hChkBx = document.getElementById('helpChkBx');
-hChkBx.checked = false;
 var showKeyPanel = function (show) {
 	var kp = d3.select('#keyPanel');
 	if (show) {
@@ -106,6 +104,11 @@ var showKeyPanel = function (show) {
 	}
 	kChkBx.checked = show;
 }
+*/
+
+/*
+var hChkBx = document.getElementById('helpChkBx');
+hChkBx.checked = false;
 var showHelpPanel = function (show) {
 	var hp = d3.select('#helpPanel');
 	if (show) {
@@ -115,6 +118,8 @@ var showHelpPanel = function (show) {
 	}
 	hChkBx.checked = show;
 }
+*/
+
 var showSpectrumPanel = function (show) {
 	var sp = d3.select('#spectrumPanel');
 	if (show) {
@@ -273,7 +278,7 @@ function onDistanceSliderChange(scale){
 }
 
 function onDistanceSliderChange3D(scale){
-	showKeyPanel(false);
+	//showKeyPanel(false);
 	var domain = scale.domain();
 	var lowerLimit = domain[1];
 	var upperLimit = domain[2];

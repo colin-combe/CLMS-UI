@@ -141,7 +141,6 @@
         },
 
         setVisible: function (show) {
-            console.log("event display in distogram", show);
             d3.select(this.el).style('display', show ? 'block' : 'none');
 
             if (show) {

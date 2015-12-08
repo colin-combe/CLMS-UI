@@ -52,22 +52,31 @@ CLMSUI.utils = {
         },
     
         initialize: function (viewOptions) {
-             var self = this;
-            this.eventName = viewOptions.eventName;
+            var self = this;
+            var defaultOptions = {
+                labelFirst: true
+            };   
+            this.options = _.extend(defaultOptions, viewOptions.myOptions);
                 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
             var myid = "#" + sel.attr("id");
-            sel.append("label")
+            var labs = sel.append("label")
                 .attr("class", "btn")
                 .style("padding-left", "0px")
-                .text (viewOptions.label)
-                .append ("input")
-                    .attr ("id", myid+"ChkBx")
-                    .attr("type", "checkbox")
             ;
+            if (this.options.labelFirst) {
+                labs.append("span").text(this.options.label);
+            }
+            labs.append ("input")
+                .attr ("id", myid+"ChkBx")
+                .attr("type", "checkbox")
+            ;
+            if (!this.options.labelFirst) {
+                labs.append("span").text(this.options.label);
+            }
             
-            this.listenTo (CLMSUI.vent, this.eventName, this.showState);
+            this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
         },
         
         showState : function (boolVal) {
@@ -75,15 +84,14 @@ CLMSUI.utils = {
         },
         
         checkboxClicked: function () {
-            CLMSUI.vent.trigger (this.eventName, d3.select(this.el).select("input").property("checked"));
+            CLMSUI.vent.trigger (this.options.eventName, d3.select(this.el).select("input").property("checked"));
         }
     }),
     
     addCheckboxBackboneView : function (parentSel, options) {                        
         var cboxViewInst = new CLMSUI.utils.checkBoxView ({
             el: "#"+parentSel.attr("id"),
-            label: options.label,
-            eventName: options.eventName
+            myOptions: options,
         });        
     },
     
@@ -149,8 +157,93 @@ CLMSUI.utils = {
          }
      }),
     
-    dataAggregator: function () {
+    BaseFrameView: Backbone.View.extend ({
         
-    },
-    
+        events: {
+            // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
+            // and dragend not supported by zepto, fallback to d3 instead (see later)
+            // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
+            "click .downloadButton": "downloadSVG",
+            "click .closeButton": "hideView"
+        },
+        
+        initialize: function (viewOptions) {
+            
+            this.displayEventName = viewOptions.displayEventName;
+
+            var self = this;
+
+            // this.el is the dom element this should be getting added to, replaces targetDiv
+            var mainDivSel = d3.select(this.el);
+
+            // Set up some html scaffolding in d3
+            CLMSUI.utils.addDynDivScaffolding (mainDivSel);
+
+            // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
+            var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });
+            mainDivSel.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
+                .call (drag)
+            ;
+            
+            if (this.displayEventName) {
+                this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
+            }
+            
+            return this;
+        },
+        
+        render: function () {
+            return this;
+        },
+        
+        relayout: function () {
+            return this;
+        },
+        
+        downloadSVG: function () {
+            var svgString = global.CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
+            download(svgString, 'application/svg', 'distogram.svg');
+        },
+        
+        hideView: function () {
+            CLMSUI.vent.trigger (this.displayEventName, false);
+        },
+
+        setVisible: function (show) {
+            d3.select(this.el).style('display', show ? 'block' : 'none');
+
+            if (show) {
+                this
+                    .relayout() // need to resize first sometimes so render gets correct width/height coords
+                    .render()
+                ;
+            }
+        },
+        
+        // removes view
+        // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
+        remove: function () {
+            // remove drag listener
+            d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null); 
+
+            // this line destroys the containing backbone view and it's events
+            Backbone.View.prototype.remove.call(this);
+        }
+    }),
 };
+
+CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
+    initialize: function (viewOptions) {
+        CLMSUI.utils.KeyViewBB.__super__.initialize.apply (this, arguments);
+        
+        var mainDivSel = d3.select(this.el);
+        var chartDiv = mainDivSel.append("div")
+            .attr("class", "panelInner")
+        ;
+        
+        chartDiv.html ("<div id='key'><img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'></div>");
+        
+        this.render();
+        return this;
+    }
+});

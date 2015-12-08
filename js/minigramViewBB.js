@@ -34,8 +34,6 @@
                 .attr("id", this.el.id+"c3Chart")
                 .attr("class", "c3minigram")
             ;
-            
-            console.log ("mainDivSel", mainDivSel, chartDiv, this.el, this.el.id);
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
