@@ -70,11 +70,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
 		// onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
  
-        if (self.model.get("scores") === null){
-            sliderSection.style('display', 'none');
-        } else {
-            sliderSection.style('display', 'inline-block');
-        }
+        sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : 'inline-block');
         
         this.displayEventName = viewOptions.displayEventName;
 
