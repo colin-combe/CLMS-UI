@@ -200,17 +200,19 @@
                 seriesLengths[1] = this.randArrLength;
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
 
-                // add names to front of arrays as c3 demands
-                countArrays.forEach (function (countArray,i) { countArray.unshift (this.options.seriesNames[i]); }, this);
-
                 var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
                 //var maxY = d3.max(countArrays, function(array) {
                 //    return d3.max(array);
                 //});
+                
+                // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
+                countArrays.forEach (function (countArray,i) { countArray.unshift (this.options.seriesNames[i]); }, this);
+                
                 //console.log ("thresholds", thresholds);
-                var curMaxY = this.chart.axis.max();
-                if (curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                var curMaxY = this.chart.axis.max().y;
+                if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                    console.log ("resetting axis max");
                     this.chart.axis.max({y: maxY});
                 }
                 this.chart.load({

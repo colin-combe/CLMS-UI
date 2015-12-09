@@ -131,16 +131,17 @@
             var seriesLengths = dataSeries.map (function(s) { return s.length; });
             var countArrays = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
 
-            // add names to front of arrays as c3 demands
-            countArrays.forEach (function (countArray,i) { countArray.unshift (self.options.seriesNames[i]); });
-
             var maxY = d3.max(countArrays[0]);  // max calced on real data only
             // if max y needs to be calculated across all series
             //var maxY = d3.max(countArrays, function(array) {
             //    return d3.max(array);
             //});
-            var curMaxY = this.chart.axis.max();
-            if (curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+            
+            // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
+            countArrays.forEach (function (countArray,i) { countArray.unshift (self.options.seriesNames[i]); });
+
+            var curMaxY = this.chart.axis.max().y;
+            if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
                 this.chart.axis.max ({y: maxY});
             }
             this.chart.load({
