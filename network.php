@@ -24,13 +24,13 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-        
+
         <meta http-equiv="cache-control" content="max-age=0" />
         <meta http-equiv="cache-control" content="no-cache" />
         <meta http-equiv="expires" content="0" />
         <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
         <meta http-equiv="pragma" content="no-cache" />
-        
+
 		<meta name="description" content="common platform for downstream analysis of CLMS data" />
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,7 +40,7 @@
 		<link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
 		<link rel="stylesheet" href="./css/style.css" />
 		<link rel="stylesheet" href="./css/xiNET.css">
-        
+
         <link rel="stylesheet" href="./css/matrix.css">
         <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
@@ -52,10 +52,10 @@
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
-		
+
 		<script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
 		<script type="text/javascript" src="./vendor/crosslink.js"></script>
-		
+
 		<!-- <script type="text/javascript" src="./vendor/DistanceSlider.js"></script> -->
 
 		<script type="text/javascript" src="./vendor/spectrum.js"></script>
@@ -65,30 +65,30 @@
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
-	      
-        
+
+
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
-        
-       	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
-		<!--
-        CLMS-model dev 
-        <script type="text/javascript" src="../CLMS-model/src/controller/Init.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/model/Match.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/model/Protein.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/model/Annotation.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/model/ProteinLink.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/model/CrossLink.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/controller/xiNET_Storage.js"></script>-->
-                
+
+       	<!--<script type="text/javascript" src="./vendor/CLMS_model.js"></script>-->
+
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/util/Init.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/ModelBB.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Match.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Annotation.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/ProteinLink.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
+
        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 
 	<!-- 	<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>-->
 
-    
+
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
@@ -114,28 +114,24 @@
 
 				<div style="height:40px;">
 					<label  class="btn">loss labels
-						<input id="lossyChkBx" 
-							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)" 
+						<input id="lossyChkBx"
+							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)"
 						type="checkbox">
 					</label>
 					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
 					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>		
 				</div>
-				
+	
 				<div class="panelInner">
-					<div id='spectrumDiv'></div>
-				</div> 
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>
+					<div  id='spectrumDiv'></div>
+				</div>
 			</div>
-			
+		
             <div class="dynDiv" id="keyPanel"></div>
             <div class="dynDiv" id="nglPanel"></div>
             <div class="dynDiv" id="distoPanel"></div>
             <div class="dynDiv" id="matrixPanel"></div>
-			
+
 <!--
 		</div>
 -->
@@ -179,7 +175,7 @@
 
 			<div class="controls">
                     <span id="filterPlaceholder"></span>
-                
+
 					<div style='float:right'>
 
 						<label style="margin-left:20px;">Annotations:
@@ -190,7 +186,7 @@
 								<option>SuperFamily</option>
 								<option>Lysines</option>
 							</select>
-						</label>						
+						</label>
 <!--
 						<label style="margin-left:20px;">Link colours:
 -->
@@ -207,44 +203,37 @@
 			</div>
 
 		</div><!-- MAIN -->
-        
 
-        <script>	
+
+        <script>
 		//<![CDATA[
-			
+
 			"use strict";
-			
+
             var CLMSUI = CLMSUI || {};
-            
+
             // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
             CLMSUI.vent = {};
             _.extend (CLMSUI.vent, Backbone.Events);
-            
-			            
-            
-			//showSelectionPanel(false);	
+
 			// for NGL
-			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";  
+			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
 			var stage;
-			// for xiNET
-			var tempModelMaker;
-            
+			
             var targetDiv = document.getElementById('topDiv');
-				
-            tempModelMaker = new xiNET.Controller(targetDiv);
+
+            //tempModelMaker = new xiNET.Controller(targetDiv);
             <?php
                 include './php/loadData.php';
                 if (file_exists('../annotations.php')){
-                    // include '../annotations.php';
+                    //include '../annotations.php';
                 }
             ?>
-			CLMSUI.xlv = tempModelMaker;
-            //~ CLMSUI.clmsModel = Backbone.Model.extend();
-            CLMSUI.clmsModelInst = new window.CLMS.DataModelBB ({ 
-                    interactors: tempModelMaker.proteins, //map
-                    proteinLinks: tempModelMaker.proteinLinks, //map
-                    crossLinks: tempModelMaker.crossLinks, //map
-                    matches: tempModelMaker.matches //array
+
+            CLMSUI.clmsModelInst = new window.CLMS.DataModelBB (tempInteractors, tempMatches);
+
+            CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({
+                scores: CLMSUI.clmsModelInst.get("scores")
             });
 
             CLMSUI.distancesModel = Backbone.Model.extend({
@@ -255,39 +244,36 @@
             CLMSUI.distancesInst = new CLMSUI.distancesModel ({
                 distances: distances
             });
-            
-            CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({
-                scores: tempModelMaker.scores
-            });
-            
-            console.log ("CLMSUI", CLMSUI, "xinet", tempModelMaker);
+
 
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
-            
+
                 // Showing multiple searches at once
 				var s = d3.map(CLMSUI.searchesShown);
 				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
 				document.title = title;
-				
+
 				if (s.keys().length > 1) {
 					//showKeyPanel(true);
 					document.getElementById('save').setAttribute('style','display:none;');
 				}
-                
-                
+
+
                 var filterViewGroup = new CLMSUI.FilterViewBB ({
-                    el: "#filterPlaceholder", 
+                    el: "#filterPlaceholder",
                     model: CLMSUI.filterModelInst
                 });
-                
 
-                
+
+
                 var miniDistModelInst = new CLMSUI.modelUtils.MinigramModelBB ();
                 miniDistModelInst.data = function() {
                     var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
                     return [matches, []];
                 };
+                var clmsMatches = CLMSUI.clmsModelInst.get("matches");
+                console.log("*>" + clmsMatches.length);
 
                 var miniDistView = new CLMSUI.MinigramViewBB ({
                     el: "#filterPlaceholderSliderHolder",
@@ -301,13 +287,13 @@
                         height: 50
                     }
                 });
-                
-                
+
+
                 // When the range changes on the mini histogram model pass the values onto the filter model
                 CLMSUI.filterModelInst.listenTo (miniDistModelInst, "change", function (model) {
-                    this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
+                    this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
                 }, this);
-                
+
                 // If the ClmsModel matches attribute changes then tell the mini histogram view
                 miniDistView
                     .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
@@ -337,17 +323,17 @@
                     }
                 })
                 
-				
+
 				if (HSA_Active){
-						
+
 					/*Distance slider */
 					var distSliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
 					var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
 					distSlider.brushMoved.add(onDistanceSliderChange); //add listener
                     distSlider.brushmove();
-                    
+                    //CLMSUI.rangeModelInst.set ("scale", scale);
                     //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
-					//distoViewer.setData(xlv.distances,xlv);				
+					//distoViewer.setData(xlv.distances,xlv);
 				}
 				else {
                     document.getElementById('viewDropdownPlaceholder').setAttribute('style','display:none;');
@@ -383,7 +369,7 @@
                 //filteredModel.set("matches") = rawModel.get("matches").filter(function(match) { return CLMSUI.filterModelInst.filter (match); });
                 // then bung crosslinks on top either with own filter or build from matches ^^^
                 /*
-                
+
 				//register callbacks
 				xlv.linkSelectionCallbacks.push(selectionPanel.updateTable);
 
@@ -400,11 +386,11 @@
 								table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
 										+ temp.toRGB() + ";'></div></td><td>"
 										+ xlv.searchesShown[domain[i]] +"</td></tr>";
-							}	
+							}
 							table += "<tr><td style='padding:5px;width:70px;'><div style='width:60px;height:3px;background:"
 										+ "#000;" + ";'></div></td><td>"
 										+ "Not unique" +"</td></tr>";
-							
+
 						}
 						if (domainColours) {
 							domain = domainColours.domain();
@@ -443,22 +429,22 @@
 					else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
 					else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
 					else return false;
-				};	
+				};
 				xlv.checkLinks();
 				xlv.initLayout();
-				xlv.initProteins();				
+				xlv.initProteins();
 				changeAnnotations();
 				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
 				xlv.ambigShown = document.getElementById('ambig').checked;
 				initSlider();
 				*/
 				window.onresize();
-				
+
 			});
-			
-		//]]>			
+
+		//]]>
 		</script>
-    
+
         <script type="text/javascript" src="./js/SelectionPanel.js"></script>
 		<script type="text/javascript" src="./js/networkFrame.js"></script>
 		<script type="text/javascript" src="./js/downloads.js"></script>

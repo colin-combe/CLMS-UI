@@ -97,28 +97,28 @@
 				.then( function(
 				structureComp ){
 
-					var linkList = [];
-					
-					for(var crossLink of self.model.get("clmsModel").get("crossLinks").values()){
-
-						linkList.push( {
-							fromResidue: crossLink.fromResidue,
-							toResidue: crossLink.toResidue
-						} );
-
-					}
-					
-					linkList = transformLinkList( linkList, "A" );
-					
-					var crosslinkData = new CrosslinkData( linkList );
-
-					var xlRepr = new CrosslinkRepresentation(
-						self.stage, structureComp, crosslinkData, {
-							highlightedColor: "lightgreen",
-							sstrucColor: "wheat",
-							displayedDistanceColor: "tomato"
-						}
-					);
+					//~ var linkList = [];
+					//~ 
+					//~ for(var crossLink of self.model.get("clmsModel").get("crossLinks").values()){
+//~ 
+						//~ linkList.push( {
+							//~ fromResidue: crossLink.fromResidue,
+							//~ toResidue: crossLink.toResidue
+						//~ } );
+//~ 
+					//~ }
+					//~ 
+					//~ linkList = transformLinkList( linkList, "A" );
+					//~ 
+					//~ var crosslinkData = new CrosslinkData( linkList );
+//~ 
+					//~ var xlRepr = new CrosslinkRepresentation(
+						//~ self.stage, structureComp, crosslinkData, {
+							//~ highlightedColor: "lightgreen",
+							//~ sstrucColor: "wheat",
+							//~ displayedDistanceColor: "tomato"
+						//~ }
+					//~ );
 				});
 				
 			}        

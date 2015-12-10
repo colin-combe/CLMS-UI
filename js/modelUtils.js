@@ -49,7 +49,7 @@ CLMSUI.modelUtils = {
     },
     
     flattenMatches: function (matchesArr) {
-        return matchesArr.map (function(m) { return m.score; });    
+		 return matchesArr.map (function(m) { return m.score; });    
     },
     
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html

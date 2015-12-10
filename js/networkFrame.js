@@ -104,14 +104,19 @@ var showSpectrumPanel = function (show) {
 CLMSUI.rangeModelInst = new CLMSUI.modelUtils.RangeModel ({ scale: d3.scale.linear() });
 CLMSUI.tooltipModelInst = new CLMSUI.TooltipModelBB ();
 
+
 var compositeModel = new Backbone.Model ({
     distancesModel: CLMSUI.distancesInst,
     clmsModel: CLMSUI.clmsModelInst,
     rangeModel: CLMSUI.rangeModelInst,
     filterModel: CLMSUI.filterModelInst,
-    tooltipModel: CLMSUI.tooltipModelInst
-});
+    tooltipModel: CLMSUI.tooltipModelInst,
+        
+}
 
+);
+
+compositeModel.listenTo(CLMSUI.filterModelInst, "change", compositeModel.get("applyFilter"));
 
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
 
@@ -123,8 +128,7 @@ var tooltipView = new window.CLMSUI.TooltipViewBB ({
 
 var crosslinkViewer = new window.CLMS.CrosslinkViewerBB ({
     el: "#topDiv", 
-    model: compositeModel,
-    displayEventName: "crosslinkViewerShow"
+    model: compositeModel
 });
 
 var distoViewer = new window.CLMSUI.DistogramBB ({
