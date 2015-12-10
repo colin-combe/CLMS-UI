@@ -34,8 +34,6 @@
                 .attr("id", this.el.id+"c3Chart")
                 .attr("class", "c3minigram")
             ;
-            
-            console.log ("mainDivSel", mainDivSel, chartDiv, this.el, this.el.id);
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
@@ -45,7 +43,6 @@
                 data: {
                     //x: 'x',
                     columns: [
-                        //['x'],
                         [this.options.seriesName],
                     ],
                     type: 'bar',
@@ -120,8 +117,6 @@
                 .attr ("transform", function(d) { return "translate(0,0) scale("+(2*flip[d])+",2)"; })
                 .attr ("d", "M 0 0 V 10 L 5 5 Z")
             ;   
-  
-            this.recalcRandomBinning();
             
             this.render();
             
@@ -129,80 +124,60 @@
         },
 
         render: function () {
-                   
-            var valArr = this.model.data();
-
-            var extent = d3.extent(valArr);
-            //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
-            if (thresholds.length === 0) {
-                thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
-            }
-
-            var self = this;
-            var seriesArr = [
-                {data: valArr, name: this.options.seriesName, scale: 1.0},
-                {data: [1] /*should be precalced*/, name: "Random", scale: valArr.length / (this.randArrLength || valArr.length)}
-            ];
-
-            var countArrays = seriesArr.map (function (series) {
-
-                var binnedData = self.precalcedDistributions[series.name]
-                    ? self.precalcedDistributions[series.name]
-                    : d3.layout.histogram().bins(thresholds)(series.data)
-                ;
-
-                var countData = binnedData.map(function (nestedArr) {
-                    return nestedArr.y * series.scale;
-                });
-
-                return countData;
-            });
-
+            var self = this;       
+            var dataSeries = this.model.data();
+            
+            // aggregate data into bar chart friendly form
+            var seriesLengths = dataSeries.map (function(s) { return s.length; });
+            var countArrays = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
 
             var maxY = d3.max(countArrays[0]);  // max calced on real data only
             // if max y needs to be calculated across all series
             //var maxY = d3.max(countArrays, function(array) {
             //    return d3.max(array);
             //});
+            
+            // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
+            countArrays.forEach (function (countArray,i) { countArray.unshift (self.options.seriesNames[i]); });
 
-            // add names to front of arrays as c3 demands
-
-            countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); });
-
-
-            // if this is an unfiltered data set, set the max Y axis value (don't want it to shrink when filtering starts)
-            var maxAxes = {};
-                //console.log ("maxy", maxY);
-            //if (+xlv.cutOff <= xlv.scores.min) {
-                maxAxes.y = maxY;
-            //}
-
-            //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
-
-            //console.log ("thresholds", thresholds);
-            //console.log ("maxAxes", maxAxes);
-            this.chart.axis.max(maxAxes);
+            var curMaxY = this.chart.axis.max().y;
+            if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                this.chart.axis.max ({y: maxY});
+            }
             this.chart.load({
                 columns: countArrays
             });
 
             //console.log ("data", distArr, binnedData);
-
             return this;
         },
+        
+        aggregate: function (series, seriesLengths, precalcedDistributions) {
+            // get extents of all arrays, concatenate them, then get extent of that array
+            var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
+            //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
+            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
+            if (thresholds.length === 0) {
+                thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
+            }
+            
+            var sIndex = this.options.seriesNames.indexOf (this.options.scaleOthersTo);
+            var targetLength = sIndex >= 0 ? seriesLengths[sIndex] : 1; 
 
-        recalcRandomBinning: function () {
-            console.log ("precalcing random bins for minigram view");
-            var randArr = [2,3,4];
-            var thresholds = d3.range(0, this.options.maxX);
-            var binnedData = d3.layout.histogram()
-                .bins(thresholds)
-                (randArr)
-            ;
-            this.randArrLength = randArr.length;
-            this.precalcedDistributions = this.precalcedDistributions || {};
-            this.precalcedDistributions["Random"] = binnedData;
+            var countArrays = series.map (function (aseries, i) {
+                var aseriesName = this.options.seriesNames[i];
+                var binnedData = precalcedDistributions[aseriesName]
+                    ? precalcedDistributions[aseriesName]
+                    : d3.layout.histogram().bins(thresholds)(aseries)
+                ;
+
+                var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
+                return binnedData.map (function (nestedArr) {
+                    return nestedArr.y * scale;
+                });
+            }, this);
+
+            return countArrays;
         },
 
         relayout: function () {

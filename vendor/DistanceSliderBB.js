@@ -11,16 +11,12 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.DistanceSliderBB = Backbone.View.extend ({
-    tagName: "div",
     events: {},
     initialize: function () {
         this.brushMoved = new signals.Signal();
 
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
-             
-        //avoids prob with 'save - web page complete'
-        d3.select(this.el).selectAll("*").remove();
         this.cx = this.el.clientWidth;
         this.cy = this.el.clientHeight;
 
@@ -34,7 +30,9 @@ CLMSUI.DistanceSliderBB = Backbone.View.extend ({
 
         this.y = d3.scale.linear()
             .domain([35, 0])
-            .range([0, this.height]);
+            .range([0, this.height])
+        ;
+        
         
         var self = this;
 

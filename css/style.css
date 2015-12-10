@@ -627,3 +627,13 @@ label.horizontalFlow {
     margin-left: 0.2em;
 }
 
+A.btn {
+    text-decoration: none;
+}
+
+.righty {
+    float: right;
+    vertical-align: middle;
+    line-height: 20px;
+}
+

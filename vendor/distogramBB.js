@@ -22,7 +22,8 @@
             var defaultOptions = {
                 xlabel: "Distance",
                 ylabel: "Count",
-                seriesName: "Cross Links",
+                seriesNames: ["Cross Links", "Random"],
+                scaleOthersTo: "Cross Links",
                 chartTitle: "Distogram",
                 maxX: 80
             };
@@ -68,8 +69,7 @@
                 data: {
                     //x: 'x',
                     columns: [
-                        //['x'],
-                        [this.options.seriesName],
+                        this.options.seriesNames,
                     ],
                     type: 'bar',
                     colors: {
@@ -119,7 +119,7 @@
                     }
                 },
                 legend: {
-                    //hide: [this.options.seriesName]
+                    //hide: this.options.seriesNames
                 },
                 padding: {
                     left: 40, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
@@ -188,7 +188,6 @@
 
                 var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
                 var pp1 = allProtProtLinks.next().value;
-                //console.log ("all", pp1);
                 var allCrossLinks = pp1.crossLinks.values();
                 var distances = this.model.get("distancesModel").get("distances");
 
@@ -196,52 +195,24 @@
                 var distArr = global.CLMSUI.modelUtils.flattenCrossLinkMatrix (allCrossLinks, distances);
                 //console.log ("distArr", distArr);
 
-                //var randArr = CLMSUI.modelUtils.generateRandomDistribution (1, distances);
-                //var randArr = this.model.get("distancesModel").get("flattenedDistances");
-                //console.log ("random", randArr);
-
-                var extent = d3.extent(distArr);
-                //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-                var thresholds = d3.range(Math.min(0, Math.floor(extent[0])), this.options.maxX);
-                if (thresholds.length === 0) {
-                    thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
-                }
-
-                var self = this;
-                var seriesArr = [
-                    {data: distArr, name: this.options.seriesName, scale: 1.0},
-                    {data: [1] /*should be precalced*/, name: "Random", scale: distArr.length / (this.randArrLength || distArr.length)}
-                ];
-
-                var countArrays = seriesArr.map (function (series) {
-
-                    var binnedData = self.precalcedDistributions[series.name]
-                        ? self.precalcedDistributions[series.name]
-                        : d3.layout.histogram().bins(thresholds)(series.data)
-                    ;
-
-                    var countData = binnedData.map(function (nestedArr) {
-                        return nestedArr.y * series.scale;
-                    });
-
-                    return countData;
-                });
-
+                var series = [distArr, []];
+                var seriesLengths = series.map (function(s) { return s.length; });
+                seriesLengths[1] = this.randArrLength;
+                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
 
                 var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
                 //var maxY = d3.max(countArrays, function(array) {
                 //    return d3.max(array);
                 //});
-
-                // add names to front of arrays as c3 demands
-                countArrays.forEach (function (countArray,i) { countArray.unshift (seriesArr[i].name); });
-
-                //var xNames = thresholds.slice(0, thresholds.length - 1).unshift("x");
-
+                
+                // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
+                countArrays.forEach (function (countArray,i) { countArray.unshift (this.options.seriesNames[i]); }, this);
+                
                 //console.log ("thresholds", thresholds);
-                var curMaxY = this.chart.axis.max();
-                if (curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                var curMaxY = this.chart.axis.max().y;
+                if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                    console.log ("resetting axis max");
                     this.chart.axis.max({y: maxY});
                 }
                 this.chart.load({
@@ -252,6 +223,34 @@
             }
 
             return this;
+        },
+        
+        aggregate: function (series, seriesLengths, precalcedDistributions) {
+            // get extents of all arrays, concatenate them, then get extent of that array
+            var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
+            //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
+            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
+            if (thresholds.length === 0) {
+                thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
+            }
+            
+            var sIndex = this.options.seriesNames.indexOf (this.options.scaleOthersTo);
+            var targetLength = sIndex >= 0 ? seriesLengths[sIndex] : 1; 
+
+            var countArrays = series.map (function (aseries, i) {
+                var aseriesName = this.options.seriesNames[i];
+                var binnedData = precalcedDistributions[aseriesName]
+                    ? precalcedDistributions[aseriesName]
+                    : d3.layout.histogram().bins(thresholds)(aseries)
+                ;
+
+                var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
+                return binnedData.map (function (nestedArr) {
+                    return nestedArr.y * scale;
+                });
+            }, this);
+
+            return countArrays;
         },
 
         recalcRandomBinning: function () {

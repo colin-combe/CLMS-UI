@@ -45,6 +45,7 @@
         <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
         <link rel="stylesheet" href="./css/minigram.css">
+        <link rel="stylesheet" href="./css/ddMenuViewBB.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -100,6 +101,7 @@
         <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
         <script type="text/javascript" src="./js/matrix.js"></script>   
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>   
+        <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
     </head>
 
@@ -107,32 +109,6 @@
 <!--
 		<div class="dynDiv_setLimit">
 -->
-
-			<div class="dynDiv" id="keyPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showKeyPanel(false);"></i></div>
-				<div class="panelInner">
-					<div id="key"><img id="defaultLinkKey" src="./images/fig3_1.svg"><br><img id="logo" src="./images/logos/rappsilber-lab-small.png"></div>
-				</div>					
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>
-			</div>
-
-			<div class="dynDiv helpPanel" id="helpPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showHelpPanel(false);"></i></div>
-				<div class="panelInner">
-					<?php include "./php/help.php" ?>
-				</div>
-				<div class="dynDiv_resizeDiv_tl"></div>
-				<div class="dynDiv_resizeDiv_tr"></div>
-				<div class="dynDiv_resizeDiv_bl"></div>
-				<div class="dynDiv_resizeDiv_br"></div>
-			</div>
-
-			<div class="dynDiv" id="nglPanel">
-			</div>			
-			
 			<div class="dynDiv" id="spectrumPanel">
 				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);selectionPanel.clearTableHighlights();"></i></div>
 
@@ -143,13 +119,11 @@
 						type="checkbox">
 					</label>
 					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>
-					
+					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>		
 				</div>
-
 				
 				<div class="panelInner">
-					<div  id='spectrumDiv'></div>
+					<div id='spectrumDiv'></div>
 				</div> 
 				<div class="dynDiv_resizeDiv_tl"></div>
 				<div class="dynDiv_resizeDiv_tr"></div>
@@ -157,13 +131,10 @@
 				<div class="dynDiv_resizeDiv_br"></div>
 			</div>
 			
-        
-            <div class="dynDiv" id="distoPanel">
-			</div>	
-        
-            <div class="dynDiv" id="matrixPanel">
-            </div>
-
+            <div class="dynDiv" id="keyPanel"></div>
+            <div class="dynDiv" id="nglPanel"></div>
+            <div class="dynDiv" id="distoPanel"></div>
+            <div class="dynDiv" id="matrixPanel"></div>
 			
 <!--
 		</div>
@@ -178,27 +149,22 @@
 <!--
 					http://pterkildsen.com/2014/07/13/styling-a-group-of-checkboxes-as-a-dropdown-via-css-and-javascript/
 -->
-
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
 <!--
 					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
 -->
-					<p class="btn">Download:</p>
-					<button class="btn btn-1 btn-1a" onclick="downloadLinks();">Links</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadMatches();">Matches</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadResidueCount();">Residues</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadSVG();">Image</button>
-					<label class="btn">Legend
-							<input id="keyChkBx" onclick="showKeyPanel(this.checked);" type="checkbox"></label>
+                    <p id="expDropdownPlaceholder"></p>
+                    <p id="viewDropdownPlaceholder"></p>
+                    
 					<!-- <label class="btn" style="margin-left:20px;padding-left:0px;">Selection
 							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label> -->
+                    <span id="keyChkBxPlaceholder"></span>
 					<span id="nglChkBxPlaceholder"></span>
                     <span id="distoChkBxPlaceholder"></span>
                     <span id="matrixChkBxPlaceholder"></span>
-					<label class="btn" style="padding-left:0px;">Help
-							<input id="helpChkBx" onclick="showHelpPanel(this.checked)" type="checkbox"></label>
                     
+                    <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
 				</h1>
    	 		</div>
 
@@ -286,14 +252,9 @@
                     return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
                 }
             });
-            CLMSUI.distancesInst = new CLMSUI.distancesModel ({});
-            /*
-            CLMSUI.distancesInst.listenTo (CLMSUI.distancesInst, "change:distances", function (model, newDistances) {
-                console.log ("model calling own flattenedDistances set method");
-                model.set ("flattenedDistances", CLMSUI.modelUtils.flattenDistanceMatrix (newDistances));
+            CLMSUI.distancesInst = new CLMSUI.distancesModel ({
+                distances: distances
             });
-            */
-            CLMSUI.distancesInst.set("distances", distances);
             
             CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({
                 scores: tempModelMaker.scores
@@ -303,7 +264,6 @@
 
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
-				
             
                 // Showing multiple searches at once
 				var s = d3.map(CLMSUI.searchesShown);
@@ -311,7 +271,7 @@
 				document.title = title;
 				
 				if (s.keys().length > 1) {
-					showKeyPanel(true);
+					//showKeyPanel(true);
 					document.getElementById('save').setAttribute('style','display:none;');
 				}
                 
@@ -324,15 +284,19 @@
 
                 
                 var miniDistModelInst = new CLMSUI.modelUtils.MinigramModelBB ();
-                miniDistModelInst.data = function() { return CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches")); };
+                miniDistModelInst.data = function() {
+                    var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
+                    return [matches, []];
+                };
 
                 var miniDistView = new CLMSUI.MinigramViewBB ({
                     el: "#filterPlaceholderSliderHolder",
                     model: miniDistModelInst,
                     myOptions: {
                         maxX: 0,    // let data decide
-                        seriesName: "matches",
-                        xlabel: "Distance",
+                        seriesNames: ["Matches", "Decoys"],
+                        scaleOthersTo: "Matches",
+                        xlabel: "Score",
                         ylabel: "Count",
                         height: 50
                     }
@@ -352,44 +316,72 @@
                 ;       
             
                 
-                // Generate distogram checkbox view here
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow"});
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow"});
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow"});
+                // Generate checkboxes
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow", labelFirst: false});
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow", labelFirst: false});
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow", labelFirst: false});
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#keyChkBxPlaceholder"), {label:"Legend", eventName:"keyShow", labelFirst: false});
+                
+                // Add them to a drop-down menu (this rips them away from where they currently are)
+                new CLMSUI.DropDownMenuViewBB ({
+                    el: "#viewDropdownPlaceholder",
+                    model: CLMSUI.clmsModelInst,
+                    myOptions: {
+                        title: "View",
+                        menu: [
+                            {id: "nglChkBxPlaceholder"},
+                            {id: "distoChkBxPlaceholder"},
+                            {id: "matrixChkBxPlaceholder"},
+                            {id: "keyChkBxPlaceholder"},
+                        ]
+                    }
+                })
+                
 				
 				if (HSA_Active){
 						
 					/*Distance slider */
 					var distSliderDiv = d3.select(targetDiv).append("div").attr("id","sliderDiv");
-      
 					var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
 					distSlider.brushMoved.add(onDistanceSliderChange); //add listener
                     distSlider.brushmove();
-
-					//distSlider.brushMoved.add(onDistanceSliderChange3D); //add listener
-					//var scale = d3.scale.threshold()
-					//	.domain([0, 15, 25])
-					//	.range(distSlider.colourRange.slice(0));   // nasty access of view data, but only have to do it until xlv is backboned. Edit: Actually can ignore now.
-					//onDistanceSliderChange(scale);
-                    //CLMSUI.rangeModelInst.set ("scale", scale);
                     
                     //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
 					//distoViewer.setData(xlv.distances,xlv);				
 				}
 				else {
-					document.getElementById('nglCbLabel').setAttribute('style','display:none;');
-					document.getElementById('distoChkBxPlaceholder').setAttribute('style','display:none;');
-                    document.getElementById('matrixChkBxPlaceholder').setAttribute('style','display:none;');
+                    document.getElementById('viewDropdownPlaceholder').setAttribute('style','display:none;');
+					//document.getElementById('nglCbLabel').setAttribute('style','display:none;');
+					//document.getElementById('distoChkBxPlaceholder').setAttribute('style','display:none;');
+                    //document.getElementById('matrixChkBxPlaceholder').setAttribute('style','display:none;');
 				}		
 				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
 					
+                new CLMSUI.DropDownMenuViewBB ({
+                    el: "#expDropdownPlaceholder",
+                    model: CLMSUI.clmsModelInst,
+                    myOptions: {
+                        title: "Export",
+                        menu: [
+                            {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches}, 
+                            {name: "Residues", func: downloadResidueCount}, {name: "SVG", func: downloadSVG}
+                        ]
+                    }
+                })
+                
+                // This generates the legend div, we don't keep a handle to it - the event object has one
+                new CLMSUI.utils.KeyViewBB ({
+                    el: "#keyPanel",
+                    displayEventName: "keyShow",
+                });
                 /*
 				CLMSUI.filterFunc = function () {
                     //xlv.checkLinks(); // needs fixed.
                     distoViewer.render ();
                 }
                 */
-                
+                //filteredModel.set("matches") = rawModel.get("matches").filter(function(match) { return CLMSUI.filterModelInst.filter (match); });
+                // then bung crosslinks on top either with own filter or build from matches ^^^
                 /*
                 
 				//register callbacks

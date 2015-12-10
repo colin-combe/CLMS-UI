@@ -92,29 +92,6 @@ if (selectionPanel.isShown() == false) {
 }
 */
 
-
-var kChkBx = document.getElementById('keyChkBx');
-kChkBx.checked = false;
-var hChkBx = document.getElementById('helpChkBx');
-hChkBx.checked = false;
-var showKeyPanel = function (show) {
-	var kp = d3.select('#keyPanel');
-	if (show) {
-		kp.style('display', 'block');
-	} else {
-		kp.style('display', 'none');
-	}
-	kChkBx.checked = show;
-}
-var showHelpPanel = function (show) {
-	var hp = d3.select('#helpPanel');
-	if (show) {
-		hp.style('display', 'block');
-	} else {
-		hp.style('display', 'none');
-	}
-	hChkBx.checked = show;
-}
 var showSpectrumPanel = function (show) {
 	var sp = d3.select('#spectrumPanel');
 	if (show) {
@@ -137,18 +114,7 @@ var compositeModel = new Backbone.Model ({
 
 
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
-/*
-var showDistoPanel = function (show) {
-	var sp = d3.select('#distoPanel');
-	sp.style('display', show ? 'block' : 'none');
 
-    distoChkBx.checked = show;
-    if (show) {
-        distoViewer.relayout(); // need to resize first sometimes so render gets correct width/height coords
-        distoViewer.render();
-    }
-}
-*/
 d3.select("body").append("div").attr("id", "tooltip2").attr("class", "CLMStooltip");
 var tooltipView = new window.CLMSUI.TooltipViewBB ({
     el: "#tooltip2",
@@ -273,7 +239,7 @@ function onDistanceSliderChange(scale){
 }
 
 function onDistanceSliderChange3D(scale){
-	showKeyPanel(false);
+	//showKeyPanel(false);
 	var domain = scale.domain();
 	var lowerLimit = domain[1];
 	var upperLimit = domain[2];
@@ -325,51 +291,3 @@ function changeAnnotations(){
 	var annotationSelect = document.getElementById('annotationsSelect');
 	xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
 };
-
-
-/*Score slider*/
-/*
-function initSlider(){
-	if (xlv.scores === null){
-		d3.select('#scoreSlider').style('display', 'none');
-	}
-	else {
-		document.getElementById('scoreLabel1').innerHTML = "Score:&nbsp;&nbsp;" + getMinScore();
-		document.getElementById('scoreLabel2').innerHTML = getMaxScore();
-		sliderChanged();
-		d3.select('#scoreSlider').style('display', 'inline-block');
-	}
-};
-*/
-/*
-var sliderDecimalPlaces = 1;
-function getMinScore(){
-	if (xlv.scores){
-		var powerOfTen = Math.pow(10, sliderDecimalPlaces);
-		return (Math.floor(xlv.scores.min * powerOfTen) / powerOfTen)
-				.toFixed(sliderDecimalPlaces);
-	}
-}
-function getMaxScore(){
-	if (xlv.scores){
-		var powerOfTen = Math.pow(10, sliderDecimalPlaces);
-		return (Math.ceil(xlv.scores.max * powerOfTen) / powerOfTen)
-				.toFixed(sliderDecimalPlaces);
-	}
-}
-*/
-/*
-function sliderChanged(){
-	var slide = document.getElementById('slide');
-	var powerOfTen = Math.pow(10, sliderDecimalPlaces);
-
-	var cut = ((slide.value / 100)
-				* (getMaxScore() - getMinScore()))
-				+ (getMinScore() / 1);
-	cut = cut.toFixed(sliderDecimalPlaces);
-	var cutoffLabel = document.getElementById("cutoffLabel");
-	cutoffLabel.innerHTML = '(' + cut + ')';
-	//xlv.setCutOff(cut);
-    CLMSUI.filterFunc();    // this is calling xlv redraw as well
-}
-*/

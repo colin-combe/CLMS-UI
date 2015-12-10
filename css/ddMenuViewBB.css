@@ -1,0 +1,27 @@
+.dropdown DIV {
+    position: absolute;
+    z-index: 5000;
+    background: #091D42;
+    padding: 0.2em 1em 0.2em 1em;
+    border: 1px solid #fff;
+    box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+    display: none;
+}
+
+.dropdown .menuTitle:hover {
+    color: #091D42;
+    background: #fff;
+}
+
+.dropdown DIV UL {
+    list-style-type: none;
+}
+
+.dropdown DIV LI .btn {
+    font-size: inherit;
+}
+
+.dropdown DIV LI:hover {
+    color: #091D42;
+    background: #fff;
+}
