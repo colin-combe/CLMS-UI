@@ -177,6 +177,7 @@ CLMSUI.vent.trigger (matrixFilterEventName, 1); // Transmit initial value to bot
 
 
 // Resizing of panels
+/*
 ByRei_dynDiv.api.alter = function() {
 	var mode = ByRei_dynDiv.cache.modus;
 	console.log('Div is alter...',  'ID', ByRei_dynDiv.api.elem, 'elem',  ByRei_dynDiv.api, 'Mode', mode);
@@ -190,6 +191,8 @@ ByRei_dynDiv.api.alter = function() {
 		}
 	}
 };
+*/
+
 
 var nglViewer = new window.CLMSUI.NGLViewBB ({
     el: "#nglPanel", 

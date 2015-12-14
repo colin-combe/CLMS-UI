@@ -48,8 +48,31 @@ CLMSUI.modelUtils = {
         return distArr;
     },
     
-    flattenMatches: function (matchesArr) {
+    flattenMatchesOld: function (matchesArr) {
         return matchesArr.map (function(m) { return m.score; });    
+    },
+    
+    flattenMatches: function (matchesArr) {
+        var arrs = [[],[]];
+        matchesArr.forEach (function(m) {
+            var pLink = m.crossLinks[0].proteinLink;
+            var isDecoy = (pLink.toProtein.isDecoy() || pLink.fromProtein.isDecoy()) ? 1 : 0;
+            //var isDecoy = (Math.random() > 0.8) ? 1: 0; 
+            arrs[isDecoy].push (m.score);
+        });
+        return arrs;
+        /*
+        return matchesArr
+            .filter (function (m) { 
+                //return m.crossLinks[0].some (function(c) {
+                    var pLink = m.crossLinks[0].proteinLink;
+                    return pLink.toProtein.isDecoy() && pLink.fromProtein.isDecoy();
+                //});
+                
+            })
+            .map (function(m) { return m.score; })
+        ;    
+        */
     },
     
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html

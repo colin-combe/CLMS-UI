@@ -103,6 +103,7 @@
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>   
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
+        <script type="text/javascript" src="./js/bioseq32.js"></script>
     </head>
 
     <body>
@@ -261,7 +262,13 @@
             });
             
             console.log ("CLMSUI", CLMSUI, "xinet", tempModelMaker);
-
+            
+            //  How to do a sequence alignment
+            /*
+            var res = CLMSUI.SequenceUtils.align ("CAT", "CHATTER");    // (query, target)
+            console.log ("res", res);   //res.indx has the two-way mappings between CAT and CHATTER in .qToTarget and .tToQuery
+            */    
+            
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
             
@@ -286,7 +293,7 @@
                 var miniDistModelInst = new CLMSUI.modelUtils.MinigramModelBB ();
                 miniDistModelInst.data = function() {
                     var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
-                    return [matches, []];
+                    return matches; // matches is now an array of arrays    //  [matches, []];
                 };
 
                 var miniDistView = new CLMSUI.MinigramViewBB ({
@@ -295,10 +302,11 @@
                     myOptions: {
                         maxX: 0,    // let data decide
                         seriesNames: ["Matches", "Decoys"],
-                        scaleOthersTo: "Matches",
+                        //scaleOthersTo: "Matches",
                         xlabel: "Score",
                         ylabel: "Count",
-                        height: 50
+                        height: 50,
+                        colors: {"Matches":"blue", "Decoys":"grey"}
                     }
                 });
                 
