@@ -73,9 +73,9 @@
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
 
-       	<!--<script type="text/javascript" src="./vendor/CLMS_model.js"></script>-->
+       	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
 
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/util/Init.js"></script>
+<!--
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
@@ -83,30 +83,25 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
-
-<!--
-       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 -->
 
-	 	<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>
+       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/Init.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/MouseEvents.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/Layout.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/Refresh.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/ToolTips.js"></script>
+<!--
+	 	<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/model/Match.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/model/Link.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/model/Protein.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/model/Annotation.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/model/ResidueLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/xiNET_Storage.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/ReadCSV.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/Fasta.js"></script>
-        
+-->
+<!--
+        <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
+-->
+
+
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>

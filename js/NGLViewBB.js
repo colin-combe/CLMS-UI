@@ -87,7 +87,7 @@
             
 			//create 3D network viewer
 			if ( ! Detector.webgl ) {
-				alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage(); // the Detector message messes up web page layout
+				Detector.addGetWebGLMessage(mainDivSel); 
 			}
 			else {
 				this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
