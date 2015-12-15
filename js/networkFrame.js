@@ -111,7 +111,7 @@ var compositeModel = new Backbone.Model ({
     rangeModel: CLMSUI.rangeModelInst,
     filterModel: CLMSUI.filterModelInst,
     tooltipModel: CLMSUI.tooltipModelInst,
-        
+    applyFilter: function () {alert("applyFilter");}   
 }
 
 );
@@ -126,7 +126,7 @@ var tooltipView = new window.CLMSUI.TooltipViewBB ({
     model: CLMSUI.tooltipModelInst
 });
 
-var crosslinkViewer = new window.CLMS.CrosslinkViewerBB ({
+var crosslinkViewer = new window.CLMS.xiNET.CrosslinkViewer ({
     el: "#topDiv", 
     model: compositeModel
 });
