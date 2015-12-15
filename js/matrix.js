@@ -10,15 +10,14 @@
 
     global.CLMSUI = global.CLMSUI || {};
     
-    global.CLMSUI.DistanceMatrixViewBB = global.Backbone.View.extend({
-    tagName: "div",
+    global.CLMSUI.DistanceMatrixViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
     events: {
         "click .closeButton": "hideView",
         "mousemove canvas": "invokeTooltip"
     },
     initialize: function (viewOptions) {
-        //to contain registered callback functions
-        this.highlightChangedCallbacks = [];
+        global.CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply (this, arguments);
+        
         var self = this;
 
         var defaultOptions = {
@@ -45,14 +44,6 @@
         //avoids prob with 'save - web page complete'
         var elem = d3.select(this.el); 
         
-        // Set up some html scaffolding in d3
-        global.CLMSUI.utils.addDynDivScaffolding(elem);
-        
-        // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
-        var panelDrag = d3.behavior.drag().on ("drag", function() { self.resize(); });
-        elem.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
-            .call (panelDrag)
-        ;
         
         var chartDiv = elem.append("div")
             .attr("class", "panelInner")
@@ -137,11 +128,12 @@
         this.listenTo (this.model.get("rangeModel"), "change:scale", this.render); 
         this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
         
-        if (viewOptions.displayEventName) {
-            this.listenTo (global.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
-        }
-        
         //this.distancesChanged ();
+    },
+        
+    relayout: function () {
+        this.resize();
+        return this;
     },
     
     distancesChanged: function () {
@@ -156,18 +148,6 @@
 		this.vis.select(".x")
 			.call(this.xAxis)
         ;
-    },
-    
-    hideView: function () {
-        global.CLMSUI.vent.trigger (this.displayEventName, false);
-    },
-
-    setVisible: function (show) {
-        d3.select(this.el).style('display', show ? 'block' : 'none');
-
-        if (show) {
-            this.render();
-        }
     },
         
     invokeTooltip: function (evt) {
@@ -535,16 +515,6 @@
 			.call(self.xAxis)
         ;
     },
-    
-    // removes view
-    // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
-    remove: function () {
-        // remove drag listener
-        d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null); 
-        
-        // this line destroys the containing backbone view and it's events
-        Backbone.View.prototype.remove.call(this);
-    }
 });
     
 } (this));

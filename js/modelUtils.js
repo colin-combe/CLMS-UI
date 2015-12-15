@@ -48,6 +48,7 @@ CLMSUI.modelUtils = {
         return distArr;
     },
     
+
     flattenMatchesOld: function (matchesArr) {
         return matchesArr.map (function(m) { return m.score; });    
     },

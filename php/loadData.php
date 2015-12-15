@@ -18,16 +18,14 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-
-	$startTime = microtime(true);
 	$sid = urldecode($_GET["sid"]);
-	
-	$showDecoys = true;//false;//urldecode($_GET["decoys"]);
+
+	$showDecoys = false;//urldecode($_GET["decoys"]);
 	$showAll = false;//urldecode($_GET["all"]);
-	//~ 
+
 	//~ echo "// decoys?:".$showDecoys."\n";
 	//~ echo "// all?:".$showAll."\n";
-	
+
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
 		header();
@@ -37,7 +35,7 @@
 
 	include('../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
-		
+
 	$id_rands = explode("," , $sid);
 	$searchesShown = 'CLMSUI.searchesShown = {';
 	for ($i = 0; $i < count($id_rands); $i++) {
@@ -49,13 +47,13 @@
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		$name = $line['name'];
 		$filename = $line['file_name'];
-		$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'-'.$filename.'"';	
+		$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'-'.$filename.'"';
 		if (($i + 1) < count($id_rands)){
 			$searchesShown = $searchesShown.',';
 		}
 	}
 	echo $searchesShown."};\n";
-	echo "CLMSUI.sid = ".$id.";\n";	
+	echo "CLMSUI.sid = ".$id.";\n";
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;";
 		include('./php/distances.php');
@@ -92,8 +90,8 @@
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
 			. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
 			. ' spectrum_match.autovalidated, '
-			. ($showAll ? 
-					'CASE WHEN spectrum_match.validated IS NULL THEN \'?\' ELSE spectrum_match.validated  END AS validated, ' 
+			. ($showAll ?
+					'CASE WHEN spectrum_match.validated IS NULL THEN \'?\' ELSE spectrum_match.validated  END AS validated, '
 					: 'spectrum_match.validated, ')
 			. ' spectrum_match.search_id, v_export_materialized.scan_number, v_export_materialized.run_name, peptide.sequence AS pepseq  INTO TEMPORARY '
 			. $peptidesTempTableName
@@ -110,9 +108,9 @@
 			. ' inner join v_export_materialized ON spectrum_match.id = v_export_materialized.spectrum_match_id '
 			. ' WHERE search.random_id = \''.$randId.'\''
 			. ' AND matched_peptide.link_position != -1;';
-		
+
 		echo "\n//Query:".$q_makeTempMatchedPeptides;
-			
+
 		$q_makeTempHasProtein =
 			'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
 			. $proteinTempTableName
@@ -163,7 +161,7 @@
 			. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
 			. ' inner join (SELECT * from  v_export_materialized WHERE ('.$WHERE_VE.') AND dynamic_rank = true AND is_decoy != true )  v_export_materialized ON sm.id = v_export_materialized.spectrum_match_id '
 			. ' WHERE  matched_peptide.link_position != -1;';
-			
+
 		$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
 				$proteinTempTableName . ' FROM has_protein, '
 				. $peptidesTempTableName .', protein'
@@ -186,13 +184,16 @@
 
 	$res = pg_query($q_proteins) or die('Query failed: ' . pg_last_error());
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+
+	echo "\nvar tempInteractors = [";
+
 	while ($line) {
 		//may or may not have enclosing single quotes in DB. We need them.
 		$seq = $line["sequence"];
 		if (substr($seq, 0, 1) != "'") {
 			$seq = "'" . $seq . "'";
 		}
-		
+
 		$name = str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["name"])));
 		//~ $underscore_pos = strpos($name,'_');
 		//~ $name = substr($name, 0, $underscore_pos); //removes e.g. '_HUMAN' from end of names
@@ -202,23 +203,25 @@
 			$pid = $line["accession"];
 		}
 
-		echo 'tempModelMaker.addProtein (' 
-				. '\''.$pid . '\',' 
-				. '\'' . $name . "'" . ',' 
-				. $seq . ',' 
+		echo '['
+				. '\''.$pid . '\','
+				. '\'' . $name . "'" . ','
+				. $seq . ','
 			//	. '\'' . str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["description"]))) . "'" .	','
-				. '\'' . str_replace("'", "", $line["accession"]) . '\'' 
-			//	. '\'' . $line["size"] . '\'' 
-				. ");\n";
+				. '\'' . str_replace("'", "", $line["accession"]) . '\''
+			//	. '\'' . $line["size"] . '\''
+				. "]";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+		if ($line) echo ',';
 	}
-	
+	echo "];\n";
+
 	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '
 			.$peptidesTempTableName . ', ('	.$q_hasProtein.') AS prt WHERE '
 			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
-	echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
+	//~ echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
-	echo "tempModelMaker.addMatches([";
+	echo "var tempMatches = [";
 	$waitingForFirstMatch = true;
 	//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
@@ -264,13 +267,13 @@
 								. "]";
 					//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 					//~ if ($line)
-					 {echo ',';} // that last comma should be removed 
+					 {echo ',';} // that last comma should be removed
 					$waitingForFirstMatch = true;
 				}
 			}
 		}
 	}
-	echo "]);\n";
+	echo "];\n";
 
 	// Free resultset
 	pg_free_result($res);

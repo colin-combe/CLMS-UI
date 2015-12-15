@@ -2,7 +2,7 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.FilterModelBB = Backbone.Model.extend ({
     initialize: function () {
-        this.set ({
+		this.set ({
             "A": true, "B": true, "C": true, "Q": false,
             "AUTO": false,
             "selfLinks": true, "ambig": true,

@@ -87,7 +87,7 @@
             
 			//create 3D network viewer
 			if ( ! Detector.webgl ) {
-				alert("no webGL = no 3D graphics");//Detector.addGetWebGLMessage(); // the Detector message messes up web page layout
+				Detector.addGetWebGLMessage(mainDivSel); 
 			}
 			else {
 				this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
@@ -132,8 +132,9 @@
         },
 
         downloadImage: function () {
-            //~ var svgString = this.stage.screenshot();//need to get viewer
-            //~ download(svgString, 'application', 'ngl.png');
+			this.stage.exportImage( 1, true, false, false );
+            //~ var png = NGL.screenshot(this.stage.viewer);
+            //~ download(png , 'image/png', 'ngl.png');
         },
 
         hideView: function () {

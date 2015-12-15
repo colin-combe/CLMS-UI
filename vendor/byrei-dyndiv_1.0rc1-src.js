@@ -671,7 +671,7 @@ var ByRei_dynDiv = {
        mouse_diff_top = (ByRei_dynDiv.cache.pos.top - ByRei_dynDiv.cache.init.pos.top || 0);
 
       // Try to keep Aspect Ratio 
-      /* Maus so abfragen das Mouse nicht größers als Offset von Object sein kann ! */
+      /* Maus so abfragen das Mouse nicht grÏ†Î¯ers als Offset von Object sein kann ! */
       if (keepAspect) {
           switch(ByRei_dynDiv.cache.modus) {
            case "br" : case "tl" :
