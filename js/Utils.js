@@ -210,10 +210,21 @@ CLMSUI.utils = {
             CLMSUI.vent.trigger (this.displayEventName, false);
         },
         
+        // find z-indexes of all visible, movable divs, and make the current one a higher z-index
+        // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
-            console.log ("mouseenter", this);
-            d3.selectAll(".dynDiv").style("z-index", 10);
-            d3.select(this.el).style("z-index", 11);
+            var z = [];
+            var activeDivs = d3.selectAll(".dynDiv").filter (function() {
+                return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
+            });
+            activeDivs.each(function(d,i) { z[i] = +d3.select(this).style("z-index"); });   // all the z-indexes
+            var range = d3.extent (z.filter (function(zi) { return zi !== 0; }));
+            //console.log (range, "z-indexes", z);
+            
+            activeDivs.style("z-index", function() {
+                return Math.max (0, +d3.select(this).style("z-index") - range[0] + 1);
+            });
+            d3.select(this.el).style("z-index", range[1] - range[0] + 2);
         },
 
         setVisible: function (show) {

@@ -338,7 +338,7 @@ var ByRei_dynDiv = {
    if(ByRei_dynDiv.cache.obj) {
       ByRei_dynDiv.get.mouse(evt); // Get Mouse Position
       if (ByRei_dynDiv.get.db.id('zIndex').found) {
-          ByRei_dynDiv._style(ByRei_dynDiv.cache.obj,'zIndex', ByRei_dynDiv.get.db.id('zIndex').data + 1);
+          //ByRei_dynDiv._style(ByRei_dynDiv.cache.obj,'zIndex', ByRei_dynDiv.get.db.id('zIndex').data + 1);    // killed by mjg, do this elsewhere backbone view
       }
       if (ByRei_dynDiv.cache.modus) {
           if (ByRei_dynDiv.api.alter) {ByRei_dynDiv.api.alter();} // API move Event
@@ -401,7 +401,7 @@ var ByRei_dynDiv = {
    ByRei_dynDiv.db(2,false); // Active to Inactive
    ByRei_dynDiv.del_eventListener(document, 'mousemove' , ByRei_dynDiv.on.move); // Remove Event Listener Mouse Move
    ByRei_dynDiv.del_eventListener(document, 'mouseup', ByRei_dynDiv.on.stop);     // Remove Event Listener Mouse Up
-   ByRei_dynDiv._style(ByRei_dynDiv.cache.obj,'zIndex', ByRei_dynDiv.cache.zIndex); // Reset zIndex to initial value
+   //ByRei_dynDiv._style(ByRei_dynDiv.cache.obj,'zIndex', ByRei_dynDiv.cache.zIndex); // Reset zIndex to initial value  // killed by mjg, do this elsewhere backbone view
    if (ByRei_dynDiv.cache.last.obj !== ByRei_dynDiv.cache.obj) {ByRei_dynDiv.cache.last.obj = ByRei_dynDiv.cache.obj;} // Set Cache last Object
    if (ByRei_dynDiv.cache.last.elem !== ByRei_dynDiv.cache.elem) {ByRei_dynDiv.cache.last.elem = ByRei_dynDiv.cache.elem;} // Set Cache last Element
    if (ByRei_dynDiv.db(9)) {ByRei_dynDiv.set.visible(true);} // Show hiden dynDIVs
