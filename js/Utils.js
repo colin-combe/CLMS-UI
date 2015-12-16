@@ -165,7 +165,7 @@ CLMSUI.utils = {
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
             "click .downloadButton": "downloadSVG",
             "click .closeButton": "hideView",
-            "mouseenter": "bringToTop",
+            "click": "bringToTop",
         },
         
         initialize: function (viewOptions) {

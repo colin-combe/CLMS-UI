@@ -120,7 +120,7 @@ var compositeModel = new Backbone.Model ({
 			for (var i = 0; i < unfilteredMatchCount; i++){
 				var match = crossLink.matches[i];
 				var result = filterModel.filter(match);
-				console.log("result:"+result);
+				//console.log("result:"+result);
 				if (result === true){
 					crossLink.filteredMatches.push(match);
 				}
@@ -166,8 +166,9 @@ var matrixViewer = new window.CLMSUI.DistanceMatrixViewBB ({
 
 // This stuffs a basic filter view into the matrix view
 var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
-matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
 var matrixFilterEventName = "filterEster";
+/*
+matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
 var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
     el: "#matrixButtons",
     myOptions: {
@@ -178,13 +179,14 @@ var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
         eventName: matrixFilterEventName
     }
 });
+*/
 
 // the matrix view listens to the event the basic filter view generates and changes a variable on it
 matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
     this.filterVal = filterVal;
     this.render();
 });
-CLMSUI.vent.trigger (matrixFilterEventName, 1); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
+CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
 
 // This is all done outside the matrix view itself as we may not always want a matrix view to have this 
 // functionality. Plus the views don't know about each other now.
