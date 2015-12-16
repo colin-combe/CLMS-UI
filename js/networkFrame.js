@@ -111,7 +111,23 @@ var compositeModel = new Backbone.Model ({
     rangeModel: CLMSUI.rangeModelInst,
     filterModel: CLMSUI.filterModelInst,
     tooltipModel: CLMSUI.tooltipModelInst,
-    applyFilter: function () {alert("applyFilter");}   
+    applyFilter: function () {
+		
+		var filterModel = this.get("filterModel");
+		var filterFunction = filterModel.get("filter");
+		var crossLinks = this.get("clmsModel").get("crossLinks").values();
+		for (var crossLink of crossLinks) {
+			crossLink.filteredMatches = [];
+			var unfilteredMatchCount = crossLink.matches.length;
+			for (var i = 0; i < unfilteredMatchCount; i++){
+				var match = crossLink.matches[i];
+				if (filterFunction(match) === true){
+					crossLink.filteredMatches.push(match);
+				}
+			}
+		}
+		
+	}   
 }
 
 );
