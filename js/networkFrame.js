@@ -104,15 +104,31 @@ var showSpectrumPanel = function (show) {
 CLMSUI.rangeModelInst = new CLMSUI.modelUtils.RangeModel ({ scale: d3.scale.linear() });
 CLMSUI.tooltipModelInst = new CLMSUI.TooltipModelBB ();
 
-
 var compositeModel = new Backbone.Model ({
     distancesModel: CLMSUI.distancesInst,
     clmsModel: CLMSUI.clmsModelInst,
     rangeModel: CLMSUI.rangeModelInst,
     filterModel: CLMSUI.filterModelInst,
-    tooltipModel: CLMSUI.tooltipModelInst
+    tooltipModel: CLMSUI.tooltipModelInst,
+    applyFilter: function () {
+		
+		var filterModel = this.get("filterModel");
+        console.log ("filterModel", filterModel);
+		var filterFunction = filterModel.filter;
+		var crossLinks = this.get("clmsModel").get("crossLinks").values();
+		for (var crossLink of crossLinks) {
+			crossLink.filteredMatches = [];
+			var unfilteredMatchCount = crossLink.matches.length;
+			for (var i = 0; i < unfilteredMatchCount; i++){
+				var match = crossLink.matches[i];
+				if (filterFunction(match) === true){
+					crossLink.filteredMatches.push(match);
+				}
+			}
+		}
+		
+	}   
 });
-
 
 compositeModel.listenTo(CLMSUI.filterModelInst, "change", compositeModel.get("applyFilter"));
 
@@ -124,7 +140,7 @@ var tooltipView = new window.CLMSUI.TooltipViewBB ({
     model: CLMSUI.tooltipModelInst
 });
 
-var crosslinkViewer = new window.CLMS.CrosslinkViewerBB ({
+var crosslinkViewer = new window.CLMS.xiNET.CrosslinkViewer ({
     el: "#topDiv", 
     model: compositeModel,
 });

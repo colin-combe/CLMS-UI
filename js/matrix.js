@@ -213,12 +213,12 @@
             var self = this;
             var distances = this.model.get("distancesModel").get("distances");
             var seqLength = distances.length - 1;
-            var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-            //var allProtProtLinks = this.model.get("clmsModel").get("crossLinks").values();
+            //var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+            var residueLinks = this.model.get("clmsModel").get("crossLinks").values();
 
 
             //var proteins = this.model.get("clmsModel").get("interactors");
-            var residueLinks = allProtProtLinks.next().value.crossLinks.values();
+            //var residueLinks = allProtProtLinks.next().value.crossLinks.values();
 
             // make underlying canvas big enough to hold 1 pixel per residue pair
             // it gets rescaled in the resize function to fit a particular size on the screen

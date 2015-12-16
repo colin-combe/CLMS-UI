@@ -88,14 +88,12 @@
        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 
 <!--
-	 	<script type="text/javascript" src="../crosslink-viewer/src/CrosslinkViewerBB.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/model/Match.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/model/Link.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/model/Protein.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/model/Annotation.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/model/ProteinLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/model/ResidueLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/Rotator.js"></script>
+	 	<script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProteinLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
 -->
 <!--
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
