@@ -9,16 +9,18 @@
 
     global.CLMSUI = global.CLMSUI || {};
     
-    global.CLMSUI.DistogramBB = global.Backbone.View.extend({
-        events: {
-            // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
-            // and dragend not supported by zepto, fallback to d3 instead (see later)
-            // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
-            "click .downloadButton": "downloadSVG",
-            "click .closeButton": "hideView"
+    global.CLMSUI.DistogramBB = global.CLMSUI.utils.BaseFrameView.extend ({
+        events: function() {
+          var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
+          if(_.isFunction(parentEvents)){
+              parentEvents = parentEvents();
+          }
+          return _.extend({},parentEvents,{});
         },
 
         initialize: function (viewOptions) {
+            global.CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
+            
             var defaultOptions = {
                 xlabel: "Distance",
                 ylabel: "Count",
@@ -36,15 +38,6 @@
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
-
-            // Set up some html scaffolding in d3
-            global.CLMSUI.utils.addDynDivScaffolding(mainDivSel);
-
-            // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
-            var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });
-            mainDivSel.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
-                .call (drag)
-            ;
 
             mainDivSel.append("div").style("height", "40px")
                 .append("button")
@@ -154,30 +147,6 @@
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
 
             this.recalcRandomBinning();
-
-            if (viewOptions.displayEventName) {
-                this.listenTo (global.CLMSUI.vent, viewOptions.displayEventName, this.setVisible);
-            }
-        },
-
-        downloadSVG: function () {
-            var svgString = global.CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
-            download(svgString, 'application/svg', 'distogram.svg');
-        },
-
-        hideView: function () {
-            global.CLMSUI.vent.trigger (this.displayEventName, false);
-        },
-
-        setVisible: function (show) {
-            d3.select(this.el).style('display', show ? 'block' : 'none');
-
-            if (show) {
-                this
-                    .relayout() // need to resize first sometimes so render gets correct width/height coords
-                    .render()
-                ;
-            }
         },
 
         render: function () {
@@ -279,14 +248,10 @@
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
         remove: function () {
+            global.CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
+        
             // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
             this.chart = this.chart.destroy();
-
-            // remove drag listener
-            d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null); 
-
-            // this line destroys the containing backbone view and it's events
-            Backbone.View.prototype.remove.call(this);
         }
 
     });

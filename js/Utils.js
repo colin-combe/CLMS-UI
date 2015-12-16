@@ -164,7 +164,8 @@ CLMSUI.utils = {
             // and dragend not supported by zepto, fallback to d3 instead (see later)
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
             "click .downloadButton": "downloadSVG",
-            "click .closeButton": "hideView"
+            "click .closeButton": "hideView",
+            "mouseenter": "bringToTop",
         },
         
         initialize: function (viewOptions) {
@@ -208,6 +209,12 @@ CLMSUI.utils = {
         hideView: function () {
             CLMSUI.vent.trigger (this.displayEventName, false);
         },
+        
+        bringToTop : function () {
+            console.log ("mouseenter", this);
+            d3.selectAll(".dynDiv").style("z-index", 10);
+            d3.select(this.el).style("z-index", 11);
+        },
 
         setVisible: function (show) {
             d3.select(this.el).style('display', show ? 'block' : 'none');
@@ -221,7 +228,7 @@ CLMSUI.utils = {
         },
         
         // removes view
-        // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
+        // not really needed unless we want to do something extra on top of the prototype remove function (like destroy a c3 view just to be sure)
         remove: function () {
             // remove drag listener
             d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null); 
@@ -233,15 +240,14 @@ CLMSUI.utils = {
 };
 
 CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
-    initialize: function (viewOptions) {
+    initialize: function () {
         CLMSUI.utils.KeyViewBB.__super__.initialize.apply (this, arguments);
         
         var mainDivSel = d3.select(this.el);
         var chartDiv = mainDivSel.append("div")
             .attr("class", "panelInner")
-        ;
-        
-        chartDiv.html ("<div id='key'><img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'></div>");
+        ;       
+        chartDiv.html ("<img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
         
         this.render();
         return this;

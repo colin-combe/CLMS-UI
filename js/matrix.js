@@ -11,10 +11,16 @@
     global.CLMSUI = global.CLMSUI || {};
     
     global.CLMSUI.DistanceMatrixViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
-    events: {
-        "click .closeButton": "hideView",
+    events: function() {
+      var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
+      if(_.isFunction(parentEvents)){
+          parentEvents = parentEvents();
+      }
+      return _.extend({},parentEvents,{
         "mousemove canvas": "invokeTooltip"
+      });
     },
+
     initialize: function (viewOptions) {
         global.CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply (this, arguments);
         
@@ -208,6 +214,8 @@
             var distances = this.model.get("distancesModel").get("distances");
             var seqLength = distances.length - 1;
             var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+            //var allProtProtLinks = this.model.get("clmsModel").get("crossLinks").values();
+
 
             //var proteins = this.model.get("clmsModel").get("interactors");
             var residueLinks = allProtProtLinks.next().value.crossLinks.values();
