@@ -50,32 +50,64 @@
 
 
     /* 
-     Ala     A       Alanine
-            Arg     R       Arginine
-            Asn     N       Asparagine
-            Asp     D       Aspartic acid (Aspartate)
-            Cys     C       Cysteine
-            Gln     Q       Glutamine
-            Glu     E       Glutamic acid (Glutamate)
-            Gly     G       Glycine
-            His     H       Histidine
-            Ile     I       Isoleucine
-            Leu     L       Leucine
-            Lys     K       Lysine
-            Met     M       Methionine
-            Phe     F       Phenylalanine
-            Pro     P       Proline
-            Ser     S       Serine
-            Thr     T       Threonine
-            Trp     W       Tryptophan
-            Tyr     Y       Tyrosine
-            Val     V       Valine
-            Asx     B       Aspartic acid or Asparagine
-            Glx     Z       Glutamine or Glutamic acid.
-            Xaa     X       Any amino acid.
-            TERM            termination codon
+        Ala     A       Alanine
+        Arg     R       Arginine
+        Asn     N       Asparagine
+        Asp     D       Aspartic acid (Aspartate)
+        Cys     C       Cysteine
+        Gln     Q       Glutamine
+        Glu     E       Glutamic acid (Glutamate)
+        Gly     G       Glycine
+        His     H       Histidine
+        Ile     I       Isoleucine
+        Leu     L       Leucine
+        Lys     K       Lysine
+        Met     M       Methionine
+        Phe     F       Phenylalanine
+        Pro     P       Proline
+        Ser     S       Serine
+        Thr     T       Threonine
+        Trp     W       Tryptophan
+        Tyr     Y       Tyrosine
+        Val     V       Valine
+        Asx     B       Aspartic acid or Asparagine
+        Glx     Z       Glutamine or Glutamic acid.
+        Xaa     X       Any amino acid.
+        TERM            termination codon
+
+        not in alphabet : JOU
     */
     var aminos = makeAlphabetMap ("ARNDCQEGHILKMFPSTWYVBZX", 32);
+    
+    /*
+    blosum-80 score matrix
+    http://www.cbcb.umd.edu/confcour/Fall2008/CMSC423-materials/BLOSUM80
+   A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *
+A  7 -3 -3 -3 -1 -2 -2  0 -3 -3 -3 -1 -2 -4 -1  2  0 -5 -4 -1 -3 -2 -1 -8 
+R -3  9 -1 -3 -6  1 -1 -4  0 -5 -4  3 -3 -5 -3 -2 -2 -5 -4 -4 -2  0 -2 -8 
+N -3 -1  9  2 -5  0 -1 -1  1 -6 -6  0 -4 -6 -4  1  0 -7 -4 -5  5 -1 -2 -8 
+D -3 -3  2 10 -7 -1  2 -3 -2 -7 -7 -2 -6 -6 -3 -1 -2 -8 -6 -6  6  1 -3 -8 
+C -1 -6 -5 -7 13 -5 -7 -6 -7 -2 -3 -6 -3 -4 -6 -2 -2 -5 -5 -2 -6 -7 -4 -8 
+Q -2  1  0 -1 -5  9  3 -4  1 -5 -4  2 -1 -5 -3 -1 -1 -4 -3 -4 -1  5 -2 -8 
+E -2 -1 -1  2 -7  3  8 -4  0 -6 -6  1 -4 -6 -2 -1 -2 -6 -5 -4  1  6 -2 -8 
+G  0 -4 -1 -3 -6 -4 -4  9 -4 -7 -7 -3 -5 -6 -5 -1 -3 -6 -6 -6 -2 -4 -3 -8 
+H -3  0  1 -2 -7  1  0 -4 12 -6 -5 -1 -4 -2 -4 -2 -3 -4  3 -5 -1  0 -2 -8 
+I -3 -5 -6 -7 -2 -5 -6 -7 -6  7  2 -5  2 -1 -5 -4 -2 -5 -3  4 -6 -6 -2 -8 
+L -3 -4 -6 -7 -3 -4 -6 -7 -5  2  6 -4  3  0 -5 -4 -3 -4 -2  1 -7 -5 -2 -8 
+K -1  3  0 -2 -6  2  1 -3 -1 -5 -4  8 -3 -5 -2 -1 -1 -6 -4 -4 -1  1 -2 -8 
+M -2 -3 -4 -6 -3 -1 -4 -5 -4  2  3 -3  9  0 -4 -3 -1 -3 -3  1 -5 -3 -2 -8 
+F -4 -5 -6 -6 -4 -5 -6 -6 -2 -1  0 -5  0 10 -6 -4 -4  0  4 -2 -6 -6 -3 -8 
+P -1 -3 -4 -3 -6 -3 -2 -5 -4 -5 -5 -2 -4 -6 12 -2 -3 -7 -6 -4 -4 -2 -3 -8 
+S  2 -2  1 -1 -2 -1 -1 -1 -2 -4 -4 -1 -3 -4 -2  7  2 -6 -3 -3  0 -1 -1 -8 
+T  0 -2  0 -2 -2 -1 -2 -3 -3 -2 -3 -1 -1 -4 -3  2  8 -5 -3  0 -1 -2 -1 -8 
+W -5 -5 -7 -8 -5 -4 -6 -6 -4 -5 -4 -6 -3  0 -7 -6 -5 16  3 -5 -8 -5 -5 -8 
+Y -4 -4 -4 -6 -5 -3 -5 -6  3 -3 -2 -4 -3  4 -6 -3 -3  3 11 -3 -5 -4 -3 -8 
+V -1 -4 -5 -6 -2 -4 -4 -6 -5  4  1 -4  1 -2 -4 -3  0 -5 -3  7 -6 -4 -2 -8 
+B -3 -2  5  6 -6 -1  1 -2 -1 -6 -7 -1 -5 -6 -4  0 -1 -8 -5 -6  6  0 -3 -8 
+Z -2  0 -1  1 -7  5  6 -4  0 -6 -5  1 -3 -6 -2 -1 -2 -5 -4 -4  0  6 -1 -8 
+X -1 -2 -2 -3 -4 -2 -2 -3 -2 -2 -2 -2 -2 -3 -3 -1 -1 -5 -3 -2 -3 -1 -2 -8 
+* -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8 -8  1 
+*/
 
     /************************
      *** Generic routines ***
@@ -259,6 +291,8 @@
                 else H[j] = -(gapo + gape * j), E[j] = E[j-1] - gape;
             }
         }
+        
+        console.log ("H",H,"E",E);
 
         // the DP loop
         for (var i = 0; i < t.length; ++i) {
@@ -271,20 +305,30 @@
                 h1 = beg > 0? NEG_INF : -gapoe - gape * i;
                 f = beg > 0? NEG_INF : -gapoe - gapoe - gape * i;
             }
+            console.log ("vars", {h1:h1, f:f, m:m, mj:mj});
             for (var j = beg; j < end; ++j) {
                 // At the beginning of the loop: h=H[j]=H(i-1,j-1), e=E[j]=E(i,j), f=F(i,j) and h1=H(i,j-1)
                 // If we only want to compute the max score, delete all lines involving direction "d".
-                var e = E[j], h = H[j], d;
+                var e = E[j], h = H[j], d = 0;
                 H[j] = h1;           // set H(i,j-1) for the next row
-                h += qpi[j];         // h = H(i-1,j-1) + S(i,j)
-                d = h > e? 0 : 1;
-                h = h > e? h : e;
-                d = h > f? d : 2;
-                h = h > f? h : f;    // h = H(i,j) = max{H(i-1,j-1)+S(i,j), E(i,j), F(i,j)}
+                h += qpi[j];         // h = H(i-1,j-1) + S(i,j) // match or not score
+                if (h <= e) {
+                    d = 1;
+                    h = e;
+                }
+                if (h <= f) {
+                    d = 2;
+                    h = f;  
+                }
+                // now h = H(i,j) = max{H(i-1,j-1)+S(i,j), E(i,j), F(i,j)}
                 d = !is_local || h > 0? d : 64;
                 h1 = h;              // save H(i,j) to h1 for the next column
-                mj = m > h? mj : j;
-                m = m > h? m : h;    // update the max score in this row
+                if (h >= m) {
+                    mj = j;
+                    m = h;  // update the max score in this row
+                }
+                console.log ("j",j,"pen",qpi[j],"h",h,"d",d,"e",e,"f",f);
+                
                 h -= gapoe;
                 h = !is_local || h > 0? h : 0;
                 e -= gape;
@@ -298,6 +342,7 @@
             }
             H[end] = h1, E[end] = is_local? 0 : NEG_INF;
             if (m > max) max = m, end_i = i, end_j = mj;
+            console.log ("vars end", {h1:h1, end_i:end_i, m:m, max:max, end_j:mj});
         }
         if (is_local && max == 0) return null;
         score = is_local? max : H[qlen];

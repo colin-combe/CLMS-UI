@@ -46,6 +46,7 @@
         <link rel="stylesheet" href="./css/c3.css">
         <link rel="stylesheet" href="./css/minigram.css">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
+        <link rel="stylesheet" href="./css/alignViewBB.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -116,6 +117,8 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
+        <script type="text/javascript" src="./js/alignModelBB.js"></script>
+        <script type="text/javascript" src="./js/alignViewBB.js"></script>
     </head>
 
     <body>
@@ -144,6 +147,7 @@
             <div class="dynDiv" id="nglPanel"></div>
             <div class="dynDiv" id="distoPanel"></div>
             <div class="dynDiv" id="matrixPanel"></div>
+            <div class="dynDiv" id="alignPanel"></div>
 
 <!--
 		</div>
@@ -172,6 +176,7 @@
 					<span id="nglChkBxPlaceholder"></span>
                     <span id="distoChkBxPlaceholder"></span>
                     <span id="matrixChkBxPlaceholder"></span>
+                    <span id="alignChkBxPlaceholder"></span>
                     
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
 				</h1>
@@ -268,6 +273,15 @@
             console.log ("res", res);   //res.indx has the two-way mappings between CAT and CHATTER in .qToTarget and .tToQuery
             */    
             
+            CLMSUI.alignmentModel = new CLMSUI.AlignModelBB ({
+                refSeq: "CHATWITHCATSPEWNOW",
+                compSeqs: ["CATSPAWN"],
+                //refSeq: "CHATTER",
+                //compSeqs: ["CAT"],
+            });
+            CLMSUI.alignmentModel.align();
+            console.log ("Align stuff:", CLMSUI.alignmentModel.get("refAlignments"), CLMSUI.alignmentModel.get("compAlignments"));
+            
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
             
@@ -334,6 +348,7 @@
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow", labelFirst: false});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow", labelFirst: false});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow", labelFirst: false});
+                CLMSUI.utils.addCheckboxBackboneView (d3.select("#alignChkBxPlaceholder"), {label:"Alignment", eventName:"alignShow", labelFirst: false});
                 CLMSUI.utils.addCheckboxBackboneView (d3.select("#keyChkBxPlaceholder"), {label:"Legend", eventName:"keyShow", labelFirst: false});
                 
                 // Add them to a drop-down menu (this rips them away from where they currently are)
@@ -346,6 +361,7 @@
                             {id: "nglChkBxPlaceholder"},
                             {id: "distoChkBxPlaceholder"},
                             {id: "matrixChkBxPlaceholder"},
+                            {id: "alignChkBxPlaceholder"},
                             {id: "keyChkBxPlaceholder"},
                         ]
                     }

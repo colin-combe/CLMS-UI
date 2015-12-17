@@ -1,0 +1,14 @@
+TABLE.alignView {
+    font-family: Courier;
+    font-size: 0.9em;
+    color: #000;
+    width: auto;
+    height: auto;
+}
+
+TABLE.alignView TD, TABLE.alignView TH {
+    margin: 0;
+    padding: 0;
+    line-height: 1em;
+    height: 1em;
+}

@@ -192,6 +192,11 @@ CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to bot
 // functionality. Plus the views don't know about each other now.
 // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
 
+var alignViewer = new window.CLMSUI.AlignViewBB ({
+    el:"#alignPanel",
+    model: CLMSUI.alignmentModel,
+    displayEventName: "alignShow"
+});
 
 
 

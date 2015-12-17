@@ -249,7 +249,13 @@
                 cd[index + 2] = b;
                 cd[index + 3] = a;
             }
+            
+            function drawPixel32 (cd, pixi, r, g, b, a) {
+                var index = pixi;
+                cd[index] = (a << 24) + (b << 16) + (g << 8) + r;
+            }
 
+            //CLMSUI.times = CLMSUI.times || [];
             var start = performance.now();
 
             var rangeColours = self.model.get("rangeModel").get("scale").range();
@@ -332,10 +338,13 @@
                             if (distance && distance < max) {
                                 var col = (distance > min ? colourArray[1] : colourArray[0]);
                                 drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                                //drawPixel32 (data, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                             }
                         }
                     }
                 }
+            
+                //cd.set (buf8);
                 ctx.putImageData(canvasData, 0, 0);
             //}
             /*
@@ -350,7 +359,7 @@
 
             var end = performance.now();
             //CLMSUI.times.push(Math.round(end-start));
-            //console.log ("CLMSUI.times", CLMSUI.times);
+            console.log ("CLMSUI.times", CLMSUI.times);
 
             var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
             var modelUtils = global.CLMSUI.modelUtils;

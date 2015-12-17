@@ -147,6 +147,8 @@
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
 
             this.recalcRandomBinning();
+            
+            return this;
         },
 
         render: function () {

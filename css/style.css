@@ -572,7 +572,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #helpPanel, #spectrumPanel, #nglPanel, #distoPanel, #matrixPanel {
+#keyPanel, #helpPanel, #spectrumPanel, #nglPanel, #distoPanel, #matrixPanel, #alignPanel {
 	display:none;
 	top:80px;
 }
@@ -607,6 +607,13 @@ tbody tr:hover td, tbody tr:hover td  {
 .distoDiv {
     /*overflow:auto;*/
      background: rgba(224,224,255, 0.9);
+}
+
+#alignPanel{
+	left: 40px;
+	width:500px;
+	height:80px;
+    overflow-x: auto;
 }
 
 .sideOn {
