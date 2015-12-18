@@ -1,14 +1,23 @@
-TABLE.alignView {
-    font-family: Courier;
+.alignView {
+    font-family: Consolas, Courier;
     font-size: 0.9em;
     color: #000;
     width: auto;
     height: auto;
+    background: #fff;
 }
 
-TABLE.alignView TD, TABLE.alignView TH {
+TABLE.alignView TD, TABLE.alignView TH, .alignView P {
     margin: 0;
     padding: 0;
     line-height: 1em;
     height: 1em;
+}
+
+.seqDelete {
+    background: #44a;
+}
+
+.seqMismatch {
+    background: #f80;
 }

@@ -93,12 +93,7 @@ if (selectionPanel.isShown() == false) {
 */
 
 var showSpectrumPanel = function (show) {
-	var sp = d3.select('#spectrumPanel');
-	if (show) {
-		sp.style('display', 'block');
-	} else {
-		sp.style('display', 'none');
-	}
+	d3.select('#spectrumPanel').style('display', show ? 'block' : 'none');
 }
 
 CLMSUI.rangeModelInst = new CLMSUI.modelUtils.RangeModel ({ scale: d3.scale.linear() });
@@ -192,7 +187,10 @@ CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to bot
 // functionality. Plus the views don't know about each other now.
 // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
 
-var alignViewer = new window.CLMSUI.AlignViewBB ({
+
+
+//var alignViewer = new window.CLMSUI.AlignViewBB ({
+var alignViewer = new window.CLMSUI.AlignViewBB2 ({
     el:"#alignPanel",
     model: CLMSUI.alignmentModel,
     displayEventName: "alignShow"

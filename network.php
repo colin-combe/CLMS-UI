@@ -119,6 +119,7 @@
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelBB.js"></script>
         <script type="text/javascript" src="./js/alignViewBB.js"></script>
+        <script type="text/javascript" src="./js/alignViewBB2.js"></script>
     </head>
 
     <body>
@@ -276,6 +277,8 @@
             CLMSUI.alignmentModel = new CLMSUI.AlignModelBB ({
                 refSeq: "CHATWITHCATSPEWNOW",
                 compSeqs: ["CATSPAWN"],
+                //refSeq: "CHATWITHCATSPEWNOW",
+                //compSeqs: ["CATSPAWN"],
                 //refSeq: "CHATTER",
                 //compSeqs: ["CAT"],
             });

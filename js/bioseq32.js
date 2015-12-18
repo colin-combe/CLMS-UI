@@ -169,8 +169,8 @@ X -1 -2 -2 -3 -4 -2 -2 -3 -2 -2 -2 -2 -2 -3 -3 -1 -1 -5 -3 -2 -3 -1 -2 -8
      * calculate the scores in a different order:
      *
      *   H(i,j)   = max{H(i-1,j-1)+S(i,j), E(i,j), F(i,j)}
-     *   E(i+1,j) = max{H(i,j)-q, E(i,j)} - r
-     *   F(i,j+1) = max{H(i,j)-q, F(i,j)} - r
+     *   E(i+1,j) = max{H(i,j)-q, E(i,j)} - r = max(h-gapoe, e-gape)
+     *   F(i,j+1) = max{H(i,j)-q, F(i,j)} - r = max(h-gapoe, f-gape)
      *
      * i.e. at cell (i,j), we compute E for the next row and F for the next column.
      * Please see inline comments below for details.
@@ -291,8 +291,6 @@ X -1 -2 -2 -3 -4 -2 -2 -3 -2 -2 -2 -2 -2 -3 -3 -1 -1 -5 -3 -2 -3 -1 -2 -8
                 else H[j] = -(gapo + gape * j), E[j] = E[j-1] - gape;
             }
         }
-        
-        console.log ("H",H,"E",E);
 
         // the DP loop
         for (var i = 0; i < t.length; ++i) {
@@ -302,16 +300,17 @@ X -1 -2 -2 -3 -4 -2 -2 -3 -2 -2 -2 -2 -2 -3 -3 -1 -1 -5 -3 -2 -3 -1 -2 -8
             var beg = i > w? i - w : 0;
             var end = i + w + 1 < qlen? i + w + 1 : qlen; // only loop through [beg,end) of the query sequence
             if (!is_local) {
-                h1 = beg > 0? NEG_INF : -gapoe - gape * i;
+                h1 = beg > 0? NEG_INF : 0; //-gapoe - gape * i; // changed so don't penalise a start gap (hopefully)
                 f = beg > 0? NEG_INF : -gapoe - gapoe - gape * i;
             }
-            console.log ("vars", {h1:h1, f:f, m:m, mj:mj});
+
             for (var j = beg; j < end; ++j) {
                 // At the beginning of the loop: h=H[j]=H(i-1,j-1), e=E[j]=E(i,j), f=F(i,j) and h1=H(i,j-1)
                 // If we only want to compute the max score, delete all lines involving direction "d".
                 var e = E[j], h = H[j], d = 0;
                 H[j] = h1;           // set H(i,j-1) for the next row
                 h += qpi[j];         // h = H(i-1,j-1) + S(i,j) // match or not score
+                //  http://jsperf.com/two-ternary-versus-one-if
                 if (h <= e) {
                     d = 1;
                     h = e;
@@ -327,22 +326,30 @@ X -1 -2 -2 -3 -4 -2 -2 -3 -2 -2 -2 -2 -2 -3 -3 -1 -1 -5 -3 -2 -3 -1 -2 -8
                     mj = j;
                     m = h;  // update the max score in this row
                 }
-                console.log ("j",j,"pen",qpi[j],"h",h,"d",d,"e",e,"f",f);
                 
                 h -= gapoe;
                 h = !is_local || h > 0? h : 0;
+                
+                // E(i+1,j) = max{H(i,j)-q, E(i,j)} - r
                 e -= gape;
-                d |= e > h? 4 : 0;
-                e = e > h? e : h;    // e = E(i+1,j)
+                if (e > h) {    // e = E(i+1,j)
+                    d |= 4;
+                } else {
+                    e = h;
+                }   
                 E[j] = e;            // save E(i+1,j) for the next row
+                
+                // F(i,j+1) = max{H(i,j)-q, F(i,j)} - r
                 f -= gape;
-                d |= f > h? 32 : 0;
-                f = f > h? f : h;    // f = F(i,j+1)
+                if (f > h) {    // f = F(i,j+1)
+                    d |= 32;
+                } else {
+                    f = h;
+                }  
                 zi[j] = d;           // z[i,j] keeps h for the current cell and e/f for the next cell
             }
             H[end] = h1, E[end] = is_local? 0 : NEG_INF;
             if (m > max) max = m, end_i = i, end_j = mj;
-            console.log ("vars end", {h1:h1, end_i:end_i, m:m, max:max, end_j:mj});
         }
         if (is_local && max == 0) return null;
         score = is_local? max : H[qlen];
