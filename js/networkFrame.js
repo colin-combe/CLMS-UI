@@ -110,6 +110,8 @@ var compositeModel = new Backbone.Model ({
     rangeModel: CLMSUI.rangeModelInst,
     filterModel: CLMSUI.filterModelInst,
     tooltipModel: CLMSUI.tooltipModelInst,
+    selection: [], //will contain cross-link objects
+    highlights: [], //will contain cross-link objects 
     applyFilter: function () {
 		
 		var filterModel = this.get("filterModel");
