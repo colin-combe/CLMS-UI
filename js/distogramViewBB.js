@@ -129,9 +129,12 @@
                             return name + " " + self.options.ylabel;
                         },
                         value: function (value, ratio, id) {
-                            var v = value.toFixed (id === "Random" ? 1 : 0);
-                            if (id !== "Random") {
-                                v += "<span style='visibility:hidden; margin: 0'>.0</span>";
+                            var v = "";
+                            if (value !== undefined) {
+                                v = value.toFixed (id === "Random" ? 1 : 0);
+                                if (id !== "Random") {
+                                    v += "<span style='visibility:hidden; margin: 0'>.0</span>";
+                                }
                             }
                             return v;
                         }
@@ -142,7 +145,8 @@
                 }
             });
 
-            this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
+            this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
+            //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
             this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
 
@@ -159,16 +163,17 @@
 
                 var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
                 var pp1 = allProtProtLinks.next().value;
-                var allCrossLinks = pp1.crossLinks.values();
+                var crossLinkMap = pp1.crossLinks;  // do values() after filtering in next line
+                var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
                 var distances = this.model.get("distancesModel").get("distances");
 
                 //console.log ("distances", distances);
-                var distArr = global.CLMSUI.modelUtils.flattenCrossLinkMatrix (allCrossLinks, distances);
+                var distArr = global.CLMSUI.modelUtils.getCrossLinkDistances (filteredCrossLinks, distances);
+                
                 //console.log ("distArr", distArr);
 
                 var series = [distArr, []];
-                var seriesLengths = series.map (function(s) { return s.length; });
-                seriesLengths[1] = this.randArrLength;
+                var seriesLengths = [crossLinkMap.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
 
                 var maxY = d3.max(countArrays[0]);  // max calced on real data only
@@ -186,6 +191,7 @@
                     console.log ("resetting axis max");
                     this.chart.axis.max({y: maxY});
                 }
+
                 this.chart.load({
                     columns: countArrays
                 });

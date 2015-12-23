@@ -2,8 +2,9 @@
     "use strict";
 
     global.CLMSUI = global.CLMSUI || {};
+    global.CLMSUI.BackboneModelTypes = global.CLMSUI.BackboneModelTypes || {};
 
-    global.CLMSUI.AlignModelBB = global.Backbone.Model.extend ({
+    global.CLMSUI.BackboneModelTypes.AlignModel = global.Backbone.Model.extend ({
         defaults: {
             "gapOpenScore" : -3,
             "gapExtendScore" : -2,

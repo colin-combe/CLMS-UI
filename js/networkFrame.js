@@ -96,10 +96,10 @@ var showSpectrumPanel = function (show) {
 	d3.select('#spectrumPanel').style('display', show ? 'block' : 'none');
 }
 
-CLMSUI.rangeModelInst = new CLMSUI.modelUtils.RangeModel ({ scale: d3.scale.linear() });
-CLMSUI.tooltipModelInst = new CLMSUI.TooltipModelBB ();
+CLMSUI.rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({ scale: d3.scale.linear() });
+CLMSUI.tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
-var compositeModel = new Backbone.Model ({
+var compositeModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
     distancesModel: CLMSUI.distancesInst,
     clmsModel: CLMSUI.clmsModelInst,
     rangeModel: CLMSUI.rangeModelInst,
@@ -107,27 +107,17 @@ var compositeModel = new Backbone.Model ({
     tooltipModel: CLMSUI.tooltipModelInst,
     selection: [], //will contain cross-link objects
     highlights: [], //will contain cross-link objects 
-    applyFilter: function () {
-		
-		var filterModel = this.get("filterModel");
-		var crossLinks = this.get("clmsModel").get("crossLinks").values();
-		for (var crossLink of crossLinks) {
-			crossLink.filteredMatches = [];
-			var unfilteredMatchCount = crossLink.matches.length;
-			for (var i = 0; i < unfilteredMatchCount; i++){
-				var match = crossLink.matches[i];
-				var result = filterModel.filter(match);
-				//console.log("result:"+result);
-				if (result === true){
-					crossLink.filteredMatches.push(match);
-				}
-			}
-		}
-		
-	}   
 });
+   
+compositeModel.applyFilter();   // do it first time so filtered sets aren't empty
 
-compositeModel.listenTo(CLMSUI.filterModelInst, "change", compositeModel.get("applyFilter"));
+// instead of views listening to chnages in filter directly, we listen to any changes here, update filtered stuff
+// and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means 
+// the views are only notified once the changed data is ready.
+compositeModel.listenTo (CLMSUI.filterModelInst, "change", function() {
+    compositeModel.applyFilter();
+    compositeModel.trigger ("filteringDone");
+});
 
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
 

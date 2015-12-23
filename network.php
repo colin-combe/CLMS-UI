@@ -100,24 +100,21 @@
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
 -->
 
-
-    
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
+        <script type="text/javascript" src="./js/models.js"></script>
+        <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
-        <script type="text/javascript" src="./vendor/distogramBB.js"></script>
+        <script type="text/javascript" src="./js/distogramViewBB.js"></script>
         <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
-        <script type="text/javascript" src="./js/filterModelBB.js"></script>
-        <script type="text/javascript" src="./js/matrix.js"></script>
+        <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
-        <script type="text/javascript" src="./js/tooltipModelBB.js"></script>
-        <script type="text/javascript" src="./js/matrix.js"></script>   
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>   
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
-        <script type="text/javascript" src="./js/alignModelBB.js"></script>
+        <script type="text/javascript" src="./js/alignModelType.js"></script>
         <script type="text/javascript" src="./js/alignViewBB.js"></script>
         <script type="text/javascript" src="./js/alignViewBB2.js"></script>
     </head>
@@ -254,27 +251,15 @@
 
             CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (tempInteractors, tempMatches);
 
-            CLMSUI.filterModelInst = new CLMSUI.FilterModelBB ({
+            CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
                 scores: CLMSUI.clmsModelInst.get("scores")
             });
 
-            CLMSUI.distancesModel = Backbone.Model.extend({
-                flattenedDistances: function () {
-                    return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
-                }
-            });
-            CLMSUI.distancesInst = new CLMSUI.distancesModel ({
+            CLMSUI.distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
                 distances: distances
             });
             
-            
-            //  How to do a sequence alignment
-            /*
-            var res = CLMSUI.SequenceUtils.align ("CAT", "CHATTER");    // (query, target)
-            console.log ("res", res);   //res.indx has the two-way mappings between CAT and CHATTER in .qToTarget and .tToQuery
-            */    
-            
-            CLMSUI.alignmentModel = new CLMSUI.AlignModelBB ({
+            CLMSUI.alignmentModel = new CLMSUI.BackboneModelTypes.AlignModel ({
                 refSeq: "CHATWITHCATSPEWNOW",
                 compSeqs: ["CATSPAWN"],
                 //refSeq: "CHATWITHCATSPEWNOW",
@@ -297,7 +282,7 @@
 
 				if (s.keys().length > 1) {
 					//showKeyPanel(true);
-					document.getElementById('save').setAttribute('style','display:none;');
+					d3.select('#save').style('display','none');
 				}
                 
                 
@@ -308,7 +293,7 @@
                     model: CLMSUI.filterModelInst
                 });
                 
-                var miniDistModelInst = new CLMSUI.modelUtils.MinigramModelBB ();
+                var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
                 miniDistModelInst.data = function() {
                     var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
                     return matches; // matches is now an array of arrays    //  [matches, []];
@@ -348,11 +333,16 @@
             
                 
                 // Generate checkboxes
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#nglChkBxPlaceholder"), {label:"3D", eventName:"nglShow", labelFirst: false});
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#distoChkBxPlaceholder"), {label:"Distogram", eventName:"distoShow", labelFirst: false});
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#matrixChkBxPlaceholder"), {label:"Matrix", eventName:"matrixShow", labelFirst: false});
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#alignChkBxPlaceholder"), {label:"Alignment", eventName:"alignShow", labelFirst: false});
-                CLMSUI.utils.addCheckboxBackboneView (d3.select("#keyChkBxPlaceholder"), {label:"Legend", eventName:"keyShow", labelFirst: false});
+                var checkBoxData = [
+                    {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
+                    {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
+                    {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+                    {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+                    {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
+                ];
+                checkBoxData.forEach (function (cbdata) {
+                    CLMSUI.utils.addCheckboxBackboneView (d3.select("#"+cbdata.id), {label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
+                })
                 
                 // Add them to a drop-down menu (this rips them away from where they currently are)
                 new CLMSUI.DropDownMenuViewBB ({
@@ -360,13 +350,7 @@
                     model: CLMSUI.clmsModelInst,
                     myOptions: {
                         title: "View",
-                        menu: [
-                            {id: "nglChkBxPlaceholder"},
-                            {id: "distoChkBxPlaceholder"},
-                            {id: "matrixChkBxPlaceholder"},
-                            {id: "alignChkBxPlaceholder"},
-                            {id: "keyChkBxPlaceholder"},
-                        ]
+                        menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id }; })
                     }
                 })
                 
@@ -383,12 +367,10 @@
 					//distoViewer.setData(xlv.distances,xlv);
 				}
 				else {
-                    document.getElementById('viewDropdownPlaceholder').setAttribute('style','display:none;');
-					//document.getElementById('nglCbLabel').setAttribute('style','display:none;');
-					//document.getElementById('distoChkBxPlaceholder').setAttribute('style','display:none;');
-                    //document.getElementById('matrixChkBxPlaceholder').setAttribute('style','display:none;');
+                    // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
+                    d3.select('#viewDropdownPlaceholder').style("display", "none");
 				}		
-				document.getElementById('linkColourSelect').setAttribute('style','display:none;');
+				d3.select('#linkColourSelect').style('display','none');
 					
                 new CLMSUI.DropDownMenuViewBB ({
                     el: "#expDropdownPlaceholder",
@@ -407,12 +389,7 @@
                     el: "#keyPanel",
                     displayEventName: "keyShow",
                 });
-                /*
-				CLMSUI.filterFunc = function () {
-                    //xlv.checkLinks(); // needs fixed.
-                    distoViewer.render ();
-                }
-                */
+
                 //filteredModel.set("matches") = rawModel.get("matches").filter(function(match) { return CLMSUI.filterModelInst.filter (match); });
                 // then bung crosslinks on top either with own filter or build from matches ^^^
                 /*
@@ -467,23 +444,6 @@
 					}
 				});
 
-				//all this init stuff needs looked at and tidied up
-				xlv.filter = function (match) {
-					var vChar = match.validated;
-					if (vChar == 'A' && document.getElementById('A').checked && (!match.score || match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'B' && document.getElementById('B').checked  && (!match.score || match.score >= xlv.cutOff)) return true;
-					else if (vChar == 'C' && document.getElementById('C').checked && (!match.score || match.score >= xlv.cutOff)) return true;
-					else if (vChar == '?' && document.getElementById('Q').checked && (!match.score || match.score >= xlv.cutOff)) return true;
-					else if (match.autovalidated && document.getElementById('AUTO').checked && (!match.score || match.score >= xlv.cutOff))  return true;
-					else return false;
-				};
-				xlv.checkLinks();
-				xlv.initLayout();
-				xlv.initProteins();
-				changeAnnotations();
-				xlv.selfLinksShown = document.getElementById('selfLinks').checked;
-				xlv.ambigShown = document.getElementById('ambig').checked;
-				initSlider();
 				*/
 				window.onresize();
 

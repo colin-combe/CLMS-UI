@@ -130,7 +130,8 @@
         //this.resLinkColours = ["black", "blue", "red"];
         this.resLinkColours = ["green", "orange", "black"];
         
-        this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
+        this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
+        //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.model.get("rangeModel"), "change:scale", this.render); 
         this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
         
@@ -166,13 +167,15 @@
         
         var distances = this.model.get("distancesModel").get("distances");
         //var dist = (x > y) ? (distances[x] !== null ? distances[x][y] : null) : (distances[y] !== null ? distances[y][x] : null);
-        var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-        var residueLinks = allProtProtLinks.next().value.crossLinks;
+        //var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+        //var crossLinkMap = allProtProtLinks.next().value.crossLinks;
+        var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+        var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
 
         //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
-        var neighbourhood = global.CLMSUI.modelUtils.findResidueIDsInSpiral (residueLinks, b, a, 2);
+        var neighbourhood = global.CLMSUI.modelUtils.findResidueIDsInSpiral (filteredCrossLinks, b, a, 2);
         neighbourhood = neighbourhood.filter (function(clid) {
-            var est = global.CLMSUI.modelUtils.getEsterLinkType (residueLinks.get(clid));
+            var est = global.CLMSUI.modelUtils.getEsterLinkType (filteredCrossLinks.get(clid));
             return (self.filterVal === undefined || est >= self.filterVal);
         });
         var rdata = neighbourhood.map (function (clid) {
@@ -214,9 +217,9 @@
             var distances = this.model.get("distancesModel").get("distances");
             var seqLength = distances.length - 1;
             //var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-            var residueLinks = this.model.get("clmsModel").get("crossLinks").values();
-
-
+            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
+            
             //var proteins = this.model.get("clmsModel").get("interactors");
             //var residueLinks = allProtProtLinks.next().value.crossLinks.values();
 
@@ -366,7 +369,7 @@
             //for (let crossLink of residueLinks) {
             ctx.strokeStyle = "#000";
             ctx.lineWidth = 0.5;
-            for (var crossLink of residueLinks) {
+            for (var crossLink of filteredCrossLinks) {
             //var rlCount = residueLinks.length;
             //for (var rl = 0; rl < rlCount; rl++) {
                 //var crossLink = residueLinks[rl];

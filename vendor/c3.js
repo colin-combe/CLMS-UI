@@ -3844,7 +3844,6 @@
             valueFormat = config.tooltip_format_value || defaultValueFormat,
             text, i, title, value, name, bgcolor,
             orderAsc = $$.isOrderAsc();
-        
         if (config.data_groups.length === 0) {
             d.sort(function(a,b){
                 return orderAsc ? a.value - b.value : b.value - a.value;
