@@ -5,6 +5,7 @@
     width: auto;
     height: auto;
     background: #fff;
+    overflow: x-auto;
 }
 
 TABLE.alignView TD, TABLE.alignView TH, .alignView P {

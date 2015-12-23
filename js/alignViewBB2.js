@@ -6,7 +6,7 @@
     global.CLMSUI.AlignViewBB2 = global.CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
           var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
-          if(_.isFunction(parentEvents)){
+          if (_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
           return _.extend({},parentEvents,{});
@@ -16,7 +16,7 @@
             global.CLMSUI.AlignViewBB2.__super__.initialize.apply (this, arguments);
             
             var topElem = d3.select(this.el);
-            topElem.append("div").attr("class","alignView");;
+            topElem.append("div").attr("class","alignView");
             
             this.listenTo (this.model, "change:compAlignments", this.render);
             
@@ -32,18 +32,52 @@
             
             place.selectAll("p").remove();
             
-            /*
-            var topCells = table.append("tr").attr("class", "firstRow")
-                .selectAll("th")
-                .data (d3.range (maxLength))
-            ;
-            topCells.enter().append("th").text(function(d) { return d; });
-            */
-            var rows = place.selectAll("tr.seq")
+            allSeqs.slice(1).forEach (function (seq) {
+                var rstr = seq.refStr;
+                var str = seq.str;
+                var l = [];
+                var delStreak = false;
+                var misStreak = false;
+                var i = 0;
+                for (var n = 0; n < str.length; n++) {
+                    var c = str[n];
+                    var r = rstr[n];
+                    if ((c !== "-" && delStreak) || (c === r && misStreak)) {
+                        l.push (str.substring(i,n));
+                        l.push ("</span>");
+                        i = n;
+                        delStreak = false;
+                        misStreak = false;
+                    }
+              
+                    if (c === "-" && !delStreak) {
+                        delStreak = true;
+                        l.push (str.substring(i,n));
+                        l.push ("<span class='seqDelete'>");
+                        i = n;
+                    }
+                    else if (c !== "-" && c !== r && !misStreak) {
+                        misStreak = true;
+                        l.push (str.substring(i,n));
+                        l.push ("<span class='seqMismatch'>");
+                        i = n;
+                    }
+                }
+                
+                l.push (str.substring(i,n));
+                if (misStreak || delStreak) {
+                    l.push("</span>");
+                }
+
+                seq.viewStr = l.join('');
+            });
+
+            
+            place.selectAll("tr.seq")
                 .data(allSeqs)
                 .enter()
                 .append ("p")
-                .text (function(d) { return d.str; });
+                .html (function(d) { return d.viewStr || d.str; })
             ;
             
             return this;

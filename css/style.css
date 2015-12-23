@@ -613,7 +613,6 @@ tbody tr:hover td, tbody tr:hover td  {
 	left: 40px;
 	width:500px;
 	height:80px;
-    overflow-x: auto;
 }
 
 .sideOn {
