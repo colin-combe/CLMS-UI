@@ -77,7 +77,7 @@
 
         not in alphabet : JOU
     */
-    var aminos = makeAlphabetMap ("ARNDCQEGHILKMFPSTWYVBZX", 32);
+    var aminos = makeAlphabetMap ("ARNDCQEGHILKMFPSTWYVBZX", 23 /*32*/);
     
         /*
     See R/blosumJsonise.R for details
