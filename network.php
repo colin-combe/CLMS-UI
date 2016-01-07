@@ -262,10 +262,7 @@
             CLMSUI.alignmentModel = new CLMSUI.BackboneModelTypes.AlignModel ({
                 refSeq: "CHATWITHCATSPEWNOW",
                 compSeqs: ["CATSPAWN"],
-                //refSeq: "CHATWITHCATSPEWNOW",
-                //compSeqs: ["CATSPAWN"],
-                //refSeq: "CHATTER",
-                //compSeqs: ["CAT"],
+                //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
             });
             CLMSUI.alignmentModel.align();
             console.log ("Align stuff:", CLMSUI.alignmentModel.get("refAlignments"), CLMSUI.alignmentModel.get("compAlignments"));

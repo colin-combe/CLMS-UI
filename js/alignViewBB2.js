@@ -24,6 +24,7 @@
         },
         
         render: function () {
+            console.log ("rerendering alignment");
             var place = d3.select(this.el).select("div.alignView");
             
             var refs = this.model.get("refAlignments");

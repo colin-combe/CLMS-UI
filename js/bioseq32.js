@@ -272,10 +272,10 @@
         w = w > len_diff? w : len_diff;
 
         // set gap score
-        var gapo, gape; // these are penalties which should be non-negative
-        if (typeof gapsc == 'number') { gapo = 0, gape = Math.abs (gapsc); }
+		var gapo, gape, gapswg; // these are penalties which should be non-negative
+        if (typeof gapsc == 'number') { gapo = 0, gape = Math.abs (gapsc), gapswg = undefined; }
         else { 
-            gapo = Math.abs(gapsc[0]), gape = Math.abs(gapsc[1]);
+            gapo = Math.abs(gapsc[0]), gape = Math.abs(gapsc[1]), gapswg = Math.abs(gapsc[2]);
         }
         var gapoe = gapo + gape; // penalty for opening the first gap
 
@@ -302,7 +302,8 @@
             var beg = i > w? i - w : 0;
             var end = i + w + 1 < qlen? i + w + 1 : qlen; // only loop through [beg,end) of the query sequence
             if (!is_local) {
-                h1 = beg > 0? NEG_INF : 0; //-gapoe - gape * i; // changed so don't penalise a start gap (hopefully)
+                // changed so don't have to penalise a start gap (set gapswg to 0) (hopefully)
+                h1 = beg > 0? NEG_INF : (gapswg === undefined || isNaN(gapswg) ? -gapoe - gape * i : gapswg); 
                 f = beg > 0? NEG_INF : -gapoe - gapoe - gape * i;
             }
 
@@ -470,10 +471,9 @@
         var target = target || 'ATAGCTAGCTAGCATAAGC';
         var query  = query || 'AGCTAcCGCAT';
         var isLocal = isLocal || false;
-        var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
+        var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1, gapAtStart: undefined}, scores || {});
         var table = aminos;
-        //var rst = bsa_align(isLocal, target, query, [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], undefined, table);
-        var rst = bsa_align(isLocal, target, query, Blosum80, [scores.gapOpen,scores.gapExt], undefined, table);
+        var rst = bsa_align(isLocal, target, query, scores.matrix || Blosum80 || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], undefined, table);
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
         var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);
@@ -485,7 +485,7 @@
         module.exports = combine;
     } else {
         global.CLMSUI = global.CLMSUI || {};
-        global.CLMSUI.SequenceUtils = {align: align};
+        global.CLMSUI.GotohAligner = {align: align};
     }
     
     function combine () {
