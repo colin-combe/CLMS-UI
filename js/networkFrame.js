@@ -184,8 +184,9 @@ CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to bot
 //var alignViewer = new window.CLMSUI.AlignViewBB ({
 var alignViewer = new window.CLMSUI.AlignViewBB2 ({
     el:"#alignPanel",
-    model: CLMSUI.alignmentModel,
-    displayEventName: "alignShow"
+    model: CLMSUI.alignmentModelInst,
+    displayEventName: "alignShow",
+    tooltipModel: CLMSUI.tooltipModelInst
 });
 
 

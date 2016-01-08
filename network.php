@@ -259,13 +259,12 @@
                 distances: distances
             });
             
-            CLMSUI.alignmentModel = new CLMSUI.BackboneModelTypes.AlignModel ({
+            CLMSUI.alignmentModelInst = new CLMSUI.BackboneModelTypes.AlignModel ({
                 refSeq: "CHATWITHCATSPEWNOW",
                 compSeqs: ["CATSPAWN"],
                 //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
             });
-            CLMSUI.alignmentModel.align();
-            console.log ("Align stuff:", CLMSUI.alignmentModel.get("refAlignments"), CLMSUI.alignmentModel.get("compAlignments"));
+            CLMSUI.alignmentModelInst.align();
             
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {

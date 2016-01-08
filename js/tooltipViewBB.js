@@ -85,8 +85,8 @@
 
             var tx = e.pageX;
             var ty = e.pageY;
-            var tw = this.$el.width();  // outerWidth in JQuery, width in Zepto
-            var th = this.$el.height(); // ditto, but for height
+            var tw = $.zepto ? this.$el.width() : this.$el.outerWidth();  // outerWidth in JQuery, width in Zepto
+            var th = $.zepto ? this.$el.height() : this.$el.outerHeight(); // ditto, but for height
 
             var allDefinedAndNonZero = (dw && dh && tw && th && ww && wh); // test all widths/heights are non-zero and defined
             var newtx, newty;

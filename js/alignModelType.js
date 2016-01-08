@@ -13,10 +13,11 @@
             "gapExtendScore" : -2,
             "gapAtStartScore": 0,   // fixed penalty for starting with a gap (semi-global alignment)
             "refSeq": "CHATTER",
+            "refID": "Canonical",
             "compSeqs": ["CAT"],
             "compIDs": ["Demo"],
             "local": false,
-            "sequenceAligner": global.CLMSUI.GotohAligner
+            "sequenceAligner": global.CLMSUI.GotohAligner,
         },
         
         initialize: function () {
@@ -26,7 +27,7 @@
             this.listenTo (this, "change", function() { 
                 console.log ("something in align settings changed", this.changed); 
                 if (!("refAlignments" in this.changed) && !("compAlignments" in this.changed)) {
-                    console.log ("and it's not the final results so lets runs align agaian");
+                    console.log ("and it's not the final results so lets runs align again");
                     this.align();
                 }
             });
@@ -52,15 +53,15 @@
             }, this);
             
             var refResults = fullResults.map (function (res) {
-               return {str: res.fmt[1]}; 
-            });
+               return {str: res.fmt[1], label: this.get("refID")}; 
+            }, this);
             
             var compResults = fullResults.map (function (res, i) {
                return {
                    str: res.fmt[0], 
                    refStr: res.fmt[1], 
-                   indexFromRef: res.indx.qToTarget, 
-                   indexToRef: res.indx.tToQuery, 
+                   convertToRef: res.indx.qToTarget, 
+                   convertFromRef: res.indx.tToQuery, 
                    cigar: res.res[2], 
                    score: res.res[0], 
                    label: this.get("compIDs")[i]}; 

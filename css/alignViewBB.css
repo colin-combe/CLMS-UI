@@ -1,19 +1,26 @@
 .alignView {
-    font-family: Consolas, Courier;
-    font-size: 0.9em;
+    font-size: 1em;
     color: #000;
     width: auto;
     height: auto;
     background: #fff;
     overflow: x-auto;
+    cursor: pointer;
 }
 
-TABLE.alignView TD, TABLE.alignView TH, .alignView P {
+.alignView TD, .alignView TH, .alignView P {
     margin: 0;
-    padding: 0;
+    padding: 0em 0.1em;
     line-height: 1em;
     height: 1em;
 }
+
+.alignView TH {
+    background: #eef;
+    color: #668;
+    padding: 0.2em 0.1em;
+}
+
 
 .seqDelete {
     background: #44a;
@@ -21,4 +28,17 @@ TABLE.alignView TD, TABLE.alignView TH, .alignView P {
 
 .seqMismatch {
     background: #f80;
+}
+
+P.seq, TD.seq {
+    font-family: Consolas, Courier;
+}
+
+DIV.alignSettings {
+    padding-top: 1em;
+    font-size: 0.8em
+}
+
+DIV.alignSettings label {
+    min-width: 12em;
 }
