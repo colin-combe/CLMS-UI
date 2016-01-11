@@ -7,10 +7,10 @@
     global.CLMSUI.BackboneModelTypes.AlignModel = global.Backbone.Model.extend ({
         defaults: {
             "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
-            "matchScore": 1,    // match and mis should be superceded by the score matrix if present
-            "misScore": -1,
-            "gapOpenScore" : -3,
-            "gapExtendScore" : -2,
+            "matchScore": 6,    // match and mis should be superceded by the score matrix if present
+            "misScore": -6,
+            "gapOpenScore" : 10,
+            "gapExtendScore" : 1,
             "gapAtStartScore": 0,   // fixed penalty for starting with a gap (semi-global alignment)
             "refSeq": "CHATTER",
             "refID": "Canonical",
@@ -33,6 +33,8 @@
             });
             return this;
         },
+        
+        scoreMatrices: d3.entries(global.CLMSUI.Blosums),
         
         align: function () {
             console.log ("alignModel", this);

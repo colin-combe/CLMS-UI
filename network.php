@@ -114,9 +114,11 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
+        <script type="text/javascript" src="./js/blosums.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
         <script type="text/javascript" src="./js/alignViewBB.js"></script>
         <script type="text/javascript" src="./js/alignViewBB2.js"></script>
+        <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
     </head>
 
     <body>
@@ -260,6 +262,7 @@
             });
             
             CLMSUI.alignmentModelInst = new CLMSUI.BackboneModelTypes.AlignModel ({
+                scoreMatrix: CLMSUI.Blosums.Blosum80,
                 refSeq: "CHATWITHCATSPEWNOW",
                 compSeqs: ["CATSPAWN"],
                 //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)

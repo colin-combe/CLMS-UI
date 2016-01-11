@@ -9,9 +9,7 @@
           if (_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{
-              "change input[type=number]": "inputChanged"
-          });
+          return _.extend({},parentEvents,{});
         },
 
         initialize: function (viewOptions) {
@@ -21,25 +19,8 @@
             
             var topElem = d3.select(this.el);
             var topDiv = topElem.append("DIV").attr("class", "alignView");
-            var tpl = _.template ("<TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE><DIV class='<%= alignControlClass %>'></DIV>");
-            topDiv.html (tpl ({firstColHeader:"Name", secondColHeader:"Sequence", alignControlClass:"alignSettings"}));       
-            
-            var controls = topDiv.select(".alignSettings");
-            var inputArray = [
-                {label: "Gap Open Score", prop:"gapOpenScore", type:"number"},
-                {label: "Gap Extend Score", prop:"gapExtendScore", type:"number"},
-                {label: "Score Matrix", prop:"scoreMatrix", type:"input"},
-            ];
-            var inputSel = controls.selectAll("div.controlBlock")
-                .data(inputArray, function(d) { return d.prop; })
-            ;
-            var inputElems = inputSel.enter()
-                .append("div")
-                .attr("class", "controlBlock")
-            ;
-            inputElems.append("label").text(function(d) { return d.label; });
-            inputElems.append("input").attr("type",function(d) { return d.type; });
-            
+            var tpl = _.template ("<TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV>");
+            topDiv.html (tpl ({firstColHeader:"Name", secondColHeader:"Sequence", alignControlClass:"alignSettings", alignControlID: topElem.attr("id") + "Controls"}));       
             
             this.listenTo (this.model, "change:compAlignments", this.render);
             
@@ -55,9 +36,6 @@
             var comps = this.model.get("compAlignments");
             var sids = [this.model.get("refID")].concat(this.model.get("compIDs"));
             var allSeqs = refs.concat(comps);
-            
-            var controls = d3.select(this.el).selectAll(".alignSettings div.controlBlock input");
-            controls.attr("value", function(d) { return self.model.get(d.prop); });
             
             place.selectAll("tr").remove();
             
@@ -152,12 +130,5 @@
             ]).set("location", d3.event);
             this.tooltipModel.trigger ("change:location");
         },
-        
-        inputChanged: function (evt) {
-            var control = d3.select(evt.target);
-            var controlDatum = control.datum();
-            console.log (controlDatum.prop, +control.property("value"));
-            this.model.set (controlDatum.prop, +control.property("value"));
-        }
     });
 })(this);

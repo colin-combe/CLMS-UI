@@ -188,26 +188,11 @@ var alignViewer = new window.CLMSUI.AlignViewBB2 ({
     displayEventName: "alignShow",
     tooltipModel: CLMSUI.tooltipModelInst
 });
+var alignViewSettings = new window.CLMSUI.AlignSettingsViewBB ({
+    el:"#alignPanelControls",
+     model: CLMSUI.alignmentModelInst,
+});
 
-
-
-
-// Resizing of panels
-/*
-ByRei_dynDiv.api.alter = function() {
-	var mode = ByRei_dynDiv.cache.modus;
-	console.log('Div is alter...',  'ID', ByRei_dynDiv.api.elem, 'elem',  ByRei_dynDiv.api, 'Mode', mode);
-    
-	if (mode != "moveparent") {
-		if (ByRei_dynDiv.api.elem == 3){
-			spectrumViewer.resize();
-		}
-		else if (ByRei_dynDiv.api.elem == 2){
-			//stage.handleResize();
-		}
-	}
-};
-*/
 
 
 var nglViewer = new window.CLMSUI.NGLViewBB ({
