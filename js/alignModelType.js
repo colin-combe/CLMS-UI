@@ -21,7 +21,6 @@
         },
         
         initialize: function () {
-            console.log ("in alignmodel initializer");
             // do more with these change listeners if we want to automatically run align function on various parameters changing;
             // or we may just want to call align manually when things are known to be done
             this.listenTo (this, "change", function() { 

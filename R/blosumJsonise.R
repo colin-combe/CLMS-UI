@@ -30,7 +30,7 @@ makeJSONBlosumMatrix = function (blosumRaw, outputFilename, leftCut = 1, topCut 
   # collapse header row then remove numbers to make ordered alphabet, if no header row alphabet will be empty string
   blossAlphabet <- gsub("\\d", "", paste(blossHeader, collapse="")) 
   # combine matrix and alphabet into one object
-  blossObj <- list(alphabet=blossAlphabet, matrix=blossMatNum)
+  blossObj <- list(alphabetInOrder=blossAlphabet, scoreMatrix=blossMatNum)
  
   blossJSON <- toJSON (blossObj) # turn it into a json object
   writeLines (blossJSON, outputFilename, useBytes=T) # write it to a json file
