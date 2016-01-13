@@ -19,8 +19,14 @@
             
             var topElem = d3.select(this.el);
             var topDiv = topElem.append("DIV").attr("class", "alignView");
-            var tpl = _.template ("<TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV>");
-            topDiv.html (tpl ({firstColHeader:"Name", secondColHeader:"Sequence", alignControlClass:"alignSettings", alignControlID: topElem.attr("id") + "Controls"}));       
+            var tpl = _.template ("<TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID2 %>'></DIV>");
+            topDiv.html (tpl ({
+                    firstColHeader:"Name", 
+                    secondColHeader:"Sequence", 
+                    alignControlClass:"alignSettings", 
+                    alignControlID: topElem.attr("id") + "Controls",
+                    alignControlID2: topElem.attr("id") + "Controls2",
+            }));       
             
             this.listenTo (this.model, "change:compAlignments", this.render);
             
@@ -118,8 +124,8 @@
             var str = d.str;
             var charWidth = width / str.length;
             var charIndex = Math.floor (xx / charWidth);
-            console.log ("@", xx, width, charIndex);
-            console.log (d.convertToRef, d.convertFromRef);
+            //console.log ("@", xx, width, charIndex);
+            //console.log (d.convertToRef, d.convertFromRef);
             
             var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
                 

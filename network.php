@@ -269,6 +269,12 @@
             });
             CLMSUI.alignmentModelInst.align();
             
+            
+            CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection();
+            CLMSUI.blosumCollInst.fetch();
+            
+            
+            
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {
             

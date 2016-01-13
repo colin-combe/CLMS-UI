@@ -33,7 +33,7 @@
             return this;
         },
         
-        scoreMatrices: d3.entries(global.CLMSUI.Blosums),
+        //scoreMatrices: d3.entries(global.CLMSUI.Blosums),
         
         align: function () {
             console.log ("alignModel", this);

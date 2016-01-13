@@ -190,8 +190,28 @@ var alignViewer = new window.CLMSUI.AlignViewBB2 ({
 });
 var alignViewSettings = new window.CLMSUI.AlignSettingsViewBB ({
     el:"#alignPanelControls",
-     model: CLMSUI.alignmentModelInst,
+    model: CLMSUI.alignmentModelInst,
 });
+var alignViewBlosumSelector = new window.CLMSUI.CollectionAsSelectViewBB ({
+    el:"#alignPanelControls2",
+    collection: CLMSUI.blosumCollInst,
+    label: "Score Matrix",
+    selectionEventName: "blosumSelected",
+});
+alignViewBlosumSelector.listenTo (CLMSUI.blosumCollInst, "sync", function () { 
+    console.log ("blosum collection fetched and synced");
+    alignViewBlosumSelector.render();
+});
+console.log ("alignblosumselectview", alignViewBlosumSelector);
+alignViewBlosumSelector.listenTo (CLMSUI.alignmentModelInst, "change:scoreMatrix", function(sm) {
+    console.log ("yo", sm);
+    alignViewBlosumSelector.setSelected (sm.key);
+});
+window.CLMSUI.alignmentModelInst.listenTo (window.CLMSUI.vent, "blosumSelected", function (blosumModel) {
+    console.log ("blosum selector event args", arguments);
+    window.CLMSUI.alignmentModelInst.set ("scoreMatrix", blosumModel.attributes);
+});
+
 
 
 
