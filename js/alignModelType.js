@@ -37,9 +37,11 @@
         
         align: function () {
             console.log ("alignModel", this);
+            var matrix = this.get("scoreMatrix");
+            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
             
             var scores = {
-                matrix: this.get("scoreMatrix"),
+                matrix: matrix,
                 match: this.get("matchScore"), 
                 mis: this.get("misScore"), 
                 gapOpen: this.get("gapOpenScore"), 

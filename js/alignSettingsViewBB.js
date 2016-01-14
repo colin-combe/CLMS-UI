@@ -85,47 +85,56 @@
         },
         
         initialize: function (viewOptions) {
-            console.log ("init col view", viewOptions);
             var topElem = d3.select(this.el).append("DIV").attr("class", "controlBlock");
             var tpl = _.template ("<LABEL><%= label %></LABEL><SELECT name='<%= name %>'></SELECT>");
-            topElem.html (tpl ({label:viewOptions.label || "Label", name:"ScoreMatrix"})); 
-            this.selectionEventName = viewOptions.selectionEventName;
+            topElem.html (tpl ({label: viewOptions.label || "Label", name: viewOptions.name || "Name"})); 
+            
+            this.listenTo (this.collection, "sync", function () { 
+                console.log ("Collection fetched and synced for view", this);
+                this.render();
+            });
+            // If collection has fetched quickly then the sync event maybe fired before we registered the listener
+            // above, thus we add an immediate this.render() afterwards as a safety net
             this.render();
         },
         
         render: function () {
-            console.log ("control rerendering");
+            console.log ("blosum select control rerendering");
+            var self = this;
             
-            var options = d3.select(this.el).select("select").selectAll("option").data (this.collection.models);
+            var options = d3.select(this.el).select("select").selectAll("option")
+                .data (this.collection.models, function(d) { return d.cid; })
+            ;
             
             options
                 .enter()
                 .append("option")
-                .attr("value", function(d) { return d.get("key"); })    // because d is a backbone Model we use the .get notation to get values
+                // because d will be a Backbone Model we use the .get notation to get values
+                .attr("value", function(d) { return d.get("key"); })  
                 .text (function(d) { return d.get("key"); })
             ;
             
+            options.property ("selected", function(d) { return d.cid == self.lastSelected; })
+            
             options.exit().remove();
-            
-           // setSelected ();
-            
+
             return this;
         },
-        
-        setSelected: function (optionKey) {
-            var options = d3.selectAll("option");
-            /*
-            options.property("selected", function(d) {
-                console.log ("d", d);
-                return d ? d.key === optionKey : false;
-            });
-            */
+
+        // In case the selected score matrix is set from another view or model, we should reflect that choice here
+        setSelected: function (aModel) {
+            console.log ("aModel", aModel);
+            if (aModel && aModel.cid !== this.lastSelectec) {
+                this.lastSelected = aModel.cid;
+                this.render();
+            }
+            return this;
         },
         
         selectChanged: function (evt) {
             var control = d3.select(evt.target);
-            var selectedOption = control.selectAll("option").filter(function(d,i) { return i == control.property("selectedIndex"); });
-            CLMSUI.vent.trigger (this.selectionEventName, selectedOption.datum());
+            var selectedOption = control.selectAll("option").filter(function() { return this.selected; });
+            this.collection.trigger ("modelSelected", selectedOption.datum());
         }
     });
 })(this);

@@ -181,7 +181,9 @@ CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to bot
 
 
 
-//var alignViewer = new window.CLMSUI.AlignViewBB ({
+// three alignment sub-views (though two get poked into placeholders in the first)
+// first shows results of alignment, second allows changing of numerical parameters,
+// third allows choosing of blosum matrices stored as a backbone Model Collection
 var alignViewer = new window.CLMSUI.AlignViewBB2 ({
     el:"#alignPanel",
     model: CLMSUI.alignmentModelInst,
@@ -196,20 +198,16 @@ var alignViewBlosumSelector = new window.CLMSUI.CollectionAsSelectViewBB ({
     el:"#alignPanelControls2",
     collection: CLMSUI.blosumCollInst,
     label: "Score Matrix",
-    selectionEventName: "blosumSelected",
+    name: "BlosumSelector",
 });
-alignViewBlosumSelector.listenTo (CLMSUI.blosumCollInst, "sync", function () { 
-    console.log ("blosum collection fetched and synced");
-    alignViewBlosumSelector.render();
-});
-console.log ("alignblosumselectview", alignViewBlosumSelector);
-alignViewBlosumSelector.listenTo (CLMSUI.alignmentModelInst, "change:scoreMatrix", function(sm) {
-    console.log ("yo", sm);
-    alignViewBlosumSelector.setSelected (sm.key);
-});
-window.CLMSUI.alignmentModelInst.listenTo (window.CLMSUI.vent, "blosumSelected", function (blosumModel) {
-    console.log ("blosum selector event args", arguments);
-    window.CLMSUI.alignmentModelInst.set ("scoreMatrix", blosumModel.attributes);
+
+// Set up initially selected option in BlosumSelector view to match the current scoreMatrix model.
+// This is needed as the sync on the BlosumCollection may have completed before we reach this point, thus 
+// the following change:scoreMatrix event may not be registered in time to be at the end of the sync eventchain
+alignViewBlosumSelector.setSelected (CLMSUI.alignmentModelInst.get("scoreMatrix"));
+// and then make it track it thereafter
+alignViewBlosumSelector.listenTo (CLMSUI.alignmentModelInst, "change:scoreMatrix", function(alignModel, scoreMatrix) {
+    alignViewBlosumSelector.setSelected (scoreMatrix);
 });
 
 
