@@ -30,10 +30,23 @@
                     this.align();
                 }
             });
+            
             return this;
         },
         
-        //scoreMatrices: d3.entries(global.CLMSUI.Blosums),
+        addSequences: function (newSequences) {
+            if (typeof (newSequences) === "string") {
+                newSequences = [newSequences];
+            }
+            
+            newSequences.forEach (function (seq) {
+                this.get("compSeqs").push(seq);
+            }, this);
+            
+            console.log ("newSequences", newSequences);
+            
+            return this;
+        },
         
         align: function () {
             console.log ("alignModel", this);
@@ -71,6 +84,8 @@
                 }, 
                 this
             );
+            
+            console.log ("rr", refResults, compResults);
             
             this
                 .set ("refAlignments", refResults)

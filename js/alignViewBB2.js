@@ -19,7 +19,7 @@
             
             var topElem = d3.select(this.el);
             var topDiv = topElem.append("DIV").attr("class", "alignView");
-            var tpl = _.template ("<TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID2 %>'></DIV>");
+            var tpl = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID2 %>'></DIV>");
             topDiv.html (tpl ({
                     firstColHeader:"Name", 
                     secondColHeader:"Sequence", 
@@ -41,11 +41,12 @@
             var refs = this.model.get("refAlignments");
             var comps = this.model.get("compAlignments");
             var sids = [this.model.get("refID")].concat(this.model.get("compIDs"));
-            var allSeqs = refs.concat(comps);
+            
+            console.log ("allSeqs", allSeqs);
             
             place.selectAll("tr").remove();
             
-            allSeqs.slice(1).forEach (function (seq) {
+            comps.forEach (function (seq) {
                 var rstr = seq.refStr;
                 var str = seq.str;
                 var l = [];
@@ -84,6 +85,9 @@
 
                 seq.decoratedStr = l.join('');
             });
+            
+            var allSeqs = [];
+            refs.forEach (function(r,i) { allSeqs.push(r); allSeqs.push(comps[i]); });
 
             var containerID = d3.select(this.el).attr("id");
             
@@ -94,7 +98,7 @@
                 .attr ("id", function(d,i) { return containerID+sids[i]; })
             ;
             
-            seqRows.append("td")
+            seqRows.append("th")
                 .attr("class", "seqLabel")
                 .html (function(d) { return d.label; })
             ;

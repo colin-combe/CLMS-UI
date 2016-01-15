@@ -113,6 +113,11 @@
 							displayedDistanceColor: "tomato"
 						}
 					);
+                    
+                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage);
+                    console.log ("stage", self.stage, "\nhas sequences", sequences);
+                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                    self.model.trigger ("3dsync", sequences);   
 				});
 				
 			}        
@@ -120,6 +125,8 @@
             this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
             //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
         },
+        
+
 
         downloadImage: function () {
 			this.stage.exportImage( 1, true, false, false );

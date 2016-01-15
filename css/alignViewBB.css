@@ -7,6 +7,19 @@
     cursor: pointer;
 }
 
+.alignView DIV.tableWrapper {
+    overflow-x:auto;
+    width: 100%;
+}
+
+
+DIV.tableWrapper TABLE TR TH:first-child {
+     position: fixed;
+     width:6em;
+}
+
+
+
 .alignView TABLE {
     color: #000;
 }
@@ -18,7 +31,16 @@
     height: 1em;
 }
 
-.alignView TH {
+DIV.tableWrapper TABLE TR TD, DIV.tableWrapper TABLE TR TH:not(:first-child) {
+     padding-left: 6em;
+}
+
+
+.alignView TBODY TH {
+    background: #eef;
+}
+
+.alignView THEAD TH {
     background: #eef;
     color: #668;
     padding: 0.2em 0.1em;
