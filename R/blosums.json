@@ -1,18 +1,5 @@
-(function(global) {
-    "use strict";
-
-    global.CLMSUI = global.CLMSUI || {};
-    global.CLMSUI.Blosums = global.CLMSUI.Blosums || {};
-    
-    /*
-    Sources:
-    http://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/data/
-    ftp://ftp.ncbi.nih.gov/blast/matrices/BLOSUM100
-    
-    See R/blosumJsonise.R for details on array conversion from text table
-    */
-    
-    global.CLMSUI.Blosums.Blosum80 = {
+{
+    "Blosum80": {
          "alphabetInOrder": "ARNDCQEGHILKMFPSTWYVBJZX*",
         "scoreMatrix": [
              [ 5, -2, -2, -2, -1, -1, -1, 0, -2, -2, -2, -1, -1, -3, -1, 1, 0, -3, -2, 0, -2, -2, -1, -1, -6 ],
@@ -41,9 +28,9 @@
             [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -6 ],
             [ -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1 ] 
         ] 
-    };
+    },
     
-    global.CLMSUI.Blosums.Blosum62 = {
+    "Blosum62": {
          "alphabetInOrder": "ARNDCQEGHILKMFPSTWYVBJZX*",
         "scoreMatrix": [
              [ 4, -1, -2, -2, 0, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1, 1, 0, -3, -2, 0, -2, -1, -1, -1, -4 ],
@@ -72,9 +59,9 @@
             [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -4 ],
             [ -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, 1 ] 
         ] 
-    };
+    },
     
-    global.CLMSUI.Blosums.Blosum90 = {
+    "Blosum90": {
          "alphabetInOrder": "ARNDCQEGHILKMFPSTWYVBJZX*",
         "scoreMatrix": [
              [ 5, -2, -2, -3, -1, -1, -1, 0, -2, -2, -2, -1, -2, -3, -1, 1, 0, -4, -3, -1, -2, -2, -1, -1, -6 ],
@@ -103,9 +90,9 @@
             [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -6 ],
             [ -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1 ] 
         ] 
-    };
+    },
     
-    global.CLMSUI.Blosums.Blosum100 = {
+    "Blosum100": {
         "alphabetInOrder": "ARNDCQEGHILKMFPSTWYVBZX*",
         "scoreMatrix": [
              [ 8, -3, -4, -5, -2, -2, -3, -1, -4, -4, -4, -2, -3, -5, -2, 1, -1, -6, -5, -2, -4, -2, -2, -10 ],
@@ -133,38 +120,5 @@
             [ -2, -3, -3, -4, -5, -2, -3, -4, -4, -3, -3, -3, -3, -4, -4, -2, -2, -6, -4, -3, -4, -2, -3, -10 ],
             [ -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, 1 ] 
         ] 
-    };
-
-    /* 
-        Standard AA abbreviation alphabet
-        
-        Ala     A       Alanine
-        Arg     R       Arginine
-        Asn     N       Asparagine
-        Asp     D       Aspartic acid (Aspartate)
-        Cys     C       Cysteine
-        Gln     Q       Glutamine
-        Glu     E       Glutamic acid (Glutamate)
-        Gly     G       Glycine
-        His     H       Histidine
-        Ile     I       Isoleucine
-        Leu     L       Leucine
-        Lys     K       Lysine
-        Met     M       Methionine
-        Phe     F       Phenylalanine
-        Pro     P       Proline
-        Ser     S       Serine
-        Thr     T       Threonine
-        Trp     W       Tryptophan
-        Tyr     Y       Tyrosine
-        Val     V       Valine
-        Asx     B       Aspartic acid or Asparagine
-        Glx     Z       Glutamine or Glutamic acid.
-        Xle     J       Leucine or Isoleucine
-        Xaa     X       Any amino acid.
-        TERM            termination codon
-
-        not in alphabet : OU
-    */
-
-})(this);
+    }
+}

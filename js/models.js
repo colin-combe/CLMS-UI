@@ -65,6 +65,32 @@
             }
         }),
         
-    } );
+        BlosumModel: global.Backbone.Model.extend ({
+            initialize: function() {
+                console.log ("Blosum model initialised");
+                console.log ("model", this);
+            },
+        }),
+    });
+    
+    // this is separate to get round the fact BlosumModel won't be available within the same declaration
+    global.CLMSUI.BackboneModelTypes = global._.extend (global.CLMSUI.BackboneModelTypes || {}, 
+    {
+        BlosumCollection: global.Backbone.Collection.extend ({
+            model: global.CLMSUI.BackboneModelTypes.BlosumModel,
+            url: "R/blosums.json",
+            parse: function(response) {
+                // turn json object into array, add keys to value parts, then export just the values
+                var entries = global.d3.entries (response);
+                var values = entries.map (function (entry) {
+                    entry.value.key = entry.key;
+                    return entry.value;
+                });
+
+                console.log ("response", response, values);
+                return values;
+            }
+        }),
+    });
  
 })(this);
