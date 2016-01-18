@@ -9,7 +9,9 @@
           if (_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{});
+          return _.extend({
+              "mouseleave td.seq>span" : "clearTooltip",
+          }, parentEvents, {});
         },
 
         initialize: function (viewOptions) {
@@ -107,38 +109,52 @@
                 .attr("class", "seq")
                 .append ("span")
                     .html (function(d) { return d.decoratedStr || d.str; })
+                    // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
                     .on ("mousemove", function(d) {
-                        if (self.tooltipModel) {
-                            self.invokeTooltip (d, this);
-                        }
-                    })
-                    .on ("mouseleave", function() {
-                        if (self.tooltipModel) {
-                            self.tooltipModel.set ("contents", null);
-                        }
+                        self.invokeTooltip (d, this);
                     })
             ;
             
             return this;
         },
         
+        clearTooltip: function (evt) {
+            if (this.tooltipModel) {
+                 this.tooltipModel.set ("contents", null);
+                /*
+                var xs = {offsetX: evt.offsetX, clientX: evt.clientX, layerX: evt.layerX, pageX: evt.pageX, screenX: evt.screenX, x: evt.x};
+                var offs = {offsetLeft: evt.target.offsetLeft, scrollLeft: evt.target.scrollLeft};
+                console.log ("clear xs", xs, "offs", offs);
+                */
+            }
+        },
+        
         invokeTooltip: function (d, elem) {
-            var xx = d3.event.offsetX;
-            var width = $.zepto ? $(elem).width() : $(elem).outerWidth();
-            var str = d.str;
-            var charWidth = width / str.length;
-            var charIndex = Math.floor (xx / charWidth);
-            //console.log ("@", xx, width, charIndex);
-            //console.log (d.convertToRef, d.convertFromRef);
-            
-            var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
+            if (this.tooltipModel) {
+                var xx = global.CLMSUI.utils.crossBrowserElementX (d3.event, elem);
+                var width = $.zepto ? $(elem).width() : $(elem).outerWidth();
+                var str = d.str;
+                var charWidth = width / str.length;
+                var charIndex = Math.floor (xx / charWidth);
                 
-            this.tooltipModel.set("header", d.label).set("contents", [
-                ["Index", charIndex],
-                ["Value", str[charIndex]],
-                ["Ref Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
-            ]).set("location", d3.event);
-            this.tooltipModel.trigger ("change:location");
+                /*
+                var evt = d3.event;
+                var xs = {offsetX: evt.offsetX, clientX: evt.clientX, layerX: evt.layerX, pageX: evt.pageX, screenX: evt.screenX, x: evt.x};
+                var offs = {offsetLeft: elem.offsetLeft, scrollLeft: elem.scrollLeft};
+                console.log ("moved xs", xs, "offs", offs);
+                console.log ("@", xx, width, charIndex, d3.event, d3.event.target, elem);
+                //console.log (d.convertToRef, d.convertFromRef);
+                */
+                
+                var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
+
+                this.tooltipModel.set("header", d.label).set("contents", [
+                    ["Index", charIndex],
+                    ["Value", str[charIndex]],
+                    ["Ref Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
+                ]).set("location", d3.event);
+                this.tooltipModel.trigger ("change:location");
+            }
         },
     });
 })(this);

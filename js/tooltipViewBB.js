@@ -75,7 +75,7 @@
         setPosition: function () {
             var e = this.model.get("location");
             
-            console.log ("event", e);
+            //console.log ("event", e);
 
             var tooltip = d3.select(this.el);
             var dw = $(document).width();

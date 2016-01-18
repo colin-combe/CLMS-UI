@@ -44,6 +44,17 @@ CLMSUI.utils = {
         return (zeptoElem.css('display') != 'none' && zeptoElem.css('visibility') != 'hidden' && zeptoElem.height()>0);
     },
     
+    // try .layerX / .layerY first as .offsetX / .offsetY is wrong in firefox
+    // in fact don't use layerX / offsetX, they're unreliable cross-browser
+    crossBrowserElementX : function (evt, optElem) {
+        return evt.clientX - $(optElem || evt.target).offset().left;    // use evt.target if no optional element passed
+        //return (evt.layerX || evt.offsetX) - evt.target.offsetLeft;    
+    },
+    
+    crossBrowserElementY : function (evt) {
+        return evt.clientY - $(optElem || evt.target).offset().top; 
+    },
+    
     checkBoxView: Backbone.View.extend ({
         tagName: "span",
         className: "buttonPlaceholder",

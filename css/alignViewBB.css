@@ -7,15 +7,33 @@
     cursor: pointer;
 }
 
-.alignView DIV.tableWrapper {
-    overflow-x:auto;
-    width: 100%;
+/* Following 6 rules are for fixed first column and fixed header row */
+DIV.tableWrapper TABLE {
+    table-layout: fixed;
 }
 
+DIV.tableWrapper TABLE TBODY {
+    display: block;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
 
-DIV.tableWrapper TABLE TR TH:first-child {
-     position: fixed;
+DIV.tableWrapper TABLE THEAD {
+    display: block;
+    margin: 0;
+    background: #eef;
+}
+
+DIV.tableWrapper TABLE TH:first-child {
      width:6em;
+}
+
+DIV.tableWrapper TABLE TBODY TH:first-child {
+     position: fixed;
+}
+
+DIV.tableWrapper TABLE TBODY TD {
+     padding-left: 6em;
 }
 
 
@@ -31,27 +49,23 @@ DIV.tableWrapper TABLE TR TH:first-child {
     height: 1em;
 }
 
-DIV.tableWrapper TABLE TR TD, DIV.tableWrapper TABLE TR TH:not(:first-child) {
-     padding-left: 6em;
-}
-
-
-.alignView TBODY TH {
+.alignView TH {
     background: #eef;
 }
 
 .alignView THEAD TH {
-    background: #eef;
     color: #668;
     padding: 0.2em 0.1em;
 }
 
 
 .seqDelete {
+    pointer-events: none;   /* so events aren't captured by substrings in sequence readout */
     background: #44a;
 }
 
 .seqMismatch {
+    pointer-events: none;   /* so events aren't captured by substrings in sequence readout */
     background: #f80;
 }
 
