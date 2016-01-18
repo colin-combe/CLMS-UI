@@ -60,6 +60,7 @@
 	}
 	else {
 		echo "var HSA_Active = false;";
+		echo "var distances = [];";
 	}
 	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
@@ -205,14 +206,13 @@
 
 		echo '['
 				. '\''.$pid . '\','
-				. '\'' . $name . "'" . ','
-				. $seq . ','
-			//	. '\'' . str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["description"]))) . "'" .	','
-				. '\'' . str_replace("'", "", $line["accession"]) . '\''
-			//	. '\'' . $line["size"] . '\''
+				. '\'' . str_replace("'", "", $line["accession"]) . '\','
+				. '\'' . $name . "',"
+				. $seq
 				. "]";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
-		if ($line) echo ',';
+		if ($line) { echo ','; }
+		echo "\n";
 	}
 	echo "];\n";
 
