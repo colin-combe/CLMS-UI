@@ -181,7 +181,9 @@ CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to bot
 
 
 
-//var alignViewer = new window.CLMSUI.AlignViewBB ({
+// three alignment sub-views (though two get poked into placeholders in the first)
+// first shows results of alignment, second allows changing of numerical parameters,
+// third allows choosing of blosum matrices stored as a backbone Model Collection
 var alignViewer = new window.CLMSUI.AlignViewBB2 ({
     el:"#alignPanel",
     model: CLMSUI.alignmentModelInst,
@@ -190,11 +192,30 @@ var alignViewer = new window.CLMSUI.AlignViewBB2 ({
 });
 var alignViewSettings = new window.CLMSUI.AlignSettingsViewBB ({
     el:"#alignPanelControls",
-     model: CLMSUI.alignmentModelInst,
+    model: CLMSUI.alignmentModelInst,
+});
+var alignViewBlosumSelector = new window.CLMSUI.CollectionAsSelectViewBB ({
+    el:"#alignPanelControls2",
+    collection: CLMSUI.blosumCollInst,
+    label: "Score Matrix",
+    name: "BlosumSelector",
+});
+
+// Set up initially selected option in BlosumSelector view to match the current scoreMatrix model.
+// This is needed as the sync on the BlosumCollection may have completed before we reach this point, thus 
+// the following change:scoreMatrix event may not be registered in time to be at the end of the sync eventchain
+alignViewBlosumSelector.setSelected (CLMSUI.alignmentModelInst.get("scoreMatrix"));
+// and then make it track it thereafter
+alignViewBlosumSelector.listenTo (CLMSUI.alignmentModelInst, "change:scoreMatrix", function(alignModel, scoreMatrix) {
+    alignViewBlosumSelector.setSelected (scoreMatrix);
 });
 
 
 
+CLMSUI.alignmentModelInst.listenTo (compositeModel, "3dsync", function (sequences) {
+    console.log ("sequences", sequences);
+    CLMSUI.alignmentModelInst.addSequences (sequences);
+});
 var nglViewer = new window.CLMSUI.NGLViewBB ({
     el: "#nglPanel", 
     model: compositeModel,

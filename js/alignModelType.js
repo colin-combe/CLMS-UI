@@ -30,16 +30,31 @@
                     this.align();
                 }
             });
+            
             return this;
         },
         
-        scoreMatrices: d3.entries(global.CLMSUI.Blosums),
+        addSequences: function (newSequences) {
+            if (typeof (newSequences) === "string") {
+                newSequences = [newSequences];
+            }
+            
+            newSequences.forEach (function (seq) {
+                this.get("compSeqs").push(seq);
+            }, this);
+            
+            console.log ("newSequences", newSequences);
+            
+            return this;
+        },
         
         align: function () {
             console.log ("alignModel", this);
+            var matrix = this.get("scoreMatrix");
+            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
             
             var scores = {
-                matrix: this.get("scoreMatrix"),
+                matrix: matrix,
                 match: this.get("matchScore"), 
                 mis: this.get("misScore"), 
                 gapOpen: this.get("gapOpenScore"), 
@@ -69,6 +84,8 @@
                 }, 
                 this
             );
+            
+            console.log ("rr", refResults, compResults);
             
             this
                 .set ("refAlignments", refResults)

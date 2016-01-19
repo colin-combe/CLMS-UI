@@ -114,9 +114,7 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>   
 		<script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
-        <script type="text/javascript" src="./js/blosums.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
-        <script type="text/javascript" src="./js/alignViewBB.js"></script>
         <script type="text/javascript" src="./js/alignViewBB2.js"></script>
         <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
     </head>
@@ -261,13 +259,30 @@
                 distances: distances
             });
             
+            
             CLMSUI.alignmentModelInst = new CLMSUI.BackboneModelTypes.AlignModel ({
-                scoreMatrix: CLMSUI.Blosums.Blosum80,
                 refSeq: "CHATWITHCATSPEWNOW",
                 compSeqs: ["CATSPAWN"],
                 //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
             });
-            CLMSUI.alignmentModelInst.align();
+     
+            // bad - I first used BlosumCollection({}) which added one empty model to the collection before fetch overwrote it.
+            CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection(); 
+
+            // when the blosum Collection is loaded, we select one of its models as being selected
+            CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
+                this.trigger ("modelSelected", this.models[3]);  
+            });
+            // and when the blosum Collection fires a modelSelected event it is accompanied by the chosen blosum Model
+            // so we get the alignmentModel to listen for this and deal accordingly
+            CLMSUI.alignmentModelInst.listenTo (CLMSUI.blosumCollInst, "modelSelected", function (blosumModel) {
+                // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment 
+                // (done internally within alignmentModelInst)
+                this.set ("scoreMatrix", blosumModel);
+            });
+            // Do the asynchronous fetching after the above two events have been set up
+            CLMSUI.blosumCollInst.fetch();
+            
             
 			//~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
 			window.addEventListener("load", function() {

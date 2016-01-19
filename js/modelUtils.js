@@ -160,4 +160,76 @@ CLMSUI.modelUtils = {
         }
         return a;
     },
+    
+    amino3to1Map: {
+         "Ala": "A",
+        "Asx": "B",
+        "Cys": "C",
+        "Asp": "D",
+        "Glu": "E",
+        "Phe": "F",
+        "Gly": "G",
+        "His": "H",
+        "Ile": "I",
+        "Lys": "K",
+        "Leu": "L",
+        "Met": "M",
+        "Asn": "N",
+        "Pro": "P",
+        "Gln": "Q",
+        "Arg": "R",
+        "Ser": "S",
+        "Thr": "T",
+        "Val": "V",
+        "Trp": "W",
+        "X": "X",
+        "Tyr": "Y",
+        "Glx": "Z",
+        "*": "*",
+        "ALA": "A",
+        "ASX": "B",
+        "CYS": "C",
+        "ASP": "D",
+        "GLU": "E",
+        "PHE": "F",
+        "GLY": "G",
+        "HIS": "H",
+        "ILE": "I",
+        "LYS": "K",
+        "LEU": "L",
+        "MET": "M",
+        "ASN": "N",
+        "PRO": "P",
+        "GLN": "Q",
+        "ARG": "R",
+        "SER": "S",
+        "THR": "T",
+        "VAL": "V",
+        "TRP": "W",
+        "X": "X",
+        "TYR": "Y",
+        "GLX": "Z",
+        "*": "*" ,
+    },
+    
+    getSequencesFromNGLModel: function (stage) {
+        var sequences = [];
+
+        stage.eachComponent (function (comp) {   
+            comp.structure.eachModel (function(m) {
+                var resList = [];
+
+                m.eachChain (function(c) {
+                    c.eachResidue (function (r) {
+                        var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
+                        resList.push (oneLetter || "X");    
+                    });
+                });
+
+                sequences[sequences.length] = resList.join("");
+            });
+        });  
+
+        return sequences;
+    },
 };

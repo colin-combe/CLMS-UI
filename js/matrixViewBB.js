@@ -8,8 +8,9 @@
 (function(global) {
     "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
     
+    global.CLMSUI = global.CLMSUI || {};
+    console.log ("in matrix load");
     global.CLMSUI.DistanceMatrixViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
     events: function() {
       var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
@@ -206,6 +207,23 @@
         
         self.panZoom();
     },
+        
+    // That's how you define the value of a pixel //
+    // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
+    // moved from out of render() as firefox in strict mode objected
+        
+    drawPixel: function (cd, pixi, r, g, b, a) {
+        var index = pixi * 4;
+        cd[index] = r;
+        cd[index + 1] = g;
+        cd[index + 2] = b;
+        cd[index + 3] = a;
+    },
+            
+    drawPixel32: function (cd, pixi, r, g, b, a) {
+        var index = pixi;
+        cd[index] = (a << 24) + (b << 16) + (g << 8) + r;
+    },
     
     render: function () {
 
@@ -241,22 +259,6 @@
             var rangeDomain = self.model.get("rangeModel").get("scale").domain();
             var min = rangeDomain[1];
             var max = rangeDomain[2];
-
-            // That's how you define the value of a pixel //
-            // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
-
-            function drawPixel (cd, pixi, r, g, b, a) {
-                var index = pixi * 4;
-                cd[index] = r;
-                cd[index + 1] = g;
-                cd[index + 2] = b;
-                cd[index + 3] = a;
-            }
-            
-            function drawPixel32 (cd, pixi, r, g, b, a) {
-                var index = pixi;
-                cd[index] = (a << 24) + (b << 16) + (g << 8) + r;
-            }
 
             //CLMSUI.times = CLMSUI.times || [];
             var start = performance.now();
@@ -340,7 +342,7 @@
                             var distance = row[j];
                             if (distance && distance < max) {
                                 var col = (distance > min ? colourArray[1] : colourArray[0]);
-                                drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                                this.drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                                 //drawPixel32 (data, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                             }
                         }
