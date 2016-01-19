@@ -314,5 +314,5 @@ function saveLayout () {
 
 function changeAnnotations(){
 	var annotationSelect = document.getElementById('annotationsSelect');
-	xlv.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
+	crosslinkViewer.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
 };
