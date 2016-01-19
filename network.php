@@ -256,12 +256,18 @@
                 //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
             });
             CLMSUI.alignmentModelInst.listenTo (CLMSUI.vent, "uniprotDataParsed", function () {
-                console.log (this, "MODEL", CLMSUI, CLMSUI.clmsModelInst, "args", arguments);
+                console.log (this, "MODEL",$.extend({},CLMSUI), CLMSUI.clmsModelInst, "args", arguments);
                 console.log ("uniprot sequences available");
-                //CLMSUI.alignmentModelInst.addSequences (sequences);
+                //this.addSequences (sequences);
             })
-
             
+            var TestModel = Backbone.Model.extend ({
+                initialize: function () {
+                    console.log ("new testmodel initialised", this);
+                }
+            })
+            console.log ("inbetween");
+            var testModelInst = new TestModel();
             
             CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (tempInteractors, tempMatches);
 
