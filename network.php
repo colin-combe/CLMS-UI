@@ -260,16 +260,12 @@
                 console.log ("uniprot sequences available");
                 //this.addSequences (sequences);
             })
-            
-            var TestModel = Backbone.Model.extend ({
-                initialize: function () {
-                    console.log ("new testmodel initialised", this);
-                }
-            })
-            console.log ("inbetween");
-            var testModelInst = new TestModel();
-            
-            CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (tempInteractors, tempMatches);
+
+
+	
+			var options = {rawInteractors: tempInteractors, rawMatches: tempMatches};
+            CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+
 
             CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
                 scores: CLMSUI.clmsModelInst.get("scores")
