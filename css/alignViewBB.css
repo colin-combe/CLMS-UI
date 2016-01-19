@@ -25,7 +25,7 @@ DIV.tableWrapper TABLE THEAD {
 }
 
 DIV.tableWrapper TABLE TH:first-child {
-     width:6em;
+     width:8em;
 }
 
 DIV.tableWrapper TABLE TBODY TH:first-child {
@@ -33,7 +33,7 @@ DIV.tableWrapper TABLE TBODY TH:first-child {
 }
 
 DIV.tableWrapper TABLE TBODY TD {
-     padding-left: 6em;
+     padding-left: 8em;
 }
 
 

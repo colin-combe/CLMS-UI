@@ -215,6 +215,7 @@ alignViewBlosumSelector.listenTo (CLMSUI.alignmentModelInst, "change:scoreMatrix
 CLMSUI.alignmentModelInst.listenTo (compositeModel, "3dsync", function (sequences) {
     console.log ("sequences", sequences);
     CLMSUI.alignmentModelInst.addSequences (sequences);
+    CLMSUI.alignmentModelInst.align();
 });
 var nglViewer = new window.CLMSUI.NGLViewBB ({
     el: "#nglPanel", 

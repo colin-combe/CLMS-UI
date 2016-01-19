@@ -251,14 +251,24 @@
             
             // define alignment model and listeners first, so they're ready to pick up events from other models
             CLMSUI.alignmentModelInst = new CLMSUI.BackboneModelTypes.AlignModel ({
-                refSeq: "CHATWITHCATSPEWNOW",
-                compSeqs: ["CATSPAWN"],
+                //refSeq: "CHATWITHCATSPEWNOW",
+                //compSeqs: ["CATSPAWN"],
+                refSeq: "",
+                compSeqs: [],
+                compIDs: [],
                 //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
             });
-            CLMSUI.alignmentModelInst.listenTo (CLMSUI.vent, "uniprotDataParsed", function () {
-                console.log (this, "MODEL",$.extend({},CLMSUI), CLMSUI.clmsModelInst, "args", arguments);
+            CLMSUI.alignmentModelInst.listenTo (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+                var sequences = [];
+                clmsModel.get("interactors").forEach (function (entry) {
+                    console.log ("entry", entry);
+                    this.set("refSeq", entry.canonicalSeq);
+                    sequences.push ({name: entry.name, data: entry.sequence});
+                }, this);
+
                 console.log ("uniprot sequences available");
-                //this.addSequences (sequences);
+                this.addSequences (sequences);
+                
             })
 
 
