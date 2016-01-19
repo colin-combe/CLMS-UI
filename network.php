@@ -248,7 +248,21 @@
                     //include '../annotations.php';
                 }
             ?>
+            
+            // define alignment model and listeners first, so they're ready to pick up events from other models
+            CLMSUI.alignmentModelInst = new CLMSUI.BackboneModelTypes.AlignModel ({
+                refSeq: "CHATWITHCATSPEWNOW",
+                compSeqs: ["CATSPAWN"],
+                //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
+            });
+            CLMSUI.alignmentModelInst.listenTo (CLMSUI.vent, "uniprotDataParsed", function () {
+                console.log (this, "MODEL", CLMSUI, CLMSUI.clmsModelInst, "args", arguments);
+                console.log ("uniprot sequences available");
+                //CLMSUI.alignmentModelInst.addSequences (sequences);
+            })
 
+            
+            
             CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (tempInteractors, tempMatches);
 
             CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
@@ -260,11 +274,6 @@
             });
             
             
-            CLMSUI.alignmentModelInst = new CLMSUI.BackboneModelTypes.AlignModel ({
-                refSeq: "CHATWITHCATSPEWNOW",
-                compSeqs: ["CATSPAWN"],
-                //gapAtStartScore: NaN, // if we want to penalise a gap right at the start (undefined doesn't overwrite default value but NaN does somehow)
-            });
      
             // bad - I first used BlosumCollection({}) which added one empty model to the collection before fetch overwrote it.
             CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection(); 
