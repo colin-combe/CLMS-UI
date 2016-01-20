@@ -248,8 +248,9 @@
                     //include '../annotations.php';
                 }
             ?>
-
-            CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (tempInteractors, tempMatches);
+	
+			var options = {rawInteractors: tempInteractors, rawMatches: tempMatches};
+            CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
             CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
                 scores: CLMSUI.clmsModelInst.get("scores")
