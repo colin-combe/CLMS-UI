@@ -56,6 +56,7 @@ CLMSUI.modelUtils = {
         matchesArr.forEach (function(m) {
             var pLink = m.crossLinks[0].proteinLink;
             var isDecoy = (pLink.toProtein.isDecoy() || pLink.fromProtein.isDecoy()) ? 1 : 0;
+            //console.log ("m", m, pLink, isDecoy);
             //var isDecoy = (Math.random() > 0.8) ? 1: 0; 
             arrs[isDecoy].push (m.score);
         });

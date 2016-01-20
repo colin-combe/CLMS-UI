@@ -99,18 +99,6 @@
     
     global.CLMSUI.BackboneModelTypes.AlignCollection = global.Backbone.Collection.extend ({
         model: global.CLMSUI.BackboneModelTypes.AlignModel,
-        
-        // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
-        mergeArrayAttr: function (modelId, attrName, appendThis) {
-            var model = this.get(modelId);
-            if (model) {
-                var attr = model.get(attrName);
-                if (attr && global.$.type(attr) === "array") {
-                    appendThis.unshift.apply (appendThis, attr);
-                }
-            }
-            return appendThis;
-        },
     });
     
 })(this); 

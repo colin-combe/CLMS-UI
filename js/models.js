@@ -71,6 +71,22 @@
                 console.log ("model", this);
             },
         }),
+        
+        
+        TestModel: global.Backbone.Model.extend ({
+            defaults : {
+                prime: "animal",
+                //secondaries: ["blee", "whee"],
+                tertiary: 36,
+            },
+
+            initialize: function () {
+                // http://stackoverflow.com/questions/6433795/backbone-js-handling-of-attributes-that-are-arrays    
+                // ^^^setting an array in defaults passes that same array reference to every instantiated model
+                this.set ("secondaries", ["blee", "whee"]);
+            },
+        }),
+
     });
     
     // this is separate to get round the fact BlosumModel won't be available within the same declaration
@@ -90,6 +106,22 @@
                 console.log ("response", response, values);
                 return values;
             }
+        }),
+        
+        TestCollection: global.Backbone.Collection.extend ({
+            model: global.CLMSUI.BackboneModelTypes.TestModel,
+            
+            // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
+            mergeArrayAttr: function (modelId, attrName, appendThis) {
+                var model = this.get(modelId);
+                if (model) {
+                    var attr = model.get(attrName);
+                    if (attr && global.$.type(attr) === "array") {
+                        appendThis.unshift.apply (appendThis, attr);
+                    }
+                }
+                return appendThis;
+            },
         }),
     });
  
