@@ -60,7 +60,7 @@ header('Content-type: text/html; charset=utf-8');
 					<?php
 						if ($_SESSION['session_name'] == "adam"){
 							//~ echo "<button class='btn btn-1 btn-1a' onclick='aggregate3D();'>3D</button>";
-							echo "<button class='btn btn-1 btn-1a' onclick='aggregateMatrix();'>Matrix</button>";
+							// echo "<button class='btn btn-1 btn-1a' onclick='aggregateMatrix();'>Matrix</button>";
 						}
 					?>
 				</div>
@@ -169,6 +169,7 @@ header('Content-type: text/html; charset=utf-8');
                 }
             }
 
+            /*
            function aggregateMatrix(){
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
                 var values = new Array();
@@ -182,6 +183,7 @@ header('Content-type: text/html; charset=utf-8');
                     window.open("./matrix.php?sid="+values.join(','), "_self");
                 }
             }
+            */
 
             function clearAggregationCheckboxes(){
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
