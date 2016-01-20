@@ -35,16 +35,16 @@
         },
         
         addSequences: function (newSequences) {
-            if (typeof (newSequences) === "string") {
+            if ($.type(newSequences) !== "array") {
                 newSequences = [newSequences];
             }
             
             newSequences.forEach (function (seq) {
-                this.get("compSeqs").push(seq);
+                this.get("compSeqs").push(seq.data);
+                this.get("compIDs").push(seq.name);
             }, this);
             
-            console.log ("newSequences", newSequences);
-            
+            console.log ("compSeqs", this.get("compSeqs"));  
             return this;
         },
         

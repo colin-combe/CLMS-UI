@@ -11,6 +11,7 @@
           }
           return _.extend({
               "mouseleave td.seq>span" : "clearTooltip",
+              "change input.diff" : "render",
           }, parentEvents, {});
         },
 
@@ -21,10 +22,11 @@
             
             var topElem = d3.select(this.el);
             var topDiv = topElem.append("DIV").attr("class", "alignView");
-            var tpl = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID2 %>'></DIV>");
-            topDiv.html (tpl ({
+            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><div><label><%= diffLabel %></label><input type='checkbox' class='diff'></input></div><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID2 %>'></DIV>");
+            topDiv.html (template ({
                     firstColHeader:"Name", 
                     secondColHeader:"Sequence", 
+                    diffLabel:"Show differences only",
                     alignControlClass:"alignSettings", 
                     alignControlID: topElem.attr("id") + "Controls",
                     alignControlID2: topElem.attr("id") + "Controls2",
@@ -36,9 +38,17 @@
         },
         
         render: function () {
+            //function ellipStr (length) {
+            //    var ellip = "\u2026\u2026\u2026\u2026\u2026\u2026";
+            //    
+            //}
+            
             console.log ("rerendering alignment");
             var place = d3.select(this.el).select("tbody");
             var self = this;
+            
+            var showDiff = d3.select(this.el).select("input.diff").property("checked");
+            console.log ("showDiff", showDiff);
             
             var refs = this.model.get("refAlignments");
             var comps = this.model.get("compAlignments");
@@ -48,10 +58,13 @@
             
             place.selectAll("tr").remove();
             
+            var ellip = "\u2026";
+            
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
                 var str = seq.str;
                 var l = [];
+                var rf = [];
                 var delStreak = false;
                 var misStreak = false;
                 var i = 0;
@@ -59,6 +72,7 @@
                     var c = str[n];
                     var r = rstr[n];
                     if ((c !== "-" && delStreak) || (c === r && misStreak)) {
+                        rf.push (rstr.substring(i,n));
                         l.push (str.substring(i,n));
                         l.push ("</span>");
                         i = n;
@@ -68,28 +82,59 @@
               
                     if (c === "-" && !delStreak) {
                         delStreak = true;
-                        l.push (str.substring(i,n));
+                        if (misStreak || !showDiff) {
+                            rf.push (rstr.substring(i,n));
+                            l.push (str.substring(i,n));
+                            if (misStreak) {
+                                l.push ("</span>");
+                                misStreak = false;
+                            }
+                        } else if (n > i) {
+                            l.push (ellip);
+                            rf.push (ellip);
+                        }
+                        
                         l.push ("<span class='seqDelete'>");
                         i = n;
                     }
                     else if (c !== "-" && c !== r && !misStreak) {
                         misStreak = true;
-                        l.push (str.substring(i,n));
+                        if (delStreak || !showDiff) {
+                            rf.push (rstr.substring(i,n));
+                            l.push (str.substring(i,n));
+                            if (delStreak) {
+                                l.push ("</span>");
+                                delStreak = false;
+                            }
+                        } else if (n > i) {
+                            l.push (ellip);
+                            rf.push (ellip);
+                        }
+      
                         l.push ("<span class='seqMismatch'>");
                         i = n;
                     }
                 }
                 
-                l.push (str.substring(i,n));
-                if (misStreak || delStreak) {
-                    l.push("</span>");
+                if (misStreak || delStreak || !showDiff) {
+                    l.push (str.substring(i,n));
+                    rf.push (rstr.substring(i,n));
+                    if (misStreak || delStreak) {
+                        l.push("</span>");
+                    }
+                } else if (n > i) {
+                    console.log ("n,#", n, i);
+                     l.push (ellip);
+                    rf.push (ellip);
                 }
-
+                
+                seq.decoratedRStr = showDiff ? rf.join('') : rstr;
                 seq.decoratedStr = l.join('');
             });
             
             var allSeqs = [];
-            refs.forEach (function(r,i) { allSeqs.push(r); allSeqs.push(comps[i]); });
+            //refs.forEach (function(r,i) { allSeqs.push(r); allSeqs.push(comps[i]); });
+             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); });
 
             var containerID = d3.select(this.el).attr("id");
             
@@ -97,18 +142,20 @@
                 .data(allSeqs)
                 .enter()
                 .append ("tr")
-                .attr ("id", function(d,i) { return containerID+sids[i]; })
+                //.attr ("id", function(d,i) { return containerID+sids[i]; })
+                .attr ("id", function(d,i) { return "seqComp"+d.label+(i%2); })
             ;
             
             seqRows.append("th")
                 .attr("class", "seqLabel")
-                .html (function(d) { return d.label; })
+                .html (function(d,i) { return ((i % 2) == 0) ? self.model.get("refID") : d.label; })
             ;
             
             seqRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
-                    .html (function(d) { return d.decoratedStr || d.str; })
+                    //.html (function(d) { return d.decoratedStr || d.str; })
+                    .html (function(d,i) { return ((i % 2) == 0) ? d.decoratedRStr : d.decoratedStr; })
                     // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
                     .on ("mousemove", function(d) {
                         self.invokeTooltip (d, this);

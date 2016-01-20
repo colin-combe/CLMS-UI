@@ -214,7 +214,7 @@ CLMSUI.modelUtils = {
     
     getSequencesFromNGLModel: function (stage) {
         var sequences = [];
-
+        
         stage.eachComponent (function (comp) {   
             comp.structure.eachModel (function(m) {
                 var resList = [];
@@ -225,8 +225,7 @@ CLMSUI.modelUtils = {
                         resList.push (oneLetter || "X");    
                     });
                 });
-
-                sequences[sequences.length] = resList.join("");
+                sequences[sequences.length] = {name: "3D_p"+m.index, data: resList.join("")};
             });
         });  
 
