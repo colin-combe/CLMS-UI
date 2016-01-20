@@ -262,8 +262,12 @@
                 var sequences = [];
                 clmsModel.get("interactors").forEach (function (entry) {
                     console.log ("entry", entry);
-                    this.set("refSeq", entry.canonicalSeq);
-                    sequences.push ({name: entry.name, data: entry.sequence});
+                    //this.set("refSeq", entry.canonicalSeq);
+                    //sequences.push ({name: entry.name, data: entry.sequence});
+                    
+                    this.set("refID", "Search");
+                    this.set("refSeq", entry.sequence);
+                    sequences.push ({name: "Canonical", data: entry.canonicalSeq});
                 }, this);
 
                 console.log ("uniprot sequences available");

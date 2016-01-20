@@ -42,12 +42,18 @@ DIV.tableWrapper TABLE TBODY TD {
     color: #000;
 }
 
+.alignView TBODY TR:nth-child(2n+1) {
+    border-top: 4px solid #fff;
+}
+
 .alignView TD, .alignView TH, .alignView P {
     margin: 0;
     padding: 0em 0.1em;
     line-height: 1em;
     height: 1em;
 }
+
+
 
 .alignView TH {
     background: #eef;

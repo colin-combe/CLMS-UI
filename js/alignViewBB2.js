@@ -33,22 +33,24 @@
             }));       
             
             this.listenTo (this.model, "change:compAlignments", this.render);
+            this.ellipStr = new Array(10).join("\"");
+            //this.ellipStr = new Array(10).join("\u2026");
             
             return this;
         },
         
+        ellipFill: function (length) {
+            var sigfigs = length ? Math.floor (Math.log10 (length)) + 1 : 0;
+            return this.ellipStr.substring (0, sigfigs);
+        },
+        
         render: function () {
-            //function ellipStr (length) {
-            //    var ellip = "\u2026\u2026\u2026\u2026\u2026\u2026";
-            //    
-            //}
             
             console.log ("rerendering alignment");
             var place = d3.select(this.el).select("tbody");
             var self = this;
             
             var showDiff = d3.select(this.el).select("input.diff").property("checked");
-            console.log ("showDiff", showDiff);
             
             var refs = this.model.get("refAlignments");
             var comps = this.model.get("compAlignments");
@@ -58,7 +60,7 @@
             
             place.selectAll("tr").remove();
             
-            var ellip = "\u2026";
+
             
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
@@ -90,8 +92,9 @@
                                 misStreak = false;
                             }
                         } else if (n > i) {
-                            l.push (ellip);
-                            rf.push (ellip);
+                            var estr = this.ellipFill (n - i);
+                            l.push (estr);
+                            rf.push (estr);
                         }
                         
                         l.push ("<span class='seqDelete'>");
@@ -107,8 +110,9 @@
                                 delStreak = false;
                             }
                         } else if (n > i) {
-                            l.push (ellip);
-                            rf.push (ellip);
+                            var estr = this.ellipFill (n - i);
+                            l.push (estr);
+                            rf.push (estr);
                         }
       
                         l.push ("<span class='seqMismatch'>");
@@ -121,16 +125,18 @@
                     rf.push (rstr.substring(i,n));
                     if (misStreak || delStreak) {
                         l.push("</span>");
+                        misStreak = false;
+                        delStreak = false;
                     }
                 } else if (n > i) {
-                    console.log ("n,#", n, i);
-                     l.push (ellip);
-                    rf.push (ellip);
+                    var estr = this.ellipFill (n - i);
+                    l.push (estr);
+                    rf.push (estr);
                 }
                 
                 seq.decoratedRStr = showDiff ? rf.join('') : rstr;
                 seq.decoratedStr = l.join('');
-            });
+            }, this);
             
             var allSeqs = [];
             //refs.forEach (function(r,i) { allSeqs.push(r); allSeqs.push(comps[i]); });
