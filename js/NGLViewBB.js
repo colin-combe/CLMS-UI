@@ -114,7 +114,7 @@
 						}
 					);
                     
-                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage);
+                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
                     console.log ("stage", self.stage, "\nhas sequences", sequences);
                     // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
                     self.model.trigger ("3dsync", sequences);   

@@ -96,9 +96,4 @@
         },
     });
     
-    
-    global.CLMSUI.BackboneModelTypes.AlignCollection = global.Backbone.Collection.extend ({
-        model: global.CLMSUI.BackboneModelTypes.AlignModel,
-    });
-    
 })(this); 

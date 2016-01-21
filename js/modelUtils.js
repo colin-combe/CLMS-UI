@@ -213,10 +213,15 @@ CLMSUI.modelUtils = {
         "*": "*" ,
     },
     
-    getSequencesFromNGLModel: function (stage) {
+    getSequencesFromNGLModel: function (stage, CLMSModel) {
         var sequences = [];
+        var proteinIDIter = CLMSModel.get("interactors").entries();
         
         stage.eachComponent (function (comp) {   
+            var pid = proteinIDIter.next().value[0]; // assuming proteins match 1-1 with stages, is a guess
+            // but otherwise at mo have no way of knowing which stage belongs to which protein
+            console.log ("pid", pid);
+            
             comp.structure.eachModel (function(m) {
                 var resList = [];
 
@@ -226,7 +231,7 @@ CLMSUI.modelUtils = {
                         resList.push (oneLetter || "X");    
                     });
                 });
-                sequences[sequences.length] = {name: "3D_p"+m.index, data: resList.join("")};
+                sequences[sequences.length] = {id: pid, name: "3D_p"+m.index, data: resList.join("")};
             });
         });  
 

@@ -116,6 +116,7 @@
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
         <script type="text/javascript" src="./js/alignViewBB2.js"></script>
+        <script type="text/javascript" src="./js/alignViewBB3.js"></script>
         <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
     </head>
 

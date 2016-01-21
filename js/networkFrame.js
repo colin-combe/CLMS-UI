@@ -184,6 +184,7 @@ CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to bot
 // three alignment sub-views (though two get poked into placeholders in the first)
 // first shows results of alignment, second allows changing of numerical parameters,
 // third allows choosing of blosum matrices stored as a backbone Model Collection
+/*
 var alignViewer = new window.CLMSUI.AlignViewBB2 ({
     el:"#alignPanel",
     model: CLMSUI.alignmentModelInst,
@@ -200,7 +201,15 @@ var alignViewBlosumSelector = new window.CLMSUI.CollectionAsSelectViewBB ({
     label: "Score Matrix",
     name: "BlosumSelector",
 });
+*/
+var alignViewer = new window.CLMSUI.AlignCollectionViewBB ({
+    el:"#alignPanel",
+    collection: CLMSUI.alignmentCollectionInst,
+    displayEventName: "alignShow",
+    tooltipModel: CLMSUI.tooltipModelInst
+});
 
+/*
 // Set up initially selected option in BlosumSelector view to match the current scoreMatrix model.
 // This is needed as the sync on the BlosumCollection may have completed before we reach this point, thus 
 // the following change:scoreMatrix event may not be registered in time to be at the end of the sync eventchain
@@ -209,14 +218,28 @@ alignViewBlosumSelector.setSelected (CLMSUI.alignmentModelInst.get("scoreMatrix"
 alignViewBlosumSelector.listenTo (CLMSUI.alignmentModelInst, "change:scoreMatrix", function(alignModel, scoreMatrix) {
     alignViewBlosumSelector.setSelected (scoreMatrix);
 });
+*/
 
-
-
+/*
 CLMSUI.alignmentModelInst.listenTo (compositeModel, "3dsync", function (sequences) {
     console.log ("sequences", sequences);
     CLMSUI.alignmentModelInst.addSequences (sequences);
     CLMSUI.alignmentModelInst.align();
 });
+*/
+CLMSUI.alignmentCollectionInst.listenTo (compositeModel, "3dsync", function (sequences) {
+    sequences.forEach (function (entry) {
+        console.log ("entry", entry);
+        this.add ([{
+            "id": entry.id,
+            "compIDs": this.mergeArrayAttr (entry.id, "compIDs", [entry.name]),
+            "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.data]),
+        }], {merge: true});
+    }, this);
+
+    console.log ("uniprot sequences poked to collection", this);
+});
+
 var nglViewer = new window.CLMSUI.NGLViewBB ({
     el: "#nglPanel", 
     model: compositeModel,
