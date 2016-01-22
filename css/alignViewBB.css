@@ -10,11 +10,13 @@
 /* Following 6 rules are for fixed first column and fixed header row */
 DIV.tableWrapper TABLE {
     table-layout: fixed;
+    font-size: 1em;
 }
 
 DIV.tableWrapper TABLE TBODY {
     display: block;
-    overflow-x: auto;
+     /* always show scrollbar even if not needed so content underneath doesn't jump (which it does with auto) */
+    overflow-x: scroll;
     overflow-y: hidden;
 }
 
@@ -38,28 +40,26 @@ DIV.tableWrapper TABLE TBODY TD {
 
 
 
-.alignView TABLE {
+DIV.tableWrapper TABLE {
     color: #000;
 }
 
-.alignView TBODY TR:nth-child(2n+1) {
+DIV.tableWrapper TBODY TR:nth-child(2n+1) {
     border-top: 4px solid #fff;
 }
 
-.alignView TD, .alignView TH, .alignView P {
+DIV.tableWrapper TD, DIV.tableWrapper TH {
     margin: 0;
     padding: 0em 0.1em;
     line-height: 1em;
     height: 1em;
 }
 
-
-
-.alignView TH {
+DIV.tableWrapper TH {
     background: #eef;
 }
 
-.alignView THEAD TH {
+DIV.tableWrapper THEAD TH {
     color: #668;
     padding: 0.2em 0.1em;
 }
@@ -79,8 +79,17 @@ P.seq, TD.seq {
     font-family: Consolas, Courier;
 }
 
+
+.alignView P.alignHeader {
+    text-decoration: underline;
+}
+
+DIV.checkHolder {
+    border-bottom: 4px solid rgba(255,255,255,0.5);
+}
+
 DIV.alignSettings {
-    padding-top: 1em;
+    padding-top: 0.5em;
     font-size: 0.8em
 }
 

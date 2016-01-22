@@ -53,6 +53,7 @@
             console.log ("control rerendering");
             var self = this;
             var controls = d3.select(this.el).selectAll("div.controlBlock input");
+            console.log ("selfm", self.model, controls.datum());
             controls.attr("value", function(d) { return self.model.get(d.prop); });
             
             return this;
@@ -124,7 +125,7 @@
         // In case the selected score matrix is set from another view or model, we should reflect that choice here
         setSelected: function (aModel) {
             console.log ("aModel", aModel);
-            if (aModel && aModel.cid !== this.lastSelectec) {
+            if (aModel && aModel.cid !== this.lastSelected) {
                 this.lastSelected = aModel.cid;
                 this.render();
             }

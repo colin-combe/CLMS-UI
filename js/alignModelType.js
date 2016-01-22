@@ -21,6 +21,9 @@
         },
         
         initialize: function () {
+            
+            this.set("compIDs", ["Demo"]);
+            
             // do more with these change listeners if we want to automatically run align function on various parameters changing;
             // or we may just want to call align manually when things are known to be done
             this.listenTo (this, "change", function() { 
@@ -31,20 +34,6 @@
                 }
             });
             
-            return this;
-        },
-        
-        addSequences: function (newSequences) {
-            if (global.$.type(newSequences) !== "array") {
-                newSequences = [newSequences];
-            }
-            
-            newSequences.forEach (function (seq) {
-                this.get("compSeqs").push(seq.data);
-                this.get("compIDs").push(seq.name);
-            }, this);
-            
-            console.log ("compSeqs", this.get("compSeqs"));  
             return this;
         },
         

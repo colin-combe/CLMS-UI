@@ -6,7 +6,6 @@
     global.CLMSUI.BackboneModelTypes = global._.extend (global.CLMSUI.BackboneModelTypes || {}, 
     
     {
-        
         DistancesModel: global.Backbone.Model.extend({
             flattenedDistances: function () {
                 return global.CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
@@ -14,13 +13,16 @@
         }),
         
         FilterModel: global.Backbone.Model.extend ({
+            defaults: {
+                "A": true, "B": true, "C": true, "Q": false,
+                "AUTO": false,
+                "selfLinks": true,
+                "ambig": true,
+            },
+            
             initialize: function () {
-                this.set ({
-                    "A": true, "B": true, "C": true, "Q": false,
-                    "AUTO": false,
-                    "selfLinks": true, "ambig": true,
-                    "cutoff": [0,100]
-                });   
+                // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
+                this.set ("cutoff", [0,100]);
             },
 
             filter: function (match) {
@@ -40,35 +42,34 @@
         
             
         RangeModel: global.Backbone.Model.extend ({
-            initialize: function () {
-                this
-                    .set ("active", false)
-                ;
-            }
+            defaults: {
+                active: false
+            },
         }),
 
             // I want MinigramBB to be model agnostic so I can re-use it in other places
         MinigramModel: global.Backbone.Model.extend ({
+            defaults: {
+                domainStart: 0,
+                domainEnd: 100,
+            },
             data: function() { return [1,2,3,4]; },
-            initialize: function () {
-                this.set ({domainStart: 0, domainEnd: 100});
-            }
         }),
         
         TooltipModel: global.Backbone.Model.extend ({
+            defaults: {
+                location: null,
+                header: "Tooltip",
+            },
             initialize: function () {
-                this
-                    .set("location", null)
-                    .set("header", "Tooltip")
-                    .set("contents", ["Can show", "single items", "lists or", "tables"])
-                ;
+                // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
+                this.set("contents", ["Can show", "single items", "lists or", "tables"]);
             }
         }),
         
         BlosumModel: global.Backbone.Model.extend ({
             initialize: function() {
-                console.log ("Blosum model initialised");
-                console.log ("model", this);
+                console.log ("Blosum model initialised", this);
             },
         }),
         
@@ -82,7 +83,7 @@
 
             initialize: function () {
                 // http://stackoverflow.com/questions/6433795/backbone-js-handling-of-attributes-that-are-arrays    
-                // ^^^setting an array in defaults passes that same array reference to every instantiated model
+                // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 this.set ("secondaries", ["blee", "whee"]);
             },
         }),
