@@ -20,7 +20,7 @@
 
 	$sid = urldecode($_GET["sid"]);
 
-	$showDecoys = false;//urldecode($_GET["decoys"]);
+	$showDecoys = true;//urldecode($_GET["decoys"]);
 	$showAll = false;//urldecode($_GET["all"]);
 
 	//~ echo "// decoys?:".$showDecoys."\n";
