@@ -44,7 +44,7 @@
             
             this.listenTo (this.model, "change:compAlignments", this.render);
             
-            this.render();
+            //this.render();
             
             return this;
         },

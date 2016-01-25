@@ -10,7 +10,7 @@
               parentEvents = parentEvents();
           }
           return _.extend({
-              "change input.alignRadio" : "swapFocusModel",
+              "change input.alignRadio" : "radioClicked",
           }, parentEvents, {});
         },
         
@@ -26,7 +26,7 @@
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
-            })); 
+            }));  
             
             topDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
             
@@ -41,6 +41,14 @@
             
             var firstModel = this.collection.models[0];
             this.setFocusModel (firstModel);
+        },
+        
+        hollowElement: function (view) {
+            view.stopListening();   // remove listeners bound with listenTo etc 
+            $(view.el).off();       // 
+            var a = d3.select(view.el);
+            a.selectAll("*").remove();
+            
         },
         
         render: function () {
@@ -67,41 +75,51 @@
         },
         
         radioClicked: function (evt) {
-            var model = this.collection.get(evt.target.value);
+            console.log ("evt", evt, evt.target);
+            var model = this.collection.get (evt.target.value);
             this.setFocusModel (model);
         },
         
         setFocusModel: function (model) {
             var prevModel = this.modelView ? this.modelView.model : undefined;
             if (prevModel) {
+                console.log ("old modelView", this.modelView);
                 this.alignViewBlosumSelector.stopListening (prevModel);
-                this.modelView.destroy();
-                this.alignViewSettings.destroy();
+                this.modelView.remove();
+                this.alignViewSettings.remove();
             }
         
-            // TODO, safely swap these models in/out, maybe by generating new views altogether
+            // Safely swap these models in/out, maybe by generating new views altogether
             // http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js
             // http://stackoverflow.com/questions/8591992/backbone-change-model-of-view
             // http://stackoverflow.com/questions/21411059/backbone-reusable-view-set-new-model-to-existing-view?lq=1
         
-            var modelViewID = d3.select(this.el).attr("id") + "IndView"; 
-            
-            this.modelView = new global.CLMSUI.AlignViewBB3 ({
-                el: "#"+modelViewID, 
-                model: model,
-                tooltipModel: this.tooltipModel,
-            });
-            
-            this.alignViewSettings = new global.CLMSUI.AlignSettingsViewBB ({
-                el:"#"+modelViewID+"Controls",
-                model: model,
-            });
+            if (model) {
+                console.log ("model", model);
+                var modelViewID = d3.select(this.el).attr("id") + "IndView"; 
+                
+                this.modelView = new global.CLMSUI.AlignViewBB3 ({
+                    el: "#"+modelViewID, 
+                    model: model,
+                    tooltipModel: this.tooltipModel,
+                });
 
-            this.alignViewBlosumSelector.setSelected (model.get("scoreMatrix"));
-            // and then make it track it thereafter
-            this.alignViewBlosumSelector.listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) {
-                this.setSelected (scoreMatrix);
-            });
+                this.alignViewSettings = new global.CLMSUI.AlignSettingsViewBB ({
+                    el:"#"+modelViewID+"Controls",
+                    model: model,
+                });
+                
+                console.log ("new modelView", this.modelView);
+
+                this.alignViewBlosumSelector.setSelected (model.get("scoreMatrix"));
+                // and then make it track it thereafter
+                this.alignViewBlosumSelector.listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) {
+                    this.setSelected (scoreMatrix);
+                });
+                
+                this.modelView.render();
+                //
+            }
         },
     });
     

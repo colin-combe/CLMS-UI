@@ -20,8 +20,6 @@
 
 var CLMSUI = CLMSUI || {};
 
-console.log ("start of networkFrame.js");
-
 /*
  * Horizontal splitter JS
  */
@@ -98,122 +96,206 @@ var showSpectrumPanel = function (show) {
 	d3.select('#spectrumPanel').style('display', show ? 'block' : 'none');
 }
 
-CLMSUI.rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({ scale: d3.scale.linear() });
-CLMSUI.tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
-var compositeModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-    distancesModel: CLMSUI.distancesInst,
-    clmsModel: CLMSUI.clmsModelInst,
-    rangeModel: CLMSUI.rangeModelInst,
-    filterModel: CLMSUI.filterModelInst,
-    tooltipModel: CLMSUI.tooltipModelInst,
-    selection: [], //will contain cross-link objects
-    highlights: [], //will contain cross-link objects 
-});
-   
-compositeModel.applyFilter();   // do it first time so filtered sets aren't empty
-
-// instead of views listening to chnages in filter directly, we listen to any changes here, update filtered stuff
-// and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means 
-// the views are only notified once the changed data is ready.
-compositeModel.listenTo (CLMSUI.filterModelInst, "change", function() {
-    compositeModel.applyFilter();
-    compositeModel.trigger ("filteringDone");
-});
 
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
 
-d3.select("body").append("div").attr("id", "tooltip2").attr("class", "CLMStooltip");
-var tooltipView = new window.CLMSUI.TooltipViewBB ({
-    el: "#tooltip2",
-    model: CLMSUI.tooltipModelInst
-});
+CLMSUI.init = CLMSUI.init || {};
 
-var crosslinkViewer = new window.CLMS.xiNET.CrosslinkViewer ({
-    el: "#topDiv", 
-    model: compositeModel,
-});
+CLMSUI.init.views = function () {
+    var filterViewGroup = new CLMSUI.FilterViewBB ({
+        el: "#filterPlaceholder", 
+        model: CLMSUI.filterModelInst
+    });
 
-var distoViewer = new window.CLMSUI.DistogramBB ({
-    el: "#distoPanel", 
-    model: compositeModel,
-    displayEventName: "distoShow",
-    myOptions: {
-        chartTitle: "Cross-Link Distogram",
-        seriesName: "Actual"
-    }
-});
+    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
+    miniDistModelInst.data = function() {
+        var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
+        return matches; // matches is now an array of arrays    //  [matches, []];
+    };
 
+    console.log("*>" + CLMSUI.clmsModelInst.get("matches").length);
 
-// This makes a matrix viewer
-var matrixViewer = new window.CLMSUI.DistanceMatrixViewBB ({
-    el: "#matrixPanel", 
-    model: compositeModel,
-    displayEventName: "matrixShow"
-});
-
-
-// This stuffs a basic filter view into the matrix view
-var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
-var matrixFilterEventName = "filterEster";
-/*
-matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
-var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
-    el: "#matrixButtons",
-    myOptions: {
-        states: [0, 1, 2],
-        labels: ["Any to Any", "NHS to Any", "NHS to NHS"],
-        header: "NHS Ester Filter",
-        labelGroupFlow: "verticalFlow",
-        eventName: matrixFilterEventName
-    }
-});
-*/
-
-// the matrix view listens to the event the basic filter view generates and changes a variable on it
-matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
-    this.filterVal = filterVal;
-    this.render();
-});
-CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
-
-// This is all done outside the matrix view itself as we may not always want a matrix view to have this 
-// functionality. Plus the views don't know about each other now.
-// We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
+    var miniDistView = new CLMSUI.MinigramViewBB ({
+        el: "#filterPlaceholderSliderHolder",
+        model: miniDistModelInst,
+        myOptions: {
+            maxX: 0,    // let data decide
+            seriesNames: ["Matches", "Decoys"],
+            //scaleOthersTo: "Matches",
+            xlabel: "Score",
+            ylabel: "Count",
+            height: 50,
+            colors: {"Matches":"blue", "Decoys":"red"}
+        }
+    });
 
 
-
-// Alignment View
-var alignViewer = new window.CLMSUI.AlignCollectionViewBB ({
-    el:"#alignPanel",
-    collection: CLMSUI.alignmentCollectionInst,
-    displayEventName: "alignShow",
-    tooltipModel: CLMSUI.tooltipModelInst
-});
-
-CLMSUI.alignmentCollectionInst.listenTo (compositeModel, "3dsync", function (sequences) {
-    sequences.forEach (function (entry) {
-        console.log ("entry", entry);
-        this.add ([{
-            "id": entry.id,
-            "compIDs": this.mergeArrayAttr (entry.id, "compIDs", [entry.name]),
-            "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.data]),
-        }], {merge: true});
+    // When the range changes on the mini histogram model pass the values onto the filter model
+    CLMSUI.filterModelInst.listenTo (miniDistModelInst, "change", function (model) {
+        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
     }, this);
 
-    console.log ("uniprot sequences poked to collection", this);
-});
 
-var nglViewer = new window.CLMSUI.NGLViewBB ({
-    el: "#nglPanel", 
-    model: compositeModel,
-    displayEventName: "nglShow"
-});
+    // If the ClmsModel matches attribute changes then tell the mini histogram view
+    miniDistView
+        .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
+        // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
+        //.listenTo (this.model.get("filterModel"), "change", this.render)  
+    ;       
+
+    // Generate checkboxes
+    var checkBoxData = [
+        {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
+        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
+    ];
+    checkBoxData.forEach (function (cbdata) {
+        CLMSUI.utils.addCheckboxBackboneView (d3.select("#"+cbdata.id), {label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
+    })
+
+    // Add them to a drop-down menu (this rips them away from where they currently are)
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#viewDropdownPlaceholder",
+        model: CLMSUI.clmsModelInst,
+        myOptions: {
+            title: "View",
+            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id }; })
+        }
+    });
 
 
-//init spectrum viewer
-var spectrumDiv = document.getElementById('spectrumDiv');
-var spectrumViewer = new SpectrumViewer(spectrumDiv);
+    if (HSA_Active){
+        /*Distance slider */
+        var distSliderDiv = d3.select("#topDiv").append("div").attr("id","sliderDiv");
+        var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
+        distSlider.brushMoved.add(onDistanceSliderChange); //add listener
+        distSlider.brushmove();
+        //CLMSUI.rangeModelInst.set ("scale", scale);
+        //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
+        //distoViewer.setData(xlv.distances,xlv);
+    }
+    else {
+        // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
+        //d3.select('#viewDropdownPlaceholder').style("display", "none");
+    }		
+    d3.select('#linkColourSelect').style('display','none');
+
+
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#expDropdownPlaceholder",
+        model: CLMSUI.clmsModelInst,
+        myOptions: {
+            title: "Export",
+            menu: [
+                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches}, 
+                {name: "Residues", func: downloadResidueCount}, {name: "SVG", func: downloadSVG}
+            ]
+        }
+    })
+
+    // This generates the legend div, we don't keep a handle to it - the event object has one
+    new CLMSUI.utils.KeyViewBB ({
+        el: "#keyPanel",
+        displayEventName: "keyShow",
+    });
+};
+
+CLMSUI.init.viewsThatNeedAsyncData = function () {
+    d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
+    var tooltipView = new window.CLMSUI.TooltipViewBB ({
+        el: "#tooltip2",
+        model: CLMSUI.tooltipModelInst,
+    });
+
+    var crosslinkViewer = new window.CLMS.xiNET.CrosslinkViewer ({
+        el: "#topDiv", 
+        model: CLMSUI.compositeModelInst,
+    });
+
+    var distoViewer = new window.CLMSUI.DistogramBB ({
+        el: "#distoPanel", 
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "distoShow",
+        myOptions: {
+            chartTitle: "Cross-Link Distogram",
+            seriesName: "Actual"
+        }
+    });
+
+
+    // This makes a matrix viewer
+    var matrixViewer = new window.CLMSUI.DistanceMatrixViewBB ({
+        el: "#matrixPanel", 
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "matrixShow",
+    });
+
+
+    // This stuffs a basic filter view into the matrix view
+    var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
+    var matrixFilterEventName = "filterEster";
+    /*
+    matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
+    var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
+        el: "#matrixButtons",
+        myOptions: {
+            states: [0, 1, 2],
+            labels: ["Any to Any", "NHS to Any", "NHS to NHS"],
+            header: "NHS Ester Filter",
+            labelGroupFlow: "verticalFlow",
+            eventName: matrixFilterEventName
+        }
+    });
+    */
+
+    // the matrix view listens to the event the basic filter view generates and changes a variable on it
+    matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
+        this.filterVal = filterVal;
+        this.render();
+    });
+    CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
+
+    // This is all done outside the matrix view itself as we may not always want a matrix view to have this 
+    // functionality. Plus the views don't know about each other now.
+    // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
+
+
+
+    // Alignment View
+    var alignViewer = new window.CLMSUI.AlignCollectionViewBB ({
+        el:"#alignPanel",
+        collection: CLMSUI.alignmentCollectionInst,
+        displayEventName: "alignShow",
+        tooltipModel: CLMSUI.tooltipModelInst
+    });
+
+    CLMSUI.alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
+        sequences.forEach (function (entry) {
+            console.log ("entry", entry);
+            this.add ([{
+                "id": entry.id,
+                "compIDs": this.mergeArrayAttr (entry.id, "compIDs", [entry.name]),
+                "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.data]),
+            }], {merge: true});
+        }, this);
+
+        console.log ("uniprot sequences poked to collection", this);
+    });
+
+    var nglViewer = new window.CLMSUI.NGLViewBB ({
+        el: "#nglPanel", 
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "nglShow",
+    });
+
+
+    //init spectrum viewer
+    var spectrumDiv = document.getElementById('spectrumDiv');
+    var spectrumViewer = new SpectrumViewer(spectrumDiv);
+};
 
 
 
@@ -306,5 +388,3 @@ function changeAnnotations(){
 	var annotationSelect = document.getElementById('annotationsSelect');
 	crosslinkViewer.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
 };
-
-console.log ("end of networkFrame.js?");
