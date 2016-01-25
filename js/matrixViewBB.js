@@ -10,7 +10,7 @@
 
     
     global.CLMSUI = global.CLMSUI || {};
-    console.log ("in matrix load");
+
     global.CLMSUI.DistanceMatrixViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
     events: function() {
       var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;

@@ -10,7 +10,7 @@
               parentEvents = parentEvents();
           }
           return _.extend({
-              "change input.alignRadio" : "swapFocusModel",
+              "change input.alignRadio" : "radioClicked",
           }, parentEvents, {});
         },
         
@@ -20,26 +20,17 @@
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
             var topDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<P><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID %>'></DIV><DIV class='<%= alignControlClass %>' id='<%= alignControlID2 %>'></DIV>");
+            var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
             topDiv.html (template ({
                 headerText: "Available Proteins for Alignment",
                 alignModelViewID: modelViewID,
-                alignControlClass:"alignSettings", 
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
-            })); 
+            }));  
             
-            var defaultModel = this.collection.models[0];
+            topDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
             
-            this.modelView = new global.CLMSUI.AlignViewBB3 ({
-                el: "#"+modelViewID, 
-                model: defaultModel,
-            })
-            
-            this.alignViewSettings = new global.CLMSUI.AlignSettingsViewBB ({
-                el:"#"+modelViewID+"Controls",
-                model: defaultModel,
-            });
+            this.tooltipModel = viewOptions.tooltipModel;   
             
             this.alignViewBlosumSelector = new global.CLMSUI.CollectionAsSelectViewBB ({
                 el:"#"+modelViewID+"Controls2",
@@ -47,6 +38,16 @@
                 label: "Score Matrix",
                 name: "BlosumSelector",
             });
+            
+            var firstModel = this.collection.models[0];
+            this.setFocusModel (firstModel);
+        },
+        
+        hollowElement: function (view) {
+            view.stopListening();   // remove listeners bound with listenTo etc 
+            $(view.el).off();       // 
+            var a = d3.select(view.el);
+            a.selectAll("*").remove();
             
         },
         
@@ -74,29 +75,51 @@
         },
         
         radioClicked: function (evt) {
-            var model = this.collection.get(evt.target.value);
-            this.swapFocusModel (model);
+            console.log ("evt", evt, evt.target);
+            var model = this.collection.get (evt.target.value);
+            this.setFocusModel (model);
         },
         
-        swapFocusModel: function (model) {
-            var prevModel = this.modelView.model;
+        setFocusModel: function (model) {
+            var prevModel = this.modelView ? this.modelView.model : undefined;
             if (prevModel) {
+                console.log ("old modelView", this.modelView);
                 this.alignViewBlosumSelector.stopListening (prevModel);
+                this.modelView.remove();
+                this.alignViewSettings.remove();
             }
         
-            // TODO, safely swap these models in/ouit, maybe by generating new views altogether
+            // Safely swap these models in/out, maybe by generating new views altogether
             // http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js
             // http://stackoverflow.com/questions/8591992/backbone-change-model-of-view
             // http://stackoverflow.com/questions/21411059/backbone-reusable-view-set-new-model-to-existing-view?lq=1
-            this.modelView.model = model;
-            this.alignViewSettings = model;
-            
-            
-            this.alignViewBlosumSelector.setSelected (model.get("scoreMatrix"));
-            // and then make it track it thereafter
-            this.alignViewBlosumSelector.listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) {
-                this.alignViewBlosumSelector.setSelected (scoreMatrix);
-            });
+        
+            if (model) {
+                console.log ("model", model);
+                var modelViewID = d3.select(this.el).attr("id") + "IndView"; 
+                
+                this.modelView = new global.CLMSUI.AlignViewBB3 ({
+                    el: "#"+modelViewID, 
+                    model: model,
+                    tooltipModel: this.tooltipModel,
+                });
+
+                this.alignViewSettings = new global.CLMSUI.AlignSettingsViewBB ({
+                    el:"#"+modelViewID+"Controls",
+                    model: model,
+                });
+                
+                console.log ("new modelView", this.modelView);
+
+                this.alignViewBlosumSelector.setSelected (model.get("scoreMatrix"));
+                // and then make it track it thereafter
+                this.alignViewBlosumSelector.listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) {
+                    this.setSelected (scoreMatrix);
+                });
+                
+                this.modelView.render();
+                //
+            }
         },
     });
     
@@ -140,13 +163,10 @@
             
             var refs = this.model.get("refAlignments");
             var comps = this.model.get("compAlignments");
-            var sids = [this.model.get("refID")].concat(this.model.get("compIDs"));
             
             console.log ("allSeqs", allSeqs);
             
             place.selectAll("tr").remove();
-            
-
             
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;

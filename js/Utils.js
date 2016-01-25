@@ -265,13 +265,12 @@ CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function () {
         CLMSUI.utils.KeyViewBB.__super__.initialize.apply (this, arguments);
         
-        var mainDivSel = d3.select(this.el);
-        var chartDiv = mainDivSel.append("div")
+        var chartDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner")
         ;       
+        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
         chartDiv.html ("<img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
         
-        this.render();
         return this;
     }
 });

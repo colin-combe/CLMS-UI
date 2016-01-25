@@ -183,10 +183,8 @@ CLMSUI.modelUtils = {
         "Thr": "T",
         "Val": "V",
         "Trp": "W",
-        "X": "X",
         "Tyr": "Y",
         "Glx": "Z",
-        "*": "*",
         "ALA": "A",
         "ASX": "B",
         "CYS": "C",
@@ -218,7 +216,8 @@ CLMSUI.modelUtils = {
         var proteinIDIter = CLMSModel.get("interactors").entries();
         
         stage.eachComponent (function (comp) {   
-            var pid = proteinIDIter.next().value[0]; // assuming proteins match 1-1 with stages, is a guess
+            var pidArr = proteinIDIter.next().value;
+            var pid = pidArr ? pidArr[0] : "Unknown"; // assuming proteins match 1-1 with stages, is a guess
             // but otherwise at mo have no way of knowing which stage belongs to which protein
             console.log ("pid", pid);
             
