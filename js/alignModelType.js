@@ -6,6 +6,7 @@
 
     global.CLMSUI.BackboneModelTypes.AlignModel = global.Backbone.Model.extend ({
         defaults: {
+            "displayLabel": "A Protein",    // label to display in collection view for this model
             "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
             "matchScore": 6,    // match and mis should be superceded by the score matrix if present
             "misScore": -6,
@@ -21,8 +22,7 @@
         },
         
         initialize: function () {
-            
-            this.set("compIDs", ["Demo"]);
+            //this.set("compIDs", ["Demo"]);
             
             // do more with these change listeners if we want to automatically run align function on various parameters changing;
             // or we may just want to call align manually when things are known to be done

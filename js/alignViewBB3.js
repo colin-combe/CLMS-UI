@@ -44,11 +44,10 @@
         },
         
         hollowElement: function (view) {
-            view.stopListening();   // remove listeners bound with listenTo etc 
-            $(view.el).off();       // 
+            view.stopListening();   // remove backbone events bound with listenTo etc 
+            $(view.el).off();       // remove dom events
             var a = d3.select(view.el);
-            a.selectAll("*").remove();
-            
+            a.selectAll("*").remove();  // remove all elements underneath el
         },
         
         render: function () {
@@ -65,12 +64,14 @@
                 .attr ("class", "alignRadio")
                 .attr ("type", "radio")
                 .attr ("name", topElem.attr("id")+"pgroup")
+                .attr ("id", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
                 .attr ("value", function(d) { return d.id; })
                 .property ("checked", function (d,i) { return i === 0; })
             ;
             
             pspans.append("label")
-                 .text (function(d) { return d.id; })
+                .text (function(d) { return d.get("displayLabel"); })
+                .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
             ;
         },
         
@@ -85,8 +86,10 @@
             if (prevModel) {
                 console.log ("old modelView", this.modelView);
                 this.alignViewBlosumSelector.stopListening (prevModel);
-                this.modelView.remove();
-                this.alignViewSettings.remove();
+                this.hollowElement (this.modelView);
+                this.hollowElement (this.alignViewSettings);
+                //this.modelView.remove();
+                //this.alignViewSettings.remove();
             }
         
             // Safely swap these models in/out, maybe by generating new views altogether
@@ -151,6 +154,22 @@
         ellipFill: function (length) {
             var sigfigs = length ? Math.floor (Math.log10 (length)) + 1 : 0;
             return this.ellipStr.substring (0, sigfigs);
+        },
+        
+        makeIndexString: function (length, unit) {
+            unit = unit || 10;
+            
+            var iFillStr = new Array(unit).join(" ");
+            iFillStr += "\u2022";
+            var segs = [iFillStr];
+            
+            for (var n = 1; n < length / unit; n++) {
+                var iStr = ((n * unit)).toString();
+                var gStr = iFillStr.substr (-(unit - iStr.length));
+                segs.push(iStr);
+                segs.push(gStr);
+            }
+            return segs.join("");
         },
         
         render: function () {
@@ -242,32 +261,33 @@
                 
                 seq.decoratedRStr = showDiff ? rf.join('') : rstr;
                 seq.decoratedStr = l.join('');
+                var max = Math.max (seq.str.length, seq.refStr.length);
+                seq.indexStr = this.makeIndexString(max,20).substring(0, max);
             }, this);
             
             var allSeqs = [];
             //refs.forEach (function(r,i) { allSeqs.push(r); allSeqs.push(comps[i]); });
-             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); });
+            var wrap = 3;
+             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); allSeqs.push(comps[i]); });
 
-            var containerID = d3.select(this.el).attr("id");
             
             var seqRows = place.selectAll("tr")
                 .data(allSeqs)
                 .enter()
                 .append ("tr")
-                //.attr ("id", function(d,i) { return containerID+sids[i]; })
-                .attr ("id", function(d,i) { return "seqComp"+d.label+(i%2); })
+                .attr ("id", function(d,i) { return "seqComp"+d.label+(i % wrap); })
             ;
             
             seqRows.append("th")
                 .attr("class", "seqLabel")
-                .html (function(d,i) { return ((i % 2) == 0) ? self.model.get("refID") : d.label; })
+                .html (function(d,i) { var v = i % wrap; return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); })
             ;
             
             seqRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
                     //.html (function(d) { return d.decoratedStr || d.str; })
-                    .html (function(d,i) { return ((i % 2) == 0) ? d.decoratedRStr : d.decoratedStr; })
+                    .html (function(d,i) { var v = i % wrap; return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); })
                     // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
                     .on ("mousemove", function(d) {
                         self.invokeTooltip (d, this);
@@ -303,7 +323,7 @@
                 var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
 
                 this.tooltipModel.set("header", d.label).set("contents", [
-                    ["Index", charIndex],
+                    ["Index", charIndex + 1],
                     ["Value", str[charIndex]],
                     ["Ref Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
                 ]).set("location", d3.event);
