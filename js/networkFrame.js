@@ -297,8 +297,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: window.CLMSUI.compositeModelInst,
         displayEventName: "ignoreThisFlag",
     });
-    selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function() {
-        this.render();    
+    selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+        console.log ("args", arguments);
+        this.setVisible (selection.length > 0);    
     });
 
 
