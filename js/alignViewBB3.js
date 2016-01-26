@@ -147,6 +147,7 @@
             this.listenTo (this.model, "change:compAlignments", this.render);
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");
+            console.log ("view", this);
             
             return this;
         },
@@ -171,7 +172,7 @@
             }
             return segs.join("");
         },
-        
+
         render: function () {
             
             console.log ("rerendering alignment");

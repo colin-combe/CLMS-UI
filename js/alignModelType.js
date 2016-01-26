@@ -80,7 +80,7 @@
                 this
             );
             
-            console.log ("rr", refResults, compResults, this);
+            console.log ("align results", refResults, compResults);
             
             this
                 .set ("refAlignments", refResults)

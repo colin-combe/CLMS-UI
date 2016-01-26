@@ -291,6 +291,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             displayEventName: "nglShow",
         });
     }
+    
+    var selectionViewer = new window.CLMSUI.SelectionTableViewBB ({
+        el: "#bottomDiv",
+        model: window.CLMSUI.compositeModelInst,
+        displayEventName: "ignoreThisFlag",
+    });
+    selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function() {
+        this.render();    
+    });
 
 
     //init spectrum viewer
