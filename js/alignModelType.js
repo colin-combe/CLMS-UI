@@ -61,20 +61,26 @@
                return {str: res.fmt[1], label: this.get("refID")}; 
             }, this);
             
+            this.seqIndex = {};
+            
             var compResults = fullResults.map (function (res, i) {
-               return {
-                   str: res.fmt[0], 
-                   refStr: res.fmt[1], 
-                   convertToRef: res.indx.qToTarget, 
-                   convertFromRef: res.indx.tToQuery, 
-                   cigar: res.res[2], 
-                   score: res.res[0], 
-                   label: this.get("compIDs")[i]}; 
+                    var seqLabel = this.get("compIDs")[i];
+                    this.seqIndex[seqLabel] = i;
+
+                   return {
+                       str: res.fmt[0], 
+                       refStr: res.fmt[1], 
+                       convertToRef: res.indx.qToTarget, 
+                       convertFromRef: res.indx.tToQuery, 
+                       cigar: res.res[2], 
+                       score: res.res[0], 
+                       label: seqLabel,
+                   }; 
                 }, 
                 this
             );
             
-            console.log ("rr", refResults, compResults);
+            console.log ("rr", refResults, compResults, this);
             
             this
                 .set ("refAlignments", refResults)
@@ -82,6 +88,40 @@
             ;
             
             return this;
+        },
+        
+        mapToSearch: function (seqName, index) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                return this.get("compAlignments")[sInd].convertToRef (index);
+            }
+            return undefined;
+        },
+        
+        mapFromSearch: function (seqName, index) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                return this.get("compAlignments")[sInd].convertFromRef (index);
+            }
+            return undefined;
+        },
+        
+        bulkMapToSearch: function (seqName, indices) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                var marr = this.get("compAlignments")[sInd];
+                return indices.map (function(i) { return marr.convertToRef [i]; });
+            }
+            return undefined;
+        },
+        
+        bulkMapFromSearch: function (seqName, indices) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                var marr = this.get("compAlignments")[sInd];
+                return indices.map (function(i) { return marr.convertFromRef [i]; });
+            }
+            return undefined;
         },
     });
     
