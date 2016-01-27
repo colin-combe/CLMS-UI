@@ -106,7 +106,7 @@
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
-        <script type="text/javascript" src="./vendor/DistanceSliderBB.js"></script>
+        <script type="text/javascript" src="./js/DistanceSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
@@ -117,6 +117,7 @@
         <script type="text/javascript" src="./js/alignModelType.js"></script>
         <script type="text/javascript" src="./js/alignViewBB3.js"></script>
         <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
+        <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
     </head>
 
     <body>
@@ -276,6 +277,7 @@
                         console.log ("entry", entry);
                         this.add ([{
                             "id": entry.id,
+                            "displayLabel": entry.name.replace("_", " "),
                             "refID": "Search",
                             "refSeq": entry.sequence, 
                             "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),

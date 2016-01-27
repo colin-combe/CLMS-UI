@@ -169,7 +169,6 @@ CLMSUI.init.views = function () {
         /*Distance slider */
         var distSliderDiv = d3.select("#sliderDiv");
         var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
-        distSlider.brushMoved.add(onDistanceSliderChange); //add listener
         distSlider.brushmove();
         //CLMSUI.rangeModelInst.set ("scale", scale);
         //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
@@ -280,13 +279,25 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             }], {merge: true});
         }, this);
 
-        console.log ("uniprot sequences poked to collection", this);
+        console.log ("3D sequences poked to collection", this);
     });
 
-    var nglViewer = new window.CLMSUI.NGLViewBB ({
-        el: "#nglPanel", 
-        model: CLMSUI.compositeModelInst,
-        displayEventName: "nglShow",
+    if (HSA_Active) { 
+        var nglViewer = new window.CLMSUI.NGLViewBB ({
+            el: "#nglPanel", 
+            model: CLMSUI.compositeModelInst,
+            displayEventName: "nglShow",
+        });
+    }
+    
+    var selectionViewer = new window.CLMSUI.SelectionTableViewBB ({
+        el: "#bottomDiv",
+        model: window.CLMSUI.compositeModelInst,
+        displayEventName: "ignoreThisFlag",
+    });
+    selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+        console.log ("args", arguments);
+        this.setVisible (selection.length > 0);    
     });
 
 

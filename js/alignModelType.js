@@ -6,6 +6,7 @@
 
     global.CLMSUI.BackboneModelTypes.AlignModel = global.Backbone.Model.extend ({
         defaults: {
+            "displayLabel": "A Protein",    // label to display in collection view for this model
             "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
             "matchScore": 6,    // match and mis should be superceded by the score matrix if present
             "misScore": -6,
@@ -21,8 +22,7 @@
         },
         
         initialize: function () {
-            
-            this.set("compIDs", ["Demo"]);
+            //this.set("compIDs", ["Demo"]);
             
             // do more with these change listeners if we want to automatically run align function on various parameters changing;
             // or we may just want to call align manually when things are known to be done
@@ -61,20 +61,26 @@
                return {str: res.fmt[1], label: this.get("refID")}; 
             }, this);
             
+            this.seqIndex = {};
+            
             var compResults = fullResults.map (function (res, i) {
-               return {
-                   str: res.fmt[0], 
-                   refStr: res.fmt[1], 
-                   convertToRef: res.indx.qToTarget, 
-                   convertFromRef: res.indx.tToQuery, 
-                   cigar: res.res[2], 
-                   score: res.res[0], 
-                   label: this.get("compIDs")[i]}; 
+                    var seqLabel = this.get("compIDs")[i];
+                    this.seqIndex[seqLabel] = i;
+
+                   return {
+                       str: res.fmt[0], 
+                       refStr: res.fmt[1], 
+                       convertToRef: res.indx.qToTarget, 
+                       convertFromRef: res.indx.tToQuery, 
+                       cigar: res.res[2], 
+                       score: res.res[0], 
+                       label: seqLabel,
+                   }; 
                 }, 
                 this
             );
             
-            console.log ("rr", refResults, compResults);
+            console.log ("align results", refResults, compResults);
             
             this
                 .set ("refAlignments", refResults)
@@ -82,6 +88,40 @@
             ;
             
             return this;
+        },
+        
+        mapToSearch: function (seqName, index) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                return this.get("compAlignments")[sInd].convertToRef (index);
+            }
+            return undefined;
+        },
+        
+        mapFromSearch: function (seqName, index) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                return this.get("compAlignments")[sInd].convertFromRef (index);
+            }
+            return undefined;
+        },
+        
+        bulkMapToSearch: function (seqName, indices) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                var marr = this.get("compAlignments")[sInd];
+                return indices.map (function(i) { return marr.convertToRef [i]; });
+            }
+            return undefined;
+        },
+        
+        bulkMapFromSearch: function (seqName, indices) {
+            var sInd = this.seqIndex[seqName];
+            if (sInd !== undefined) {
+                var marr = this.get("compAlignments")[sInd];
+                return indices.map (function(i) { return marr.convertFromRef [i]; });
+            }
+            return undefined;
         },
     });
     
