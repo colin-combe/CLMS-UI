@@ -3,20 +3,12 @@
 
     global.CLMSUI = global.CLMSUI || {};
     
-    global.CLMSUI.SelectionTableViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
-        events: function() {
-          var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
-          if(_.isFunction(parentEvents)){
-              parentEvents = parentEvents();
-          }
-          return _.extend({},parentEvents,{});
-        },
+    global.CLMSUI.SelectionTableViewBB = global.Backbone.View.extend ({
+        events: {},
 
-        initialize: function (viewOptions) {
-            global.CLMSUI.SelectionTableViewBB.__super__.initialize.apply (this, arguments);
-            
-            var topDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
-            topDiv.html ("<TABLE><THEAD><TR></TR></THEAD><TBODY></TBODY></TABLE>"); 
+        initialize: function () {
+            var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
+            holdingDiv.html ("<TABLE><THEAD><TR></TR></THEAD><TBODY></TBODY></TABLE>"); 
         },
         
         render: function () {
@@ -25,11 +17,7 @@
         
         updateTable: function () {
             console.log("MODEL", this.model);
-            var selectionDiv = this.el;
             var selectedXLinkArray = this.model.get("selection");
-
-            var bd = d3.select('#bottomDiv');
-            var splt = d3.select('#splitterDiv');
 
             if (selectedXLinkArray.length > 0) {
                 
@@ -41,19 +29,19 @@
                                                                                    
                 var headerLabels = {
                    "protein1": "Protein1",
-																			"pepPos1": "PepPos1",
-																			"pepSeq1raw": "PepSeq1",
-																			"linkPos1": "LinkPos1",
-																			"protein2": "Protein2",
-																			"pepPos2": "PepPos2",
-																			"pepSeq2raw": "PepSeq2",
-																			"linkPos2": "LinkPos2",
-																			"score": "Score",
-																			"autovalidated": "Auto",
-																			"validated": "Manual",
-																			"group": "Group",
-																			"runName": "Run Name",
-																			"scanNumber": "Scan Number",		
+                    "pepPos1": "PepPos1",
+                    "pepSeq1raw": "PepSeq1",
+                    "linkPos1": "LinkPos1",
+                    "protein2": "Protein2",
+                    "pepPos2": "PepPos2",
+                    "pepSeq2raw": "PepSeq2",
+                    "linkPos2": "LinkPos2",
+                    "score": "Score",
+                    "autovalidated": "Auto",
+                    "validated": "Manual",
+                    "group": "Group",
+                    "runName": "Run Name",
+                    "scanNumber": "Scan Number",		
                 };
                 
                 // entries commented out until a replacement is found for xlv
@@ -70,14 +58,16 @@
                 );
                                                                                    
                 var headerRow = d3.select(this.el).select("THEAD TR");
-                var headerJoin = headerRow.selectAll("TH").data(filteredProps);
+                console.log ("headerRow", headerRow, filteredProps, headerRow.selectAll("TH"));
+                var headerJoin = headerRow.selectAll("TH").data(filteredProps, function(d) { return d; });
                 
                 headerJoin.exit().remove();
-                headerJoin.enter().append("TH")
+                // See https://github.com/mbostock/d3/issues/2722 as I kick off about case sensitivity
+                headerJoin.enter().append("th")
                     .text (function(d) { return headerLabels[d]; })
                 ;
 
-                this.addRows (filteredProps)
+                this.addRows (filteredProps);
             }
         },
 
@@ -88,7 +78,7 @@
 
     
         addRows : function (filteredProps) {   
-            var selectionDiv = this.el;
+            var self = this;
             var selectedLinkArray = this.model.get("selection");
 
             // make fresh array with protein links expanded out into constituent residue links
@@ -96,7 +86,7 @@
             selectedLinkArray.forEach (function(link) {
                 link.filteredMatches.forEach (function (m) {
                     resLinks.push (m[0]);
-                })
+                });
                 /*
                 if (link.residueLinks) {   //its a ProteinLink
                     resLinks.push.apply (resLinks, link.residueLinks.values());
@@ -126,7 +116,7 @@
         
             var cellJoin = tjoin.selectAll("TD").data(filteredProps, function(d) { return d; });
             cellJoin.exit().remove();
-            cellJoin.enter().append("TD");
+            cellJoin.enter().append("td");
         
             var cellFuncs = {
                 "score": function (d) { 
@@ -152,13 +142,16 @@
             });
         },
         
-         // removes view
-        // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
-        remove: function () {
-            global.CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
-        
-            // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
-            this.chart = this.chart.destroy();
+        setVisible: function (show) {
+            var current = d3.select(this.el).style("display");
+            var next = show ? 'block' : 'none';
+            d3.select(this.el).style('display', next);
+            if (current !== next) {
+                
+            }
+            if (show) {
+                this.render();
+            }
         },
     });
     

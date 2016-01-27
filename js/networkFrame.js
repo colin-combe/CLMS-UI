@@ -23,25 +23,26 @@ var CLMSUI = CLMSUI || {};
 /*
  * Horizontal splitter JS
  */
+
+/*
 var marginBottom = 95;
 var minBottomDivHeight = 120;
-var splitterDivHeight = 20;
 var splitterDragging = false;
 var splitterDiv = document.getElementById("splitterDiv");
 var topDiv = document.getElementById("topDiv");
 var bottomDiv = document.getElementById("bottomDiv");
-var main = document;//.getElementById("main");
+var main = document;//.getElementById("main"); 
+
 splitterDiv.onmousedown = function(evt) {
 	CLMSUI.splitterDragging = true;
 };
+splitterDiv.onmouseup = function(evt) {
+	CLMSUI.splitterDragging = false;
+};
 main.onmousemove = function(evt) {
 	if (CLMSUI.splitterDragging === true || !evt){
-		var element = topDiv;
-		var top = 0;
-		do {
-			top += element.offsetTop  || 0;
-			element = element.offsetParent;
-		} while(element);
+        var splitterDivHeight = $(splitterDiv).height();
+		var top = $(topDiv).offset().top;
 		var topDivHeight;
 		if (evt) topDivHeight = evt.pageY - top - (splitterDivHeight / 2);
 		else topDivHeight = window.innerHeight - top - splitterDivHeight - minBottomDivHeight- marginBottom;
@@ -54,28 +55,26 @@ main.onmousemove = function(evt) {
 		topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
 		bottomDiv.setAttribute("style", "height:"+bottomDivHeight+"px;");
 	};
-}
+};
+
 main.onmouseup = function(evt) {
 	splitterDragging = false;
-}
+};
 
 window.onresize = function(event) {
 	//if (document.getElementById('selectionChkBx').checked == true) {
     //if (selectionShown == true) {
-    if (selectionPanel.isShown() == true) {
-		main.onmousemove();//event);}
-	} else {
-		var element = topDiv;
-		var top = 0;
-		do {
-			top += element.offsetTop  || 0;
-			element = element.offsetParent;
-		} while(element);
+   // if (selectionPanel.isShown() == true) {
+	//	main.onmousemove();//event);}
+	//} else {
+		var top = $(topDiv).offset().top;
 		var topDivHeight = window.innerHeight - top - marginBottom;
 		topDiv.setAttribute("style", "height:"+topDivHeight+"px;");
-	}
+	//}
 };
+*/
 
+var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", minSize: [200,0], });
 /*
  *
  *  Hide / show floaty panels (including Selection)
@@ -84,7 +83,7 @@ window.onresize = function(event) {
 //~ var selChkBx = document.getElementById('selectionChkBx');
 //~ selChkBx.checked = false;
 var selectionShown = false;
-var selectionPanel = new SelectionPanel("selectionDiv");
+//var selectionPanel = new SelectionPanel("selectionDiv");
 
 /*
 if (selectionPanel.isShown() == false) {
@@ -94,7 +93,7 @@ if (selectionPanel.isShown() == false) {
 
 var showSpectrumPanel = function (show) {
 	d3.select('#spectrumPanel').style('display', show ? 'block' : 'none');
-}
+};
 
 
 
@@ -295,7 +294,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     var selectionViewer = new window.CLMSUI.SelectionTableViewBB ({
         el: "#bottomDiv",
         model: window.CLMSUI.compositeModelInst,
-        displayEventName: "ignoreThisFlag",
     });
     selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
         console.log ("args", arguments);

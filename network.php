@@ -47,6 +47,7 @@
         <link rel="stylesheet" href="./css/minigram.css">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
         <link rel="stylesheet" href="./css/alignViewBB.css">
+        <link rel="stylesheet" href="./css/selectionViewBB.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -70,6 +71,8 @@
 
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
+        <script type="text/javascript" src="./vendor/split.js"></script>
+        
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
@@ -181,12 +184,14 @@
 				</h1>
    	 		</div>
 
-			<div>
+			<div class="mainContent">
 				<div id="topDiv"></div>
-				<div id=splitterDiv class="horizontalSplitter"></div>
+				<!-- <div id=splitterDiv class="horizontalSplitter"></div> -->
 				<div id="bottomDiv">
-					<div id="selectionDiv" class="panelInner">
+					<!--
+                    <div id="selectionDiv" class="panelInner">
 					</div>
+                    -->
 				</div>
 			</div>
 
@@ -426,7 +431,7 @@
 				});
 
 				*/
-				window.onresize();
+				//window.onresize();
 
 			};
             
