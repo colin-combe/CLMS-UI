@@ -181,7 +181,10 @@
    	 		</div>
 
 			<div>
-				<div id="topDiv"></div>
+				<div id="topDiv">
+					<div id="networkDiv"></div>
+					<div id="sliderDiv"></div>
+				</div>
 				<div id=splitterDiv class="horizontalSplitter"></div>
 				<div id="bottomDiv">
 					<div id="selectionDiv" class="panelInner">

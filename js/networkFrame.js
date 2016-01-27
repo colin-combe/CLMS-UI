@@ -60,8 +60,6 @@ main.onmouseup = function(evt) {
 }
 
 window.onresize = function(event) {
-	//if (document.getElementById('selectionChkBx').checked == true) {
-    //if (selectionShown == true) {
     if (selectionPanel.isShown() == true) {
 		main.onmousemove();//event);}
 	} else {
@@ -169,7 +167,7 @@ CLMSUI.init.views = function () {
 
     if (HSA_Active){
         /*Distance slider */
-        var distSliderDiv = d3.select("#topDiv").append("div").attr("id","sliderDiv");
+        var distSliderDiv = d3.select("#sliderDiv");
         var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
         distSlider.brushMoved.add(onDistanceSliderChange); //add listener
         distSlider.brushmove();
@@ -211,7 +209,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     var crosslinkViewer = new window.CLMS.xiNET.CrosslinkViewer ({
-        el: "#topDiv", 
+        el: "#networkDiv", 
         model: CLMSUI.compositeModelInst,
     });
 
