@@ -200,7 +200,7 @@
 
 					<div style='float:right'>
 
-						<label style="margin-left:20px;">Annotations:
+                        <label style="margin-left:20px;"><span>Annotations:</span>
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
 								<option selected>Custom</option>
@@ -275,16 +275,20 @@
                 CLMSUI.alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
 
                 CLMSUI.alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+                    console.log("Interactors", clmsModel.get("interactors"));
+                    
                     clmsModel.get("interactors").forEach (function (entry) {
                         console.log ("entry", entry);
-                        this.add ([{
-                            "id": entry.id,
-                            "displayLabel": entry.name.replace("_", " "),
-                            "refID": "Search",
-                            "refSeq": entry.sequence, 
-                            "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
-                            "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
-                        }]);
+                        if (!entry.isDecoy()) {
+                            this.add ([{
+                                "id": entry.id,
+                                "displayLabel": entry.name.replace("_", " "),
+                                "refID": "Search",
+                                "refSeq": entry.sequence, 
+                                "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
+                                "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
+                            }]);
+                        }
                     }, this);
 
                     allDataLoaded();

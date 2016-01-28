@@ -554,8 +554,6 @@ tbody tr:hover td, tbody tr:hover td  {
     user-select: none;
 }
 .scoreSlider  {
-    vertical-align: top;
-    position: relative;
     display: inline-block;
     border-left: 1px solid #bbb;
     border-right: 1px solid #bbb;
@@ -564,8 +562,6 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 .scoreSlider p {
     display: inline-block;
-    vertical-align: top;
-    position: relative;
 }
 .scoreSlider .cutoffLabel {
     min-width: 4em;

@@ -74,7 +74,7 @@ window.onresize = function(event) {
 };
 */
 
-var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", minSize: [200,0], });
+var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [95,5], minSize: [200,10], });
 /*
  *
  *  Hide / show floaty panels (including Selection)
