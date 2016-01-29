@@ -313,24 +313,12 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 #topDiv {
 	overflow:hidden;
 }
-#topLeftDiv {
-	overflow:hidden;
-	float:left;
-	width:50%;
-	height:100%
-}
-#topRightDiv {
-	float:right;
-	width:50%;
-	height:100%;
-}
+
 #spectrumDiv {
-background-color: white;
-height: calc(100% - 40px);
+    background-color: white;
+    height: calc(100% - 40px);
 }
-#selectionDiv {
-	overflow:auto;
-}
+
 #nglDiv {
 /*
 	float:right;
@@ -412,14 +400,7 @@ height: calc(100% - 40px);
 */
   fill:#FDB863;
 }
-.horizontalSplitter {
-    height: 20px;
-    background: rgba(9, 29, 66, 1);
-    margin-left: 10px;
-    margin-right: 10px;
-    color: #fff;
-    cursor:ns-resize;
-}
+
 #bottomDiv {
     margin-left: 10px;
     margin-right: 10px;
@@ -429,13 +410,7 @@ height: calc(100% - 40px);
 .noMarg{
 	margin:0px!important;
 }
-.dynDiv_setLimit{
-	height:100%;
-	width:100%;
-	z-index:2;
-	position:fixed;
-	pointer-events:none;
-}
+
 .dynDiv{
 	padding:20px 10px;
 	background: rgba(9, 29, 66, 0.9);

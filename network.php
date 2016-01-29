@@ -124,36 +124,31 @@
     </head>
 
     <body>
-<!--
-		<div class="dynDiv_setLimit">
--->
-			<div class="dynDiv" id="spectrumPanel">
-				<div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);selectionPanel.clearTableHighlights();"></i></div>
 
-				<div style="height:40px;">
-					<label  class="btn">loss labels
-						<input id="lossyChkBx"
-							onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)"
-						type="checkbox">
-					</label>
-					<button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
-					<button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>		
-				</div>
-	
-				<div class="panelInner">
-					<div  id='spectrumDiv'></div>
-				</div>
-			</div>
-		
-            <div class="dynDiv" id="keyPanel"></div>
-            <div class="dynDiv" id="nglPanel"></div>
-            <div class="dynDiv" id="distoPanel"></div>
-            <div class="dynDiv" id="matrixPanel"></div>
-            <div class="dynDiv" id="alignPanel"></div>
+        <div class="dynDiv" id="spectrumPanel">
+            <div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);selectionPanel.clearTableHighlights();"></i></div>
 
-<!--
-		</div>
--->
+            <div style="height:40px;">
+                <label  class="btn">loss labels
+                    <input id="lossyChkBx"
+                        onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)"
+                    type="checkbox">
+                </label>
+                <button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
+                <button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>		
+            </div>
+
+            <div class="panelInner">
+                <div id='spectrumDiv'></div>
+            </div>
+        </div>
+
+        <div class="dynDiv" id="keyPanel"></div>
+        <div class="dynDiv" id="nglPanel"></div>
+        <div class="dynDiv" id="distoPanel"></div>
+        <div class="dynDiv" id="matrixPanel"></div>
+        <div class="dynDiv" id="alignPanel"></div>
+
 
 		<!-- Main -->
 		<div id="main">
@@ -186,13 +181,7 @@
 
 			<div class="mainContent">
 				<div id="topDiv"></div>
-				<!-- <div id=splitterDiv class="horizontalSplitter"></div> -->
-				<div id="bottomDiv">
-					<!--
-                    <div id="selectionDiv" class="panelInner">
-					</div>
-                    -->
-				</div>
+				<div id="bottomDiv"></div>
 			</div>
 
 			<div class="controls">

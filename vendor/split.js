@@ -43,7 +43,7 @@ var global = this
       , pairs = []
 
     // Set defaults
-
+    console.log ("spliot this", this);
     options = typeof options !== 'undefined' ?  options : {}
 
     if (typeof options.gutterSize === 'undefined') options.gutterSize = 10
@@ -196,9 +196,11 @@ var global = this
       , adjust = function (offset) {
             // A size is the same as offset. B size is total size - A size.
             // Both sizes are calculated from the initial parent percentage.
-
-            this.a.style[dimension] = calc + '(' + (offset / this.size * this.percentage) + '% - ' + this.aGutterSize + 'px)'
-            this.b.style[dimension] = calc + '(' + (this.percentage - (offset / this.size * this.percentage)) + '% - ' + this.bGutterSize + 'px)'
+            this.aPerc = offset / this.size * this.percentage;
+            this.bPerc = this.percentage - (offset / this.size * this.percentage);
+            console.log ("adj", offset, this.size, this.percentage, this.aPerc);
+            this.a.style[dimension] = calc + '(' + (this.aPerc) + '% - ' + this.aGutterSize + 'px)'
+            this.b.style[dimension] = calc + '(' + (this.bPerc) + '% - ' + this.bGutterSize + 'px)'
         }
       , fitMin = function () {
             var self = this
@@ -337,7 +339,28 @@ var global = this
         }
     }
 
-    balancePairs(pairs)
+    balancePairs(pairs);
+      
+      var splitObj = {};
+      splitObj.collapse = function (state) {
+          pairs.forEach (function (pair) {
+              if (state !== pair.collapseState) {
+                  //console.log ("chnage collapse state");
+                  pair.collapseState = state;
+                  if (state) {
+                    //console.log ("collapse pair", pair);
+                    pair.resAPerc = pair.aPerc;
+                    adjust.call (pair, pair.size - pair.bMin);
+                  } else {
+                       //console.log ("expand pair", pair);
+                      var offset = ((pair.size * pair.percentage) / 100) * ((pair.resAPerc || pair.aPerc) / 100);
+                      adjust.call (pair, offset);
+                  }
+              }
+          });
+      };
+      
+      return splitObj;
 }
 
 if (typeof exports !== 'undefined') {
