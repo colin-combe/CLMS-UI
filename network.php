@@ -47,6 +47,7 @@
         <link rel="stylesheet" href="./css/minigram.css">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
         <link rel="stylesheet" href="./css/alignViewBB.css">
+        <link rel="stylesheet" href="./css/selectionViewBB.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -70,6 +71,8 @@
 
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
+        <script type="text/javascript" src="./vendor/split.js"></script>
+        
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
@@ -181,15 +184,9 @@
 				</h1>
    	 		</div>
 
-			<div>
-				<div id="topDiv">
-					<div id="networkDiv"></div>
-					<div id="sliderDiv"></div>
-				</div>
-				<div id=splitterDiv class="horizontalSplitter"></div>
+			<div class="mainContent">
+				<div id="topDiv"></div>
 				<div id="bottomDiv">
-					<div id="selectionDiv" class="panelInner">
-					</div>
 				</div>
 			</div>
 
@@ -198,7 +195,7 @@
 
 					<div style='float:right'>
 
-						<label style="margin-left:20px;">Annotations:
+                        <label style="margin-left:20px;"><span>Annotations:</span>
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
 								<option selected>Custom</option>
@@ -273,16 +270,20 @@
                 CLMSUI.alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
 
                 CLMSUI.alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+                    console.log("Interactors", clmsModel.get("interactors"));
+                    
                     clmsModel.get("interactors").forEach (function (entry) {
                         console.log ("entry", entry);
-                        this.add ([{
-                            "id": entry.id,
-                            "displayLabel": entry.name.replace("_", " "),
-                            "refID": "Search",
-                            "refSeq": entry.sequence, 
-                            "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
-                            "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
-                        }]);
+                        if (!entry.isDecoy()) {
+                            this.add ([{
+                                "id": entry.id,
+                                "displayLabel": entry.name.replace("_", " "),
+                                "refID": "Search",
+                                "refSeq": entry.sequence, 
+                                "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
+                                "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
+                            }]);
+                        }
                     }, this);
 
                     allDataLoaded();
@@ -429,7 +430,7 @@
 				});
 
 				*/
-				window.onresize();
+				//window.onresize();
 
 			};
             

@@ -90,38 +90,29 @@
             return this;
         },
         
-        mapToSearch: function (seqName, index) {
+        getCompSequence: function (seqName) {
             var sInd = this.seqIndex[seqName];
-            if (sInd !== undefined) {
-                return this.get("compAlignments")[sInd].convertToRef (index);
-            }
-            return undefined;
+            return sInd !== undefined ? this.get("compAlignments")[sInd] : undefined;
+        },
+        
+        mapToSearch: function (seqName, index) {
+            var compSeq = this.getCompSequence (seqName);
+            return compSeq ? compSeq.convertToRef (index) : undefined;
         },
         
         mapFromSearch: function (seqName, index) {
-            var sInd = this.seqIndex[seqName];
-            if (sInd !== undefined) {
-                return this.get("compAlignments")[sInd].convertFromRef (index);
-            }
-            return undefined;
+            var compSeq = this.getCompSequence (seqName);
+            return compSeq ? compSeq.convertFromRef (index) : undefined;
         },
         
         bulkMapToSearch: function (seqName, indices) {
-            var sInd = this.seqIndex[seqName];
-            if (sInd !== undefined) {
-                var marr = this.get("compAlignments")[sInd];
-                return indices.map (function(i) { return marr.convertToRef [i]; });
-            }
-            return undefined;
+            var compSeq = this.getCompSequence (seqName);
+            return compSeq ? indices.map (function(i) { return compSeq.convertToRef [i]; }) : undefined;
         },
         
         bulkMapFromSearch: function (seqName, indices) {
-            var sInd = this.seqIndex[seqName];
-            if (sInd !== undefined) {
-                var marr = this.get("compAlignments")[sInd];
-                return indices.map (function(i) { return marr.convertFromRef [i]; });
-            }
-            return undefined;
+            var compSeq = this.getCompSequence (seqName);
+            return compSeq ? indices.map (function(i) { return compSeq.convertFromRef [i]; }) : undefined;
         },
     });
     

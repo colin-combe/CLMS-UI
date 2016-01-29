@@ -19,16 +19,16 @@
             
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
-            var topDiv = topElem.append("DIV").attr("class", "alignView");
+            var holdingDiv = topElem.append("DIV").attr("class", "alignView");
             var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
-            topDiv.html (template ({
+            holdingDiv.html (template ({
                 headerText: "Available Proteins for Alignment",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
             }));  
             
-            topDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
+            holdingDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
             
             this.tooltipModel = viewOptions.tooltipModel;   
             
@@ -136,9 +136,9 @@
             this.tooltipModel = viewOptions.tooltipModel;
             
             var topElem = d3.select(this.el);
-            var topDiv = topElem.append("DIV").attr("class", "alignView");
+            var holdingDiv = topElem.append("DIV").attr("class", "alignView");
             var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><div><label><%= diffLabel %></label><input type='checkbox' class='diff'></input></div>");
-            topDiv.html (template ({
+            holdingDiv.html (template ({
                     firstColHeader:"Name", 
                     secondColHeader:"Sequence", 
                     diffLabel:"Show differences only",

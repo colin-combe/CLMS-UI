@@ -1,4 +1,7 @@
-.minigram { display: inline-block; }
+.minigram { 
+    display: inline-block;
+    vertical-align: middle;
+}
 
 .c3minigram .c3-brush .extent {
   fill-opacity: 0.2; 
