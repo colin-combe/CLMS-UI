@@ -121,6 +121,7 @@
         <script type="text/javascript" src="./js/alignViewBB3.js"></script>
         <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
+        <script type="text/javascript" src="./js/circularViewBB.js"></script>
     </head>
 
     <body>
@@ -148,6 +149,7 @@
         <div class="dynDiv" id="distoPanel"></div>
         <div class="dynDiv" id="matrixPanel"></div>
         <div class="dynDiv" id="alignPanel"></div>
+        <div class="dynDiv" id="circularPanel"></div>
 
 
 		<!-- Main -->
@@ -174,6 +176,7 @@
                     <span id="distoChkBxPlaceholder"></span>
                     <span id="matrixChkBxPlaceholder"></span>
                     <span id="alignChkBxPlaceholder"></span>
+                    <span id="circularChkBxPlaceholder"></span>
                     
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
 				</h1>
