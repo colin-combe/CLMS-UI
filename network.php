@@ -24,7 +24,6 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-
         <meta http-equiv="cache-control" content="max-age=0" />
         <meta http-equiv="cache-control" content="no-cache" />
         <meta http-equiv="expires" content="0" />
@@ -49,7 +48,6 @@
         <link rel="stylesheet" href="./css/alignViewBB.css">
         <link rel="stylesheet" href="./css/selectionViewBB.css">
 
-		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
@@ -77,9 +75,10 @@
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
 
-       	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
-
 <!--
+       	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
+-->
+
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
@@ -87,18 +86,17 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
--->
-
-       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 
 <!--
+       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+-->
+
 	 	<script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProteinLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
--->
 <!--
         <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
 -->
@@ -240,8 +238,6 @@
 			NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
 			var stage;
             
-            var targetDiv = document.getElementById('topDiv');
-            //tempModelMaker = new xiNET.Controller(targetDiv);
             <?php
                 include './php/loadData.php';
                 if (file_exists('../annotations.php')){
