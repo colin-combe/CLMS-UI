@@ -185,7 +185,10 @@
    	 		</div>
 
 			<div class="mainContent">
-				<div id="topDiv"></div>
+				<div id="topDiv">
+					<div id="networkDiv"></div>
+					<div id="sliderDiv"></div>
+				</div>
 				<div id="bottomDiv">
 				</div>
 			</div>
