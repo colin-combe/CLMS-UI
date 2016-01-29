@@ -21,6 +21,7 @@
 var CLMSUI = CLMSUI || {};
 
 var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [95,5], minSize: [200,10], });
+console.log ("split", split);
 /*
  *
  *  Hide / show floaty panels (including Selection)
@@ -242,8 +243,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: window.CLMSUI.compositeModelInst,
     });
     selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-        console.log ("args", arguments);
-        this.setVisible (selection.length > 0);    
+        var emptySelection = (selection.length === 0);
+        split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
+        this.setVisible (!emptySelection);    
     });
 
 

@@ -1,4 +1,3 @@
 .selectView TABLE {
-    /*width: 100%;*/
-    
+    overflow: auto;
 }
