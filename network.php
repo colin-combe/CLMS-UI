@@ -48,6 +48,7 @@
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
         <link rel="stylesheet" href="./css/alignViewBB.css">
         <link rel="stylesheet" href="./css/selectionViewBB.css">
+        <link rel="stylesheet" href="./css/circularViewBB.css">
 
 		<script type="text/javascript" src="./vendor/signals.js"></script>
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -77,9 +78,8 @@
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
 
-       	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
+       	<!-- <script type="text/javascript" src="./vendor/CLMS_model.js"></script> -->
 
-<!--
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
@@ -87,7 +87,7 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
--->
+
 
        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 

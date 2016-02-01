@@ -76,10 +76,8 @@
         // Canvas viewport and element
         var canvasViewport = viewDiv.append("div")
             .attr ("class", "viewport")
-            .style("position", "absolute")
             .style("top", this.margin.top + "px")
 			.style("left", this.margin.left + "px")
-            //.style("border", "1px solid red")
             .call(self.zoomStatus)
         ;
         
