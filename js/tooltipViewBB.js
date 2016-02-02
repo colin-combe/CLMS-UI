@@ -78,12 +78,14 @@
             //console.log ("event", e);
 
             var tooltip = d3.select(this.el);
-            var dw = $(document).width();
-            var dh = $(document).height();
-            var ww = $(window).width();
-            var wh = $(window).height();
-            var sx = $(document).scrollLeft();
-            var sy = $(document).scrollTop();
+            var doc = $(document);
+            var win = $(window);
+            var dw = doc.width();
+            var dh = doc.height();
+            var ww = win.width();
+            var wh = win.height();
+            var sx = win.scrollLeft();
+            var sy = win.scrollTop();
 
             var tx = e.pageX;
             var ty = e.pageY;

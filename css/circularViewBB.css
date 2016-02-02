@@ -26,6 +26,11 @@ svg.circularView {
     stroke-opacity: 0.5;
 }
 
+.selectedCircleLink {
+    stroke: #ff0;
+    stroke-opacity: 0.8;
+}
+
 .circleNode {
     stroke-width: 1px;
 }
@@ -38,6 +43,7 @@ svg.circularView {
     font-size: 0.5em;
     stroke: none;
     fill: #000;
+    pointer-events: none;
 }
 
 .circularView .tick line {
@@ -48,3 +54,9 @@ svg.circularView {
     transform: rotate(180deg)translateX(-16px);
     text-anchor: end;
 }
+
+.circularNodeLabel {
+    text-anchor: middle;
+    font-size: 0.75em;
+    pointer-events: none;
+    fill: #444;
