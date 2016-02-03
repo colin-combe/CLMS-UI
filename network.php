@@ -73,6 +73,7 @@
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
+        <script type="text/javascript" src="./vendor/svgexp.js"></script>
         
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>

@@ -213,8 +213,13 @@ CLMSUI.utils = {
         },
         
         downloadSVG: function () {
-            var svgString = global.CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
-            download(svgString, 'application/svg', 'distogram.svg');
+            //var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
+            var svgSel = d3.select(this.el).selectAll("svg");
+            var svgArr = [svgSel.node()];
+            var svgStrings = CLMSUI.svgUtils.capture (svgArr);
+            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
+            //console.log ("xml", svgXML);
+            download (svgXML, 'application/svg', "view.svg");
         },
         
         hideView: function () {

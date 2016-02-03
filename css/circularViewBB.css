@@ -1,5 +1,5 @@
-#circularPanel {
-    background-color: #aaf;
+#circularPanel DIV.circleDiv {
+    background-color: #eee;
 }
 
 svg.circularView {
@@ -60,3 +60,8 @@ svg.circularView {
     font-size: 0.75em;
     pointer-events: none;
     fill: #444;
+}
+
+.flipNodeText {
+    transform: scale(-1,1);
+}

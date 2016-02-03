@@ -24,6 +24,10 @@
                 nodeWidth: 15,
                 tickWidth: 23,
                 gap: 5,
+                linkParse: function (link) { 
+                    return {fromPos: link.fromResidue - 1, fromNodeID: link.proteinLink.fromProtein.id, 
+                            toPos: link.toResidue - 1, toNodeID: link.proteinLink.toProtein.id};
+                },
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -33,11 +37,26 @@
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
+            // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
+            var template = _.template ("<DIV style='height:40px'><button class='<%= buttonClass %>'><%= buttonLabel %></button></DIV>"+
+                                       "<DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            mainDivSel.append("div")
+                .attr ("class", "panelInner")
+                .html(
+                    template ({
+                        svgClass: "circularView", 
+                        buttonClass: "btn btn-1 btn-1a downloadButton", 
+                        buttonLabel: "Download SVG",
+                    })
+                )
+            ;
+            
+            var degToRad = Math.PI / 180;
             
             // Lets user rotate diagram
             var drag = d3.behavior.drag();
             drag.on ("dragstart", function() {
-                var curTheta = d3.transform (svg.select("g g").attr("transform")).rotate / (180 / Math.PI);
+                var curTheta = d3.transform (svg.select("g g").attr("transform")).rotate * degToRad;
                 var mc = d3.mouse(this);
                 var dragStartTheta = Math.atan2 (mc[1] - self.radius, mc[0] - self.radius);
                 drag.offTheta = curTheta - dragStartTheta;
@@ -46,44 +65,42 @@
                 var dmc = d3.mouse(this);
                 var theta = Math.atan2 (dmc[1] - self.radius, dmc[0] - self.radius);
                 theta += drag.offTheta;
-                svg.select("g g").attr("transform", "rotate("+(theta*(180/Math.PI))+")");
+                svg.select("g g").attr("transform", "rotate("+(theta / degToRad)+")");
             });
             
-            var svg = mainDivSel.append("svg")
-                .attr ("class", "circularView")
+            
+            
+            var svg = mainDivSel.select("svg")
                 .call (drag)
             ;
             
-            svg.append("defs");
-            svg.append("g").append("g");    // two nested g's, one for translating, then one for rotating
+
             
  
             this.color = d3.scale.ordinal()
                 .domain([0,2])
-                .range(["#f7f7f7", "#67a9cf" , "#ef8a62"])
+                .range(["#beb", "#ebb" , "#bbe"])
             ;
-
-            var radConst = Math.PI / 180;
             
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")
                 .tension(0.45)
                 .radius(function(d) { return d.rad; })
-                .angle(function(d) { return d.ang * radConst; })
+                .angle(function(d) { return d.ang * degToRad; })
             ;
 
             this.arc = d3.svg.arc()
                 .innerRadius(90)
                 .outerRadius(100)
-                .startAngle(function(d) { return d.start * radConst; }) // remembering to convert from degs to radians
-                .endAngle(function(d) { return d.end * radConst; })
+                .startAngle(function(d) { return d.start * degToRad; }) // remembering to convert from degs to radians
+                .endAngle(function(d) { return d.end * degToRad; })
             ;
             
             this.textArc = d3.svg.arc()
                 .innerRadius(90)
                 .outerRadius(90)
-                .startAngle(function(d) { return d.start * radConst; }) // remembering to convert from degs to radians
-                .endAngle(function(d) { return d.end * radConst; })
+                .startAngle(function(d) { return d.start * degToRad; }) // remembering to convert from degs to radians
+                .endAngle(function(d) { return d.end * degToRad; })
             ;
             
                                             
@@ -104,6 +121,7 @@
                 
             this.linkTip = function (d) {
                 var xlink = self.model.get("clmsModel").get("crossLinks").get(d.id);
+                console.log ("tooltipped crosslink", xlink);
                 self.model.get("tooltipModel")
                     .set("header", "XLink")
                     .set("contents", [
@@ -126,24 +144,23 @@
         
         idFunc: function (d) { return d.id; },
 
-        calcLayout: function (interactors, crossLinks, range, options) {
+        calcLayout: function (nodeArr, linkArr, range, options) {
 
-            var _options = _.extend({gap: 5}, options);
+            var defaults = {
+                gap: 5,
+                linkParse: function(link) { return {
+                    fromPos: link.fromPos, fromNodeID: link.fromNodeID, toPos: link.toPos, toNodeID: link.toNodeID
+                }; },
+            };
+            var _options = _.extend(defaults, options);
             
-            var realInteractors = [];
-            interactors.forEach (function (value) {
-                if (!value.isDecoy()) {
-                    realInteractors.push (value);
-                }
-            });
-            
-            var totalLength = realInteractors.reduce (function (total, interactor) {
+            var totalLength = nodeArr.reduce (function (total, interactor) {
                 return total + interactor.size;    
             }, 0);
             
             // work out the length a gap needs to be in the domain to make a _options.gap length in the range
             var realRange = range[1] - range[0];
-            var noOfGaps = realInteractors.length;
+            var noOfGaps = nodeArr.length;
             var ratio = totalLength / (realRange - (_options.gap * noOfGaps));
             var dgap = _options.gap * ratio;
             totalLength += dgap * noOfGaps;
@@ -151,32 +168,26 @@
             var scale = d3.scale.linear().domain([0,totalLength]).range(range);
             
             
-            var nodeMap = d3.map();
+            var nodeCoordMap = d3.map();
             var total = 0;
-            realInteractors.forEach (function (interactor) {
-                var size = interactor.size;
-                nodeMap.set (interactor.id, {id: interactor.id, rawStart: total, start: scale(total), end: scale(total + size), size: size} );
+            nodeArr.forEach (function (node) {
+                var size = node.size;
+                nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size} );
                 total += size + dgap;
             });
             
-            var linkMap = d3.map ();
-            crossLinks.forEach (function (value, key) {
-                var fromProt = value.proteinLink.fromProtein;
-                var toProt = value.proteinLink.toProtein;
-
-                if (!fromProt.isDecoy() && !toProt.isDecoy()) {
-                    var fromRes = value.fromResidue;
-                    var toRes = value.toResidue;
-                    linkMap.set (key, {
-                        id: key, 
-                        start: scale (fromRes + nodeMap.get(fromProt.id).rawStart), 
-                        end: scale (toRes + nodeMap.get(toProt.id).rawStart),
-                    });
-                }
+            var linkCoords = [];
+            linkArr.forEach (function (crossLink) {
+                var tofrom = _options.linkParse (crossLink);
+                linkCoords.push ({
+                    id: crossLink.id, 
+                    start: scale (tofrom.fromPos + nodeCoordMap.get(tofrom.fromNodeID).rawStart), 
+                    end: scale (tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
+                });
             });
             
             
-            return { nodes: nodeMap.values(), links: linkMap.values() };
+            return { nodes: nodeCoordMap.values(), links: linkCoords };
         },
         
         showSelected: function () {
@@ -210,7 +221,22 @@
                 var interactors = this.model.get("clmsModel").get("interactors");
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 console.log (this.model, "interactors", interactors, "clmsModel", crossLinks);
-                var layout = this.calcLayout (interactors, crossLinks, [0,360], this.options);
+                
+                var filteredInteractors = [];
+                interactors.forEach (function (value) {
+                    if (!value.isDecoy()) {
+                        filteredInteractors.push (value);
+                    }
+                });
+                var filteredCrossLinks = [];
+                crossLinks.forEach (function (value) {
+                    var plink = value.proteinLink;
+                    if (value.filteredMatches && value.filteredMatches.length > 0 && !plink.fromProtein.isDecoy() && !plink.toProtein.isDecoy()) {
+                        filteredCrossLinks.push (value);
+                    }
+                });
+                
+                var layout = this.calcLayout (filteredInteractors, filteredCrossLinks, [0,360], this.options);
                 console.log ("layout", layout);
 
                 var svg = d3.select(this.el).select("svg");
@@ -358,8 +384,6 @@
                 .attr("x", 8)
                 .attr("dy", ".35em")
                 .classed ("justifyTick", function(d) { return d.angle > 180; })
-                //.style("transform", function(d) { return d.angle > 180 ? "rotate(180deg)translateX(-16px)" : null; })
-                //.style("text-anchor", function(d) { return d.angle > 180 ? "end" : null; })
                 .text(function(d) { return d.label; })
             ;
 
@@ -374,12 +398,12 @@
         
         drawText: function (g, nodes) {
             var self = this;
-            var interactors = this.model.get("clmsModel").get("interactors");
             
             var defs = d3.select(this.el).select("svg defs");
             var pathId = function (d) { return self.el.id + d.id; };
             
-            var tNodes = nodes.filter (function(d) { return d.end - d.start > 10; });
+            // only add names to nodes with 10 degrees of display or more
+            var tNodes = nodes.filter (function(d) { return (d.end - d.start) > 10; });
             
             var pathJoin = defs.selectAll("path").data (tNodes, self.idFunc);
             pathJoin.exit().remove();
@@ -389,10 +413,15 @@
             pathJoin
                 .attr("d", function(d) {
                     var pathd = self.textArc (d);
-                    // only want one curve, not solid arc
+                    console.log ("pathd", pathd);
+                    // only want one curve, not solid arc shape, so chop path string
                     var cutoff = pathd.indexOf("L");
                     if (cutoff >= 0) {
-                        pathd = pathd.substring (0, cutoff);
+                        var midAng = (d.start + d.end) / 2;
+                        // use second curve in arc for labels on bottom of circle to make sure text is left-to-right + chop off end 'Z',
+                        // use first curve otherwise
+                        pathd = (midAng > 90 && midAng < 270) ? 
+                            "M" + pathd.substring (cutoff + 1, pathd.length - 1) : pathd.substring (0, cutoff);
                     }
                     return pathd;
                 })
@@ -405,10 +434,11 @@
             textJoin.enter()
                 .append("text")
                 .attr ("class", "circularNodeLabel")
+                    .attr ("dy", function(d) { return (((d.start + d.end) / 2) > 90 && ((d.start + d.end) / 2) < 270) ? "1em" : null; })
                     .append("textPath")
                         .attr("startOffset", "50%")
-                        .attr("xlink:href", function(d) { return "#" + pathId(d); })
-                        .text (function(d) { return interactors.get(d.id).name.replace("_", " "); })
+                        .attr("xlink:href", function(d) { return "#" + pathId(d); })  
+                        .text (function(d) { return d.name.replace("_", " "); })
             ;
             
             return this;

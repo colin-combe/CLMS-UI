@@ -16,7 +16,6 @@
         },
         
         updateTable: function () {
-            console.log("MODEL", this.model);
             var selectedXLinkArray = this.model.get("selection");
 
             if (selectedXLinkArray.length > 0) {
