@@ -65,9 +65,9 @@
                 },
                 padding: {
                     bottom: 0,
-                    left: 0,
+                    left: 10,
                     top: 0,
-                    right: 0,
+                    right: 10,
                 },
                 bar: {
                     width: {

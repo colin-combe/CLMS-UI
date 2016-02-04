@@ -157,10 +157,14 @@
             var totalLength = nodeArr.reduce (function (total, interactor) {
                 return total + interactor.size;    
             }, 0);
-            
+           
             // work out the length a gap needs to be in the domain to make a _options.gap length in the range
             var realRange = range[1] - range[0];
             var noOfGaps = nodeArr.length;
+            // Fix so gaps never take more than a quarter the display circle in total
+            _options.gap = Math.min ((realRange / 4) / (noOfGaps * _options.gap), 1.0) * _options.gap;
+            console.log ("og", _options.gap);
+        
             var ratio = totalLength / (realRange - (_options.gap * noOfGaps));
             var dgap = _options.gap * ratio;
             totalLength += dgap * noOfGaps;
@@ -169,7 +173,7 @@
             
             
             var nodeCoordMap = d3.map();
-            var total = 0;
+            var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
             nodeArr.forEach (function (node) {
                 var size = node.size;
                 nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size} );
