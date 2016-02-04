@@ -27,8 +27,11 @@ svg.circularView {
 }
 
 .selectedCircleLink {
-    stroke: #ff0;
     stroke-opacity: 0.8;
+}
+
+.highlightedCircleLink {
+    stroke-opacity: 0.5;
 }
 
 .circleNode {

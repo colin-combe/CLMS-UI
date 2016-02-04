@@ -133,11 +133,11 @@
                 ;
             };
                 
-                
-            this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
+            // listen to custom filteringDone event from model    
+            this.listenTo (this.model, "filteringDone", function () { this.render (true); });  
             //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.model, "change:selection", this.showSelected); 
+            this.listenTo (this.model, "change:highlights", this.showHighlighted); 
             
             return this;
         },
@@ -158,13 +158,13 @@
                 return total + interactor.size;    
             }, 0);
            
-            // work out the length a gap needs to be in the domain to make a _options.gap length in the range
+            
             var realRange = range[1] - range[0];
             var noOfGaps = nodeArr.length;
             // Fix so gaps never take more than a quarter the display circle in total
-            _options.gap = Math.min ((realRange / 4) / (noOfGaps * _options.gap), 1.0) * _options.gap;
-            console.log ("og", _options.gap);
+            _options.gap = Math.min ((realRange / 4) / noOfGaps, _options.gap);
         
+            // work out the length a gap needs to be in the domain to make a _options.gap length in the range
             var ratio = totalLength / (realRange - (_options.gap * noOfGaps));
             var dgap = _options.gap * ratio;
             totalLength += dgap * noOfGaps;
@@ -197,10 +197,27 @@
         showSelected: function () {
             var selectedIDs = this.model.get("selection").map((function(xlink) { return xlink.id; }));
             var idset = d3.set (selectedIDs);
-            var thinLinks = d3.select(this.el).selectAll(".circleGhostLink");
-            thinLinks.classed ("selectedCircleLink", function(d) { return idset.has(d.id); });
-            console.log ("sods", selectedIDs);
+            var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
+            thickLinks.classed ("selectedCircleLink", function(d) { return idset.has(d.id); });
             return this;
+        },
+        
+        showHighlighted: function () {
+            var highlightedIDs = this.model.get("highlights").map((function(xlink) { return xlink.id; }));
+            var idset = d3.set (highlightedIDs);
+            var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
+            thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
+            return this;
+        },
+        
+        highlightNodeLinks: function (nodeId) {
+            var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+            var matchLinks = filteredCrossLinks.filter (function(link) {
+                var plink = link.proteinLink;
+                return plink.fromProtein.id === nodeId || plink.toProtein.id === nodeId;
+            });
+            this.model.set("highlights", matchLinks);
         },
         
         convertLinks: function (links, rad) {
@@ -215,8 +232,19 @@
             var diameter = Math.min (zelem.width(), zelem.height());
             return diameter / 2;
         },
+        
+        filterCrossLinks: function (crossLinks) {
+            var filteredCrossLinks = [];
+            crossLinks.forEach (function (value) {
+                var plink = value.proteinLink;
+                if (value.filteredMatches && value.filteredMatches.length > 0 && !plink.fromProtein.isDecoy() && !plink.toProtein.isDecoy()) {
+                    filteredCrossLinks.push (value);
+                }
+            });
+            return filteredCrossLinks;
+        },
 
-        render: function () {
+        render: function (linksOnly) {
             
             if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
 
@@ -224,7 +252,7 @@
                 
                 var interactors = this.model.get("clmsModel").get("interactors");
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
-                console.log (this.model, "interactors", interactors, "clmsModel", crossLinks);
+                console.log ("model", this.model);
                 
                 var filteredInteractors = [];
                 interactors.forEach (function (value) {
@@ -232,13 +260,7 @@
                         filteredInteractors.push (value);
                     }
                 });
-                var filteredCrossLinks = [];
-                crossLinks.forEach (function (value) {
-                    var plink = value.proteinLink;
-                    if (value.filteredMatches && value.filteredMatches.length > 0 && !plink.fromProtein.isDecoy() && !plink.toProtein.isDecoy()) {
-                        filteredCrossLinks.push (value);
-                    }
-                });
+                var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 
                 var layout = this.calcLayout (filteredInteractors, filteredCrossLinks, [0,360], this.options);
                 console.log ("layout", layout);
@@ -251,64 +273,70 @@
                 this.arc.innerRadius(innerNodeRadius).outerRadius(outerNodeRadius);
                 this.textArc.innerRadius(innerNodeRadius+1).outerRadius(innerNodeRadius+1); // both radii same for textArc
                 
-
                 var nodes = layout.nodes;
                 var links = layout.links;
-                var newLinks = this.convertLinks (links, innerNodeRadius);
-                console.log ("newLinks", newLinks);
-                
+                // turns link end & start angles into something d3.svg.arc can use
+                var linkCoords = this.convertLinks (links, innerNodeRadius);    
+                console.log ("linkCoords", linkCoords);
                 var self = this;
                 
                 var gTrans = svg.select("g");
                 gTrans.attr("transform", "translate(" + this.radius + "," + this.radius + ")");
                 var gRot = gTrans.select("g");
-                //gRot.attr("transform", "rotate(0)");
+                //gRot.attr("transform", "rotate(0)");  
                 
-                   
-                // draw thin links
-                var linkJoin = gRot.selectAll(".circleLink").data(newLinks, self.idFunc);
-                
-                linkJoin.exit().remove();
-                
-                linkJoin.enter()
-                    .append("path")
-                        .attr("class", "circleLink")
-                ;
-                
-                linkJoin
-                    .attr("d", function(d) { return self.line(d.coords); })
-                ;
-            
-                
-                
-                // draw thick, invisible links (used for highlighting and mouse event capture)
-                var ghostLinkJoin = gRot.selectAll(".circleGhostLink").data(newLinks, self.idFunc);
-                
-                ghostLinkJoin.exit().remove();
-                
-                ghostLinkJoin.enter()
-                    .append("path")
-                        .attr("class", "circleGhostLink")
-                        .on ("mouseenter", self.linkTip)
-                        .on ("mouseleave", self.clearTip)
-                        .on ("click", function (d) {
-                            self.model.set("selection", [crossLinks.get(d.id)]);
-                        })
-                ;
-                
-                ghostLinkJoin
-                    .attr("d", function(d) { return self.line(d.coords); })
-                ;
-                
-                // draw nodes (around edge)
-                this.drawNodes (gRot, nodes);
-                // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
-                this.drawTicks (gRot, nodes, outerNodeRadius);
-                // draw names on nodes
-                this.drawText (gRot, nodes);
+                // draw links
+                this.drawLinks (gRot, linkCoords);
+                if (!linksOnly) {
+                    // draw nodes (around edge)
+                    this.drawNodes (gRot, nodes);
+                    // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
+                    this.drawNodeTicks (gRot, nodes, outerNodeRadius);
+                    // draw names on nodes
+                    this.drawNodeText (gRot, nodes);
+                }
             }
 
             return this;
+        },
+        
+        drawLinks: function (g, links) {
+            
+            var self = this;
+            var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            
+            // draw thin links
+            var linkJoin = g.selectAll(".circleLink").data(links, self.idFunc);
+            linkJoin.exit().remove();
+            linkJoin.enter()
+                .append("path")
+                    .attr("class", "circleLink")
+            ;
+            linkJoin
+                .attr("d", function(d) { return self.line(d.coords); })
+            ;
+
+            // draw thick, invisible links (used for highlighting and mouse event capture)
+            var ghostLinkJoin = g.selectAll(".circleGhostLink").data(links, self.idFunc);
+            ghostLinkJoin.exit().remove();
+            ghostLinkJoin.enter()
+                .append("path")
+                    .attr("class", "circleGhostLink")
+                    .on ("mouseenter", function(d) {
+                        self.linkTip (d);
+                        self.model.set ("highlights", [crossLinks.get(d.id)]);
+                    })
+                    .on ("mouseleave", function(d) {
+                        self.clearTip (d);
+                        self.model.set ("highlights", []);
+                    })
+                    .on ("click", function (d) {
+                        self.model.set ("selection", [crossLinks.get(d.id)]);
+                    })
+            ;
+            ghostLinkJoin
+                .attr("d", function(d) { return self.line(d.coords); })
+            ;
         },
         
         drawNodes: function (g, nodes) {
@@ -320,8 +348,14 @@
             nodeJoin.enter()
                 .append('path')
                     .attr("class", "circleNode")
-                    .on("mouseenter", self.nodeTip)
-                    .on("mouseleave", self.clearTip)
+                    .on("mouseenter", function(d) {
+                        self.nodeTip (d);
+                        self.highlightNodeLinks (d.id);
+                    })
+                    .on("mouseleave", function(d) {
+                        self.clearTip (d); 
+                        self.model.set ("highlights", []);
+                    })
             ;
 
             nodeJoin
@@ -332,7 +366,7 @@
             return this;
         },
         
-        drawTicks: function (g, nodes, radius) {
+        drawNodeTicks: function (g, nodes, radius) {
             var self = this;
             var tot = nodes.reduce (function (total, node) {
                 return total + node.size;    
@@ -400,7 +434,7 @@
             return this;
         },
         
-        drawText: function (g, nodes) {
+        drawNodeText: function (g, nodes) {
             var self = this;
             
             var defs = d3.select(this.el).select("svg defs");
