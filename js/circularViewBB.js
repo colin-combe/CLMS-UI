@@ -134,7 +134,7 @@
             };
                 
                 
-            //this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
+            this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
             //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
             //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.model, "change:selection", this.showSelected); 
