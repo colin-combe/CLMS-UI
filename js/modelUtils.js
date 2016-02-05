@@ -236,4 +236,10 @@ CLMSUI.modelUtils = {
 
         return sequences;
     },
+    
+    linkHasHomomultimerMatch: function (xlink) {
+        return xlink.filteredMatches.some (function (match) {
+            return match[0].confirmedHomomultimer;    
+        });
+    },
 };

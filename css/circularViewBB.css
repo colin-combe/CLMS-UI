@@ -36,10 +36,11 @@ svg.circularView {
 
 .circleNode {
     stroke-width: 1px;
+    fill: #dde;
 }
 
 .circleNode:hover {
-    stroke: #fff;
+    stroke: #445;
 }
 
 .circularView .tick text {

@@ -97,12 +97,12 @@
         
         mapToSearch: function (seqName, index) {
             var compSeq = this.getCompSequence (seqName);
-            return compSeq ? compSeq.convertToRef (index) : undefined;
+            return compSeq ? compSeq.convertToRef [index] : undefined;
         },
         
         mapFromSearch: function (seqName, index) {
             var compSeq = this.getCompSequence (seqName);
-            return compSeq ? compSeq.convertFromRef (index) : undefined;
+            return compSeq ? compSeq.convertFromRef [index] : undefined;
         },
         
         bulkMapToSearch: function (seqName, indices) {

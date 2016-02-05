@@ -8,6 +8,76 @@
 
     global.CLMSUI = global.CLMSUI || {};
     
+    
+    global.CLMSUI.circleLayout = function  (nodeArr, linkArr, featureArrs, range, options) {
+
+        var defaults = {
+            gap: 5,
+            linkParse: function(link) { return {
+                fromPos: link.fromPos, fromNodeID: link.fromNodeID, toPos: link.toPos, toNodeID: link.toNodeID
+            }; },
+            featureParse: function (feature, node) {
+                return {
+                    fromPos: feature.start - 1, 
+                    toPos: feature.end - 1
+                };
+            },
+        };
+        var _options = _.extend(defaults, options);
+
+        var totalLength = nodeArr.reduce (function (total, interactor) {
+            return total + interactor.size;    
+        }, 0);
+
+
+        var realRange = range[1] - range[0];
+        var noOfGaps = nodeArr.length;
+        // Fix so gaps never take more than a quarter the display circle in total
+        _options.gap = Math.min ((realRange / 4) / noOfGaps, _options.gap);
+
+        // work out the length a gap needs to be in the domain to make a _options.gap length in the range
+        var ratio = totalLength / (realRange - (_options.gap * noOfGaps));
+        var dgap = _options.gap * ratio;
+        totalLength += dgap * noOfGaps;
+
+        var scale = d3.scale.linear().domain([0,totalLength]).range(range);
+
+
+        var nodeCoordMap = d3.map();
+        var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
+        nodeArr.forEach (function (node) {
+            var size = node.size;
+            nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size} );
+            total += size + dgap;
+        });
+
+        var featureCoords = [];
+        featureArrs.forEach (function (farr, i) {
+            var nodeID = nodeArr[i].id;
+            var nodeCoord = nodeCoordMap.get (nodeID);
+            farr.forEach (function (feature) {
+                var tofrom = _options.featureParse (feature, nodeID);
+                featureCoords.push ({
+                    id: feature.name,
+                    start: scale (tofrom.fromPos + nodeCoord.rawStart),
+                    end: scale (tofrom.toPos + nodeCoord.rawStart),
+                });
+            });   
+        });
+        
+        var linkCoords = [];
+        linkArr.forEach (function (link) {
+            var tofrom = _options.linkParse (link);
+            linkCoords.push ({
+                id: link.id, 
+                start: scale (tofrom.fromPos + nodeCoordMap.get(tofrom.fromNodeID).rawStart), 
+                end: scale (tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
+            });
+        });
+
+        return { nodes: nodeCoordMap.values(), links: linkCoords, features: featureCoords};
+    },
+    
     global.CLMSUI.CircularViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
           var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
@@ -20,6 +90,7 @@
         initialize: function (viewOptions) {
             global.CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
             
+            var self = this;
             var defaultOptions = {
                 nodeWidth: 15,
                 tickWidth: 23,
@@ -28,12 +99,26 @@
                     return {fromPos: link.fromResidue - 1, fromNodeID: link.proteinLink.fromProtein.id, 
                             toPos: link.toResidue - 1, toNodeID: link.proteinLink.toProtein.id};
                 },
+                featureParse: function (feature, nodeid) {
+                    var alignModel = self.model.get("alignColl").get(nodeid);
+                    var convStart = alignModel ? alignModel.mapToSearch ("Canonical", feature.start - 1) : undefined;
+                    var convEnd = alignModel ? alignModel.mapToSearch ("Canonical", feature.end - 1) : undefined;
+                    if (convStart < 0) { convStart = -convStart -1; }   // < 0 indicates no equal index match, do the - and -1 to find nearest index
+                    else if (convStart === undefined) { convStart = feature.start - 1; } // if no value, just use feature.start - 1
+                    
+                    if (convEnd < 0) { convEnd = -convEnd -1; }         // < 0 indicates no equal index match, do the - and -1 to find nearest index
+                    else if (convEnd === undefined) { convEnd = feature.end - 1; }       // ditto for end
+                    
+                    console.log ("convStart", feature.start - 1, convStart, "convEnd", feature.end - 1, convEnd);
+                    return {
+                        fromPos: convStart, 
+                        toPos: convEnd,
+                    };
+                },
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
             this.displayEventName = viewOptions.displayEventName;
-
-            var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
@@ -68,14 +153,9 @@
                 svg.select("g g").attr("transform", "rotate("+(theta / degToRad)+")");
             });
             
-            
-            
             var svg = mainDivSel.select("svg")
                 .call (drag)
-            ;
-            
-
-            
+            ;       
  
             this.color = d3.scale.ordinal()
                 .domain([0,2])
@@ -132,6 +212,16 @@
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
+            
+            this.featureTip = function (d) {
+                self.model.get("tooltipModel")
+                    .set("header", d.id.replace("_", " "))
+                    .set("contents", [
+                        ["Name", d.id],
+                    ])
+                    .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
+                ;
+            };
                 
             // listen to custom filteringDone event from model    
             this.listenTo (this.model, "filteringDone", function () { this.render (true); });  
@@ -143,56 +233,6 @@
         },
         
         idFunc: function (d) { return d.id; },
-
-        calcLayout: function (nodeArr, linkArr, range, options) {
-
-            var defaults = {
-                gap: 5,
-                linkParse: function(link) { return {
-                    fromPos: link.fromPos, fromNodeID: link.fromNodeID, toPos: link.toPos, toNodeID: link.toNodeID
-                }; },
-            };
-            var _options = _.extend(defaults, options);
-            
-            var totalLength = nodeArr.reduce (function (total, interactor) {
-                return total + interactor.size;    
-            }, 0);
-           
-            
-            var realRange = range[1] - range[0];
-            var noOfGaps = nodeArr.length;
-            // Fix so gaps never take more than a quarter the display circle in total
-            _options.gap = Math.min ((realRange / 4) / noOfGaps, _options.gap);
-        
-            // work out the length a gap needs to be in the domain to make a _options.gap length in the range
-            var ratio = totalLength / (realRange - (_options.gap * noOfGaps));
-            var dgap = _options.gap * ratio;
-            totalLength += dgap * noOfGaps;
-            
-            var scale = d3.scale.linear().domain([0,totalLength]).range(range);
-            
-            
-            var nodeCoordMap = d3.map();
-            var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
-            nodeArr.forEach (function (node) {
-                var size = node.size;
-                nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size} );
-                total += size + dgap;
-            });
-            
-            var linkCoords = [];
-            linkArr.forEach (function (crossLink) {
-                var tofrom = _options.linkParse (crossLink);
-                linkCoords.push ({
-                    id: crossLink.id, 
-                    start: scale (tofrom.fromPos + nodeCoordMap.get(tofrom.fromNodeID).rawStart), 
-                    end: scale (tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
-                });
-            });
-            
-            
-            return { nodes: nodeCoordMap.values(), links: linkCoords };
-        },
         
         showSelected: function () {
             var selectedIDs = this.model.get("selection").map((function(xlink) { return xlink.id; }));
@@ -220,17 +260,32 @@
             this.model.set("highlights", matchLinks);
         },
         
-        convertLinks: function (links, rad) {
+        convertLinks: function (links, rad1, rad2) {
+            var xlinks = this.model.get("clmsModel").get("crossLinks");
             var newLinks = links.map (function (link) {
-                return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) /2, rad: 0}, {ang: link.end, rad: rad}] };
+                var xlink = xlinks.get (link.id);
+                var homom = global.CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
+                var rad = homom ? rad2 : rad1;
+                var bowRadius = homom ? rad2 * 1.3 : 0;
+                return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) /2, rad: bowRadius}, {ang: link.end, rad: rad}] };
             });
             return newLinks;
         },
 	
-        getRadius: function (d3sel) {
+        getMaxRadius: function (d3sel) {
             var zelem = $(d3sel.node());
             var diameter = Math.min (zelem.width(), zelem.height());
             return diameter / 2;
+        },
+        
+        filterInteractors: function (interactors) {
+            var filteredInteractors = [];
+            interactors.forEach (function (value) {
+                if (!value.isDecoy()) {
+                    filteredInteractors.push (value);
+                }
+            });
+            return filteredInteractors;
         },
         
         filterCrossLinks: function (crossLinks) {
@@ -243,6 +298,10 @@
             });
             return filteredCrossLinks;
         },
+        
+        filterFeatures: function (features) {
+            return features ? features.filter (function (f) { return f.category === "DOMAIN"; }) : [];
+        },
 
         render: function (linksOnly) {
             
@@ -254,29 +313,28 @@
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 console.log ("model", this.model);
                 
-                var filteredInteractors = [];
-                interactors.forEach (function (value) {
-                    if (!value.isDecoy()) {
-                        filteredInteractors.push (value);
-                    }
-                });
+                var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+                var filteredFeatures = filteredInteractors.map (function (inter) {
+                    return this.filterFeatures (inter.uniprotFeatures);
+                }, this);
                 
-                var layout = this.calcLayout (filteredInteractors, filteredCrossLinks, [0,360], this.options);
+                var layout = global.CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
                 console.log ("layout", layout);
 
                 var svg = d3.select(this.el).select("svg");
-                this.radius = this.getRadius (svg);
-                var outerNodeRadius = this.radius - this.options.tickWidth;
-                var innerNodeRadius = outerNodeRadius - this.options.nodeWidth;
+                this.radius = this.getMaxRadius (svg);
+                var tickRadius = this.radius - this.options.tickWidth;
+                var innerNodeRadius = tickRadius - this.options.nodeWidth;
                 
-                this.arc.innerRadius(innerNodeRadius).outerRadius(outerNodeRadius);
+                this.arc.innerRadius(innerNodeRadius).outerRadius(tickRadius);
                 this.textArc.innerRadius(innerNodeRadius+1).outerRadius(innerNodeRadius+1); // both radii same for textArc
                 
                 var nodes = layout.nodes;
                 var links = layout.links;
+                var features = layout.features;
                 // turns link end & start angles into something d3.svg.arc can use
-                var linkCoords = this.convertLinks (links, innerNodeRadius);    
+                var linkCoords = this.convertLinks (links, innerNodeRadius, tickRadius);    
                 console.log ("linkCoords", linkCoords);
                 var self = this;
                 
@@ -291,9 +349,11 @@
                     // draw nodes (around edge)
                     this.drawNodes (gRot, nodes);
                     // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
-                    this.drawNodeTicks (gRot, nodes, outerNodeRadius);
+                    this.drawNodeTicks (gRot, nodes, tickRadius);
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
+                    // draw features
+                    this.drawFeatures (gRot, features);
                 }
             }
 
@@ -360,7 +420,6 @@
 
             nodeJoin
                 .attr("d", this.arc)
-                .style("fill", function(d,i) { return self.color(i); })
             ;    
             
             return this;
@@ -478,6 +537,27 @@
                         .attr("xlink:href", function(d) { return "#" + pathId(d); })  
                         .text (function(d) { return d.name.replace("_", " "); })
             ;
+            
+            return this;
+        },
+        
+        drawFeatures : function (g, features) {
+            var self = this;
+            var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
+
+            featureJoin.exit().remove();
+
+            featureJoin.enter()
+                .append('path')
+                    .attr("class", "circleFeature")
+                    .on("mouseenter", self.featureTip)
+                    .on("mouseleave", self.clearTip)
+            ;
+
+            featureJoin
+                .attr("d", this.arc)
+                .style("fill", function(d,i) { return self.color(i); })
+            ;    
             
             return this;
         },

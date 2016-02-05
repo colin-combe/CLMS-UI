@@ -334,6 +334,7 @@
                     rangeModel: CLMSUI.rangeModelInst,
                     filterModel: CLMSUI.filterModelInst,
                     tooltipModel: CLMSUI.tooltipModelInst,
+                    alignColl: CLMSUI.alignmentCollectionInst,
                     selection: [], //will contain cross-link objects
                     highlights: [], //will contain cross-link objects 
                 });

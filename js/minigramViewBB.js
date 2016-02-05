@@ -96,6 +96,7 @@
                         // eventually do snapping: http://bl.ocks.org/mbostock/6232620
                         
                         // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
+                        console.log ("minigram domain", domain[0], domain[1]);
                         self.model.set ({"domainStart": domain[0], "domainEnd": domain[1]}); 
                     },
                     size: {
@@ -103,7 +104,7 @@
                     },  
                     axis: {
                         x: {
-                            show: true
+                            show: true,
                         }
                     }
                 }
@@ -118,6 +119,7 @@
                 .attr ("d", "M 0 0 V 10 L 5 5 Z")
             ;   
             
+            this.relayout();
             this.render();
             
             return this;
@@ -144,9 +146,15 @@
             if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
                 this.chart.axis.max ({y: maxY});
             }
+
             this.chart.load({
                 columns: countArrays
             });
+            
+            // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
+            var internal = this.chart.internal;
+            var halfBarW = internal.getBarW (internal.subXAxis, 1) / 2;
+            d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
 
             //console.log ("data", distArr, binnedData);
             return this;
@@ -155,12 +163,13 @@
         aggregate: function (series, seriesLengths, precalcedDistributions) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
+
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
+            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX) + 2);
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
-            
+
             var sIndex = this.options.seriesNames.indexOf (this.options.scaleOthersTo);
             var targetLength = sIndex >= 0 ? seriesLengths[sIndex] : 1; 
 
@@ -183,10 +192,11 @@
         relayout: function () {
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
-            d3.select(this.el).select(".c3").style("max-height", "none");   
-
+            //d3.select(this.el).select(".c3").style("max-height", "none");  
+            // kill brush clip so we can see brush arrows at chart extremeties
+            d3.select(this.el).select(".c3-brush").attr("clip-path", "");   
+            
             this.chart.resize();
-
             return this;
         },
 
