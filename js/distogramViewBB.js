@@ -86,7 +86,8 @@
                     },
                     ondragend: function (extent) {
                         console.log ("extent", extent);
-                    }
+                    },
+                    order: null,
                 },
                 bar: {
                     width: {
@@ -97,8 +98,12 @@
                 },
                 axis: {
                     x: {
-                        label: this.options.xlabel //,
-                            //max: this.options.maxX
+                        label: this.options.xlabel,
+                        //max: this.options.maxX,
+                        padding: {
+                          left: 0,
+                          right: 0,
+                        }
                     },
                     y: {
                         label: this.options.ylabel,
@@ -120,12 +125,11 @@
                     top: 0
                 },
                 tooltip: {
-                    grouped: true,
                     format: {
                         title: function (x) {
                             return self.options.xlabel + " " + x;
                         },
-                        name: function (name/*, ratio, id, index*/) {
+                        name: function (name) {
                             return name + " " + self.options.ylabel;
                         },
                         value: function (value, ratio, id) {
@@ -138,7 +142,7 @@
                             }
                             return v;
                         }
-                    }
+                    },           
                 },
                 title: {
                     text: this.options.chartTitle
@@ -166,21 +170,19 @@
                 var crossLinkMap = pp1.crossLinks;  // do values() after filtering in next line
                 var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
                 var distances = this.model.get("distancesModel").get("distances");
-
-                //console.log ("distances", distances);
-                var distArr = global.CLMSUI.modelUtils.getCrossLinkDistances (filteredCrossLinks, distances);
                 
-                //console.log ("distArr", distArr);
+                var distArr = global.CLMSUI.modelUtils.getCrossLinkDistances (filteredCrossLinks, distances);
 
                 var series = [distArr, []];
                 var seriesLengths = [crossLinkMap.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
 
-                var maxY = d3.max(countArrays[0]);  // max calced on real data only
+                //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
-                //var maxY = d3.max(countArrays, function(array) {
-                //    return d3.max(array);
-                //});
+                var maxY = d3.max(countArrays, function(array) {
+                    return d3.max(array);
+                });
+                //console.log ("maxY", maxY);
                 
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (this.options.seriesNames[i]); }, this);
@@ -188,13 +190,18 @@
                 //console.log ("thresholds", thresholds);
                 var curMaxY = this.chart.axis.max().y;
                 if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
-                    console.log ("resetting axis max");
+                    console.log ("resetting axis max from", curMaxY, "to", maxY);
                     this.chart.axis.max({y: maxY});
                 }
 
                 this.chart.load({
                     columns: countArrays
                 });
+                
+                // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
+                var internal = this.chart.internal;
+                var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
+                global.d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
 
                 //console.log ("data", distArr, binnedData);
             }
