@@ -21,14 +21,14 @@
                 width: 180,
                 xAxisHeight: 20
             };
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.options = global._.extend(defaultOptions, viewOptions.myOptions);
 
             this.precalcedDistributions = {};
 
             var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
-            var mainDivSel = d3.select(this.el).attr("class", "minigram");
+            var mainDivSel = global.d3.select(this.el).attr("class", "minigram");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("id", this.el.id+"c3Chart")
@@ -38,7 +38,7 @@
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
 
-            this.chart = c3.generate({
+            this.chart = global.c3.generate({
                 bindto: bid,
                 data: {
                     //x: 'x',
@@ -72,7 +72,6 @@
                 bar: {
                     width: {
                         ratio: 0.8 // this makes bar width 50% of length between ticks
-                            // need to poke c3.js code to see why the bars are initally zero width (whatever it calculates from is zero too I suspect)
                     }
                 },
                 tooltip: {
@@ -96,7 +95,7 @@
                         // eventually do snapping: http://bl.ocks.org/mbostock/6232620
                         
                         // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
-                        console.log ("minigram domain", domain[0], domain[1]);
+                        // console.log ("minigram domain", domain[0], domain[1]);
                         self.model.set ({"domainStart": domain[0], "domainEnd": domain[1]}); 
                     },
                     size: {
@@ -112,7 +111,7 @@
             
             this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
             
-            var brush = d3.select(this.el).selectAll("svg .c3-brush");
+            var brush = global.d3.select(this.el).selectAll("svg .c3-brush");
             var flip = {"e":1, "w":-1};
             brush.selectAll(".resize").append("path")
                 .attr ("transform", function(d) { return "translate(0,0) scale("+(2*flip[d])+",2)"; })
@@ -133,7 +132,7 @@
             var seriesLengths = dataSeries.map (function(s) { return s.length; });
             var countArrays = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
 
-            var maxY = d3.max(countArrays[0]);  // max calced on real data only
+            var maxY = global.d3.max(countArrays[0]);  // max calced on real data only
             // if max y needs to be calculated across all series
             //var maxY = d3.max(countArrays, function(array) {
             //    return d3.max(array);
@@ -154,7 +153,7 @@
             // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
             var internal = this.chart.internal;
             var halfBarW = internal.getBarW (internal.subXAxis, 1) / 2;
-            d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+            global.d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
 
             //console.log ("data", distArr, binnedData);
             return this;
@@ -162,10 +161,10 @@
         
         aggregate: function (series, seriesLengths, precalcedDistributions) {
             // get extents of all arrays, concatenate them, then get extent of that array
-            var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
+            var extent = global.d3.extent ([].concat.apply([], series.map (function(d) { return global.d3.extent(d); })));
 
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX) + 2);
+            var thresholds = global.d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX) + 2);
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
@@ -177,7 +176,7 @@
                 var aseriesName = this.options.seriesNames[i];
                 var binnedData = precalcedDistributions[aseriesName]
                     ? precalcedDistributions[aseriesName]
-                    : d3.layout.histogram().bins(thresholds)(aseries)
+                    : global.d3.layout.histogram().bins(thresholds)(aseries)
                 ;
 
                 var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
@@ -194,7 +193,7 @@
             // See https://github.com/masayuki0812/c3/issues/1450
             //d3.select(this.el).select(".c3").style("max-height", "none");  
             // kill brush clip so we can see brush arrows at chart extremeties
-            d3.select(this.el).select(".c3-brush").attr("clip-path", "");   
+            global.d3.select(this.el).select(".c3-brush").attr("clip-path", "");   
             
             this.chart.resize();
             return this;

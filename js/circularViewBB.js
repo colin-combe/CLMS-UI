@@ -224,10 +224,14 @@
             };
                 
             // listen to custom filteringDone event from model    
-            this.listenTo (this.model, "filteringDone", function () { this.render (true); });  
+            this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });  
             //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.model, "change:selection", this.showSelected); 
             this.listenTo (this.model, "change:highlights", this.showHighlighted); 
+            this.listenTo (this.model.get("alignColl"), "change:compAlignments", function (alignModel, alignColl) { 
+                console.log ("CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments); 
+                this.render ({changed : d3.set(["features"]), });   
+            });
             
             return this;
         },
@@ -303,7 +307,9 @@
             return features ? features.filter (function (f) { return f.category === "DOMAIN"; }) : [];
         },
 
-        render: function (linksOnly) {
+        render: function (options) {
+            console.log ("render args", arguments);
+            var changed = options ? options.changed : undefined;
             
             if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
 
@@ -336,7 +342,6 @@
                 // turns link end & start angles into something d3.svg.arc can use
                 var linkCoords = this.convertLinks (links, innerNodeRadius, tickRadius);    
                 console.log ("linkCoords", linkCoords);
-                var self = this;
                 
                 var gTrans = svg.select("g");
                 gTrans.attr("transform", "translate(" + this.radius + "," + this.radius + ")");
@@ -344,15 +349,19 @@
                 //gRot.attr("transform", "rotate(0)");  
                 
                 // draw links
-                this.drawLinks (gRot, linkCoords);
-                if (!linksOnly) {
+                if (!changed || changed.has("links")) {
+                    this.drawLinks (gRot, linkCoords);
+                }
+                if (!changed) {
                     // draw nodes (around edge)
                     this.drawNodes (gRot, nodes);
                     // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
                     this.drawNodeTicks (gRot, nodes, tickRadius);
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
-                    // draw features
+                }
+                if (!changed || changed.has("features")) {
+                     // draw features
                     this.drawFeatures (gRot, features);
                 }
             }

@@ -267,9 +267,8 @@
             }, this);
             
             var allSeqs = [];
-            //refs.forEach (function(r,i) { allSeqs.push(r); allSeqs.push(comps[i]); });
-            var wrap = 3;
-             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); allSeqs.push(comps[i]); });
+            var wrap = 2;
+             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
 
             
             var seqRows = place.selectAll("tr")
@@ -324,7 +323,7 @@
                 var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
 
                 this.tooltipModel.set("header", d.label).set("contents", [
-                    ["Index", charIndex + 1],
+                    ["Align Index", charIndex + 1],
                     ["Value", str[charIndex]],
                     ["Ref Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
                 ]).set("location", d3.event);

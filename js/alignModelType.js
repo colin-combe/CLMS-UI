@@ -120,6 +120,10 @@
     global.CLMSUI.BackboneModelTypes.AlignCollection = global.Backbone.Collection.extend ({
         model: global.CLMSUI.BackboneModelTypes.AlignModel,
         
+        initialize: function() {
+            this.listenTo (this, "change:compAlignments", function() { console.log ("COLLECTION AWARE", arguments); });
+        },
+        
         // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
         mergeArrayAttr: function (modelId, attrName, appendThis) {
             var model = this.get(modelId);
