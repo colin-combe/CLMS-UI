@@ -86,7 +86,11 @@
                     }, 
                     x: {
                         height: this.options.xAxisHeight,
-                        show: true
+                        show: true,
+                        padding: {
+                          left: 0,
+                          right: 0,
+                        }
                     }
                 },
                 subchart: {
@@ -114,8 +118,8 @@
             var brush = global.d3.select(this.el).selectAll("svg .c3-brush");
             var flip = {"e":1, "w":-1};
             brush.selectAll(".resize").append("path")
-                .attr ("transform", function(d) { return "translate(0,0) scale("+(2*flip[d])+",2)"; })
-                .attr ("d", "M 0 0 V 10 L 5 5 Z")
+                .attr ("transform", function(d) { return "translate(0,0) scale("+(flip[d])+",1)"; })
+                .attr ("d", "M 1 0 V 20 L 10 10 Z")
             ;   
             
             this.relayout();

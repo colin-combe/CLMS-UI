@@ -47,7 +47,7 @@
         var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
         nodeArr.forEach (function (node) {
             var size = node.size;
-            nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size} );
+            nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size});
             total += size + dgap;
         });
 
@@ -70,8 +70,8 @@
             var tofrom = _options.linkParse (link);
             linkCoords.push ({
                 id: link.id, 
-                start: scale (tofrom.fromPos + nodeCoordMap.get(tofrom.fromNodeID).rawStart), 
-                end: scale (tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
+                start: scale (0.5 + tofrom.fromPos + nodeCoordMap.get(tofrom.fromNodeID).rawStart), 
+                end: scale (0.5 + tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
             });
         });
 
@@ -101,13 +101,16 @@
                 },
                 featureParse: function (feature, nodeid) {
                     var alignModel = self.model.get("alignColl").get(nodeid);
-                    var convStart = alignModel ? alignModel.mapToSearch ("Canonical", feature.start - 1) : undefined;
-                    var convEnd = alignModel ? alignModel.mapToSearch ("Canonical", feature.end - 1) : undefined;
-                    if (convStart < 0) { convStart = -convStart -1; }   // < 0 indicates no equal index match, do the - and -1 to find nearest index
-                    else if (convStart === undefined) { convStart = feature.start - 1; } // if no value, just use feature.start - 1
+                    // feature start and end are 1-indexed, and so are the returned convStart and convEnd values
+                    var convStart = alignModel ? alignModel.mapToSearch ("Canonical", feature.start) : undefined;
+                    var convEnd = alignModel ? alignModel.mapToSearch ("Canonical", feature.end) : undefined;
+                    if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
+                    else if (convStart === undefined) { convStart = feature.start; } // if no value, just use feature.start - 1
+                    convStart--;
                     
-                    if (convEnd < 0) { convEnd = -convEnd -1; }         // < 0 indicates no equal index match, do the - and -1 to find nearest index
-                    else if (convEnd === undefined) { convEnd = feature.end - 1; }       // ditto for end
+                    if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
+                    else if (convEnd === undefined) { convEnd = feature.end; }       // ditto for end
+                    convEnd--;
                     
                     console.log ("convStart", feature.start - 1, convStart, "convEnd", feature.end - 1, convEnd);
                     return {
@@ -449,7 +452,7 @@
               tRange[tRange.length-1] = d.size;
               return tRange.map(function(v, i) {
                 return {
-                  angle: ((v-1) * k) + d.start,
+                  angle: (((v-1) + 0.5) * k) + d.start, // -1 cos we want 1 to be at the zero pos angle, +0.5 cos we want it to be a tick in the middle
                   label: i % 5 && i < tRange.length - 1 ? null : v,
                 };
               });
