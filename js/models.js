@@ -1,18 +1,17 @@
-(function(global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
+
+    var CLMSUI = CLMSUI || {};
     
-    global.CLMSUI.BackboneModelTypes = global._.extend (global.CLMSUI.BackboneModelTypes || {}, 
+    CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {}, 
     
     {
-        DistancesModel: global.Backbone.Model.extend({
+        DistancesModel: Backbone.Model.extend({
             flattenedDistances: function () {
-                return global.CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
+                return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
             }
         }),
         
-        FilterModel: global.Backbone.Model.extend ({
+        FilterModel: Backbone.Model.extend ({
             defaults: {
                 "A": true, "B": true, "C": true, "Q": false,
                 "AUTO": false,
@@ -41,14 +40,14 @@
         }),
         
             
-        RangeModel: global.Backbone.Model.extend ({
+        RangeModel: Backbone.Model.extend ({
             defaults: {
                 active: false
             },
         }),
 
             // I want MinigramBB to be model agnostic so I can re-use it in other places
-        MinigramModel: global.Backbone.Model.extend ({
+        MinigramModel: Backbone.Model.extend ({
             defaults: {
                 domainStart: 0,
                 domainEnd: 100,
@@ -56,7 +55,7 @@
             data: function() { return [1,2,3,4]; },
         }),
         
-        TooltipModel: global.Backbone.Model.extend ({
+        TooltipModel: Backbone.Model.extend ({
             defaults: {
                 location: null,
                 header: "Tooltip",
@@ -67,14 +66,14 @@
             }
         }),
         
-        BlosumModel: global.Backbone.Model.extend ({
+        BlosumModel: Backbone.Model.extend ({
             initialize: function() {
                 console.log ("Blosum model initialised", this);
             },
         }),
         
         
-        TestModel: global.Backbone.Model.extend ({
+        TestModel: Backbone.Model.extend ({
             defaults : {
                 prime: "animal",
                 //secondaries: ["blee", "whee"],
@@ -91,14 +90,14 @@
     });
     
     // this is separate to get round the fact BlosumModel won't be available within the same declaration
-    global.CLMSUI.BackboneModelTypes = global._.extend (global.CLMSUI.BackboneModelTypes || {}, 
+    CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {}, 
     {
-        BlosumCollection: global.Backbone.Collection.extend ({
-            model: global.CLMSUI.BackboneModelTypes.BlosumModel,
+        BlosumCollection: Backbone.Collection.extend ({
+            model: CLMSUI.BackboneModelTypes.BlosumModel,
             url: "R/blosums.json",
             parse: function(response) {
                 // turn json object into array, add keys to value parts, then export just the values
-                var entries = global.d3.entries (response);
+                var entries = d3.entries (response);
                 var values = entries.map (function (entry) {
                     entry.value.key = entry.key;
                     return entry.value;
@@ -109,15 +108,15 @@
             }
         }),
         
-        TestCollection: global.Backbone.Collection.extend ({
-            model: global.CLMSUI.BackboneModelTypes.TestModel,
+        TestCollection: Backbone.Collection.extend ({
+            model: CLMSUI.BackboneModelTypes.TestModel,
             
             // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
             mergeArrayAttr: function (modelId, attrName, appendThis) {
                 var model = this.get(modelId);
                 if (model) {
                     var attr = model.get(attrName);
-                    if (attr && global.$.type(attr) === "array") {
+                    if (attr && $.type(attr) === "array") {
                         appendThis.unshift.apply (appendThis, attr);
                     }
                 }
@@ -125,5 +124,3 @@
             },
         }),
     });
- 
-})(this);

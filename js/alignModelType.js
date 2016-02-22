@@ -1,10 +1,8 @@
-(function(global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
-    global.CLMSUI.BackboneModelTypes = global.CLMSUI.BackboneModelTypes || {};
+    var CLMSUI = CLMSUI || {};
+    CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
-    global.CLMSUI.BackboneModelTypes.AlignModel = global.Backbone.Model.extend ({
+    CLMSUI.BackboneModelTypes.AlignModel = Backbone.Model.extend ({
         defaults: {
             "displayLabel": "A Protein",    // label to display in collection view for this model
             "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
@@ -18,7 +16,7 @@
             "compSeqs": ["CAT"],
             "compIDs": ["Demo"],
             "local": false,
-            "sequenceAligner": global.CLMSUI.GotohAligner,
+            "sequenceAligner": CLMSUI.GotohAligner,
         },
         
         initialize: function () {
@@ -118,15 +116,15 @@
     });
     
     
-    global.CLMSUI.BackboneModelTypes.AlignCollection = global.Backbone.Collection.extend ({
-        model: global.CLMSUI.BackboneModelTypes.AlignModel,
+    CLMSUI.BackboneModelTypes.AlignCollection = Backbone.Collection.extend ({
+        model: CLMSUI.BackboneModelTypes.AlignModel,
         
         // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
         mergeArrayAttr: function (modelId, attrName, appendThis) {
             var model = this.get(modelId);
             if (model) {
                 var attr = model.get(attrName);
-                if (attr && global.$.type(attr) === "array") {
+                if (attr && $.type(attr) === "array") {
                     appendThis.unshift.apply (appendThis, attr);
                 }
             }
@@ -134,4 +132,3 @@
         },
     });
     
-})(this); 

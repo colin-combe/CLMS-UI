@@ -3,13 +3,10 @@
 //		Martin Graham, Colin Combe, Rappsilber Laboratory, 2015
 
 
-(function(global) {
-    "use strict";
-
-    global.CLMSUI = global.CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
     
     
-    global.CLMSUI.circleLayout = function  (nodeArr, linkArr, featureArrs, range, options) {
+    CLMSUI.circleLayout = function  (nodeArr, linkArr, featureArrs, range, options) {
 
         var defaults = {
             gap: 5,
@@ -76,11 +73,11 @@
         });
 
         return { nodes: nodeCoordMap.values(), links: linkCoords, features: featureCoords};
-    },
+    };
     
-    global.CLMSUI.CircularViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
+    CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
-          var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
+          var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
@@ -88,7 +85,7 @@
         },
 
         initialize: function (viewOptions) {
-            global.CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
             
             var self = this;
             var defaultOptions = {
@@ -96,8 +93,8 @@
                 tickWidth: 23,
                 gap: 5,
                 linkParse: function (link) { 
-                    return {fromPos: link.fromResidue - 1, fromNodeID: link.proteinLink.fromProtein.id, 
-                            toPos: link.toResidue - 1, toNodeID: link.proteinLink.toProtein.id};
+                    return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id, 
+                            toPos: link.toResidue - 1, toNodeID: link.toProtein.id};
                 },
                 featureParse: function (feature, nodeid) {
                     var alignModel = self.model.get("alignColl").get(nodeid);
@@ -208,8 +205,8 @@
                 self.model.get("tooltipModel")
                     .set("header", "XLink")
                     .set("contents", [
-                        ["From", xlink.fromResidue, xlink.proteinLink.fromProtein.name],
-                        ["To", xlink.toResidue, xlink.proteinLink.toProtein.name],
+                        ["From", xlink.fromResidue, xlink.fromProtein.name],
+                        ["To", xlink.toResidue, xlink.toProtein.name],
                         ["Current<br>Matches", xlink.filteredMatches.length]
                     ])
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
@@ -250,10 +247,13 @@
         },
         
         showHighlighted: function () {
-            var highlightedIDs = this.model.get("highlights").map((function(xlink) { return xlink.id; }));
-            var idset = d3.set (highlightedIDs);
-            var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
-            thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
+			var highlights = this.model.get("highlights");
+			if (highlights) {
+				var highlightedIDs = highlights.map((function(xlink) { return xlink.id; }));
+				var idset = d3.set (highlightedIDs);
+				var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
+				thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
+			}
             return this;
         },
         
@@ -261,8 +261,8 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.filterCrossLinks (crossLinks);
             var matchLinks = filteredCrossLinks.filter (function(link) {
-                var plink = link.proteinLink;
-                return plink.fromProtein.id === nodeId || plink.toProtein.id === nodeId;
+                //var plink = link.proteinLink;
+                return link.fromProtein.id === nodeId || link.toProtein.id === nodeId;
             });
             this.model.set("highlights", matchLinks);
         },
@@ -271,7 +271,7 @@
             var xlinks = this.model.get("clmsModel").get("crossLinks");
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
-                var homom = global.CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
+                var homom = CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
                 var rad = homom ? rad2 : rad1;
                 var bowRadius = homom ? rad2 * 1.3 : 0;
                 return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) /2, rad: bowRadius}, {ang: link.end, rad: rad}] };
@@ -298,8 +298,8 @@
         filterCrossLinks: function (crossLinks) {
             var filteredCrossLinks = [];
             crossLinks.forEach (function (value) {
-                var plink = value.proteinLink;
-                if (value.filteredMatches && value.filteredMatches.length > 0 && !plink.fromProtein.isDecoy() && !plink.toProtein.isDecoy()) {
+                //var plink = value.proteinLink;
+                if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.isDecoy() && !value.toProtein.isDecoy()) {
                     filteredCrossLinks.push (value);
                 }
             });
@@ -314,7 +314,7 @@
             console.log ("render args", arguments);
             var changed = options ? options.changed : undefined;
             
-            if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
 
                 console.log ("re rendering circular view");
                 
@@ -328,7 +328,7 @@
                     return this.filterFeatures (inter.uniprotFeatures);
                 }, this);
                 
-                var layout = global.CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
+                var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
                 console.log ("layout", layout);
 
                 var svg = d3.select(this.el).select("svg");
@@ -583,9 +583,7 @@
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
         remove: function () {
-            global.CLMSUI.CircularViewBB.__super__.remove.apply (this, arguments);    
+            CLMSUI.CircularViewBB.__super__.remove.apply (this, arguments);    
         }
 
     });
-    
-} (this));

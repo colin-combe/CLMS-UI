@@ -1,11 +1,10 @@
-(function(global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
+
+    var CLMSUI = CLMSUI || {};
     
-    global.CLMSUI.AlignCollectionViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
+    CLMSUI.AlignCollectionViewBB = CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
-          var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
+          var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
           if (_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
@@ -15,7 +14,7 @@
         },
         
         initialize: function (viewOptions) {
-            global.CLMSUI.AlignCollectionViewBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.AlignCollectionViewBB.__super__.initialize.apply (this, arguments);
             
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
@@ -32,7 +31,7 @@
             
             this.tooltipModel = viewOptions.tooltipModel;   
             
-            this.alignViewBlosumSelector = new global.CLMSUI.CollectionAsSelectViewBB ({
+            this.alignViewBlosumSelector = new CLMSUI.CollectionAsSelectViewBB ({
                 el:"#"+modelViewID+"Controls2",
                 collection: CLMSUI.blosumCollInst,
                 label: "Score Matrix",
@@ -101,13 +100,13 @@
                 console.log ("model", model);
                 var modelViewID = d3.select(this.el).attr("id") + "IndView"; 
                 
-                this.modelView = new global.CLMSUI.AlignViewBB3 ({
+                this.modelView = new CLMSUI.AlignViewBB3 ({
                     el: "#"+modelViewID, 
                     model: model,
                     tooltipModel: this.tooltipModel,
                 });
 
-                this.alignViewSettings = new global.CLMSUI.AlignSettingsViewBB ({
+                this.alignViewSettings = new CLMSUI.AlignSettingsViewBB ({
                     el:"#"+modelViewID+"Controls",
                     model: model,
                 });
@@ -126,7 +125,7 @@
         },
     });
     
-    global.CLMSUI.AlignViewBB3 = global.Backbone.View.extend ({
+    CLMSUI.AlignViewBB3 = Backbone.View.extend ({
         events: {
             "mouseleave td.seq>span" : "clearTooltip",
             "change input.diff" : "render",
@@ -305,7 +304,7 @@
         
         invokeTooltip: function (d, elem) {
             if (this.tooltipModel) {
-                var xx = global.CLMSUI.utils.crossBrowserElementX (d3.event, elem);
+                var xx = CLMSUI.utils.crossBrowserElementX (d3.event, elem);
                 var width = $.zepto ? $(elem).width() : $(elem).outerWidth();
                 var str = d.str;
                 var charWidth = width / str.length;
@@ -331,4 +330,3 @@
             }
         },
     });
-})(this);

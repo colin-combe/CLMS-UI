@@ -4,14 +4,12 @@
 //
 //		distogram/Distogram.js
 
-(function(global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
     
-    global.CLMSUI.DistogramBB = global.CLMSUI.utils.BaseFrameView.extend ({
+    CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
-          var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
+          var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
@@ -19,7 +17,7 @@
         },
 
         initialize: function (viewOptions) {
-            global.CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
             
             var defaultOptions = {
                 xlabel: "Distance",
@@ -161,17 +159,17 @@
 
         render: function () {
             
-            if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
 
                 console.log ("re rendering distogram");
 
-                var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-                var pp1 = allProtProtLinks.next().value;
-                var crossLinkMap = pp1.crossLinks;  // do values() after filtering in next line
+                //~ var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
+                //~ var pp1 = allProtProtLinks.next().value;
+                var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
                 var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
                 var distances = this.model.get("distancesModel").get("distances");
                 
-                var distArr = global.CLMSUI.modelUtils.getCrossLinkDistances (filteredCrossLinks, distances);
+                var distArr = CLMSUI.modelUtils.getCrossLinkDistances (filteredCrossLinks, distances);
 
                 var series = [distArr, []];
                 var seriesLengths = [crossLinkMap.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
@@ -201,7 +199,7 @@
                 // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
                 var internal = this.chart.internal;
                 var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
-                global.d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+                d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
 
                 //console.log ("data", distArr, binnedData);
             }
@@ -263,12 +261,11 @@
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
         remove: function () {
-            global.CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
+            CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
         
             // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
             this.chart = this.chart.destroy();
         }
 
     });
-    
-} (this));
+

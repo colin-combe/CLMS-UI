@@ -1,6 +1,4 @@
-(function(global) {
-    
-    "use strict";
+
     /**************************
      *** Common data tables ***
      **************************/
@@ -492,8 +490,8 @@
     if (typeof module == 'object') {
         module.exports = combine;
     } else {
-        global.CLMSUI = global.CLMSUI || {};
-        global.CLMSUI.GotohAligner = {align: align};
+        CLMSUI = CLMSUI || {};
+        CLMSUI.GotohAligner = {align: align};
     }
     
     function combine () {
@@ -501,18 +499,17 @@
     }
 /*
     function main() {
-      if (global.process.argv.length < 3) {
+      if (process.argv.length < 3) {
         return;
       }
-        var ret = combine (global.process.argv.slice(2));
+        var ret = combine (process.argv.slice(2));
         console.log ("str", ret.str, "\nfmt", ret.fmt);
     }
     
     
     
-    if (global.process.argv[1] == __filename) {
+    if (process.argv[1] == __filename) {
       main();
     }
     */
-})(this);
 

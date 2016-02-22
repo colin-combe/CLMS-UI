@@ -1,9 +1,8 @@
-(function(global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
+
+    var CLMSUI = CLMSUI || {};
     
-    global.CLMSUI.AlignSettingsViewBB = global.Backbone.View.extend ({
+    CLMSUI.AlignSettingsViewBB = Backbone.View.extend ({
         events: {
             "change input": "inputChanged",
             "keyup input": "inputKeyed",
@@ -80,7 +79,7 @@
         }
     });
     
-    global.CLMSUI.CollectionAsSelectViewBB = global.Backbone.View.extend ({
+    CLMSUI.CollectionAsSelectViewBB = Backbone.View.extend ({
         events: {
             "change select": "selectChanged",
         },
@@ -138,4 +137,3 @@
             this.collection.trigger ("modelSelected", selectedOption.datum());
         }
     });
-})(this);

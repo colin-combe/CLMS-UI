@@ -54,8 +54,8 @@ CLMSUI.modelUtils = {
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
         matchesArr.forEach (function(m) {
-            var pLink = m.crossLinks[0].proteinLink;
-            var isDecoy = (pLink.toProtein.isDecoy() || pLink.fromProtein.isDecoy()) ? 1 : 0;
+            var crossLink = m.crossLinks[0];
+            var isDecoy = (crossLink.toProtein.isDecoy() || crossLink.fromProtein.isDecoy()) ? 1 : 0;
             //console.log ("m", m, pLink, isDecoy);
             //var isDecoy = (Math.random() > 0.8) ? 1: 0; 
             arrs[isDecoy].push (m.score);
@@ -85,13 +85,13 @@ CLMSUI.modelUtils = {
         var toResIndex = crossLink.toResidue;
         var fromResIndex = crossLink.fromResidue;
         //console.log ("res", crossLink);
-        var pLink = crossLink.proteinLink;
+        //~ var pLink = crossLink.proteinLink;
         //var pLinkId = pLink.id;
         
         // might need to query protein model at this point if from and to prot data stops getting attached to residues
         
-        var fromProt = pLink.fromProtein;
-        var toProt = pLink.toProtein;
+        var fromProt = crossLink.fromProtein;
+        var toProt = crossLink.toProtein;
         
         var fromResType = this.getResidueType (fromProt, fromResIndex);
         var toResType = this.getResidueType (toProt, toResIndex);

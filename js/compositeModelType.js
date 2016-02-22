@@ -1,10 +1,9 @@
-(function(global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
-    global.CLMSUI.BackboneModelTypes = global.CLMSUI.BackboneModelTypes || {};
+
+    var CLMSUI = CLMSUI || {};
+    CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
     
-    global.CLMSUI.BackboneModelTypes.CompositeModelType = global.Backbone.Model.extend ({
+    CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend ({
         applyFilter: function () {
             var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
@@ -38,5 +37,3 @@
         },
     
     });
- 
-})(this);

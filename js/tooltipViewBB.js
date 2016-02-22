@@ -1,10 +1,7 @@
 
-(function(global) {
-    "use strict";
+    var CLMSUI = CLMSUI || {};
 
-    global.CLMSUI = global.CLMSUI || {};
-
-    global.CLMSUI.TooltipViewBB = global.Backbone.View.extend ({
+    CLMSUI.TooltipViewBB = Backbone.View.extend ({
         className: "CLMStooltip",
         initialize: function () {
             var tooltip = d3.select(this.el);
@@ -123,4 +120,3 @@
             return this;
         }
     });
-})(this);

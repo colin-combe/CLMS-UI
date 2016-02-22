@@ -4,15 +4,13 @@
 //
 //		distogram/Distogram.js
 
-(function(win) {
-    "use strict";
 
-    win.CLMSUI = win.CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
     
-    win.CLMSUI.NGLViewBB = win.CLMSUI.utils.BaseFrameView.extend({
+    CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         events: function() {
-          var parentEvents = win.CLMSUI.utils.BaseFrameView.prototype.events;
+          var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
@@ -23,7 +21,7 @@
         },
 
         initialize: function (viewOptions) {
-            win.CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
             
             console.log("arg options", viewOptions);
             var defaultOptions = {
@@ -135,7 +133,7 @@
         },
 
         render: function () {
-            if (win.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 console.log ("re rendering NGL view");
                 this.stage.handleResize();
             }
@@ -154,5 +152,4 @@
         },
 
     });
-    
-} (this));
+

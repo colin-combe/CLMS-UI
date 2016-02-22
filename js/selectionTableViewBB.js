@@ -1,9 +1,7 @@
-(function (global) {
-    "use strict";
 
-    global.CLMSUI = global.CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
     
-    global.CLMSUI.SelectionTableViewBB = global.Backbone.View.extend ({
+    CLMSUI.SelectionTableViewBB = Backbone.View.extend ({
         events: {},
 
         initialize: function () {
@@ -154,4 +152,3 @@
         },
     });
     
-} (this));

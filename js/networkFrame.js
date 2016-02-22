@@ -16,8 +16,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-"use strict";
-
 var CLMSUI = CLMSUI || {};
 
 var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [95,5], minSize: [200,10], });
@@ -61,7 +59,7 @@ CLMSUI.init.views = function () {
 
     console.log("*>" + CLMSUI.clmsModelInst.get("matches").length);
 
-    var miniDistView = new CLMSUI.MinigramViewBB ({
+    var scoreDistributionView = new CLMSUI.MinigramViewBB ({
         el: "#filterPlaceholderSliderHolder",
         model: miniDistModelInst,
         myOptions: {
@@ -83,7 +81,7 @@ CLMSUI.init.views = function () {
 
 
     // If the ClmsModel matches attribute changes then tell the mini histogram view
-    miniDistView
+    scoreDistributionView
         .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
         // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
         //.listenTo (this.model.get("filterModel"), "change", this.render)  
@@ -156,17 +154,17 @@ CLMSUI.init.views = function () {
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
-    var tooltipView = new window.CLMSUI.TooltipViewBB ({
+    var tooltipView = new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
         model: CLMSUI.tooltipModelInst,
     });
 
-    var crosslinkViewer = new window.CLMS.xiNET.CrosslinkViewer ({
+    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv", 
         model: CLMSUI.compositeModelInst,
     });
 
-    var distoViewer = new window.CLMSUI.DistogramBB ({
+    var distoViewer = new CLMSUI.DistogramBB ({
         el: "#distoPanel", 
         model: CLMSUI.compositeModelInst,
         displayEventName: "distoShow",
@@ -178,7 +176,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
 
     // This makes a matrix viewer
-    var matrixViewer = new window.CLMSUI.DistanceMatrixViewBB ({
+    var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
         el: "#matrixPanel", 
         model: CLMSUI.compositeModelInst,
         displayEventName: "matrixShow",
@@ -216,7 +214,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
 
     // Alignment View
-    var alignViewer = new window.CLMSUI.AlignCollectionViewBB ({
+    var alignViewer = new CLMSUI.AlignCollectionViewBB ({
         el:"#alignPanel",
         collection: CLMSUI.alignmentCollectionInst,
         displayEventName: "alignShow",
@@ -237,18 +235,18 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     if (HSA_Active) { 
-        var nglViewer = new window.CLMSUI.NGLViewBB ({
+        var nglViewer = new CLMSUI.NGLViewBB ({
             el: "#nglPanel", 
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
         });
     }
     
-    var selectionViewer = new window.CLMSUI.SelectionTableViewBB ({
+    var selectionViewer = new CLMSUI.SelectionTableViewBB ({
         el: "#bottomDiv",
-        model: window.CLMSUI.compositeModelInst,
+        model: CLMSUI.compositeModelInst,
     });
-    selectionViewer.listenTo (window.CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+    selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
         var emptySelection = (selection.length === 0);
         split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
         this.setVisible (!emptySelection);    

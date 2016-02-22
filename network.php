@@ -17,6 +17,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 -->
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -85,7 +86,6 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/ProteinLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
 
@@ -96,12 +96,8 @@
 	 	<script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProteinLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
-<!--
-        <script type="text/javascript" src="../crosslink-viewer/src/controller/ExternalControls.js"></script>
--->
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
@@ -163,9 +159,8 @@
 -->
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
-<!--
-					<button class="btn btn-1 btn-1a" onclick="xlv.reset();">Reset</button>
--->
+					<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     
@@ -225,7 +220,6 @@
 
         <script>	
 		//<![CDATA[
-			"use strict";
 			
             var CLMSUI = CLMSUI || {};
             

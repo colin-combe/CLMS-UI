@@ -1,10 +1,7 @@
 
-(function(global) {
-    "use strict";
-
-    global.CLMSUI = global.CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
     
-    global.CLMSUI.DropDownMenuViewBB = global.Backbone.View.extend ({
+    CLMSUI.DropDownMenuViewBB = Backbone.View.extend ({
         events: {
             "mouseenter .menuTitle": "switchVis",
             "click .menuTitle": "toggleVis",
@@ -62,14 +59,14 @@
         },
         
         setVis: function (show) {
-            global.CLMSUI.DropDownMenuViewBB.anyOpen = show;    // static var. Set to true if any menu clicked open.
+            CLMSUI.DropDownMenuViewBB.anyOpen = show;    // static var. Set to true if any menu clicked open.
             d3.select(this.el).select("div")
                 .style ("display", show ? "block" : "none")
             ;
         },
         
         switchVis: function () {
-            if (global.CLMSUI.DropDownMenuViewBB.anyOpen && !this.isShown()) {
+            if (CLMSUI.DropDownMenuViewBB.anyOpen && !this.isShown()) {
                 this.toggleVis();
             }
         },
@@ -83,4 +80,3 @@
             this.hideVis();
         },
     });
-})(this);

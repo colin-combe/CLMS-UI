@@ -5,15 +5,13 @@
 //
 //		graph/Matrix.js
 
-(function(global) {
-    "use strict";
 
     
-    global.CLMSUI = global.CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
 
-    global.CLMSUI.DistanceMatrixViewBB = global.CLMSUI.utils.BaseFrameView.extend ({
+    CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend ({
     events: function() {
-      var parentEvents = global.CLMSUI.utils.BaseFrameView.prototype.events;
+      var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
       if(_.isFunction(parentEvents)){
           parentEvents = parentEvents();
       }
@@ -23,7 +21,7 @@
     },
 
     initialize: function (viewOptions) {
-        global.CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply (this, arguments);
+        CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
 
@@ -172,9 +170,9 @@
         var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
 
         //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
-        var neighbourhood = global.CLMSUI.modelUtils.findResidueIDsInSpiral (filteredCrossLinks, b, a, 2);
+        var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSpiral (filteredCrossLinks, b, a, 2);
         neighbourhood = neighbourhood.filter (function(clid) {
-            var est = global.CLMSUI.modelUtils.getEsterLinkType (filteredCrossLinks.get(clid));
+            var est = CLMSUI.modelUtils.getEsterLinkType (filteredCrossLinks.get(clid));
             return (self.filterVal === undefined || est >= self.filterVal);
         });
         var rdata = neighbourhood.map (function (clid) {
@@ -225,7 +223,7 @@
     
     render: function () {
 
-        if (global.CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
             console.log ("re-rendering matrix view");
             this.resize();
 
@@ -365,7 +363,7 @@
             console.log ("CLMSUI.times", CLMSUI.times);
 
             var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
-            var modelUtils = global.CLMSUI.modelUtils;
+            var modelUtils = CLMSUI.modelUtils;
             //for (let crossLink of residueLinks) {
             ctx.strokeStyle = "#000";
             ctx.lineWidth = 0.5;
@@ -537,4 +535,3 @@
     },
 });
     
-} (this));
