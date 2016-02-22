@@ -95,24 +95,25 @@
             return sInd !== undefined ? this.get("compAlignments")[sInd] : undefined;
         },
         
+        // These following routines assume that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
         mapToSearch: function (seqName, index) {
             var compSeq = this.getCompSequence (seqName);
-            return compSeq ? compSeq.convertToRef (index) : undefined;
+            return compSeq ? compSeq.convertToRef [index - 1] + 1: undefined;
         },
         
         mapFromSearch: function (seqName, index) {
             var compSeq = this.getCompSequence (seqName);
-            return compSeq ? compSeq.convertFromRef (index) : undefined;
+            return compSeq ? compSeq.convertFromRef [index - 1] + 1 : undefined;
         },
         
         bulkMapToSearch: function (seqName, indices) {
             var compSeq = this.getCompSequence (seqName);
-            return compSeq ? indices.map (function(i) { return compSeq.convertToRef [i]; }) : undefined;
+            return compSeq ? indices.map (function(i) { return compSeq.convertToRef [i - 1] + 1; }) : undefined;
         },
         
         bulkMapFromSearch: function (seqName, indices) {
             var compSeq = this.getCompSequence (seqName);
-            return compSeq ? indices.map (function(i) { return compSeq.convertFromRef [i]; }) : undefined;
+            return compSeq ? indices.map (function(i) { return compSeq.convertFromRef [i - 1] + 1; }) : undefined;
         },
     });
     

@@ -47,6 +47,7 @@
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
         <link rel="stylesheet" href="./css/alignViewBB.css">
         <link rel="stylesheet" href="./css/selectionViewBB.css">
+        <link rel="stylesheet" href="./css/circularViewBB.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -70,6 +71,7 @@
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
+        <script type="text/javascript" src="./vendor/svgexp.js"></script>
         
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
@@ -119,6 +121,7 @@
         <script type="text/javascript" src="./js/alignViewBB3.js"></script>
         <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
+        <script type="text/javascript" src="./js/circularViewBB.js"></script>
     </head>
 
     <body>
@@ -146,6 +149,7 @@
         <div class="dynDiv" id="distoPanel"></div>
         <div class="dynDiv" id="matrixPanel"></div>
         <div class="dynDiv" id="alignPanel"></div>
+        <div class="dynDiv" id="circularPanel"></div>
 
 
 		<!-- Main -->
@@ -172,6 +176,7 @@
                     <span id="distoChkBxPlaceholder"></span>
                     <span id="matrixChkBxPlaceholder"></span>
                     <span id="alignChkBxPlaceholder"></span>
+                    <span id="circularChkBxPlaceholder"></span>
                     
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
 				</h1>
@@ -330,6 +335,7 @@
                     rangeModel: CLMSUI.rangeModelInst,
                     filterModel: CLMSUI.filterModelInst,
                     tooltipModel: CLMSUI.tooltipModelInst,
+                    alignColl: CLMSUI.alignmentCollectionInst,
                     selection: [], //will contain cross-link objects
                     highlights: [], //will contain cross-link objects 
                 });

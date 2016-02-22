@@ -1,5 +1,6 @@
 .viewport {
     overflow: hidden;
+    position: absolute;
 }
 
 #matrixPanel {

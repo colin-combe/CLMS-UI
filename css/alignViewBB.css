@@ -44,14 +44,14 @@ DIV.tableWrapper TABLE {
     color: #000;
 }
 
-DIV.tableWrapper TBODY TR:nth-child(3n+4) {
+DIV.tableWrapper TBODY TR:nth-child(2n+3) {
     border-top: 2em solid #fff;
 }
-
+/*
 DIV.tableWrapper TBODY TR:nth-child(3n) TD {
     color: #888;
 }
-
+*/
 DIV.tableWrapper TD, DIV.tableWrapper TH {
     margin: 0;
     padding: 0em 0.1em;

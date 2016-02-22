@@ -1,0 +1,71 @@
+#circularPanel DIV.circleDiv {
+    background-color: #eee;
+}
+
+svg.circularView {
+    width: 100%;
+    height: 100%;
+}
+
+.circleLink {
+    fill: none;
+    stroke-width: 1px;
+    stroke: #666;
+    pointer-events: none;
+}
+
+.circleGhostLink {
+    fill: none;
+    stroke-width: 5px;
+    stroke-opacity: 0;
+    stroke: #ff0;
+    pointer-events: stroke;
+}
+
+.circleGhostLink:hover {
+    stroke-opacity: 0.5;
+}
+
+.selectedCircleLink {
+    stroke-opacity: 0.8;
+}
+
+.highlightedCircleLink {
+    stroke-opacity: 0.5;
+}
+
+.circleNode {
+    stroke-width: 1px;
+    fill: #dde;
+}
+
+.circleNode:hover {
+    stroke: #445;
+}
+
+.circularView .tick text {
+    font-size: 0.5em;
+    stroke: none;
+    fill: #000;
+    pointer-events: none;
+}
+
+.circularView .tick line {
+    stroke: #000;
+}
+
+.justifyTick {
+    transform: rotate(180deg)translateX(-16px);
+    text-anchor: end;
+}
+
+.circularNodeLabel {
+    text-anchor: middle;
+    font-size: 0.75em;
+    pointer-events: none;
+    fill: #444;
+}
+
+.flipNodeText {
+    transform: scale(-1,1);
+}

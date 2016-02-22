@@ -21,7 +21,6 @@
 var CLMSUI = CLMSUI || {};
 
 var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [95,5], minSize: [200,10], });
-console.log ("split", split);
 /*
  *
  *  Hide / show floaty panels (including Selection)
@@ -97,6 +96,7 @@ CLMSUI.init.views = function () {
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
+        {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         CLMSUI.utils.addCheckboxBackboneView (d3.select("#"+cbdata.id), {label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
@@ -145,6 +145,12 @@ CLMSUI.init.views = function () {
     new CLMSUI.utils.KeyViewBB ({
         el: "#keyPanel",
         displayEventName: "keyShow",
+    });
+    
+    new CLMSUI.CircularViewBB ({
+        el: "#circularPanel",
+        displayEventName: "circularShow",
+        model: CLMSUI.compositeModelInst,
     });
 };
 

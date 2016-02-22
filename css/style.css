@@ -576,7 +576,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #helpPanel, #spectrumPanel, #nglPanel, #distoPanel, #matrixPanel, #alignPanel {
+#keyPanel, #helpPanel, #spectrumPanel, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #circularPanel {
 	display:none;
 	top:80px;
 }
@@ -606,6 +606,12 @@ tbody tr:hover td, tbody tr:hover td  {
 	left: 40px;
 	width:500px;
 	height:300px;
+}
+
+#circularPanel {
+    left: 40px;
+    width: 400px;
+    height: 400px;
 }
 
 .distoDiv {
