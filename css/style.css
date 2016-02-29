@@ -177,7 +177,7 @@ body, input, select, textarea {
     margin-right:10px;
     font-size:0.9em;
 }
-
+65
 /* history page */
 .tableContainer a {
     color:#091D42;
@@ -282,7 +282,7 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
     -webkit-transition: opacity 0.4s ease-in-out;
     -moz-transition: opacity 0.4s ease-in-out;
     -o-transition: opacity 0.4s ease-in-out;
-    -ms-transition: opacity 0.4s ease-in-out;
+    -ms-transition: opacity 0.4s ease-in-out;65
     transition: opacity 0.4s ease-in-out;
     pointer-events: none; /* avoid mouse click events inside the dropdown */
 }
@@ -361,7 +361,7 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 }
 .bar rect {
   fill: steelblue;
-/*
+/*65
   shape-rendering: crispEdges;
 */
 }
@@ -530,7 +530,7 @@ tbody tr:hover td, tbody tr:hover td  {
     position: fixed;
 	bottom: 0;
     width: 100%;
-    height: 95px;
+    height: 70px;
     
     background:#ecedf2;
     color:#091D42;

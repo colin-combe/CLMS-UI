@@ -153,6 +153,7 @@ CLMSUI.init.views = function () {
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
+	
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
     var tooltipView = new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
@@ -162,6 +163,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv", 
         model: CLMSUI.compositeModelInst,
+        myOptions: {layout: storedLayout}
     });
 
     var distoViewer = new CLMSUI.DistogramBB ({
@@ -330,10 +332,10 @@ function onDistanceSliderChange3D(scale){
 }
 
 function saveLayout () {
-	var layout = xlv.getLayout();
+	var layout = crosslinkViewer.getLayout();
 	var xmlhttp = new XMLHttpRequest();
 	var url = "./php/saveLayout.php";
-	var params =  "sid=" + xlv.sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
+	var params =  "sid=" + CLMSUI.sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
 	xmlhttp.open("POST", url, true);
 	//Send the proper header information along with the request
 	xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");

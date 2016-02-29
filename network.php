@@ -122,24 +122,7 @@
 
     <body>
 
-        <div class="dynDiv" id="spectrumPanel">
-            <div class="dynDiv_moveParentDiv"><i class="fa fa-times-circle" onclick="showSpectrumPanel(false);selectionPanel.clearTableHighlights();"></i></div>
-
-            <div style="height:40px;">
-                <label  class="btn">loss labels
-                    <input id="lossyChkBx"
-                        onclick="spectrumViewer.showLossy(document.getElementById('lossyChkBx').checked)"
-                    type="checkbox">
-                </label>
-                <button class="btn btn-1 btn-1a" onclick="spectrumViewer.resize();">Reset zoom</button>
-                <button class="btn btn-1 btn-1a" onclick="downloadSpectrumSVG();">Download image</button>		
-            </div>
-
-            <div class="panelInner">
-                <div id='spectrumDiv'></div>
-            </div>
-        </div>
-
+        <div class="dynDiv" id="spectrumPanel"></div>
         <div class="dynDiv" id="keyPanel"></div>
         <div class="dynDiv" id="nglPanel"></div>
         <div class="dynDiv" id="distoPanel"></div>
@@ -189,6 +172,7 @@
 			<div class="controls">
                     <span id="filterPlaceholder"></span>
 
+<!--
 					<div style='float:right'>
 
                         <label style="margin-left:20px;"><span>Annotations:</span>
@@ -200,19 +184,17 @@
 								<option>Lysines</option>
 							</select>
 						</label>
-<!--
 						<label style="margin-left:20px;">Link colours:
--->
+
 							<select id="linkColourSelect" onChange="changeLinkColours();">
 								<option selected>SAS dist.</option>
 								<option>Euc. dist.</option>
 								<option>Search</option>
 							</select>
-<!--
 						</label>
--->
 					</div>
 				</div>
+-->
 			</div>
 
 		</div><!-- MAIN -->

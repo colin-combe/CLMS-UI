@@ -53,14 +53,14 @@
 		}
 	}
 	echo $searchesShown."};\n";
-	echo "CLMSUI.sid = ".$id.";\n";
+	echo "CLMSUI.sid = ".$id.";\n";// TODO - this needs to change
 	if ($filename == "HSA-Active.FASTA"){
-		echo "var HSA_Active = true;";
+		echo "var HSA_Active = true;\n";
 		include('./php/distances.php');
 	}
 	else {
-		echo "var HSA_Active = false;";
-		echo "var distances = [];";
+		echo "var HSA_Active = false;\n";
+		echo "var distances = [];\n";
 	}
 	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
@@ -84,7 +84,9 @@
 				. " WHERE t1.search_id = " . $id . " AND t2.search_id IS NULL;";
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-			//echo "xlv.setLayout('" . $line["l"] . "');";
+			
+			echo "storedLayout = " . stripslashes($line["l"]) . ";";
+			
 		}
 
 		$q_makeTempMatchedPeptides =
