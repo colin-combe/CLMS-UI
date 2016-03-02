@@ -34,6 +34,6 @@
             //return crossLinks.filter (function(cLink) {
             //    return cLink.filteredMatches.length > 0;
             //}); 
-        },
+        }
     
     });

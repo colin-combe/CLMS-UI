@@ -46,11 +46,9 @@ header('Content-type: text/html; charset=utf-8');
 					<span class="headerLabel" >All Searches</span>
 					
 					
-<!--
-					<button class='btn btn-1 btn-1a' onclick='alert("Please do not press this button again.");'>
+					<button class='btn btn-1 btn-1a' onclick='window.location = "../searchSumbit/submitSearch.php";'>
 						New Search
 					</button>	
--->
 					
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
