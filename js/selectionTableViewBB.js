@@ -6,7 +6,7 @@
 
         initialize: function () {
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
-            holdingDiv.html ("<TABLE><THEAD><TR></TR></THEAD><TBODY></TBODY></TABLE>"); 
+            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
         },
         
         render: function () {
@@ -14,9 +14,14 @@
         },
         
         updateTable: function () {
+            console.log ("table model", this.model);
+            
             var selectedXLinkArray = this.model.get("selection");
+            var selectedXLinkCount = selectedXLinkArray.length;
+            
+            d3.select(this.el).select(".crossLinkTotal").text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount > 1 ? "s" : "")+ " selected.");
 
-            if (selectedXLinkArray.length > 0) {
+            if (selectedXLinkCount > 0) {
                 
                 var tableDataPropOrder = [
                     "protein1", "pepPos1", "pepSeq1raw", "linkPos1", 
@@ -77,28 +82,53 @@
         addRows : function (filteredProps) {   
             var self = this;
             var selectedLinkArray = this.model.get("selection");
+            var proteinMap = this.model.get("clmsModel").get("interactors");
 
-            // make fresh array with protein links expanded out into constituent residue links
-            var resLinks = [];
-            selectedLinkArray.forEach (function(link) {
-                link.filteredMatches.forEach (function (m) {
-                    resLinks.push (m[0]);
+            console.log ("selectedLinks", selectedLinkArray);
+            
+            var colspan = d3.select(this.el).select("THEAD").selectAll("TH").size();    // get number of TH elements in header for colspan purposes
+            
+            // helper functions
+            // return filtered matches from given crosslink
+            var getMatches = function (xlink) {
+                var matches = xlink.filteredMatches.map (function (m) {
+                    return m[0];
                 });
-                /*
-                if (link.residueLinks) {   //its a ProteinLink
-                    resLinks.push.apply (resLinks, link.residueLinks.values());
-                } else {    //must be ResidueLink
-                    resLinks.push (link);			
-                }		
-                */
-            });
-            console.log ("resLinks", resLinks);
+                console.log ("xlink matches", xlink, matches);
+                return matches;
+            };
+            
+            // return comma-separated list of protein names from array of protein ids
+            var proteinConcat = function (d, field) {
+                var pnames =  d[field].map (function(pid) { return proteinMap.get(pid).name; });
+                return pnames.join(",");
+            };
+            
+            // make nice id string from cross link object
+            var niceCrossLinkName = function (crosslink) {
+                return crosslink.fromProtein.name+", "+crosslink.fromResidue+" --- "+crosslink.toResidue+", "+crosslink.toProtein.name;      
+            }; 
+            
+            // table building starts here
+            // match crosslinks up to tbody sections
+            var xlinkTBodyJoin = d3.select(this.el).select("TABLE").selectAll("TBODY")
+                .data(selectedLinkArray, function(d) { return d.id; })
+            ;
         
-            var tbody = d3.select(this.el).select("TBODY");
-            var tjoin = tbody.selectAll("TR").data (resLinks, function(d) { return d.id; });
-        
+            xlinkTBodyJoin.exit().remove();
+            xlinkTBodyJoin.enter()
+                .append("TBODY")
+                .append("TR")
+                    .append("TD")
+                    .attr ("colspan", colspan)
+                    .text (function(d,i) { return (i+1)+". "+niceCrossLinkName(d); })
+            ;
+            
+            
+            // Within each tbody section, match rows up to matches within each crosslink
+            var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data (function(d) { return getMatches(d); }, function(d) { return d.id; });
             tjoin.exit().remove();
-            tjoin.enter().append("tr");
+            tjoin.enter().append("tr").attr("class", "matchRow");
         
             if (typeof loadSpectra == "function") {
                 tjoin
@@ -111,11 +141,18 @@
                 ;
             }
         
+            // Within each row, match cells up to individual pieces of match information
             var cellJoin = tjoin.selectAll("TD").data(filteredProps, function(d) { return d; });
             cellJoin.exit().remove();
             cellJoin.enter().append("td");
         
             var cellFuncs = {
+                "protein1": function (d) {
+                    return proteinConcat (d, "protein1");
+                },
+                "protein2": function (d) {
+                    return proteinConcat (d, "protein2");
+                },
                 "score": function (d) { 
                     return ((typeof d.score !== 'undefined')? d.score.toFixed(4) : 'undefined'); 
                 },
@@ -131,11 +168,11 @@
                 */
             };
         
-            cellJoin.text (function (d, i, ii) {
-                var link = resLinks [ii];
-                console.log ("link", link);
+            cellJoin.text (function (d) {
+                var link = d3.select(this.parentNode).datum();
+                //console.log ("link", link);
                 var cellFunc = cellFuncs[d];
-                return cellFunc ? cellFunc(link) : link[d];
+                return cellFunc ? cellFunc(link) : (link[d] || "empty");
             });
         },
         

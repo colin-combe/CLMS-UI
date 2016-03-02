@@ -1,3 +1,18 @@
-.selectView TABLE {
-    overflow: auto;
+.selectView {
+    height: calc(100%);
+}
+
+.selectView > DIV.scrollHolder {
+    height: calc(100% - 30px);
+    overflow: scroll;
+}
+
+.selectView TBODY {
+    border-top: 1px solid #335;
+}
+
+.selectView TBODY TR:first-child {
+    background: #99f;
+    color: #444;
+    font-size: 1em;
 }

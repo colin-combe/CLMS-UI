@@ -253,6 +253,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
         this.setVisible (!emptySelection);    
     });
+    selectionViewer.setVisible (false);
 
 
     //init spectrum viewer
