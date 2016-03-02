@@ -24,8 +24,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"auto", "id":"AUTO"},
             ],
             toggleSpecials: [
-                {label: "Self-Links", id: "selfLinks"},
-                {label: "Ambiguous", id: "ambig"},
+				// temp hack
+                //~ {label: "Self-Links", id: "selfLinks"},
+                //~ {label: "Ambiguous", id: "ambig"},
             ]
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);

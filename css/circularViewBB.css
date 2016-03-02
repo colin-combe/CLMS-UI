@@ -18,7 +18,7 @@ svg.circularView {
     fill: none;
     stroke-width: 5px;
     stroke-opacity: 0;
-    stroke: #ff0;
+    stroke: #fdc086;
     pointer-events: stroke;
 }
 
