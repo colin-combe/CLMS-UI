@@ -246,10 +246,17 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#bottomDiv",
         model: CLMSUI.compositeModelInst,
     });
+    // redraw / hide table on selected cross-link change
     selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
         var emptySelection = (selection.length === 0);
         split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
         this.setVisible (!emptySelection);    
+    });
+    // redraw table on filter change if crosslinks selected (matches may have changed)
+    selectionViewer.listenTo (CLMSUI.compositeModelInst, "filteringDone", function (model) {
+        if (this.model.get("selection").length > 0) {
+            this.render();
+        }  
     });
     split.collapse (true);
     selectionViewer.setVisible (false);

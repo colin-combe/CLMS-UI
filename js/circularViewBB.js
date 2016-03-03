@@ -232,6 +232,7 @@
                 console.log ("CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments); 
                 this.render ({changed : d3.set(["features"]), });   
             });
+            this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
             
             return this;
         },
@@ -247,13 +248,13 @@
         },
         
         showHighlighted: function () {
-			var highlights = this.model.get("highlights");
-			if (highlights) {
-				var highlightedIDs = highlights.map((function(xlink) { return xlink.id; }));
-				var idset = d3.set (highlightedIDs);
-				var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
-				thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
-			}
+           var highlights = this.model.get("highlights");
+           if (highlights) {
+                var highlightedIDs = highlights.map((function(xlink) { return xlink.id; }));
+                var idset = d3.set (highlightedIDs);
+                var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
+                thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
+			         }
             return this;
         },
         
@@ -376,6 +377,7 @@
             
             var self = this;
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var colourScheme = this.model.get("linkColourAssignment");
             
             // draw thin links
             var linkJoin = g.selectAll(".circleLink").data(links, self.idFunc);
@@ -386,6 +388,7 @@
             ;
             linkJoin
                 .attr("d", function(d) { return self.line(d.coords); })
+                .style("stroke", function(d) { return colourScheme (crossLinks.get(d.id)); })
             ;
 
             // draw thick, invisible links (used for highlighting and mouse event capture)
