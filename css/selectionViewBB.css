@@ -7,12 +7,29 @@
     overflow: scroll;
 }
 
-.selectView TBODY {
-    border-top: 1px solid #335;
+.selectView TABLE  {
+    border-collapse: separate;
+}
+
+.selectView TABLE TH  {
+    vertical-align: top;
+}
+
+.selectView tbody tr:nth-child(odd) {
+    background: #e8e8ff;
 }
 
 .selectView TBODY TR:first-child {
     background: #99f;
     color: #444;
     font-size: 1em;
+}
+
+/* this replaces a .selectView TBODY rule which deosn't work when border-collapse is set to separate */
+.selectView TBODY TR:first-child TD {
+    border-top: 2px solid #668;
+}
+
+.selectView TBODY TR.matchRow td:not(:first-child), .selectView THEAD TR th:not(:first-child) {
+    border-left: 1px solid #ddd;
 }

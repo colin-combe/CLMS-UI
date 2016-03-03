@@ -178,6 +178,7 @@ var global = this
                 offset = this.size - this.bMin
             }
 
+            //console.log ("offset", offset, this, this.size, this.percentage);
             adjust.call(this, offset)
 
             if (options.onDrag) {
@@ -190,6 +191,7 @@ var global = this
               , parentSize = this.parent[clientDimension] - parseFloat(computedStyle[paddingA]) - parseFloat(computedStyle[paddingB])
 
             this.size = this.a[getBoundingClientRect]()[dimension] + this.b[getBoundingClientRect]()[dimension] + this.aGutterSize + this.bGutterSize
+            //console.log ("calc size", this.a[getBoundingClientRect]()[dimension], this.b[getBoundingClientRect]()[dimension]);
             this.percentage = Math.min(this.size / parentSize * 100, 100)
             this.start = this.a[getBoundingClientRect]()[position]
         }
@@ -237,6 +239,10 @@ var global = this
             for (i = pairs.length - 1; i >= 0; i--) {
                 calculateSizes.call(pairs[i])
                 fitMinReverse.call(pairs[i])
+                var pair = pairs[i];
+                // mjg 2 lines
+                var totSize = pair.a[getBoundingClientRect]()[dimension] + pair.b[getBoundingClientRect]()[dimension] + pair.aGutterSize + pair.bGutterSize
+                pair.aPerc = (pair.a[getBoundingClientRect]()[dimension] / totSize) * 100;
             }
         }
       , preventSelection = function () { return false }
@@ -331,6 +337,7 @@ var global = this
                 size = options.sizes[i] + '%'
             }
         }
+    
 
         el.style[dimension] = size
 
@@ -342,18 +349,19 @@ var global = this
     balancePairs(pairs);
       
       var splitObj = {};
+      // mjg. collapse
       splitObj.collapse = function (state) {
           pairs.forEach (function (pair) {
               if (state !== pair.collapseState) {
                   //console.log ("chnage collapse state");
                   pair.collapseState = state;
                   if (state) {
-                    //console.log ("collapse pair", pair);
-                    pair.resAPerc = pair.aPerc;
+                    //console.log ("collapse pair", pair, pair.aPerc);
+                    pair.resAPerc = pair.aPerc; // mjg
                     adjust.call (pair, pair.size - pair.bMin);
                   } else {
                        //console.log ("expand pair", pair);
-                      var offset = ((pair.size * pair.percentage) / 100) * ((pair.resAPerc || pair.aPerc) / 100);
+                      var offset = ((pair.size * pair.percentage) / 100) * ((pair.resAPerc || pair.aPerc) / 100);   // mjg resAPerc
                       adjust.call (pair, offset);
                   }
               }
