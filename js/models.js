@@ -25,7 +25,7 @@
             },
 
             filter: function (match) {
-                match = match[0];
+                //~ match = match[0];
                 var vChar = match.validated;
                 var scorePass = (!match.score || (match.score >= this.get("cutoff")[0] && match.score <= this.get("cutoff")[1]));
                 if (!scorePass) { return false; }

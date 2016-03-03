@@ -118,6 +118,7 @@
         <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
         <script type="text/javascript" src="./js/circularViewBB.js"></script>
+        <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
     </head>
 
     <body>
@@ -172,9 +173,9 @@
 			<div class="controls">
                     <span id="filterPlaceholder"></span>
 
-<!--
 					<div style='float:right'>
 
+<!--
                         <label style="margin-left:20px;"><span>Annotations:</span>
 							<select id="annotationsSelect" onChange="changeAnnotations();">
 								<option>None</option>
@@ -184,17 +185,22 @@
 								<option>Lysines</option>
 							</select>
 						</label>
+-->
 						<label style="margin-left:20px;">Link colours:
-
 							<select id="linkColourSelect" onChange="changeLinkColours();">
-								<option selected>SAS dist.</option>
-								<option>Euc. dist.</option>
-								<option>Search</option>
+								<option selected>Default</option>
+								<option>Group</option>
+<!--
+								<option>SAS dist.</option>
+-->
+<!--
+								<option>Euclidean dist.</option>
+-->
+
 							</select>
 						</label>
 					</div>
 				</div>
--->
 			</div>
 
 		</div><!-- MAIN -->
@@ -314,6 +320,7 @@
                     alignColl: CLMSUI.alignmentCollectionInst,
                     selection: [], //will contain cross-link objects
                     highlights: [], //will contain cross-link objects 
+                    linkColourAssignment: CLMSUI.linkColour.defaultColours 
                 });
 
                 CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
@@ -326,22 +333,22 @@
                     this.trigger ("filteringDone");
                 });
 
-
                 // Start the asynchronous blosum fetching after the above events have been set up
                 CLMSUI.blosumCollInst.fetch();
             }
             
-            CLMSUI.init.models();
+            changeLinkColours = function () {
+				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.group);
+            }
             
-
+            CLMSUI.init.models();
             
             var windowLoaded = function () {    
                 // Showing multiple searches at once
 				var s = d3.map(CLMSUI.searchesShown);
 				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
 				document.title = title;
-				
-
+	
 				if (s.keys().length > 1) {
 					//showKeyPanel(true);
 					d3.select('#save').style('display','none');

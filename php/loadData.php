@@ -20,7 +20,7 @@
 
 	$sid = urldecode($_GET["sid"]);
 
-	$showDecoys = true;//urldecode($_GET["decoys"]);
+	$showDecoys = false;//urldecode($_GET["decoys"]);
 	$showAll = false;//urldecode($_GET["all"]);
 
 	//~ echo "// decoys?:".$showDecoys."\n";
@@ -70,7 +70,7 @@
 		. ' FROM has_protein, ' . $peptidesTempTableName
 		. ' WHERE ' . $peptidesTempTableName
 		. '.peptide_id = has_protein.peptide_id GROUP BY  has_protein.peptide_id, has_protein.protein_id, peptide_position;';*/
-
+	echo "storedLayout = null;\n";
 	if (strpos($sid,',') === false) { //if not aggregation of more than one search
 
 		$dashPos = strpos($sid,'-');
@@ -85,7 +85,7 @@
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
 			
-			echo "storedLayout = " . stripslashes($line["l"]) . ";";
+			echo "storedLayout = " . stripslashes($line["l"]) . ";\n";
 			
 		}
 

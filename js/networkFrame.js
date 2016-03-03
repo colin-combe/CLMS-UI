@@ -124,9 +124,7 @@ CLMSUI.init.views = function () {
         // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
         //d3.select('#viewDropdownPlaceholder').style("display", "none");
     }		
-    d3.select('#linkColourSelect').style('display','none');
-
-
+    
     new CLMSUI.DropDownMenuViewBB ({
         el: "#expDropdownPlaceholder",
         model: CLMSUI.clmsModelInst,
