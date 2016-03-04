@@ -96,6 +96,8 @@ CLMSUI.init.views = function () {
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
     ];
+    // filter out those for whom ID doesn't exist i.e. we've commented out those bits
+    var checkBoxData = checkBoxData.filter (function (cbdata) { return d3.select("#"+cbdata.id).size() > 0; });
     checkBoxData.forEach (function (cbdata) {
         CLMSUI.utils.addCheckboxBackboneView (d3.select("#"+cbdata.id), {label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
     })

@@ -15,7 +15,7 @@
         
         updateTable: function () {
             var selectedXLinkArray = this.model.get("selection").filter (
-                function(xlink) { return xlink.filteredMatches.length > 0; }
+                function (xlink) { return xlink.filteredMatches.length > 0; }
             );
             var selectedXLinkCount = selectedXLinkArray.length;
             
@@ -50,8 +50,9 @@
                 };
                 
                 var self = this;
-                this.numberColumns = d3.set(["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2"]);
-                this.colSectionStarts = d3.set(["protein2", "score"])
+                this.numberColumns = d3.set (["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2"]);
+                this.colSectionStarts = d3.set (["protein2", "score"]);
+                this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
                 
                 // entries commented out until a replacement is found for xlv
                 var headerFilterFuncs = {
@@ -146,6 +147,7 @@
             tjoin.enter().append("tr").attr("class", "matchRow");
         
             if (typeof loadSpectra == "function") {
+                console.log ("GETTING HERE");
                 tjoin
                     .attr("id", function(d) { return 'match'+d.id; })
                     .on("click", function(d) {
@@ -184,6 +186,9 @@
                 })
                 .classed ("colSectionStart", function(d) {
                     return self.colSectionStarts.has(d);
+                })
+                .classed ("monospaced", function(d) {
+                    return self.monospacedColumns.has(d);
                 })
                 .text (function (d) {
                     var link = d3.select(this.parentNode).datum();

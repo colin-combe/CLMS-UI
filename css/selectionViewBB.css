@@ -34,11 +34,31 @@
     border-left: 1px solid #ddd;
 }
 
+.selectView THEAD TR {
+    line-height: 1.5em;
+    height: 1.5em;
+}
+
+.selectView TBODY TR {
+    line-height: 1.8em;
+    height: 1.8em;
+}
+
+.selectView TR.matchRow {
+    line-height: 1.1em;
+    height: 1.1em;
+}
+
 .selectView TBODY TR.matchRow td.colSectionStart:not(:first-child), .selectView THEAD TR th.colSectionStart:not(:first-child) {
     border-left: 3px solid #bbb;
 }
 
 .selectView TD.number {
     text-align: right;
+}
+
+.selectView TD.monospaced {
+    font-family: monospace;
+    font-size: 1.1em;
 }
 
