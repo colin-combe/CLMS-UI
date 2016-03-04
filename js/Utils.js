@@ -251,6 +251,8 @@ CLMSUI.utils = {
                     .relayout() // need to resize first sometimes so render gets correct width/height coords
                     .render()
                 ;
+                console.log (this.el, "made visible");
+                this.bringToTop();
             }
         },
         

@@ -19,25 +19,6 @@
 var CLMSUI = CLMSUI || {};
 
 var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
-/*
- *
- *  Hide / show floaty panels (including Selection)
- *
- */
-//~ var selChkBx = document.getElementById('selectionChkBx');
-//~ selChkBx.checked = false;
-var selectionShown = false;
-//var selectionPanel = new SelectionPanel("selectionDiv");
-
-/*
-if (selectionPanel.isShown() == false) {
-    selectionPanel.show (true);
-}
-*/
-
-var showSpectrumPanel = function (show) {
-	d3.select('#spectrumPanel').style('display', show ? 'block' : 'none');
-};
 
 
 
@@ -175,6 +156,14 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             seriesName: "Actual"
         }
     });
+    
+    spectrumModel = new AnnotatedSpectrumModel();
+    var spectrumViewer = new SpectrumView ({
+        model: spectrumModel, 
+        el:"#spectrumPanel",
+        displayEventName: "spectrumShow",
+    });
+    var fragmentationKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
 
     // This makes a matrix viewer
@@ -262,31 +251,25 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
     split.collapse (true);
     selectionViewer.setVisible (false);
-
-
-    //init spectrum viewer
-    var spectrumDiv = document.getElementById('spectrumDiv');
-    var spectrumViewer = new SpectrumViewer(spectrumDiv);
 };
 
 
+function loadSpectra (match) {
+    var url = "http://129.215.14.63/xiAnnotator/annotate/"
+                + match.group + "/" + "12345" + "/" + match.id 
+                + "/?peptide=" + match.pepSeq1raw 
+                + "&peptide=" + match.pepSeq2raw
+                + "&link=" + match.linkPos1
+                + "&link=" + match.linkPos2;
 
-function loadSpectra(id, pepSeq1, linkPos1, pepSeq2, linkPos2){
-	spectrumViewer.clear();
-	showSpectrumPanel(true);
-	var xmlhttp = new XMLHttpRequest();
-	var url = "./php/spectra.php";
-	var params =  "id=" + id;
-	xmlhttp.open("POST", url, true);
-	//Send the proper header information along with the request
-	xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-		if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-			spectrumViewer.clear();// tidy up, could be AJAX synchronisation issues
-			spectrumViewer.setData(pepSeq1, linkPos1, pepSeq2, linkPos2, xmlhttp.responseText);
-		}
-	}
-	xmlhttp.send(params);
+    //d3.selectAll("tr").classed("selected", false); 
+    //d3.select("#m" + matchViewed).classed("selected", true); 
+
+    d3.json(url, function(json) {
+        spectrumModel.set({JSONdata: json});
+        CLMSUI.vent.trigger ("spectrumShow", true);
+        d3.select("#spectrumPanel").style("z-index", 10);
+    });
 };
 
 function onDistanceSliderChange(scale){

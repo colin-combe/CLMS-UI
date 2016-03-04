@@ -146,17 +146,14 @@
             tjoin.exit().remove();
             tjoin.enter().append("tr").attr("class", "matchRow");
         
-            if (typeof loadSpectra == "function") {
-                console.log ("GETTING HERE");
-                tjoin
-                    .attr("id", function(d) { return 'match'+d.id; })
-                    .on("click", function(d) {
-                        loadSpectra (d.id, d.pepSeq1, d.linkPos1, d.pepSeq2, d.linkPos2);
-                        self.clearTableHighlights();
-                        d3.selectAll("#match"+d.id).attr("class", "spectrumShown");
-                    })
-                ;
-            }
+            tjoin
+                .attr("id", function(d) { return 'match'+d.id; })
+                .on("click", function(d) {
+                    loadSpectra (d);
+                    self.clearTableHighlights();
+                    //d3.selectAll("#match"+d.id).attr("class", "spectrumShown");
+                })
+            ;
         
             // Within each row, match cells up to individual pieces of match information
             var cellJoin = tjoin.selectAll("TD").data(filteredProps, function(d) { return d; });

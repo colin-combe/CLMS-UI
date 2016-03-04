@@ -60,14 +60,6 @@
 
 		<!-- <script type="text/javascript" src="./vendor/DistanceSlider.js"></script> -->
 
-		<script type="text/javascript" src="./vendor/spectrum.js"></script>
-        <!--spectrum dev
-        <script type="text/javascript" src="../spectrum/src/SpectrumViewer.js"></script>
-        <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>-->
-
 
         <!-- <script type="text/javascript" src="../distogram/distogram.js"></script> -->
         <script type="text/javascript" src="./vendor/c3.js"></script>
@@ -77,6 +69,7 @@
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
+
 
 <!--
        	<script type="text/javascript" src="./vendor/CLMS_model.js"></script>
@@ -119,11 +112,55 @@
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
         <script type="text/javascript" src="./js/circularViewBB.js"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
+        
+                
+        <script type="text/javascript" src="../spectrum/src/model.js"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
+        <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
+        <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>		
+        <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>	
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>	
     </head>
 
     <body>
 
-        <div class="dynDiv" id="spectrumPanel"></div>
+        <div class="dynDiv" id="spectrumPanel">
+				<label>lossy labels
+					<input id="lossyChkBx" type="checkbox">
+				</label>
+				<button id="reset">reset zoom</button>
+				<button id="clearHighlights">clear highlights</button>
+				<label>measure
+					<input id="measuringTool" type="checkbox">
+				</label>
+				<label>move labels
+					<input id="moveLabels" type="checkbox">
+				</label>
+	<!--
+				</br>
+	-->
+				<label for="colorSelector">Change color scheme:</label>
+				<select id="colorSelector" style="display:inline-block;">
+					<option value="RdBu">Red&Blue</option>
+					<option value="BrBG">Brown&Teal</option>
+					<option value="PiYG">Pink&Green</option>
+					<option value="PRGn">Purple&Green</option>
+					<option value="PuOr">Orange&Purple</option>
+				</select> 
+				<form id="setrange" style="display:inline-block;">
+					m/z Range:
+					<input type="text" id="xleft" size="5">
+					<input type="text" id="xright" size="5">
+					<input type="submit" value="set range">
+					<span id="range-error"></span>
+				</form>
+				<svg id="spectrumSVG" style="height:400px; width:100%;"></svg>
+				<div id="measureTooltip"></div>
+        </div>
+        
         <div class="dynDiv" id="keyPanel"></div>
         <div class="dynDiv" id="nglPanel"></div>
         <div class="dynDiv" id="distoPanel"></div>
