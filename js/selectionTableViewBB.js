@@ -14,14 +14,17 @@
         },
         
         updateTable: function () {
-            console.log ("table model", this.model);
-            
-            var selectedXLinkArray = this.model.get("selection");
+            var selectedXLinkArray = this.model.get("selection").filter (
+                function(xlink) { return xlink.filteredMatches.length > 0; }
+            );
             var selectedXLinkCount = selectedXLinkArray.length;
             
-            d3.select(this.el).select(".crossLinkTotal").text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount > 1 ? "s" : "")+ " selected.");
+            d3.select(this.el).select(".crossLinkTotal").text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
 
-            if (selectedXLinkCount > 0) {
+            // draw if selected crosslink count > 0 or is 'freshly' zero
+            if (selectedXLinkCount > 0 || this.lastCount > 0) {
+                this.lastCount = selectedXLinkCount;
+                console.log ("rendering table view of selected crosslinks", this, this.model);
                 
                 var tableDataPropOrder = [
                     "protein1", "pepPos1", "pepSeq1raw", "linkPos1", 
@@ -31,13 +34,13 @@
                                                                                    
                 var headerLabels = {
                    "protein1": "Protein 1",
-                    "pepPos1": "Pep Pos1",
-                    "pepSeq1raw": "Pep Seq1",
-                    "linkPos1": "Link Pos1",
+                    "pepPos1": "Pep Pos",
+                    "pepSeq1raw": "Pep Sequence",
+                    "linkPos1": "Link Pos",
                     "protein2": "Protein 2",
-                    "pepPos2": "Pep Pos2",
-                    "pepSeq2raw": "Pep Seq2",
-                    "linkPos2": "Link Pos2",
+                    "pepPos2": "Pep Pos",
+                    "pepSeq2raw": "Pep Sequence",
+                    "linkPos2": "Link Pos",
                     "score": "Score",
                     "autovalidated": "Auto",
                     "validated": "Manual",
@@ -46,7 +49,9 @@
                     "scanNumber": "Scan Number",		
                 };
                 
-                this.rightAligns = d3.set(["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2"]);
+                var self = this;
+                this.numberColumns = d3.set(["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2"]);
+                this.colSectionStarts = d3.set(["protein2", "score"])
                 
                 // entries commented out until a replacement is found for xlv
                 var headerFilterFuncs = {
@@ -62,16 +67,18 @@
                 );
                                                                                    
                 var headerRow = d3.select(this.el).select("THEAD TR");
-                console.log ("headerRow", headerRow, filteredProps, headerRow.selectAll("TH"));
                 var headerJoin = headerRow.selectAll("TH").data(filteredProps, function(d) { return d; });
                 
                 headerJoin.exit().remove();
                 // See https://github.com/mbostock/d3/issues/2722 as I kick off about case sensitivity
                 headerJoin.enter().append("th")
                     .html (function(d) { return headerLabels[d]; })
+                    .classed ("colSectionStart", function(d) {
+                        return self.colSectionStarts.has(d);
+                    })
                 ;
 
-                this.addRows (filteredProps);
+                this.addRows (selectedXLinkArray, filteredProps);
             }
         },
 
@@ -81,12 +88,9 @@
         },
 
     
-        addRows : function (filteredProps) {   
+        addRows : function (selectedLinkArray, filteredProps) {   
             var self = this;
-            var selectedLinkArray = this.model.get("selection");
             var proteinMap = this.model.get("clmsModel").get("interactors");
-
-            console.log ("selectedLinks", selectedLinkArray);
             
             var colspan = d3.select(this.el).select("THEAD").selectAll("TH").size();    // get number of TH elements in header for colspan purposes
             
@@ -96,7 +100,6 @@
                 var matches = xlink.filteredMatches.map (function (m) {
                     return m[0];
                 });
-                console.log ("xlink matches", xlink, matches);
                 return matches;
             };
             
@@ -111,8 +114,8 @@
             };
             
             // make nice id string from cross link object
-            var niceCrossLinkName = function (crosslink) {
-                return crosslink.fromProtein.name+", "+crosslink.fromResidue+" --- "+crosslink.toProtein.name+", "+crosslink.toResidue;      
+            var niceCrossLinkName = function (crosslink, i) {
+                return /*(i+1)+". "+*/"Matches for "+crosslink.fromProtein.name+", "+crosslink.fromResidue+" --- "+crosslink.toProtein.name+", "+crosslink.toResidue;      
             }; 
             
             // table building starts here
@@ -127,8 +130,14 @@
                 .append("TR")
                     .append("TD")
                     .attr ("colspan", colspan)
-                    .text (function(d,i) { return (i+1)+". "+niceCrossLinkName(d); })
             ;
+            xlinkTBodyJoin.order();
+            xlinkTBodyJoin
+                .select("TR")
+                    .select("TD")
+                    .text (niceCrossLinkName)
+            ;
+            //xlinkTBodyJoin.sort (function(a,b) { return a.id > b.id ? 1 : (a.id < b.id ? -1 : 0); });
             
             
             // Within each tbody section, match rows up to matches within each crosslink
@@ -154,36 +163,30 @@
             
         
             var cellFuncs = {
-                "protein1": function (d) {
-                    return proteinConcat (d, "protein1");
-                },
-                "protein2": function (d) {
-                    return proteinConcat (d, "protein2");
-                },
+                "protein1": function (d) { return proteinConcat (d, "protein1"); },
+                "protein2": function (d) { return proteinConcat (d, "protein2"); },
                 "pepPos1": function(d) { return arrayConcat (d, "pepPos1"); },
                 "pepPos2": function(d) { return arrayConcat (d, "pepPos2"); },
-                "score": function (d) { 
-                    return ((typeof d.score !== 'undefined')? d.score.toFixed(2) : 'undefined'); 
-                },
+                "linkPos1": function(d) { return arrayConcat (d, "linkPos1"); },
+                "linkPos2": function(d) { return arrayConcat (d, "linkPos2"); },
+                "score": function (d) { return ((typeof d.score !== 'undefined')? d.score.toFixed(2) : 'undefined'); },
                 // .controller is not a property of a match, but manual / auto will be filtered out at
                 // header stage eventually anyways
                 /*
-                "validated": function () { 
-                    return d.controller.manualValidatedFound ? d.validated : "";
-                },
-                "autoValidated": function () { 
-                    return d.controller.autoValidatedFound ? d.autoValidated : "";
-                },
+                "validated": function () { return d.controller.manualValidatedFound ? d.validated : ""; },
+                "autoValidated": function () { return d.controller.autoValidatedFound ? d.autoValidated : ""; },
                 */
             };
         
             cellJoin
-                .style ("text-align", function(d) {
-                    return self.rightAligns.has(d) ? "right" : null;
+                .classed ("number", function(d) {
+                    return self.numberColumns.has(d);
+                })
+                .classed ("colSectionStart", function(d) {
+                    return self.colSectionStarts.has(d);
                 })
                 .text (function (d) {
                     var link = d3.select(this.parentNode).datum();
-                    //console.log ("link", link);
                     var cellFunc = cellFuncs[d];
                     return cellFunc ? cellFunc(link) : (link[d] || "");
                 })
@@ -191,15 +194,9 @@
         },
         
         setVisible: function (show) {
-            var current = d3.select(this.el).style("display");
-            var next = show ? 'block' : 'none';
-            d3.select(this.el).style('display', next);
-            if (current !== next) {
-                
-            }
+            d3.select(this.el).style('display', show ? 'block' : 'none');
             if (show) {
                 this.render();
             }
         },
     });
-    

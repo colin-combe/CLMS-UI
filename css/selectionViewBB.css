@@ -33,3 +33,12 @@
 .selectView TBODY TR.matchRow td:not(:first-child), .selectView THEAD TR th:not(:first-child) {
     border-left: 1px solid #ddd;
 }
+
+.selectView TBODY TR.matchRow td.colSectionStart:not(:first-child), .selectView THEAD TR th.colSectionStart:not(:first-child) {
+    border-left: 3px solid #bbb;
+}
+
+.selectView TD.number {
+    text-align: right;
+}
+
