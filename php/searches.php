@@ -31,19 +31,17 @@
 		
 		$searchFile = $line['file_name'];
 		
-		if ($searchFile == "{HSA-Active.FASTA}"){
-			echo "<td></td>";//"<td><a id=".$line['name']." href='./network_3D.php?sid=" . urlencode($urlPart) . "'>3D</a>" . "</td>";
-			echo "<td></td>";//<a id=".$line['name']." href='./matrix.php?sid=" . urlencode($urlPart) . "'>#</a>" . "</td>";
-			
-		}else {
-			echo "<td></td><td></td>";
-		}
+
 		$status = $line['status'];
 		$statusSpacePos = strpos($status, ' ');
 		if ($statusSpacePos > 0){
 			$status = substr($line['status'], 0, $statusSpacePos);
 		}
 		echo "<td><strong>" .$status. "</strong></td>";
+
+		echo "<td><a id=".$line['name']." href='./validate.php?sid=" . urlencode($urlPart) . "'>" . validate . "</a>" . "</td>";
+	
+
 		echo "<td>" .$searchFile. "</td>";
 		echo "<td>" .substr($line['submit_date'], 0, strpos($line['submit_date'], '.')) . "</td>";
 		echo "<td>" .$id . "</td>";

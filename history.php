@@ -44,8 +44,7 @@ header('Content-type: text/html; charset=utf-8');
 					<span class="headerLabel">My Searches</span>
 					<input type="radio" name="mineOrAll" value="allSearches" id="allSearches" onchange="loadSearchList();">
 					<span class="headerLabel" >All Searches</span>
-					
-					
+										
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../searchSumbit/submitSearch.php";'>
 						New Search
 					</button>	
@@ -53,6 +52,7 @@ header('Content-type: text/html; charset=utf-8');
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
 					</button>
+					
 				<div style='float:right'>
 					<button class='btn btn-1 btn-1a' onclick='aggregate();'>Aggregate</button>
 					<?php
@@ -90,7 +90,7 @@ header('Content-type: text/html; charset=utf-8');
 				if (document.getElementById('mySearches').checked){
 					params =  "searches=MINE";
 					var opt1 = {
-						colTypes: ["alpha","none", "none", "none", "alpha", "alpha","number","none", "clearCheckboxes"],
+						colTypes: ["alpha","none",  "none", "alpha", "alpha","number","none", "clearCheckboxes"],
 						pager: {
 						rowsCount: 20
 						}
@@ -99,7 +99,7 @@ header('Content-type: text/html; charset=utf-8');
 				else {
 					params =  "searches=ALL";
 					var opt1 = {
-						colTypes: ["alpha","none", "none", "none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
+						colTypes: ["alpha","none", "none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
 						pager: {
 						rowsCount: 20
 						}
@@ -114,7 +114,7 @@ header('Content-type: text/html; charset=utf-8');
 						document.getElementById("t1").innerHTML = xmlhttp.responseText;
 						dynTable = new DynamicTable("t1", opt1);
 						if (document.getElementById('mySearches').checked){
-							document.getElementsByClassName("tool-8")[0].setAttribute("style", "width:0px;");
+							document.getElementsByClassName("tool-7")[0].setAttribute("style", "width:0px;");
 						}
 						else {
 							//~ document.getElementByClassName("tool-8")[0].setAttribute("style", "width:90px;");
