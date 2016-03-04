@@ -323,7 +323,8 @@
                     alignColl: CLMSUI.alignmentCollectionInst,
                     selection: [], //will contain cross-link objects
                     highlights: [], //will contain cross-link objects 
-                    linkColourAssignment: CLMSUI.linkColour.defaultColours 
+                    linkColourAssignment: CLMSUI.linkColour.defaultColours,
+                    selectedProtein: null
                 });
 
                 CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
