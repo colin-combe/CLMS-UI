@@ -380,7 +380,12 @@
             }
             
             changeLinkColours = function () {
-				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.group);
+				var colourSelection = document.getElementById("linkColourSelect").value;
+				if (colourSelection == "Default") {
+					CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
+				} else if (colourSelection == "Group") {
+					CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.group);
+				}
             }
             
             CLMSUI.init.models();
