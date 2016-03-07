@@ -29,7 +29,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 					+"<input type='submit' value='set range'>"
 					+"<span id='range-error'></span>"
 				+"</form>"
-				+"<svg id='spectrumSVG' style='height:400px; width:100%;'></svg>"
+				+"<svg id='spectrumSVG' style='height:100%; width:100%;'></svg>"
 				+"<div id='measureTooltip'></div>"
         ;
         
