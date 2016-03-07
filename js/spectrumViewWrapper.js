@@ -16,13 +16,16 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         var myOptions = options.options;
         SpectrumViewWrapper.__super__.initialize.apply (this, arguments);
         
-        var _html = "<label>lossy labels<input id='lossyChkBx' type='checkbox'></label>"
-				+"<button id='reset'>reset zoom</button>"
-				+"<button id='clearHighlights'>clear highlights</button>"
-				+"<label>measure<input id='measuringTool' type='checkbox'></label>"
-				+"<label>move labels<input id='moveLabels' type='checkbox'></label>"
-				+"<label for='colorSelector'>Change color scheme:</label>"
+        var _html = ""
+				+"<button id='reset'>Reset Zoom</button>"
+				+"<button id='clearHighlights'>Clear Highlights</button>"
+                +"<button id='spectrumExportSVG'>Export SVG</button>"
+				+"<label>Change color scheme:</label>"
 				+"<select id='colorSelector' style='display:inline-block;'></select>" 
+                +"<br/>"
+                +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
+				+"<label>Measure<input id='measuringTool' type='checkbox'></label>"
+				+"<label>Move Labels<input id='moveLabels' type='checkbox'></label>"
 				+"<form id='setrange' style='display:inline-block;'>m/z Range:"
 					+"<input type='text' id='xleft' size='5'>"
 					+"<input type='text' id='xright' size='5'>"
@@ -38,6 +41,13 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             .attr("id", myOptions.wrapperID)
             .html (_html)
         ;
+        
+        d3.select("#"+myOptions.wrapperID)
+            .selectAll("button")
+            .attr ("class", "btn btn-1 btn-1a")
+        ;
+        
+        d3.select("#spectrumExportSVG").classed ("downloadButton", true);
         
         var colOptions = [
             {value: "RdBu", text: "Red & Blue"},

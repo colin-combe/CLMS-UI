@@ -233,9 +233,9 @@ CLMSUI.utils = {
             var activeDivs = d3.selectAll(".dynDiv").filter (function() {
                 return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
             });
-            activeDivs.each(function(d,i) { z[i] = +d3.select(this).style("z-index"); });   // all the z-indexes
+            // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
+            activeDivs.each (function(d,i) { z[i] = +d3.select(this).style("z-index") || 0; });   // all the z-indexes
             var range = d3.extent (z/*.filter (function(zi) { return zi !== 0; })*/);
-            
             activeDivs.style("z-index", function() {
                 return Math.max (0, +d3.select(this).style("z-index") - range[0] + 1);
             });
