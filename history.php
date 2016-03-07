@@ -45,7 +45,7 @@ header('Content-type: text/html; charset=utf-8');
 					<input type="radio" name="mineOrAll" value="allSearches" id="allSearches" onchange="loadSearchList();">
 					<span class="headerLabel" >All Searches</span>
 										
-					<button class='btn btn-1 btn-1a' onclick='window.location = "../searchSumbit/submitSearch.php";'>
+					<button class='btn btn-1 btn-1a' onclick='window.location = "../searchSubmit/submitSearch.php";'>
 						New Search
 					</button>	
 					
