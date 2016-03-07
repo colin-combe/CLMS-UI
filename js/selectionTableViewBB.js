@@ -132,13 +132,12 @@
                     .append("TD")
                     .attr ("colspan", colspan)
             ;
-            xlinkTBodyJoin.order();
+            xlinkTBodyJoin.order(); // reorder existing dom elements so they are in same order as data (selectedLinkArray)
             xlinkTBodyJoin
                 .select("TR")
                     .select("TD")
                     .text (niceCrossLinkName)
             ;
-            //xlinkTBodyJoin.sort (function(a,b) { return a.id > b.id ? 1 : (a.id < b.id ? -1 : 0); });
             
             
             // Within each tbody section, match rows up to matches within each crosslink
@@ -149,9 +148,9 @@
             tjoin
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
-                    loadSpectra (d);
+                    CLMSUI.vent.trigger ("individualMatchSelected", d);
                     self.clearTableHighlights();
-                    //d3.selectAll("#match"+d.id).attr("class", "spectrumShown");
+                    d3.select(this).classed ("spectrumShown", true);
                 })
             ;
         

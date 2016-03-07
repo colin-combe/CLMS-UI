@@ -234,8 +234,7 @@ CLMSUI.utils = {
                 return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
             });
             activeDivs.each(function(d,i) { z[i] = +d3.select(this).style("z-index"); });   // all the z-indexes
-            var range = d3.extent (z.filter (function(zi) { return zi !== 0; }));
-            //console.log (range, "z-indexes", z);
+            var range = d3.extent (z/*.filter (function(zi) { return zi !== 0; })*/);
             
             activeDivs.style("z-index", function() {
                 return Math.max (0, +d3.select(this).style("z-index") - range[0] + 1);
@@ -244,14 +243,13 @@ CLMSUI.utils = {
         },
 
         setVisible: function (show) {
-            d3.select(this.el).style('display', show ? 'block' : 'none');
+            d3.select(this.el).style ('display', show ? 'block' : 'none');
 
             if (show) {
                 this
                     .relayout() // need to resize first sometimes so render gets correct width/height coords
                     .render()
                 ;
-                console.log (this.el, "made visible");
                 this.bringToTop();
             }
         },

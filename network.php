@@ -112,6 +112,7 @@
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
         <script type="text/javascript" src="./js/circularViewBB.js"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
+        <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
         
                 
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
@@ -127,7 +128,8 @@
 
     <body>
 
-        <div class="dynDiv" id="spectrumPanel">
+        <div class="dynDiv" id="spectrumPanelWrapper">
+            <!--
 				<label>lossy labels
 					<input id="lossyChkBx" type="checkbox">
 				</label>
@@ -139,9 +141,7 @@
 				<label>move labels
 					<input id="moveLabels" type="checkbox">
 				</label>
-	<!--
-				</br>
-	-->
+
 				<label for="colorSelector">Change color scheme:</label>
 				<select id="colorSelector" style="display:inline-block;">
 					<option value="RdBu">Red&Blue</option>
@@ -159,6 +159,7 @@
 				</form>
 				<svg id="spectrumSVG" style="height:400px; width:100%;"></svg>
 				<div id="measureTooltip"></div>
+    -->
         </div>
         
         <div class="dynDiv" id="keyPanel"></div>

@@ -157,11 +157,17 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
     
-    spectrumModel = new AnnotatedSpectrumModel();
+    var spectrumWrapper = new SpectrumViewWrapper ({
+        el:"#spectrumPanelWrapper",
+        displayEventName: "spectrumShow",
+        options: {wrapperID: "spectrumPanel"}
+    });
+    
+    var spectrumModel = new AnnotatedSpectrumModel();
     var spectrumViewer = new SpectrumView ({
         model: spectrumModel, 
         el:"#spectrumPanel",
-        displayEventName: "spectrumShow",
+        //displayEventName: "spectrumShow",
     });
     var fragmentationKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
@@ -251,26 +257,37 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
     split.collapse (true);
     selectionViewer.setVisible (false);
-};
-
-
-function loadSpectra (match) {
-    var url = "http://129.215.14.63/xiAnnotator/annotate/"
+    
+    
+    // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
+    spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+        CLMSUI.vent.trigger ("spectrumShow", true);
+        
+        var url = "http://129.215.14.63/xiAnnotator/annotate/"
                 + match.group + "/" + "12345" + "/" + match.id 
                 + "/?peptide=" + match.pepSeq1raw 
                 + "&peptide=" + match.pepSeq2raw
                 + "&link=" + match.linkPos1
-                + "&link=" + match.linkPos2;
-
-    //d3.selectAll("tr").classed("selected", false); 
-    //d3.select("#m" + matchViewed).classed("selected", true); 
-
-    d3.json(url, function(json) {
-        spectrumModel.set({JSONdata: json});
-        CLMSUI.vent.trigger ("spectrumShow", true);
-        d3.select("#spectrumPanel").style("z-index", 10);
+                + "&link=" + match.linkPos2
+        ;
+        
+        var self = this;
+        console.log ("$el", this.$el);
+        d3.json (url, function(error, json) {
+            if (error) {
+                console.warn ("error", error);
+                d3.select("#range-error").text ("Cannot load spectra from URL");
+            } else {
+                self.model.set ({JSONdata: json}); 
+            }
+        });
+    });
+    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        console.log ("spectrum sub views resize"); 
+        this.resize();
     });
 };
+
 
 function onDistanceSliderChange(scale){
 	//~ var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();

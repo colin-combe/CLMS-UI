@@ -576,7 +576,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #helpPanel, #spectrumPanel, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #circularPanel {
+#keyPanel, #helpPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #circularPanel {
 	display:none;
 	top:80px;
 }
@@ -593,6 +593,15 @@ tbody tr:hover td, tbody tr:hover td  {
 	left: 160px;
 }
 #spectrumPanel{
+    /*
+	left: 280px;
+	width:600px;
+	height:500px;
+    */
+    width: 100%;
+    height: 100%;
+}
+#spectrumPanelWrapper{
 	left: 280px;
 	width:600px;
 	height:500px;
