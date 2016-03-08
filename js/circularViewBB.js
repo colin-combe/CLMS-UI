@@ -258,14 +258,13 @@
             return this;
         },
         
-        highlightNodeLinks: function (nodeId) {
+        actionNodeLinks: function (nodeId, actionType) {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.filterCrossLinks (crossLinks);
             var matchLinks = filteredCrossLinks.filter (function(link) {
-                //var plink = link.proteinLink;
                 return link.fromProtein.id === nodeId || link.toProtein.id === nodeId;
             });
-            this.model.set("highlights", matchLinks);
+            this.model.set (actionType, matchLinks);
         },
         
         convertLinks: function (links, rad1, rad2) {
@@ -425,11 +424,14 @@
                     .attr("class", "circleNode")
                     .on("mouseenter", function(d) {
                         self.nodeTip (d);
-                        self.highlightNodeLinks (d.id);
+                        self.actionNodeLinks (d.id, "highlights");
                     })
                     .on("mouseleave", function(d) {
                         self.clearTip (d); 
                         self.model.set ("highlights", []);
+                    })
+                    .on("click", function(d) {
+                        self.actionNodeLinks (d.id, "selection");
                     })
             ;
 
