@@ -3,7 +3,7 @@
 }
 
 #spectrumControls div {
-    padding-bottom: 0.4em;
+    padding-bottom: 0.3em;
     border-bottom: 1px solid grey;
 }
 
@@ -16,6 +16,7 @@
 
 #spectrumControls input {
     vertical-align: text-top;
+    line-height: normal;
 }
      
 #spectrumControls form {

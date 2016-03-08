@@ -46,13 +46,14 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         d3.select(this.el)
             .append("div")
             .attr("id", myOptions.wrapperID)
+            // http://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space?rq=1
             .style ("display", "table")
             .html (_html)
         ;
 
         d3.select("#"+myOptions.wrapperID)
             .selectAll("button")
-            .attr ("class", "btn btn-1 btn-1a")
+            .classed ("btn btn-1 btn-1a", true)
         ;
         
         d3.select(this.el).selectAll("label")
