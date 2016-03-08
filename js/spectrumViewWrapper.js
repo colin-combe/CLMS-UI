@@ -17,38 +17,48 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         SpectrumViewWrapper.__super__.initialize.apply (this, arguments);
         
         var _html = ""
-				+"<button id='reset'>Reset Zoom</button>"
-				+"<button id='clearHighlights'>Clear Highlights</button>"
-                +"<button id='spectrumExportSVG'>Export SVG</button>"
-				+"<label>Change color scheme:</label>"
-				+"<select id='colorSelector' style='display:inline-block;'></select>" 
-                +"<br/>"
-                +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
-				+"<label>Measure<input id='measuringTool' type='checkbox'></label>"
-				+"<label>Move Labels<input id='moveLabels' type='checkbox'></label>"
-				+"<form id='setrange' style='display:inline-block;'>m/z Range:"
-					+"<input type='text' id='xleft' size='5'>"
-					+"<input type='text' id='xright' size='5'>"
-					+"<input type='submit' value='set range'>"
-					+"<span id='range-error'></span>"
-				+"</form>"
-				+"<svg id='spectrumSVG' style='height:100%; width:100%;'></svg>"
-				+"<div id='measureTooltip'></div>"
+            +"<div id='spectrumControls'>"
+            +"<div>"
+            +"<button id='reset'>Reset Zoom</button>"
+            +"<button id='clearHighlights'>Clear Highlights</button>"
+            +"<button class='downloadButton'>Export SVG</button>"
+            +"</div>"
+            +"<div>"
+            +"<label>Color scheme:</label>"
+            +"<select id='colorSelector'></select>"
+            +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
+            +"<label>Measure<input id='measuringTool' type='checkbox'></label>"
+            +"<label>Move Labels<input id='moveLabels' type='checkbox'></label>"
+            +"<form id='setrange'><label>m/z Range:</label>"
+             +"<input type='text' id='xleft' size='7'>"
+             +"<input type='text' id='xright' size='7'>"
+             +"<input type='submit' value='set range'>"
+             +"<span id='range-error'></span>"
+            +"</form>"
+            +"</div>"
+            +"</div>"
+            +"<div class='heightFill'>"
+            +"<svg id='spectrumSVG'></svg>"
+            +"</div>"
+            +"<div id='measureTooltip'></div>"
         ;
         
         d3.select(this.el)
             .append("div")
             .attr("id", myOptions.wrapperID)
+            .style ("display", "table")
             .html (_html)
         ;
-        
+
         d3.select("#"+myOptions.wrapperID)
             .selectAll("button")
             .attr ("class", "btn btn-1 btn-1a")
         ;
         
-        d3.select("#spectrumExportSVG").classed ("downloadButton", true);
-        
+        d3.select(this.el).selectAll("label")
+            .classed ("btn", true)
+        ;
+     
         var colOptions = [
             {value: "RdBu", text: "Red & Blue"},
             {value: "BrBG", text: "Brown & Teal"},

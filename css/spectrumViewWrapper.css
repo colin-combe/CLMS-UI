@@ -1,0 +1,38 @@
+#spectrumControls {
+    display: table-row;
+}
+
+#spectrumControls div {
+    padding-bottom: 0.4em;
+    border-bottom: 1px solid grey;
+}
+
+#spectrumControls label {
+    display: inline-block;
+    padding-left: 1em;
+    padding-right: 1em;
+    margin: 0;
+}
+
+#spectrumControls input {
+    vertical-align: text-top;
+}
+     
+#spectrumControls form {
+    display: inline-block;
+}
+
+#spectrumControls form > * {
+    margin-right: 0.3em;
+}
+
+.heightFill {
+    display: table-row;
+    height: 100%;
+}
+
+#spectrumSVG {
+    width: 100%;
+    height: 100%;
+}
+

@@ -49,6 +49,7 @@
         <link rel="stylesheet" href="./css/alignViewBB.css">
         <link rel="stylesheet" href="./css/selectionViewBB.css">
         <link rel="stylesheet" href="./css/circularViewBB.css">
+        <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -128,40 +129,7 @@
 
     <body>
 
-        <div class="dynDiv" id="spectrumPanelWrapper">
-            <!--
-				<label>lossy labels
-					<input id="lossyChkBx" type="checkbox">
-				</label>
-				<button id="reset">reset zoom</button>
-				<button id="clearHighlights">clear highlights</button>
-				<label>measure
-					<input id="measuringTool" type="checkbox">
-				</label>
-				<label>move labels
-					<input id="moveLabels" type="checkbox">
-				</label>
-
-				<label for="colorSelector">Change color scheme:</label>
-				<select id="colorSelector" style="display:inline-block;">
-					<option value="RdBu">Red&Blue</option>
-					<option value="BrBG">Brown&Teal</option>
-					<option value="PiYG">Pink&Green</option>
-					<option value="PRGn">Purple&Green</option>
-					<option value="PuOr">Orange&Purple</option>
-				</select> 
-				<form id="setrange" style="display:inline-block;">
-					m/z Range:
-					<input type="text" id="xleft" size="5">
-					<input type="text" id="xright" size="5">
-					<input type="submit" value="set range">
-					<span id="range-error"></span>
-				</form>
-				<svg id="spectrumSVG" style="height:400px; width:100%;"></svg>
-				<div id="measureTooltip"></div>
-    -->
-        </div>
-        
+        <div class="dynDiv" id="spectrumPanelWrapper"></div>
         <div class="dynDiv" id="keyPanel"></div>
         <div class="dynDiv" id="nglPanel"></div>
         <div class="dynDiv" id="distoPanel"></div>
