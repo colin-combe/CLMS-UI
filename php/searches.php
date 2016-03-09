@@ -39,7 +39,7 @@
 		}
 		echo "<td><strong>" .$status. "</strong></td>";
 
-		echo "<td><a id=".$line['name']." href='./validate.php?sid=" . urlencode($urlPart) . "'>" . validate . "</a>" . "</td>";
+		echo "<td><a id=".$line['name']." href='./validate.php?sid=" . urlencode($urlPart) . "'>validate</a>" . "</td>";
 	
 
 		echo "<td>" .$searchFile. "</td>";
