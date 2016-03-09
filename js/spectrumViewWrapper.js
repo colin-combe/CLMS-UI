@@ -39,8 +39,9 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"</div>"
             +"<div class='heightFill'>"
             +"<svg id='spectrumSVG'></svg>"
-            +"</div>"
+
             +"<div id='measureTooltip'></div>"
+                    +"</div>"
         ;
         
         d3.select(this.el)

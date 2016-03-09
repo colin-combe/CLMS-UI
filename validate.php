@@ -192,8 +192,12 @@ header('Content-type: text/html; charset=utf-8');
 					<input type="submit" value="set range">
 					<span id="range-error"></span>
 				</form>
-				<svg id="spectrumSVG" style="height:400px; width:100%;"></svg>
-				<div id="measureTooltip"></div>
+                <div>
+                    <!-- display:block in svg stops containing div being slightly larger than svg, which stops g calculating itself as slightly larger
+                        in spectrum code (it grabs height from the div immediately above svg) -->
+                    <svg id="spectrumSVG" style="height:400px; width:100%; display: block;"></svg>
+                    <div id="measureTooltip"></div>
+                </div>
 				
 				<div>
 					

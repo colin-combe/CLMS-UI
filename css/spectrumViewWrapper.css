@@ -37,3 +37,16 @@
     height: 100%;
 }
 
+#measureTooltip {
+    position: absolute;
+    /*max-width: 8em;*/
+    text-align:center;
+    pointer-events:none; /*let mouse events pass through*/
+    /*transition: opacity 0.3s;*/
+    color: black;
+    background: rgba(230,230,230,0.4);
+    padding: 0.2em;
+    border: 1px solid rgba(128,128,128,0.5);
+    line-height: normal;
+}
+
