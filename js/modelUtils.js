@@ -242,4 +242,11 @@ CLMSUI.modelUtils = {
             return match[0].confirmedHomomultimer;    
         });
     },
+    
+    aggregateCrossLinkFilteredMatches: function (xlinkarr) {
+        var nestedArr = xlinkarr.map (function (xlink) {
+            return xlink.getFilteredMatches();
+        });
+        return [].concat.apply([], nestedArr);
+    }
 };

@@ -76,6 +76,7 @@ CLMSUI.init.views = function () {
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
+        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
     ];
     // filter out those for whom ID doesn't exist i.e. we've commented out those bits
     var checkBoxData = checkBoxData.filter (function (cbdata) { return d3.select("#"+cbdata.id).size() > 0; });
@@ -167,7 +168,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     var spectrumViewer = new SpectrumView ({
         model: spectrumModel, 
         el:"#spectrumPanel",
-        //displayEventName: "spectrumShow",
     });
     var fragmentationKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
@@ -259,6 +259,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     selectionViewer.setVisible (false);
     
     
+    
+    
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         CLMSUI.vent.trigger ("spectrumShow", true);
@@ -285,6 +287,32 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         console.log ("spectrum sub views resize"); 
         this.resize();
+    });
+    spectrumViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+        console.log ("tell spectrum big model selection change");
+        var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
+        fMatches.sort (function(a,b) { return b[0].score - a[0].score; });
+        console.log ("fmatches", fMatches);
+        var match = fMatches[0][0];
+        
+        var url = "http://129.215.14.63/xiAnnotator/annotate/"
+                + match.group + "/" + "12345" + "/" + match.id 
+                + "/?peptide=" + match.pepSeq1raw 
+                + "&peptide=" + match.pepSeq2raw
+                + "&link=" + match.linkPos1
+                + "&link=" + match.linkPos2
+        ;
+        
+        var self = this;
+        console.log ("$el", this.$el);
+        d3.json (url, function(error, json) {
+            if (error) {
+                console.warn ("error", error);
+                d3.select("#range-error").text ("Cannot load spectra from URL");
+            } else {
+                self.model.set ({JSONdata: json}); 
+            }
+        });
     });
 };
 

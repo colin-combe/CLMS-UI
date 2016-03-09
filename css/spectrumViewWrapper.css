@@ -27,9 +27,11 @@
     margin-right: 0.3em;
 }
 
+/* Important, let's the div with this class take up the remaining height inside a div declared with display:table */
 .heightFill {
     display: table-row;
     height: 100%;
+    background: #fff;
 }
 
 #spectrumSVG {

@@ -165,6 +165,7 @@
                     <span id="alignChkBxPlaceholder"></span>
                     -->
                     <span id="circularChkBxPlaceholder"></span>
+                    <span id="spectrumChkBxPlaceholder"></span>
                     
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
 				</h1>

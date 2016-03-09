@@ -155,7 +155,7 @@
             ;
         
             // Within each row, match cells up to individual pieces of match information
-            var cellJoin = tjoin.selectAll("TD").data(filteredProps, function(d) { return d; });
+            var cellJoin = tjoin.selectAll("TD").data (filteredProps, function(d) { return d; });
             cellJoin.exit().remove();
             cellJoin.enter().append("td");
             
