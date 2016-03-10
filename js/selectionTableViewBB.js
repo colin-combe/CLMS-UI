@@ -155,7 +155,8 @@
             tjoin
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
-                    CLMSUI.vent.trigger ("individualMatchSelected", d);
+                    self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
+                    //CLMSUI.vent.trigger ("individualMatchSelected", d);
                     self.clearTableHighlights();
                     d3.select(this).classed ("spectrumShown", true);
                 })

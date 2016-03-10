@@ -74,7 +74,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             .text (function(d) { return d.text; })
         ;
         
-        
         // Only if spectrum viewer visible...
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
@@ -85,14 +84,34 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                 CLMSUI.vent.trigger ("spectrumShow", false);
             } else {
                 fMatches.sort (function(a,b) { return b[0].score - a[0].score; });
-                if (this.isVisible()) {
-                    CLMSUI.vent.trigger ("individualMatchSelected", fMatches[0][0]);
-                }
+                this.model.set ("lastSelectedMatch", {match: fMatches[0][0], directSelection: false});
             }
         });
-	},
+     
+        this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
+            this.triggerSpectrumViewer (selectedMatch.match, selectedMatch.directSelection);
+        });
+	   },
+    
+    triggerSpectrumViewer: function (match, forceShow) {
+        console.log ("MATCH selected", match, forceShow);
+        if (this.isVisible() || forceShow) {
+            this.newestSelectionShown = true;
+            CLMSUI.vent.trigger ("individualMatchSelected", match);
+        } else {
+            this.newestSelectionShown = false;
+        }
+    },
     
     relayout: function () {
+        // if a new selected match has been made while the spectrum viewer was hidden,
+        // load it in when the spectrum viewer is made visible
+        if (!this.newestSelectionShown) {
+            console.log ("LAZY LOADING SPECTRUM");
+            var selectedMatch = this.model.get("lastSelectedMatch");
+            this.triggerSpectrumViewer (selectedMatch.match, true);
+        }
+        // resize the spectrum on drag
         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
         return this;
     },
