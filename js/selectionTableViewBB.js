@@ -7,6 +7,13 @@
         initialize: function () {
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
             holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
+            
+            // redraw table on filter change if crosslinks selected (matches may have changed)
+            this.listenTo (this.model, "filteringDone", function () {
+                if (this.model.get("selection").length > 0) {
+                    this.render();
+                }  
+            });
         },
         
         render: function () {

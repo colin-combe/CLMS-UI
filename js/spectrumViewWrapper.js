@@ -12,8 +12,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 
 
 	initialize: function (options) {
-        console.log ("args", arguments, options);
-        var myOptions = options.options;
+        var myOptions = options.myOptions;
         SpectrumViewWrapper.__super__.initialize.apply (this, arguments);
         
         var _html = ""
@@ -74,6 +73,23 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             .attr ("value", function(d) { return d.value; })
             .text (function(d) { return d.text; })
         ;
+        
+        
+        // Only if spectrum viewer visible...
+        // When crosslink selection changes, pick highest scoring filtered match of the set
+        // and tell it to show the spectrum for that match
+        this.listenTo (this.model, "change:selection", function (model, selection) {  
+            var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
+
+            if (fMatches.length === 0) {
+                CLMSUI.vent.trigger ("spectrumShow", false);
+            } else {
+                fMatches.sort (function(a,b) { return b[0].score - a[0].score; });
+                if (this.isVisible()) {
+                    CLMSUI.vent.trigger ("individualMatchSelected", fMatches[0][0]);
+                }
+            }
+        });
 	},
     
     relayout: function () {

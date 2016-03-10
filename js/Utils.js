@@ -254,6 +254,11 @@ CLMSUI.utils = {
             }
         },
         
+        // Ask if view is currently visible in the DOM
+        isVisible: function () {
+            return CLMSUI.utils.isZeptoDOMElemVisible (this.$el);   
+        },
+        
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy a c3 view just to be sure)
         remove: function () {

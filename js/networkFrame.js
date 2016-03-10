@@ -160,8 +160,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:"#spectrumPanelWrapper",
+        model: CLMSUI.compositeModelInst, 
         displayEventName: "spectrumShow",
-        options: {wrapperID: "spectrumPanel"}
+        myOptions: {wrapperID: "spectrumPanel"}
     });
     
     var spectrumModel = new AnnotatedSpectrumModel();
@@ -169,7 +170,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: spectrumModel, 
         el:"#spectrumPanel",
     });
-    var fragmentationKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
+    new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
 
     // This makes a matrix viewer
@@ -249,19 +250,18 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
         this.setVisible (!emptySelection);    
     });
-    // redraw table on filter change if crosslinks selected (matches may have changed)
-    selectionViewer.listenTo (CLMSUI.compositeModelInst, "filteringDone", function (model) {
-        if (this.model.get("selection").length > 0) {
-            this.render();
-        }  
-    });
     split.collapse (true);
     selectionViewer.setVisible (false);
     
     
     
+    // Update spectrum view when extrenal resize event called
+    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.resize();
+    });
     
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
+    // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         CLMSUI.vent.trigger ("spectrumShow", true);
         
@@ -272,44 +272,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
                 + "&link=" + match.linkPos1
                 + "&link=" + match.linkPos2
         ;
-        
         var self = this;
-        console.log ("$el", this.$el);
+        
         d3.json (url, function(error, json) {
             if (error) {
-                console.warn ("error", error);
+                console.log ("error", error, "for", url);
                 d3.select("#range-error").text ("Cannot load spectra from URL");
+                self.graph.clear();
             } else {
-                self.model.set ({JSONdata: json}); 
-            }
-        });
-    });
-    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-        console.log ("spectrum sub views resize"); 
-        this.resize();
-    });
-    spectrumViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-        console.log ("tell spectrum big model selection change");
-        var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
-        fMatches.sort (function(a,b) { return b[0].score - a[0].score; });
-        console.log ("fmatches", fMatches);
-        var match = fMatches[0][0];
-        
-        var url = "http://129.215.14.63/xiAnnotator/annotate/"
-                + match.group + "/" + "12345" + "/" + match.id 
-                + "/?peptide=" + match.pepSeq1raw 
-                + "&peptide=" + match.pepSeq2raw
-                + "&link=" + match.linkPos1
-                + "&link=" + match.linkPos2
-        ;
-        
-        var self = this;
-        console.log ("$el", this.$el);
-        d3.json (url, function(error, json) {
-            if (error) {
-                console.warn ("error", error);
-                d3.select("#range-error").text ("Cannot load spectra from URL");
-            } else {
+                console.log ("json", json);
                 self.model.set ({JSONdata: json}); 
             }
         });
