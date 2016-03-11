@@ -34,6 +34,10 @@
     background: #fff;
 }
 
+.validationControls {
+    display: table-row;
+}
+
 #spectrumSVG {
     width: 100%;
     height: 100%;

@@ -14,6 +14,22 @@
                     this.render();
                 }  
             });
+            
+            // rerender if a match's validation details have changed
+            this.listenTo (this.model, "matchValidationStateUpdated", function () {
+                if (this.model.get("selection").length > 0) {
+                    this.render();
+                }  
+            });
+            
+            // highlight selected match table row (or not if nothing selected)
+            this.listenTo (this.model, "change:lastSelectedMatch", function () {
+                var selMatch = this.model.get("lastSelectedMatch");
+                this.clearTableHighlights();
+                if (selMatch && selMatch.match) {
+                    d3.select(this.el).select("tr#match"+selMatch.match.id).classed ("spectrumShown2", true);
+                }
+            });
         },
         
         render: function () {
@@ -92,7 +108,7 @@
 
 
         clearTableHighlights : function() {
-            d3.select(this.el).selectAll("tr").classed('spectrumShown', false);
+            d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
         },
 
     
@@ -156,9 +172,6 @@
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
                     self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
-                    //CLMSUI.vent.trigger ("individualMatchSelected", d);
-                    self.clearTableHighlights();
-                    d3.select(this).classed ("spectrumShown", true);
                 })
             ;
         

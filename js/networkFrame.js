@@ -158,6 +158,26 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
     
+    
+    // World of code smells vol.1
+    // selectionViewer declared before spectrumWrapper because...
+    // 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
+    // 2. Event A in spectrumWrapper fires event B
+    // 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
+    // 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
+    var selectionViewer = new CLMSUI.SelectionTableViewBB ({
+        el: "#bottomDiv",
+        model: CLMSUI.compositeModelInst,
+    });
+    // redraw / hide table on selected cross-link change
+    selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+        var emptySelection = (selection.length === 0);
+        split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
+        this.setVisible (!emptySelection);    
+    });
+    split.collapse (true);
+    selectionViewer.setVisible (false);
+    
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:"#spectrumPanelWrapper",
         model: CLMSUI.compositeModelInst, 
@@ -240,18 +260,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         });
     }
     
-    var selectionViewer = new CLMSUI.SelectionTableViewBB ({
-        el: "#bottomDiv",
-        model: CLMSUI.compositeModelInst,
-    });
-    // redraw / hide table on selected cross-link change
-    selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-        var emptySelection = (selection.length === 0);
-        split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-        this.setVisible (!emptySelection);    
-    });
-    split.collapse (true);
-    selectionViewer.setVisible (false);
     
     
     
@@ -263,27 +271,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-        CLMSUI.vent.trigger ("spectrumShow", true);
-        
-        var url = "http://129.215.14.63/xiAnnotator/annotate/"
-                + match.group + "/" + "12345" + "/" + match.id 
-                + "/?peptide=" + match.pepSeq1raw 
-                + "&peptide=" + match.pepSeq2raw
-                + "&link=" + match.linkPos1
-                + "&link=" + match.linkPos2
-        ;
-        var self = this;
-        
-        d3.json (url, function(error, json) {
-            if (error) {
-                console.log ("error", error, "for", url);
-                d3.select("#range-error").text ("Cannot load spectra from URL");
-                self.graph.clear();
-            } else {
-                console.log ("json", json);
-                self.model.set ({JSONdata: json}); 
-            }
-        });
+        if (match) { 
+            CLMSUI.loadSpectra (match, null, this.model);
+        } else {
+            console.log ("CLEARING SPECTRUM MODEL");
+            this.model.clear();
+        }
     });
 };
 

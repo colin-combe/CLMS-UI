@@ -62,3 +62,8 @@
     font-size: 1.1em;
 }
 
+.selectView tbody TR.spectrumShown2 {
+    color: black;
+    background: yellow;
+}
+

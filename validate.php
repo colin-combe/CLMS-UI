@@ -49,6 +49,8 @@ header('Content-type: text/html; charset=utf-8');
 			<link rel="stylesheet" href="css/reset.css" />
 			<link rel="stylesheet" href="css/style.css" />
 			<link rel="stylesheet" href="css/dynamic_table.css" />
+            <link rel="stylesheet" href="css/validate.css" />
+        
 			<script type="text/javascript" src="./vendor/dynamic_table.js"></script>
 	</head>
 	    <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -60,6 +62,9 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
+    
+        <script type="text/javascript" src="./js/validate.js"></script>
+    
 	<script type="text/javascript" src="../spectrum/src/model.js"></script>
 	<script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
 	<script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
@@ -111,24 +116,6 @@ header('Content-type: text/html; charset=utf-8');
 		    /*transition: opacity 0.3s;*/
 		}
 		
-		.validationButton {
-			width: 100%;
-		}
-		button.A:hover, tr.A {
-			background-color:#7fc97f;/*#4daf4a;*/
-		}
-		button.B:hover, tr.B {
-			background-color:#fdc086;/*#ff7f00;*/
-		}
-		button.C:hover, tr.C {
-			background-color:#ffff99;/*#ffff33;*/
-		}
-		button.Q:hover, tr.Q {
-			background-color:light-gray;
-		}
-		button.R:hover, tr.R {
-			background-color:#e41a1c;
-		}
 		tr.selected {
 			color: #fff;
 			background-color: #091D42;
@@ -149,6 +136,7 @@ header('Content-type: text/html; charset=utf-8');
 					$id = substr($sid, 0, ($dashPos));
 					echo $id;
 				?>
+                
 			</span>	
 					
 <!--
@@ -299,7 +287,7 @@ header('Content-type: text/html; charset=utf-8');
 
         <script>
 			//<![CDATA[
-
+            
 			var opt = {
 				pager: {
 					rowsCount: 10
@@ -310,21 +298,27 @@ header('Content-type: text/html; charset=utf-8');
 			loadSpectra = function (searchId, randId, matchId, pepSeq1, linkPos1, pepSeq2, linkPos2){
 				
 				matchViewed = matchId;
-				
+                
+                CLMSUI.loadSpectra ({group: searchId, id: matchId, pepSeq1raw: pepSeq1,
+                                    pepSeq2raw: pepSeq2, linkPos1: linkPos1, linkPos2: linkPos2},
+                                    randId, SpectrumModel)
+                ;
+				/*
 				var url = "http://129.215.14.63/xiAnnotator/annotate/"
 							+ searchId + "/" + randId + "/" + matchId 
 							+ "/?peptide=" + pepSeq1 
 							+ "&peptide=" + pepSeq2 
 							+ "&link=" + linkPos1
 							+ "&link=" + linkPos2;
-				
-				d3.selectAll("tr").classed("selected", false); 
-				d3.select("#m" + matchViewed).classed("selected", true); 
-				
+			
 				d3.text(url, function(json) {
 					json = JSON.parse(json);
 					SpectrumModel.set({JSONdata: json});
 				});
+                */
+                
+                d3.selectAll("tr").classed("selected", false); 
+				d3.select("#m" + matchViewed).classed("selected", true); 
 					
 				//~ d3.select("#spectrumDiv").transition().attr("opacity", 1)
 					//~ .attr("transform", "scale(1, 1)")
@@ -332,6 +326,7 @@ header('Content-type: text/html; charset=utf-8');
 			}; 
 			
 			validate = function (validationStatus) {
+                /*
 				var xmlhttp = new XMLHttpRequest();
 				var url = "./php/validateMatch.php";
 				var params =  "mid=" + matchViewed + "&val=" + validationStatus + "&randId=<?php echo $randId ?>";
@@ -345,7 +340,14 @@ header('Content-type: text/html; charset=utf-8');
 						d3.select("#m" + matchViewed).classed(validationStatus, true); 
 					}
 				}
-				xmlhttp.send(params);		
+				xmlhttp.send(params);
+                */
+                var randId = <?php echo '"'.$randId.'"'; ?>;
+                console.log ("randId", randId);
+                CLMSUI.validate (matchViewed, validationStatus, randId, function() {
+                    d3.select("#td" + matchViewed).text(validationStatus);
+				    d3.select("#m" + matchViewed).classed(validationStatus, true); 
+                });
 			}
 							
             //]]>

@@ -1,0 +1,27 @@
+.validationButton {
+    width: 100%;
+}
+
+button.A:hover, tr.A {
+    background-color:#7fc97f;/*#4daf4a;*/
+}
+
+button.B:hover, tr.B {
+    background-color:#fdc086;/*#ff7f00;*/
+}
+
+button.C:hover, tr.C {
+    background-color:#ffff99;/*#ffff33;*/
+}
+
+button.Q:hover, tr.Q {
+    background-color:light-gray;
+}
+
+button.R:hover, tr.R {
+    background-color:#e41a1c;
+}
+
+button.validatedState, tr.validatedState {
+    border: 2px solid black;
+}

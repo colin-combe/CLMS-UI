@@ -38,9 +38,10 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"</div>"
             +"<div class='heightFill'>"
             +"<svg id='spectrumSVG'></svg>"
-
             +"<div id='measureTooltip'></div>"
-                    +"</div>"
+            +"</div>"
+            +"<div class='validationControls'>"
+            +"</div>"
         ;
         
         d3.select(this.el)
@@ -74,6 +75,33 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             .text (function(d) { return d.text; })
         ;
         
+        this.validationMap = {A: "A", B: "B", C: "C", "?": "Q", R: "R"};
+        var buttonData = d3.entries(this.validationMap).map (function(entry) { return {label: entry.key, klass: entry.value}; });
+        
+        // Add validation buttons
+        var self = this;
+        d3.select(this.el).select("div.validationControls")
+            .append("table")
+            .append("tr")
+            .selectAll("td")
+            .data (buttonData)
+            .enter()
+            .append("td")
+            .append("button")
+                .attr ("class", function(d) { return "validationButton "+d.klass; })
+                .text (function(d) { return d.label; })
+                .on ("click", function (d) { 
+                    var lsm = self.model.get("lastSelectedMatch");
+                    if (lsm && lsm.match) {
+                        CLMSUI.validate (lsm.match.id, d.label, "12345", function() { 
+                            lsm.match.validated = d.label; 
+                            self.setButtonValidationState (lsm.match);
+                            self.model.trigger ("matchValidationStateUpdated");
+                        });
+                    }
+                })
+        ;
+        
         // Only if spectrum viewer visible...
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
@@ -81,7 +109,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
 
             if (fMatches.length === 0) {
-                CLMSUI.vent.trigger ("spectrumShow", false);
+                this.model.set ("lastSelectedMatch", {match: null, directSelection: false});
             } else {
                 fMatches.sort (function(a,b) { return b[0].score - a[0].score; });
                 this.model.set ("lastSelectedMatch", {match: fMatches[0][0], directSelection: false});
@@ -91,13 +119,44 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
             this.triggerSpectrumViewer (selectedMatch.match, selectedMatch.directSelection);
         });
-	   },
+        
+        this.newestSelectionShown = true;
+        this.enableControls (false);
+        
+        console.log ("SPCWRPMOD", this.model);
+    },
+    
+    enableControls: function (state) {
+        d3.select(this.el)
+            .selectAll(".validationControls,#spectrumControls")
+            .style ("background", state ? null : "#888888")
+            .selectAll("*")
+            .property("disabled", !state)
+        ;
+    },
+    
+    setButtonValidationState: function (match) {
+        d3.select(this.el).selectAll("button.validationButton").classed("validatedState", false);
+        if (match && match.validated) {
+            var klass = this.validationMap[match.validated];
+            if (klass) {
+                d3.select(this.el).select("."+klass).classed("validatedState", true);
+            }
+        }
+    },
     
     triggerSpectrumViewer: function (match, forceShow) {
         console.log ("MATCH selected", match, forceShow);
         if (this.isVisible() || forceShow) {
             this.newestSelectionShown = true;
+            var visible = !!match;
+            if (this.isVisible() !== visible) {
+                console.log ("CHANGE VISIBILITY");
+                CLMSUI.vent.trigger ("spectrumShow", visible);   
+            }
             CLMSUI.vent.trigger ("individualMatchSelected", match);
+            this.enableControls (match);
+            this.setButtonValidationState (match);
         } else {
             this.newestSelectionShown = false;
         }
@@ -108,7 +167,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         // load it in when the spectrum viewer is made visible
         if (!this.newestSelectionShown) {
             console.log ("LAZY LOADING SPECTRUM");
-            var selectedMatch = this.model.get("lastSelectedMatch");
+            var selectedMatch = this.model.get("lastSelectedMatch") || {match: null};
             this.triggerSpectrumViewer (selectedMatch.match, true);
         }
         // resize the spectrum on drag
