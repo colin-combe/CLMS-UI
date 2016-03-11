@@ -89,7 +89,7 @@
             
             var self = this;
             var defaultOptions = {
-                nodeWidth: 15,
+                nodeWidth: 10,  // this is a percentage measure
                 tickWidth: 23,
                 gap: 5,
                 linkParse: function (link) { 
@@ -131,7 +131,7 @@
                     template ({
                         svgClass: "circularView", 
                         buttonClass: "btn btn-1 btn-1a downloadButton", 
-                        buttonLabel: "Download SVG",
+                        buttonLabel: "Export SVG",
                     })
                 )
             ;
@@ -168,22 +168,17 @@
                 .radius(function(d) { return d.rad; })
                 .angle(function(d) { return d.ang * degToRad; })
             ;
-
-            this.arc = d3.svg.arc()
-                .innerRadius(90)
-                .outerRadius(100)
-                .startAngle(function(d) { return d.start * degToRad; }) // remembering to convert from degs to radians
-                .endAngle(function(d) { return d.end * degToRad; })
-            ;
             
-            this.textArc = d3.svg.arc()
-                .innerRadius(90)
-                .outerRadius(90)
-                .startAngle(function(d) { return d.start * degToRad; }) // remembering to convert from degs to radians
-                .endAngle(function(d) { return d.end * degToRad; })
-            ;
-            
-                                            
+            var arcs = ["arc", "textArc", "featureArc"];
+            arcs.forEach (function(arc) {
+                this[arc] = d3.svg.arc()
+                    .innerRadius(90)
+                    .outerRadius(100)
+                    .startAngle(function(d) { return d.start * degToRad; }) // remembering to convert from degs to radians
+                    .endAngle(function(d) { return d.end * degToRad; })
+                ;
+            }, this);
+                           
             this.clearTip = function () {
                 self.model.get("tooltipModel").set("contents", null);
             };
@@ -328,15 +323,18 @@
                     return this.filterFeatures (inter.uniprotFeatures);
                 }, this);
                 
+                console.log ("filteredFeatures", filteredFeatures);
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
                 console.log ("layout", layout);
 
                 var svg = d3.select(this.el).select("svg");
                 this.radius = this.getMaxRadius (svg);
                 var tickRadius = this.radius - this.options.tickWidth;
-                var innerNodeRadius = tickRadius - this.options.nodeWidth;
+                var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
+                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
                 
                 this.arc.innerRadius(innerNodeRadius).outerRadius(tickRadius);
+                this.featureArc.innerRadius(innerFeatureRadius).outerRadius(tickRadius);
                 this.textArc.innerRadius(innerNodeRadius+1).outerRadius(innerNodeRadius+1); // both radii same for textArc
                 
                 var nodes = layout.nodes;
@@ -360,12 +358,14 @@
                     this.drawNodes (gRot, nodes);
                     // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
                     this.drawNodeTicks (gRot, nodes, tickRadius);
-                    // draw names on nodes
-                    this.drawNodeText (gRot, nodes);
                 }
                 if (!changed || changed.has("features")) {
                      // draw features
                     this.drawFeatures (gRot, features);
+                }
+                if (!changed) {
+                    // draw names on nodes
+                    this.drawNodeText (gRot, nodes);
                 }
             }
 
@@ -561,6 +561,8 @@
         drawFeatures : function (g, features) {
             var self = this;
             var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
+            
+            console.log ("features", features);
 
             featureJoin.exit().remove();
 
@@ -572,7 +574,7 @@
             ;
 
             featureJoin
-                .attr("d", this.arc)
+                .attr("d", this.featureArc)
                 .style("fill", function(d,i) { return self.color(i); })
             ;    
             
