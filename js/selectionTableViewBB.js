@@ -37,9 +37,10 @@
         },
         
         updateTable: function () {
-            var selectedXLinkArray = this.model.get("selection").filter (
-                function (xlink) { return xlink.filteredMatches.length > 0; }
-            );
+            var selectedXLinkArray = this.model.get("selection")
+                .filter (function (xlink) { return xlink.filteredMatches.length > 0; })
+                .sort (function (a,b) { return b.filteredMatches[0][0].score - a.filteredMatches[0][0].score; })    // sorts links by top match score
+            ;
             var selectedXLinkCount = selectedXLinkArray.length;
             
             d3.select(this.el).select(".crossLinkTotal").text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
@@ -167,11 +168,15 @@
             var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data (function(d) { return getMatches(d); }, function(d) { return d.id; });
             tjoin.exit().remove();
             tjoin.enter().append("tr").attr("class", "matchRow");
-        
+            tjoin.order();
             tjoin
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
                     self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
+                })
+                .classed ("spectrumShown2", function(d) {
+                    var lsm = self.model.get("lastSelectedMatch");
+                    return lsm && lsm.match ? lsm.match.id === d.id : false;
                 })
             ;
         

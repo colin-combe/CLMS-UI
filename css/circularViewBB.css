@@ -39,7 +39,7 @@ svg.circularView {
     fill: #dde;
 }
 
-.circleNode:hover {
+.circleNode:hover, .circleFeature:hover {
     stroke: #445;
 }
 

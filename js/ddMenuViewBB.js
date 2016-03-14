@@ -29,13 +29,15 @@
                 if (d.name) {
                     ind.text(d.name);
                 } else if (d.id) {
-                    var targetNode = d3.select("#"+d.id).node();
-                    if (targetNode.parentElement) {
-                        targetNode.parentElement.removeChild (targetNode);
+                    var targetSel = d3.select("#");
+                    if (!targetSel.empty()) {
+                        var targetNode = targetSel.node();
+                        if (targetNode.parentElement) {
+                            targetNode.parentElement.removeChild (targetNode);
+                        }
+                        ind.node().appendChild(targetNode);
                     }
-                    ind.node().appendChild(targetNode);
                 }
-                //ind.text(function(d) { return d.name; });
             });
             
             return this;

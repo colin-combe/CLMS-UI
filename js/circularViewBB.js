@@ -16,7 +16,7 @@
             featureParse: function (feature, node) {
                 return {
                     fromPos: feature.start - 1, 
-                    toPos: feature.end - 1
+                    toPos: feature.end// - 1
                 };
             },
         };
@@ -44,9 +44,12 @@
         var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
         nodeArr.forEach (function (node) {
             var size = node.size;
+            // start ... end goes from scale (0 ... size), 1 bigger than 1-indexed size
             nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size});
             total += size + dgap;
+            //console.log ("prot", nodeCoordMap.get(node.id));
         });
+        
 
         var featureCoords = [];
         featureArrs.forEach (function (farr, i) {
@@ -54,8 +57,12 @@
             var nodeCoord = nodeCoordMap.get (nodeID);
             farr.forEach (function (feature) {
                 var tofrom = _options.featureParse (feature, nodeID);
+                //console.log ("nc", nodeCoord, tofrom.fromPos, tofrom.toPos, feature);
                 featureCoords.push ({
                     id: feature.name,
+                    nodeID: nodeID,
+                    fstart: tofrom.fromPos + 1,
+                    fend: tofrom.toPos,
                     start: scale (tofrom.fromPos + nodeCoord.rawStart),
                     end: scale (tofrom.toPos + nodeCoord.rawStart),
                 });
@@ -71,6 +78,11 @@
                 end: scale (0.5 + tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
             });
         });
+        
+        // End result
+        // 0...1...2...3...4...5...6...7...8...9...10 - node start - end range for protein length 10 (1-indexed)
+        // ..1...2...3...4...5...6...7...8...9...10.. - link positions set to 1-indexed link pos minus 0.5
+        // 0...2...............5..................... - feature range [2..5] starts at node start -1 to node end to cover approporiate links
 
         return { nodes: nodeCoordMap.values(), links: linkCoords, features: featureCoords};
     };
@@ -93,27 +105,27 @@
                 tickWidth: 23,
                 gap: 5,
                 linkParse: function (link) { 
+                    // turn toPos and fromPos to zero-based index
                     return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id, 
                             toPos: link.toResidue - 1, toNodeID: link.toProtein.id};
                 },
-                featureParse: function (feature, nodeid) {
+                featureParse: function (feature, nodeid) {  
+                    // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
+                    var convStart = feature.start;
+                    var convEnd = feature.end;
                     var alignModel = self.model.get("alignColl").get(nodeid);
-                    // feature start and end are 1-indexed, and so are the returned convStart and convEnd values
-                    var convStart = alignModel ? alignModel.mapToSearch ("Canonical", feature.start) : undefined;
-                    var convEnd = alignModel ? alignModel.mapToSearch ("Canonical", feature.end) : undefined;
-                    if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
-                    else if (convStart === undefined) { convStart = feature.start; } // if no value, just use feature.start - 1
-                    convStart--;
+                    if (alignModel) {
+                        convStart = alignModel.mapToSearch ("Canonical", feature.start);
+                        convEnd = alignModel.mapToSearch ("Canonical", feature.end);
+                        if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
+                        if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
+                    }
+                    convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
+                    //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
+                    // e.g. a feature that starts/stops at some point has length of 1, not 0
                     
-                    if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
-                    else if (convEnd === undefined) { convEnd = feature.end; }       // ditto for end
-                    convEnd--;
-                    
-                    console.log ("convStart", feature.start - 1, convStart, "convEnd", feature.end - 1, convEnd);
-                    return {
-                        fromPos: convStart, 
-                        toPos: convEnd,
-                    };
+                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd);
+                    return {fromPos: convStart, toPos: convEnd};
                 },
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -157,6 +169,7 @@
                 .call (drag)
             ;       
  
+            // Cycle colours through features
             this.color = d3.scale.ordinal()
                 .domain([0,2])
                 .range(["#beb", "#ebb" , "#bbe"])
@@ -196,9 +209,8 @@
                 
             this.linkTip = function (d) {
                 var xlink = self.model.get("clmsModel").get("crossLinks").get(d.id);
-                console.log ("tooltipped crosslink", xlink);
                 self.model.get("tooltipModel")
-                    .set("header", "XLink")
+                    .set("header", "Cross Link")
                     .set("contents", [
                         ["From", xlink.fromResidue, xlink.fromProtein.name],
                         ["To", xlink.toResidue, xlink.toProtein.name],
@@ -210,9 +222,12 @@
             
             this.featureTip = function (d) {
                 self.model.get("tooltipModel")
-                    .set("header", d.id.replace("_", " "))
+                    //.set("header", d.id.replace("_", " "))
+                    .set("header", "Feature")  
                     .set("contents", [
                         ["Name", d.id],
+                        ["Start", d.fstart],
+                        ["End", d.fend]
                     ])
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
@@ -249,15 +264,19 @@
                 var idset = d3.set (highlightedIDs);
                 var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
                 thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
-			         }
+           }
             return this;
         },
         
-        actionNodeLinks: function (nodeId, actionType) {
+        actionNodeLinks: function (nodeId, actionType, startPos, endPos) {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+            var anyPos = startPos == undefined && endPos == undefined;
+            startPos = startPos || 0;
+            endPos = endPos || 100000;
             var matchLinks = filteredCrossLinks.filter (function(link) {
-                return link.fromProtein.id === nodeId || link.toProtein.id === nodeId;
+                return (link.fromProtein.id === nodeId && (anyPos || (link.fromResidue >= startPos && endPos >= link.fromResidue))) ||
+                        (link.toProtein.id === nodeId && (anyPos || (link.toResidue >= startPos && endPos >= link.toResidue)));
             });
             this.model.set (actionType, matchLinks);
         },
@@ -269,15 +288,14 @@
                 var homom = CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
                 var rad = homom ? rad2 : rad1;
                 var bowRadius = homom ? rad2 * 1.3 : 0;
-                return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) /2, rad: bowRadius}, {ang: link.end, rad: rad}] };
+                return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) / 2, rad: bowRadius}, {ang: link.end, rad: rad}] };
             });
             return newLinks;
         },
 	
         getMaxRadius: function (d3sel) {
             var zelem = $(d3sel.node());
-            var diameter = Math.min (zelem.width(), zelem.height());
-            return diameter / 2;
+            return Math.min (zelem.width(), zelem.height()) / 2;
         },
         
         filterInteractors: function (interactors) {
@@ -293,7 +311,6 @@
         filterCrossLinks: function (crossLinks) {
             var filteredCrossLinks = [];
             crossLinks.forEach (function (value) {
-                //var plink = value.proteinLink;
                 if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.isDecoy() && !value.toProtein.isDecoy()) {
                     filteredCrossLinks.push (value);
                 }
@@ -311,11 +328,11 @@
             
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
 
-                console.log ("re rendering circular view");
+                console.log ("re-rendering circular view");
                 
                 var interactors = this.model.get("clmsModel").get("interactors");
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
-                console.log ("model", this.model);
+                //console.log ("model", this.model);
                 
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
@@ -323,26 +340,27 @@
                     return this.filterFeatures (inter.uniprotFeatures);
                 }, this);
                 
-                console.log ("filteredFeatures", filteredFeatures);
+                //console.log ("filteredFeatures", filteredFeatures);
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
-                console.log ("layout", layout);
+                //console.log ("layout", layout);
 
                 var svg = d3.select(this.el).select("svg");
                 this.radius = this.getMaxRadius (svg);
                 var tickRadius = this.radius - this.options.tickWidth;
                 var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
                 var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
+                var textRadius = (tickRadius + innerNodeRadius) / 2;
                 
                 this.arc.innerRadius(innerNodeRadius).outerRadius(tickRadius);
                 this.featureArc.innerRadius(innerFeatureRadius).outerRadius(tickRadius);
-                this.textArc.innerRadius(innerNodeRadius+1).outerRadius(innerNodeRadius+1); // both radii same for textArc
+                this.textArc.innerRadius(textRadius).outerRadius(textRadius); // both radii same for textArc
                 
                 var nodes = layout.nodes;
                 var links = layout.links;
                 var features = layout.features;
                 // turns link end & start angles into something d3.svg.arc can use
                 var linkCoords = this.convertLinks (links, innerNodeRadius, tickRadius);    
-                console.log ("linkCoords", linkCoords);
+                //console.log ("linkCoords", linkCoords);
                 
                 var gTrans = svg.select("g");
                 gTrans.attr("transform", "translate(" + this.radius + "," + this.radius + ")");
@@ -400,8 +418,8 @@
                         self.linkTip (d);
                         self.model.set ("highlights", [crossLinks.get(d.id)]);
                     })
-                    .on ("mouseleave", function(d) {
-                        self.clearTip (d);
+                    .on ("mouseleave", function() {
+                        self.clearTip ();
                         self.model.set ("highlights", []);
                     })
                     .on ("click", function (d) {
@@ -426,8 +444,8 @@
                         self.nodeTip (d);
                         self.actionNodeLinks (d.id, "highlights");
                     })
-                    .on("mouseleave", function(d) {
-                        self.clearTip (d); 
+                    .on("mouseleave", function() {
+                        self.clearTip (); 
                         self.model.set ("highlights", []);
                     })
                     .on("click", function(d) {
@@ -527,7 +545,7 @@
             pathJoin
                 .attr("d", function(d) {
                     var pathd = self.textArc (d);
-                    console.log ("pathd", pathd);
+                    // console.log ("pathd", pathd);
                     // only want one curve, not solid arc shape, so chop path string
                     var cutoff = pathd.indexOf("L");
                     if (cutoff >= 0) {
@@ -548,7 +566,7 @@
             textJoin.enter()
                 .append("text")
                 .attr ("class", "circularNodeLabel")
-                    .attr ("dy", function(d) { return (((d.start + d.end) / 2) > 90 && ((d.start + d.end) / 2) < 270) ? "1em" : null; })
+                    .attr ("dy", "0.3em")
                     .append("textPath")
                         .attr("startOffset", "50%")
                         .attr("xlink:href", function(d) { return "#" + pathId(d); })  
@@ -561,17 +579,25 @@
         drawFeatures : function (g, features) {
             var self = this;
             var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
-            
-            console.log ("features", features);
 
             featureJoin.exit().remove();
 
             featureJoin.enter()
                 .append('path')
                     .attr("class", "circleFeature")
-                    .on("mouseenter", self.featureTip)
-                    .on("mouseleave", self.clearTip)
+                    .on("mouseenter", function(d) {
+                        self.featureTip (d);
+                        self.actionNodeLinks (d.nodeID, "highlights", d.fstart, d.fend);
+                    })
+                    .on ("mouseleave", function() {
+                        self.clearTip ();
+                        self.model.set ("highlights", []);
+                    })
+                    .on("click", function(d) {
+                        self.actionNodeLinks (d.nodeID, "selection", d.fstart, d.fend);
+                    })
             ;
+            
 
             featureJoin
                 .attr("d", this.featureArc)
@@ -586,11 +612,9 @@
             return this;     
         },
 
-
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
         remove: function () {
             CLMSUI.CircularViewBB.__super__.remove.apply (this, arguments);    
         }
-
     });

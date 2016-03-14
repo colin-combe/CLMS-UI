@@ -154,10 +154,7 @@
                     <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
-                    
-					<!-- <label class="btn" style="margin-left:20px;padding-left:0px;">Selection
-							<input checked id="selectionChkBx" onclick="showSelectionPanel(this.checked)" type="checkbox"></label> -->
-                    
+                                       
                     <!--
                     <span id="keyChkBxPlaceholder"></span>
 					<span id="nglChkBxPlaceholder"></span>
@@ -165,8 +162,10 @@
                     <span id="matrixChkBxPlaceholder"></span>
                     <span id="alignChkBxPlaceholder"></span>
                     -->
+                    
                     <span id="circularChkBxPlaceholder"></span>
                     <span id="spectrumChkBxPlaceholder"></span>
+                    
                     
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
 				</h1>
