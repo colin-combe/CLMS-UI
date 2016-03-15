@@ -40,6 +40,7 @@
 }
 
 .selectView TBODY TR {
+    white-space: nowrap;
     line-height: 1.8em;
     height: 1.8em;
 }
