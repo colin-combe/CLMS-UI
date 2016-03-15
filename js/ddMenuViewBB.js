@@ -29,7 +29,7 @@
                 if (d.name) {
                     ind.text(d.name);
                 } else if (d.id) {
-                    var targetSel = d3.select("#");
+                    var targetSel = d3.select("#"+d.id);
                     if (!targetSel.empty()) {
                         var targetNode = targetSel.node();
                         if (targetNode.parentElement) {
