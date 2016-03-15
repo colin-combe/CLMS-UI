@@ -70,18 +70,17 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
-        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
+        //{id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
+        //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
+        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+        //{id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
     ];
-    // filter out those for whom ID doesn't exist i.e. we've commented out those bits
-    var checkBoxData = checkBoxData.filter (function (cbdata) { return d3.select("#"+cbdata.id).size() > 0; });
     checkBoxData.forEach (function (cbdata) {
-        CLMSUI.utils.addCheckboxBackboneView (d3.select("#"+cbdata.id), {label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
+        var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
+        $("#viewDropdownPlaceholder").append(cbView.$el);
     })
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
@@ -280,24 +279,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 };
 
-
-function onDistanceSliderChange(scale){
-	//~ var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-	//~ var rc = rLinks.length;
-	//~ for (var j = 0; j < rc; j++) {
-		//~ var resLink = rLinks[j];
-		//~ var d = null;
-		//~ if (xlv.distances[resLink.toResidue]) {
-			//~ d = xlv.distances[resLink.toResidue][resLink.fromResidue];
-		//~ }
-		//~ var d = parseFloat(d);
-		//~ if (isNaN(d) === true){
-			//~ d = -1;
-		//~ }
-		//~ resLink.colour = scale(d);
-		//~ resLink.line.setAttribute("stroke", resLink.colour);
-	//~ }
-}
 
 function onDistanceSliderChange3D(scale){
 	//showKeyPanel(false);

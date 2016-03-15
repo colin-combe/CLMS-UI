@@ -71,7 +71,11 @@ CLMSUI.utils = {
                 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
+            if (!sel.attr("id")) {
+                sel.attr("id", this.options.id);
+            }
             var myid = "#" + sel.attr("id");
+            
             var labs = sel.append("label")
                 .attr("class", "btn")
                 .style("padding-left", "0px")
@@ -99,11 +103,8 @@ CLMSUI.utils = {
         }
     }),
     
-    addCheckboxBackboneView : function (parentSel, options) {                        
-        var cboxViewInst = new CLMSUI.utils.checkBoxView ({
-            el: "#"+parentSel.attr("id"),
-            myOptions: options,
-        });        
+    addCheckboxBackboneView : function (options) {                        
+        return new CLMSUI.utils.checkBoxView ({myOptions: options});        
     },
     
     dpNumber: function (num, decimalPlaces, roundFunc) {
