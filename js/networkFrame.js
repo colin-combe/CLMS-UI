@@ -317,6 +317,7 @@ function saveLayout () {
 	var layout = crosslinkViewer.getLayout();
 	var xmlhttp = new XMLHttpRequest();
 	var url = "./php/saveLayout.php";
+	console.log(CLMSUI.sid);
 	var params =  "sid=" + CLMSUI.sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
 	xmlhttp.open("POST", url, true);
 	//Send the proper header information along with the request

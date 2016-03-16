@@ -199,7 +199,9 @@ body, input, select, textarea {
 .dynamic-table-filter{
 	margin:auto;
 }
-
+.aggregateCheckbox{
+	width:20px;
+}
 /* network page */
 #main {
     

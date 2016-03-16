@@ -409,4 +409,5 @@
     <!-- <script type="text/javascript" src="./js/SelectionPanel.js"></script> -->
     <script type="text/javascript" src="./js/networkFrame.js"></script>
     <script type="text/javascript" src="./js/downloads.js"></script>
+    </body>
 </html>

@@ -19,7 +19,10 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 	$sid = urldecode($_GET["sid"]);
-
+	$id_rands = explode("," , $sid);
+	$sid = str_replace(',','', $sid );
+	$sid = str_replace('-','', $sid );
+	
 	$showDecoys = false;//urldecode($_GET["decoys"]);
 	$showAll = false;//urldecode($_GET["all"]);
 
@@ -29,31 +32,47 @@
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
 		header();
-		echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
+		echo ("<!DOCTYPE html>\n<html><head></head><body>Numbers only for group ids</body></html>");
 		exit;
 	}
 
 	include('../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
-	$id_rands = explode("," , $sid);
-	$searchesShown = 'CLMSUI.searchesShown = {';
+	$search_randGroup = [];
+	
 	for ($i = 0; $i < count($id_rands); $i++) {
-		$agg = $id_rands[$i];
-		$dashPos = strpos($agg,'-');
-		$randId = substr($agg, $dashPos + 1);
-		$id = substr($agg, 0, ($dashPos));
-		$res = pg_query("SELECT search.name, sequence_file.file_name FROM search, search_sequencedb, sequence_file WHERE search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND search.id = '".$id."';") or die('Query failed: ' . pg_last_error());
+		$s = [];		
+		$dashSeperated = explode("-" , $id_rands[$i]);
+		$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
+		$id = $dashSeperated[0];
+		$res = pg_query("SELECT search.name, sequence_file.file_name"
+					." FROM search, search_sequencedb, sequence_file "
+					."WHERE search.id = search_sequencedb.search_id "
+					."AND search_sequencedb.seqdb_id = sequence_file.id "
+					."AND search.id = '".$id."';") 
+					or die('Query failed: ' . pg_last_error());
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		$name = $line['name'];
 		$filename = $line['file_name'];
-		$searchesShown = $searchesShown . '"'.$id.'":"'.$name.'-'.$filename.'"';
-		if (($i + 1) < count($id_rands)){
-			$searchesShown = $searchesShown.',';
-		}
+		
+		$s["id"] = $id;
+		$s["randId"] = $randId;
+		$s["name"] = $name;
+		$s["filename"] = $filename;
+		$s["group"] = $dashSeperated[5];
+		$search_randGroup[$id] = $s;
+
 	}
-	echo $searchesShown."};\n";
-	echo "CLMSUI.sid = ".$id.";\n";// TODO - this needs to change
+	$searchMeta = "var searchMeta = " . json_encode($search_randGroup) . ';';
+	
+	
+	
+	
+	echo "CLMSUI.sid = '".$sid."';\n";// TODO - this needs to change
+	
+	echo $searchMeta;
+	
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;\n";
 		include('./php/distances.php');
@@ -71,24 +90,27 @@
 		. ' WHERE ' . $peptidesTempTableName
 		. '.peptide_id = has_protein.peptide_id GROUP BY  has_protein.peptide_id, has_protein.protein_id, peptide_position;';*/
 	echo "storedLayout = null;\n";
-	if (strpos($sid,',') === false) { //if not aggregation of more than one search
+	
+	/*if (false){//strpos($sid,',') === false) { //if not aggregation of more than one search
 
 		$dashPos = strpos($sid,'-');
 		$randId = substr($sid, $dashPos + 1);
-		$id = substr($sid, 0, ($dashPos));
-
+		$id = substr($sid, 0, ($dashPos));*/
+	if (count($search_randGroup) == 1) {
 		$layoutQuery = "SELECT t1.layout AS l "
 				. " FROM layouts AS t1 "
 				. " LEFT OUTER JOIN layouts AS t2 "
 				. " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
-				. " WHERE t1.search_id = " . $id . " AND t2.search_id IS NULL;";
+				. " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
+		echo "\n\n//l:".$layoutQuery."\n\n";
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
 			
 			echo "storedLayout = " . stripslashes($line["l"]) . ";\n";
 			
 		}
-
+	}
+/*
 		$q_makeTempMatchedPeptides =
 			'SELECT matched_peptide.match_id, spectrum_match.score,'
 			. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
@@ -131,20 +153,21 @@
 		  .'.protein_id = protein.id  GROUP BY protein.id;';
 	}
 	else { //its an aggregation of more than one search
-		$sets = explode("," , $sid);
+*/	
 		$WHERE = ' ';
+		//TODO - get rid of this ref to v_export_materialized, its being used to get scan number/run_name
 		$WHERE_VE = ' '; // v_export_materialized
 		$c = 0;
-		for ($i = 0; $i < count($sets); $i++) {
-			$agg = $sets[$i];
+		for ($i = 0; $i < count($search_randGroup); $i++) {
+			$search = array_values($search_randGroup)[$i];
 			if ($c > 0){
 				$WHERE = $WHERE.' OR ';
 				$WHERE_VE = $WHERE_VE.' OR ';
 			}
 			$c++;
-			$dashPos = strpos($agg,'-');
-			$randId = substr($agg, $dashPos + 1);
-			$id = substr($agg, 0, ($dashPos));
+			$randId = $search["randId"];//substr($agg, $dashPos + 1);
+			$id = $search["id"];//substr($agg, 0, ($dashPos));
+			//echo '// s' . $id . ' ' . (string)$search;
 			$WHERE = $WHERE.'(sm.search_id = '.$id.' AND s.random_id = \''.$randId.'\''.') ';
 			$WHERE_VE = $WHERE_VE.'(search_id = '.$id.')';
 		}
@@ -178,7 +201,7 @@
 			  .' FROM protein, '
 			  .	$proteinTempTableName . ' WHERE ' . $proteinTempTableName
 			  .'.protein_id = protein.id  GROUP BY protein.accession_number;';
-	}
+	/*}*/
 
 
 	echo '//q_makeTempMatchedPeptides>'.$q_makeTempMatchedPeptides."\n";
@@ -234,7 +257,6 @@
 			$match_autovalidated = '"'.$line["autovalidated"].'"';
 			$match_validated = '"'.$line["validated"].'"';
 			$search_id = $line["search_id"];
-			$run_name = '"' . $line["run_name"]. '"';
 			$scan_number = '"' . $line["scan_number"]. '"';
 
 			$pep1_link_position = $line['link_position'];
@@ -249,6 +271,10 @@
 				$pep2_prot_ids = '"' . $line["proteins"] . '"';
 				$pep2_seq =  '"' . $line["pepseq"] . '"';
 
+				$search = $search_randGroup[$search_id];
+				$group = $search["group"];
+				$run_name = '"' . $line["run_name"]. '"';
+			
 				if ($waitingForFirstMatch != true) {
 					echo "["//"xlv.addMatch("
 								. $match_id . ','
@@ -265,7 +291,8 @@
 								. $match_autovalidated . ','
 								. $match_validated . ','
 								. $run_name . ','
-								. $scan_number
+								. $scan_number. ','
+								. $group
 								. "]";
 					//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 					//~ if ($line)

@@ -129,66 +129,20 @@ header('Content-type: text/html; charset=utf-8');
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
                 var values = new Array();
                 for (var i = 0; i < inputs.length; i++) {
-                    if (inputs[i].checked) {
-                        values.push(inputs[i].value);
+                    if (inputs[i].value != "") {
+                        values.push(inputs[i].getAttribute("id").substring(4) + "-" + inputs[i].value);
                     }
                 }
-                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
+                if (values.length === 0) alert ("Cannot aggregate: no selection - use text field in right most table column.");
                 else {
                     window.open("./network.php?sid="+values.join(','), "_self");
                 }
             }
-
-           function aggregate(){
-				var inputs = document.getElementsByClassName('aggregateCheckbox');
-                var values = new Array();
-                for (var i = 0; i < inputs.length; i++) {
-                    if (inputs[i].checked) {
-                        values.push(inputs[i].value);
-                    }
-                }
-                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
-                else {
-                    window.open("./network.php?sid="+values.join(','), "_self");
-                }
-            }
-
-           function aggregate3D(){
-				var inputs = document.getElementsByClassName('aggregateCheckbox');
-                var values = new Array();
-                for (var i = 0; i < inputs.length; i++) {
-                    if (inputs[i].checked) {
-                        values.push(inputs[i].value);
-                    }
-                }
-                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
-                else {
-                    window.open("./network_3D.php?sid="+values.join(','), "_self");
-                }
-            }
-
-            /*
-           function aggregateMatrix(){
-				var inputs = document.getElementsByClassName('aggregateCheckbox');
-                var values = new Array();
-                for (var i = 0; i < inputs.length; i++) {
-                    if (inputs[i].checked) {
-                        values.push(inputs[i].value);
-                    }
-                }
-                if (values.length === 0) alert ("Cannot aggregate: no selection - use checkboxes in right most table column.");
-                else {
-                    window.open("./matrix.php?sid="+values.join(','), "_self");
-                }
-            }
-            */
 
             function clearAggregationCheckboxes(){
 				var inputs = document.getElementsByClassName('aggregateCheckbox');
                 for (var i = 0; i < inputs.length; i++) {
-                    if (inputs[i].type === 'checkbox') {
-                        inputs[i].checked = false;
-                    }
+                    inputs[i].value = "";
                 }
 			}
 
