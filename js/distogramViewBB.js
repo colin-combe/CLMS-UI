@@ -54,14 +54,13 @@
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
+            var columnsAsNamesOnly = this.options.seriesNames.map (function(sname) { return [sname]; });
 
             this.chart = c3.generate({
                 bindto: bid,
                 data: {
                     //x: 'x',
-                    columns: [
-                        this.options.seriesNames,
-                    ],
+                    columns: columnsAsNamesOnly,
                     type: 'bar',
                     colors: {
                         Random: "#aaa"
