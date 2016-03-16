@@ -52,8 +52,10 @@
 			$searchesShown = $searchesShown.',';
 		}
 	}
-	echo $searchesShown."};\n";
-	echo "CLMSUI.sid = ".$id.";\n";// TODO - this needs to change
+	
+	
+	//~ echo $searchesShown."};\n";
+	//~ echo "CLMSUI.sid = ".$id.";\n";// TODO - this needs to change
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;\n";
 		include('./php/distances.php');

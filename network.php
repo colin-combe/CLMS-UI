@@ -305,7 +305,7 @@
 
 
                 // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
-                var options = {rawInteractors: tempInteractors, rawMatches: tempMatches};
+                var options = {rawInteractors: tempInteractors, rawMatches: tempMatches, searches: searchMeta};
                 CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
                 CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
@@ -332,7 +332,7 @@
                     selection: [], //will contain cross-link objects
                     highlights: [], //will contain cross-link objects 
                     linkColourAssignment: CLMSUI.linkColour.defaultColours,
-                    selectedProtein: null
+                    selectedInteractor: null
                 });
 
                 CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
