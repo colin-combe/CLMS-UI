@@ -121,7 +121,7 @@
     </head>
 
     <body>
-
+        <!--
         <div class="dynDiv" id="spectrumPanelWrapper"></div>
         <div class="dynDiv" id="keyPanel"></div>
         <div class="dynDiv" id="nglPanel"></div>
@@ -129,7 +129,7 @@
         <div class="dynDiv" id="matrixPanel"></div>
         <div class="dynDiv" id="alignPanel"></div>
         <div class="dynDiv" id="circularPanel"></div>
-
+        -->
 		<!-- Main -->
 		<div id="main">
 

@@ -62,7 +62,9 @@
 		$s["filename"] = $filename;
 		if (count($dashSeperated) == 6){
 			$s["group"] = $dashSeperated[5];
-		}
+		} else {
+            $s["group"] = "'NA'";
+        }
 		$search_randGroup[$id] = $s;
 
 	}

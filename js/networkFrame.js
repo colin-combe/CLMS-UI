@@ -27,6 +27,19 @@ var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [6
 CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.views = function () {
+    
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel"];
+    // something funny happens if I do a data join and enter instead
+    // ('distoPanel' datum trickles down into chart axes due to unintended select.select inheritance)
+    // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
+    windowIds.forEach (function (winid) {
+        d3.select("body").append("div")
+            .attr("id", winid)
+            .attr("class", "dynDiv")
+        ;
+    });
+    
+    
     var filterViewGroup = new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder", 
         model: CLMSUI.filterModelInst
