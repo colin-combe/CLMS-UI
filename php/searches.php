@@ -50,7 +50,8 @@
 		} else {
 			echo "<td>" .$line['user_name'] . "</td>";
 		}
-		echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $urlPart . "'></td>";
+		//~ echo  "<td class='centre'><input type='checkbox' class='aggregateCheckbox' value='". $urlPart . "'></td>";
+		echo  "<td class='centre'><input type='text' class='aggregateCheckbox' id='agg_". $urlPart . "' maxlength='1'></td>";
 		echo "</tr>\n";
 		
 	}
