@@ -60,7 +60,9 @@
 		$s["randId"] = $randId;
 		$s["name"] = $name;
 		$s["filename"] = $filename;
-		if (count($dashSeperated[5]) == 6) $s["group"] = $dashSeperated[5];
+		if (count($dashSeperated) == 6){
+			$s["group"] = $dashSeperated[5];
+		}
 		$search_randGroup[$id] = $s;
 
 	}
