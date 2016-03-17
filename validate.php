@@ -42,7 +42,7 @@ header('Content-type: text/html; charset=utf-8');
 			<title><?php echo $pageName ?></title>
 			<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 			<meta name="description" content="common platform for downstream analysis of CLMS data" />
-			<meta name="keywords" content="biologists, mass-spectrometrists, cross-linking, protein, complexes, 3d, models, rappsilber, software" />	
+			<meta name="keywords" content="biologists, mass-spectrometrists, cross-linking, protein, complexes, 3d, models, rappsilber, software" />
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<meta name="apple-mobile-web-app-capable" content="yes">
 			<meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -50,11 +50,11 @@ header('Content-type: text/html; charset=utf-8');
 			<link rel="stylesheet" href="css/style.css" />
 			<link rel="stylesheet" href="css/dynamic_table.css" />
             <link rel="stylesheet" href="css/validate.css" />
-        
-			<script type="text/javascript" src="./vendor/dynamic_table.js"></script>
+
 	</head>
-	    <script type="text/javascript" src="./vendor/d3.js"></script>
-	    
+	<script type="text/javascript" src="./vendor/split.js"></script>
+        <script type="text/javascript" src="./vendor/d3.js"></script>
+
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
 <!--
        	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
@@ -62,23 +62,20 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
-    
+
         <script type="text/javascript" src="./js/validate.js"></script>
-    
+
 	<script type="text/javascript" src="../spectrum/src/model.js"></script>
 	<script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
 	<script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
 	<script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
 	<script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
-	<script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>		
-	<script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>	
+	<script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
+	<script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
 	<script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
-	<script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>		
+	<script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
 	<style>
-		.dynamic-table-toolbar{
-			display:none;
-		}
-		
+
 		html, body{
 			background-color: white;
 			color:black;
@@ -89,23 +86,25 @@ header('Content-type: text/html; charset=utf-8');
 			-moz-user-select: -moz-none;
 			-o-user-select: none;
 			user-select: none;
-			
-<!--
+
 			overflow:hidden;
--->
-		}		
+		}
 		*{
 			margin:0px;
 			padding:0px;
 		}
-		
+
 		#validationSpectrumDiv {
 			width:100%;
-			height:500px;
+<!--
+			height:100%;
+-->
 		}
 
 		#tableContainer {
-			width:100%;		
+			width:100%;
+			height:100%;
+			overflow:auto;
 		}
 
 		#measureTooltip {
@@ -115,41 +114,40 @@ header('Content-type: text/html; charset=utf-8');
 		    pointer-events:none; /*let mouse events pass through*/
 		    /*transition: opacity 0.3s;*/
 		}
-		
+
 		tr.selected {
 			color: #fff;
 			background-color: #091D42;
 		}
-		
+
 	</style>
 
 	<body>
 
-		<div class="container" style="height:100%;">
+		<div class="container" style="height:calc(100% - 90px);">
 			<h1 class="page-header">
 			<span class="headerLabel" style="font-weight:bold;">
-				<?php echo $_SESSION['session_name'] ?>  validating  
-				<?php 
-					$sid = urldecode($_GET["sid"]);
+				<?php echo $_SESSION['session_name'] ?>  validating
+				<?php
 					$dashPos = strpos($sid,'-');
 					$randId = substr($sid, $dashPos + 1);
 					$id = substr($sid, 0, ($dashPos));
 					echo $id;
 				?>
-                
-			</span>	
-					
+
+			</span>
+
 <!--
 					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
 						Log Out
 					</button>
 -->
 				<div style='float:right'>
-					<button class='btn btn-1 btn-1a' onclick="window.location = './history.php';" title="Return to search history">Done</button>
+					<button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
 				</div>
 
 			</h1>
-				
+
 			<div id='validationSpectrumDiv'>
 				<label>lossy labels
 					<input id="lossyChkBx" type="checkbox">
@@ -172,7 +170,7 @@ header('Content-type: text/html; charset=utf-8');
 					<option value="PiYG">Pink&Green</option>
 					<option value="PRGn">Purple&Green</option>
 					<option value="PuOr">Orange&Purple</option>
-				</select> 
+				</select>
 				<form id="setrange" style="display:inline-block;">
 					m/z Range:
 					<input type="text" id="xleft" size="5">
@@ -180,15 +178,15 @@ header('Content-type: text/html; charset=utf-8');
 					<input type="submit" value="set range">
 					<span id="range-error"></span>
 				</form>
-                <div>
+                <div style="height: calc(100% - 80px); width:100%; display: block;">
                     <!-- display:block in svg stops containing div being slightly larger than svg, which stops g calculating itself as slightly larger
                         in spectrum code (it grabs height from the div immediately above svg) -->
-                    <svg id="spectrumSVG" style="height:400px; width:100%; display: block;"></svg>
+                    <svg id="spectrumSVG" style="height: 100%; width:100%; display: block;"></svg>
                     <div id="measureTooltip"></div>
                 </div>
-				
+
 				<div>
-					
+
 				<table>
 					<tr>
 						<td><button class="validationButton A" onclick="validate('A')">A</button></td>
@@ -197,17 +195,17 @@ header('Content-type: text/html; charset=utf-8');
 						<td><button class="validationButton Q" onclick="validate('?')">?</button></td>
 						<td><button class="validationButton R" onclick="validate('R')">R</button></td>
 					</tr>
-				</table>		
-					
+				</table>
+
 				</div>
 			</div>
-			
-			
+
+
 		<div id="tableContainer">
 				<table id='t1'>
 					<thead><td>Match ID</td><td>Score</td><td>PepSeq1</td><td>LinkPos1</td><td>PepSeq2 </td><td>LinkPos2</td><td>Validated</td></thead>
 					<tbody id='tb1'>
-					<?php							
+					<?php
 						include('../connectionString.php');
 						$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
@@ -222,18 +220,18 @@ header('Content-type: text/html; charset=utf-8');
 							. ' FROM '
 							. ' matched_peptide inner join '
 							. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$id . ' AND dynamic_rank = true'
-							. ' AND spectrum_match.score > 6' 
+							. ' AND spectrum_match.score > 6'
 							. ' ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
 							. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
 							. ' inner join search ON spectrum_match.search_id = search.id '
 							. ' WHERE search.random_id = \''.$randId.'\''
 							. ' AND matched_peptide.link_position != -1'
 							. ' ORDER BY score DESC, match_id, match_type;';
-						
-						
+
+
 						$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
 
-						
+
 						$waitingForFirstMatch = true;
 						//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 						while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
@@ -242,7 +240,7 @@ header('Content-type: text/html; charset=utf-8');
 								$match_id = $line["match_id"];
 								$match_score = $line["score"];
 								$match_validated = $line["validated"];
-								
+
 								$pep1_link_position = $line['link_position'];
 								$pep1_seq =  $line["pepseq"];
 								$waitingForFirstMatch = false;
@@ -256,7 +254,7 @@ header('Content-type: text/html; charset=utf-8');
 												. $pep1_seq.'",'.$pep1_link_position.',"'.$pep2_seq.'",'.$pep1_link_position.");'"
 												. " class='". $match_validated ."' id='m". $match_id ."'>"
 												. '<td>' . $match_id . '</td>'
-												. '<td>' . $match_score . '</td>'
+												. '<td>' . number_format((float)$match_score, 2, '.', '') . '</td>'
 												. '<td>' . $pep1_seq . '</td>'
 												. '<td>' . $pep1_link_position. '</td>'
 												. '<td>' . $pep2_seq . '</td>'
@@ -272,87 +270,17 @@ header('Content-type: text/html; charset=utf-8');
 						pg_free_result($res);
 						// Closing connection
 						pg_close($dbconn);
-										
+
 					?>
 					</tbody>
 				</table>
 			</div> <!-- tableContainer -->
-			
-		
-		</div> <!-- CONTAINER -->			
-			
 
-			
+
+		</div> <!-- CONTAINER -->
 
 
         <script>
-			//<![CDATA[
-            
-			var opt = {
-				pager: {
-					rowsCount: 10
-				}
-			}
-			new DynamicTable("t1", opt);
-							
-			loadSpectra = function (searchId, randId, matchId, pepSeq1, linkPos1, pepSeq2, linkPos2){
-				
-				matchViewed = matchId;
-                
-                CLMSUI.loadSpectra ({group: searchId, id: matchId, pepSeq1raw: pepSeq1,
-                                    pepSeq2raw: pepSeq2, linkPos1: linkPos1, linkPos2: linkPos2},
-                                    randId, SpectrumModel)
-                ;
-				/*
-				var url = "http://129.215.14.63/xiAnnotator/annotate/"
-							+ searchId + "/" + randId + "/" + matchId 
-							+ "/?peptide=" + pepSeq1 
-							+ "&peptide=" + pepSeq2 
-							+ "&link=" + linkPos1
-							+ "&link=" + linkPos2;
-			
-				d3.text(url, function(json) {
-					json = JSON.parse(json);
-					SpectrumModel.set({JSONdata: json});
-				});
-                */
-                
-                d3.selectAll("tr").classed("selected", false); 
-				d3.select("#m" + matchViewed).classed("selected", true); 
-					
-				//~ d3.select("#spectrumDiv").transition().attr("opacity", 1)
-					//~ .attr("transform", "scale(1, 1)")
-					//~ .duration(CLMS.xiNET.RenderedProtein.transitionTime);
-			}; 
-			
-			validate = function (validationStatus) {
-                /*
-				var xmlhttp = new XMLHttpRequest();
-				var url = "./php/validateMatch.php";
-				var params =  "mid=" + matchViewed + "&val=" + validationStatus + "&randId=<?php echo $randId ?>";
-				xmlhttp.open("POST", url, true);
-				//Send the proper header information along with the request
-				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						console.log(xmlhttp.responseText, true);
-						d3.select("#td" + matchViewed).text(validationStatus);
-						d3.select("#m" + matchViewed).classed(validationStatus, true); 
-					}
-				}
-				xmlhttp.send(params);
-                */
-                var randId = <?php echo '"'.$randId.'"'; ?>;
-                console.log ("randId", randId);
-                CLMSUI.validate (matchViewed, validationStatus, randId, function() {
-                    d3.select("#td" + matchViewed).text(validationStatus);
-				    d3.select("#m" + matchViewed).classed(validationStatus, true); 
-                });
-			}
-							
-            //]]>
-        </script>
-        	<script>
 
 
 	var SpectrumModel = new AnnotatedSpectrumModel();
@@ -372,9 +300,80 @@ header('Content-type: text/html; charset=utf-8');
 			//~ SpectrumModel.set({JSONdata: json});
 		//~ });
 
+         var split = Split (["#validationSpectrumDiv", "#tableContainer"],
+            { direction: "vertical", sizes: [60,40], minSize: [200,10],
+				onDragEnd:function (){
+					Spectrum.resize();}
+				});
+	});
 
-});
-	</script>
+		</script>
+
+
+        <script>
+			//<![CDATA[
+
+			loadSpectra = function (searchId, randId, matchId, pepSeq1, linkPos1, pepSeq2, linkPos2){
+
+				matchViewed = matchId;
+
+                CLMSUI.loadSpectra ({searchId: searchId, id: matchId, pepSeq1raw: pepSeq1,
+                                    pepSeq2raw: pepSeq2, linkPos1: linkPos1, linkPos2: linkPos2},
+                                    randId, SpectrumModel)
+                ;
+				/*
+				var url = "http://129.215.14.63/xiAnnotator/annotate/"
+							+ searchId + "/" + randId + "/" + matchId
+							+ "/?peptide=" + pepSeq1
+							+ "&peptide=" + pepSeq2
+							+ "&link=" + linkPos1
+							+ "&link=" + linkPos2;
+
+				d3.text(url, function(json) {
+					json = JSON.parse(json);
+					SpectrumModel.set({JSONdata: json});
+				});
+                */
+
+                d3.selectAll("tr").classed("selected", false);
+				d3.select("#m" + matchViewed).classed("selected", true);
+
+				//~ d3.select("#spectrumDiv").transition().attr("opacity", 1)
+					//~ .attr("transform", "scale(1, 1)")
+					//~ .duration(CLMS.xiNET.RenderedProtein.transitionTime);
+			};
+
+			validate = function (validationStatus) {
+                /*
+				var xmlhttp = new XMLHttpRequest();
+				var url = "./php/validateMatch.php";
+				var params =  "mid=" + matchViewed + "&val=" + validationStatus + "&randId=<?php echo $randId ?>";
+				xmlhttp.open("POST", url, true);
+				//Send the proper header information along with the request
+				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						console.log(xmlhttp.responseText, true);
+						d3.select("#td" + matchViewed).text(validationStatus);
+						d3.select("#m" + matchViewed).classed(validationStatus, true);
+					}
+				}
+				xmlhttp.send(params);
+                */
+                var randId = <?php echo '"'.$randId.'"'; ?>;
+                console.log ("randId", randId);
+                CLMSUI.validate (matchViewed, validationStatus, randId, function() {
+                    d3.select("#td" + matchViewed).text(validationStatus);
+				    d3.select("#m" + matchViewed).classed(validationStatus, true);
+                });
+			}
+
+			loadSpectrumForRow = function(){
+
+			}
+            //]]>
+        </script>
+
 
 	</body>
 </html>
