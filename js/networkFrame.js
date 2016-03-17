@@ -284,9 +284,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) { 
+            var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
             CLMSUI.loadSpectra (match, null, this.model);
         } else {
-            console.log ("CLEARING SPECTRUM MODEL");
             this.model.clear();
         }
     });

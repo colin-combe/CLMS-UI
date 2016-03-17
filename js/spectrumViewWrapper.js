@@ -93,11 +93,14 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                 .on ("click", function (d) { 
                     var lsm = self.model.get("lastSelectedMatch");
                     if (lsm && lsm.match) {
-                        CLMSUI.validate (lsm.match.id, d.label, "12345", function() { 
+                        var randId = CLMSUI.modelUtils.getRandomSearchId (self.model.get("clmsModel"), lsm.match);
+                        console.log ("randId", randId);
+                        
+                        CLMSUI.validate (lsm.match.id, d.label, randId, function() { 
                             lsm.match.validated = d.label; 
                             self.setButtonValidationState (lsm.match);
                             self.model.trigger ("matchValidationStateUpdated");
-                        });
+                        });              
                     }
                 })
         ;
@@ -122,8 +125,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         
         this.newestSelectionShown = true;
         this.enableControls (false);
-        
-        console.log ("SPCWRPMOD", this.model);
     },
     
     enableControls: function (state) {
@@ -146,12 +147,12 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     },
     
     triggerSpectrumViewer: function (match, forceShow) {
-        console.log ("MATCH selected", match, forceShow);
+        //console.log ("MATCH selected", match, forceShow);
         if (this.isVisible() || forceShow) {
             this.newestSelectionShown = true;
             var visible = !!match;
             if (this.isVisible() !== visible) {
-                console.log ("CHANGE VISIBILITY");
+                //console.log ("CHANGE VISIBILITY");
                 CLMSUI.vent.trigger ("spectrumShow", visible);   
             }
             CLMSUI.vent.trigger ("individualMatchSelected", match);
@@ -166,7 +167,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         // if a new selected match has been made while the spectrum viewer was hidden,
         // load it in when the spectrum viewer is made visible
         if (!this.newestSelectionShown) {
-            console.log ("LAZY LOADING SPECTRUM");
+            //console.log ("LAZY LOADING SPECTRUM");
             var selectedMatch = this.model.get("lastSelectedMatch") || {match: null};
             this.triggerSpectrumViewer (selectedMatch.match, true);
         }

@@ -248,5 +248,14 @@ CLMSUI.modelUtils = {
             return xlink.getFilteredMatches();
         });
         return [].concat.apply([], nestedArr);
-    }
+    },
+    
+    getRandomSearchId : function (clmsModel, match) {
+        // pitfall: maps store integer keys as strings, so toString here
+        var searchId = match.searchId.toString();
+        var searchMap = clmsModel.get("searches");
+        var searchData = searchMap.get(searchId);
+        var randId = searchData.randId;    
+        return randId;
+    },
 };
