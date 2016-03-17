@@ -112,6 +112,20 @@ CLMSUI.utils = {
         return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
     },
     
+    displayError: function (condition, message) {
+        if (condition()) {
+            var box = d3.select("#clmsErrorBox");
+            if (box.size() == 0) {
+                box = d3.select("body").append("div").attr("id", "clmsErrorBox");
+            }
+            
+            box
+                .style("display", "block")
+                .html (message)
+            ;
+        }
+    },
+    
     RadioButtonFilterViewBB: Backbone.View.extend ({
         tagName: "div",
         events: {
@@ -271,6 +285,7 @@ CLMSUI.utils = {
         }
     }),
 };
+
 
 CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function () {

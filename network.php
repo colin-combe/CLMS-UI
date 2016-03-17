@@ -277,6 +277,10 @@
 
             // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
             var options = {rawInteractors: tempInteractors, rawMatches: tempMatches};
+            CLMSUI.utils.displayError (function() { return !options.rawInteractors || !options.rawInteractors.length; },
+                "No cross-links detected for this search.<br>Please return to the search history page."
+            );
+
             CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
             CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
