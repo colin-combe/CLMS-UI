@@ -276,7 +276,7 @@
 
 
             // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
-            var options = {rawInteractors: tempInteractors, rawMatches: tempMatches};
+            var options = {rawInteractors: tempInteractors, rawMatches: tempMatches, searches: searchMeta};
             CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
             CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
@@ -330,17 +330,13 @@
         }
             
     CLMSUI.init.models();
-
-    var windowLoaded = function () {    
-        // Showing multiple searches at once
-				var s = d3.map(CLMSUI.searchesShown);
-				var title = s.keys().toString() + " : " + s.values().toString();//JSON.stringify(searchesShown);
-				document.title = title;
+	var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+	console.log(searches);
+	document.title = Array.from(searches.keys()).join();
 	
-				if (s.keys().length > 1) {
-					//showKeyPanel(true);
-					d3.select('#save').style('display','none');
-				}
+	
+    var windowLoaded = function () {    
+    
                 
     CLMSUI.init.views();
                           
