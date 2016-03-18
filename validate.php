@@ -371,7 +371,7 @@ header('Content-type: text/html; charset=utf-8');
 					d3.select("#m" + matchViewed).classed(validationStatus, true);
 				});
 				
-				loadSpectrum(matchKeys[matchkeys.indexOf(matchViewed) + 1]);
+				loadSpectrum(matchKeys[matchKeys.indexOf(matchViewed) + 1]);
 			}
 			
 			loadSpectrum(matchKeys[0]);
