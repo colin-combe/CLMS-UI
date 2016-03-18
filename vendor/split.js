@@ -43,7 +43,7 @@ var global = this
       , pairs = []
 
     // Set defaults
-    console.log ("spliot this", this);
+    //console.log ("spliot this", this);
     options = typeof options !== 'undefined' ?  options : {}
 
     if (typeof options.gutterSize === 'undefined') options.gutterSize = 10
