@@ -285,7 +285,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) { 
             var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-            CLMSUI.loadSpectra (match, null, this.model);
+            CLMSUI.loadSpectra (match, randId, this.model);
         } else {
             this.model.clear();
         }
