@@ -350,17 +350,18 @@ header('Content-type: text/html; charset=utf-8');
 
 
 			function loadSpectrum (matchId) {
-				
-				match = matches.get(matchId);
-				
-				matchViewed = match.id;
+				if (matchId){
+					match = matches.get(matchId);
+					
+					matchViewed = match.id;
 
-				CLMSUI.loadSpectra (match,
-									<?php echo '"'.$randId.'"'; ?>, SpectrumModel)
-				;
+					CLMSUI.loadSpectra (match,
+										<?php echo '"'.$randId.'"'; ?>, SpectrumModel)
+					;
 
-				d3.selectAll("tr").classed("selected", false);
-				d3.select("#m" + matchViewed).classed("selected", true);
+					d3.selectAll("tr").classed("selected", false);
+					d3.select("#m" + matchViewed).classed("selected", true);
+				}
 
 			};
 
