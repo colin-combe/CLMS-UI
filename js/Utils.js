@@ -112,6 +112,17 @@ CLMSUI.utils = {
         return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
     },
     
+    niceRoundMap: {1: 1, 2: 2, 3: 3, 4: 5, 5: 5, 6: 10, 7: 10, 8: 10, 9: 10, 10: 10},
+    
+    niceRound: function (val) {
+        var log = Math.floor (Math.log10 (val));
+        var pow = Math.pow (10, log);
+        val = Math.ceil (val / pow);  // will now be a number 1-10
+        var roundVal = CLMSUI.utils.niceRoundMap[val];
+        roundVal *= pow;
+        return roundVal;
+    },
+    
     displayError: function (condition, message) {
         if (condition()) {
             var box = d3.select("#clmsErrorBox");

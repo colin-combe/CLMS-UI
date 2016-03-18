@@ -277,7 +277,7 @@
 
             // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
             var options = {rawInteractors: tempInteractors, rawMatches: tempMatches, searches: searchMeta};
-            CLMSUI.utils.displayError (function() { return !options.rawInteractors || !options.rawInteractors.length; },
+            CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
                 "No cross-links detected for this search.<br>Please return to the search history page."
             );
 

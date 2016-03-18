@@ -103,6 +103,7 @@
             var defaultOptions = {
                 nodeWidth: 10,  // this is a percentage measure
                 tickWidth: 23,
+                tickLabelCycle: 5,  // show label every nth tick
                 gap: 5,
                 linkParse: function (link) { 
                     // turn toPos and fromPos to zero-based index
@@ -398,6 +399,7 @@
             
             // draw thin links
             var linkJoin = g.selectAll(".circleLink").data(links, self.idFunc);
+            var hasNew = linkJoin.enter().size() > 0;
             linkJoin.exit().remove();
             linkJoin.enter()
                 .append("path")
@@ -429,6 +431,11 @@
             ghostLinkJoin
                 .attr("d", function(d) { return self.line(d.coords); })
             ;
+            
+            // If this is the first time the links are drawn, some of them may have been selected in other views
+            if (hasNew) {
+                this.showSelected();
+            }
         },
         
         drawNodes: function (g, nodes) {
@@ -466,19 +473,29 @@
                 return total + node.size;    
             }, 0);
            
-            var tickGap = Math.ceil ((tot / 360) * 5 / 20) * 20;
+            var tickValGap = (tot / 360) * 5;
+            var tickGap = CLMSUI.utils.niceRound (tickValGap);
             
             var groupTicks = function (d) {
-              var k = (d.end - d.start) / d.size;
-              var tRange = d3.range(0, d.size, tickGap);
-              tRange[0] = 1;
-              tRange[tRange.length-1] = d.size;
-              return tRange.map(function(v, i) {
-                return {
-                  angle: (((v-1) + 0.5) * k) + d.start, // -1 cos we want 1 to be at the zero pos angle, +0.5 cos we want it to be a tick in the middle
-                  label: i % 5 && i < tRange.length - 1 ? null : v,
-                };
-              });
+                var k = (d.end - d.start) / d.size;
+                var tRange = d3.range(0, d.size, tickGap);
+                // make first tick at 1, not 0 (as protein indices are 1-based)
+                tRange[0] = 1;
+                // decide whether to add extra tick for last value (d.size) or replace last tick if close enough
+                var tlen = tRange.length;
+                var lastIndex = tlen - (d.size - tRange[tlen - 1] <= tickGap / 3 ? 1 : 0);
+                tRange[lastIndex] = d.size;
+                tlen = tRange.length;
+
+                var labelCycle = self.options.tickLabelCycle;
+                return tRange.map(function(v, i) {
+                    return {
+                        angle: (((v-1) + 0.5) * k) + d.start, // v-1 cos we want 1 to be at the zero pos angle, +0.5 cos we want it to be a tick in the middle
+                        // show label every labelCycle'th tick starting with first.
+                        // Exceptions: Show label for last tick. Don't show for second last tick (unless that tick is the first). It looks nicer.
+                        label: (i % labelCycle && i < tlen - 1) || (i == tlen - 2 && i > 0) ? null : v,
+                    };
+                });
             };
 
             var groupTickJoin = g.selectAll("g.tickGroups")
