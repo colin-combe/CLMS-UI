@@ -126,13 +126,14 @@ header('Content-type: text/html; charset=utf-8');
 
 		<div class="container" style="height:calc(100% - 90px);">
 			<h1 class="page-header">
-			<span class="headerLabel" style="font-weight:bold;">
+			<i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
+            <span class="headerLabel" style="font-weight:bold;">
 				<?php echo $_SESSION['session_name'] ?>  validating
 				<?php
 					$dashPos = strpos($sid,'-');
 					$randId = substr($sid, $dashPos + 1);
-					$id = substr($sid, 0, ($dashPos));
-					echo $id;
+					$search_id = substr($sid, 0, ($dashPos));
+					echo $search_id;
 				?>
 
 			</span>
@@ -152,7 +153,7 @@ header('Content-type: text/html; charset=utf-8');
 				<label>lossy labels
 					<input id="lossyChkBx" type="checkbox">
 				</label>
-				<button id="reset">reset zoom</button>
+				<button id="reset" class="">reset zoom</button>
 				<button id="clearHighlights">clear highlights</button>
 				<label>measure
 					<input id="measuringTool" type="checkbox">
@@ -205,73 +206,6 @@ header('Content-type: text/html; charset=utf-8');
 				<table id='t1'>
 					<thead><td>Match ID</td><td>Score</td><td>PepSeq1</td><td>LinkPos1</td><td>PepSeq2 </td><td>LinkPos2</td><td>Validated</td></thead>
 					<tbody id='tb1'>
-					<?php
-						include('../connectionString.php');
-						$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
-
-						$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
-
-
-						$q_matchedPeptides =
-							'SELECT matched_peptide.match_id, spectrum_match.score,'
-							. ' matched_peptide.match_type, matched_peptide.link_position + 1 AS link_position, '
-							. 'spectrum_match.validated, '
-							. ' peptide.sequence AS pepseq '
-							. ' FROM '
-							. ' matched_peptide inner join '
-							. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$id . ' AND dynamic_rank = true'
-							. ' AND spectrum_match.score > 6'
-							. ' ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
-							. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
-							. ' inner join search ON spectrum_match.search_id = search.id '
-							. ' WHERE search.random_id = \''.$randId.'\''
-							. ' AND matched_peptide.link_position != -1'
-							. ' ORDER BY score DESC, match_id, match_type;';
-
-
-						$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
-
-
-						$waitingForFirstMatch = true;
-						//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-						while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-							$match_type = $line["match_type"];
-							if ($match_type == 1) {
-								$match_id = $line["match_id"];
-								$match_score = $line["score"];
-								$match_validated = $line["validated"];
-
-								$pep1_link_position = $line['link_position'];
-								$pep1_seq =  $line["pepseq"];
-								$waitingForFirstMatch = false;
-							} else if ($match_type == 2) {
-								if ($match_id == $line["match_id"]) {
-									$pep2_link_position = $line['link_position'];
-									$pep2_seq = $line["pepseq"];
-
-									if ($waitingForFirstMatch != true) {
-										echo "<tr onclick='loadSpectra(".$id.',"'.$randId.'",'.$match_id.',"'
-												. $pep1_seq.'",'.$pep1_link_position.',"'.$pep2_seq.'",'.$pep1_link_position.");'"
-												. " class='". $match_validated ."' id='m". $match_id ."'>"
-												. '<td>' . $match_id . '</td>'
-												. '<td>' . number_format((float)$match_score, 2, '.', '') . '</td>'
-												. '<td>' . $pep1_seq . '</td>'
-												. '<td>' . $pep1_link_position. '</td>'
-												. '<td>' . $pep2_seq . '</td>'
-												. '<td>' . $pep2_link_position. '</td>'
-												. '<td id="td'.$match_id.'">' . $match_validated . '</td>'
-											. "</tr>";
-										$waitingForFirstMatch = true;
-									}
-								}
-							}
-						}
-						// Free resultset
-						pg_free_result($res);
-						// Closing connection
-						pg_close($dbconn);
-
-					?>
 					</tbody>
 				</table>
 			</div> <!-- tableContainer -->
@@ -280,99 +214,170 @@ header('Content-type: text/html; charset=utf-8');
 		</div> <!-- CONTAINER -->
 
 
-        <script>
-
-
-	var SpectrumModel = new AnnotatedSpectrumModel();
-
-
-	$(function() {
-
-
-		_.extend(window, Backbone.Events);
-		window.onresize = function() { window.trigger('resize') };
-
-
-		var Spectrum = new SpectrumView({model: SpectrumModel, el:"#validationSpectrumDiv"});
-		var FragmentationKey = new FragmentationKeyView({model: SpectrumModel, el:"#validationSpectrumDiv"});
-
-		//~ d3.json("http://129.215.14.63/xiAnnotator/annotate/3421/85160-94827-96653-69142/210313888/?peptide=TVTAMDVVYALK&peptide=YKAAFTECcmCcmQAADK&link=21&link=1", function(json) {
-			//~ SpectrumModel.set({JSONdata: json});
-		//~ });
-
-         var split = Split (["#validationSpectrumDiv", "#tableContainer"],
-            { direction: "vertical", sizes: [60,40], minSize: [200,10],
-				onDragEnd:function (){
-					Spectrum.resize();}
-				});
-	});
-
-		</script>
 
 
         <script>
-			//<![CDATA[
+			
+			//map iterates in insertion order, SQL query sorts by score
+			var matches = new Map();
+			
+			<?php
+			include('../connectionString.php');
+			$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
-			loadSpectra = function (searchId, randId, matchId, pepSeq1, linkPos1, pepSeq2, linkPos2){
+			//$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 
-				matchViewed = matchId;
 
-                CLMSUI.loadSpectra ({searchId: searchId, id: matchId, pepSeq1raw: pepSeq1,
-                                    pepSeq2raw: pepSeq2, linkPos1: linkPos1, linkPos2: linkPos2},
-                                    randId, SpectrumModel)
-                ;
-				/*
-				var url = "http://129.215.14.63/xiAnnotator/annotate/"
-							+ searchId + "/" + randId + "/" + matchId
-							+ "/?peptide=" + pepSeq1
-							+ "&peptide=" + pepSeq2
-							+ "&link=" + linkPos1
-							+ "&link=" + linkPos2;
+			$q_matchedPeptides =
+				'SELECT matched_peptide.match_id, spectrum_match.score,'
+				. ' matched_peptide.match_type, matched_peptide.link_position + 1 AS link_position, '
+				. 'spectrum_match.validated, '
+				. ' peptide.sequence AS pepseq '
+				. ' FROM '
+				. ' matched_peptide inner join '
+				. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$search_id . ' AND dynamic_rank = true'
+				. ' AND spectrum_match.score > 6'
+				. ' ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
+				. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
+				. ' inner join search ON spectrum_match.search_id = search.id '
+				. ' WHERE search.random_id = \''.$randId.'\''
+				. ' AND matched_peptide.link_position != -1'
+				. ' ORDER BY score DESC, match_id, match_type;';
 
-				d3.text(url, function(json) {
-					json = JSON.parse(json);
-					SpectrumModel.set({JSONdata: json});
-				});
-                */
 
-                d3.selectAll("tr").classed("selected", false);
-				d3.select("#m" + matchViewed).classed("selected", true);
+			$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
 
-				//~ d3.select("#spectrumDiv").transition().attr("opacity", 1)
-					//~ .attr("transform", "scale(1, 1)")
-					//~ .duration(CLMS.xiNET.RenderedProtein.transitionTime);
+
+			$waitingForFirstMatch = true;
+			//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
+			while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+				$match_type = $line["match_type"];
+				if ($match_type == 1) {
+					$match_id = $line["match_id"];
+					$match_score = $line["score"];
+					$match_validated = $line["validated"];
+
+					$pep1_link_position = $line['link_position'];
+					$pep1_seq =  $line["pepseq"];
+					$waitingForFirstMatch = false;
+				} else if ($match_type == 2) {
+					if ($match_id == $line["match_id"]) {
+						$pep2_link_position = $line['link_position'];
+						$pep2_seq = $line["pepseq"];
+
+						if ($waitingForFirstMatch != true) {
+							/*echo "<tr onclick='loadSpectra(".$search_id.',"'.$randId.'",'.$match_id.',"'
+									. $pep1_seq.'",'.$pep1_link_position.',"'.$pep2_seq.'",'.$pep1_link_position.");'"
+									. " class='". $match_validated ."' id='m". $match_id ."'>"
+									. '<td>' . $match_id . '</td>'
+									. '<td>' . number_format((float)$match_score, 2, '.', '') . '</td>'
+									. '<td>' . $pep1_seq . '</td>'
+									. '<td>' . $pep1_link_position. '</td>'
+									. '<td>' . $pep2_seq . '</td>'
+									. '<td>' . $pep2_link_position. '</td>'
+									. '<td id="td'.$match_id.'">' . $match_validated . '</td>'
+								. "</tr>";*/
+								
+							echo 'matches.set("'.$match_id.'",{"id":"'.$match_id
+									.'","searchId":"'.$search_id
+									.'","pepSeq1raw":"'.$pep1_seq
+									.'","linkPos1":"'.$pep1_link_position
+									.'","pepSeq2raw":"'.$pep2_seq
+									.'","linkPos2":"'.$pep2_link_position
+									.'","score":"'.number_format((float)$match_score, 2, '.', '')
+									.'","validated":"'.$match_validated
+									."\"});\n";
+
+							$waitingForFirstMatch = true;
+							
+						}
+					}
+				}
+			}
+			
+			// Free resultset
+			pg_free_result($res);
+			// Closing connection
+			pg_close($dbconn);
+
+			?>
+			
+			var matchKeys = Array.from(matches.keys());
+
+			
+			// how to create a table using d3's binding:
+			// https://vis4.net/blog/posts/making-html-tables-in-d3-doesnt-need-to-be-a-pain/
+			// (haven't done that)
+			
+			var tableBody =d3.select("#tb1");
+			for (match of matches.values()){
+				var tableRow = tableBody.append("tr")
+						.attr("class", match.validated)
+						.attr("id", "m" + match.id)
+						.on('click', function(){
+							var id = this.getAttribute("id").substr(1);
+							loadSpectrum(id);
+						});
+				
+				tableRow.append("td").html(match.id);
+				tableRow.append("td").html(match.score);
+				tableRow.append("td").html(match.pepSeq1raw);
+				tableRow.append("td").html(match.linkPos1);
+				tableRow.append("td").html(match.pepSeq2raw);
+				tableRow.append("td").html(match.linkPos2);
+				tableRow.append("td").html(match.validated).attr("id", "valTd"+match.id);
+			}
+
+			var SpectrumModel = new AnnotatedSpectrumModel();
+
+
+			$(function() {
+
+
+				_.extend(window, Backbone.Events);
+				window.onresize = function() { window.trigger('resize') };
+
+
+				var Spectrum = new SpectrumView({model: SpectrumModel, el:"#validationSpectrumDiv"});
+				var FragmentationKey = new FragmentationKeyView({model: SpectrumModel, el:"#validationSpectrumDiv"});
+
+				var split = Split (["#validationSpectrumDiv", "#tableContainer"],
+					{ direction: "vertical", sizes: [60,40], minSize: [200,10],
+						onDragEnd:function (){
+							Spectrum.resize();}
+					});
+			});
+
+
+			function loadSpectrum (matchId) {
+				if (matchId){
+					match = matches.get(matchId);
+					
+					matchViewed = match.id;
+
+					CLMSUI.loadSpectra (match,
+										<?php echo '"'.$randId.'"'; ?>, SpectrumModel)
+					;
+
+					d3.selectAll("tr").classed("selected", false);
+					d3.select("#m" + matchViewed).classed("selected", true);
+				}
+
 			};
 
 			validate = function (validationStatus) {
-                /*
-				var xmlhttp = new XMLHttpRequest();
-				var url = "./php/validateMatch.php";
-				var params =  "mid=" + matchViewed + "&val=" + validationStatus + "&randId=<?php echo $randId ?>";
-				xmlhttp.open("POST", url, true);
-				//Send the proper header information along with the request
-				xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-				xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-						console.log(xmlhttp.responseText, true);
-						d3.select("#td" + matchViewed).text(validationStatus);
-						d3.select("#m" + matchViewed).classed(validationStatus, true);
-					}
-				}
-				xmlhttp.send(params);
-                */
-                var randId = <?php echo '"'.$randId.'"'; ?>;
-                console.log ("randId", randId);
-                CLMSUI.validate (matchViewed, validationStatus, randId, function() {
-                    d3.select("#td" + matchViewed).text(validationStatus);
-				    d3.select("#m" + matchViewed).classed(validationStatus, true);
-                });
+				CLMSUI.validate (matchViewed, validationStatus, <?php echo '"'.$randId.'"'; ?>, function() {
+					d3.select("#valTd" + matchViewed).text(validationStatus);
+					d3.select("#m" + matchViewed).attr("class", validationStatus);
+					loadSpectrum(matchKeys[matchKeys.indexOf(matchViewed) + 1]);
+				});
+				
 			}
+			
+			loadSpectrum(matchKeys[0]);
 
-			loadSpectrumForRow = function(){
-
-			}
-            //]]>
-        </script>
+			//]]>
+		</script>
 
 
 	</body>
