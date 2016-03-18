@@ -369,9 +369,9 @@ header('Content-type: text/html; charset=utf-8');
 				CLMSUI.validate (matchViewed, validationStatus, <?php echo '"'.$randId.'"'; ?>, function() {
 					d3.select("#valTd" + matchViewed).text(validationStatus);
 					d3.select("#m" + matchViewed).classed(validationStatus, true);
+					loadSpectrum(matchKeys[matchKeys.indexOf(matchViewed) + 1]);
 				});
 				
-				loadSpectrum(matchKeys[matchKeys.indexOf(matchViewed) + 1]);
 			}
 			
 			loadSpectrum(matchKeys[0]);
