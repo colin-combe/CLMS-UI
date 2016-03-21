@@ -18,20 +18,23 @@ svg.circularView {
     fill: none;
     stroke-width: 5px;
     stroke-opacity: 0;
-    stroke: #fdc086;
+    /*stroke: #fdc086;*/
+    stroke: #ff0;
     pointer-events: stroke;
 }
 
 .circleGhostLink:hover {
-    stroke-opacity: 0.5;
+    stroke-opacity: 0.8;
+    stroke: #fdc086;
 }
 
 .selectedCircleLink {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.5;
 }
 
 .highlightedCircleLink {
-    stroke-opacity: 0.5;
+    stroke-opacity: 0.8;
+    stroke: #fdc086;
 }
 
 .circleNode {
