@@ -52,7 +52,7 @@
                 
                 var tableDataPropOrder = [
                     "protein1", "pepPos1", "pepSeq1raw", "linkPos1", 
-                    "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score",
+                    "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", "precursorCharge",
                     "autovalidated", "validated", "group", "runName", "scanNumber",
                 ];       
                                                                                    
@@ -70,11 +70,12 @@
                     "validated": "Manual",
                     "group": "Group",
                     "runName": "Run Name",
-                    "scanNumber": "Scan Number",		
+                    "scanNumber": "Scan Number",	
+                    "precursorCharge": "Charge",
                 };
                 
                 var self = this;
-                this.numberColumns = d3.set (["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2"]);
+                this.numberColumns = d3.set (["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
                 this.colSectionStarts = d3.set (["protein2", "score"]);
                 this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
                 
@@ -170,7 +171,7 @@
             tjoin.enter().append("tr").attr("class", "matchRow");
             tjoin.order();
             tjoin
-                .attr("id", function(d) { return 'match'+d.id; })
+                .attr("id", function(d) { console.log("match",d); return 'match'+d.id; })
                 .on("click", function(d) {
                     self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
                 })
