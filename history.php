@@ -124,7 +124,7 @@ header('Content-type: text/html; charset=utf-8');
                 var values = new Array();
                 for (var i = 0; i < inputs.length; i++) {
                     if (inputs[i].value != "") {
-						if (isNan(inputs[i].value)) {
+						if (isNaN(inputs[i].value)) {
 							alert("Group identifiers must be a single digit.");
 						}
                         values.push(inputs[i].getAttribute("id").substring(4) + "-" + inputs[i].value);
