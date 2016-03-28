@@ -205,7 +205,7 @@
         <?php
             include './php/loadData.php';
             if (file_exists('../annotations.php')){
-                //include '../annotations.php';
+                include '../annotations.php';
             }
         ?>
 
