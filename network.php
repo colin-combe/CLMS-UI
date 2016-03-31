@@ -189,10 +189,16 @@
 
         <script>	
 		//<![CDATA[
-			
-            var CLMSUI = CLMSUI || {};
+		    var CLMSUI = CLMSUI || {};
             
 
+        <?php
+			session_start();
+			if ($_SESSION['session_name']) {
+				echo "CLMSUI.loggedIn = true;";
+			}
+		?>	
+		
             // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
             CLMSUI.vent = {};
             _.extend (CLMSUI.vent, Backbone.Events);
