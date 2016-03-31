@@ -202,7 +202,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: spectrumModel, 
         el:"#spectrumPanel",
     });
-    new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
+    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
 
     // This makes a matrix viewer
@@ -272,11 +272,11 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         });
     }
     
-    
-    
-    
     // Update spectrum view when extrenal resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.resize();
+    });
+	fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
     
