@@ -196,7 +196,7 @@
             
 
         <?php
-			if ($_SESSION['session_name']) {
+			if (isset($_SESSION['session_name'])) {
 				echo "CLMSUI.loggedIn = true;";
 			}
 		?>	
