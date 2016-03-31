@@ -17,7 +17,10 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 -->
-
+<?php
+	session_start();
+?>
+		
 <!DOCTYPE html>
 <html>
     <head>
@@ -193,7 +196,6 @@
             
 
         <?php
-			session_start();
 			if ($_SESSION['session_name']) {
 				echo "CLMSUI.loggedIn = true;";
 			}
