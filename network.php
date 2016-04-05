@@ -17,7 +17,10 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 -->
-
+<?php
+	session_start();
+?>
+		
 <!DOCTYPE html>
 <html>
     <head>
@@ -189,10 +192,15 @@
 
         <script>	
 		//<![CDATA[
-			
-            var CLMSUI = CLMSUI || {};
+		    var CLMSUI = CLMSUI || {};
             
 
+        <?php
+			if (isset($_SESSION['session_name'])) {
+				echo "CLMSUI.loggedIn = true;";
+			}
+		?>	
+		
             // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
             CLMSUI.vent = {};
             _.extend (CLMSUI.vent, Backbone.Events);
@@ -205,7 +213,7 @@
         <?php
             include './php/loadData.php';
             if (file_exists('../annotations.php')){
-                //include '../annotations.php';
+                include '../annotations.php';
             }
         ?>
 
