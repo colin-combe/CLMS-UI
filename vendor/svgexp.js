@@ -134,6 +134,8 @@ CLMSUI.svgUtils = {
         var CSSSheets = ownerDoc.styleSheets;
 
         for(var j=0; j < CSSSheets.length; j++){
+            if (CSSSheets[j].cssRules == null)  // skip empty sheets as it crashes the loop
+                continue;
             for(var i=0; i < CSSSheets[j].cssRules.length; i++){
                 rule = CSSSheets[j].cssRules[i];
                 var bool = false;
