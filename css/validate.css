@@ -2,23 +2,23 @@
     width: 100%;
 }
 
-button.A:hover, tr.A {
+button.A:hover, button.A.validatedState, tr.A {
     background-color:#7fc97f;/*#4daf4a;*/
 }
 
-button.B:hover, tr.B {
+button.B:hover, button.B.validatedState, tr.B {
     background-color:#fdc086;/*#ff7f00;*/
 }
 
-button.C:hover, tr.C {
+button.C:hover, button.C.validatedState, tr.C {
     background-color:#ffff99;/*#ffff33;*/
 }
 
-button.Q:hover, tr.Q {
+button.Q:hover, button.Q.validatedState, tr.Q {
     background-color:light-gray;
 }
 
-button.R:hover, tr.R {
+button.R:hover, button.R.validatedState, tr.R {
     background-color:#e41a1c;
 }
 
