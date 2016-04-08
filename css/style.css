@@ -428,6 +428,7 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
     margin-right: 10px;
 	background: rgba(9, 29, 66, 0.9);
 	padding:0px 10px;
+    position: relative; /* will overlay previous absolute divs i.e. distance slider */
 }
 .noMarg{
 	margin:0px!important;
@@ -686,6 +687,7 @@ A.btn {
   background-color: #eee;
   background-repeat: no-repeat;
   background-position: 50%;
+  position: relative; /* will overlay previous absolute divs i.e. distance slider */
 }
 
 .gutter.gutter-horizontal {
