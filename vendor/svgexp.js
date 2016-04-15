@@ -65,7 +65,8 @@ CLMSUI.svgUtils = {
 
         // if no dummy parent added in previous section, but our svg isn't root then add one as placeholder
         if (svgElem.parentNode != null && !parentAdded) {
-            var dummySVGElem = ownerDoc.createElement ("svg");
+            //var dummySVGElem = ownerDoc.createElement ("svg");
+            var dummySVGElem = ownerDoc.createElementNS ("http://www.w3.org/2000/svg", "svg");
             dummySVGElem.appendChild (cloneSVG);
             transferAttr.forEach (function (attr) {
                 dummySVGElem.setAttribute (attr, cloneSVG.getAttribute (attr));
@@ -77,7 +78,7 @@ CLMSUI.svgUtils = {
 
         // Copy svg's computed style (it's style context) if a dummy parent node has been introduced
         if (parentAdded) {
-            cloneSVG.setAttribute ("style", window.getComputedStyle(svgElem).cssText);
+            cloneSVG.setAttribute ("style", CLMSUI.svgUtils.getComputedStyleCssText (svgElem));
         }
 
         cloneSVG.setAttribute ("version", "1.1");
@@ -92,6 +93,23 @@ CLMSUI.svgUtils = {
         cloneSVG.insertBefore (styleElem, cloneSVG.firstChild);
 
         return cloneSVG;
+    },
+    
+    // Because firefox returns cssText as empty
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=137687
+    getComputedStyleCssText: function (element) {
+        var style = window.getComputedStyle(element);
+
+        if (style.cssText != "") {
+            return style.cssText;
+        }
+
+        var cssText = "";
+            for (var i = 0; i < style.length; i++) {
+            cssText += style[i] + ": " + style.getPropertyValue(style[i]) + "; ";
+        }
+
+        return cssText;
     },
 
     parentChain: function (elem, styles) {
