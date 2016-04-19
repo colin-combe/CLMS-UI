@@ -399,6 +399,7 @@
             
             var self = this;
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            console.log ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
 
           
@@ -436,6 +437,7 @@
             linkJoin
                 .attr("d", function(d) { return self.line(d.coords); })
                 .style("stroke", function(d) { return colourScheme (crossLinks.get(d.id)); })
+                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambig; })
             ;
         },
         
