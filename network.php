@@ -53,6 +53,7 @@
         <link rel="stylesheet" href="./css/circularViewBB.css">
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
         <link rel="stylesheet" href="./css/validate.css">
+        <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -110,6 +111,7 @@
         <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
         <script type="text/javascript" src="./js/validate.js"></script>
+        <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
                 
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>

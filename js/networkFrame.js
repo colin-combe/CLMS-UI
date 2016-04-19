@@ -28,9 +28,9 @@ CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.views = function () {
     
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel"];
     // something funny happens if I do a data join and enter instead
-    // ('distoPanel' datum trickles down into chart axes due to unintended select.select inheritance)
+    // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
     windowIds.forEach (function (winid) {
         d3.select("body").append("div")
@@ -90,6 +90,7 @@ CLMSUI.init.views = function () {
         //{id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
+        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
@@ -276,7 +277,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
-	fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+	   fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
     
@@ -289,6 +290,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         } else {
             this.model.clear();
         }
+    });
+    
+        
+    new CLMSUI.ProteinInfoViewBB ({
+        el: "#proteinInfoPanel",
+        displayEventName: "proteinInfoShow",
+        model: CLMSUI.clmsModelInst,
     });
 };
 
