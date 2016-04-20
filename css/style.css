@@ -629,8 +629,8 @@ tbody tr:hover td, tbody tr:hover td  {
 
 #proteinInfoPanel {
     left: 40px;
-    width: 300px;
-    height: 500px;
+    width: 40em;
+    height: 25em;
 }
 
 #clmsErrorBox {

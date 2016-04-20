@@ -105,6 +105,7 @@
                 tickWidth: 23,
                 tickLabelCycle: 5,  // show label every nth tick
                 gap: 5,
+                uniprotFeatureFilterSet: d3.set(["DOMAIN"]),
                 linkParse: function (link) { 
                     // turn toPos and fromPos to zero-based index
                     return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id, 
@@ -324,7 +325,7 @@
         },
         
         filterFeatures: function (features) {
-            return features ? features.filter (function (f) { return f.category === "DOMAIN"; }) : [];
+            return features ? features.filter (function (f) { return this.options.uniprotFeatureFilterSet.has (f.category); }, this) : [];
         },
 
         render: function (options) {
