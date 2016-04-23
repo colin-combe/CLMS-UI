@@ -9,6 +9,7 @@
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
                 crossLink.filteredMatches = [];
+                crossLink.ambiguous = true;
                 var unfilteredMatchCount = crossLink.matches.length;
                 for (var i = 0; i < unfilteredMatchCount; i++){
                     var match = crossLink.matches[i];
@@ -16,6 +17,9 @@
                     //console.log("result:"+result);
                     if (result === true){
                         crossLink.filteredMatches.push(match);
+                        if (match[0].crossLinks.length === 1) {
+							crossLink.ambiguous = false;
+						}
                     }
                 }
             }
