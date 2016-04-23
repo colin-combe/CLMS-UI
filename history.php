@@ -55,12 +55,6 @@ header('Content-type: text/html; charset=utf-8');
 					
 				<div style='float:right'>
 					<button class='btn btn-1 btn-1a' onclick='aggregate();'>Aggregate</button>
-					<?php
-						if ($_SESSION['session_name'] == "adam"){
-							//~ echo "<button class='btn btn-1 btn-1a' onclick='aggregate3D();'>3D</button>";
-							// echo "<button class='btn btn-1 btn-1a' onclick='aggregateMatrix();'>Matrix</button>";
-						}
-					?>
 				</div>
 
 			</h1>
@@ -78,8 +72,8 @@ header('Content-type: text/html; charset=utf-8');
 			
 			var dynTable;
 			
-			function loadSearchList(){
-				
+			function loadSearchList(){		
+
 				DynamicTable.destroy("t1");
 				document.getElementById("t1").innerHTML = "";
 				
@@ -90,7 +84,7 @@ header('Content-type: text/html; charset=utf-8');
 				if (document.getElementById('mySearches').checked){
 					params =  "searches=MINE";
 					var opt1 = {
-						colTypes: ["alpha","none",  "none", "alpha", "alpha","number","none", "clearCheckboxes"],
+						colTypes: ["alpha","alpha","none", "alpha", "alpha","number","none", "clearCheckboxes"],
 						pager: {
 						rowsCount: 20
 						}
@@ -99,7 +93,7 @@ header('Content-type: text/html; charset=utf-8');
 				else {
 					params =  "searches=ALL";
 					var opt1 = {
-						colTypes: ["alpha","none", "none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
+						colTypes: ["alpha","alpha","none", "alpha", "alpha","number","alpha", "clearCheckboxes"],
 						pager: {
 						rowsCount: 20
 						}
@@ -117,7 +111,7 @@ header('Content-type: text/html; charset=utf-8');
 							document.getElementsByClassName("tool-7")[0].setAttribute("style", "width:0px;");
 						}
 						else {
-							//~ document.getElementByClassName("tool-8")[0].setAttribute("style", "width:90px;");
+							document.getElementsByClassName("tool-7")[0].setAttribute("style", "width:90px;");
 						}
 					}
 				}
@@ -130,6 +124,9 @@ header('Content-type: text/html; charset=utf-8');
                 var values = new Array();
                 for (var i = 0; i < inputs.length; i++) {
                     if (inputs[i].value != "") {
+						if (isNaN(inputs[i].value)) {
+							alert("Group identifiers must be a single digit.");
+						}
                         values.push(inputs[i].getAttribute("id").substring(4) + "-" + inputs[i].value);
                     }
                 }

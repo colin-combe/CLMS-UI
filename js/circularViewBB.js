@@ -251,10 +251,14 @@
         idFunc: function (d) { return d.id; },
         
         showSelected: function () {
-            var selectedIDs = this.model.get("selection").map((function(xlink) { return xlink.id; }));
+            this.showSelectedOnTheseElements (d3.select(this.el).selectAll(".circleGhostLink"), this);
+            return this;
+        },
+        
+        showSelectedOnTheseElements: function (d3Selection, thisContext) {
+            var selectedIDs = thisContext.model.get("selection").map((function(xlink) { return xlink.id; }));
             var idset = d3.set (selectedIDs);
-            var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
-            thickLinks.classed ("selectedCircleLink", function(d) { return idset.has(d.id); });
+            d3Selection.classed ("selectedCircleLink", function(d) { return idset.has(d.id); });
             return this;
         },
         
@@ -396,20 +400,8 @@
             var self = this;
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var colourScheme = this.model.get("linkColourAssignment");
-            
-            // draw thin links
-            var linkJoin = g.selectAll(".circleLink").data(links, self.idFunc);
-            var hasNew = linkJoin.enter().size() > 0;
-            linkJoin.exit().remove();
-            linkJoin.enter()
-                .append("path")
-                    .attr("class", "circleLink")
-            ;
-            linkJoin
-                .attr("d", function(d) { return self.line(d.coords); })
-                .style("stroke", function(d) { return colourScheme (crossLinks.get(d.id)); })
-            ;
 
+          
             // draw thick, invisible links (used for highlighting and mouse event capture)
             var ghostLinkJoin = g.selectAll(".circleGhostLink").data(links, self.idFunc);
             ghostLinkJoin.exit().remove();
@@ -427,15 +419,24 @@
                     .on ("click", function (d) {
                         self.model.set ("selection", [crossLinks.get(d.id)]);
                     })
+                    .call (self.showSelectedOnTheseElements, self)
             ;
             ghostLinkJoin
                 .attr("d", function(d) { return self.line(d.coords); })
             ;
             
-            // If this is the first time the links are drawn, some of them may have been selected in other views
-            if (hasNew) {
-                this.showSelected();
-            }
+            // draw thin links
+            var linkJoin = g.selectAll(".circleLink").data(links, self.idFunc);
+            //var hasNew = linkJoin.enter().size() > 0;
+            linkJoin.exit().remove();
+            linkJoin.enter()
+                .append("path")
+                    .attr("class", "circleLink")
+            ;
+            linkJoin
+                .attr("d", function(d) { return self.line(d.coords); })
+                .style("stroke", function(d) { return colourScheme (crossLinks.get(d.id)); })
+            ;
         },
         
         drawNodes: function (g, nodes) {
