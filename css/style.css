@@ -177,7 +177,7 @@ body, input, select, textarea {
     margin-right:10px;
     font-size:0.9em;
 }
-65
+
 /* history page */
 .tableContainer a {
     color:#091D42;
@@ -579,7 +579,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #helpPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #circularPanel, #clmsErrorBox {
+#keyPanel, #helpPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox {
 	display:none;
 	top:80px;
 }
@@ -625,6 +625,12 @@ tbody tr:hover td, tbody tr:hover td  {
     left: 40px;
     width: 400px;
     height: 400px;
+}
+
+#proteinInfoPanel {
+    left: 40px;
+    width: 40em;
+    height: 25em;
 }
 
 #clmsErrorBox {

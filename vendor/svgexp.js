@@ -69,8 +69,11 @@ CLMSUI.svgUtils = {
             var dummySVGElem = ownerDoc.createElementNS ("http://www.w3.org/2000/svg", "svg");
             dummySVGElem.appendChild (cloneSVG);
             transferAttr.forEach (function (attr) {
-                dummySVGElem.setAttribute (attr, cloneSVG.getAttribute (attr));
-                cloneSVG.removeAttribute (attr);
+                var val = cloneSVG.getAttribute (attr);
+                if (val !== null) { 
+                    dummySVGElem.setAttribute (attr, cloneSVG.getAttribute (attr));
+                    cloneSVG.removeAttribute (attr);
+                }
             });
             cloneSVG = dummySVGElem;
             parentAdded = true;

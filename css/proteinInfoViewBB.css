@@ -1,0 +1,67 @@
+
+#proteinInfoPanel .panelInner {
+    overflow-y: auto;
+}
+
+.proteinInfoPanel section {
+    margin-top: 5px;
+    border-bottom: 2px solid white;
+}
+
+.proteinInfoPanel section:not(:first-of-type) table {
+    display: none;
+}
+
+.proteinInfoPanel table {
+    table-layout: fixed;
+}
+
+.proteinInfoPanel table td:first-child, .proteinInfoPanel table th:first-child {
+    width: 10em;
+    text-transform: capitalize;
+}
+.proteinInfoPanel tbody tr:hover {
+    background: #999;
+}
+
+.proteinInfoPanel tbody tr:nth-child(2n-1) {
+    background: #ddd;
+}
+
+.proteinInfoPanel tbody td {
+    word-wrap: break-word;
+}
+
+.proteinInfoPanel h2 {
+    width: 100%;
+    cursor: pointer;
+}
+
+.proteinInfoPanel h2 svg {
+    margin-right: 1em;
+    width: 16px;
+    height: 16px;
+    fill: white;
+    stroke: white;
+}
+
+.proteinInfoPanel h2 svg:hover {
+    fill: orange;
+    stroke: orange;
+}
+
+.proteinInfoPanel h2:hover {
+    fill: orange;
+    color: orange;
+}
+
+.proteinInfoPanel .hit {
+    color: red;
+    background: white;
+    cursor: pointer;
+}
+
+.fixedSizeFont {
+    font-family: monospace;
+    line-height: 1em;
+}
