@@ -97,7 +97,9 @@
 
                         // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
                         // console.log ("minigram domain", domain[0], domain[1]);
-                        self.model.set ({"domainStart": domain[0], "domainEnd": domain[1]});
+                        var roundDomain = domain.map (function (v) { return Math.round (v*10) / 10; });
+                        //console.log ("roundDomain", roundDomain[0], roundDomain[1]);
+                        self.model.set ({"domainStart": roundDomain[0], "domainEnd": roundDomain[1]});
                     },
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars

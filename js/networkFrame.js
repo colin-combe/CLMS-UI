@@ -90,7 +90,7 @@ CLMSUI.init.views = function () {
         //{id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
-        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
+        //{id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
@@ -292,12 +292,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
     
-        
+    /*    
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",
         model: CLMSUI.clmsModelInst,
     });
+    */
 };
 
 

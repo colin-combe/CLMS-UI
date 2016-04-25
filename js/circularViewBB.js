@@ -400,12 +400,17 @@
             
             var self = this;
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            console.log ("clinks", crossLinks);
+            //console.log ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
 
-          
+
             // draw thick, invisible links (used for highlighting and mouse event capture)
-            var ghostLinkJoin = g.selectAll(".circleGhostLink").data(links, self.idFunc);
+            var ghostLayer = g.select("g.ghostLayer");
+            if (ghostLayer.empty()) {
+                ghostLayer = g.append("g").attr("class", "ghostLayer");
+            }
+            
+            var ghostLinkJoin = ghostLayer.selectAll(".circleGhostLink").data(links, self.idFunc);
             ghostLinkJoin.exit().remove();
             ghostLinkJoin.enter()
                 .append("path")
@@ -428,7 +433,11 @@
             ;
             
             // draw thin links
-            var linkJoin = g.selectAll(".circleLink").data(links, self.idFunc);
+            var thinLayer = g.select("g.thinLayer");
+            if (thinLayer.empty()) {
+                thinLayer = g.append("g").attr("class", "thinLayer");
+            }
+            var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
             //var hasNew = linkJoin.enter().size() > 0;
             linkJoin.exit().remove();
             linkJoin.enter()
