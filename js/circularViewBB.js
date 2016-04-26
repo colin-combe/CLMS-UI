@@ -447,7 +447,7 @@
             linkJoin
                 .attr("d", function(d) { return self.line(d.coords); })
                 .style("stroke", function(d) { return colourScheme (crossLinks.get(d.id)); })
-                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambig; })
+                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
             ;
         },
         
