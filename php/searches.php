@@ -14,12 +14,12 @@
 	
 	if ($searches == "MINE"){
 		pg_prepare($dbconn, "my_query",
-		"SELECT search.id, search.notes, (array_agg(user_name))[1] as user_name, (array_agg(search.submit_date))[1] AS submit_date, (array_agg(search.name))[1] AS name, (array_agg(search.status))[1] AS status, (array_agg(search.random_id))[1] AS random_id, array_agg(sequence_file.file_name) AS file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND users.user_name = $1 AND status != 'hide' GROUP BY search.id ORDER BY submit_date DESC ;");
-	$result = pg_execute($dbconn, "my_query", [$_SESSION['session_name']]);
+		"SELECT search.id, search.notes, (array_agg(user_name))[1] as user_name, (array_agg(search.submit_date))[1] AS submit_date, (array_agg(search.name))[1] AS name, (array_agg(search.status))[1] AS status, (array_agg(search.random_id))[1] AS random_id, array_agg(sequence_file.file_name) AS file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND users.user_name = $1 AND status != 'hide' GROUP BY search.id ORDER BY (CASE WHEN status = 'queuing' THEN 0 WHEN is_executing THEN 1 ELSE 2 END) ASC, search.id DESC ;");
+		$result = pg_execute($dbconn, "my_query", [$_SESSION['session_name']]);
 	}
 	else {
 		$q = 
-		"SELECT search.id, search.notes, (array_agg(user_name))[1] as user_name, (array_agg(search.submit_date))[1] AS submit_date, (array_agg(search.name))[1] AS name, (array_agg(search.status))[1] AS status, (array_agg(search.random_id))[1] AS random_id, array_agg(sequence_file.file_name) AS file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND status != 'hide' GROUP BY search.id ORDER BY submit_date DESC ;";	
+		"SELECT search.id, search.notes, (array_agg(user_name))[1] as user_name, (array_agg(search.submit_date))[1] AS submit_date, (array_agg(search.name))[1] AS name, (array_agg(search.status))[1] AS status, (array_agg(search.random_id))[1] AS random_id, array_agg(sequence_file.file_name) AS file_name FROM search, users, search_sequencedb, sequence_file WHERE search.uploadedby = users.id AND search.id = search_sequencedb.search_id AND search_sequencedb.seqdb_id = sequence_file.id AND status != 'hide' GROUP BY search.id ORDER BY (CASE WHEN status = 'queuing' THEN 0 WHEN is_executing THEN 1 ELSE 2 END) ASC, search.id DESC ;";	
 		$result = pg_query($q) or die('Query failed: ' . pg_last_error());
 	}
 	// Execute the prepared query
@@ -28,10 +28,10 @@
 		$urlPart = $id.'-'.$line['random_id'];
 		
 		$status = $line['status'];
-		$statusSpacePos = strpos($status, ' ');
+		/*$statusSpacePos = strpos($status, ' ');
 		if ($statusSpacePos > 0){
 			$status = substr($line['status'], 0, $statusSpacePos);
-		}
+		}*/
 		$status = ' <strong>['.$status.']<strong>';
 		
 		echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($urlPart) . "'>" . $line['name'] . "</a>" .$status. "</td>";
