@@ -30,7 +30,7 @@ CLMSUI.svgUtils = {
         // clone node
         var cloneSVG = svgElem.cloneNode (true);
         var ownerDoc = cloneSVG.ownerDocument || document;
-        CLMSUI.svgUtils.pruneInvisibleSubtrees (cloneSVG);
+        CLMSUI.svgUtils.pruneInvisibleSubtrees (cloneSVG, svgElem);
 
         // find all styles inherited/referenced at or below this node
         var styles = CLMSUI.svgUtils.usedStyles (svgElem, true);
@@ -118,18 +118,19 @@ CLMSUI.svgUtils = {
     
     doPruneInvisible: true,
     
-    pruneConditionSets: [{"display": "none"}, {"visibility": "hidden"}, {"opacity": "0"}, {"fill-opacity": "0", "stroke-opacity": "0"},],
+    pruneConditionSets: [{"display": "none"}, {"visibility": "hidden"}, {"opacity": "0"}, {"fill-opacity": "0", "stroke-opacity": "0"}, {"fill": "none", "stroke-opacity": "0"}],
     
-    pruneInvisibleSubtrees: function (element) {
+    pruneInvisibleSubtrees: function (clonedElement, matchingOriginalElement) {
         if (CLMSUI.svgUtils.doPruneInvisible) {
-            var style = window.getComputedStyle (element);
+            var style = window.getComputedStyle (matchingOriginalElement);  // cloned (unattached) nodes in chrome at least don't have computed styles
             var prune = false;
+            
             CLMSUI.svgUtils.pruneConditionSets.forEach (function (conditionSet) {
                 if (!prune) {
                     var allConditionsMet = true;
                     Object.keys(conditionSet).forEach (function (condition) {
                         var eStyle = style[condition];
-                        var eAttr = element.getAttribute(condition);
+                        var eAttr = matchingOriginalElement.getAttribute(condition);
                         if (!(eStyle === conditionSet[condition] || (!eStyle && eAttr === conditionSet[condition]))) {
                             allConditionsMet = false; 
                         }
@@ -138,18 +139,20 @@ CLMSUI.svgUtils = {
                 }
             });
             if (prune) {
-                element.parentNode.removeChild (element);
-                console.log ("removed", element);
+                clonedElement.parentNode.removeChild (clonedElement);
+                //console.log ("removed", clonedElement);
             } else {
-                var children = element.children;
-                console.log ("kept", element);
+                var clonedChildren = clonedElement.children;
+                var matchingOriginalChildren = matchingOriginalElement.children;
+                //console.log ("kept", clonedElement, style.display, style.visibility, style.opacity, style["stroke-opacity"], style["fill-opacity"], style);
                 //console.log (element, "children", children);
-                if (children && children.length) {
+                if (clonedChildren && clonedChildren.length) {
                     // count backwards because removing a child will break the 'i' counter if we go forwards
                     // e.g. if children=[A,B,C,D] and i=2, if we delete[C] then children becomes [A,B,D],
                     // and when i then increments to 3, expecting D, instead we find the end of loop, and don't test D
-                    for (var i = children.length; --i >= 0;) {
-                        CLMSUI.svgUtils.pruneInvisibleSubtrees (children[i]);
+                    // PS. And if we fixed that we'd then need a separate counter for the original child elements anyways so backwards it is
+                    for (var i = clonedChildren.length; --i >= 0;) {
+                        CLMSUI.svgUtils.pruneInvisibleSubtrees (clonedChildren[i], matchingOriginalChildren[i]);
                     }
                 }
             }
