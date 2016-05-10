@@ -30,6 +30,7 @@ CLMSUI.svgUtils = {
         // clone node
         var cloneSVG = svgElem.cloneNode (true);
         var ownerDoc = cloneSVG.ownerDocument || document;
+        CLMSUI.svgUtils.pruneInvisibleSubtrees (cloneSVG);
 
         // find all styles inherited/referenced at or below this node
         var styles = CLMSUI.svgUtils.usedStyles (svgElem, true);
@@ -113,6 +114,46 @@ CLMSUI.svgUtils = {
         }
 
         return cssText;
+    },
+    
+    doPruneInvisible: true,
+    
+    pruneConditionSets: [{"display": "none"}, {"visibility": "hidden"}, {"opacity": "0"}, {"fill-opacity": "0", "stroke-opacity": "0"},],
+    
+    pruneInvisibleSubtrees: function (element) {
+        if (CLMSUI.svgUtils.doPruneInvisible) {
+            var style = window.getComputedStyle (element);
+            var prune = false;
+            CLMSUI.svgUtils.pruneConditionSets.forEach (function (conditionSet) {
+                if (!prune) {
+                    var allConditionsMet = true;
+                    Object.keys(conditionSet).forEach (function (condition) {
+                        var eStyle = style[condition];
+                        var eAttr = element.getAttribute(condition);
+                        if (!(eStyle === conditionSet[condition] || (!eStyle && eAttr === conditionSet[condition]))) {
+                            allConditionsMet = false; 
+                        }
+                    });
+                    prune = allConditionsMet;
+                }
+            });
+            if (prune) {
+                element.parentNode.removeChild (element);
+                console.log ("removed", element);
+            } else {
+                var children = element.children;
+                console.log ("kept", element);
+                //console.log (element, "children", children);
+                if (children && children.length) {
+                    // count backwards because removing a child will break the 'i' counter if we go forwards
+                    // e.g. if children=[A,B,C,D] and i=2, if we delete[C] then children becomes [A,B,D],
+                    // and when i then increments to 3, expecting D, instead we find the end of loop, and don't test D
+                    for (var i = children.length; --i >= 0;) {
+                        CLMSUI.svgUtils.pruneInvisibleSubtrees (children[i]);
+                    }
+                }
+            }
+        }
     },
 
     parentChain: function (elem, styles) {
