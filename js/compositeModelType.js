@@ -38,6 +38,26 @@
             //return crossLinks.filter (function(cLink) {
             //    return cLink.filteredMatches.length > 0;
             //}); 
-        }
+        },
+        
+        collateMatchRegions: function (crossLinks) {
+            var fromPeptides = [], toPeptides = [], regs = [], prots = {};
+            crossLinks.forEach (function (crossLink) {
+                crossLink.filteredMatches.forEach (function (match) {
+                    console.log ("mmatch", match);
+                    var smatch = match[0];
+                    var prot1 = smatch.protein1[0];
+                    var prot2 = smatch.protein2[0];
+                    prots[prot1] = prots[prot1] || [];
+                    prots[prot2] = prots[prot2] || [];
+                    prots[prot1].push ({protein: prot1, start: match[1], end: match[1] + match[2] });
+                    prots[prot2].push ({protein: prot2, start: match[3], end: match[3] + match[4] }); 
+                });
+            });
+            
+            console.log ("match regions", prots);
+            
+            return prots;
+        },
     
     });

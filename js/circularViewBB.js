@@ -276,6 +276,7 @@
         
         actionNodeLinks: function (nodeId, actionType, startPos, endPos) {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            console.log ("model 4 circle", this.model);
             var filteredCrossLinks = this.filterCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
             startPos = startPos || 0;
@@ -418,6 +419,7 @@
                     .on ("mouseenter", function(d) {
                         self.linkTip (d);
                         self.model.set ("highlights", [crossLinks.get(d.id)]);
+                        //self.model.collateMatchRegions ([crossLinks.get(d.id)]);
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
