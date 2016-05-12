@@ -18,8 +18,8 @@
                     if (result === true){
                         crossLink.filteredMatches.push(match);
                         if (match[0].crossLinks.length === 1) {
-							crossLink.ambiguous = false;
-						}
+                            crossLink.ambiguous = false;
+                        }
                     }
                 }
             }
@@ -59,5 +59,36 @@
             
             return prots;
         },
+        
+        // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
+        // to fill in the model
+        calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives) {
+            var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
+
+            if (andAlternatives) {
+                crossLinks.forEach (function (crossLink) {
+                    if (crossLink.ambiguous || crossLink.ambig) {
+                       this.recurseAmbiguity (crossLink, crossLinkMap);
+                    }
+                }, this);
+            }
+            var dedupedCrossLinks = crossLinkMap.values();
+            this.set (modelProperty, dedupedCrossLinks);
+        },
+                                    
+        recurseAmbiguity: function (crossLink, crossLinkMap) {
+            var matches = crossLink.filteredMatches;
+            matches.forEach (function (match) {
+                var matchData = match[0];
+                if (matchData.isAmbig()) {
+                    matchData.crossLinks.forEach (function (overlapCrossLink) {
+                        if (!crossLinkMap.has (overlapCrossLink.id)) {
+                            crossLinkMap.set (overlapCrossLink.id, overlapCrossLink);
+                            this.recurseAmbiguity (overlapCrossLink, crossLinkMap);
+                        }
+                    }, this);
+                }
+            }, this);
+        }
     
     });
