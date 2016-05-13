@@ -276,7 +276,6 @@
         
         actionNodeLinks: function (nodeId, actionType, startPos, endPos) {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            console.log ("model 4 circle", this.model);
             var filteredCrossLinks = this.filterCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
             startPos = startPos || 0;
@@ -285,7 +284,7 @@
                 return (link.fromProtein.id === nodeId && (anyPos || (link.fromResidue >= startPos && endPos >= link.fromResidue))) ||
                         (link.toProtein.id === nodeId && (anyPos || (link.toResidue >= startPos && endPos >= link.toResidue)));
             });
-            this.model.calcMatchingCrosslinks (actionType,  matchLinks, true);
+            this.model.calcMatchingCrosslinks (actionType,  matchLinks, actionType === "highlights");
             //this.model.set (actionType, matchLinks);
         },
         

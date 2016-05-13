@@ -171,7 +171,7 @@
             tjoin.enter().append("tr").attr("class", "matchRow");
             tjoin.order();
             tjoin
-                .attr("id", function(d) { console.log("match",d); return 'match'+d.id; })
+                .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
                     self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
                 })
