@@ -129,9 +129,10 @@ CLMSUI.svgUtils = {
                 if (!prune) {
                     var allConditionsMet = true;
                     Object.keys(conditionSet).forEach (function (condition) {
+                        var condVal = conditionSet[condition];
                         var eStyle = style[condition];
                         var eAttr = matchingOriginalElement.getAttribute(condition);
-                        if (!(eStyle === conditionSet[condition] || (!eStyle && eAttr === conditionSet[condition]))) {
+                        if (!(eStyle === condVal || (!eStyle && eAttr === condVal))) {
                             allConditionsMet = false; 
                         }
                     });
