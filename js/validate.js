@@ -16,7 +16,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
             d3.select("#range-error").text ("Cannot load spectra from URL");
             spectrumModel.clear();
         } else {
-            spectrumModel.set ({JSONdata: json}); 
+            spectrumModel.set ({JSONdata: json, match: match, randId: randId}); 
         }
     });
 }; 
