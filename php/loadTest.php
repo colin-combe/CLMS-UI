@@ -1,31 +1,25 @@
 <?php
 
-//  CLMS-UI
-//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
-//
-//  This file is part of CLMS-UI.
-//
-//  CLMS-UI is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  CLMS-UI is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
+	//  CLMS-UI
+	//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
+	//
+	//  This file is part of CLMS-UI.
+	//
+	//  CLMS-UI is free software: you can redistribute it and/or modify
+	//  it under the terms of the GNU General Public License as published by
+	//  the Free Software Foundation, either version 3 of the License, or
+	//  (at your option) any later version.
+	//
+	//  CLMS-UI is distributed in the hope that it will be useful,
+	//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+	//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	//  GNU General Public License for more details.
+	//
+	//  You should have received a copy of the GNU General Public License
+	//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 	$sid = urldecode($_GET["sid"]);
-	$id_rands = explode("," , $sid);
-	$sid = str_replace(',','', $sid );
-	$sid = str_replace('-','', $sid );
-	
-	$showDecoys = false;//urldecode($_GET["decoys"]);
-	$showAll = false;//urldecode($_GET["all"]);
-
+	//only allow digits or ',' or '-' in url params
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
 		header();
@@ -33,14 +27,23 @@
 		exit;
 	}
 
-	include('../connectionString.php');
+	//the CLMSUI.sid identifier is used when saving layouts
+	echo "CLMSUI.sid = '".preg_replace('/(,|\-)/','', $sid )."';\n";
+
+	$searchId_rand_group = explode("," , $sid);
+	$showDecoys = true;//urldecode($_GET["decoys"]);
+	$showAll = true;//urldecode($_GET["all"]);
+
+	include('../../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
-	$search_randGroup = [];
+	echo '<pre style="width:100%;">';
+
+	$searchId_randGroup = [];
 	
-	for ($i = 0; $i < count($id_rands); $i++) {
+	for ($i = 0; $i < count($searchId_rand_group); $i++) {
 		$s = [];		
-		$dashSeperated = explode("-" , $id_rands[$i]);
+		$dashSeperated = explode("-" , $searchId_rand_group[$i]);
 		$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
 		$id = $dashSeperated[0];
 		$res = pg_query("SELECT search.name, sequence_file.file_name"
@@ -60,52 +63,49 @@
 		if (count($dashSeperated) == 6){
 			$s["group"] = $dashSeperated[5];
 		} else {
-            $s["group"] = "'NA'";
+            $s["group"] = "NA";
         }
-		$search_randGroup[$id] = $s;
+		$searchId_randGroup[$id] = $s;
 
 	}
-	$searchMeta = "var searchMeta = " . json_encode($search_randGroup) . ';';
+	echo "var searchMeta = " . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ";\n\n";
 	
-	
-	
-	
-	echo "CLMSUI.sid = '".$sid."';\n";// TODO - this needs to change
-	
-	echo $searchMeta;
-	
+	echo "//temp - if (HSA_Active == true) then we might have a go at some 3d stuff\n";
 	if ($filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;\n";
 		include('./php/distances.php');
 	}
 	else {
 		echo "var HSA_Active = false;\n";
-		echo "var distances = [];\n";
+		echo "var distances = [];\n\n";
 	}
-	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
-	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
-	echo "storedLayout = null;\n";
-	if (count($search_randGroup) == 1) {
+	
+	echo "//saved layout - some work needed here to make it work with aggregated searches\n";
+	echo "storedLayout = null;\n\n";
+	if (count($searchId_randGroup) == 1) {
 		$layoutQuery = "SELECT t1.layout AS l "
 				. " FROM layouts AS t1 "
 				. " LEFT OUTER JOIN layouts AS t2 "
 				. " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
 				. " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
-		echo "\n\n//l:".$layoutQuery."\n\n";
 		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
 			
-			echo "storedLayout = " . stripslashes($line["l"]) . ";\n";
+			echo "storedLayout = " . stripslashes($line["l"]) . ";\n\n";
 			
 		}
 	}
-
+	
+	//names for temp tables
+	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
+	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
+	
 	$WHERE = ' ';
 	//TODO - get rid of this ref to v_export_materialized, its being used to get scan number/run_name
 	$WHERE_VE = ' '; // v_export_materialized
 	$c = 0;
-	for ($i = 0; $i < count($search_randGroup); $i++) {
-		$search = array_values($search_randGroup)[$i];
+	for ($i = 0; $i < count($searchId_randGroup); $i++) {
+		$search = array_values($searchId_randGroup)[$i];
 		if ($c > 0){
 			$WHERE = $WHERE.' OR ';
 			$WHERE_VE = $WHERE_VE.' OR ';
@@ -118,20 +118,22 @@
 	}
 
 	$q_makeTempMatchedPeptides =
-		'SELECT matched_peptide.match_id, sm.score,'
-		. ' matched_peptide.match_type,  matched_peptide.peptide_id, matched_peptide.link_position + 1 AS link_position, '
+		'SELECT mp.match_id, sm.score,'
+		. ' mp.match_type,  mp.peptide_id, mp.link_position + 1 AS link_position, '
 		. ' sm.autovalidated, sm.validated, '
 		. ' sm.search_id, sm.precursor_charge, v_export_materialized.scan_number, v_export_materialized.run_name, peptide.sequence AS pepseq  INTO TEMPORARY '
 		. $peptidesTempTableName
 		. ' FROM '
-		. '  matched_peptide inner join '
-		. ' (SELECT sm.* FROM spectrum_match sm INNER JOIN search s ON sm.search_id = s.id WHERE ('.$WHERE.') AND dynamic_rank = true AND sm.is_decoy != true'
-		. ' AND ((sm.autovalidated = true AND (sm.rejected != true  OR sm.rejected is null)) OR'
-		. ' (sm.validated LIKE \'A\') OR (sm.validated LIKE \'B\') OR (sm.validated LIKE \'C\')  '
-		. ' OR (sm.validated LIKE \'?\')) ) sm ON sm.id = matched_peptide.match_id '
-		. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
+		. '  matched_peptide mp INNER JOIN '
+		. ' (SELECT sm.* FROM spectrum_match sm INNER JOIN search s ON sm.search_id = s.id WHERE ('.$WHERE.') AND dynamic_rank = true '
+		. ($showDecoys ? '' : ' AND sm.is_decoy != true')
+        . ($showAll ? ' AND sm.score > 4' : ' AND ((sm.autovalidated = true AND (sm.rejected != true  OR sm.rejected is null)) OR'
+                        . ' (sm.validated LIKE \'A\') OR (sm.validated LIKE \'B\') OR (sm.validated LIKE \'C\')  '
+                        . ' OR (sm.validated LIKE \'?\'))')
+                        . ' )  sm ON sm.id = mp.match_id '
+		. ' inner join  peptide ON  mp.peptide_id = peptide.id '
 		. ' inner join (SELECT * from  v_export_materialized WHERE ('.$WHERE_VE.') AND dynamic_rank = true AND is_decoy != true )  v_export_materialized ON sm.id = v_export_materialized.spectrum_match_id '
-		. ' WHERE  matched_peptide.link_position != -1;';
+		. ';';// WHERE  mp.link_position != -1;';
 
 	$q_makeTempHasProtein = 'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position, (array_agg(protein.accession_number))[1] as accession  INTO TEMPORARY ' .
 			$proteinTempTableName . ' FROM has_protein, '
@@ -139,8 +141,6 @@
 			.' WHERE ' . $peptidesTempTableName
 			.'.peptide_id = has_protein.peptide_id AND has_protein.protein_id = protein.id GROUP BY has_protein.peptide_id, has_protein.protein_id, peptide_position;';
 
-	$q_hasProtein = 'SELECT peptide_id, array_to_string(array_agg(accession), \',\') as proteins, array_to_string(array_agg(peptide_position), \',\') as positions FROM '
-			. $proteinTempTableName . ' GROUP BY '. $proteinTempTableName .'.peptide_id';
 	// turns out that array_agg()[1] is quicker than the (SQL script created) first() function
 	$q_proteins = 'SELECT protein.accession_number as id, (array_agg(protein.name))[1] AS name, (array_agg(protein.description))[1] AS description, (array_agg(protein.sequence))[1] AS sequence, (array_agg(protein.protein_length))[1] AS size, (array_agg(protein.accession_number))[1] AS accession'
 		  .' FROM protein, '
@@ -148,14 +148,28 @@
 		  .'.protein_id = protein.id  GROUP BY protein.accession_number;';
 
 
-	echo '//q_makeTempMatchedPeptides>'.$q_makeTempMatchedPeptides."\n";
+	echo "//makeTempMatchedPeptides>\n//".$q_makeTempMatchedPeptides."\n";
+	$startTime = microtime(true);
 	$res = pg_query($q_makeTempMatchedPeptides) or die('Query failed: ' . pg_last_error());
+	$endTime = microtime(true);
+	echo '//'.($endTime - $startTime)."ms\n\n";
+	
+	echo "//makeTempHasProtein>\n//".$q_makeTempHasProtein."\n";
+	$startTime = microtime(true);
 	$res = pg_query($q_makeTempHasProtein) or die('Query failed: ' . pg_last_error());
-
+	$endTime = microtime(true);
+	echo '//'.($endTime - $startTime)."ms\n\n";
+	
+	echo "//q_proteins>\n//".$q_proteins."\n";
+	$startTime = microtime(true);
 	$res = pg_query($q_proteins) or die('Query failed: ' . pg_last_error());
+	$endTime = microtime(true);
+	echo '//'.($endTime - $startTime)."ms\n\n";
+	
+	echo "//we use array of arrays (not JSON) to load data because we're trying to cut down number of bytes sent.\n";
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 
-	echo "\nvar tempInteractors = [";
+	echo "\nvar tempInteractors = [\n";
 
 	while ($line) {
 		//may or may not have enclosing single quotes in DB. We need them.
@@ -181,15 +195,26 @@
 		if ($line) { echo ','; }
 		echo "\n";
 	}
-	echo "];\n";
+	echo "];\n\n";
 
+	$q_hasProtein = 'SELECT peptide_id, array_to_string(array_agg(accession), \',\') as proteins, array_to_string(array_agg(peptide_position), \',\') as positions FROM '
+			. $proteinTempTableName . ' GROUP BY '. $proteinTempTableName .'.peptide_id';
+
+	
 	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '
 			.$peptidesTempTableName . ', ('	.$q_hasProtein.') AS prt WHERE '
 			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
+	
+	echo "//matchedPeptides>\n//".$q_matchedPeptides."\n";
+	$startTime = microtime(true);
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
-	echo "var tempMatches = [";
+	$endTime = microtime(true);
+	echo '//'.($endTime - $startTime)."ms\n\n";
+	
+	echo "\nvar tempMatches = [\n";
 	$waitingForFirstMatch = true;
-	while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 		$match_type = $line["match_type"];
 		if ($match_type == 1) {
 			$match_id = $line["match_id"];
@@ -204,6 +229,7 @@
 			$pep1_prot_ids = '"' . $line["proteins"] . '"';
 			$pep1_seq =  '"' . $line["pepseq"] . '"';
 			$waitingForFirstMatch = false;
+			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		} else if ($match_type == 2) {
 			if ($match_id == $line["match_id"]) {
 				$pep2_link_position = $line['link_position'];
@@ -211,7 +237,7 @@
 				$pep2_prot_ids = '"' . $line["proteins"] . '"';
 				$pep2_seq =  '"' . $line["pepseq"] . '"';
 
-				$search = $search_randGroup[$search_id];
+				$search = $searchId_randGroup[$search_id];
 				$group = $search["group"];
 				$run_name = '"' . $line["run_name"]. '"';
 				$precursorCharge = $line["precursor_charge"];
@@ -236,15 +262,14 @@
 								. $group. ','
 								. $precursorCharge
 								. "]";
-					//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-					//~ if ($line)
-					 {echo ',';} // that last comma should be removed
 					$waitingForFirstMatch = true;
+					$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+					if ($line) {echo ",\n";}
 				}
 			}
 		}
 	}
-	echo "];\n";
+	echo "\n];\n\n</pre>\n";
 
 	// Free resultset
 	pg_free_result($res);
