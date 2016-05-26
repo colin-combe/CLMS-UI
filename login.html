@@ -23,11 +23,14 @@
     <meta charset="utf-8">
     <title>Searches</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="description" content="a common platform for the downstream analysis of CLMS data" />
-	<meta name="google" content="notranslate" />
-	<meta name="author" content="Rappsilber Laboratory">
-	<meta name="copyright" content="2015">
-	<meta charset="UTF-8">
+     <meta name="description" content="a common platform for the downstream analysis of CLMS data" />
+     <meta name="google" content="notranslate" />
+     <meta name="author" content="Rappsilber Laboratory">
+     <meta name="copyright" content="2015">
+     <meta charset="UTF-8">
+
+     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/login.css" />
   </head>
   <body>
 
@@ -35,9 +38,7 @@
 	<header>
 		<div class="container">
 			<div class="demo-headline">
-<!--
-				<h1 class="demo-logo">CLMS-UI</h1>
--->
+				<h1 class="demo-logo">Xi User Login</h1>
     	  </div>
 		</div>
 	</header>
@@ -45,26 +46,25 @@
 <div class="container">
 
        <div class="login">
-        <div class="login-screen">
 
           <form  name="login_form" method="post" action="../util/checkLogin.php" class="login-form">
             <div class="control-group">
-              <input type="text" class="login-field" value="" placeholder="Username" id="login-name" name="login-name"/>
+                <label for="login-name">Username</label>
+              <input type="text" value="" placeholder="Username" id="login-name" name="login-name"/>
                 <input type="hidden" value="" id="redirect" name="redirect"/>
-              <label class="login-field-icon fui-user" for="login-name"></label>
             </div>
 
             <div class="control-group">
-              <input type="password" class="login-field" value="" placeholder="Password" id="login-pass" name="login-pass" />
+              <label for="login-pass">Password</label>
+              <input type="password" value="" placeholder="Password" id="login-pass" name="login-pass" />
               <label class="login-field-icon fui-lock" for="login-pass"></label>
             </div>
 
-            <input name="Submit" value="Login" type="submit" class="btn btn-primary btn-large btn-block"/>
+            <input name="Submit" value="Login" type="submit" class="btn btn-1a"/>
 <!--
             <a class="login-link" href="../password/lost_password.php"> </a>
 -->
           </form>
-        </div>
       </div>
     
     <script type="text/javascript"> 
@@ -76,7 +76,7 @@
 
     <footer>
       <div class="container">
-       <p>Rappsilber Laboratory</p>
+       <p>(C) Rappsilber Laboratory, 2016</p>
       </div>
     </footer>
 

@@ -1,0 +1,21 @@
+label { 
+    display: inline-block;
+    min-width: 8em;
+}
+
+.control-group {
+    margin-bottom: 1em;
+    color: #44a;
+}
+
+input[type=submit] {
+    border: 1px solid #44a;
+    margin: 0;
+    color: #44a;
+}
+
+input[type=text], input[type=password] {
+    color: #44a;
+    border: 1px solid #44a;
+    padding-left: 0.5em;
+}
