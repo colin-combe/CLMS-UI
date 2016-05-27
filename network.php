@@ -117,7 +117,6 @@
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>		
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>	

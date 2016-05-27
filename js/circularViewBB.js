@@ -284,7 +284,8 @@
                 return (link.fromProtein.id === nodeId && (anyPos || (link.fromResidue >= startPos && endPos >= link.fromResidue))) ||
                         (link.toProtein.id === nodeId && (anyPos || (link.toResidue >= startPos && endPos >= link.toResidue)));
             });
-            this.model.set (actionType, matchLinks);
+            this.model.calcMatchingCrosslinks (actionType,  matchLinks, actionType === "highlights");
+            //this.model.set (actionType, matchLinks);
         },
         
         convertLinks: function (links, rad1, rad2) {
@@ -417,7 +418,9 @@
                     .attr("class", "circleGhostLink")
                     .on ("mouseenter", function(d) {
                         self.linkTip (d);
-                        self.model.set ("highlights", [crossLinks.get(d.id)]);
+                        self.model.calcMatchingCrosslinks ("highlights",  [crossLinks.get(d.id)], true);
+                        //self.model.set ("highlights", [crossLinks.get(d.id)]);
+                        //self.model.collateMatchRegions ([crossLinks.get(d.id)]);
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
