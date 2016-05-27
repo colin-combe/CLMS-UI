@@ -32,52 +32,40 @@
      <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/login.css" />
   </head>
-  <body>
-
+    
+  <body class="pageMargin">
 
 	<header>
-		<div class="container">
-			<div class="demo-headline">
-				<h1 class="demo-logo">Xi User Login</h1>
-    	  </div>
-		</div>
+        <h1>Xi User Login</h1>
 	</header>
 
-<div class="container">
-
-       <div class="login">
+    <div class="login">
 
           <form  name="login_form" method="post" action="../util/checkLogin.php" class="login-form">
             <div class="control-group">
                 <label for="login-name">Username</label>
-              <input type="text" value="" placeholder="Username" id="login-name" name="login-name"/>
+                <input type="text" value="" placeholder="Username" id="login-name" name="login-name"/>
                 <input type="hidden" value="" id="redirect" name="redirect"/>
             </div>
 
             <div class="control-group">
               <label for="login-pass">Password</label>
               <input type="password" value="" placeholder="Password" id="login-pass" name="login-pass" />
-              <label class="login-field-icon fui-lock" for="login-pass"></label>
             </div>
 
             <input name="Submit" value="Login" type="submit" class="btn btn-1a"/>
-<!--
+            <!--
             <a class="login-link" href="../password/lost_password.php"> </a>
--->
+            -->
           </form>
-      </div>
-    
-    <script type="text/javascript"> 
-        document.getElementById("redirect").setAttribute('value',document.referrer);
-    </script>
 
-
-    </div> <!-- /container -->
+        <script type="text/javascript"> 
+            document.getElementById("redirect").setAttribute('value',document.referrer);
+        </script>
+    </div>
 
     <footer>
-      <div class="container">
-       <p>(C) Rappsilber Laboratory, 2016</p>
-      </div>
+        <p>© Rappsilber Laboratory, 2016</p>
     </footer>
 
   </body>
