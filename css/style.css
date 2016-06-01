@@ -397,6 +397,11 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 }
 */
 
+.selected {
+    stroke: #ff0;
+    stroke-width: 5px;
+}
+
 .resize path {
   fill: #888;
   /*fill-opacity: .8;*/

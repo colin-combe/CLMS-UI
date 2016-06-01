@@ -245,7 +245,7 @@
                 this.render ({changed : d3.set(["features"]), });   
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
-            
+            this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
             return this;
         },
         
@@ -378,7 +378,7 @@
                 if (!changed || changed.has("links")) {
                     this.drawLinks (gRot, linkCoords);
                 }
-                if (!changed) {
+                if (!changed || changed.has("nodes")) {
                     // draw nodes (around edge)
                     this.drawNodes (gRot, nodes);
                     // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
@@ -473,11 +473,17 @@
                     })
                     .on("click", function(d) {
                         self.actionNodeLinks (d.id, "selection");
+                        console.log ("d3 event", d3.event);
+                        self.model.setSelectedProteins ([d.id], d3.event);
                     })
             ;
 
             nodeJoin
                 .attr("d", this.arc)
+                .classed ("selected", function(d) {
+                    var map = self.model.get("selectedProtein");
+                    return map && map.has(d.id);
+                })
             ;    
             
             return this;

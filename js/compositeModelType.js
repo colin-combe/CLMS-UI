@@ -89,6 +89,14 @@
                     }, this);
                 }
             }, this);
+        },
+        
+        setSelectedProteins: function (idArr, add) {
+            var map = add ? new Map (this.get("selectedProtein")) : new Map ();
+            idArr.forEach (function (id) {
+                map.set (id, this.get("clmsModel").get("interactors").get(id));    
+            }, this);
+            this.set ("selectedProtein", map);
         }
     
     });

@@ -62,8 +62,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var assocTable = d3.select("#protInfo"+d.id);
                         var tableDisplay = (assocTable.style("display") == "none");
                         console.log ("td1", tableDisplay);
-                        assocTable.style("display", tableDisplay ? "table" : "none");
-                        setArrow.call (this, d);         
+                        assocTable.style("display", tableDisplay ? "table" : "none");         
+                        setArrow.call (this, d);  
+                        d3.select(this).style("background", tableDisplay ? "#55a" : null);
                     })
                 ;
                 newHeaders.append("svg")
