@@ -15,7 +15,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         },
 
         initialize: function (viewOptions) {
-            CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.ProteinInfoViewBB.__super__.initialize.apply (this, arguments);
             
             var self = this;
             var defaultOptions = {
@@ -32,12 +32,15 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 .attr ("class", "panelInner")
                 .classed ("proteinInfoPanel", true)
             ;
+            
+            this.listenTo (this.model, "change:selectedProtein", this.render);
                 
             return this;
         },
     
         render: function () {
             // only render if visible
+            console.log ("prot info render called");
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 
                 var setArrow = function (d) {
@@ -47,11 +50,12 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     d3.select(this).select("svg").style("transform", "rotate("+(tableDisplay ? 90 : 180)+"deg)");
                 };
                 
-                var prots = Array.from (this.model.get("interactors").values());
+                var dataSource = this.model.get("selectedProtein");
+                var prots = dataSource ? Array.from (dataSource.values()) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
 
-                console.log ("prot info model", this.model);
+                console.log ("prot info", prots);
 
                 var protJoin = tabs.selectAll("section").data(prots);
                 protJoin.exit().remove();

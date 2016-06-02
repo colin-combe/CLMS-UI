@@ -296,7 +296,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",
-        model: CLMSUI.clmsModelInst,
+        model: CLMSUI.compositeModelInst,
     });
     
 };

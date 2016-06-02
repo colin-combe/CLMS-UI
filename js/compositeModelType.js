@@ -96,7 +96,9 @@
             idArr.forEach (function (id) {
                 map.set (id, this.get("clmsModel").get("interactors").get(id));    
             }, this);
+            console.log ("map eq", map == this.get("selectedProtein"));
             this.set ("selectedProtein", map);
+            console.log ("map", this.get("selectedProtein"));
         }
     
     });
