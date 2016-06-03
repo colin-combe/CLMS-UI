@@ -100,8 +100,8 @@
             // Currently (03/06/16) Maps/Sets don't trigger change functions even for new Objects
             // https://github.com/jashkenas/underscore/issues/2451
             // So need to force change event
-            //this.set ("selectedProtein", map);
-            this.model.trigger ("change:selectedProtein", this.model, map);
+            this.set ("selectedProtein", map);
+            this.trigger ("change:selectedProtein", this);
             console.log ("map", this.get("selectedProtein"));
         }
     
