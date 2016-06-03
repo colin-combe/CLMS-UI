@@ -113,22 +113,16 @@
 	}*/
 	
 	/*
-	 * SPECTRUM MATCHES AND MATCHED PEPTIDES
+	 * SPECTRUM MATCHES
 	 */
 	$query = "	
 		SELECT 
-			mp.match_id, mp.match_type, mp.peptide_id, 
-			mp.link_position + 1 AS link_position,
-			sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, 
 			sp.scan_number
 		FROM 
 			(select * from spectrum_match where search_id = 624 and dynamic_rank) sm 
-		INNER JOIN 
-			(select * from matched_peptide where search_id = 624) mp 
-			ON sm.id = mp.match_id 
-		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 
-		ORDER BY sm.id;";
+		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id;";
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
@@ -136,16 +130,14 @@
 	echo '//rows:'.pg_num_rows($res)."\n";
 	$startTime = microtime(true);
 	echo "var tempMatches = [\n";
-	$peptideIds = array();
+	$spectrumMatchIds = array();
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-			$peptideId = $line["peptide_id"];
-			$peptideIds[$peptideId] = 1;
+			$spectrumMatchId = $line["id"];
+			$spectrumMatchIds[$spectrumMatchId] = 1;
+
 			echo "{"
-				. '"id":' . $line["match_id"] . ','
-				. '"ty":' . $line["match_type"] . ','
-				. '"pi":' . $peptideId . ','
-				. '"lp":'. $line["link_position"]. ','
+				. '"id":' . $line["id"] . ','
 				. '"sc":' . round($line["score"], 5) . ','
 				. '"si":' . $line["search_id"] . ',';
 			$autoVal =  $line["autovalidated"];
@@ -172,6 +164,70 @@
 	echo '//php time: '.($endTime - $startTime)."ms\n\n";
 	
 	/*
+	 * MATCHED PEPTIDES
+	 */
+	$query = "	
+		SELECT 
+			mp.match_id, mp.match_type, mp.peptide_id, 
+			mp.link_position + 1 AS link_position
+		FROM 
+			matched_peptide mp WHERE match_id IN (".implode(array_keys($spectrumMatchIds), ",").");";
+	$startTime = microtime(true);
+	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
+	$endTime = microtime(true);
+	echo '//db time: '.($endTime - $startTime)."ms\n";
+	echo '//rows:'.pg_num_rows($res)."\n";
+	$startTime = microtime(true);
+	echo "var tempMatches = [\n";
+	$peptideIds = array();
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+			$peptideId = $line["peptide_id"];
+			$peptideIds[$peptideId] = 1;
+/*			echo "["
+				. $line["match_id"] . ','
+				. $line["match_type"] . ','
+				. $peptideId . ','
+				. $line["link_position"]. ','
+				. round($line["score"], 5) . ','
+				. $line["search_id"] . ','
+				. '"'.$line["autovalidated"].'"' . ','
+				. '"'.$line["validated"].'"' . ','
+				. "'run'," //$run_name . ','
+				. $line["scan_number"]. ','
+				. $line["precursor_charge"]
+				. "]";*/
+			echo "{"
+				. '"smid":' . $line["match_id"] . ','
+				. '"ty":' . $line["match_type"] . ','
+				. '"pi":' . $peptideId . ','
+				. '"lp":'. $line["link_position"] . '}';
+				//~ //. '"sc":' . round($line["score"], 5) . ','
+				//~ //. '"si":' . $line["search_id"] . ',';
+//~ /*			$autoVal =  $line["autovalidated"];
+			//~ if (isset($autoVal)){
+				//~ echo '"av":"' . $autoVal.'"' . ',';
+			//~ }
+			//~ $val = $line["validated"];
+			//~ if (isset($val)){
+				//~ echo '"v":"'.$val.'"' . ',';
+			//~ }
+			//~ $rej = $line["rejected"];
+			//~ if (isset($rej)){
+				//~ echo '"rj":"'.$rej.'"' . ',';
+			//~ }
+			//~ echo '"r":"' . "run" . '",'
+				//~ . '"sn":' . $line["scan_number"]. ','
+				//~ . '"pc":' . $line["precursor_charge"]
+				 //~ "}";*/
+			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+			if ($line) {echo ",\n";}
+	}
+	echo "\n];\n";
+	$endTime = microtime(true);
+	echo '//php time: '.($endTime - $startTime)."ms\n\n";
+	
+	/*
 	 * PEPTIDES
 	 */
 	$implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
@@ -188,7 +244,7 @@
 	$endTime = microtime(true);
 	echo '//db time: '.($endTime - $startTime)."ms\n";
 	echo '//rows:'.pg_num_rows($res)."\n";
-	echo "var peptides = [\n";
+	echo "var peptides = {\n";
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 			$proteins = $line["proteins"];
@@ -198,15 +254,15 @@
 				$proteinIds[$v] = 1;
 			}
 			$positions = $line['positions'];
-			echo '{"id":' . $line["id"] . ','
-				. '"seq":"' . $line["sequence"] . '",' 
-				. '"prt":[' . implode($proteinsArray, ',') . '],' 
-				. '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']' 
+			echo '"' . $line["id"] . '":{'
+				. '"rawSeq":"' . $line["sequence"] . '",' 
+				. '"proteins":[' . implode($proteinsArray, ',') . '],' 
+				. '"positions":[' . substr($positions, 1, strlen($positions) - 2) . ']' 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}
 	}
-	echo "\n];\n";
+	echo "\n};\n";
 	$endTime = microtime(true);
 	echo '//php time: '.($endTime - $startTime)."ms\n\n";
 	
@@ -220,24 +276,21 @@
 	$endTime = microtime(true);
 	echo '//db time: '.($endTime - $startTime)."ms\n";
 	echo '//rows:'.pg_num_rows($res)."\n";
-	echo "var proteins = [\n";
+	echo "var proteins = {\n";
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 			$isDecoy = ($line["is_decoy"] == "t")? 'true' : 'false';
-			$pId = $line["id"];
-			//~ echo '"' . $pId . '":{'
-			echo '{'
-				. '"id":"' . $pId . '",' 
+			echo '"' . $line["id"] . '":{'
 				. '"name":"' . $line["name"] . '",' 
 				. '"desc":"' . $line["description"] . '",' 
 				. '"accession":"' .$line["accession_number"]  . '",'
-				. '"seq":"' .$line["sequence"] . '",' 
+				. '"sequence":"' .$line["sequence"] . '",' 
 				. '"decoy":' .$isDecoy 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}
 	}
-	echo "\n];\n";
+	echo "\n};\n";
 	$endTime = microtime(true);
 	echo '//php time: '.($endTime - $startTime)."ms\n\n";
 	
@@ -251,10 +304,10 @@
 	pg_close($dbconn);
 ?>
 
-var CLMSUI = CLMSUI || {};
-           	
-var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: {}};
-CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+//~ var CLMSUI = CLMSUI || {};
+           	//~ 
+//~ var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: {}};
+//~ CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
 //]]>
 </script>
