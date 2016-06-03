@@ -62,7 +62,12 @@
         
         // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
         // to fill in the model
-        calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives) {
+        calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
+            if (add) {
+                var existingCrossLinks = this.get (modelProperty);
+                crossLinks = crossLinks.concat (existingCrossLinks);
+                console.log ("excl", existingCrossLinks);
+            }
             var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
 
             if (andAlternatives) {

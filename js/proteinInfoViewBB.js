@@ -20,7 +20,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var self = this;
             var defaultOptions = {
                 fixedFontKeys: d3.set(["sequence"]),
-                removeTheseKeys: d3.set (["canonicalSeq"])
+                removeTheseKeys: d3.set (["canonicalSeq"]),
+                expandTheseKeys: d3.set (["uniprotFeatures"]),
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -31,6 +32,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             mainDivSel.append("div")
                 .attr ("class", "panelInner")
                 .classed ("proteinInfoPanel", true)
+                .append("h1")
+                    .attr("class", "infoHeader")
+                    .text("Selected Info for 0 Proteins")
             ;
             
             this.listenTo (this.model, "change:selectedProtein", this.render);
@@ -45,30 +49,34 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 
                 var setArrow = function (d) {
                     var assocTable = d3.select("#protInfo"+d.id);
-                    var tableDisplay = (assocTable.style("display") == "none");  
-                    console.log ("td2", tableDisplay);
-                    d3.select(this).select("svg").style("transform", "rotate("+(tableDisplay ? 90 : 180)+"deg)");
+                    var tableIsHidden = (assocTable.style("display") == "none");  
+                    d3.select(this)
+                        .style("background", tableIsHidden ? "none" : "#55a")
+                        .select("svg")
+                            .style("transform", "rotate("+(tableIsHidden ? 90 : 180)+"deg)")
+                    ;
                 };
                 
                 var dataSource = this.model.get("selectedProtein");
                 var prots = dataSource ? Array.from (dataSource.values()) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
+                
+                tabs.select("h1.infoHeader").text("Selected Info for "+prots.length+" Protein"+(prots.length !== 1 ? "s" : ""));
 
-                console.log ("prot info", prots);
-
-                var protJoin = tabs.selectAll("section").data(prots);
+                var protJoin = tabs.selectAll("section").data(prots, function(d) { return d.id; });
                 protJoin.exit().remove();
                 var newProts = protJoin.enter().append("section");
 
                 var newHeaders = newProts.append("h2")
                     .on ("click", function(d) {
                         var assocTable = d3.select("#protInfo"+d.id);
-                        var tableDisplay = (assocTable.style("display") == "none");
-                        console.log ("td1", tableDisplay);
-                        assocTable.style("display", tableDisplay ? "table" : "none");         
+                        var tableIsHidden = (assocTable.style("display") == "none");
+                        assocTable.style("display", tableIsHidden ? "table" : "none");         
                         setArrow.call (this, d);  
-                        d3.select(this).style("background", tableDisplay ? "#55a" : null);
+                    })
+                    .on ("mouseover", function(d) {
+                        // eventually backbone shared highlighting code to go here   
                     })
                 ;
                 newHeaders.append("svg")
@@ -84,8 +92,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
 
                 var self = this;
 
-                var rowFilterFunc = function(d) {
-                    var entries = d3.entries(d);
+                var rowFilterFunc = function (d, entries) {
                     var badKeys = self.options.removeTheseKeys;
                     return entries.filter (function (entry) {
                         if ($.isArray(entry.value)) {
@@ -97,9 +104,52 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         return ! ($.isFunction(entry.value) || $.isPlainObject(entry.value) || (badKeys && badKeys.has(entry.key))); 
                     });
                 };
+                
+                // yet another cobble a table together function, but as a string
+                var makeTable237 = function (arrOfObjs) {
+                    var t = "<table><tr>";
+                    var headers = d3.keys(arrOfObjs[0]);
+                    headers.forEach (function(h) {
+                        t+="<TH>"+h+"</TH>";
+                    });
+                    t += "</TR>";
+                    arrOfObjs.forEach (function (obj) {
+                        t += "<TR>";
+                        d3.values(obj).forEach (function(h) {
+                            t+="<TD>"+h+"</TD>";
+                        }); 
+                        t += "</TR>";
+                    });
+                    t += "</TABLE>";
+                    return t;
+                };
+                
+                var arrayExpandFunc = function (d, entries) {
+                    var newEntries = [];
+                    var expandKeys = self.options.expandTheseKeys;
+                    entries.forEach (function (entry) {
+                        // this way makes a row in main table per array entry
+                        /*
+                        newEntries.push (entry);
+                        if (expandKeys && expandKeys.has(entry.key)) {
+                            var vals = d[entry.key];
+                            vals.forEach (function (val, i) {
+                                newEntries.push ({key: i, value: d3.values(val).join(",\t") });
+                            });
+                        }
+                        */
+                        // this way makes a nested table in a row of the main table
+                        if (expandKeys && expandKeys.has(entry.key)) {
+                            newEntries.push ({key: entry.key, value: makeTable237 (d[entry.key])});
+                        } else {
+                            newEntries.push (entry);
+                        }
+                    });
+                    return newEntries;
+                };
 
                 var tbodies = tables.select("tbody");
-                var rowJoin = tbodies.selectAll("tr").data(function(d) { return rowFilterFunc (d); });
+                var rowJoin = tbodies.selectAll("tr").data(function(d) { return arrayExpandFunc (d, rowFilterFunc (d, d3.entries(d))); });
                 rowJoin.exit().remove();
                 var newRows = rowJoin.enter().append("tr");
                 newRows.append("td").text(function(d) { return d.key; });
@@ -108,7 +158,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .classed ("fixedSizeFont", function(d) { return self.options.fixedFontKeys && self.options.fixedFontKeys.has (d.key); })
                 ;
 
-                protJoin.each (setArrow);
+                protJoin.selectAll("h2").each (setArrow);
             }
 
             return this;
