@@ -158,7 +158,7 @@
 	$q_hasProtein = 'SELECT peptide_id, array_to_string(array_agg(accession), \',\') as proteins, array_to_string(array_agg(peptide_position), \',\') as positions FROM '
 			. $proteinTempTableName . ' GROUP BY '. $proteinTempTableName .'.peptide_id';
 	// turns out that array_agg()[1] is quicker than the (SQL script created) first() function
-	$q_proteins = 'SELECT protein.accession_number as id, (array_agg(protein.name))[1] AS name, (array_agg(protein.description))[1] AS description, (array_agg(protein.sequence))[1] AS sequence, (array_agg(protein.protein_length))[1] AS size, (array_agg(protein.accession_number))[1] AS accession'
+	$q_proteins = 'SELECT protein.accession_number as id, (array_agg(protein.name))[1] AS name,  (array_agg(protein.description))[1] AS description, (array_agg(protein.description))[1] AS description, (array_agg(protein.sequence))[1] AS sequence, (array_agg(protein.protein_length))[1] AS size, (array_agg(protein.accession_number))[1] AS accession'
 		  .' FROM protein, '
 		  .	$proteinTempTableName . ' WHERE ' . $proteinTempTableName
 		  .'.protein_id = protein.id  GROUP BY protein.accession_number;';
@@ -179,6 +179,10 @@
 		if (substr($seq, 0, 1) != "'") {
 			$seq = "'" . $seq . "'";
 		}
+		$desc = $line["description"];
+		if (substr($desc, 0, 1) != "'") {
+			$desc = "'" . $desc . "'";
+		}
 
 		$name = str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["name"])));
 		//~ $underscore_pos = strpos($name,'_');
@@ -193,7 +197,8 @@
 				. '\''.$pid . '\','
 				. '\'' . str_replace("'", "", $line["accession"]) . '\','
 				. '\'' . $name . "',"
-				. $seq
+				. $seq . ","
+				. $desc
 				. "]";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		if ($line) { echo ','; }

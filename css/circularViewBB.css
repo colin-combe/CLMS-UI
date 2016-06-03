@@ -38,12 +38,16 @@ svg.circularView {
 }
 
 .circleNode {
-    stroke-width: 1px;
+    stroke-width: 5px;
     fill: #dde;
 }
 
+.circleNode.selected {
+    stroke: #ff0;
+}
+
 .circleNode:hover, .circleFeature:hover {
-    stroke: #445;
+    stroke: #fdc086;
 }
 
 .circularView .tick text {
