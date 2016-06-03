@@ -97,7 +97,11 @@
                 map.set (id, this.get("clmsModel").get("interactors").get(id));    
             }, this);
             console.log ("map eq", map == this.get("selectedProtein"));
-            this.set ("selectedProtein", map);
+            // Currently (03/06/16) Maps/Sets don't trigger change functions even for new Objects
+            // https://github.com/jashkenas/underscore/issues/2451
+            // So need to force change event
+            //this.set ("selectedProtein", map);
+            this.model.trigger ("change:selectedProtein", this.model, map);
             console.log ("map", this.get("selectedProtein"));
         }
     
