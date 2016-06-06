@@ -212,10 +212,10 @@
             
             // What does this php bit do now?
         <?php
-            include './php/loadData.php';
-            if (file_exists('../annotations.php')){
-                include '../annotations.php';
-            }
+            include './php/loadTest.php';
+            //~ if (file_exists('../annotations.php')){
+                //~ include '../annotations.php';
+            //~ }
         ?>
 
         CLMSUI.init = CLMSUI.init || {};
@@ -285,7 +285,7 @@
 
 
             // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
-            var options = {rawInteractors: tempInteractors, rawMatches: tempMatches, searches: searchMeta};
+            var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
             CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
                 "No cross-links detected for this search.<br>Please return to the search history page."
             );

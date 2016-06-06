@@ -26,9 +26,6 @@
 	$showDecoys = false;//urldecode($_GET["decoys"]);
 	$showAll = false;//urldecode($_GET["all"]);
 
-	//~ echo "// decoys?:".$showDecoys."\n";
-	//~ echo "// all?:".$showAll."\n";
-
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
 		header();
@@ -87,19 +84,7 @@
 	}
 	$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
 	$proteinTempTableName = 'tempHasProtein'.preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']).time();
-	/*$q_makeTempHasProtein =
-		'SELECT has_protein.peptide_id, has_protein.protein_id, (peptide_position + 1) as peptide_position INTO TEMPORARY '
-		. $proteinTempTableName
-		. ' FROM has_protein, ' . $peptidesTempTableName
-		. ' WHERE ' . $peptidesTempTableName
-		. '.peptide_id = has_protein.peptide_id GROUP BY  has_protein.peptide_id, has_protein.protein_id, peptide_position;';*/
 	echo "storedLayout = null;\n";
-	
-	/*if (false){//strpos($sid,',') === false) { //if not aggregation of more than one search
-
-		$dashPos = strpos($sid,'-');
-		$randId = substr($sid, $dashPos + 1);
-		$id = substr($sid, 0, ($dashPos));*/
 	if (count($search_randGroup) == 1) {
 		$layoutQuery = "SELECT t1.layout AS l "
 				. " FROM layouts AS t1 "
@@ -128,7 +113,6 @@
 		$c++;
 		$randId = $search["randId"];//substr($agg, $dashPos + 1);
 		$id = $search["id"];//substr($agg, 0, ($dashPos));
-		//echo '// s' . $id . ' ' . (string)$search;
 		$WHERE = $WHERE.'(sm.search_id = '.$id.' AND s.random_id = \''.$randId.'\''.') ';
 		$WHERE_VE = $WHERE_VE.'(search_id = '.$id.')';
 	}
@@ -185,9 +169,7 @@
 		}
 
 		$name = str_replace(")", "", str_replace("(", "", str_replace("'", "", $line["name"])));
-		//~ $underscore_pos = strpos($name,'_');
-		//~ $name = substr($name, 0, $underscore_pos); //removes e.g. '_HUMAN' from end of names
-
+	
 		$pid = $line["id"];
 		if (strpos($sid,',') !== false) { //if aggregation
 			$pid = $line["accession"];
@@ -209,11 +191,9 @@
 	$q_matchedPeptides = 'SELECT '. $peptidesTempTableName .'.*, proteins, positions FROM '
 			.$peptidesTempTableName . ', ('	.$q_hasProtein.') AS prt WHERE '
 			. $peptidesTempTableName .'.peptide_id = prt.peptide_id ORDER BY score DESC, match_id, match_type;';
-	//~ echo '//q_matchedPeptides>'.$q_matchedPeptides."\n";
 	$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
 	echo "var tempMatches = [";
 	$waitingForFirstMatch = true;
-	//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 		$match_type = $line["match_type"];
 		if ($match_type == 1) {
@@ -242,7 +222,7 @@
 				$precursorCharge = $line["precursor_charge"];
 			
 				if ($waitingForFirstMatch != true) {
-					echo "["//"xlv.addMatch("
+					echo "["
 								. $match_id . ','
 								. $pep1_prot_ids . ','
 								. $pep1_positions . ','
