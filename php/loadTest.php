@@ -1,25 +1,75 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <script type="text/javascript" src="../vendor/underscore.js"></script>
-        <script type="text/javascript" src="../vendor/zepto.js"></script>
-        <script type="text/javascript" src="../vendor/backbone.js"></script>
 
-        <script type="text/javascript" src="../../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
-        <script type="text/javascript" src="../../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../../CLMS-model/src/CLMS/model/Protein.js"></script>
-        <script type="text/javascript" src="../../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
-        <script type="text/javascript" src="../../CLMS-model/src/CLMS/model/CrossLink.js"></script>
-        <script type="text/javascript" src="../../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
-
-    </head>
-    <script>
-//<![CDATA[
 <?php
 
 	$pageStartTime = microtime(true);
 	include('../../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
+
+
+	$sid = urldecode($_GET["sid"]);
+	$id_rands = explode("," , $sid);
+	$sid = str_replace(',','', $sid );
+	$sid = str_replace('-','', $sid );
+	
+	$showDecoys = false;//urldecode($_GET["decoys"]);
+	$showAll = false;//urldecode($_GET["all"]);
+
+	$pattern = '/[^0-9,\-]/';
+	if (preg_match($pattern, $sid)){
+		header();
+		echo ("<!DOCTYPE html>\n<html><head></head><body>Numbers only for group ids</body></html>");
+		exit;
+	}
+
+	include('../connectionString.php');
+	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
+
+	$search_randGroup = [];
+	
+	for ($i = 0; $i < count($id_rands); $i++) {
+		$s = [];		
+		$dashSeperated = explode("-" , $id_rands[$i]);
+		$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
+		$id = $dashSeperated[0];
+		$res = pg_query("SELECT search.name, sequence_file.file_name"
+					." FROM search, search_sequencedb, sequence_file "
+					."WHERE search.id = search_sequencedb.search_id "
+					."AND search_sequencedb.seqdb_id = sequence_file.id "
+					."AND search.id = '".$id."';") 
+					or die('Query failed: ' . pg_last_error());
+		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+		$name = $line['name'];
+		$filename = $line['file_name'];
+		
+		$s["id"] = $id;
+		$s["randId"] = $randId;
+		$s["name"] = $name;
+		$s["filename"] = $filename;
+		if (count($dashSeperated) == 6){
+			$s["group"] = $dashSeperated[5];
+		} else {
+            $s["group"] = "'NA'";
+        }
+		$search_randGroup[$id] = $s;
+
+	}
+	$searchMeta = "var searchMeta = " . json_encode($search_randGroup) . ';';
+	
+	
+	
+	
+	echo "CLMSUI.sid = '".$sid."';\n";// TODO - this needs to change
+	
+	echo $searchMeta;
+	
+	if ($filename == "HSA-Active.FASTA"){
+		echo "var HSA_Active = true;\n";
+		include('./php/distances.php');
+	}
+	else {
+		echo "var HSA_Active = false;\n";
+		echo "var distances = [];\n";
+	}
 	
 /*	$sid = urldecode($_GET["sid"]);
 	//only allow digits or ',' or '-' in url params
@@ -112,6 +162,9 @@
 		$WHERE = $WHERE.'(sm.search_id = '.$id.' AND s.random_id = \''.$randId.'\''.') ';
 	}*/
 	
+	
+	$sid = 3266;
+	
 	/*
 	 * SPECTRUM MATCHES AND MATCHED PEPTIDES
 	 */
@@ -123,9 +176,9 @@
 			sm.search_id, sm.precursor_charge, 
 			sp.scan_number
 		FROM 
-			(select * from spectrum_match where search_id = 624 and dynamic_rank) sm 
+			(select * from spectrum_match where search_id = ".$sid." and dynamic_rank) sm 
 		INNER JOIN 
-			(select * from matched_peptide where search_id = 624) mp 
+			(select * from matched_peptide where search_id = ".$sid.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 
 		ORDER BY sm.id;";
@@ -227,7 +280,7 @@
 			$pId = $line["id"];
 			//~ echo '"' . $pId . '":{'
 			echo '{'
-				. '"id":"' . $pId . '",' 
+				. '"id":' . $pId . ',' 
 				. '"name":"' . $line["name"] . '",' 
 				. '"desc":"' . $line["description"] . '",' 
 				. '"accession":"' .$line["accession_number"]  . '",'
@@ -251,10 +304,9 @@
 	pg_close($dbconn);
 ?>
 
-var CLMSUI = CLMSUI || {};
+//var CLMSUI = CLMSUI || {};
            	
-var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: {}};
-CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+//var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: {}};
+//CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
-//]]>
-</script>
+
