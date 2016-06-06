@@ -1,6 +1,6 @@
 
 #proteinInfoPanel .panelInner {
-    overflow-y: auto;
+    overflow-y: scroll;
 }
 
 .proteinInfoPanel section {
@@ -16,10 +16,19 @@
     table-layout: fixed;
 }
 
+.proteinInfoPanel table table {
+    border: 1px solid gray;
+}
+
+.proteinInfoPanel table th {
+    text-transform: capitalize;
+}
+
 .proteinInfoPanel table td:first-child, .proteinInfoPanel table th:first-child {
     width: 10em;
     text-transform: capitalize;
 }
+
 .proteinInfoPanel tbody tr:hover {
     background: #999;
 }
@@ -30,6 +39,7 @@
 
 .proteinInfoPanel tbody td {
     word-wrap: break-word;
+    line-height: 1.4em;
 }
 
 .proteinInfoPanel h2 {
@@ -61,7 +71,7 @@
     cursor: pointer;
 }
 
-.fixedSizeFont {
+.proteinInfoPanel .fixedSizeFont {
     font-family: monospace;
     line-height: 1em;
 }

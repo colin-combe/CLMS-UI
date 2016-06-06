@@ -203,7 +203,7 @@
                 self.model.get("tooltipModel")
                     .set("header", interactor.name.replace("_", " "))
                     .set("contents", [
-                        ["ID", interactor.id], ["Accession", interactor.accession],["Size", interactor.size]
+                        ["ID", interactor.id], ["Accession", interactor.accession],["Size", interactor.size], ["Desc.", interactor.description]
                     ])
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
@@ -245,7 +245,7 @@
                 this.render ({changed : d3.set(["features"]), });   
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
-            
+            this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
             return this;
         },
         
@@ -274,7 +274,7 @@
             return this;
         },
         
-        actionNodeLinks: function (nodeId, actionType, startPos, endPos) {
+        actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.filterCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
@@ -284,7 +284,7 @@
                 return (link.fromProtein.id === nodeId && (anyPos || (link.fromResidue >= startPos && endPos >= link.fromResidue))) ||
                         (link.toProtein.id === nodeId && (anyPos || (link.toResidue >= startPos && endPos >= link.toResidue)));
             });
-            this.model.calcMatchingCrosslinks (actionType,  matchLinks, actionType === "highlights");
+            this.model.calcMatchingCrosslinks (actionType, matchLinks, actionType === "highlights", add);
             //this.model.set (actionType, matchLinks);
         },
         
@@ -378,7 +378,7 @@
                 if (!changed || changed.has("links")) {
                     this.drawLinks (gRot, linkCoords);
                 }
-                if (!changed) {
+                if (!changed || changed.has("nodes")) {
                     // draw nodes (around edge)
                     this.drawNodes (gRot, nodes);
                     // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
@@ -418,7 +418,7 @@
                     .attr("class", "circleGhostLink")
                     .on ("mouseenter", function(d) {
                         self.linkTip (d);
-                        self.model.calcMatchingCrosslinks ("highlights",  [crossLinks.get(d.id)], true);
+                        self.model.calcMatchingCrosslinks ("highlights",  [crossLinks.get(d.id)], true, false);
                         //self.model.set ("highlights", [crossLinks.get(d.id)]);
                         //self.model.collateMatchRegions ([crossLinks.get(d.id)]);
                     })
@@ -427,7 +427,9 @@
                         self.model.set ("highlights", []);
                     })
                     .on ("click", function (d) {
-                        self.model.set ("selection", [crossLinks.get(d.id)]);
+                        var add = d3.event.ctrlKey || d3.event.shiftKey;
+                        self.model.calcMatchingCrosslinks ("selection", [crossLinks.get(d.id)], false, add);
+                        //self.model.set ("selection", [crossLinks.get(d.id)]);
                     })
                     .call (self.showSelectedOnTheseElements, self)
             ;
@@ -465,19 +467,25 @@
                     .attr("class", "circleNode")
                     .on("mouseenter", function(d) {
                         self.nodeTip (d);
-                        self.actionNodeLinks (d.id, "highlights");
+                        self.actionNodeLinks (d.id, "highlights", false);
                     })
                     .on("mouseleave", function() {
                         self.clearTip (); 
                         self.model.set ("highlights", []);
                     })
                     .on("click", function(d) {
-                        self.actionNodeLinks (d.id, "selection");
+                        var add = d3.event.ctrlKey || d3.event.shiftKey;
+                        self.actionNodeLinks (d.id, "selection", add);
+                        self.model.setSelectedProteins ([d.id], add);
                     })
             ;
 
             nodeJoin
                 .attr("d", this.arc)
+                .classed ("selected", function(d) {
+                    var map = self.model.get("selectedProtein");
+                    return map && map.has(d.id);
+                })
             ;    
             
             return this;
@@ -620,14 +628,15 @@
                     .attr("class", "circleFeature")
                     .on("mouseenter", function(d) {
                         self.featureTip (d);
-                        self.actionNodeLinks (d.nodeID, "highlights", d.fstart, d.fend);
+                        self.actionNodeLinks (d.nodeID, "highlights", false, d.fstart, d.fend);
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
                         self.model.set ("highlights", []);
                     })
                     .on("click", function(d) {
-                        self.actionNodeLinks (d.nodeID, "selection", d.fstart, d.fend);
+                        var add = d3.event.ctrlKey || d3.event.shiftKey;
+                        self.actionNodeLinks (d.nodeID, "selection", add, d.fstart, d.fend);
                     })
             ;
             

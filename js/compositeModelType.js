@@ -62,7 +62,12 @@
         
         // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
         // to fill in the model
-        calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives) {
+        calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
+            if (add) {
+                var existingCrossLinks = this.get (modelProperty);
+                crossLinks = crossLinks.concat (existingCrossLinks);
+                console.log ("excl", existingCrossLinks);
+            }
             var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
 
             if (andAlternatives) {
@@ -89,6 +94,20 @@
                     }, this);
                 }
             }, this);
+        },
+        
+        setSelectedProteins: function (idArr, add) {
+            var map = add ? new Map (this.get("selectedProtein")) : new Map ();
+            idArr.forEach (function (id) {
+                map.set (id, this.get("clmsModel").get("interactors").get(id));    
+            }, this);
+            console.log ("map eq", map == this.get("selectedProtein"));
+            // Currently (03/06/16) Maps/Sets don't trigger change functions even for new Objects
+            // https://github.com/jashkenas/underscore/issues/2451
+            // So need to force change event
+            this.set ("selectedProtein", map);
+            this.trigger ("change:selectedProtein", this);
+            console.log ("map", this.get("selectedProtein"));
         }
     
     });
