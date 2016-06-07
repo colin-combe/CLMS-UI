@@ -386,7 +386,7 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         return min;
     }
     
-    
+    // Baur end append routine 1
     function randomEnd (pOrder, protein) {
         if (Math.random() > 0.5) {
             pOrder.push (protein);
@@ -395,10 +395,12 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         }
     }
     
+    // Baur end append routine 2
     function fixedEnd (pOrder, protein) {
         pOrder.push (protein);
     }
     
+    // Baur end append routine 3
     function leastLengthEnd (pOrder, protein, interLinks, proteins) {
         var leftDistance = 0;
         var runDistance = 0;
@@ -426,7 +428,59 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         if (leftDistance < rightDistance) {
             pOrder.splice (0, 0, protein);
         } else {
-            pOrder.push(protein);
+            pOrder.push (protein);
+        }
+    }
+    
+    // Baur end append routine 4
+    function leastCrossingsEnd (pOrder, protein, interLinks, proteins, pMap) {
+        var protCrossings = interLinks[protein];
+        var openLinkArr = pOrder.map (function (prot) {
+            var links = d3.entries(interLinks[prot]);
+            var openLinks = 0;
+            links.forEach (function(link) {
+                if (link.key !== "total" && !pMap[link.key] && link.key !== protein) {
+                    openLinks += link.value;
+                }
+            });
+            return openLinks;
+        });
+        
+        var totCount = 0;
+        var fArr = pOrder.slice(0).reverse().map (function (prot) {
+            var linkCount = protCrossings[prot] || 0;
+            totCount += linkCount;
+            return totCount - linkCount;
+        });
+        fArr.reverse();
+        
+        totCount = 0;
+        var rArr = pOrder.map (function (prot) {
+            var linkCount = protCrossings[prot] || 0;
+            totCount += linkCount;
+            return totCount - linkCount;
+        });
+        rArr.reverse();
+        
+        var fScore = 0;
+        var ftArr = fArr.map (function (val, i) {
+            fScore += val * openLinkArr[i];
+            return val * openLinkArr[i];
+        });
+        
+        var revOpenLinkArr = openLinkArr.slice(0).reverse();
+        var rScore = 0;
+        var rtArr = rArr.map (function (val, i) {
+            rScore += val * revOpenLinkArr[i];
+            return val * revOpenLinkArr[i];
+        });
+        
+        console.log ("leastCross", openLinkArr, fArr, rArr, ftArr, rtArr, fScore, rScore);
+        
+        if (fScore < rScore) {
+            pOrder.splice (0, 0, protein);
+        } else {
+            pOrder.push (protein);
         }
     }
     
@@ -442,22 +496,18 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         pMap[interLinkArr[0].key] = true;
         
         for (var n = 0; n < interLinkArr.length - 1; n++) {
-            var choice = outwardConn (interLinkArr, pMap);
+            var choice = inwardConn (interLinkArr, pMap);
             
             console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
             leastLengthEnd (pOrder, choice.protein, interLinks, proteins);
+            //leastCrossingsEnd (pOrder, choice.protein, interLinks, proteins, pMap);
             pMap[choice.protein] = true;
         }
-
         
-        
-       
         console.log ("ila", interLinkArr, pMap, pOrder);
-        
+        return pOrder;
     }
     
-    var pOrder = sort (interLinks);
-    
-    return pOrder;
+    return sort (interLinks);
 };

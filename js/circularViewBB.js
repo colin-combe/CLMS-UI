@@ -42,6 +42,7 @@
 
         var nodeCoordMap = d3.map();
         var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
+        
         nodeArr.forEach (function (node) {
             var size = node.size;
             // start ... end goes from scale (0 ... size), 1 bigger than 1-indexed size
@@ -235,8 +236,9 @@
                 ;
             };
             
-            CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"), this.model.get("clmsModel").get("crossLinks"));
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"), this.model.get("clmsModel").get("crossLinks"));
                 
+            console.log ("thisio", this, this.interactorOrder);
             // listen to custom filteringDone event from model    
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });  
             //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
@@ -341,6 +343,7 @@
                 
                 var interactors = this.model.get("clmsModel").get("interactors");
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
+                console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
                 
                 var filteredInteractors = this.filterInteractors (interactors);
@@ -348,6 +351,17 @@
                 var filteredFeatures = filteredInteractors.map (function (inter) {
                     return this.filterFeatures (inter.uniprotFeatures);
                 }, this);
+                
+                // set interactors to same order as interactor order
+                console.log ("ofi", filteredInteractors);
+                var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
+                filteredInteractors = [];
+                this.interactorOrder.forEach (function (interactorId) {
+                    if (fmap.has(interactorId)) {
+                        filteredInteractors.push (fmap.get(interactorId));
+                    }    
+                });
+                console.log ("nfi", filteredInteractors);
                 
                 //console.log ("filteredFeatures", filteredFeatures);
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
