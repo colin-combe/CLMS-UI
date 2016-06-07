@@ -402,29 +402,48 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
     
     // Baur end append routine 3
     function leastLengthEnd (pOrder, protein, interLinks, proteins) {
+        var allDistance = 0;
+        proteins.forEach (function (prot, key) {
+            allDistance += prot.size;
+        });
+        var thisProtSize = proteins.get(protein).size;
+        console.log ("ad", thisProtSize, allDistance);
+        
+        
+        var runDistance = thisProtSize / 2;
         var leftDistance = 0;
-        var runDistance = 0;
         pOrder.forEach (function (pid) {
             var linksB = interLinks[pid][protein] || 0;
             var proteinB = proteins.get(pid);
             //console.log ("pb", interLinks, linksB, pid, protein, proteinB);
             var linkDistance = ((proteinB.size / 2) + runDistance) * linksB;
+            var protDistance = ((proteinB.size / 2) + runDistance);
+            var circProtDistance = Math.min (allDistance - protDistance, protDistance); // might be closer via circle 'gap'
+            if (circProtDistance < protDistance) {
+                console.log ("shorter going other way between", pid, protein);
+            }
+            var linkDistance = circProtDistance * linksB;
             runDistance += proteinB.size;
             leftDistance += linkDistance;
         });
         
-        runDistance = 0;
+        runDistance = thisProtSize / 2;
         var rightDistance = 0;
         for (var n = pOrder.length; --n >= 0;) {
             var pid = pOrder[n];
             var linksB = interLinks[pid][protein] || 0;
             var proteinB = proteins.get(pid);
-            var linkDistance = ((proteinB.size / 2) + runDistance) * linksB;
+            var protDistance = ((proteinB.size / 2) + runDistance);
+            var circProtDistance = Math.min (allDistance - protDistance, protDistance); // might be closer via circle 'gap'
+            if (circProtDistance < protDistance) {
+                console.log ("shorter going other way between", pid, protein, protDistance, circProtDistance);
+            }
+            var linkDistance = circProtDistance * linksB;
             runDistance += proteinB.size;
             rightDistance += linkDistance;
         }
         
-        //console.log (protein, "left", leftDistance, "right", rightDistance);  
+        console.log (protein, "left", leftDistance, "right", rightDistance);  
         if (leftDistance < rightDistance) {
             pOrder.splice (0, 0, protein);
         } else {
@@ -496,12 +515,12 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         pMap[interLinkArr[0].key] = true;
         
         for (var n = 0; n < interLinkArr.length - 1; n++) {
-            var choice = inwardConn (interLinkArr, pMap);
+            var choice = outwardConn (interLinkArr, pMap);
             
             console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
-            leastLengthEnd (pOrder, choice.protein, interLinks, proteins);
-            //leastCrossingsEnd (pOrder, choice.protein, interLinks, proteins, pMap);
+            //leastLengthEnd (pOrder, choice.protein, interLinks, proteins);
+            leastCrossingsEnd (pOrder, choice.protein, interLinks, proteins, pMap);
             pMap[choice.protein] = true;
         }
         
