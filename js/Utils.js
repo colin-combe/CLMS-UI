@@ -311,3 +311,153 @@ CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         return this;
     }
 });
+
+CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
+    function chunk (proteins, crosslinks) {
+        var map = {};
+        proteins.forEach (function (protein) {
+            map[protein.id] = {total: 0};    
+        });
+        crosslinks.forEach (function (xlink) {
+            if (xlink.toProtein.id !== xlink.fromProtein.id) {
+                var pto = xlink.toProtein.id;
+                var pfrom = xlink.fromProtein.id;
+                map[pto] = map[pto] || {};
+                map[pfrom] = map[pfrom] || {};
+                map[pto][pfrom] = map[pto][pfrom] || 0;
+                map[pto][pfrom]++;    
+                map[pto].total++;
+                map[pfrom][pto] = map[pfrom][pto] || 0;
+                map[pfrom][pto]++;    
+                map[pfrom].total++;
+            }
+        });
+        console.log ("map", map);
+        return map;
+    }
+    
+    console.log ("proteins", proteins);
+    var interLinks = chunk (proteins, crosslinks);
+    
+    
+    function inwardConn (interLinkArr, pMap) {
+       var max = {max: -1, protein: null};
+        interLinkArr.forEach (function (interLink) {
+            console.log ("il", interLink);
+            if (!pMap[interLink.key]) {
+                var cur = 0;
+                var vals = d3.entries(interLink.value);
+                vals.forEach (function(val) {
+                    console.log ("val", val);
+                    if (pMap[val.key]) {
+                        cur += val.value;
+                    }
+                });
+                if (cur > max.max) {
+                    max.max = cur;
+                    max.protein = interLink.key;
+                }
+            }
+        }); 
+        
+        return max;
+    }
+    
+    function outwardConn (interLinkArr, pMap) {
+       var min = {min: Number.MAX_SAFE_INTEGER, protein: null};
+        interLinkArr.forEach (function (interLink) {
+            console.log ("ol", interLink);
+            if (!pMap[interLink.key]) {
+                var cur = 0;
+                var vals = d3.entries(interLink.value);
+                vals.forEach (function(val) {
+                    console.log ("val", val);
+                    if (!pMap[val.key] && val.key !== "total") {
+                        cur += val.value;
+                    }
+                });
+                if (cur < min.min) {
+                    min.min = cur;
+                    min.protein = interLink.key;
+                }
+            }
+        }); 
+        
+        return min;
+    }
+    
+    
+    function randomEnd (pOrder, protein) {
+        if (Math.random() > 0.5) {
+            pOrder.push (protein);
+        } else {
+            pOrder.splice (0, 0, protein);
+        }
+    }
+    
+    function fixedEnd (pOrder, protein) {
+        pOrder.push (protein);
+    }
+    
+    function leastLengthEnd (pOrder, protein, interLinks, proteins) {
+        var leftDistance = 0;
+        var runDistance = 0;
+        pOrder.forEach (function (pid) {
+            var linksB = interLinks[pid][protein] || 0;
+            var proteinB = proteins.get(pid);
+            //console.log ("pb", interLinks, linksB, pid, protein, proteinB);
+            var linkDistance = ((proteinB.size / 2) + runDistance) * linksB;
+            runDistance += proteinB.size;
+            leftDistance += linkDistance;
+        });
+        
+        runDistance = 0;
+        var rightDistance = 0;
+        for (var n = pOrder.length; --n >= 0;) {
+            var pid = pOrder[n];
+            var linksB = interLinks[pid][protein] || 0;
+            var proteinB = proteins.get(pid);
+            var linkDistance = ((proteinB.size / 2) + runDistance) * linksB;
+            runDistance += proteinB.size;
+            rightDistance += linkDistance;
+        }
+        
+        //console.log (protein, "left", leftDistance, "right", rightDistance);  
+        if (leftDistance < rightDistance) {
+            pOrder.splice (0, 0, protein);
+        } else {
+            pOrder.push(protein);
+        }
+    }
+    
+    
+    function sort (interLinks) {
+        var pOrder = [];
+        var pMap = {};
+        var interLinkArr = d3.entries(interLinks);
+        interLinkArr.sort (function(a,b) {
+            return b.value.total - a.value.total;
+        });
+        pOrder.push (interLinkArr[0].key);
+        pMap[interLinkArr[0].key] = true;
+        
+        for (var n = 0; n < interLinkArr.length - 1; n++) {
+            var choice = outwardConn (interLinkArr, pMap);
+            
+            console.log ("choice", choice);
+            //fixedEnd (pOrder, choice.protein);
+            leastLengthEnd (pOrder, choice.protein, interLinks, proteins);
+            pMap[choice.protein] = true;
+        }
+
+        
+        
+       
+        console.log ("ila", interLinkArr, pMap, pOrder);
+        
+    }
+    
+    var pOrder = sort (interLinks);
+    
+    return pOrder;
+};

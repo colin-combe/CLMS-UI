@@ -234,6 +234,8 @@
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
+            
+            CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"), this.model.get("clmsModel").get("crossLinks"));
                 
             // listen to custom filteringDone event from model    
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });  
