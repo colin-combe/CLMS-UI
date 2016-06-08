@@ -318,39 +318,48 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         proteins.forEach (function (protein) {
             map[protein.id] = {total: 0};    
         });
+        
+        function add (a, b, posA, posB) {
+            map[a] = map[a] || {};
+            map[a].total++;
+            map[a][b] = map[a][b] || {count: 0, posOutTotal: 0, posIn:[], posOut:[]};
+            var datum = map[a][b];
+            datum.count++;    
+            datum.posOutTotal += posB;    
+            datum.posIn.push (posA);
+            datum.posOut.push (posB);
+            datum.posIn.sort(function(a,b) { return a-b; });
+            datum.posOut.sort(function(a,b) { return a-b; });
+        }
+        
         crosslinks.forEach (function (xlink) {
             if (xlink.toProtein.id !== xlink.fromProtein.id) {
+                //console.log ("xlink", xlink);
                 var pto = xlink.toProtein.id;
                 var pfrom = xlink.fromProtein.id;
-                map[pto] = map[pto] || {};
-                map[pfrom] = map[pfrom] || {};
-                map[pto][pfrom] = map[pto][pfrom] || 0;
-                map[pto][pfrom]++;    
-                map[pto].total++;
-                map[pfrom][pto] = map[pfrom][pto] || 0;
-                map[pfrom][pto]++;    
-                map[pfrom].total++;
+                add (pto, pfrom, xlink.toResidue, xlink.fromResidue);    
+                add (pfrom, pto, xlink.fromResidue, xlink.toResidue);
             }
         });
-        console.log ("map", map);
+        //console.log ("map", map);
         return map;
     }
     
-    console.log ("proteins", proteins);
+    //console.log ("proteins", proteins);
     var interLinks = chunk (proteins, crosslinks);
     
     
     function inwardConn (interLinkArr, pMap) {
        var max = {max: -1, protein: null};
         interLinkArr.forEach (function (interLink) {
-            console.log ("il", interLink);
+            //console.log ("il", interLink);
             if (!pMap[interLink.key]) {
                 var cur = 0;
                 var vals = d3.entries(interLink.value);
                 vals.forEach (function(val) {
-                    console.log ("val", val);
+                    //console.log ("val", val);
                     if (pMap[val.key]) {
-                        cur += val.value;
+                        cur += val.value ? val.value.count : 0;
                     }
                 });
                 if (cur > max.max) {
@@ -366,14 +375,14 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
     function outwardConn (interLinkArr, pMap) {
        var min = {min: Number.MAX_SAFE_INTEGER, protein: null};
         interLinkArr.forEach (function (interLink) {
-            console.log ("ol", interLink);
+            //console.log ("ol", interLink);
             if (!pMap[interLink.key]) {
                 var cur = 0;
                 var vals = d3.entries(interLink.value);
                 vals.forEach (function(val) {
-                    console.log ("val", val);
+                    //console.log ("val", val);
                     if (!pMap[val.key] && val.key !== "total") {
-                        cur += val.value;
+                        cur += val.value ? val.value.count : 0;
                     }
                 });
                 if (cur < min.min) {
@@ -403,25 +412,20 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
     // Baur end append routine 3
     function leastLengthEnd (pOrder, protein, interLinks, proteins) {
         var allDistance = 0;
-        proteins.forEach (function (prot, key) {
+        proteins.forEach (function (prot) {
             allDistance += prot.size;
         });
         var thisProtSize = proteins.get(protein).size;
-        console.log ("ad", thisProtSize, allDistance);
-        
         
         var runDistance = thisProtSize / 2;
         var leftDistance = 0;
         pOrder.forEach (function (pid) {
-            var linksB = interLinks[pid][protein] || 0;
+            var pplinkData = interLinks[pid][protein];
+            var linksB = pplinkData ? pplinkData.count : 0;
             var proteinB = proteins.get(pid);
-            //console.log ("pb", interLinks, linksB, pid, protein, proteinB);
             var linkDistance = ((proteinB.size / 2) + runDistance) * linksB;
             var protDistance = ((proteinB.size / 2) + runDistance);
             var circProtDistance = Math.min (allDistance - protDistance, protDistance); // might be closer via circle 'gap'
-            if (circProtDistance < protDistance) {
-                console.log ("shorter going other way between", pid, protein);
-            }
             var linkDistance = circProtDistance * linksB;
             runDistance += proteinB.size;
             leftDistance += linkDistance;
@@ -431,19 +435,17 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         var rightDistance = 0;
         for (var n = pOrder.length; --n >= 0;) {
             var pid = pOrder[n];
-            var linksB = interLinks[pid][protein] || 0;
+            var pplinkData = interLinks[pid][protein];
+            var linksB = pplinkData ? pplinkData.count : 0;
             var proteinB = proteins.get(pid);
             var protDistance = ((proteinB.size / 2) + runDistance);
             var circProtDistance = Math.min (allDistance - protDistance, protDistance); // might be closer via circle 'gap'
-            if (circProtDistance < protDistance) {
-                console.log ("shorter going other way between", pid, protein, protDistance, circProtDistance);
-            }
             var linkDistance = circProtDistance * linksB;
             runDistance += proteinB.size;
             rightDistance += linkDistance;
         }
         
-        console.log (protein, "left", leftDistance, "right", rightDistance);  
+        //console.log (protein, "left", leftDistance, "right", rightDistance);  
         if (leftDistance < rightDistance) {
             pOrder.splice (0, 0, protein);
         } else {
@@ -459,7 +461,7 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
             var openLinks = 0;
             links.forEach (function(link) {
                 if (link.key !== "total" && !pMap[link.key] && link.key !== protein) {
-                    openLinks += link.value;
+                    openLinks += link.value.count;
                 }
             });
             return openLinks;
@@ -467,17 +469,35 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         
         var totCount = 0;
         var fArr = pOrder.slice(0).reverse().map (function (prot) {
-            var linkCount = protCrossings[prot] || 0;
+            var linkCount = 0;
+            var beforeHalfway = false;
+            var linkData = protCrossings[prot];
+            if (linkData) {
+                linkCount = linkData.count;
+                var avgLinkPos = linkData.posOutTotal / linkCount;
+                var pLength = proteins.get(prot).size;
+                beforeHalfway = (avgLinkPos / pLength) < 0.5;
+            }
+
             totCount += linkCount;
-            return totCount - linkCount;
+            return totCount - (beforeHalfway ? linkCount : 0);
         });
         fArr.reverse();
         
         totCount = 0;
         var rArr = pOrder.map (function (prot) {
-            var linkCount = protCrossings[prot] || 0;
+            var linkCount = 0;
+            var beforeHalfway = false;
+            var linkData = protCrossings[prot];
+            if (linkData) {
+                linkCount = linkData.count;
+                var avgLinkPos = linkData.posOutTotal / linkCount;
+                var pLength = proteins.get(prot).size;
+                beforeHalfway = (avgLinkPos / pLength) < 0.5;
+            }
+            
             totCount += linkCount;
-            return totCount - linkCount;
+            return totCount - (beforeHalfway ? 0 : linkCount);
         });
         rArr.reverse();
         
@@ -502,6 +522,97 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
             pOrder.push (protein);
         }
     }
+
+    
+    // Baur end append routine 4A - added stuff by me
+    // check for open-edge crossings on individual level
+    // check for open-edge crossings in added protein too depending on direction added
+    function leastCrossingsEnd2 (pOrder, protein, interLinks, proteins, pMap) {
+        var linkOrd = [];
+        var distance = 0;
+        var dpOrder = pOrder.slice(0);
+        dpOrder.splice(0,0,protein);
+        dpOrder.push(protein);
+        
+        var curProtLength = proteins.get(protein).size;
+        
+        dpOrder.forEach (function (prot) {
+            var links = d3.entries(interLinks[prot]);
+            links.forEach (function(link) {
+                if (link.key !== "total" && !pMap[link.key] /*&& link.key !== protein*/) {
+                    var type = (link.key === protein) ? "newin" : "openended";
+                    var pos = link.value.posIn;
+                    pos.forEach (function(p) {
+                        linkOrd.push ({pos: p + distance, type: type});    
+                    });
+                } 
+                else if (prot === protein && pMap[link.key]) {
+                    var pos = link.value.posIn;
+                    pos.forEach (function(p) {
+                        linkOrd.push ({pos: p + distance, type: "newout"});    
+                    });
+                }
+            });
+            
+            distance += proteins.get(prot).size;
+        });
+        linkOrd.sort(function(a,b) { return a.pos - b.pos; });
+        //console.log ("linkOrd", linkOrd);
+     
+        var ftot = 0;
+        var active = 0;
+        var lastPos = 0;
+        var sameIndex = 0;
+        for (var n = 0; n < linkOrd.length; n++) {
+            var pos = linkOrd[n].pos;
+            if (pos < distance - curProtLength) {
+                var type = linkOrd[n].type;
+                if (type === "newout") {
+                    active++;
+                    sameIndex = (pos === lastPos) ? sameIndex + 1 : 1;
+                    lastPos = pos;
+                } else if (type === "newin") {
+                    active--;
+                } else {
+                    if (pos !== lastPos) {
+                        sameIndex = 0;
+                    }  
+                    ftot += (active - sameIndex);
+                }
+            }
+        }
+        
+        var rtot = 0;
+        active = 0;
+        lastPos = 0;
+        sameIndex = 0;
+        for (n = linkOrd.length; --n >= 0;) {
+            var pos = linkOrd[n].pos;
+            if (pos > curProtLength) {
+                var type = linkOrd[n].type;
+                if (type === "newout") {
+                    active++;
+                    sameIndex = (pos === lastPos) ? sameIndex + 1 : 1;
+                    lastPos = pos;
+                } else if (type === "newin") {
+                     active--;
+                } else {
+                    if (pos !== lastPos) {
+                        sameIndex = 0;
+                    }
+                    rtot += (active - sameIndex);
+                }
+            }
+        }
+        
+        //console.log ("leastCross", ftot, rtot);
+        
+        if (ftot < rtot) {
+            pOrder.splice (0, 0, protein);
+        } else {
+            pOrder.push (protein);
+        }
+    }
     
     
     function sort (interLinks) {
@@ -511,20 +622,17 @@ CLMSUI.utils.circleArrange = function (proteins, crosslinks) {
         interLinkArr.sort (function(a,b) {
             return b.value.total - a.value.total;
         });
-        pOrder.push (interLinkArr[0].key);
-        pMap[interLinkArr[0].key] = true;
         
-        for (var n = 0; n < interLinkArr.length - 1; n++) {
+        for (var n = 0; n < interLinkArr.length; n++) {
             var choice = outwardConn (interLinkArr, pMap);
-            
-            console.log ("choice", choice);
+            //console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
             //leastLengthEnd (pOrder, choice.protein, interLinks, proteins);
-            leastCrossingsEnd (pOrder, choice.protein, interLinks, proteins, pMap);
+            leastCrossingsEnd2 (pOrder, choice.protein, interLinks, proteins, pMap);
             pMap[choice.protein] = true;
         }
         
-        console.log ("ila", interLinkArr, pMap, pOrder);
+        //console.log ("ila", interLinkArr, pMap, pOrder);
         return pOrder;
     }
     
