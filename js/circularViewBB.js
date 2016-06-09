@@ -236,7 +236,12 @@
                 ;
             };
             
-            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"), this.model.get("clmsModel").get("crossLinks"));
+            this.interactorOrder = CLMSUI.utils.circleArrange2 (
+                this.model.get("clmsModel").get("interactors"), this.model.get("clmsModel").get("crossLinks")
+            );
+            
+            //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("interactors").values()))
+            //    .map(function(p) { return p.id; });
                 
             console.log ("thisio", this, this.interactorOrder);
             // listen to custom filteringDone event from model    
