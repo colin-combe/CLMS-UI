@@ -1,18 +1,29 @@
-
 <?php
+
+//  CLMS-UI
+//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
+//
+//  This file is part of CLMS-UI.
+//
+//  CLMS-UI is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  CLMS-UI is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 	$pageStartTime = microtime(true);
 	include('../../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
 
-	$sid = urldecode($_GET["sid"]);
-	$id_rands = explode("," , $sid);
-	$sid = str_replace(',','', $sid );
-	$sid = str_replace('-','', $sid );
-	
-	$showDecoys = false;//urldecode($_GET["decoys"]);
-	$showAll = false;//urldecode($_GET["all"]);
+	$sid = 3266;
 
 	$pattern = '/[^0-9,\-]/';
 	if (preg_match($pattern, $sid)){
@@ -24,7 +35,7 @@
 	include('../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
-	$search_randGroup = [];
+	$searchId_randGroup = [];
 	
 	for ($i = 0; $i < count($id_rands); $i++) {
 		$s = [];		
@@ -50,10 +61,10 @@
 		} else {
             $s["group"] = "'NA'";
         }
-		$search_randGroup[$id] = $s;
+		$searchId_randGroup[$id] = $s;
 
 	}
-	$searchMeta = "var searchMeta = " . json_encode($search_randGroup) . ';';
+	$searchMeta = "var searchMeta = " . json_encode($searchId_randGroup) . ';';
 	
 	
 	
@@ -70,70 +81,6 @@
 		echo "var HSA_Active = false;\n";
 		echo "var distances = [];\n";
 	}
-	
-/*	$sid = urldecode($_GET["sid"]);
-	//only allow digits or ',' or '-' in url params
-	$pattern = '/[^0-9,\-]/';
-	if (preg_match($pattern, $sid)){
-		header();
-		echo ("<!DOCTYPE html>\n<html><head></head><body>Numbers only for group ids</body></html>");
-		exit;
-	}
-
-	//the CLMSUI.sid identifier is used when saving layouts
-	echo "CLMSUI.sid = '".preg_replace('/(,|\-)/','', $sid )."';\n";
-
-	$searchId_rand_group = explode("," , $sid);
-	$showDecoys = true;//urldecode($_GET["decoys"]);
-	$showAll = true;//urldecode($_GET["all"]);
-
-	include('../../connectionString.php');
-	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
-
-	echo '<pre style="width:100%;">';
-
-	$searchId_randGroup = [];
-	
-	for ($i = 0; $i < count($searchId_rand_group); $i++) {
-		$s = [];		
-		$dashSeperated = explode("-" , $searchId_rand_group[$i]);
-		$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
-		$id = $dashSeperated[0];
-		$res = pg_query("SELECT search.name, sequence_file.file_name"
-					." FROM search, search_sequencedb, sequence_file "
-					."WHERE search.id = search_sequencedb.search_id "
-					."AND search_sequencedb.seqdb_id = sequence_file.id "
-					."AND search.id = '".$id."';") 
-					or die('Query failed: ' . pg_last_error());
-		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
-		$name = $line['name'];
-		$filename = $line['file_name'];
-		
-		$s["id"] = $id;
-		$s["randId"] = $randId;
-		$s["name"] = $name;
-		$s["filename"] = $filename;
-		if (count($dashSeperated) == 6){
-			$s["group"] = $dashSeperated[5];
-		} else {
-            $s["group"] = "NA";
-        }
-		$searchId_randGroup[$id] = $s;
-
-	}
-	echo "var searchMeta = " . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ";\n\n";
-	
-	echo "//temp - if (HSA_Active == true) then we might have a go at some 3d stuff\n";
-	if ($filename == "HSA-Active.FASTA"){
-		echo "var HSA_Active = true;\n";
-		include('./php/distances.php');
-	}
-	else {
-		echo "var HSA_Active = false;\n";
-		echo "var distances = [];\n\n";
-	}
-	
-	echo "//saved layout - some work needed here to make it work with aggregated searches\n";
 	echo "storedLayout = null;\n\n";
 	if (count($searchId_randGroup) == 1) {
 		$layoutQuery = "SELECT t1.layout AS l "
@@ -149,21 +96,9 @@
 		}
 	}
 	
-	$WHERE = ' ';
-	$c = 0;
-	for ($i = 0; $i < count($searchId_randGroup); $i++) {
-		$search = array_values($searchId_randGroup)[$i];
-		if ($c > 0){
-			$WHERE = $WHERE.' OR ';
-		}
-		$c++;
-		$randId = $search["randId"];//substr($agg, $dashPos + 1);
-		$id = $search["id"];//substr($agg, 0, ($dashPos));
-		$WHERE = $WHERE.'(sm.search_id = '.$id.' AND s.random_id = \''.$randId.'\''.') ';
-	}*/
-	
-	
-	$sid = 3266;
+
+
+
 	
 	/*
 	 * SPECTRUM MATCHES AND MATCHED PEPTIDES
@@ -171,9 +106,9 @@
 	$query = "	
 		SELECT 
 			mp.match_id, mp.match_type, mp.peptide_id, 
-			mp.link_position + 1 AS link_position,
+			mp.link_position + 1 AS link_position, 
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
-			sm.search_id, sm.precursor_charge, 
+			sm.search_id, sm.precursor_charge, sm.is_decoy,
 			sp.scan_number
 		FROM 
 			(select * from spectrum_match where search_id = ".$sid." and dynamic_rank) sm 
@@ -200,7 +135,8 @@
 				. '"pi":' . $peptideId . ','
 				. '"lp":'. $line["link_position"]. ','
 				. '"sc":' . round($line["score"], 5) . ','
-				. '"si":' . $line["search_id"] . ',';
+				. '"si":' . $line["search_id"] . ','
+				. '"dc":"' . $line["is_decoy"] . '",';
 			$autoVal =  $line["autovalidated"];
 			if (isset($autoVal)){
 				echo '"av":"' . $autoVal.'"' . ',';
@@ -266,7 +202,10 @@
 	/*
 	 * PROTEINS
 	 */
-	$query = "SELECT id, name, description, accession_number, sequence, is_decoy
+	$query = "SELECT id, 
+			CASE WHEN name IS NULL OR name = '' OR name = 'REV_' THEN accession_number 
+			ELSE name END AS name,
+			description, accession_number, sequence, is_decoy
 			FROM protein WHERE id IN (".implode(array_keys($proteinIds), ",").")";
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
@@ -282,10 +221,10 @@
 			echo '{'
 				. '"id":' . $pId . ',' 
 				. '"name":"' . $line["name"] . '",' 
-				. '"desc":"' . $line["description"] . '",' 
+				. '"description":"' . $line["description"] . '",' 
 				. '"accession":"' .$line["accession_number"]  . '",'
 				. '"seq":"' .$line["sequence"] . '",' 
-				. '"decoy":' .$isDecoy 
+				. '"is_decoy":' .$isDecoy 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}

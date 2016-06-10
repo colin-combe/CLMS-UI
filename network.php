@@ -74,7 +74,6 @@
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
@@ -212,7 +211,7 @@
             
             // What does this php bit do now?
         <?php
-            include './php/loadTest.php';
+            include './php/loadData.php';
             //~ if (file_exists('../annotations.php')){
                 //~ include '../annotations.php';
             //~ }
@@ -246,7 +245,7 @@
 
                 clmsModel.get("interactors").forEach (function (entry) {
                     console.log ("entry", entry);
-                    if (!entry.isDecoy()) {
+                    if (!entry.is_decoy) {
                         this.add ([{
                             "id": entry.id,
                             "displayLabel": entry.name.replace("_", " "),

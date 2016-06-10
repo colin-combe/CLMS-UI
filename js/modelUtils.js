@@ -53,12 +53,8 @@ CLMSUI.modelUtils = {
     
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
-        matchesArr.forEach (function(m) {
-            var crossLink = m.crossLinks[0];
-            var isDecoy = (crossLink.toProtein.isDecoy() || crossLink.fromProtein.isDecoy()) ? 1 : 0;
-            //console.log ("m", m, pLink, isDecoy);
-            //var isDecoy = (Math.random() > 0.8) ? 1: 0; 
-            arrs[isDecoy].push (m.score);
+        matchesArr.forEach (function(m) { 
+            arrs[m.is_decoy? 1 : 0].push (m.score);
         });
         return arrs;
         /*
