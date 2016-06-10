@@ -313,32 +313,33 @@ CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 });
 
 
-CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
+CLMSUI.utils.circleArrange = function (proteins) {
     
     function makeNodeEdgeList (protein) {
         var node = {id: protein.id, length: protein.size, edges:[]};
         var edgeIds = d3.set();
         protein.crossLinks.forEach (function (clink) {
-            if (clink.fromProtein.id !== clink.toProtein.id && !edgeIds.has(clink.id)) {
+            // must have active matches, no intra-protein links, no repeated edges
+            if (clink.filteredMatches.length > 0 && clink.fromProtein.id !== clink.toProtein.id && !edgeIds.has(clink.id)) {
+                var isFromId = clink.fromProtein.id === protein.id;
                 node.edges.push ({
                     edgeId: clink.id,
-                    pos: clink.fromProtein.id === protein.id ? clink.fromResidue : clink.toResidue,
-                    otherNode: clink.fromProtein.id === protein.id ? clink.toProtein.id : clink.fromProtein.id,
-                    otherPos: clink.fromProtein.id === protein.id ? clink.toResidue : clink.fromResidue,
+                    pos: isFromId ? clink.fromResidue : clink.toResidue,
+                    otherNode: isFromId ? clink.toProtein.id : clink.fromProtein.id,
+                    otherPos: isFromId ? clink.toResidue : clink.fromResidue,
                 });
                 edgeIds.add (clink.id);
             }
         });
         node.edges.sort (function (a,b) { return b.pos-a.pos; });
         node.total = node.edges.length;
-        console.log ("nedges", node.edges);
+        console.log ("flat edges", node.edges);
         
-        var newEdges = d3.nest()
+        node.edges = d3.nest()
             .key(function(d) { return d.pos; })
             .entries(node.edges)
         ;
-        node.edges = newEdges;
-        console.log ("ne", newEdges);
+        console.log ("nested edges", node.edges);
 
         return node;
     }
@@ -358,45 +359,45 @@ CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
     
     
     // pick node with most number of edges to nodes in pmap
-    function inwardConn (interLinkArr, pMap) {
-       var max = {max: -1, nodes: null};
-        interLinkArr.forEach (function (interLink) {
-            if (!pMap[interLink.id]) {
+    function inwardConn (nodeLinkArr, pMap) {
+       var max = {max: -1, node: null};
+        nodeLinkArr.forEach (function (nodeLink) {
+            if (!pMap[nodeLink.id]) {
                 var cur = 0;
-                interLink.edges.forEach (function(pos) {
+                nodeLink.edges.forEach (function(pos) {
                     pos.values.forEach (function (edge) {
                         if (pMap[edge.otherNode]) {
-                            cur ++;
+                            cur++;
                         }
-                    })
+                    });
                 });
                 if (cur > max.max) {
                     max.max = cur;
-                    max.node = interLink;
+                    max.node = nodeLink;
                 }
             }
         }); 
-        
+        console.log ("max", max, pMap);
         return max;
     }
     
     
     // pick node with least number of edges to nodes not in pmap
-    function outwardConn (interLinkArr, pMap) {
-       var min = {min: Number.MAX_SAFE_INTEGER, node: null};
-        interLinkArr.forEach (function (interLink) {
-            if (!pMap[interLink.id]) {
+    function outwardConn (nodeLinkArr, pMap) {
+        var min = {min: Number.MAX_SAFE_INTEGER, node: null};
+        nodeLinkArr.forEach (function (nodeLink) {
+            if (!pMap[nodeLink.id]) {
                 var cur = 0;
-                interLink.edges.forEach (function (pos) {
+                nodeLink.edges.forEach (function (pos) {
                     pos.values.forEach (function (edge) {
                         if (!pMap[edge.otherNode]) {
                             cur++;
                         }
-                    })
+                    });
                 });
                 if (cur < min.min) {
                     min.min = cur;
-                    min.node = interLink;
+                    min.node = nodeLink;
                 }
             }
         }); 
@@ -406,11 +407,8 @@ CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
     
     // Baur end append routine 1
     function randomEnd (order, node) {
-        if (Math.random() > 0.5) {
-            order.push (node);
-        } else {
-            order.splice (0, 0, node);
-        }
+        var pos = (Math.random() > 0.5) ? order.length : 0;
+        order.splice (pos, 0, node);
     }
     
     // Baur end append routine 2
@@ -420,14 +418,12 @@ CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
     
     // Baur end append routine 3
     function leastLengthEnd (order, node, interLinks) {
-        var allDistance = 0;
-        var orderDistance = 0;
-        interLinks.forEach (function (n) {
-            allDistance += n.length;
-        });
-        order.forEach (function (n) {
-            orderDistance += n.length;
-        });
+        var allDistance = interLinks.reduce (function (tot, node) {
+            return tot + node.length;
+        }, 0);
+        var orderDistance = order.reduce (function (tot, node) {
+            return tot + node.length;
+        }, 0);
         var thisNodeSize = node.length;
         
         var runDistance = 0;
@@ -446,17 +442,14 @@ CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
                         var circRightDistance = Math.min (allDistance - rightDist, rightDist); // might be closer via circle 'gap'
                         rightDistance += circRightDistance;
                     }
-                })
+                });
             });
             runDistance += pnode.length;
         });
         
         console.log (node, "left", leftDistance, "right", rightDistance);  
-        if (leftDistance < rightDistance) {
-            order.splice (0, 0, node);
-        } else {
-            order.push (node);
-        }
+        var pos = (leftDistance > rightDistance) ? order.length : 0;
+        order.splice (pos, 0, node);
     }
 
     
@@ -470,41 +463,36 @@ CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
         console.log ("l", lcrossTest, rcrossTest, node, order);
         var crossings = [lcrossTest, rcrossTest].map (function (run) {
             var tot = 0;
-            var open = 0;
-            var openSet = d3.set();
+            var closed = 0;
+            var closedSet = d3.set();
             run.forEach (function (pnode) {
                 pnode.edges.forEach (function (pos) {
-                    var curOpen = open;
-                    var posFree = 0;
+                    var curClosed = closed;
+                    var openCount = 0;
                     pos.values.forEach (function (edge) {
                         var enode = edge.otherNode;
-                        var freeEdge = (enode === node.id || pMap[enode]);
-                        if (freeEdge) {
-                            posFree++;
+                        var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has endpoints in current set of nodes
+                        if (isOpenEdge) {
+                            openCount++;
+                        } else if (closedSet.has(edge.edgeId)) {
+                            closedSet.remove (edge.edgeId);
+                            closed--;
+                            curClosed--;
                         } else {
-                            if (openSet.has(edge.edgeId)) {
-                                openSet.remove (edge.edgeId);
-                                open--;
-                                curOpen--;
-                            } else {
-                                openSet.add (edge.edgeId);
-                                open++;
-                            }
+                            closedSet.add (edge.edgeId);
+                            closed++;
                         }
                     });
-                    tot += (curOpen * posFree);
-                })    
+                    tot += (curClosed * openCount); // use curClosed so we don't include links opened at same pos as crossings
+                    //console.log ("pnode", pnode, "pos", pos, "curClosed", curClosed, "openCount", openCount, "tot", tot);
+                });    
             });
             return tot;
         });
         
         console.log ("leastCross", crossings);
-        
-        if (crossings[0] < crossings[1]) {
-            order.splice (0, 0, node);
-        } else {
-            order.push (node);
-        }
+        var pos = (crossings[0] > crossings[1]) ? order.length : 0;
+        order.splice (pos, 0, node);
     }
     
     
@@ -516,8 +504,8 @@ CLMSUI.utils.circleArrange2 = function (proteins, crosslinks) {
         });
         
         for (var n = 0; n < interLinks.length; n++) {
-            var choice = inwardConn (interLinks, pMap);
-            //console.log ("choice", choice);
+            var choice = outwardConn (interLinks, pMap);
+            console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
             //leastLengthEnd (order, choice.node, interLinks);
             leastCrossingsEnd2 (order, choice.node, interLinks, pMap);

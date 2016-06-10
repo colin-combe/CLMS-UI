@@ -94,7 +94,9 @@
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{});
+          return _.extend({},parentEvents,{
+              "click .niceButton": "reOrder"
+          });
         },
 
         initialize: function (viewOptions) {
@@ -138,15 +140,19 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV style='height:40px'><button class='<%= buttonClass %>'><%= buttonLabel %></button></DIV>"+
-                                       "<DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV style='height:40px'>"+
+                                       "<button class='<%= buttonClass1 %>'><%= buttonLabel1 %></button>"+
+                                       "<button class='<%= buttonClass2 %>'><%= buttonLabel2 %></button>"+
+                                       "</DIV><DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "panelInner")
                 .html(
                     template ({
                         svgClass: "circularView", 
-                        buttonClass: "btn btn-1 btn-1a downloadButton", 
-                        buttonLabel: "Export SVG",
+                        buttonClass1: "btn btn-1 btn-1a downloadButton", 
+                        buttonLabel1: "Export SVG",
+                        buttonClass2: "btn btn-1 btn-1a niceButton", 
+                        buttonLabel2: "Nice",
                     })
                 )
             ;
@@ -236,14 +242,12 @@
                 ;
             };
             
-            this.interactorOrder = CLMSUI.utils.circleArrange2 (
-                this.model.get("clmsModel").get("interactors"), this.model.get("clmsModel").get("crossLinks")
-            );
-            
+            // initial Order
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"));
+            // return order as is
             //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("interactors").values()))
             //    .map(function(p) { return p.id; });
                 
-            console.log ("thisio", this, this.interactorOrder);
             // listen to custom filteringDone event from model    
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });  
             //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
@@ -256,6 +260,11 @@
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
             this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
             return this;
+        },
+        
+        reOrder: function () {
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"));
+            this.render();
         },
         
         idFunc: function (d) { return d.id; },
@@ -577,7 +586,6 @@
             newTicks.append("text")
                 .attr("x", 8)
                 .attr("dy", ".35em")
-                .classed ("justifyTick", function(d) { return d.angle > 180; })
                 .text(function(d) { return d.label; })
             ;
 
@@ -585,6 +593,8 @@
                 .attr("transform", function(d) {
                     return "rotate(" + (d.angle - 90) + ")" + "translate(" + radius + ",0)";
                 })
+                .select("text")
+                    .classed ("justifyTick", function(d) { return d.angle > 180; })
             ;
             
             return this;
