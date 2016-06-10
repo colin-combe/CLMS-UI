@@ -450,49 +450,127 @@ CLMSUI.utils.circleArrange = function (proteins) {
         console.log (node, "left", leftDistance, "right", rightDistance);  
         var pos = (leftDistance > rightDistance) ? order.length : 0;
         order.splice (pos, 0, node);
+        
+        return order;
     }
 
     
     // Baur end append routine 4A - added stuff by me
     // check for open-edge crossings on individual level
     // check for open-edge crossings in added protein too depending on direction added
-    function leastCrossingsEnd2 (order, node, interLinks, pMap) {
+    function leastCrossingsEnd (order, node, interLinks, pMap) {
 
         var lcrossTest = [node].concat(order);
         var rcrossTest = order.concat(node);
+        var orders = [lcrossTest, rcrossTest];
         console.log ("l", lcrossTest, rcrossTest, node, order);
-        var crossings = [lcrossTest, rcrossTest].map (function (run) {
+        var crossings = orders.map (function (run) {
             var tot = 0;
-            var closed = 0;
-            var closedSet = d3.set();
+            var active = 0;
+            var activeSet = d3.set();
             run.forEach (function (pnode) {
                 pnode.edges.forEach (function (pos) {
-                    var curClosed = closed;
+                    var curActive = active;
                     var openCount = 0;
                     pos.values.forEach (function (edge) {
                         var enode = edge.otherNode;
-                        var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has endpoints in current set of nodes
+                        var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
                         if (isOpenEdge) {
                             openCount++;
-                        } else if (closedSet.has(edge.edgeId)) {
-                            closedSet.remove (edge.edgeId);
-                            closed--;
-                            curClosed--;
+                        } else if (activeSet.has(edge.edgeId)) {
+                            activeSet.remove (edge.edgeId);
+                            active--;
+                            curActive--;
                         } else {
-                            closedSet.add (edge.edgeId);
-                            closed++;
+                            activeSet.add (edge.edgeId);
+                            active++;
                         }
                     });
-                    tot += (curClosed * openCount); // use curClosed so we don't include links opened at same pos as crossings
+                    tot += (curActive * openCount); // use curClosed so we don't include links opened at same pos as crossings
                     //console.log ("pnode", pnode, "pos", pos, "curClosed", curClosed, "openCount", openCount, "tot", tot);
                 });    
             });
             return tot;
         });
         
+        var min = 1000;
+        for (var n = 0; n < crossings.length; n++) {
+            if (crossings[n] < min) {
+                min = crossings[n];
+                order = orders[n];
+            }
+        }
+        
         console.log ("leastCross", crossings);
-        var pos = (crossings[0] > crossings[1]) ? order.length : 0;
-        order.splice (pos, 0, node);
+        
+        return order;
+    }
+    
+    
+    function leastCrossingsEnd2 (order, node, interLinks, pMap, variations) {
+
+        function shuffle () {
+            var newOrder = order.slice(0);
+            var n = Math.floor ((Math.random() * order.length));
+            var m = Math.floor ((Math.random() * order.length));
+            var temp = newOrder[n];
+            newOrder[n] = newOrder[m];
+            newOrder[m] = temp;
+            return newOrder;
+        }
+        
+        var orders = [order];
+        for (var n = 0; n < variations; n++) {
+            orders.push (shuffle(order));
+        }  
+        
+        console.log ("l", orders, node, order);
+        var crossings = orders.map (function (run) {
+            var tot = 0;
+            var active = 0;
+            var activeSet = d3.set();
+            var activeArr = [];
+            run.forEach (function (pnode) {
+                pnode.edges.forEach (function (pos) {
+                    var curActive = active;
+                    var openCount = 0;
+                    pos.values.forEach (function (edge) {
+                        var enode = edge.otherNode;
+                        var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
+                        if (isOpenEdge) {
+                            openCount++;
+                        } else if (activeSet.has(edge.edgeId)) {
+                            activeSet.remove (edge.edgeId);
+                            active--;
+                            curActive--;
+                            var acPos = activeArr.indexOf(edge.edgeId);
+                            activeArr.splice(acPos, 1);
+                            openCount += (activeArr.length - acPos) * activeArr.length;
+                            
+                        } else {
+                            activeSet.add (edge.edgeId);
+                            activeArr.push (edge.edgeId);
+                            active++;
+                        }
+                    });
+                    tot += (curActive * openCount); // use curClosed so we don't include links opened at same pos as crossings
+                    //console.log ("pnode", pnode, "pos", pos, "curActive", curActive, "activeArr", activeArr, "openCount", openCount, "tot", tot);
+                });    
+            });
+            return tot;
+        });
+        
+        var min = 1000;
+        for (n = 0; n < crossings.length; n++) {
+            if (crossings[n] < min) {
+                min = crossings[n];
+                order = orders[n];
+            }
+        }
+        
+        console.log ("leastCross", crossings);
+        
+        return order;
     }
     
     
@@ -504,12 +582,16 @@ CLMSUI.utils.circleArrange = function (proteins) {
         });
         
         for (var n = 0; n < interLinks.length; n++) {
-            var choice = outwardConn (interLinks, pMap);
+            var choice = inwardConn (interLinks, pMap);
             console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
             //leastLengthEnd (order, choice.node, interLinks);
-            leastCrossingsEnd2 (order, choice.node, interLinks, pMap);
+            order = leastCrossingsEnd (order, choice.node, interLinks, pMap);
             pMap[choice.node.id] = true;
+        }
+        
+        for (var n = 0; n < 10; n++) {
+            order = leastCrossingsEnd2 (order, {id: null}, interLinks, pMap, 10);
         }
 
         return order;
