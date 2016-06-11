@@ -205,11 +205,10 @@
             CLMSUI.vent = {};
             _.extend (CLMSUI.vent, Backbone.Events);
 
-       // for NGL
-       NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
-       var stage;
+		// for NGL
+		NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
+		var stage;
             
-            // What does this php bit do now?
         <?php
             include './php/loadData.php';
             //~ if (file_exists('../annotations.php')){
@@ -305,6 +304,8 @@
 
             CLMSUI.tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
+			//TODO: some/most(/all?) these model instances don't need to be in CLMSUI?
+			// as they can be accessed from CLMSUI.compositeModelInst 
             CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
                 distancesModel: CLMSUI.distancesInst,
                 clmsModel: CLMSUI.clmsModelInst,
@@ -315,9 +316,10 @@
                 selection: [], //will contain cross-link objects
                 highlights: [], //will contain cross-link objects 
                 linkColourAssignment: CLMSUI.linkColour.defaultColours,
-                selectedProtein: null
+                selectedProtein: null,
+                groupColours: null // will be d3.scale for colouring by search/group
             });
-
+            
             CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
             // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
@@ -333,15 +335,16 @@
         }
 
         changeLinkColours = function () {
-            var colourSelection = document.getElementById("linkColourSelect").value;
-            if (colourSelection == "Default") {
-                CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
-            } else if (colourSelection == "Group") {
-                CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.group);
+			var colourSelection = document.getElementById("linkColourSelect").value;
+			if (colourSelection == "Default") {
+				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
+			} else if (colourSelection == "Group") {
+				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.byGroup);
             }
         }
             
     CLMSUI.init.models();
+    
 	var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
 	console.log(searches);
 	document.title = Array.from(searches.keys()).join();

@@ -65,13 +65,13 @@
 		$searchId_randGroup[$id] = $s;
 
 	}
-	$searchMeta = "var searchMeta = " . json_encode($searchId_randGroup) . ';';
+	$searchMeta = "var searchMeta = " . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ";\n";
 	
 	echo "CLMSUI.sid = '".$sid."';\n";// TODO - this needs to change
 	
 	echo $searchMeta;
 	
-	if ($filename == "HSA-Active.FASTA"){
+	if (false){//$filename == "HSA-Active.FASTA"){
 		echo "var HSA_Active = true;\n";
 		include('./php/distances.php');
 	}
@@ -79,6 +79,7 @@
 		echo "var HSA_Active = false;\n";
 		echo "var distances = [];\n";
 	}
+	
 	echo "storedLayout = null;\n\n";
 	if (count($searchId_randGroup) == 1) {
 		$layoutQuery = "SELECT t1.layout AS l "
@@ -108,7 +109,6 @@
 		$WHERE_withoutRand = $WHERE_withoutRand.'(search_id = '.$id.')';
 	}
 
-	
 
 	
 	/*
@@ -122,11 +122,12 @@
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
 			sp.scan_number
 		FROM 
-			(SELECT * FROM spectrum_match WHERE ".$WHERE_withoutRand." AND dynamic_rank) sm 
+			(SELECT sm.* FROM spectrum_match sm INNER JOIN search s ON search_id = s.id WHERE ".$WHERE_withRand." AND dynamic_rank) sm 
 		INNER JOIN 
 			(SELECT * FROM matched_peptide WHERE ".$WHERE_withoutRand.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 
+		
 		ORDER BY sm.id;";
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
@@ -170,19 +171,26 @@
 	echo "\n];\n";
 	$endTime = microtime(true);
 	echo '//php time: '.($endTime - $startTime)."ms\n\n";
-
+	
+	$proteinIdField = "hp.protein_id";
+	if (count($searchId_randGroup) > 1) {
+		$proteinIdField = "p.accession_number";
+	} 
 	/*
 	 * PEPTIDES
 	 */
 	$implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
 	$query = "SELECT pep.id, (array_agg(pep.sequence))[1] as sequence, 
-		array_agg(hp.protein_id) as proteins, array_agg(hp.peptide_position) as positions
+		array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position) as positions
 		FROM (SELECT id, sequence FROM peptide WHERE id IN "
 				.$implodedPepIds.") pep
 		INNER JOIN (SELECT peptide_id, protein_id, peptide_position
 		FROM has_protein WHERE peptide_id IN "
-				.$implodedPepIds.") hp ON pep.id = hp.peptide_id 
-		GROUP BY id;";
+				.$implodedPepIds.") hp ON pep.id = hp.peptide_id ";
+	if (count($searchId_randGroup) > 1) {
+		$query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
+	}	
+	$query = $query."GROUP BY pep.id;";	  
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
@@ -200,7 +208,7 @@
 			$positions = $line['positions'];
 			echo '{"id":' . $line["id"] . ','
 				. '"seq":"' . $line["sequence"] . '",' 
-				. '"prt":[' . implode($proteinsArray, ',') . '],' 
+				. '"prt":["' . implode($proteinsArray, '","') . '"],' 
 				. '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']' 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
@@ -213,11 +221,17 @@
 	/*
 	 * PROTEINS
 	 */
-	$query = "SELECT id, 
+	 
+	$proteinIdField = "id";
+	if (count($searchId_randGroup) > 1) {
+		$proteinIdField = "accession_number";
+	} 
+	 
+	$query = "SELECT ".$proteinIdField." AS id, 
 			CASE WHEN name IS NULL OR name = '' OR name = 'REV_' THEN accession_number 
 			ELSE name END AS name,
 			description, accession_number, sequence, is_decoy
-			FROM protein WHERE id IN (".implode(array_keys($proteinIds), ",").")";
+			FROM protein WHERE ".$proteinIdField." IN ('".implode(array_keys($proteinIds), "','")."')";
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
@@ -230,7 +244,7 @@
 			$pId = $line["id"];
 			//~ echo '"' . $pId . '":{'
 			echo '{'
-				. '"id":' . $pId . ',' 
+				. '"id":"' . $pId . '",' 
 				. '"name":"' . $line["name"] . '",' 
 				. '"description":"' . $line["description"] . '",' 
 				. '"accession":"' .$line["accession_number"]  . '",'
