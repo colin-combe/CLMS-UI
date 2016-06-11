@@ -42,6 +42,7 @@
 
         var nodeCoordMap = d3.map();
         var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
+        
         nodeArr.forEach (function (node) {
             var size = node.size;
             // start ... end goes from scale (0 ... size), 1 bigger than 1-indexed size
@@ -93,7 +94,9 @@
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{});
+          return _.extend({},parentEvents,{
+              "click .niceButton": "reOrder"
+          });
         },
 
         initialize: function (viewOptions) {
@@ -137,15 +140,19 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV style='height:40px'><button class='<%= buttonClass %>'><%= buttonLabel %></button></DIV>"+
-                                       "<DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV style='height:40px'>"+
+                                       "<button class='<%= buttonClass1 %>'><%= buttonLabel1 %></button>"+
+                                       "<button class='<%= buttonClass2 %>'><%= buttonLabel2 %></button>"+
+                                       "</DIV><DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "panelInner")
                 .html(
                     template ({
                         svgClass: "circularView", 
-                        buttonClass: "btn btn-1 btn-1a downloadButton", 
-                        buttonLabel: "Export SVG",
+                        buttonClass1: "btn btn-1 btn-1a downloadButton", 
+                        buttonLabel1: "Export SVG",
+                        buttonClass2: "btn btn-1 btn-1a niceButton", 
+                        buttonLabel2: "Nice",
                     })
                 )
             ;
@@ -234,6 +241,12 @@
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
+            
+            // initial Order
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"));
+            // return order as is
+            //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("interactors").values()))
+            //    .map(function(p) { return p.id; });
                 
             // listen to custom filteringDone event from model    
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });  
@@ -247,6 +260,11 @@
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
             this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
             return this;
+        },
+        
+        reOrder: function () {
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"));
+            this.render();
         },
         
         idFunc: function (d) { return d.id; },
@@ -339,6 +357,7 @@
                 
                 var interactors = this.model.get("clmsModel").get("interactors");
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
+                console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
                 
                 var filteredInteractors = this.filterInteractors (interactors);
@@ -346,6 +365,17 @@
                 var filteredFeatures = filteredInteractors.map (function (inter) {
                     return this.filterFeatures (inter.uniprotFeatures);
                 }, this);
+                
+                // set interactors to same order as interactor order
+                console.log ("ofi", filteredInteractors);
+                var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
+                filteredInteractors = [];
+                this.interactorOrder.forEach (function (interactorId) {
+                    if (fmap.has(interactorId)) {
+                        filteredInteractors.push (fmap.get(interactorId));
+                    }    
+                });
+                console.log ("nfi", filteredInteractors);
                 
                 //console.log ("filteredFeatures", filteredFeatures);
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
@@ -556,7 +586,6 @@
             newTicks.append("text")
                 .attr("x", 8)
                 .attr("dy", ".35em")
-                .classed ("justifyTick", function(d) { return d.angle > 180; })
                 .text(function(d) { return d.label; })
             ;
 
@@ -564,6 +593,8 @@
                 .attr("transform", function(d) {
                     return "rotate(" + (d.angle - 90) + ")" + "translate(" + radius + ",0)";
                 })
+                .select("text")
+                    .classed ("justifyTick", function(d) { return d.angle > 180; })
             ;
             
             return this;
