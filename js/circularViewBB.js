@@ -338,7 +338,7 @@
         filterInteractors: function (interactors) {
             var filteredInteractors = [];
             interactors.forEach (function (value) {
-                if (!value.isDecoy()) {
+                if (!value.is_decoy) {
                     filteredInteractors.push (value);
                 }
             });
@@ -348,7 +348,7 @@
         filterCrossLinks: function (crossLinks) {
             var filteredCrossLinks = [];
             crossLinks.forEach (function (value) {
-                if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.isDecoy() && !value.toProtein.isDecoy()) {
+                if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
                     filteredCrossLinks.push (value);
                 }
             });

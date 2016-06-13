@@ -217,7 +217,9 @@ body, input, select, textarea {
 	/*z-index:-1;*/
 }
 #main .container {
+/*
     height: 75px;
+*/
 }
 #main .mainContent {
     top: 75px;

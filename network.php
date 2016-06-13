@@ -74,7 +74,6 @@
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/Protein.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
@@ -206,16 +205,15 @@
             CLMSUI.vent = {};
             _.extend (CLMSUI.vent, Backbone.Events);
 
-       // for NGL
-       NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
-       var stage;
+		// for NGL
+		NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
+		var stage;
             
-            // What does this php bit do now?
         <?php
             include './php/loadData.php';
-            if (file_exists('../annotations.php')){
-                include '../annotations.php';
-            }
+            //~ if (file_exists('../annotations.php')){
+                //~ include '../annotations.php';
+            //~ }
         ?>
 
         CLMSUI.init = CLMSUI.init || {};
@@ -246,7 +244,7 @@
 
                 clmsModel.get("interactors").forEach (function (entry) {
                     console.log ("entry", entry);
-                    if (!entry.isDecoy()) {
+                    if (!entry.is_decoy) {
                         this.add ([{
                             "id": entry.id,
                             "displayLabel": entry.name.replace("_", " "),
@@ -285,7 +283,7 @@
 
 
             // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
-            var options = {rawInteractors: tempInteractors, rawMatches: tempMatches, searches: searchMeta};
+            var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
             CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
                 "No cross-links detected for this search.<br>Please return to the search history page."
             );
@@ -306,6 +304,8 @@
 
             CLMSUI.tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
+			//TODO: some/most(/all?) these model instances don't need to be in CLMSUI?
+			// as they can be accessed from CLMSUI.compositeModelInst 
             CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
                 distancesModel: CLMSUI.distancesInst,
                 clmsModel: CLMSUI.clmsModelInst,
@@ -316,9 +316,10 @@
                 selection: [], //will contain cross-link objects
                 highlights: [], //will contain cross-link objects 
                 linkColourAssignment: CLMSUI.linkColour.defaultColours,
-                selectedProtein: null
+                selectedProtein: null,
+                groupColours: null // will be d3.scale for colouring by search/group
             });
-
+            
             CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
             // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
@@ -334,15 +335,16 @@
         }
 
         changeLinkColours = function () {
-            var colourSelection = document.getElementById("linkColourSelect").value;
-            if (colourSelection == "Default") {
-                CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
-            } else if (colourSelection == "Group") {
-                CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.group);
+			var colourSelection = document.getElementById("linkColourSelect").value;
+			if (colourSelection == "Default") {
+				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
+			} else if (colourSelection == "Group") {
+				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.byGroup);
             }
         }
             
     CLMSUI.init.models();
+    
 	var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
 	console.log(searches);
 	document.title = Array.from(searches.keys()).join();

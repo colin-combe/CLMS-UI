@@ -53,12 +53,8 @@ CLMSUI.modelUtils = {
     
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
-        matchesArr.forEach (function(m) {
-            var crossLink = m.crossLinks[0];
-            var isDecoy = (crossLink.toProtein.isDecoy() || crossLink.fromProtein.isDecoy()) ? 1 : 0;
-            //console.log ("m", m, pLink, isDecoy);
-            //var isDecoy = (Math.random() > 0.8) ? 1: 0; 
-            arrs[isDecoy].push (m.score);
+        matchesArr.forEach (function(m) { 
+            arrs[m.is_decoy? 1 : 0].push (m.score);
         });
         return arrs;
         /*
@@ -252,7 +248,15 @@ CLMSUI.modelUtils = {
     
     getRandomSearchId : function (clmsModel, match) {
         // pitfall: maps store integer keys as strings, so toString here
-        var searchId = match.searchId.toString();
+        
+        // (actually maps store integer keys as integers, 
+        // these keys got converted to strings when they were previously propertyNames in an Object,
+        // anyway, I added the toString() conversion for searchId to SpectrumMatch (ln.26)
+        // so we don't have to bother about this anymore.
+        // this is more commentary than this minor issue merits,
+        // can delete when read... - col)
+                
+        var searchId = match.searchId;//.toString(); //see, I took it out
         var searchMap = clmsModel.get("searches");
         var searchData = searchMap.get(searchId);
         var randId = searchData.randId;    
