@@ -13,7 +13,7 @@
 	};
     
     CLMSUI.linkColour.byGroup = function (crossLink) {	
-		var searches = CLMSUI.clmsModelInst.get("searches");
+		var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         //check number of groups to choose appropriate colour scheme,
 		// (only do once)
 		if (typeof CLMSUI.linkColour.groupColourScale == 'undefined') {
