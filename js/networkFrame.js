@@ -86,7 +86,7 @@ CLMSUI.init.views = function () {
         //{id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         //{id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
