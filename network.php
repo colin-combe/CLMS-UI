@@ -237,9 +237,9 @@
         CLMSUI.init.models = function () {
 
             // define alignment model and listeners first, so they're ready to pick up events from other models
-            CLMSUI.alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
+            var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
 
-            CLMSUI.alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+            alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
                 console.log("Interactors", clmsModel.get("interactors"));
 
                 clmsModel.get("interactors").forEach (function (entry) {
@@ -273,7 +273,7 @@
 
             // and when the blosum Collection fires a modelSelected event (via bothSyncsDone) it is accompanied by the chosen blosum Model
             // and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value   
-            CLMSUI.alignmentCollectionInst.listenTo (CLMSUI.blosumCollInst, "modelSelected", function (blosumModel) {
+            alignmentCollectionInst.listenTo (CLMSUI.blosumCollInst, "modelSelected", function (blosumModel) {
                 // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment 
                 // (done internally within alignmentModelInst)   
                 this.models.forEach (function (alignModel) {
@@ -312,7 +312,7 @@
                 rangeModel: rangeModelInst,
                 filterModel: filterModelInst,
                 tooltipModel: tooltipModelInst,
-                alignColl: CLMSUI.alignmentCollectionInst,
+                alignColl: alignmentCollectionInst,
                 selection: [], //will contain cross-link objects
                 highlights: [], //will contain cross-link objects 
                 linkColourAssignment: CLMSUI.linkColour.defaultColours,
@@ -325,7 +325,7 @@
             // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
             // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means 
             // the views are only notified once the changed data is ready.
-            CLMSUI.compositeModelInst.listenTo (CLMSUI.filterModelInst, "change", function() {
+            CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
                 this.applyFilter();
                 this.trigger ("filteringDone");
             });

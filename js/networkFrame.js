@@ -150,7 +150,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
     var tooltipView = new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
-        model: CLMSUI.tooltipModelInst,
+        model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
@@ -245,12 +245,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     // Alignment View
     var alignViewer = new CLMSUI.AlignCollectionViewBB ({
         el:"#alignPanel",
-        collection: CLMSUI.alignmentCollectionInst,
+        collection: CLMSUI.compositeModelInst.get("alignColl"),
         displayEventName: "alignShow",
         tooltipModel: CLMSUI.tooltipModelInst
     });
 
-    CLMSUI.alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
+    CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         sequences.forEach (function (entry) {
             console.log ("entry", entry);
             this.add ([{
