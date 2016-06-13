@@ -120,7 +120,7 @@
 			mp.link_position + 1 AS link_position, 
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
-			sp.scan_number
+			sp.scan_number, r.run_name
 		FROM 
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
@@ -135,7 +135,10 @@
 			mp.link_position
 			FROM matched_peptide mp WHERE link_position != -1) mp 
 			ON sm.id = mp.match_id 
-		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
+		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 	
+		INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized 
+			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
+			AND (NOT is_decoy)) r ON sm.id = r.spectrum_match_id		
 		ORDER BY sm.id;";
 		
 	//New DB
@@ -191,7 +194,7 @@
 			if (isset($rej)){
 				echo '"rj":"'.$rej.'"' . ',';
 		}
-			echo '"r":"' . "run" . '",'
+			echo '"r":"' . $line["run_name"]. '",'//"run" . '",'
 				. '"sn":' . $line["scan_number"]. ','
 				. '"pc":' . $line["precursor_charge"]
 				. "}";
