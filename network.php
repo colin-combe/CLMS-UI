@@ -288,30 +288,30 @@
                 "No cross-links detected for this search.<br>Please return to the search history page."
             );
 
-            CLMSUI.clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+            var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
-            CLMSUI.filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-                scores: CLMSUI.clmsModelInst.get("scores")
+            var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
+                scores: clmsModelInst.get("scores")
             });
 
-            CLMSUI.distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
+            var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
                 distances: distances
             });
 
-            CLMSUI.rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({ 
+            var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({ 
                 scale: d3.scale.linear() 
             });
 
-            CLMSUI.tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
+            var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
 			//TODO: some/most(/all?) these model instances don't need to be in CLMSUI?
 			// as they can be accessed from CLMSUI.compositeModelInst 
             CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-                distancesModel: CLMSUI.distancesInst,
-                clmsModel: CLMSUI.clmsModelInst,
-                rangeModel: CLMSUI.rangeModelInst,
-                filterModel: CLMSUI.filterModelInst,
-                tooltipModel: CLMSUI.tooltipModelInst,
+                distancesModel: distancesInst,
+                clmsModel: clmsModelInst,
+                rangeModel: rangeModelInst,
+                filterModel: filterModelInst,
+                tooltipModel: tooltipModelInst,
                 alignColl: CLMSUI.alignmentCollectionInst,
                 selection: [], //will contain cross-link objects
                 highlights: [], //will contain cross-link objects 
