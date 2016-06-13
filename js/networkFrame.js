@@ -84,7 +84,7 @@ CLMSUI.init.views = function () {
         //{id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+        //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         //{id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
@@ -150,7 +150,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
     var tooltipView = new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
-        model: CLMSUI.tooltipModelInst,
+        model: CLMSUI.compositeModelInst.get("tooltipModel"),
     });
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
@@ -247,7 +247,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el:"#alignPanel",
         collection: CLMSUI.alignmentCollectionInst,
         displayEventName: "alignShow",
-        tooltipModel: CLMSUI.tooltipModelInst
+        tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
     CLMSUI.alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {

@@ -325,7 +325,7 @@
             // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
             // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means 
             // the views are only notified once the changed data is ready.
-            CLMSUI.compositeModelInst.listenTo (CLMSUI.filterModelInst, "change", function() {
+            CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
                 this.applyFilter();
                 this.trigger ("filteringDone");
             });

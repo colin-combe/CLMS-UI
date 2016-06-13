@@ -274,7 +274,8 @@
         
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
-            this.render ({changed : d3.set(["links"]), });
+            this.render();
+            //this.render ({changed : d3.set(["links"]), });
         },
         
         idFunc: function (d) { return d.id; },
@@ -318,13 +319,16 @@
         
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
+            var intraOutside = this.options.intraOutside;
+            var bowOutMultiplier = 1.3 * (intraOutside ? 1.6 : 1);
+            
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
                 var homom = CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
                 var intra = xlink.toProtein.id === xlink.fromProtein.id;
-                var out = this.options.intraOutside ? intra && !homom : homom;
+                var out = intraOutside ? intra && !homom : homom;
                 var rad = out ? rad2 : rad1;
-                var bowRadius = out ? rad2 * 1.3 : 0;
+                var bowRadius = out ? rad2 * bowOutMultiplier: 0;
                 return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) / 2, rad: bowRadius}, {ang: link.end, rad: rad}] };
             }, this);
             return newLinks;
@@ -379,7 +383,7 @@
                 }, this);
                 
                 // set interactors to same order as interactor order
-                console.log ("ofi", filteredInteractors);
+                //console.log ("ofi", filteredInteractors);
                 var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
                 filteredInteractors = [];
                 this.interactorOrder.forEach (function (interactorId) {
@@ -387,7 +391,7 @@
                         filteredInteractors.push (fmap.get(interactorId));
                     }    
                 });
-                console.log ("nfi", filteredInteractors);
+                //console.log ("nfi", filteredInteractors);
                 
                 //console.log ("filteredFeatures", filteredFeatures);
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
@@ -395,7 +399,7 @@
 
                 var svg = d3.select(this.el).select("svg");
                 this.radius = this.getMaxRadius (svg);
-                var tickRadius = this.radius - this.options.tickWidth;
+                var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if lots of links on outside
                 var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
                 var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
                 var textRadius = (tickRadius + innerNodeRadius) / 2;
