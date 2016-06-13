@@ -248,7 +248,15 @@ CLMSUI.modelUtils = {
     
     getRandomSearchId : function (clmsModel, match) {
         // pitfall: maps store integer keys as strings, so toString here
-        var searchId = match.searchId.toString();
+        
+        // (actually maps store integer keys as integers, 
+        // these keys got converted to strings when they were previously propertyNames in an Object,
+        // anyway, I added the toString() conversion for searchId to SpectrumMatch (ln.26)
+        // so we don't have to bother about this anymore.
+        // this is more commentary than this minor issue merits,
+        // can delete when read... - col)
+                
+        var searchId = match.searchId;//.toString(); //see, I took it out
         var searchMap = clmsModel.get("searches");
         var searchData = searchMap.get(searchId);
         var randId = searchData.randId;    

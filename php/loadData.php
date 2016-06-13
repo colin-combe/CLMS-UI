@@ -19,7 +19,7 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 	$pageStartTime = microtime(true);
-	include('../../connectionString.php');
+	include('../connectionString.php');
 	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
 
@@ -32,9 +32,6 @@
 	if (preg_match($pattern, $sid)){
 		exit;
 	}
-
-	include('../connectionString.php');
-	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
 	$searchId_randGroup = [];
 	
@@ -114,6 +111,9 @@
 	/*
 	 * SPECTRUM MATCHES AND MATCHED PEPTIDES
 	 */
+	
+	
+	//old DB
 	$query = "	
 		SELECT 
 			mp.match_id, mp.match_type, mp.peptide_id, 
@@ -122,13 +122,43 @@
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
 			sp.scan_number
 		FROM 
-			(SELECT sm.* FROM spectrum_match sm INNER JOIN search s ON search_id = s.id WHERE ".$WHERE_withRand." AND dynamic_rank) sm 
+			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
+			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
+			WHERE ".$WHERE_withRand." AND dynamic_rank AND (NOT is_decoy)
+			AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR
+			(sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')
+			OR (sm.validated LIKE '?')) 
+			) sm 
 		INNER JOIN 
-			(SELECT * FROM matched_peptide WHERE ".$WHERE_withoutRand.") mp 
+			(SELECT mp.match_id, mp.match_type, mp.peptide_id, 
+			mp.link_position
+			FROM matched_peptide mp WHERE link_position != -1) mp 
 			ON sm.id = mp.match_id 
-		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 
-		
+		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
 		ORDER BY sm.id;";
+		
+	//New DB
+	/*
+	$query = "	
+		SELECT 
+			mp.match_id, mp.match_type, mp.peptide_id, 
+			mp.link_position + 1 AS link_position, 
+			sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy,
+			sp.scan_number
+		FROM 
+			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
+			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
+			WHERE ".$WHERE_withRand." AND dynamic_rank) sm 
+		INNER JOIN 
+			(SELECT mp.match_id, mp.match_type, mp.peptide_id, 
+			mp.link_position
+			FROM matched_peptide mp WHERE ".$WHERE_withoutRand.") mp 
+			ON sm.id = mp.match_id 
+		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
+		ORDER BY sm.id;";*/
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
