@@ -39,19 +39,17 @@ CLMSUI.init.views = function () {
         ;
     });
     
-    
+    var filterModel = CLMSUI.compositeModelInst.get("filterModel");     
     var filterViewGroup = new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder", 
-        model: CLMSUI.filterModelInst
+        model: filterModel
     });
 
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
-        var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.clmsModelInst.get("matches"));
+        var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
         return matches; // matches is now an array of arrays    //  [matches, []];
     };
-
-    console.log("*>" + CLMSUI.clmsModelInst.get("matches").length);
 
     var scoreDistributionView = new CLMSUI.MinigramViewBB ({
         el: "#filterPlaceholderSliderHolder",
@@ -69,7 +67,7 @@ CLMSUI.init.views = function () {
 
 
     // When the range changes on the mini histogram model pass the values onto the filter model
-    CLMSUI.filterModelInst.listenTo (miniDistModelInst, "change", function (model) {
+    filterModel.listenTo (miniDistModelInst, "change", function (model) {
         this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
     }, this);
 
