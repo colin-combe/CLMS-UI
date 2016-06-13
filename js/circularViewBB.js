@@ -95,7 +95,8 @@
               parentEvents = parentEvents();
           }
           return _.extend({},parentEvents,{
-              "click .niceButton": "reOrder"
+              "click .niceButton": "reOrder",
+              "click .flipIntraButton": "flipIntra"
           });
         },
 
@@ -132,6 +133,7 @@
                     console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd);
                     return {fromPos: convStart, toPos: convEnd};
                 },
+                intraOutside: true,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -143,6 +145,7 @@
             var template = _.template ("<DIV style='height:40px'>"+
                                        "<button class='<%= buttonClass1 %>'><%= buttonLabel1 %></button>"+
                                        "<button class='<%= buttonClass2 %>'><%= buttonLabel2 %></button>"+
+                                       "<button class='<%= buttonClass3 %>'><%= buttonLabel3 %></button>"+
                                        "</DIV><DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "panelInner")
@@ -153,6 +156,8 @@
                         buttonLabel1: "Export SVG",
                         buttonClass2: "btn btn-1 btn-1a niceButton", 
                         buttonLabel2: "Nice",
+                        buttonClass3: "btn btn-1 btn-1a flipIntraButton", 
+                        buttonLabel3: "Flip Intra",
                     })
                 )
             ;
@@ -267,6 +272,11 @@
             this.render();
         },
         
+        flipIntra: function () {
+            this.options.intraOutside = !this.options.intraOutside;
+            this.render ({changed : d3.set(["links"]), });
+        },
+        
         idFunc: function (d) { return d.id; },
         
         showSelected: function () {
@@ -311,10 +321,12 @@
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
                 var homom = CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
-                var rad = homom ? rad2 : rad1;
-                var bowRadius = homom ? rad2 * 1.3 : 0;
+                var intra = xlink.toProtein.id === xlink.fromProtein.id;
+                var out = this.options.intraOutside ? intra && !homom : homom;
+                var rad = out ? rad2 : rad1;
+                var bowRadius = out ? rad2 * 1.3 : 0;
                 return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) / 2, rad: bowRadius}, {ang: link.end, rad: rad}] };
-            });
+            }, this);
             return newLinks;
         },
 	

@@ -353,10 +353,6 @@ CLMSUI.utils.circleArrange = function (proteins) {
         return map;
     }
     
-
-    
-    var interLinks = makeNodeEdgeLists (proteins);
-    
     
     // pick node with most number of edges to nodes in pmap
     function inwardConn (nodeLinkArr, pMap) {
@@ -453,6 +449,18 @@ CLMSUI.utils.circleArrange = function (proteins) {
         
         return order;
     }
+    
+    function returnMinOrder (crossings, orders) {
+        var order = orders[0];
+        var min = 1000;
+        for (var n = 0; n < crossings.length; n++) {
+            if (crossings[n] < min) {
+                min = crossings[n];
+                order = orders[n];
+            }
+        }
+        return order;
+    }
 
     
     // Baur end append routine 4A - added stuff by me
@@ -493,16 +501,8 @@ CLMSUI.utils.circleArrange = function (proteins) {
             return tot;
         });
         
-        var min = 1000;
-        for (var n = 0; n < crossings.length; n++) {
-            if (crossings[n] < min) {
-                min = crossings[n];
-                order = orders[n];
-            }
-        }
-        
-        console.log ("leastCross", crossings);
-        
+        order = returnMinOrder (crossings, orders);
+        console.log ("leastCross", crossings);   
         return order;
     }
     
@@ -524,16 +524,42 @@ CLMSUI.utils.circleArrange = function (proteins) {
             orders.push (shuffle(order));
         }  
         
-        console.log ("l", orders, node, order);
+        //console.log ("l", orders, node, order);
         var crossings = orders.map (function (run) {
             var tot = 0;
             var active = 0;
             var activeSet = d3.set();
             var activeArr = [];
+            //console.log ("RUN", run);
             run.forEach (function (pnode) {
+                //console.log ("NODE", pnode.id, pnode);
                 pnode.edges.forEach (function (pos) {
                     var curActive = active;
                     var openCount = 0;
+                    var l = activeArr.length;
+                    var removed = [];
+                    pos.values.forEach (function (edge) {
+                        if (activeSet.has(edge.edgeId)) {
+                            //activeSet.remove (edge.edgeId);
+                            active--;
+                            curActive--;
+                            removed.push (activeArr.indexOf(edge.edgeId)); 
+                        }
+                    });
+                    if (removed.length > 0) {
+                        removed.sort (function(a,b) { return a - b; }); // grr, default is to sort numbers alphabetically
+                        //console.log ("removed", removed, activeArr);
+                        for (var n = removed.length ; --n >= 0;) {
+                            var rpos = removed[n];
+                            var invn = removed.length - n;
+                            var ropen = ((l - rpos) - invn);
+                            tot += ropen;
+                            //console.log ("r", l-rpos, l, rpos, invn, ropen, activeArr, activeArr.length, tot);   
+                            activeArr.splice(rpos, 1);
+                        }
+                        //console.log ("postremoved", activeArr);
+                    }
+                   
                     pos.values.forEach (function (edge) {
                         var enode = edge.otherNode;
                         var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
@@ -541,35 +567,22 @@ CLMSUI.utils.circleArrange = function (proteins) {
                             openCount++;
                         } else if (activeSet.has(edge.edgeId)) {
                             activeSet.remove (edge.edgeId);
-                            active--;
-                            curActive--;
-                            var acPos = activeArr.indexOf(edge.edgeId);
-                            activeArr.splice(acPos, 1);
-                            openCount += (activeArr.length - acPos) * activeArr.length;
-                            
                         } else {
                             activeSet.add (edge.edgeId);
                             activeArr.push (edge.edgeId);
                             active++;
                         }
                     });
-                    tot += (curActive * openCount); // use curClosed so we don't include links opened at same pos as crossings
+
+                    tot += (curActive * openCount); // use curActive so we don't include links opened at same pos as crossings
                     //console.log ("pnode", pnode, "pos", pos, "curActive", curActive, "activeArr", activeArr, "openCount", openCount, "tot", tot);
                 });    
             });
             return tot;
         });
         
-        var min = 1000;
-        for (n = 0; n < crossings.length; n++) {
-            if (crossings[n] < min) {
-                min = crossings[n];
-                order = orders[n];
-            }
-        }
-        
-        console.log ("leastCross", crossings);
-        
+        order = returnMinOrder (crossings, orders);
+        //console.log ("leastCross", crossings);
         return order;
     }
     
@@ -597,5 +610,11 @@ CLMSUI.utils.circleArrange = function (proteins) {
         return order;
     }
     
+    var pArray = Array.from (proteins.values());
+    if (pArray.length < 2) {
+        return (pArray.length === 1 ? [pArray[0].id] : []);
+    }
+    
+    var interLinks = makeNodeEdgeLists (proteins);
     return sort(interLinks).map(function(node) { return node.id; });
 };
