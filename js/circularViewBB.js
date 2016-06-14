@@ -145,24 +145,27 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV style='height:40px'>"+
-                                       "<button class='<%= buttonClass1 %>'><%= buttonLabel1 %></button>"+
-                                       "<button class='<%= buttonClass2 %>'><%= buttonLabel2 %></button>"+
-                                       "<button class='<%= buttonClass3 %>'><%= buttonLabel3 %></button>"+
-                                       "</DIV><DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV class='buttonPanel'></DIV><DIV class='panelInner circleDiv'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "panelInner")
+                .style ("display", "table")
                 .html(
                     template ({
                         svgClass: "circularView", 
-                        buttonClass1: "btn btn-1 btn-1a downloadButton", 
-                        buttonLabel1: "Export SVG",
-                        buttonClass2: "btn btn-1 btn-1a niceButton", 
-                        buttonLabel2: "Nice",
-                        buttonClass3: "btn btn-1 btn-1a flipIntraButton", 
-                        buttonLabel3: "Flip Intra",
                     })
                 )
+            ;
+            var buttonData = [
+                {label:"Export SVG", class:"downloadButton"},
+                {label:"Nice", class :"niceButton"},
+                {label:"Flip Intra", class:"flipIntraButton"},
+            ];
+            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData)
+                .enter()
+                .append("button")
+                .text(function(d) { return d.label; })
+                .attr("class", function(d) { return d.class; })
+                .classed("btn btn-1 btn-1a", true);
             ;
             
             var degToRad = Math.PI / 180;
@@ -378,6 +381,12 @@
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
+                
+                // If only one protein hide some options, and make links go in middle
+                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")
+                    .style("display", (interactors.size < 2) ? "none" : null)
+                ;
+                if (interactors.size < 2) { this.options.intraOutside = false; }
                 
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
