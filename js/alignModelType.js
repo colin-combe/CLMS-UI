@@ -94,6 +94,8 @@
         },
         
         // These following routines assume that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
+        // if no compSeq will return undefined
+        // will return NaN for out of bound indices
         mapToSearch: function (seqName, index) {
             var compSeq = this.getCompSequence (seqName);
             return compSeq ? compSeq.convertToRef [index - 1] + 1: undefined;

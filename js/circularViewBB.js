@@ -127,10 +127,13 @@
                         if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                     }
                     convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
+                    if (isNaN(convEnd) || convEnd === undefined) {
+                        convEnd = feature.end;
+                    }
                     //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
                     // e.g. a feature that starts/stops at some point has length of 1, not 0
                     
-                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd);
+                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, alignModel);
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,
@@ -378,9 +381,6 @@
                 
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
-                var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures (inter.uniprotFeatures);
-                }, this);
                 
                 // set interactors to same order as interactor order
                 //console.log ("ofi", filteredInteractors);
@@ -393,7 +393,12 @@
                 });
                 //console.log ("nfi", filteredInteractors);
                 
+                // After rearrange interactors, because filtered features depends on the interactor order
+                var filteredFeatures = filteredInteractors.map (function (inter) {
+                    return this.filterFeatures (inter.uniprotFeatures);
+                }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
+                
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
                 //console.log ("layout", layout);
 

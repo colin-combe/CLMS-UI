@@ -14,6 +14,7 @@
     
     CLMSUI.linkColour.byGroup = function (crossLink) {	
 		var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+        console.log (CLMSUI.compositeModelInst.get("clmsModel"));
         //check number of groups to choose appropriate colour scheme,
 		// (only do once)
 		if (typeof CLMSUI.linkColour.groupColourScale == 'undefined') {
@@ -49,7 +50,7 @@
 			return "black";
 		}			
 	};
-    
+
     
     
     

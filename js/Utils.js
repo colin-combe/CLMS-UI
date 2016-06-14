@@ -333,13 +333,13 @@ CLMSUI.utils.circleArrange = function (proteins) {
         });
         node.edges.sort (function (a,b) { return b.pos-a.pos; });
         node.total = node.edges.length;
-        console.log ("flat edges", node.edges);
+        //console.log ("flat edges", node.edges);
         
         node.edges = d3.nest()
             .key(function(d) { return d.pos; })
             .entries(node.edges)
         ;
-        console.log ("nested edges", node.edges);
+        //console.log ("nested edges", node.edges);
 
         return node;
     }
@@ -347,7 +347,6 @@ CLMSUI.utils.circleArrange = function (proteins) {
     
     function makeNodeEdgeLists (proteins) {
         var map = Array.from(proteins.values()).map (function (protein) {
-            console.log ("protein", protein);
             return makeNodeEdgeList (protein);
         });
         return map;
@@ -373,7 +372,6 @@ CLMSUI.utils.circleArrange = function (proteins) {
                 }
             }
         }); 
-        console.log ("max", max, pMap);
         return max;
     }
     
@@ -443,7 +441,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
             runDistance += pnode.length;
         });
         
-        console.log (node, "left", leftDistance, "right", rightDistance);  
+        //console.log (node, "left", leftDistance, "right", rightDistance);  
         var pos = (leftDistance > rightDistance) ? order.length : 0;
         order.splice (pos, 0, node);
         
@@ -471,7 +469,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
         var lcrossTest = [node].concat(order);
         var rcrossTest = order.concat(node);
         var orders = [lcrossTest, rcrossTest];
-        console.log ("l", lcrossTest, rcrossTest, node, order);
+        //console.log ("l", lcrossTest, rcrossTest, node, order);
         var crossings = orders.map (function (run) {
             var tot = 0;
             var active = 0;
@@ -502,35 +500,20 @@ CLMSUI.utils.circleArrange = function (proteins) {
         });
         
         order = returnMinOrder (crossings, orders);
-        console.log ("leastCross", crossings);   
+        //console.log ("leastCross", crossings);   
         return order;
     }
     
     
     function leastCrossingsEnd2 (order, node, interLinks, pMap, variations) {
 
-        function shuffle () {
-            var newOrder = order.slice(0);
-            var n = Math.floor ((Math.random() * order.length));
-            var m = Math.floor ((Math.random() * order.length));
-            var temp = newOrder[n];
-            newOrder[n] = newOrder[m];
-            newOrder[m] = temp;
-            return newOrder;
-        }
-        
-        var orders = [order];
-        for (var n = 0; n < variations; n++) {
-            orders.push (shuffle(order));
-        }  
-        
-        //console.log ("l", orders, node, order);
-        var crossings = orders.map (function (run) {
+        //console.log ("RUN", run);
+        function countCrossing (run) {
             var tot = 0;
             var active = 0;
             var activeSet = d3.set();
             var activeArr = [];
-            //console.log ("RUN", run);
+
             run.forEach (function (pnode) {
                 //console.log ("NODE", pnode.id, pnode);
                 pnode.edges.forEach (function (pos) {
@@ -546,20 +529,20 @@ CLMSUI.utils.circleArrange = function (proteins) {
                             removed.push (activeArr.indexOf(edge.edgeId)); 
                         }
                     });
-                    if (removed.length > 0) {
+                    var remLen = removed.length;
+                    if (remLen) {
                         removed.sort (function(a,b) { return a - b; }); // grr, default is to sort numbers alphabetically
                         //console.log ("removed", removed, activeArr);
-                        for (var n = removed.length ; --n >= 0;) {
+                        for (var n = remLen ; --n >= 0;) {
                             var rpos = removed[n];
-                            var invn = removed.length - n;
-                            var ropen = ((l - rpos) - invn);
+                            var ropen = ((l - rpos) - (remLen - n));
                             tot += ropen;
-                            //console.log ("r", l-rpos, l, rpos, invn, ropen, activeArr, activeArr.length, tot);   
+                            //console.log ("r", l-rpos, l, rpos, ropen, activeArr, activeArr.length, tot);   
                             activeArr.splice(rpos, 1);
                         }
                         //console.log ("postremoved", activeArr);
                     }
-                   
+
                     pos.values.forEach (function (edge) {
                         var enode = edge.otherNode;
                         var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
@@ -579,10 +562,30 @@ CLMSUI.utils.circleArrange = function (proteins) {
                 });    
             });
             return tot;
-        });
+        }
         
-        order = returnMinOrder (crossings, orders);
-        //console.log ("leastCross", crossings);
+        function shuffle () {
+            var newOrder = order.slice(0);
+            var n = Math.floor ((Math.random() * order.length));
+            var m = Math.floor ((Math.random() * order.length));
+            var temp = newOrder[n];
+            newOrder[n] = newOrder[m];
+            newOrder[m] = temp;
+            return newOrder;
+        }
+        
+        var min = 100000;
+        var shuffledOrder = order;
+        for (var n = 0; n < variations && min > 0; n++) {
+            var crossings = countCrossing (shuffledOrder);
+            if (crossings < min) {
+                min = crossings;
+                order = shuffledOrder;
+            }
+            shuffledOrder = shuffle(order);
+            console.log (crossings, shuffledOrder, "cur | min", min, order);
+        }
+
         return order;
     }
     
@@ -596,17 +599,14 @@ CLMSUI.utils.circleArrange = function (proteins) {
         
         for (var n = 0; n < interLinks.length; n++) {
             var choice = inwardConn (interLinks, pMap);
-            console.log ("choice", choice);
+            //console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
             //leastLengthEnd (order, choice.node, interLinks);
             order = leastCrossingsEnd (order, choice.node, interLinks, pMap);
             pMap[choice.node.id] = true;
         }
         
-        for (var n = 0; n < 10; n++) {
-            order = leastCrossingsEnd2 (order, {id: null}, interLinks, pMap, 10);
-        }
-
+        order = leastCrossingsEnd2 (order, {id: null}, interLinks, pMap, 50);
         return order;
     }
     

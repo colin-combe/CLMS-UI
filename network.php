@@ -334,13 +334,14 @@
             CLMSUI.blosumCollInst.fetch();
         }
 
-        changeLinkColours = function () {
-			var colourSelection = document.getElementById("linkColourSelect").value;
-			if (colourSelection == "Default") {
-				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
-			} else if (colourSelection == "Group") {
-				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.byGroup);
+        changeLinkColours = function (e) {
+            console.log ("e", e);
+            var colMap = {
+                "Default": CLMSUI.linkColour.defaultColours,
+                "Group": CLMSUI.linkColour.byGroup,
             }
+			var colourSelection = document.getElementById("linkColourSelect").value;
+			CLMSUI.compositeModelInst.set("linkColourAssignment", colMap[colourSelection]);
         }
             
     CLMSUI.init.models();
