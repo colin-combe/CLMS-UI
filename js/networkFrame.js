@@ -85,7 +85,7 @@ CLMSUI.init.views = function () {
         //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
-        //{id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
@@ -136,6 +136,7 @@ CLMSUI.init.views = function () {
     new CLMSUI.utils.KeyViewBB ({
         el: "#keyPanel",
         displayEventName: "keyShow",
+        model: CLMSUI.compositeModelInst,
     });
     
     new CLMSUI.CircularViewBB ({

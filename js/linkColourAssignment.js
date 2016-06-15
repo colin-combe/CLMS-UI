@@ -1,23 +1,42 @@
 
-    CLMSUI = CLMSUI || {};
+    var CLMSUI = CLMSUI || {};
     CLMSUI.linkColour = CLMSUI.linkColour || {};
     
     CLMSUI.linkColour.defaultColours = function (crossLink) {
-	
-		if (crossLink.isSelfLink() || crossLink.toProtein === null) {
-			return CLMS.xiNET.defaultSelfLinkColour.toRGB();
-		} else {
-			return CLMS.xiNET.defaultInterLinkColour.toRGB();
-		}
-	
+        return CLMSUI.linkColour.defaultColours.colScale (crossLink.isSelfLink() || crossLink.toProtein === null);
 	};
-    
+    CLMSUI.linkColour.defaultColours.init = function () {};
+    CLMSUI.linkColour.defaultColours.colScale = 
+        d3.scale.ordinal().domain([true,false]).range([CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()])
+    ;
+    CLMSUI.linkColour.defaultColours.title = "Default";
+
+
+
     CLMSUI.linkColour.byGroup = function (crossLink) {	
 		var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         console.log (CLMSUI.compositeModelInst.get("clmsModel"));
         //check number of groups to choose appropriate colour scheme,
 		// (only do once)
-		if (typeof CLMSUI.linkColour.groupColourScale == 'undefined') {
+		CLMSUI.linkColour.byGroup.init();
+		//check if link uniquely belongs to one group
+		var groupCheck = d3.set();
+		var filteredMatches = crossLink.filteredMatches;
+		for (match of filteredMatches) {
+			var match = match[0];//fix this weirdness with array ( [0] ), its so wrong
+			var group = searches.get(match.searchId).group; 	
+			groupCheck.add(group);
+		}
+		if (groupCheck.values().length == 1){
+			return CLMSUI.linkColour.groupColourScale(groupCheck.values()[0]);
+		}
+		else  {
+			return "black";
+		}			
+	};
+    CLMSUI.linkColour.byGroup.init = function () {
+        var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+        if (typeof CLMSUI.linkColour.groupColourScale == 'undefined') {
 			//put d3.scale for group colour assignment in compositeModel
             var groups = new Set();
 			for(search of searches) {
@@ -34,22 +53,10 @@
 				//a d3.scale that always returns gray?
 				CLMSUI.linkColour.groupColourScale = d3.scale.ordinal().range(["#767676"]);
 			}
+            CLMSUI.linkColour.byGroup.colScale = CLMSUI.linkColour.groupColourScale;
 		}
-		//check if link uniquely belongs to one group
-		var groupCheck = d3.set();
-		var filteredMatches = crossLink.filteredMatches;
-		for (match of filteredMatches) {
-			var match = match[0];//fix this weirdness with array ( [0] ), its so wrong
-			var group = searches.get(match.searchId).group; 	
-			groupCheck.add(group);
-		}
-		if (groupCheck.values().length == 1){
-			return CLMSUI.linkColour.groupColourScale(groupCheck.values()[0]);
-		}
-		else  {
-			return "black";
-		}			
-	};
+    };
+    CLMSUI.linkColour.byGroup.title = "Group";
 
     
     

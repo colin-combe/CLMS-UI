@@ -54,6 +54,7 @@
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
+        <link rel="stylesheet" href="./css/key.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -335,7 +336,6 @@
         }
 
         changeLinkColours = function (e) {
-            console.log ("e", e);
             var colMap = {
                 "Default": CLMSUI.linkColour.defaultColours,
                 "Group": CLMSUI.linkColour.byGroup,

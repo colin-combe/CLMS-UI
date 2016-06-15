@@ -19,7 +19,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             
             var self = this;
             var defaultOptions = {
-                fixedFontKeys: d3.set(["sequence"]),
+                fixedFontKeys: d3.set(["sequence", "seq"]),
                 removeTheseKeys: d3.set (["canonicalSeq"]),
                 expandTheseKeys: d3.set (["uniprotFeatures"]),
             };

@@ -88,7 +88,3 @@ svg.circularView {
 .flipNodeText {
     transform: scale(-1,1);
 }
-
-.ambiguous {
-    stroke-dasharray: 5 5;
-}
