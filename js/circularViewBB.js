@@ -299,14 +299,17 @@
         },
         
         showHighlighted: function () {
-           var highlights = this.model.get("highlights");
-           if (highlights) {
-                var highlightedIDs = highlights.map((function(xlink) { return xlink.id; }));
-                var idset = d3.set (highlightedIDs);
-                var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
-                thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
-           }
-            return this;
+			if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+				var highlights = this.model.get("highlights");
+				//console.log(">>>" + highlights.toString());
+				if (highlights) {
+					var highlightedIDs = highlights.map((function(xlink) { return xlink.id; }));
+					var idset = d3.set (highlightedIDs);
+					var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
+					thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
+				}
+				return this;
+			}
         },
         
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
