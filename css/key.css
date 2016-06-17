@@ -1,0 +1,60 @@
+/* These are styles used to represent elements in the key/legend window
+Ideally, they should use the same css rules as the actual visualisation elements so
+changes there are automatically reflected in the legend
+*/
+
+/* crosslink styles */
+
+.ambiguous {
+    stroke-dasharray: 5 5;
+}
+
+.defaultStroke {
+    stroke: black;
+    fill: none;
+}
+
+.multiLinkStroke {
+    stroke: #bbb;
+    stroke-width: 11px;
+    fill: none;
+}
+
+.selfLink {
+    shape-rendering: initial;
+}
+
+.homomultimer {
+    color: red;
+    stroke: red;
+    stroke-width: 1.5px;
+}
+
+.filled {
+    fill: #000;
+}
+
+.highlighted {
+    fill: #fdc086;
+    background-color: #fdc086;
+}
+
+.peptideAAText {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    text-anchor: middle;
+}
+
+.miniKey {
+    width: 60px;
+    height: 30px;
+    shape-rendering: crispEdges;
+}
+
+#keyPanel tr {
+    line-height: 1.3em;
+}
+
+#keyPanel tbody {
+    border-top: 1px solid #bbb;
+}

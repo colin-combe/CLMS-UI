@@ -127,10 +127,13 @@
                         if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                     }
                     convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
+                    if (isNaN(convEnd) || convEnd === undefined) {
+                        convEnd = feature.end;
+                    }
                     //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
                     // e.g. a feature that starts/stops at some point has length of 1, not 0
                     
-                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd);
+                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, alignModel);
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,
@@ -142,24 +145,27 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV style='height:40px'>"+
-                                       "<button class='<%= buttonClass1 %>'><%= buttonLabel1 %></button>"+
-                                       "<button class='<%= buttonClass2 %>'><%= buttonLabel2 %></button>"+
-                                       "<button class='<%= buttonClass3 %>'><%= buttonLabel3 %></button>"+
-                                       "</DIV><DIV class='panelInner circleDiv' style='height:calc(100% - 40px)'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV class='buttonPanel'></DIV><DIV class='panelInner circleDiv'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "panelInner")
+                .style ("display", "table")
                 .html(
                     template ({
                         svgClass: "circularView", 
-                        buttonClass1: "btn btn-1 btn-1a downloadButton", 
-                        buttonLabel1: "Export SVG",
-                        buttonClass2: "btn btn-1 btn-1a niceButton", 
-                        buttonLabel2: "Nice",
-                        buttonClass3: "btn btn-1 btn-1a flipIntraButton", 
-                        buttonLabel3: "Flip Intra",
                     })
                 )
+            ;
+            var buttonData = [
+                {label:"Export SVG", class:"downloadButton"},
+                {label:"Nice", class :"niceButton"},
+                {label:"Flip Self", class:"flipIntraButton"},
+            ];
+            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData)
+                .enter()
+                .append("button")
+                .text(function(d) { return d.label; })
+                .attr("class", function(d) { return d.class; })
+                .classed("btn btn-1 btn-1a", true);
             ;
             
             var degToRad = Math.PI / 180;
@@ -376,11 +382,14 @@
                 console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
                 
+                // If only one protein hide some options, and make links go in middle
+                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")
+                    .style("display", (interactors.size < 2) ? "none" : null)
+                ;
+                if (interactors.size < 2) { this.options.intraOutside = false; }
+                
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
-                var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures (inter.uniprotFeatures);
-                }, this);
                 
                 // set interactors to same order as interactor order
                 //console.log ("ofi", filteredInteractors);
@@ -393,7 +402,12 @@
                 });
                 //console.log ("nfi", filteredInteractors);
                 
+                // After rearrange interactors, because filtered features depends on the interactor order
+                var filteredFeatures = filteredInteractors.map (function (inter) {
+                    return this.filterFeatures (inter.uniprotFeatures);
+                }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
+                
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
                 //console.log ("layout", layout);
 

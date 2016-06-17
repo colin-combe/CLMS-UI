@@ -298,9 +298,9 @@ CLMSUI.utils = {
 };
 
 
-CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
+CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function () {
-        CLMSUI.utils.KeyViewBB.__super__.initialize.apply (this, arguments);
+        CLMSUI.utils.KeyViewOldBB.__super__.initialize.apply (this, arguments);
         
         var chartDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner")
@@ -309,6 +309,148 @@ CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         chartDiv.html ("<img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
         
         return this;
+    }
+});
+
+
+CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
+    initialize: function () {
+        CLMSUI.utils.KeyViewBB.__super__.initialize.apply (this, arguments);
+        
+        var chartDiv = d3.select(this.el).append("div")
+            .attr("class", "panelInner")
+        ;       
+        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        chartDiv.html ("<table><thead><tr><th><h1>Legend</h1></th></tr></thead></table><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
+        
+        var svgs = {
+            clinkp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
+            ambigp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous'/>",
+            multip : "<line x1='0' y1='15' x2='50' y2='15' class='multiLinkStroke'/><line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
+            selflinkp: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink'/>",
+            selflinkpc: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink homomultimer'/>",
+            clinkr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke dynColour'/>",
+            ambigr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous dynColour'/>",
+            selflinkr: "<path d='m 3,28 v -10 a 15,15 0 0 1 30,0 v 10' class='defaultStroke selfLink dynColour'/>",
+            homom: "<path d='m 18,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer'/>",
+            selflinkinter: "<path d='m 3,28 l 14,-20 l 14,20' class='defaultStroke selfLink dynColour'/>",
+            linkmodpep: "<path d='m 12,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour filled'/><path d='m 30,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour'/>",
+            highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>"
+        };
+        
+        var colScheme = CLMSUI.linkColour.defaultColours;
+        var cols = {
+            intra: {isSelfLink: function () { return true;}}, 
+            inter: {isSelfLink: function () { return false;}}
+        };
+        d3.keys(cols).forEach (function(key) {
+            cols[key].colour = colScheme (cols[key]);
+        });
+        console.log ("cols", cols);
+        
+        var sections = [
+            {
+                header: "Protein-protein level",
+                rows: [
+                    ["clinkp", "Cross-link"],
+                    ["ambigp", "Ambiguous"],
+                    ["multip", "Multiple Linkage Sites"],
+                    ["selflinkp", "Self-link; possibly inter- or intra-molecular"],
+                    ["selflinkpc", "Self-link; includes confirmed inter-molecular"],
+                ]
+            },
+            {
+                header: "Residue level",
+                rows: [
+                    ["clinkr", "Cross-link"],
+                    ["ambigr", "Ambiguous"],
+                    ["selflinkr", "Self-link (inter- or intra-molecular)"],
+                    ["homom", "Inter-molecular self-link (homomultimeric link)"],
+                    ["selflinkinter", "Intra-molecular self link (e.g. from internally linked peptide)"],
+                    ["linkmodpep", "Linker modified peptide (unfilled = ambiguous)"],
+                    ["highlight", "Highlighted linked peptide"],
+                ]
+            },
+            {
+                header: "Colour Scheme",
+                rows: []
+            }
+        ];
+        var table = chartDiv.select("table");
+        
+        var tbodies = table.selectAll("tbody").data(sections, function(d) { return d.header; })
+            .enter()
+            .append("tbody");
+        
+        tbodies.append("tr")
+            .append("th")
+            .text(function(d) { return d.header; })
+            .attr ("colspan", 2)
+        ;
+        
+        var trows = tbodies.selectAll("tr.dataBased").data(function(d) { return d.rows; })
+            .enter()
+            .append("tr")
+            .attr("class", "dataBased")
+        ;
+        
+        trows.selectAll("td").data(function(d) { return d; })
+            .enter()
+            .append("td")
+            .text(function(d,i) { return i ? d : ""; })
+            .each (addSvg)
+        ;
+        
+        function addSvg (d,i) {
+            if (i === 0) {
+                d3.select(this).append("svg")
+                    .attr ("class", "miniKey")
+                    .html (svgs[d])
+                ;       
+            }
+        }
+        
+        table.selectAll("path,line")
+            .filter (function() {
+                return d3.select(this).classed("dynColour");
+            })
+            .each (function() {
+                var d3Sel = d3.select(this);
+                var colType = d3Sel.classed("selfLink") ? "intra" : "inter";
+                var colour = cols[colType].colour;
+                d3Sel.style("stroke", colour);
+                if (d3Sel.classed("filled")) {
+                    d3Sel.style("fill", colour);  
+                }
+            })
+        ;
+            
+        this.listenTo (this.model, "change:linkColourAssignment", this.render);
+        
+        return this;
+    },
+    
+    render: function () {
+        var colourSection =[{
+            header: "Colour Scheme",
+            rows: []
+        }];
+        
+        var colourAssign = this.model.get("linkColourAssignment");
+        colourAssign.init();
+        var colourRange = colourAssign.colScale.range();
+        colourSection[0].rows = colourRange.map (function (val, i) {
+            return ["Colour "+i, "<span style='background-color:"+val+"'>Colour</span>"];
+        });
+        
+        var updateSection = d3.select(this.el).selectAll("tbody").data(colourSection, function(d) { return d.header; });
+        updateSection.select("th").text(function(d) { return d.header+": "+colourAssign.title; });
+        var rowSel = updateSection.selectAll("tr.dataBased").data(function(d) { return d.rows; });
+        rowSel.exit().remove();
+        rowSel.enter().append("tr").attr("class", "dataBased");
+        var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
+        cellSel.enter().append("td");
+        cellSel.html (function(d) { return d; });
     }
 });
 
@@ -333,13 +475,13 @@ CLMSUI.utils.circleArrange = function (proteins) {
         });
         node.edges.sort (function (a,b) { return b.pos-a.pos; });
         node.total = node.edges.length;
-        console.log ("flat edges", node.edges);
+        //console.log ("flat edges", node.edges);
         
         node.edges = d3.nest()
             .key(function(d) { return d.pos; })
             .entries(node.edges)
         ;
-        console.log ("nested edges", node.edges);
+        //console.log ("nested edges", node.edges);
 
         return node;
     }
@@ -347,7 +489,6 @@ CLMSUI.utils.circleArrange = function (proteins) {
     
     function makeNodeEdgeLists (proteins) {
         var map = Array.from(proteins.values()).map (function (protein) {
-            console.log ("protein", protein);
             return makeNodeEdgeList (protein);
         });
         return map;
@@ -373,7 +514,6 @@ CLMSUI.utils.circleArrange = function (proteins) {
                 }
             }
         }); 
-        console.log ("max", max, pMap);
         return max;
     }
     
@@ -443,7 +583,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
             runDistance += pnode.length;
         });
         
-        console.log (node, "left", leftDistance, "right", rightDistance);  
+        //console.log (node, "left", leftDistance, "right", rightDistance);  
         var pos = (leftDistance > rightDistance) ? order.length : 0;
         order.splice (pos, 0, node);
         
@@ -471,7 +611,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
         var lcrossTest = [node].concat(order);
         var rcrossTest = order.concat(node);
         var orders = [lcrossTest, rcrossTest];
-        console.log ("l", lcrossTest, rcrossTest, node, order);
+        //console.log ("l", lcrossTest, rcrossTest, node, order);
         var crossings = orders.map (function (run) {
             var tot = 0;
             var active = 0;
@@ -502,35 +642,20 @@ CLMSUI.utils.circleArrange = function (proteins) {
         });
         
         order = returnMinOrder (crossings, orders);
-        console.log ("leastCross", crossings);   
+        //console.log ("leastCross", crossings);   
         return order;
     }
     
     
     function leastCrossingsEnd2 (order, node, interLinks, pMap, variations) {
 
-        function shuffle () {
-            var newOrder = order.slice(0);
-            var n = Math.floor ((Math.random() * order.length));
-            var m = Math.floor ((Math.random() * order.length));
-            var temp = newOrder[n];
-            newOrder[n] = newOrder[m];
-            newOrder[m] = temp;
-            return newOrder;
-        }
-        
-        var orders = [order];
-        for (var n = 0; n < variations; n++) {
-            orders.push (shuffle(order));
-        }  
-        
-        //console.log ("l", orders, node, order);
-        var crossings = orders.map (function (run) {
+        //console.log ("RUN", run);
+        function countCrossing (run) {
             var tot = 0;
             var active = 0;
             var activeSet = d3.set();
             var activeArr = [];
-            //console.log ("RUN", run);
+
             run.forEach (function (pnode) {
                 //console.log ("NODE", pnode.id, pnode);
                 pnode.edges.forEach (function (pos) {
@@ -546,20 +671,20 @@ CLMSUI.utils.circleArrange = function (proteins) {
                             removed.push (activeArr.indexOf(edge.edgeId)); 
                         }
                     });
-                    if (removed.length > 0) {
+                    var remLen = removed.length;
+                    if (remLen) {
                         removed.sort (function(a,b) { return a - b; }); // grr, default is to sort numbers alphabetically
                         //console.log ("removed", removed, activeArr);
-                        for (var n = removed.length ; --n >= 0;) {
+                        for (var n = remLen ; --n >= 0;) {
                             var rpos = removed[n];
-                            var invn = removed.length - n;
-                            var ropen = ((l - rpos) - invn);
+                            var ropen = ((l - rpos) - (remLen - n));
                             tot += ropen;
-                            //console.log ("r", l-rpos, l, rpos, invn, ropen, activeArr, activeArr.length, tot);   
+                            //console.log ("r", l-rpos, l, rpos, ropen, activeArr, activeArr.length, tot);   
                             activeArr.splice(rpos, 1);
                         }
                         //console.log ("postremoved", activeArr);
                     }
-                   
+
                     pos.values.forEach (function (edge) {
                         var enode = edge.otherNode;
                         var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
@@ -579,10 +704,30 @@ CLMSUI.utils.circleArrange = function (proteins) {
                 });    
             });
             return tot;
-        });
+        }
         
-        order = returnMinOrder (crossings, orders);
-        //console.log ("leastCross", crossings);
+        function shuffle () {
+            var newOrder = order.slice(0);
+            var n = Math.floor ((Math.random() * order.length));
+            var m = Math.floor ((Math.random() * order.length));
+            var temp = newOrder[n];
+            newOrder[n] = newOrder[m];
+            newOrder[m] = temp;
+            return newOrder;
+        }
+        
+        var min = 100000;
+        var shuffledOrder = order;
+        for (var n = 0; n < variations && min > 0; n++) {
+            var crossings = countCrossing (shuffledOrder);
+            if (crossings < min) {
+                min = crossings;
+                order = shuffledOrder;
+            }
+            shuffledOrder = shuffle(order);
+            console.log (crossings, shuffledOrder, "cur | min", min, order);
+        }
+
         return order;
     }
     
@@ -596,17 +741,14 @@ CLMSUI.utils.circleArrange = function (proteins) {
         
         for (var n = 0; n < interLinks.length; n++) {
             var choice = inwardConn (interLinks, pMap);
-            console.log ("choice", choice);
+            //console.log ("choice", choice);
             //fixedEnd (pOrder, choice.protein);
             //leastLengthEnd (order, choice.node, interLinks);
             order = leastCrossingsEnd (order, choice.node, interLinks, pMap);
             pMap[choice.node.id] = true;
         }
         
-        for (var n = 0; n < 10; n++) {
-            order = leastCrossingsEnd2 (order, {id: null}, interLinks, pMap, 10);
-        }
-
+        order = leastCrossingsEnd2 (order, {id: null}, interLinks, pMap, 50);
         return order;
     }
     

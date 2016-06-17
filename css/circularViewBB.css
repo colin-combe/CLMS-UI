@@ -1,5 +1,17 @@
+/* this table-row fills remaining height */
 #circularPanel DIV.circleDiv {
     background-color: #eee;
+    display: table-row;
+    height: 100%;
+}
+
+.buttonPanel {
+    display: table-row;
+}
+
+/* Can't do this margin in buttonPanel directly as it's a table-row display type */
+.buttonPanel button {
+    margin-bottom: 0.4em;
 }
 
 svg.circularView {
@@ -75,8 +87,4 @@ svg.circularView {
 
 .flipNodeText {
     transform: scale(-1,1);
-}
-
-.ambiguous {
-    stroke-dasharray: 5 5;
 }

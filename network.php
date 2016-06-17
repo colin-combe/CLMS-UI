@@ -54,6 +54,7 @@
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
+        <link rel="stylesheet" href="./css/key.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -335,13 +336,13 @@
             CLMSUI.blosumCollInst.fetch();
         }
 
-        changeLinkColours = function () {
-			var colourSelection = document.getElementById("linkColourSelect").value;
-			if (colourSelection == "Default") {
-				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.defaultColours);
-			} else if (colourSelection == "Group") {
-				CLMSUI.compositeModelInst.set("linkColourAssignment", CLMSUI.linkColour.byGroup);
+        changeLinkColours = function (e) {
+            var colMap = {
+                "Default": CLMSUI.linkColour.defaultColours,
+                "Group": CLMSUI.linkColour.byGroup,
             }
+			var colourSelection = document.getElementById("linkColourSelect").value;
+			CLMSUI.compositeModelInst.set("linkColourAssignment", colMap[colourSelection]);
         }
             
     CLMSUI.init.models();
