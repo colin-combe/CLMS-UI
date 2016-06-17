@@ -158,7 +158,7 @@
             var buttonData = [
                 {label:"Export SVG", class:"downloadButton"},
                 {label:"Nice", class :"niceButton"},
-                {label:"Flip Intra", class:"flipIntraButton"},
+                {label:"Flip Self", class:"flipIntraButton"},
             ];
             mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData)
                 .enter()

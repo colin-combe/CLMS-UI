@@ -365,7 +365,7 @@ CLMSUI.utils.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     ["clinkr", "Cross-link"],
                     ["ambigr", "Ambiguous"],
                     ["selflinkr", "Self-link (inter- or intra-molecular)"],
-                    ["homom", "Intra-molecular self-link (homomultimeric link)"],
+                    ["homom", "Inter-molecular self-link (homomultimeric link)"],
                     ["selflinkinter", "Intra-molecular self link (e.g. from internally linked peptide)"],
                     ["linkmodpep", "Linker modified peptide (unfilled = ambiguous)"],
                     ["highlight", "Highlighted linked peptide"],
