@@ -139,7 +139,7 @@
 		INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized 
 			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
 			AND (NOT is_decoy)) r ON sm.id = r.spectrum_match_id		
-		ORDER BY sm.id;";
+		ORDER BY score DESC, sm.id, mp.match_type;";
 		
 	//New DB
 	/*
@@ -214,7 +214,7 @@
 	 */
 	$implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
 	$query = "SELECT pep.id, (array_agg(pep.sequence))[1] as sequence, 
-		array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position) as positions
+		array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position + 1) as positions
 		FROM (SELECT id, sequence FROM peptide WHERE id IN "
 				.$implodedPepIds.") pep
 		INNER JOIN (SELECT peptide_id, protein_id, peptide_position
@@ -237,7 +237,7 @@
 			$c = count($proteinsArray);
 			foreach ($proteinsArray as $v) {
 				$proteinIds[$v] = 1;
-				}
+			}
 			$positions = $line['positions'];
 			echo '{"id":' . $line["id"] . ','
 				. '"seq":"' . $line["sequence"] . '",' 

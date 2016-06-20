@@ -1,6 +1,17 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.utils = {
+	// return comma-separated list of protein names from array of protein ids
+    proteinConcat: function (d, field) {
+		var pnames =  d[field].map (function(pid) { 
+			return CLMSUI.compositeModelInst.get("clmsModel").get("interactors").get(pid).name; });
+		return pnames.join(",");
+	},
+	
+	arrayConcat: function (d, field) {
+                return d[field].join(", ");
+    },
+    
     getSVG: function (d3SvgSelection) {
         console.log ("domElem", d3SvgSelection.node());
         var a = d3SvgSelection.node().outerHTML;
