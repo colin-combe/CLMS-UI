@@ -133,7 +133,7 @@ CLMSUI.init.views = function () {
     })
 
     // This generates the legend div, we don't keep a handle to it - the event object has one
-    new CLMSUI.utils.KeyViewBB ({
+    new CLMSUI.KeyViewBB ({
         el: "#keyPanel",
         displayEventName: "keyShow",
         model: CLMSUI.compositeModelInst,

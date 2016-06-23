@@ -583,12 +583,8 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 #keyPanel{
     left:10px;
-}
-#keyPanel .panelInner{
-/*
-    left:40px;
-*/
-    overflow:auto;
+    height: 25em;
+    width: 30em;
 }
 #helpPanel{
     left: 160px;

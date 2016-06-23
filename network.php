@@ -113,6 +113,7 @@
         <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
         <script type="text/javascript" src="./js/validate.js"></script>
         <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
+        <script type="text/javascript" src="./js/keyViewBB.js"></script>
                 
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
