@@ -17,9 +17,18 @@
        url('../fonts/lato/regular/Lato-Regular.svg#svgLato-Regular') format('svg');  /* Legacy iOS */ 
 }
 
+.highlighted {
+    stroke: #fdc086;
+}
+/*
+.selected {
+
+}
+*/
+
 /* Btn */
 .btn {
-	height: 32px;
+    height: 32px;
     border: none;
     font-family: inherit;
     font-size: 0.8em;
@@ -55,7 +64,7 @@
 
 /*tables*/
 table {
-	width:100%;
+    width:100%;
     font-size: 0.9em;
     left: auto;
     position: relative;
@@ -66,32 +75,32 @@ table {
     text-align: left;
 }
 thead{
-	margin-top:10px;
-	margin-bottom:10px;
+    margin-top:10px;
+    margin-bottom:10px;
 }
 th{
-	padding-left:5px;
-	padding-right:5px;
+    padding-left:5px;
+    padding-right:5px;
     vertical-align: middle; 
     height: 30px;
 }
 td{
-	padding-left:5px;
-	padding-right:5px;
+    padding-left:5px;
+    padding-right:5px;
     vertical-align: middle; 
     text-align: left;
 }
 th:first-child{
-	padding-left:10px;
+    padding-left:10px;
 }
 th:last-child{
-	padding-right:10px;
+    padding-right:10px;
 }
 td:first-child{
-	padding-left:10px;
+    padding-left:10px;
 }
 td:last-child{
-	padding-right:10px;
+    padding-right:10px;
 }
 tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
     color: #fff;
@@ -105,35 +114,35 @@ tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
 
 /* fa */
 .fa-home{
-	font-size:1.5em;
-	padding:4px;
-	vertical-align:middle;
+    font-size:1.5em;
+    padding:4px;
+    vertical-align:middle;
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
     transition: all .3s;
-	cursor:pointer;
+    cursor:pointer;
 }
 .fa-home:hover {
-	color: #091D42;
-	background:white;
+    color: #091D42;
+    background:white;
 }
 .fa-times-circle{
-	vertical-align:baseline;
+    vertical-align:baseline;
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
     transition: all .3s;
-	cursor:pointer;
-	float:right;
-	margin:2px;
-	margin-right:22px;
+    cursor:pointer;
+    float:right;
+    margin:2px;
+    margin-right:22px;
 }
 .fa-times-circle:hover {
-	color: #091D42;
-	background:white;
+    color: #091D42;
+    background:white;
 }
 .fa-angle-down{
 /*
-	font-size:1.5em;
+    font-size:1.5em;
 */
 }
 /* Common */
@@ -148,11 +157,11 @@ body, html{
 }
 body, input, select, textarea {
     Font-family: "Lato-Regular", Helvetica, Arial, sans-serif;
-	font-size: 13pt;
+    font-size: 13pt;
     font-weight: 300;
     line-height: 1.75em;
     color: #888;
-	-webkit-text-stroke: .15px;
+    -webkit-text-stroke: .15px;
 }
 .centre {
     text-align: center;
@@ -173,7 +182,7 @@ body, input, select, textarea {
 
 
 .headerLabel{
-	text-transform: uppercase;
+    text-transform: uppercase;
     margin-right:10px;
     font-size:0.9em;
 }
@@ -193,14 +202,14 @@ body, input, select, textarea {
     background-color: #091D42;
 }
 .clearChx{
-	background:#091D42;
-	width:70px;
+    background:#091D42;
+    width:70px;
 }
 .dynamic-table-filter{
-	margin:auto;
+    margin:auto;
 }
 .aggregateCheckbox{
-	width:20px;
+    width:20px;
 }
 /* network page */
 #main {
@@ -214,7 +223,7 @@ body, input, select, textarea {
     left: 0;
     right: 0;
     overflow:hidden;
-	/*z-index:-1;*/
+    /*z-index:-1;*/
 }
 #main .container {
 /*
@@ -230,9 +239,9 @@ body, input, select, textarea {
 }
 
 .page-header p{
-	display: inline-block;
-	padding-right:1px;
-	padding-left:10px;
+    display: inline-block;
+    padding-right:1px;
+    padding-left:10px;
 }
 /*view dropdown*/
 .checkbox-dropdown {
@@ -315,39 +324,39 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 
 
 #topDiv {
-	overflow:hidden;
+    overflow:hidden;
 }
 
 #networkDiv {
-	width:100%;
-	height:100%;
-	display:block;
+    width:100%;
+    height:100%;
+    display:block;
 }
 
 #spectrumDiv {
-	background-color: white;
-	height: calc(100% - 40px);
+    background-color: white;
+    height: calc(100% - 40px);
 }
 
 #nglDiv {
 /*
-	float:right;
-	width:50%;
+    float:right;
+    width:50%;
 */
 /*
-	height:100%;
+    height:100%;
 */
 }
 
 .histoLabel{
-	color:black;
-/*	float:right;
+    color:black;
+/*  float:right;
 
-	padding:30px;
+    padding:30px;
 */
 }
 .dist{
-	height:100px;
+    height:100px;
 }
 .bar rect {
   fill: steelblue;
@@ -361,20 +370,20 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 }
 
 .peakAnnot{
-	font-size:12px;
+    font-size:12px;
 }
 .fragBar{
-	stroke-width:1.3px;
-	stroke-linecap:round;
+    stroke-width:1.3px;
+    stroke-linecap:round;
 }
 
 #sliderDiv{
-	height:60%;
-	position:absolute;
-	top:76px;
-	right:0px;
+    height:60%;
+    position:absolute;
+    top:76px;
+    right:0px;
 /*
-	overflow:hidden;
+    overflow:hidden;
 */
 }
 
@@ -415,37 +424,37 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 #bottomDiv {
     margin-left: 10px;
     margin-right: 10px;
-	background: rgba(9, 29, 66, 0.9);
-	padding:0px 10px;
+    background: rgba(9, 29, 66, 0.9);
+    padding:0px 10px;
     position: relative; /* will overlay previous absolute divs i.e. distance slider */
 }
 .noMarg{
-	margin:0px!important;
+    margin:0px!important;
 }
 
 .dynDiv{
-	padding:20px 10px;
-	background: rgba(9, 29, 66, 0.9);
-	overflow: hidden;
-	color:#fff;
-	position:fixed;
-	pointer-events:all;
+    padding:20px 10px;
+    background: rgba(9, 29, 66, 0.9);
+    overflow: hidden;
+    color:#fff;
+    position:fixed;
+    pointer-events:all;
 /*
-	height:400px;
+    height:400px;
 */
 }
 .dynDiv_moveParentDiv{
-	height:20px;
-	background:#091D42;
+    height:20px;
+    background:#091D42;
 /*
-	background-image:url("../images/mv.png");
+    background-image:url("../images/mv.png");
 */
 }
 .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
-	width:20px;
-	height:20px;
-	background:#091D42;
-	border:none;
+    width:20px;
+    height:20px;
+    background:#091D42;
+    border:none;
 }
 .dynDiv_resizeDiv_tl {
 /*
@@ -480,12 +489,12 @@ cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
 }
 
 .panelInner{
-	overflow: hidden;   
-	height:100%;
-	width:100%;
+    overflow: hidden;   
+    height:100%;
+    width:100%;
     color: #fff;
-	text-align: left;
-	display:block;
+    text-align: left;
+    display:block;
 }
 
 .panelInner th {
@@ -520,7 +529,7 @@ tbody tr:hover td, tbody tr:hover td  {
     overflow: hidden;
     
     position: fixed;
-	bottom: 0;
+    bottom: 0;
     width: 100%;
     height: 70px;
     
@@ -532,8 +541,8 @@ tbody tr:hover td, tbody tr:hover td  {
     margin-bottom: 10px;
     margin-top: 10px;
     padding-top: 10px;
-	padding-left: 20px;
-	padding-right: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -569,51 +578,51 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-bottom:20px;
 }
 #keyPanel, #helpPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox {
-	display:none;
-	top:80px;
+    display:none;
+    top:80px;
 }
 #keyPanel{
-	left:10px;
+    left:10px;
 }
 #keyPanel .panelInner{
 /*
-	left:40px;
+    left:40px;
 */
-	overflow:auto;
+    overflow:auto;
 }
 #helpPanel{
-	left: 160px;
+    left: 160px;
 }
 #spectrumPanel{
     /*
-	left: 280px;
-	width:600px;
-	height:500px;
+    left: 280px;
+    width:600px;
+    height:500px;
     */
     width: 100%;
     height: 100%;
 }
 #spectrumPanelWrapper{
-	left: 280px;
-	width:600px;
-	height:600px;
+    left: 280px;
+    width:600px;
+    height:600px;
 }
 #nglPanel{
-	left: 40px;
-	width:700px;
-	height:400px;
+    left: 40px;
+    width:700px;
+    height:400px;
 }
 #distoPanel{
-	left: 40px;
-	width:500px;
-	height:300px;
+    left: 40px;
+    width:500px;
+    height:300px;
     position: absolute;
 }
 
 #circularPanel {
     left: 40px;
-    width: 400px;
-    height: 400px;
+    width: 500px;
+    height: 500px;
 }
 
 #proteinInfoPanel {
@@ -641,9 +650,9 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 
 #alignPanel{
-	left: 40px;
-	width:500px;
-	/*height:80px;*/
+    left: 40px;
+    width:500px;
+    /*height:80px;*/
 }
 
 .sideOn {

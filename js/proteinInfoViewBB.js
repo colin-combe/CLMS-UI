@@ -1,6 +1,6 @@
-//	protein info view
+//  protein info view
 //
-//	Martin Graham, Rappsilber Laboratory, 2015
+//  Martin Graham, Rappsilber Laboratory, 2015
 
 
 var CLMSUI = CLMSUI || {};
@@ -9,7 +9,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
             var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
             if(_.isFunction(parentEvents)){
-              parentEvents = parentEvents();
+                parentEvents = parentEvents();
             }
             return _.extend({},parentEvents,{});
         },
