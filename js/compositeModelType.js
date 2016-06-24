@@ -80,7 +80,7 @@
             var dedupedCrossLinks = crossLinkMap.values();
             this.set (modelProperty, dedupedCrossLinks);
         },
-                                    
+
         recurseAmbiguity: function (crossLink, crossLinkMap) {
             var matches = crossLink.filteredMatches;
             matches.forEach (function (match) {
@@ -96,6 +96,7 @@
             }, this);
         },
         
+        //what type should selectedProtein be? Set? Array? Is a map needed?
         setSelectedProteins: function (idArr, add) {
             var map = add ? new Map (this.get("selectedProtein")) : new Map ();
             idArr.forEach (function (id) {
