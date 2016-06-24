@@ -18,13 +18,137 @@
 
 var CLMSUI = CLMSUI || {};
 
-var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
-
-
-
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
+CLMSUI.vent = {};
+_.extend (CLMSUI.vent, Backbone.Events);
+
+// for NGL
+NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
+var stage;
+
+        // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
+        var allDataLoaded = _.after (2, function() {
+            console.log ("BOTH SYNCS DONE :-)");
+            CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
+            allDataAndWindowLoaded();
+        });
+
+        // function runs only when sequences and blosums have been loaded, and when window is loaded
+        var allDataAndWindowLoaded = _.after (2, function () {
+            console.log ("DATA LOADED AND WINDOW LOADED");
+            CLMSUI.init.viewsThatNeedAsyncData();
+            // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
+            // so we run it again here, doesn't do any harm
+            ByRei_dynDiv.init.main();
+        });
 
 CLMSUI.init = CLMSUI.init || {};
+
+CLMSUI.init.models = function (optionsContainingClmsData) {
+
+	// define alignment model and listeners first, so they're ready to pick up events from other models
+	var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
+
+	alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+		console.log("Interactors", clmsModel.get("interactors"));
+
+		clmsModel.get("interactors").forEach (function (entry) {
+			console.log ("entry", entry);
+			if (!entry.is_decoy) {
+				this.add ([{
+					"id": entry.id,
+					"displayLabel": entry.name.replace("_", " "),
+					"refID": "Search",
+					"refSeq": entry.sequence,
+					"compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
+					"compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
+				}]);
+			}
+		}, this);
+
+		allDataLoaded();
+
+		console.log ("ASYNC. uniprot sequences poked to collection", this);
+	});
+
+
+	// Collection of blosum matrices that will be fetched from a json file
+	CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection();
+
+	// when the blosum Collection is fetched (an async process), we select one of its models as being selected
+	CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
+		console.log ("ASYNC. blosum models loaded");
+		allDataLoaded();
+	});
+
+	// and when the blosum Collection fires a modelSelected event (via bothSyncsDone) it is accompanied by the chosen blosum Model
+	// and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value
+	alignmentCollectionInst.listenTo (CLMSUI.blosumCollInst, "modelSelected", function (blosumModel) {
+		// sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
+		// (done internally within alignmentModelInst)
+		this.models.forEach (function (alignModel) {
+			alignModel.set ("scoreMatrix", blosumModel);
+		});
+	});
+
+
+	// This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
+	CLMSUI.utils.displayError (function() { return !optionsContainingClmsData.rawMatches
+		|| !optionsContainingClmsData.rawMatches.length; },
+		"No cross-links detected for this search.<br>Please return to the search history page."
+	);
+	var clmsModelInst = new window.CLMS.model.SearchResultsModel (optionsContainingClmsData);
+
+	var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
+		scores: clmsModelInst.get("scores")
+	});
+
+	var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
+		distances: distances
+	});
+
+	var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
+		scale: d3.scale.linear()
+	});
+
+	var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
+
+	CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
+		distancesModel: distancesInst,
+		clmsModel: clmsModelInst,
+		rangeModel: rangeModelInst,
+		filterModel: filterModelInst,
+		tooltipModel: tooltipModelInst,
+		alignColl: alignmentCollectionInst,
+		selection: [], //will contain cross-link objects
+		highlights: [], //will contain cross-link objects
+		linkColourAssignment: CLMSUI.linkColour.defaultColours,
+		selectedProtein: null, //what type should this be? Set?
+		groupColours: null // will be d3.scale for colouring by search/group
+	});
+
+	CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
+
+	// instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
+	// and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
+	// the views are only notified once the changed data is ready.
+	CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
+		this.applyFilter();
+		this.trigger ("filteringDone");
+	});
+
+	// Start the asynchronous blosum fetching after the above events have been set up
+	CLMSUI.blosumCollInst.fetch();
+}
+
+changeLinkColours = function (e) {
+	var colMap = {
+		"Default": CLMSUI.linkColour.defaultColours,
+		"Group": CLMSUI.linkColour.byGroup,
+	}
+	var colourSelection = document.getElementById("linkColourSelect").value;
+	CLMSUI.compositeModelInst.set("linkColourAssignment", colMap[colourSelection]);
+}
 
 CLMSUI.init.views = function () {
     
