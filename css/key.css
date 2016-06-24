@@ -51,13 +51,22 @@ changes there are automatically reflected in the legend
     shape-rendering: crispEdges;
 }
 
-/* For the panels used to render legend, should be separate (and merged with thos in ProteinViewInfo) */
-#keyPanel .panelInner {
+/* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */
+#keyPanel .panelInner .panelInner {
     overflow-y: auto;
 }
 
-#keyPanel table {
-    width: 100%;
+#keyPanel > .panelInner > h1 {
+    height: 1.7em;
+}
+
+#keyPanel > .panelInner > img {
+    margin-top: 0.5em;
+    height: 63px
+}
+
+#keyPanel > .panelInner > .panelInner {
+    height: calc(100% - 2.2em - 63px);
 }
 
 #keyPanel tr {

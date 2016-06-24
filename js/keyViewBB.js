@@ -6,21 +6,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner")
-            .style ("display", "table")
+            .html("<h1 class='infoHeader'>Xi Legend</h1><div class='panelInner'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
         ;       
-        topDiv.append("div")
-            .attr("class", "panelInner")
-            .style ("display", "table-row")
-            .append("h1")
-                .attr("class", "infoHeader")
-                .text("Xi Legend")
-        ;
-        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        topDiv.append("img")
-            .attr("src", "./images/logos/rappsilber-lab-small.png")
-            .style ("margin-top", "0.5em")
-            .style ("display", "table-row")
-        ;
         var chartDiv = topDiv.select(".panelInner");
 
         
