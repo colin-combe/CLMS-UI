@@ -113,11 +113,12 @@
         <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
         <script type="text/javascript" src="./js/validate.js"></script>
         <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
+        <script type="text/javascript" src="./js/keyViewBB.js"></script>
 
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
 
-
+                
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
@@ -130,15 +131,6 @@
     </head>
 
     <body>
-        <!--
-        <div class="dynDiv" id="spectrumPanelWrapper"></div>
-        <div class="dynDiv" id="keyPanel"></div>
-        <div class="dynDiv" id="nglPanel"></div>
-        <div class="dynDiv" id="distoPanel"></div>
-        <div class="dynDiv" id="matrixPanel"></div>
-        <div class="dynDiv" id="alignPanel"></div>
-        <div class="dynDiv" id="circularPanel"></div>
-        -->
         <!-- Main -->
         <div id="main">
 

@@ -25,360 +25,342 @@ if (!$_SESSION['session_name']) {
 }
 header('Content-type: text/html; charset=utf-8');
 ?>
-<!DOCTYPE HTML>
+
+<!DOCTYPE html>
 <html>
-	<head>
-		<?php
-			$sid = urldecode($_GET["sid"]);
+    <head>
+        <?php
+            $sid = urldecode($_GET["sid"]);
 
-			$pattern = '/[^0-9,\-]/';
-			if (preg_match($pattern, $sid)){
-				header();
-				echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
-				exit;
-			}
-			$pageName = "Validation";
-		?>
-			<title><?php echo $pageName ?></title>
-			<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-			<meta name="description" content="common platform for downstream analysis of CLMS data" />
-			<meta name="keywords" content="biologists, mass-spectrometrists, cross-linking, protein, complexes, 3d, models, rappsilber, software" />
-			<meta name="viewport" content="width=device-width, initial-scale=1">
-			<meta name="apple-mobile-web-app-capable" content="yes">
-			<meta name="apple-mobile-web-app-status-bar-style" content="black">
-			<link rel="stylesheet" href="css/reset.css" />
-			<link rel="stylesheet" href="css/style.css" />
-			<link rel="stylesheet" href="css/dynamic_table.css" />
+            $pattern = '/[^0-9,\-]/';
+            if (preg_match($pattern, $sid)){
+                header();
+                echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
+                exit;
+            }
+            $pageName = "Validation";
+        ?>
+            <title><?php echo $pageName ?></title>
+            <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+            <meta name="description" content="common platform for downstream analysis of CLMS data" />
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="apple-mobile-web-app-capable" content="yes">
+            <meta name="apple-mobile-web-app-status-bar-style" content="black">
+            <link rel="stylesheet" href="css/reset.css" />
+            <link rel="stylesheet" href="css/style.css" />
+            <link rel="stylesheet" href="css/dynamic_table.css" />
             <link rel="stylesheet" href="css/validate.css" />
-
-	</head>
-	<script type="text/javascript" src="./vendor/split.js"></script>
-        <script type="text/javascript" src="./vendor/d3.js"></script>
-
-        <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
+        <link rel="stylesheet" href="./css/reset.css" />
+        <link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
+        <link rel="stylesheet" href="./css/style.css" />
+        <link rel="stylesheet" href="./css/xiNET.css">
+        <link rel="stylesheet" href="./css/matrix.css">
+        <link rel="stylesheet" href="./css/tooltip.css">
+        <link rel="stylesheet" href="./css/c3.css">
+        <link rel="stylesheet" href="./css/minigram.css">
+        <link rel="stylesheet" href="./css/ddMenuViewBB.css">
+        <link rel="stylesheet" href="./css/alignViewBB.css">
+        <link rel="stylesheet" href="./css/selectionViewBB.css">
+        <link rel="stylesheet" href="./css/circularViewBB.css">
 <!--
-       	<script type="text/javascript" src="./vendor/rgbcolor.js"></script>
+        <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
 -->
+        <link rel="stylesheet" href="./css/validate.css">
+        <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
+        <link rel="stylesheet" href="./css/key.css">
+
+        <script type="text/javascript" src="./vendor/d3.js"></script>
+        <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
+        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
+        <script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
+        <script type="text/javascript" src="./vendor/crosslink.js"></script>
+        <script type="text/javascript" src="./vendor/c3.js"></script>
+        <script type="text/javascript" src="./vendor/split.js"></script>
+        <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
 
+<!--
+        <script type="text/javascript" src="./vendor/CLMS_model.js"></script>
+-->
+
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
+
+<!--
+       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
+-->
+
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
+
+        <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
+        <script type="text/javascript" src="./js/Utils.js"></script>
+        <script type="text/javascript" src="./js/models.js"></script>
+        <script type="text/javascript" src="./js/compositeModelType.js"></script>
+        <script type="text/javascript" src="./js/modelUtils.js"></script>
+        <script type="text/javascript" src="./js/distogramViewBB.js"></script>
+        <script type="text/javascript" src="./js/DistanceSliderBB.js"></script>
+        <script type="text/javascript" src="./js/filterViewBB.js"></script>
+        <script type="text/javascript" src="./js/matrixViewBB.js"></script>
+        <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
+        <script type="text/javascript" src="./js/minigramViewBB.js"></script>
+        <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
+        <script type="text/javascript" src="./js/NGLViewBB.js"></script>
+        <script type="text/javascript" src="./js/bioseq32.js"></script>
+        <script type="text/javascript" src="./js/alignModelType.js"></script>
+        <script type="text/javascript" src="./js/alignViewBB3.js"></script>
+        <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
+        <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
+        <script type="text/javascript" src="./js/circularViewBB.js"></script>
+        <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
+        <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
         <script type="text/javascript" src="./js/validate.js"></script>
+        <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
+        <script type="text/javascript" src="./js/keyViewBB.js"></script>
 
-	<script type="text/javascript" src="../spectrum/src/model.js"></script>
-	<script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
-	<script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
-	<script type="text/javascript" src="../spectrum/src/FragmentationKey.js"></script>
-	<script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
-	<script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
-	<script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-	<script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
-	<script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
-	<style>
+        <script type="text/javascript" src="./js/networkFrame.js"></script>
+        <script type="text/javascript" src="./js/downloads.js"></script>
 
-		html, body{
-			background-color: white;
-			color:black;
-			height:100%;
-			width:100%;
-			-webkit-user-select: none;
-			-khtml-user-select: none;
-			-moz-user-select: -moz-none;
-			-o-user-select: none;
-			user-select: none;
 
-			overflow:hidden;
-		}
-		*{
-			margin:0px;
-			padding:0px;
-		}
+        <!-- Spectrum view .js files -->
+    <script type="text/javascript" src="../spectrum/src/model.js"></script>
+    <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
+    <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
+    <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
+    <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
+    <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
+    <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
+    <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
+    <style>
 
-		#validationSpectrumDiv {
-			width:100%;
-<!--
-			height:100%;
--->
-		}
+        html, body{
+            background-color: white;
+            color:black;
+            height:100%;
+            width:100%;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: -moz-none;
+            -o-user-select: none;
+            user-select: none;
 
-		#tableContainer {
-			width:100%;
-			height:100%;
-			overflow:auto;
-		}
+            overflow:hidden;
+        }
+        *{
+            margin:0px;
+            padding:0px;
+        }
 
-		#measureTooltip {
-		    position: absolute;
-		    /*max-width: 8em;*/
-		    text-align:center;
-		    pointer-events:none; /*let mouse events pass through*/
-		    /*transition: opacity 0.3s;*/
-		}
+        #validationSpectrumDiv {
+            width:100%;
 
-		tr.selected {
-			color: #fff;
-			background-color: #091D42;
-		}
+        }
 
-	</style>
+        #tableContainer {
+            width:100%;
+            height:100%;
+            overflow:auto;
+        }
 
-	<body>
+        #measureTooltip {
+            position: absolute;
+            /*max-width: 8em;*/
+            text-align:center;
+            pointer-events:none; /*let mouse events pass through*/
+            /*transition: opacity 0.3s;*/
+        }
 
-		<div class="container" style="height:calc(100% - 90px);">
-			<h1 class="page-header">
-			<i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
+        tr.selected {
+            color: #fff;
+            background-color: #091D42;
+        }
+
+    </style>
+    </head>
+
+    <body>
+        <!-- Main -->
+        <div id="main">
+
+            <div class="container">
+            <h1 class="page-header">
+            <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
             <span class="headerLabel" style="font-weight:bold;">
-				<?php echo $_SESSION['session_name'] ?>  validating
-				<?php
-					$dashPos = strpos($sid,'-');
-					$randId = substr($sid, $dashPos + 1);
-					$search_id = substr($sid, 0, ($dashPos));
-					echo $search_id;
-				?>
+                <?php echo $_SESSION['session_name'] ?>  validating
+                <?php
+                    $dashPos = strpos($sid,'-');
+                    $randId = substr($sid, $dashPos + 1);
+                    $search_id = substr($sid, 0, ($dashPos));
+                    echo $search_id;
+                ?>
 
-			</span>
+            </span>
 
 <!--
-					<button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
-						Log Out
-					</button>
+                    <button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
+                        Log Out
+                    </button>
 -->
-				<div style='float:right'>
-					<button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
-				</div>
-
-			</h1>
-
-			<div id='validationSpectrumDiv'>
-				<label>lossy labels
-					<input id="lossyChkBx" type="checkbox">
-				</label>
-				<button id="reset" class="">reset zoom</button>
-				<button id="clearHighlights">clear highlights</button>
-				<label>measure
-					<input id="measuringTool" type="checkbox">
-				</label>
-				<label>move labels
-					<input id="moveLabels" type="checkbox">
-				</label>
-	<!--
-				</br>
-	-->
-				<label for="colorSelector">Change color scheme:</label>
-				<select id="colorSelector" style="display:inline-block;">
-					<option value="RdBu">Red&Blue</option>
-					<option value="BrBG">Brown&Teal</option>
-					<option value="PiYG">Pink&Green</option>
-					<option value="PRGn">Purple&Green</option>
-					<option value="PuOr">Orange&Purple</option>
-				</select>
-				<form id="setrange" style="display:inline-block;">
-					m/z Range:
-					<input type="text" id="xleft" size="5">
-					<input type="text" id="xright" size="5">
-					<input type="submit" value="set range">
-					<span id="range-error"></span>
-				</form>
-                <div style="height: calc(100% - 80px); width:100%; display: block;">
-                    <!-- display:block in svg stops containing div being slightly larger than svg, which stops g calculating itself as slightly larger
-                        in spectrum code (it grabs height from the div immediately above svg) -->
-                    <svg id="spectrumSVG" style="height: 100%; width:100%; display: block;"></svg>
-                    <div id="measureTooltip"></div>
+                <div style='float:right'>
+                    <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
                 </div>
 
-				<div>
+            </h1>
 
-				<table>
-					<tr>
-						<td><button class="validationButton A" onclick="validate('A')">A</button></td>
-						<td><button class="validationButton B" onclick="validate('B')">B</button></td>
-						<td><button class="validationButton C" onclick="validate('C')">C</button></td>
-						<td><button class="validationButton Q" onclick="validate('?')">?</button></td>
-						<td><button class="validationButton R" onclick="validate('R')">R</button></td>
-					</tr>
-				</table>
-
-				</div>
-			</div>
+            <div class="mainContent">
+                <div id="topDiv">
+                </div>
+                <div id="bottomDiv"></div>
+            </div>
 
 
-		<div id="tableContainer">
-				<table id='t1'>
-					<thead><td>Match ID</td><td>Score</td><td>PepSeq1</td><td>LinkPos1</td><td>PepSeq2 </td><td>LinkPos2</td><td>Validated</td></thead>
-					<tbody id='tb1'>
-					</tbody>
-				</table>
-			</div> <!-- tableContainer -->
+        </div> <!-- CONTAINER -->
 
-
-		</div> <!-- CONTAINER -->
-
-
+            <div class="controls">
+     <span id="filterPlaceholder"></span>
+</div>
 
 
         <script>
-			
-			//map iterates in insertion order, SQL query sorts by score
-			var matches = new Map();
-			
-			<?php
-			include('../connectionString.php');
-			$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
+    //<![CDATA[
 
-			//$peptidesTempTableName = 'tempMatchedPeptides' . preg_replace('/(.|:)/', "_", $_SERVER['REMOTE_ADDR']) . '_' . time();
+        var CLMSUI = CLMSUI || {};
+        <?php
+            if (isset($_SESSION['session_name'])) {
+                echo "CLMSUI.loggedIn = true;";
+            }
+            include './php/loadData.php';
+            //~ if (file_exists('../annotations.php')){
+                //~ include '../annotations.php';
+            //~ }
+        ?>
 
+        var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
 
-			$q_matchedPeptides =
-				'SELECT matched_peptide.match_id, spectrum_match.score,'
-				. ' matched_peptide.match_type, matched_peptide.link_position + 1 AS link_position, '
-				. 'spectrum_match.validated, '
-				. ' peptide.sequence AS pepseq '
-				. ' FROM '
-				. ' matched_peptide inner join '
-				. ' (SELECT * FROM spectrum_match WHERE SEARCH_ID = '.$search_id . ' AND dynamic_rank = true'
-				. ' AND spectrum_match.score > 6'
-				. ' ) spectrum_match ON spectrum_match.id = matched_peptide.match_id '
-				. ' inner join  peptide ON  matched_peptide.peptide_id = peptide.id '
-				. ' inner join search ON spectrum_match.search_id = search.id '
-				. ' WHERE search.random_id = \''.$randId.'\''
-				. ' AND matched_peptide.link_position != -1'
-				. ' ORDER BY score DESC, match_id, match_type;';
+        CLMSUI.init.models(options);
 
+        var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+        document.title = Array.from(searches.keys()).join();
 
-			$res = pg_query($q_matchedPeptides) or die('Query failed: ' . pg_last_error());
+        var windowLoaded = function () {
 
+            //CLMSUI.init.views();
+			    var filterModel = CLMSUI.compositeModelInst.get("filterModel");     
+    var filterViewGroup = new CLMSUI.FilterViewBB ({
+        el: "#filterPlaceholder", 
+        model: filterModel
+    });
 
-			$waitingForFirstMatch = true;
-			//~ $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-			while ($line = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-				$match_type = $line["match_type"];
-				if ($match_type == 1) {
-					$match_id = $line["match_id"];
-					$match_score = $line["score"];
-					$match_validated = $line["validated"];
+    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
+    miniDistModelInst.data = function() {
+        var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
+        return matches; // matches is now an array of arrays    //  [matches, []];
+    };
 
-					$pep1_link_position = $line['link_position'];
-					$pep1_seq =  $line["pepseq"];
-					$waitingForFirstMatch = false;
-				} else if ($match_type == 2) {
-					if ($match_id == $line["match_id"]) {
-						$pep2_link_position = $line['link_position'];
-						$pep2_seq = $line["pepseq"];
-
-						if ($waitingForFirstMatch != true) {
-							/*echo "<tr onclick='loadSpectra(".$search_id.',"'.$randId.'",'.$match_id.',"'
-									. $pep1_seq.'",'.$pep1_link_position.',"'.$pep2_seq.'",'.$pep1_link_position.");'"
-									. " class='". $match_validated ."' id='m". $match_id ."'>"
-									. '<td>' . $match_id . '</td>'
-									. '<td>' . number_format((float)$match_score, 2, '.', '') . '</td>'
-									. '<td>' . $pep1_seq . '</td>'
-									. '<td>' . $pep1_link_position. '</td>'
-									. '<td>' . $pep2_seq . '</td>'
-									. '<td>' . $pep2_link_position. '</td>'
-									. '<td id="td'.$match_id.'">' . $match_validated . '</td>'
-								. "</tr>";*/
-								
-							echo 'matches.set("'.$match_id.'",{"id":"'.$match_id
-									.'","searchId":"'.$search_id
-									.'","pepSeq1raw":"'.$pep1_seq
-									.'","linkPos1":"'.$pep1_link_position
-									.'","pepSeq2raw":"'.$pep2_seq
-									.'","linkPos2":"'.$pep2_link_position
-									.'","score":"'.number_format((float)$match_score, 2, '.', '')
-									.'","validated":"'.$match_validated
-									."\"});\n";
-
-							$waitingForFirstMatch = true;
-							
-						}
-					}
-				}
-			}
-			
-			// Free resultset
-			pg_free_result($res);
-			// Closing connection
-			pg_close($dbconn);
-
-			?>
-			
-			var matchKeys = Array.from(matches.keys());
-
-			
-			// how to create a table using d3's binding:
-			// https://vis4.net/blog/posts/making-html-tables-in-d3-doesnt-need-to-be-a-pain/
-			// (haven't done that)
-			
-			var tableBody =d3.select("#tb1");
-			for (match of matches.values()){
-				var tableRow = tableBody.append("tr")
-						.attr("class", match.validated)
-						.attr("id", "m" + match.id)
-						.on('click', function(){
-							var id = this.getAttribute("id").substr(1);
-							loadSpectrum(id);
-						});
-				
-				tableRow.append("td").html(match.id);
-				tableRow.append("td").html(match.score);
-				tableRow.append("td").html(match.pepSeq1raw);
-				tableRow.append("td").html(match.linkPos1);
-				tableRow.append("td").html(match.pepSeq2raw);
-				tableRow.append("td").html(match.linkPos2);
-				tableRow.append("td").html(match.validated).attr("id", "valTd"+match.id);
-			}
-
-			var SpectrumModel = new AnnotatedSpectrumModel();
+    var scoreDistributionView = new CLMSUI.MinigramViewBB ({
+        el: "#filterPlaceholderSliderHolder",
+        model: miniDistModelInst,
+        myOptions: {
+            maxX: 0,    // let data decide
+            seriesNames: ["Matches", "Decoys"],
+            //scaleOthersTo: "Matches",
+            xlabel: "Score",
+            ylabel: "Count",
+            height: 50,
+            colors: {"Matches":"blue", "Decoys":"red"}
+        }
+    });
 
 
-			$(function() {
+    // When the range changes on the mini histogram model pass the values onto the filter model
+    filterModel.listenTo (miniDistModelInst, "change", function (model) {
+        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
+    }, this);
 
 
-				_.extend(window, Backbone.Events);
-				window.onresize = function() { window.trigger('resize') };
+    // If the ClmsModel matches attribute changes then tell the mini histogram view
+    scoreDistributionView
+        .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
+        // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
+        //.listenTo (this.model.get("filterModel"), "change", this.render)  
+    ;       
 
 
-				var Spectrum = new SpectrumView({model: SpectrumModel, el:"#validationSpectrumDiv"});
-				var FragmentationKey = new FragmentationKeyView({model: SpectrumModel, el:"#validationSpectrumDiv"});
-
-				var split = Split (["#validationSpectrumDiv", "#tableContainer"],
-					{ direction: "vertical", sizes: [60,40], minSize: [200,10],
-						onDragEnd:function (){
-							Spectrum.resize();}
-					});
+            //allDataAndWindowLoaded ();
+			// World of code smells vol.1
+			// selectionViewer declared before spectrumWrapper because...
+			// 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
+			// 2. Event A in spectrumWrapper fires event B
+			// 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
+			// 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
+			var selectionViewer = new CLMSUI.SelectionTableViewBB ({
+				el: "#bottomDiv",
+				model: CLMSUI.compositeModelInst,
 			});
-
-
-			function loadSpectrum (matchId) {
-				if (matchId){
-					match = matches.get(matchId);
-					
-					matchViewed = match.id;
-
-					CLMSUI.loadSpectra (match,
-										<?php echo '"'.$randId.'"'; ?>, SpectrumModel)
-					;
-
-					d3.selectAll("tr").classed("selected", false);
-					d3.select("#m" + matchViewed).classed("selected", true);
-				}
-
-			};
-
-			validate = function (validationStatus) {
-				CLMSUI.validate (matchViewed, validationStatus, <?php echo '"'.$randId.'"'; ?>, function() {
-					d3.select("#valTd" + matchViewed).text(validationStatus);
-					d3.select("#m" + matchViewed).attr("class", validationStatus);
-					loadSpectrum(matchKeys[matchKeys.indexOf(matchViewed) + 1]);
-				});
-				
-			}
+			// redraw / hide table on selected cross-link change
+			selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+				var emptySelection = (selection.length === 0);
+				split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
+				this.setVisible (!emptySelection);    
+			});
+			split.collapse (true);
+			selectionViewer.setVisible (false);
 			
-			loadSpectrum(matchKeys[0]);
+			var spectrumWrapper = new SpectrumViewWrapper ({
+				el:"#topDiv",
+				model: CLMSUI.compositeModelInst, 
+				displayEventName: "spectrumShow",
+				myOptions: {wrapperID: "spectrumPanel"}
+			});
+			
+			var spectrumModel = new AnnotatedSpectrumModel();
+			var spectrumViewer = new SpectrumView ({
+				model: spectrumModel, 
+				el:"#spectrumPanel",
+			});
+			var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
-			//]]>
-		</script>
+    // Update spectrum view when extrenal resize event called
+    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.resize();
+    });
+    fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.resize();
+    });
+    
+    // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
+    // used to transport one Match between views
+    spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+        if (match) { 
+            var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+            CLMSUI.loadSpectra (match, randId, this.model);
+        } else {
+            this.model.clear();
+        }
+    });
 
+			var allCrossLinks = Array.from(
+					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+			CLMSUI.compositeModelInst.set("selection", allCrossLinks);
 
-	</body>
+        };
+
+        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
+
+        //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
+        window.addEventListener("load", windowLoaded);
+
+            //]]>
+        </script>
+
+    </body>
 </html>
