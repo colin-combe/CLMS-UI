@@ -92,6 +92,7 @@
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
+        <script type="text/javascript" src="./js/circleArrange.js"></script>
         <script type="text/javascript" src="./js/models.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>

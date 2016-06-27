@@ -46,9 +46,11 @@ changes there are automatically reflected in the legend
 }
 
 .miniKey {
-    width: 60px;
+    width: 52px;
     height: 30px;
     shape-rendering: crispEdges;
+    background: white;
+    padding-left: 1px;
 }
 
 /* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */
@@ -71,6 +73,7 @@ changes there are automatically reflected in the legend
 
 #keyPanel tr {
     line-height: 1.3em;
+    border-bottom: 1px solid #eee;
 }
 
 #keyPanel tbody {
@@ -92,4 +95,11 @@ changes there are automatically reflected in the legend
     height: 16px;
     fill: white;
     stroke: white;
+}
+
+.colourSwatch {
+    height: 1.2em;
+    width: 5em;
+    display: inline-block;
+    vertical-align: top;
 }

@@ -1,8 +1,11 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
-    initialize: function () {
+    initialize: function (viewOptions) {
         CLMSUI.KeyViewBB.__super__.initialize.apply (this, arguments);
+        
+        var defaultOptions = {};
+        this.options = _.extend(defaultOptions, viewOptions.myOptions);
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner")
@@ -26,17 +29,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>"
         };
         
-        var colScheme = CLMSUI.linkColour.defaultColours;
-        var cols = {
-            intra: {isSelfLink: function () { return true;}}, 
-            inter: {isSelfLink: function () { return false;}}
-        };
-        d3.keys(cols).forEach (function(key) {
-            cols[key].colour = colScheme (cols[key]);
-        });
-        console.log ("cols", cols);
-        
-        var sections = [
+        var sectionData = [
             {
                 id: "proteinKey",
                 header: "Protein-protein level",
@@ -68,67 +61,36 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
         ];
         
-         var setArrow = function (d) {
-            var assocTable = d3.select("#keyInfo"+d.id);
-            var tableIsHidden = (assocTable.style("display") == "none");  
-            d3.select(this)
-                .style("background", tableIsHidden ? "none" : "#55a")
-                .select("svg")
-                    .style("transform", "rotate("+(tableIsHidden ? 90 : 180)+"deg)")
-            ;
+        var headerFunc = function(d) { return d.header.replace("_", " "); };
+        var rowFilterFunc = function(d) { 
+            return d.rows.map (function(row) {
+                return {key: row[0], value: row[1]};
+            });
+        };
+        var cellFunc = function (d,i) {
+            var sel = d3.select(this);
+            if (i === 0) {
+                sel.append("svg")
+                    .attr ("class", "miniKey")
+                    .html (svgs[d.value])
+                ;       
+            } else {
+                sel.text (d.value);
+            }
         };
         
-        var sections = chartDiv.selectAll("section").data(sections, function(d) { return d.header; })
-            .enter()
-            .append("section")
-        ;
+        CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc);
         
-        var newHeaders = sections.append("h2")
-            .on ("click", function(d) {
-                var assocTable = d3.select("#keyInfo"+d.id);
-                var tableIsHidden = (assocTable.style("display") == "none");
-                assocTable.style("display", tableIsHidden ? "table" : "none");         
-                setArrow.call (this, d);  
-            })
-            .on ("mouseover", function(d) {
-                // eventually backbone shared highlighting code to go here   
-            })
-        ;
-        newHeaders.append("svg")
-            .append("polygon")
-                .attr("points", "0,14 7,0 14,14")
-        ;
-        newHeaders.append("span").text(function(d) { return d.header.replace("_", " "); });
+        var colScheme = CLMSUI.linkColour.defaultColours;
+        var cols = {
+            intra: {isSelfLink: function () { return true;}}, 
+            inter: {isSelfLink: function () { return false;}}
+        };
+        d3.keys(cols).forEach (function(key) {
+            cols[key].colour = colScheme (cols[key]);
+        });
         
-        var tables = sections.append("table")
-            .html("<thead><tr><th>Mark</th><th>Meaning</th></tr></thead><tbody></tbody>")
-            .attr("id", function(d) { return "keyInfo"+d.id; })
-        ;
-        
-        var tbodies = tables.select("tbody");
-        var trows = tbodies.selectAll("tr.dataBased").data(function(d) { return d.rows; })
-            .enter()
-            .append("tr")
-            .attr("class", "dataBased")
-        ;
-        
-        trows.selectAll("td").data(function(d) { return d; })
-            .enter()
-            .append("td")
-            .text(function(d,i) { return i ? d : ""; })
-            .each (addSvg)
-        ;
-        
-        function addSvg (d,i) {
-            if (i === 0) {
-                d3.select(this).append("svg")
-                    .attr ("class", "miniKey")
-                    .html (svgs[d])
-                ;       
-            }
-        }
-        
-        tables.selectAll("path,line")
+        chartDiv.selectAll("table").selectAll("path,line")
             .filter (function() {
                 return d3.select(this).classed("dynColour");
             })
@@ -142,8 +104,6 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 }
             })
         ;
-        
-        sections.selectAll("h2").each (setArrow);
             
         this.listenTo (this.model, "change:linkColourAssignment", this.render);
         
@@ -158,16 +118,18 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var colourAssign = this.model.get("linkColourAssignment");
         colourAssign.init();
-        var colourRange = colourAssign.colScale.range();
-        colourSection[0].rows = colourRange.map (function (val, i) {
-            return ["Colour "+i, "<span style='background-color:"+val+"'>Colour</span>"];
+        var colourDomain = colourAssign.colScale.domain();
+        colourSection[0].rows = colourDomain.map (function (val) {
+            return ["<span class='colourSwatch' style='background-color:"+colourAssign.colScale(val)+"'></span>", colourAssign.labels(val)];
         });
         
-        var updateSection = d3.select(this.el).selectAll("tbody").data(colourSection, function(d) { return d.header; });
-        updateSection.select("th").text(function(d) { return d.header+": "+colourAssign.title; });
-        var rowSel = updateSection.selectAll("tr.dataBased").data(function(d) { return d.rows; });
+        var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
+        updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.title; });
+        
+        var rowSel = updateSection.select("tbody").selectAll("tr").data(function(d) { return d.rows; });
         rowSel.exit().remove();
-        rowSel.enter().append("tr").attr("class", "dataBased");
+        rowSel.enter().append("tr");
+        
         var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
         cellSel.enter().append("td");
         cellSel.html (function(d) { return d; });

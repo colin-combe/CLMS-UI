@@ -9,6 +9,7 @@
     CLMSUI.linkColour.defaultColours.colScale = 
         d3.scale.ordinal().domain([true,false]).range([CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()])
     ;
+    CLMSUI.linkColour.defaultColours.labels = CLMSUI.linkColour.defaultColours.colScale.copy().range(["Self-Link", "Inter-Protein Link"]);
     CLMSUI.linkColour.defaultColours.title = "Default";
 
 
@@ -31,7 +32,7 @@
 			return CLMSUI.linkColour.groupColourScale(groupCheck.values()[0]);
 		}
 		else  {
-			return "black";
+			return CLMSUI.linkColour.groupColourScale(-1);
 		}			
 	};
     CLMSUI.linkColour.byGroup.init = function () {
@@ -43,24 +44,47 @@
 				groups.add(search.group);
 			}
 			var groupCount = groups.size; 
+            var labels = [];
 			if (groupCount < 6) {
-				CLMSUI.linkColour.groupColourScale = d3.scale.ordinal().range(colorbrewer.Dark2[5]);
+                var colArr = colorbrewer.Dark2[5];
+                colArr = ["black"].concat(colArr);
+				CLMSUI.linkColour.groupColourScale = d3.scale.ordinal().range(colArr).domain(d3.range(-1, 5, 1));
+                labels = CLMSUI.linkColour.groupColourScale.domain().map (function (d) {
+                    return (d < 0 ? "Multiple" : "Group "+d);
+                });
 			}
 			else if (groupCount < 11){
-				CLMSUI.linkColour.groupColourScale = d3.scale.ordinal().range(colorbrewer.Paired[10]);
+                var colArr = colorbrewer.Paired[10];
+                colArr = ["black"].concat(colArr);
+				CLMSUI.linkColour.groupColourScale = d3.scale.ordinal().range(colArr).domain(d3.range(-1, 10, 1));
+                labels = CLMSUI.linkColour.groupColourScale.domain().map (function (d) {
+                    return (d < 0 ? "Multiple" : "Group "+d);
+                });
 			}	
 			else { // more than 10 groups, not really feasible to find colour scale that works
 				//a d3.scale that always returns gray?
-				CLMSUI.linkColour.groupColourScale = d3.scale.ordinal().range(["#767676"]);
+                CLMSUI.linkColour.groupColourScale = d3.scale.linear().domain([-1,0]).range(["black", "#767676"]).clamp(true);
+                labels = ["Cross-Group", "Single"];
 			}
             CLMSUI.linkColour.byGroup.colScale = CLMSUI.linkColour.groupColourScale;
+            CLMSUI.linkColour.byGroup.labels = CLMSUI.linkColour.byGroup.colScale.copy().range(labels);
+            console.log ("colscale", CLMSUI.linkColour.groupColourScale);
 		}
     };
     CLMSUI.linkColour.byGroup.title = "Group";
 
-    
-    
-    
+
+CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({});
+
+CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.ColourModel ({
+    getColour: function (crossLink) {
+        return this.colScale (crossLink.isSelfLink() || crossLink.toProtein === null);
+    },
+    init: function () {},
+    colScale: d3.scale.ordinal().domain([true,false]).range([CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()]),
+    labels: CLMSUI.linkColour.defaultColours.colScale.copy().range(["Self-Link", "Inter-Protein Link"]),
+    title: "Default"
+});
 /*
 
 if (this.crosslinkViewer.groups.values().length > 1 && this.crosslinkViewer.groups.values().length < 5) {
