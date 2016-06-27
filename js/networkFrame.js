@@ -26,21 +26,21 @@ _.extend (CLMSUI.vent, Backbone.Events);
 NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
 var stage;
 
-        // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-        var allDataLoaded = _.after (2, function() {
-            console.log ("BOTH SYNCS DONE :-)");
-            CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
-            allDataAndWindowLoaded();
-        });
+// only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
+var allDataLoaded = _.after (2, function() {
+	console.log ("BOTH SYNCS DONE :-)");
+	CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
+	allDataAndWindowLoaded();
+});
 
-        // function runs only when sequences and blosums have been loaded, and when window is loaded
-        var allDataAndWindowLoaded = _.after (2, function () {
-            console.log ("DATA LOADED AND WINDOW LOADED");
-            CLMSUI.init.viewsThatNeedAsyncData();
-            // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
-            // so we run it again here, doesn't do any harm
-            ByRei_dynDiv.init.main();
-        });
+// function runs only when sequences and blosums have been loaded, and when window is loaded
+var allDataAndWindowLoaded = _.after (2, function () {
+	console.log ("DATA LOADED AND WINDOW LOADED");
+	CLMSUI.init.viewsThatNeedAsyncData();
+	// ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
+	// so we run it again here, doesn't do any harm
+	ByRei_dynDiv.init.main();
+});
 
 CLMSUI.init = CLMSUI.init || {};
 
