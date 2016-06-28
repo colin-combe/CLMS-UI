@@ -308,6 +308,31 @@ CLMSUI.utils = {
     }),
 };
 
+CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
+    events: {
+        "click option": "clicked",
+    },
+    initialize: function () {
+        var d3sel = d3.select(this.el);
+        d3sel.append("select")
+            .attr("id", "linkColourSelect")
+            .selectAll("option")
+            .data(this.models)
+                .append("option")
+                .text (function(d) { return d.get("title"); })
+                .property("selected", function(d,i) { return i === 0; })
+        ;
+    },
+    clicked: function(e){
+        e.preventDefault();
+        console.log (e);
+        var item;  // = ??? how do we get the item?!
+        var name = item.get("name");
+        this.collection.set("selected", item.get("cid"));
+        alert(name);
+    },
+});
+
 
 CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function () {
