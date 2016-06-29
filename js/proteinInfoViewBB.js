@@ -58,7 +58,6 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
 
                 var rowFilterFunc = function (d) {   
                     var entries = d3.entries(d);
-                    console.log ("pe", entries);
                     var badKeys = self.options.removeTheseKeys;
                     return entries.filter (function (entry) {
                         if ($.isArray(entry.value)) {
@@ -78,9 +77,52 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 var headerFunc = function(d) { return d.name.replace("_", " "); };
                 
                 CLMSUI.utils.sectionTable.call (this, tabs, prots, "protInfo", ["Property", "Value"], headerFunc, rowFilterFunc, cellFunc);
+                
+                tabs.selectAll("span.hit")
+                    .on ("click", function() {
+                        var ids = d3.select(this).attr("data-linkids");
+                        var idArray = ids.split(",");
+                        var crossLinks = self.getCrossLinksFromIDs (idArray);
+                        self.model.calcMatchingCrosslinks ("selection", crossLinks, true, d3.event.ctrlKey);
+                    })
+                    .on ("mouseover", function () {
+                        var d3sel = d3.select(this);
+                        var pos = d3sel.attr("data-pos");
+                        var ids = d3sel.attr("data-linkids");
+                        var idArray = ids.split(",");
+                        var crossLinks = self.getCrossLinksFromIDs (idArray);
+                        var ttinfo = crossLinks.map (function (xlink) {
+                            var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
+                            if (fromId === pos) {
+                                return [xlink.toProtein.name, xlink.toResidue, xlink.filteredMatches.length];
+                            } else {
+                                return [xlink.fromProtein.name, xlink.fromResidue, xlink.filteredMatches.length];
+                            }
+                        });
+                        ttinfo.unshift (["Protein", "Pos", "Matches"]);
+                        self.model.get("tooltipModel")
+                            .set("header", idArray.length+" Linked Residue Pair"+(idArray.length > 1 ? "s" : ""))
+                            .set("contents", ttinfo)
+                            .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
+                        ;
+                        self.model.calcMatchingCrosslinks ("highlights", crossLinks, true, false);
+                    })
+                    .on ("mouseout", function() {
+                        self.model.get("tooltipModel").set("contents", null);
+                        self.model.set ("highlights", []);
+                    })
+                ;
             }
 
             return this;
+        },
+    
+        getCrossLinksFromIDs: function (linkIDs) {
+            var allLinks = this.model.get("clmsModel").get("crossLinks");
+            var crossLinks = linkIDs.map (function(linkId) {
+                 return allLinks.get(linkId);   
+            });
+            return crossLinks;
         },
     
         makeInteractiveSeqString: function (protein, seq, xlinks) {
@@ -100,16 +142,15 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 }
             });
             var endPointEntries = d3.entries (endPoints);
-            endPointEntries.sort (function(a,b) { return a.key - b.key; });
-            //console.log ("endpoints", endPointEntries);
-            
+            endPointEntries.sort (function(a,b) { return a.key - b.key; });            
             
             var strSegs = [];
             var last = 0;
             endPointEntries.forEach (function (ep) {
                 var pos = +ep.key;
+                var linkIds = ep.value.map (function(link) { return link.id; });
                 strSegs.push (seq.slice(last, pos-1));
-                strSegs.push ("<span class='hit'>"+seq.charAt(pos-1)+"</span>");
+                strSegs.push ("<span class='hit' data-pos='"+(proteinId+"_"+pos)+"' data-linkids='"+linkIds.join(",")+"'>"+seq.charAt(pos-1)+"</span>");
                 last = pos;
             });
             strSegs.push (seq.slice (last, seq.length));

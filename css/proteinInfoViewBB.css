@@ -71,6 +71,14 @@
     cursor: pointer;
 }
 
+.proteinInfoPanel .hit .selected {
+    background: #fdc086;
+}
+
+.proteinInfoPanel .hit:hover {
+    background: #ff0;
+}
+
 .proteinInfoPanel .fixedSizeFont {
     font-family: monospace;
     line-height: 1em;
