@@ -62,9 +62,7 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/alignViewBB.css">
         <link rel="stylesheet" href="./css/selectionViewBB.css">
         <link rel="stylesheet" href="./css/circularViewBB.css">
-<!--
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
--->
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
@@ -183,7 +181,14 @@ header('Content-type: text/html; charset=utf-8');
             color: #fff;
             background-color: #091D42;
         }
-
+        
+        #main .mainContent {
+			top:20px;
+		}
+		
+		#spectrumControlsTop{
+			margin-left: calc(100% - 500px);
+		}
     </style>
     </head>
 
@@ -210,9 +215,13 @@ header('Content-type: text/html; charset=utf-8');
                         Log Out
                     </button>
 -->
+<!--
                 <div style='float:right'>
+-->
                     <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
+<!--
                 </div>
+-->
 
             </h1>
 
@@ -355,7 +364,13 @@ header('Content-type: text/html; charset=utf-8');
         };
 
         var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
-
+        
+        var gutter = document.getElementsByClassName('gutter')[0];
+        gutter.addEventListener("mouseup", function (){
+				CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+			});
+		CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+        
         //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
         window.addEventListener("load", windowLoaded);
 

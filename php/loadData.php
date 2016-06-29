@@ -114,7 +114,7 @@
 	
 	
 	//old DB
-	$query = "	
+	/*$query = "	
 		SELECT 
 			mp.match_id, mp.match_type, mp.peptide_id, 
 			mp.link_position + 1 AS link_position, 
@@ -139,10 +139,9 @@
 		INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized 
 			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
 			AND (NOT is_decoy)) r ON sm.id = r.spectrum_match_id		
-		ORDER BY score DESC, sm.id, mp.match_type;";
+		ORDER BY score DESC, sm.id, mp.match_type;";*/
 		
 	//New DB
-	/*
 	$query = "	
 		SELECT 
 			mp.match_id, mp.match_type, mp.peptide_id, 
@@ -161,7 +160,8 @@
 			FROM matched_peptide mp WHERE ".$WHERE_withoutRand.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
-		ORDER BY sm.id;";*/
+		ORDER BY sm.id;";
+		
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);

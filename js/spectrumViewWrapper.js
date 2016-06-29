@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
+var SpectrumViewWrapper = Backbone.View.extend({
     
     events: function() {
       var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
@@ -17,7 +17,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         
         var _html = ""
             +"<div id='spectrumControls'>"
-            +"<div>"
+            +"<div id='spectrumControlsTop'>"
             +"<button id='reset'>Reset Zoom</button>"
             +"<button id='clearHighlights'>Clear Highlights</button>"
             +"<button class='downloadButton'>Export SVG</button>"
@@ -150,21 +150,21 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     
     triggerSpectrumViewer: function (match, forceShow) {
         //console.log ("MATCH selected", match, forceShow);
-        if (this.isVisible() || forceShow) {
+        //~ if (this.isVisible() || forceShow) {
             this.newestSelectionShown = true;
             var visible = !!match;
-            if (this.isVisible() !== visible) {
-                //console.log ("CHANGE VISIBILITY");
-                CLMSUI.vent.trigger ("spectrumShow", visible);   
-            }
+            //~ if (this.isVisible() !== visible) {
+                //~ //console.log ("CHANGE VISIBILITY");
+                //~ CLMSUI.vent.trigger ("spectrumShow", visible);   
+            //~ }
             CLMSUI.vent.trigger ("individualMatchSelected", match);
             this.enableControls (match);
             if (CLMSUI.loggedIn) {
 				this.setButtonValidationState (match);
 			}
-        } else {
-            this.newestSelectionShown = false;
-        }
+        //~ } else {
+            //~ this.newestSelectionShown = false;
+        //~ }
     },
     
     relayout: function () {
