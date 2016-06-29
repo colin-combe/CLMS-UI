@@ -189,6 +189,11 @@ header('Content-type: text/html; charset=utf-8');
 		#spectrumControlsTop{
 			margin-left: calc(100% - 500px);
 		}
+		
+		#spectrumControls div {
+			padding-bottom: 20px;
+			border-bottom: none;
+		}
     </style>
     </head>
 
@@ -368,9 +373,11 @@ header('Content-type: text/html; charset=utf-8');
         var gutter = document.getElementsByClassName('gutter')[0];
         gutter.addEventListener("mouseup", function (){
 				CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-			});
-		CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-        
+			});		
+        window.onresize = function(event) {
+			CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+		};
+		
         //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
         window.addEventListener("load", windowLoaded);
 
