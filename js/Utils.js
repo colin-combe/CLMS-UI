@@ -309,27 +309,28 @@ CLMSUI.utils = {
 };
 
 CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
-    events: {
-        "click option": "clicked",
-    },
-    initialize: function () {
-        var d3sel = d3.select(this.el);
-        d3sel.append("select")
+    initialize: function (options) {
+        var self = this;
+        d3.select(this.el)
+            .append("span")
+            .text("Link Colours")
+        ;
+        
+        d3.select(this.el)
+            .append("select")
             .attr("id", "linkColourSelect")
+            .on ("change", function () {
+                var colourModel = self.model.at (d3.event.target.selectedIndex);
+                if (options.choiceFunc) { options.choiceFunc (colourModel); }
+                //CLMSUI.compositeModelInst.set("linkColourAssignment", colourModel);
+            })
             .selectAll("option")
-            .data(this.models)
-                .append("option")
-                .text (function(d) { return d.get("title"); })
+            .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
+            .enter()
+            .append("option")
+                .text (function(d) { return d; })
                 .property("selected", function(d,i) { return i === 0; })
         ;
-    },
-    clicked: function(e){
-        e.preventDefault();
-        console.log (e);
-        var item;  // = ??? how do we get the item?!
-        var name = item.get("name");
-        this.collection.set("selected", item.get("cid"));
-        alert(name);
     },
 });
 

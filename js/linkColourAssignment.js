@@ -46,6 +46,7 @@
 				    groups.set (val.group, arr);
                 }
                 arr.push (val.id);
+                console.log ("search", search);
 			}
             
             var groupDomain = [undefined];
@@ -81,7 +82,6 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({});
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
     model: CLMSUI.BackboneModelTypes.ColourModel,
-    selected: undefined,
 });
 
 CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.ColourModel ({
@@ -112,20 +112,20 @@ CLMSUI.linkColour.groupColoursBB = new CLMSUI.BackboneModelTypes.ColourModel ({
         // choose value or right unknown value (linear scales don't do undefined)
         var value = (groupCheck.values().length === 1 ? groupCheck.values()[0] : (scale.domain()[0] === -1 ? -1 : undefined));
         return scale (value);		
-	   },
+    },
     init: function (searches) {
         if (typeof this.get("colScale") == 'undefined') {
 			     //put d3.scale for group colour assignment in compositeModel
             var groups = new Map();
-			         for(var search of searches) {
+            for (var search of searches) {
                 var val = search[1];
                 var arr = groups.get(val.group);
                 if (!arr) {
                     arr = [];
-				                groups.set (val.group, arr);
+				    groups.set (val.group, arr);
                 }
                 arr.push (val.id);
-			         }
+            }
             
             var groupDomain = [undefined];
             var labelRange = ["Multiple Group"];
@@ -133,26 +133,24 @@ CLMSUI.linkColour.groupColoursBB = new CLMSUI.BackboneModelTypes.ColourModel ({
                 groupDomain.push (group[0]);
                 labelRange.push ("Group "+group[0]+" ("+group[1].join(", ")+")");
             }
-			         var groupCount = groups.size;
+			 var groupCount = groups.size;
             var colScale;
 
-			         if (groupCount < 6) {
+            if (groupCount < 6) {
                 var colArr = ["grey"].concat(colorbrewer.Dark2[5]);
-				            colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
-			         }
-			         else if (groupCount < 11){
+				colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
+            } else if (groupCount < 11) {
                 var colArr = ["grey"].concat(colorbrewer.Paired[10]);
-				            colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
-			         }	
-			         else { // more than 10 groups, not really feasible to find colour scale that works
-				                //a d3.scale that always returns gray?
+				colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
+            } else { // more than 10 groups, not really feasible to find colour scale that works
+				    //a d3.scale that always returns gray?
                 colScale = d3.scale.linear().domain([-1,0]).range(["grey", "#448866"]).clamp(true);
                 labelRange = ["Multiple Group", "Single Group"];
-			         }
+            }
             this.set("colScale", colScale);
             this.set("labels", CLMSUI.linkColour.byGroup.colScale.copy().range(labelRange));
             console.log ("colscale", this.get("colScale"));
-		      }
+        }
     },
     title: "Group"
 });
@@ -161,47 +159,3 @@ CLMSUI.linkColour.Collection = new CLMSUI.BackboneModelTypes.ColourModelCollecti
     CLMSUI.linkColour.defaultColoursBB,
     CLMSUI.linkColour.groupColoursBB,
 ]);
-CLMSUI.linkColour.Collection.listenTo (this, "change:selected", function() {
-    //this.trigger()
-});
-/*
-
-if (this.crosslinkViewer.groups.values().length > 1 && this.crosslinkViewer.groups.values().length < 5) {
-			var groupCheck = d3.set();
-			for (var i=0; i < countFilteredMatches; i++) {
-				var match = filteredMatches[i][0];//fix this weirdness with array?
-				groupCheck.add(match.group);
-			}
-			if (groupCheck.values().length == 1){
-				var c = this.crosslinkViewer.linkColours(groupCheck.values()[0]);
-				this.line.setAttribute("stroke", c);
-		  		this.line.setAttribute("transform", "scale (1 1)");
-				this.highlightLine.setAttribute("transform", "scale (1 1)");
-			}
-			else  {
-				this.line.setAttribute("stroke", "#000000");
-				if (this.selfLink()){
-					this.line.setAttribute("transform", "scale (1 -1)");
-					this.highlightLine.setAttribute("transform", "scale (1 -1)");
-				}
-			}
-			//else this.line.setAttribute("stroke", "purple");//shouldn't happen
-		}
-		else if (this.selfLink() === true && this.colour == null){
-			if (this.hd === true) {
-				this.line.setAttribute("stroke", CLMS.xiNET.homodimerLinkColour.toRGB());
-				this.line.setAttribute("transform", "scale(1, -1)");
-				this.line.setAttribute("stroke-width", CLMS.xiNET.homodimerLinkWidth);
-				this.highlightLine.setAttribute("transform", "scale(1, -1)");
-			}
-			else {
-				this.line.setAttribute("stroke", xiNET.defaultSelfLinkColour.toRGB());
-				this.line.setAttribute("transform", "scale(1, 1)");
-				this.line.setAttribute("stroke-width", xiNET.linkWidth);
-				this.highlightLine.setAttribute("transform", "scale(1, 1)");
-			}
-		}
-		else if (this.selfLink() === true) {
-			this.line.setAttribute("stroke-width", xiNET.linkWidth);
-		}
-*/

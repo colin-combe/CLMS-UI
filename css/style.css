@@ -651,6 +651,14 @@ tbody tr:hover td, tbody tr:hover td  {
     /*height:80px;*/
 }
 
+#colourSelect {
+    display: none;
+}
+
+#colourSelect span {
+    margin-right: 0.5em;
+}
+
 .sideOn {
     -ms-transform:rotate(270deg); /* IE 9 */
     -moz-transform:rotate(270deg); /* Firefox */

@@ -133,5 +133,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
         cellSel.enter().append("td");
         cellSel.html (function(d) { return d; });
+        
+        return this;
     }
 });

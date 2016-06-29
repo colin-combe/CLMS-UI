@@ -182,6 +182,7 @@
 
                             </select>
                         </label>
+                        <span id="colourSelect"></span>
                     </div>
                 </div>
         </div><!-- MAIN -->
