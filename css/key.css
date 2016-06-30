@@ -98,8 +98,8 @@ changes there are automatically reflected in the legend
 }
 
 .colourSwatch {
-    height: 1.2em;
+    height: 3px;
     width: 5em;
     display: inline-block;
-    vertical-align: top;
+    vertical-align: middle;
 }
