@@ -38,6 +38,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             ;
             
             this.listenTo (this.model, "change:selectedProtein", this.render);
+            this.listenTo (this.model, "filteringDone", this.showState);
+            this.listenTo (this.model, "change:selection", this.showState);
+            this.listenTo (this.model, "change:highlights", this.showState);
                 
             return this;
         },
@@ -46,7 +49,6 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             // only render if visible
             console.log ("prot info render called");
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                
                 var dataSource = this.model.get("selectedProtein");
                 var prots = dataSource ? Array.from (dataSource.values()) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
@@ -80,17 +82,16 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 
                 tabs.selectAll("span.hit")
                     .on ("click", function() {
-                        var ids = d3.select(this).attr("data-linkids");
-                        var idArray = ids.split(",");
-                        var crossLinks = self.getCrossLinksFromIDs (idArray);
+                        var idArray = self.getIDsFromDataAttr (d3.select(this), "data-linkids");
+                        var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         self.model.calcMatchingCrosslinks ("selection", crossLinks, true, d3.event.ctrlKey);
                     })
                     .on ("mouseover", function () {
+                        //console.log ("model", self.model);
                         var d3sel = d3.select(this);
                         var pos = d3sel.attr("data-pos");
-                        var ids = d3sel.attr("data-linkids");
-                        var idArray = ids.split(",");
-                        var crossLinks = self.getCrossLinksFromIDs (idArray);
+                        var idArray = self.getIDsFromDataAttr (d3sel, "data-linkids");
+                        var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         var ttinfo = crossLinks.map (function (xlink) {
                             var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
                             if (fromId === pos) {
@@ -101,7 +102,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         });
                         ttinfo.unshift (["Protein", "Pos", "Matches"]);
                         self.model.get("tooltipModel")
-                            .set("header", idArray.length+" Linked Residue Pair"+(idArray.length > 1 ? "s" : ""))
+                            .set("header", crossLinks.length+" Linked Residue Pair"+(crossLinks.length > 1 ? "s" : ""))
                             .set("contents", ttinfo)
                             .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                         ;
@@ -112,16 +113,53 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         self.model.set ("highlights", []);
                     })
                 ;
+                
+                this.showState();
             }
 
             return this;
         },
     
-        getCrossLinksFromIDs: function (linkIDs) {
+        showState: function () {
+            var self = this;
+            console.log ("in prot info filter");
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                var selectedLinks = self.model.get("selection");
+                var selidset = d3.set (selectedLinks.map (function (xlink) { return xlink.id; }));
+                var highlightedLinks = self.model.get("highlights");
+                var highidset = d3.set (highlightedLinks.map (function (xlink) { return xlink.id; }));
+                
+                d3.select(this.el).selectAll("span.hit")
+                    .each (function() {
+                        var d3sel = d3.select(this);
+                        var idArray = self.getIDsFromDataAttr (d3sel, "data-linkids");
+                        var crossLinks = self.getCrossLinksFromIDs (idArray, true);
+                        d3sel.classed ("filteredOutResidue", crossLinks.length === 0);
+                        var selYes = crossLinks.some (function (xlink) { return selidset.has(xlink.id); }); 
+                        d3sel.classed ("selected", selYes);
+                        var highYes = crossLinks.some (function (xlink) { return highidset.has(xlink.id); }); 
+                        d3sel.classed ("highlighted", highYes);
+                    })
+                ;
+            }
+            return this;
+        },
+    
+        getIDsFromDataAttr: function (d3sel, dataAttrName) {
+            var ids = d3sel.attr(dataAttrName);
+            return ids ? ids.split(",") : [];
+        },
+    
+        getCrossLinksFromIDs: function (linkIDs, filter) {
             var allLinks = this.model.get("clmsModel").get("crossLinks");
             var crossLinks = linkIDs.map (function(linkId) {
                  return allLinks.get(linkId);   
             });
+            if (filter){
+                crossLinks = crossLinks.filter (function (xlink) {
+                    return xlink.filteredMatches.length > 0;    
+                });
+            }
             return crossLinks;
         },
     
