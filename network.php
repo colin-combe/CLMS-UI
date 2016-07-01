@@ -217,7 +217,9 @@
 
         };
 
-        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
+        var split = Split (["#topDiv", "#bottomDiv"], 
+                { direction: "vertical", sizes: [60,40], minSize: [200,10] }
+        );
 
         //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
         window.addEventListener("load", windowLoaded);
