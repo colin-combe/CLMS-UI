@@ -138,62 +138,31 @@ header('Content-type: text/html; charset=utf-8');
     <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
     <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
     <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
+
+    <script type="text/javascript" src="./vendor/dynamic_table.js"></script>
+
     <style>
 
-        html, body{
-            background-color: white;
-            color:black;
-            height:100%;
-            width:100%;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: -moz-none;
-            -o-user-select: none;
-            user-select: none;
-
-            overflow:hidden;
-        }
-        *{
-            margin:0px;
-            padding:0px;
-        }
-
-        #validationSpectrumDiv {
-            width:100%;
-
-        }
-
-        #tableContainer {
-            width:100%;
-            height:100%;
-            overflow:auto;
-        }
-
-        #measureTooltip {
-            position: absolute;
-            /*max-width: 8em;*/
-            text-align:center;
-            pointer-events:none; /*let mouse events pass through*/
-            /*transition: opacity 0.3s;*/
-        }
+/*      
 
         tr.selected {
             color: #fff;
             background-color: #091D42;
         }
-        
+
         #main .mainContent {
-			top:20px;
-		}
-		
-		#spectrumControlsTop{
-			margin-left: calc(100% - 500px);
-		}
-		
-		#spectrumControls div {
-			padding-bottom: 20px;
-			border-bottom: none;
-		}
+            top:20px;
+        }
+        #spectrumControls div {
+            padding-bottom: 20px;
+            border-bottom: none;
+        } */
+        
+        #spectrumControlsTop{
+            background-color: #091D42;
+        }
+
+
     </style>
     </head>
 
@@ -202,32 +171,20 @@ header('Content-type: text/html; charset=utf-8');
         <div id="main">
 
             <div class="container">
-            <h1 class="page-header">
-            <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
-            <span class="headerLabel" style="font-weight:bold;">
-                <?php echo $_SESSION['session_name'] ?>  validating
-                <?php
-                    $dashPos = strpos($sid,'-');
-                    $randId = substr($sid, $dashPos + 1);
-                    $search_id = substr($sid, 0, ($dashPos));
-                    echo $search_id;
-                ?>
+                <h1 class="page-header">
+                <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
+                <span class="headerLabel" style="font-weight:bold;">
+                    <?php echo $_SESSION['session_name'] ?>  validating
+                    <?php
+                        $dashPos = strpos($sid,'-');
+                        $randId = substr($sid, $dashPos + 1);
+                        $search_id = substr($sid, 0, ($dashPos));
+                        echo $search_id;
+                    ?>
 
-            </span>
-
-<!--
-                    <button class='btn btn-1 btn-1a' onclick='window.location = "../util/logout.php";'>
-                        Log Out
-                    </button>
--->
-<!--
-                <div style='float:right'>
--->
-                    <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
-<!--
-                </div>
--->
-
+                </span>
+                <p id="expDropdownPlaceholder"></p>
+                <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
             </h1>
 
             <div class="mainContent">
@@ -245,7 +202,7 @@ header('Content-type: text/html; charset=utf-8');
 
 
         <script>
-    //<![CDATA[
+        //<![CDATA[
 
         var CLMSUI = CLMSUI || {};
         <?php
@@ -258,9 +215,47 @@ header('Content-type: text/html; charset=utf-8');
             //~ }
         ?>
 
-        var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
+        var optionsContainingClmsData = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
 
-        CLMSUI.init.models(options);
+        var clmsModelInst = new window.CLMS.model.SearchResultsModel (optionsContainingClmsData);
+
+		var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
+			scores: clmsModelInst.get("scores")
+		});
+
+		var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
+			distances: distances
+		});
+
+		var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
+			scale: d3.scale.linear()
+		});
+
+		var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
+
+		CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
+			distancesModel: distancesInst,
+			clmsModel: clmsModelInst,
+			rangeModel: rangeModelInst,
+			filterModel: filterModelInst,
+			tooltipModel: tooltipModelInst,
+			alignColl: null,//alignmentCollectionInst,
+			selection: [], //will contain cross-link objects
+			highlights: [], //will contain cross-link objects
+			linkColourAssignment: CLMSUI.linkColour.defaultColours,
+			selectedProtein: null, //what type should this be? Set?
+			groupColours: null // will be d3.scale for colouring by search/group
+		});
+
+		CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
+
+		// instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
+		// and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
+		// the views are only notified once the changed data is ready.
+		CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
+			this.applyFilter();
+			this.trigger ("filteringDone");
+		});
 
         var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         document.title = Array.from(searches.keys()).join();
@@ -268,120 +263,132 @@ header('Content-type: text/html; charset=utf-8');
         var windowLoaded = function () {
 
             //CLMSUI.init.views();
-			    var filterModel = CLMSUI.compositeModelInst.get("filterModel");     
-    var filterViewGroup = new CLMSUI.FilterViewBB ({
-        el: "#filterPlaceholder", 
-        model: filterModel
-    });
+            var filterModel = CLMSUI.compositeModelInst.get("filterModel");
+            var filterViewGroup = new CLMSUI.FilterViewBB ({
+                el: "#filterPlaceholder",
+                model: filterModel
+            });
 
-    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
-    miniDistModelInst.data = function() {
-        var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
-        return matches; // matches is now an array of arrays    //  [matches, []];
-    };
+            var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
+            miniDistModelInst.data = function() {
+                var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
+                return matches; // matches is now an array of arrays    //  [matches, []];
+            };
 
-    var scoreDistributionView = new CLMSUI.MinigramViewBB ({
-        el: "#filterPlaceholderSliderHolder",
-        model: miniDistModelInst,
-        myOptions: {
-            maxX: 0,    // let data decide
-            seriesNames: ["Matches", "Decoys"],
-            //scaleOthersTo: "Matches",
-            xlabel: "Score",
-            ylabel: "Count",
-            height: 50,
-            colors: {"Matches":"blue", "Decoys":"red"}
-        }
-    });
-
-
-    // When the range changes on the mini histogram model pass the values onto the filter model
-    filterModel.listenTo (miniDistModelInst, "change", function (model) {
-        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
-    }, this);
+            var scoreDistributionView = new CLMSUI.MinigramViewBB ({
+                el: "#filterPlaceholderSliderHolder",
+                model: miniDistModelInst,
+                myOptions: {
+                    maxX: 0,    // let data decide
+                    seriesNames: ["Matches", "Decoys"],
+                    //scaleOthersTo: "Matches",
+                    xlabel: "Score",
+                    ylabel: "Count",
+                    height: 50,
+                    colors: {"Matches":"blue", "Decoys":"red"}
+                }
+            });
 
 
-    // If the ClmsModel matches attribute changes then tell the mini histogram view
-    scoreDistributionView
-        .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
-        // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
-        //.listenTo (this.model.get("filterModel"), "change", this.render)  
-    ;       
+            // When the range changes on the mini histogram model pass the values onto the filter model
+            filterModel.listenTo (miniDistModelInst, "change", function (model) {
+                this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
+            }, this);
 
+
+            // If the ClmsModel matches attribute changes then tell the mini histogram view
+            scoreDistributionView
+                .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
+                // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
+                //.listenTo (this.model.get("filterModel"), "change", this.render)
+            ;
+
+            new CLMSUI.DropDownMenuViewBB ({
+                el: "#expDropdownPlaceholder",
+                model: CLMSUI.clmsModelInst,
+                myOptions: {
+                    title: "Export",
+                    menu: [
+                        {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
+                        {name: "Residues", func: downloadResidueCount}
+                    ]
+                }
+            });
 
             //allDataAndWindowLoaded ();
-			// World of code smells vol.1
-			// selectionViewer declared before spectrumWrapper because...
-			// 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
-			// 2. Event A in spectrumWrapper fires event B
-			// 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
-			// 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
-			var selectionViewer = new CLMSUI.SelectionTableViewBB ({
-				el: "#bottomDiv",
-				model: CLMSUI.compositeModelInst,
-			});
-			// redraw / hide table on selected cross-link change
-			selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-				var emptySelection = (selection.length === 0);
-				split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-				this.setVisible (!emptySelection);    
-			});
-			split.collapse (true);
-			selectionViewer.setVisible (false);
-			
-			var spectrumWrapper = new SpectrumViewWrapper ({
-				el:"#topDiv",
-				model: CLMSUI.compositeModelInst, 
-				displayEventName: "spectrumShow",
-				myOptions: {wrapperID: "spectrumPanel"}
-			});
-			
-			var spectrumModel = new AnnotatedSpectrumModel();
-			var spectrumViewer = new SpectrumView ({
-				model: spectrumModel, 
-				el:"#spectrumPanel",
-			});
-			var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
-    // Update spectrum view when extrenal resize event called
-    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-        this.resize();
-    });
-    fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-        this.resize();
-    });
-    
-    // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
-    // used to transport one Match between views
-    spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-        if (match) { 
-            var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-            CLMSUI.loadSpectra (match, randId, this.model);
-        } else {
-            this.model.clear();
-        }
-    });
+            // World of code smells vol.1
+            // selectionViewer declared before spectrumWrapper because...
+            // 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
+            // 2. Event A in spectrumWrapper fires event B
+            // 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
+            // 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
+            var selectionViewer = new CLMSUI.SelectionTableViewBB ({
+                el: "#bottomDiv",
+                model: CLMSUI.compositeModelInst,
+            });
+            // redraw / hide table on selected cross-link change
+            selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+                var emptySelection = (selection.length === 0);
+                split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
+                this.setVisible (!emptySelection);
+            });
+            split.collapse (true);
+            selectionViewer.setVisible (false);
 
-			var allCrossLinks = Array.from(
-					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
-			CLMSUI.compositeModelInst.set("selection", allCrossLinks);
+            var spectrumWrapper = new SpectrumViewWrapper ({
+                el:"#topDiv",
+                model: CLMSUI.compositeModelInst,
+                displayEventName: "spectrumShow",
+                myOptions: {wrapperID: "spectrumPanel"}
+            });
+
+            var spectrumModel = new AnnotatedSpectrumModel();
+            var spectrumViewer = new SpectrumView ({
+                model: spectrumModel,
+                el:"#spectrumPanel",
+            });
+            var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
+
+            // Update spectrum view when extrenal resize event called
+            spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+                this.resize();
+            });
+            fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+                this.resize();
+            });
+
+            // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
+            // used to transport one Match between views
+            spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+                if (match) {
+                    var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+                    CLMSUI.loadSpectra (match, randId, this.model);
+                } else {
+                    this.model.clear();
+                }
+            });
+
+            var allCrossLinks = Array.from(
+                CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+            CLMSUI.compositeModelInst.set("selection", allCrossLinks);
 
         };
 
         var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
-        
+
         var gutter = document.getElementsByClassName('gutter')[0];
         gutter.addEventListener("mouseup", function (){
-				CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-			});		
+                CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+            });
         window.onresize = function(event) {
-			CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-		};
-		
+            CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+        };
+
         //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
         window.addEventListener("load", windowLoaded);
 
-            //]]>
+        //]]>
         </script>
 
     </body>

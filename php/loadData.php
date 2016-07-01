@@ -148,12 +148,12 @@
 			mp.link_position + 1 AS link_position, 
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
-			sp.scan_number
+			sp.scan_number, 'run_name' as run_name
 		FROM 
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
-			WHERE ".$WHERE_withRand." AND dynamic_rank) sm 
+			WHERE ".$WHERE_withRand." AND dynamic_rank AND (NOT is_decoy)) sm 
 		INNER JOIN 
 			(SELECT mp.match_id, mp.match_type, mp.peptide_id, 
 			mp.link_position

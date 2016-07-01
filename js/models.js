@@ -33,7 +33,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
             if (match.autovalidated && this.get("AUTO")) return true;
-            return false;
+            return true;
         }
     }),
 

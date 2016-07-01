@@ -6,7 +6,7 @@
 
         initialize: function () {
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
-            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
+            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE id='t1' ><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
             
             // redraw table on filter change if crosslinks selected (matches may have changed)
             this.listenTo (this.model, "filteringDone", function () {
@@ -30,11 +30,17 @@
                     d3.select(this.el).select("tr#match"+selMatch.match.id).classed ("spectrumShown2", true);
                 }
             });
-        },
+            
+         },
         
         render: function () {
+			//~ DynamicTable.destroy("t1");
             this.updateTable ();
-        },
+             opt1 = {
+                  colTypes: ["alpha","alpha", "alpha", "alpha","alpha","alpha", "alpha", "alpha"]
+			  };
+            //~ new DynamicTable("t1");//, opt1);
+       },
         
         updateTable: function () {
             var selectedXLinkArray = this.model.get("selection")
@@ -139,7 +145,7 @@
             var xlinkTBodyJoin = d3.select(this.el).select("TABLE").selectAll("TBODY")
                 .data(selectedLinkArray, function(d) { return d.id; })
             ;
-        
+        //~ 
             xlinkTBodyJoin.exit().remove();
             xlinkTBodyJoin.enter()
                 .append("TBODY")
