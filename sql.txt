@@ -90,3 +90,16 @@ SELECT tempMatchPeps.*, proteins, positions FROM tempMatchPeps, (SELECT peptide_
 
 
 
+
+
+
+
+
+-----------------------------------------
+-- ADDING sources to scans
+-----------------------------------------
+create table spectrum_source (id serial CONSTRAINT PK_spectrum_source PRIMARY KEY, name varchar);
+alter table add column source_id int CONSTRAINT fk_spectrum_spectrum_source REFERENCES spectrum_source(id);
+CREATE index spectrum_source_id_idx ON spectrum (source_id);
+
+
