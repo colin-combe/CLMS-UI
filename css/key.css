@@ -1,0 +1,105 @@
+/* These are styles used to represent elements in the key/legend window
+Ideally, they should use the same css rules as the actual visualisation elements so
+changes there are automatically reflected in the legend
+*/
+
+/* crosslink styles */
+
+.ambiguous {
+    stroke-dasharray: 5 5;
+}
+
+.defaultStroke {
+    stroke: black;
+    fill: none;
+}
+
+.multiLinkStroke {
+    stroke: #bbb;
+    stroke-width: 11px;
+    fill: none;
+}
+
+.selfLink {
+    shape-rendering: initial;
+}
+
+.homomultimer {
+    color: red;
+    stroke: red;
+    stroke-width: 1.5px;
+}
+
+.filled {
+    fill: #000;
+}
+
+.highlighted {
+    fill: #fdc086;
+    background-color: #fdc086;
+}
+
+.peptideAAText {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    text-anchor: middle;
+}
+
+.miniKey {
+    width: 52px;
+    height: 30px;
+    shape-rendering: crispEdges;
+    background: white;
+    padding-left: 1px;
+}
+
+/* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */
+#keyPanel .panelInner .panelInner {
+    overflow-y: auto;
+}
+
+#keyPanel > .panelInner > h1 {
+    height: 1.7em;
+}
+
+#keyPanel > .panelInner > img {
+    margin-top: 0.5em;
+    height: 63px
+}
+
+#keyPanel > .panelInner > .panelInner {
+    height: calc(100% - 2.2em - 63px);
+}
+
+#keyPanel tr {
+    line-height: 1.3em;
+    border-bottom: 1px solid #eee;
+}
+
+#keyPanel tbody {
+    border-top: 1px solid #bbb;
+}
+
+#keyPanel section:not(:first-of-type) table {
+    display: none;
+}
+
+#keyPanel h2 {
+    width: 100%;
+    cursor: pointer;
+}
+
+#keyPanel h2 svg {
+    margin-right: 1em;
+    width: 16px;
+    height: 16px;
+    fill: white;
+    stroke: white;
+}
+
+.colourSwatch {
+    height: 3px;
+    width: 5em;
+    display: inline-block;
+    vertical-align: middle;
+}

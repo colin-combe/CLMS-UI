@@ -128,17 +128,7 @@
                 });
                 return matches;
             };
-            
-            // return comma-separated list of protein names from array of protein ids
-            var proteinConcat = function (d, field) {
-                var pnames =  d[field].map (function(pid) { return proteinMap.get(pid).name; });
-                return pnames.join(",");
-            };
-            
-            var arrayConcat = function (d, field) {
-                return d[field].length ? d[field].join(", ") : d[field];
-            };
-            
+                                    
             // make nice id string from cross link object
             var niceCrossLinkName = function (crosslink, i) {
                 return /*(i+1)+". "+*/"Matches for "+crosslink.fromProtein.name+", "+crosslink.fromResidue+" --- "+crosslink.toProtein.name+", "+crosslink.toResidue;      
@@ -188,13 +178,13 @@
             
         
             var cellFuncs = {
-                "protein1": function (d) { return proteinConcat (d, "protein1"); },
-                "protein2": function (d) { return proteinConcat (d, "protein2"); },
-                "pepPos1": function(d) { return arrayConcat (d, "pepPos1"); },
-                "pepPos2": function(d) { return arrayConcat (d, "pepPos2"); },
-                "linkPos1": function(d) { return arrayConcat (d, "linkPos1"); },
-                "linkPos2": function(d) { return arrayConcat (d, "linkPos2"); },
-                "score": function (d) { return ((typeof d.score !== 'undefined')? d.score.toFixed(2) : 'undefined'); },
+                "protein1": function (d) { return CLMSUI.utils.proteinConcat (d, "protein1"); },
+                "protein2": function (d) { return CLMSUI.utils.proteinConcat (d, "protein2"); },
+                "pepPos1": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos1"); },
+                "pepPos2": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos2"); },
+                "linkPos1": function(d) { return d.linkPos1; },
+                "linkPos2": function(d) { return d.linkPos2; },
+                "score": function (d) { return d.score; },
                 // .controller is not a property of a match, but manual / auto will be filtered out at
                 // header stage eventually anyways
                 /*

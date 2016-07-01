@@ -80,9 +80,10 @@ function getMatchesCSV () {
 		var match = matches[i];
 		var result = filterModel.filter(match);
 		if (result === true){
-			csv += '"' + match.id + '","' + match.protein1 + '","' +match.pepPos1 + '","' 
+			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1")
+				+ '","' + CLMSUI.utils.arrayConcat(match, "pepPos1") + '","' 
 				+ match.pepSeq1 + '","' + match.linkPos1 + '","' 
-				+ match.protein2 + '","' + match.pepPos2 + '","'
+				+ CLMSUI.utils.proteinConcat(match, "protein2") + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
 				+ match.pepSeq2 + '","' + match.linkPos2 + '","'
 				+ match.score + '","' + match.group + '"\r\n';
 		}
@@ -107,9 +108,9 @@ function getLinksCSV(){
 	for (residueLink of crossLinks){
 		var filteredMatches = residueLink.getFilteredMatches();
 		if (filteredMatches.length > 0){
-			csv += '"' + residueLink.fromProtein.readableId() + '","' 
+			csv += '"' + mostReadableId(residueLink.fromProtein) + '","' 
 				+ residueLink.fromResidue + '","' + residueLink.fromProtein.sequence[residueLink.fromResidue - 1] + '","'
-				+ residueLink.toProtein.readableId() + '","'
+				+ mostReadableId(residueLink.toProtein) + '","'
 				+ residueLink.toResidue + '","';
 			if (residueLink.toProtein && residueLink.toResidue) {
 				csv += residueLink.toProtein.sequence[residueLink.toResidue - 1];
@@ -200,3 +201,19 @@ function getResidueCount() {
 	}
 	return csv;
 }
+
+mostReadableId = function (protein) {
+	if (protein.accession && protein.name) {
+		return "sp|" + protein.accession + "|" + protein.name;
+	}
+	else if (protein.name) {
+		return protein.name;
+	}
+	else if (protein.accession) {
+		return protein.accession;
+	}
+	else {
+		return protein.id;
+	}
+}
+
