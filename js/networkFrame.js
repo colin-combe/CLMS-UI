@@ -284,12 +284,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
-    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
-        el: "#networkDiv", 
-        model: CLMSUI.compositeModelInst,
-        myOptions: {layout: storedLayout}
-    });
-
     var distoViewer = new CLMSUI.DistogramBB ({
         el: "#distoPanel", 
         model: CLMSUI.compositeModelInst,
@@ -299,7 +293,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             seriesName: "Actual"
         }
     });
-    
     
     // World of code smells vol.1
     // selectionViewer declared before spectrumWrapper because...
@@ -319,6 +312,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
     split.collapse (true);
     selectionViewer.setVisible (false);
+    
+    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
+        el: "#networkDiv", 
+        model: CLMSUI.compositeModelInst,
+        myOptions: {layout: storedLayout}
+    });
     
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:"#spectrumPanelWrapper",
