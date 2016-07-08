@@ -160,7 +160,7 @@
 			FROM matched_peptide mp WHERE ".$WHERE_withoutRand.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
-		ORDER BY sm.id;";
+		ORDER BY score DESC, sm.id;";
 		
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
@@ -179,7 +179,7 @@
 				. '"ty":' . $line["match_type"] . ','
 				. '"pi":' . $peptideId . ','
 				. '"lp":'. $line["link_position"]. ','
-				. '"sc":' . round($line["score"], 5) . ','
+				. '"sc":' . round($line["score"], 3) . ','
 				. '"si":' . $line["search_id"] . ','
 				. '"dc":"' . $line["is_decoy"] . '",';
 			$autoVal =  $line["autovalidated"];

@@ -11,8 +11,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-            "A": true, "B": true, "C": true, "Q": false,
-            "AUTO": false,
+            "A": true, "B": true, "C": true, "Q": true, "unval": true, 
+            "AUTO": true,
+            "linears": false,
             "selfLinks": true,
             "ambig": true,
         },
@@ -24,16 +25,19 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
         filter: function (match) {
             //~ match = match[0];
-            var vChar = match.validated;
+			if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
+
             var scorePass = (!match.score || (match.score >= this.get("cutoff")[0] && match.score <= this.get("cutoff")[1]));
             if (!scorePass) { return false; }
 
+            var vChar = match.validated;
             if (vChar == 'A' && this.get("A")) return true;
             if (vChar == 'B' && this.get("B")) return true;
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
             if (match.autovalidated && this.get("AUTO")) return true;
-            return true;
+			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
+            return false;
         }
     }),
 

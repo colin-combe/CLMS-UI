@@ -22,6 +22,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
                 {"label":"auto", "id":"AUTO"},
+                {"label":"unvalidated", "id":"unval"},
+                {"label":"linears", "id":"linears"}
             ],
             toggleSpecials: [
 				// temp hack

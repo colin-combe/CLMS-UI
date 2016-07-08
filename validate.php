@@ -375,12 +375,15 @@ header('Content-type: text/html; charset=utf-8');
 
         };
 
-        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
+        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
+					sizes: [60,40], minSize: [200,10],
+					onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+			} });
 
-        var gutter = document.getElementsByClassName('gutter')[0];
-        gutter.addEventListener("mouseup", function (){
-                CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-            });
+        //~ var gutter = document.getElementsByClassName('gutter')[0];
+        //~ gutter.addEventListener("mouseup", function (){
+                //~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+            //~ });
         window.onresize = function(event) {
             CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
         };
