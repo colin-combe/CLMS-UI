@@ -268,6 +268,12 @@ CLMSUI.init.views = function () {
         displayEventName: "circularShow",
         model: CLMSUI.compositeModelInst,
     });
+    
+    new CLMSUI.utils.ColourCollectionOptionViewBB ({
+        el: "#colourSelect",
+        model: CLMSUI.linkColour.Collection,
+        choiceFunc: function (colModel) { CLMSUI.compositeModelInst.set("linkColourAssignment", colModel); },
+    });
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
@@ -276,12 +282,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     var tooltipView = new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
         model: CLMSUI.compositeModelInst.get("tooltipModel")
-    });
-
-    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
-        el: "#networkDiv", 
-        model: CLMSUI.compositeModelInst,
-        myOptions: {layout: storedLayout}
     });
 
     var distoViewer = new CLMSUI.DistogramBB ({
@@ -293,7 +293,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             seriesName: "Actual"
         }
     });
-    
     
     // World of code smells vol.1
     // selectionViewer declared before spectrumWrapper because...
@@ -313,6 +312,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
     split.collapse (true);
     selectionViewer.setVisible (false);
+    
+    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
+        el: "#networkDiv", 
+        model: CLMSUI.compositeModelInst,
+        myOptions: {layout: storedLayout}
+    });
     
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:"#spectrumPanelWrapper",

@@ -31,6 +31,11 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var sectionData = [
             {
+                id: "colourKey",
+                header: "Colour Scheme",
+                rows: []
+            },
+            {
                 id: "proteinKey",
                 header: "Protein-protein level",
                 rows: [
@@ -54,11 +59,6 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     ["highlight", "Highlighted linked peptide"],
                 ]
             },
-            {
-                id: "colourKey",
-                header: "Colour Scheme",
-                rows: []
-            }
         ];
         
         var headerFunc = function(d) { return d.header.replace("_", " "); };
@@ -133,5 +133,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
         cellSel.enter().append("td");
         cellSel.html (function(d) { return d; });
+        
+        return this;
     }
 });
