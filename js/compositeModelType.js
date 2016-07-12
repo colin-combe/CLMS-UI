@@ -13,8 +13,7 @@
                 crossLink.confirmedHomomultimer = false;
                 for (matchAndPepPos of crossLink.matchesAndPeptidePositions) {	
                     var match = matchAndPepPos.match;
-                    var result = filterModel.filter(match); // terrible hack here, that match shouldn't be an array
-                    //console.log("result:"+result);
+                    var result = filterModel.filter(match);
                     if (result === true){
                         crossLink.filteredMatchesAndPeptidePositions.push(matchAndPepPos);
                         if (match.crossLinks.length === 1) {

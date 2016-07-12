@@ -11,6 +11,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     className: "filterGroup",
     events: {         
         "click input.filterTypeToggle": "filter",
+        "input input.filterTypeText": "textFilter",
         "click input.filterSpecialToggle": "filterSpecial"
     },
 
@@ -21,14 +22,20 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"B", "id":"B"},
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
-                {"label":"auto", "id":"AUTO"},
-                {"label":"unvalidated", "id":"unval"},
-                {"label":"linears", "id":"linears"}
+                {"label":"Auto", "id":"AUTO"},
+                {"label":"Unval.", "id":"unval"}
+            ],
+            textFilters: [
+                {"label":"Peptide:", "id":"pepSeq", "chars":9},
+                {"label":"Protein:", "id":"protNames", "chars":9},
+                {"label":"Charge:", "id":"charge", "chars":1},
+                {"label":"Run:", "id":"runName","chars":9},
+                {"label":"Scan:", "id":"scanNumber", "chars":5}
             ],
             toggleSpecials: [
-				// temp hack
-                //~ {label: "Self-Links", id: "selfLinks"},
-                //~ {label: "Ambiguous", id: "ambig"},
+                {"label":"Linears", "id":"linears"},
+                {"label":"Ambig.", "id":"ambig"},
+                {"label":"Self links", "id":"selfLinks"}
             ]
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -58,10 +65,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel' style='text-align:right'></P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'></P>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));       
         
-        mainDivSel.selectAll("label")
+        mainDivSel.selectAll("label.toggles")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
             .enter()
             .append ("label")
+				.attr("class", "toggles")
                 .text (function(d) { return d.label; })
                 .append ("input")
                     .attr ("id", function(d) { return d.id; })
@@ -70,12 +78,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
 
-        // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
-		// onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
- 
         sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : 'inline-block');
         
-        this.displayEventName = viewOptions.displayEventName;
+        //this.displayEventName = viewOptions.displayEventName;
 
         /*
         //this.listenTo (this.model, "change", this.render);
@@ -92,6 +97,21 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             var max = CLMSUI.utils.dpNumber (val[1], this.sliderDecimalPlaces, Math.ceil); 
             mainDivSel.select(".cutoffLabel.vmax").html("&lt;"+max); // max label
         });
+
+        mainDivSel.selectAll("label.textFilters")
+            .data(this.options.textFilters, function(d) { return d.id; })
+            .enter()
+            .append ("label")
+            .attr("class", "textFilters")
+                .text (function(d) { return d.label; })
+                .append ("input")
+                    .attr ("id", function(d) { return d.id; })
+                    .attr ("class", "filterTypeText")
+                    .attr ("type", "textbox")
+                    .attr ("size", function(d) { return d.chars; });
+                    //~ .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+        
     },
     
     filter: function (evt) {
@@ -99,6 +119,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         var target = evt.target;
         var id = target.id;
         console.log ("filter set", id, target.checked);
+        this.model.set (id, target.checked);
+    },
+    
+    textFilter: function (evt) {
+		var target = evt.target;
+        var id = target.id;
+        console.log ("filter set", id, target.value);
         this.model.set (id, target.checked);
     },
     

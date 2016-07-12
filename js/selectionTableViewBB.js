@@ -34,13 +34,18 @@
          },
         
         render: function () {
+			//~ DynamicTable.destroy("t1");
             this.updateTable ();
-       },
+            //~ opt1 = {
+                  //~ colTypes: ["none","alpha", "alpha", "alpha","alpha","alpha", "alpha", "alpha"]
+			//~ };
+			//~ new DynamicTable("t1");//, opt1);
+		},
         
         updateTable: function () {
             var selectedXLinkArray = this.model.get("selection")
                 .filter (function (xlink) { return xlink.filteredMatchesAndPeptidePositions.length > 0; })
-                .sort (function (a,b) { return b.filteredMatchesAndPeptidePositions[0].match.score - a.filteredMatchesAndpeptidePositons[0].match.score; })    // sorts links by top match score
+                .sort (function (a,b) { return b.filteredMatchesAndPeptidePositions[0].match.score - a.filteredMatchesAndPeptidePositions[0].match.score; })    // sorts links by top match score
             ;
             var selectedXLinkCount = selectedXLinkArray.length;
             
@@ -124,8 +129,8 @@
             // helper functions
             // return filtered matches from given crosslink
             var getMatches = function (xlink) {
-                var matches = xlink.filteredMatches.map (function (m) {
-                    return m[0];
+                var matches = xlink.filteredMatchesAndPeptidePositions.map (function (m) {
+                    return m.match;
                 });
                 return matches;
             };
@@ -142,7 +147,7 @@
             var xlinkTBodyJoin = d3.select(this.el).select("TABLE").selectAll("TBODY")
                 .data(selectedLinkArray, function(d) { return d.id; })
             ;
-        //~ 
+
             xlinkTBodyJoin.exit().remove();
             xlinkTBodyJoin.enter()
                 .append("TBODY")

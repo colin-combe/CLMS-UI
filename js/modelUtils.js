@@ -241,7 +241,7 @@ CLMSUI.modelUtils = {
     
     aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
-            return xlink.getFilteredMatches();
+            return xlink.filteredMatchesAndPeptidePositions;
         });
         return [].concat.apply([], nestedArr);
     },

@@ -11,9 +11,14 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-            "A": true, "B": true, "C": true, "Q": true, "unval": true, 
+            "A": true, "B": true, "C": true, "Q": true, "R": false, "unval": false, 
             "AUTO": true,
             "linears": false,
+            "pepSeq": "",
+            "protNames": "",
+            "charge": "",
+            "runName": "",
+            "scanNumber": "",            
             "selfLinks": true,
             "ambig": true,
         },
@@ -24,17 +29,43 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         },
 
         filter: function (match) {
-            //~ match = match[0];
-			if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
+			//linears? - if linear and linears not selected return false
+            if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
 
-            var scorePass = (!match.score || (match.score >= this.get("cutoff")[0] && match.score <= this.get("cutoff")[1]));
-            if (!scorePass) { return false; }
+			//ambigs? - if ambig's not selected and match is ambig return false
+			if (this.get("ambig") == false) {
+				if (match.pepPos1.length > 1 || match.pepPos2.length > 1) return false;
+			}
+
+			//self-links? - if self links's not selected and match is self link return falsehttps://www.youtube.com/watch?v=apynMYJ_36w
+			// small complication in case of ambiguous matchs,
+			// possible an ambiguous self link will still get displayed
+			if (this.get("selfLinks") == false) {
+				var p1 = match.protein1[0];
+				for (var i = 1; i < match.protein1.length; i++) {
+					if (match.protein1[i] != p1) return false;
+				}
+				for (var i = 0; i < match.protein2.length; i++) {
+					if (match.protein1[i] != p1) return false;
+				}
+			}
+
+			// if fail score cut off, return false;
+            if (match.score < this.get("cutoff")[0] || match.score > this.get("cutoff")[1]){
+				return false;
+			}
+
+			var pepSeqSearch = this.get("pepSeq");
+			if (pepSeqSearch) {
+				
+			}
 
             var vChar = match.validated;
             if (vChar == 'A' && this.get("A")) return true;
             if (vChar == 'B' && this.get("B")) return true;
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
+            if (vChar == 'R' && this.get("R")) return true;
             if (match.autovalidated && this.get("AUTO")) return true;
 			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
             return false;

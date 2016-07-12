@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-var SpectrumViewWrapper = Backbone.View.extend({
+var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     
     events: function() {
       var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
@@ -116,8 +116,8 @@ var SpectrumViewWrapper = Backbone.View.extend({
             if (fMatches.length === 0) {
                 this.model.set ("lastSelectedMatch", {match: null, directSelection: false});
             } else {
-                fMatches.sort (function(a,b) { return b[0].score - a[0].score; });
-                this.model.set ("lastSelectedMatch", {match: fMatches[0][0], directSelection: false});
+                fMatches.sort (function(a,b) { return b.match.score - a.match.score; });
+                this.model.set ("lastSelectedMatch", {match: fMatches[0].match, directSelection: false});
             }
         });
      
@@ -150,21 +150,21 @@ var SpectrumViewWrapper = Backbone.View.extend({
     
     triggerSpectrumViewer: function (match, forceShow) {
         //console.log ("MATCH selected", match, forceShow);
-        //~ if (this.isVisible() || forceShow) {
+        if (this.isVisible() || forceShow) {
             this.newestSelectionShown = true;
             var visible = !!match;
-            //~ if (this.isVisible() !== visible) {
-                //~ //console.log ("CHANGE VISIBILITY");
-                //~ CLMSUI.vent.trigger ("spectrumShow", visible);   
-            //~ }
+            if (this.isVisible() !== visible) {
+                //console.log ("CHANGE VISIBILITY");
+                CLMSUI.vent.trigger ("spectrumShow", visible);   
+            }
             CLMSUI.vent.trigger ("individualMatchSelected", match);
             this.enableControls (match);
             if (CLMSUI.loggedIn) {
 				this.setButtonValidationState (match);
 			}
-        //~ } else {
-            //~ this.newestSelectionShown = false;
-        //~ }
+        } else {
+            this.newestSelectionShown = false;
+        }
     },
     
     relayout: function () {
