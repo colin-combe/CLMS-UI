@@ -321,17 +321,28 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             .attr("id", "linkColourSelect")
             .on ("change", function () {
                 var colourModel = self.model.at (d3.event.target.selectedIndex);
-                if (options.choiceFunc) { options.choiceFunc (colourModel); }
-                //CLMSUI.compositeModelInst.set("linkColourAssignment", colourModel);
+                if (options.choiceFunc) { options.choiceFunc (colourModel); }   //CLMSUI.compositeModelInst.set("linkColourAssignment", colourModel);
             })
             .selectAll("option")
             .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
             .enter()
             .append("option")
                 .text (function(d) { return d; })
-                .property("selected", function(d,i) { return i === 0; })
         ;
+        
+        return this;
     },
+    
+    setSelected: function (model) {
+        d3.select(this.el)
+            .selectAll("option")
+            .property ("selected", function(d) {
+                return d === model.get("title");
+            })
+        ;
+        
+        return this;
+    }
 });
 
 

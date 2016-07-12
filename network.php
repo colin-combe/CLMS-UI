@@ -169,20 +169,19 @@
                             </select>
                         </label>
 -->
+                        
+<!--
                         <label style="margin-left:20px;">Link colours:
                             <select id="linkColourSelect" onChange="changeLinkColours();">
                                 <option selected>Default</option>
                                 <option>Group</option>
-<!--
                                 <option>SAS dist.</option>
--->
-<!--
                                 <option>Euclidean dist.</option>
--->
 
                             </select>
                         </label>
-                        <span id="colourSelect"></span>
+-->
+                        <span id="colourSelect"></span> <!-- placeholder for new colour scheme selector -->
                     </div>
                 </div>
         </div><!-- MAIN -->
@@ -202,9 +201,9 @@
             //~ }
         ?>
 
-        var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
+        var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: searchMeta};
 
-        CLMSUI.init.models(options);
+        CLMSUI.init.models (options);
 
         var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         document.title = Array.from(searches.keys()).join();
