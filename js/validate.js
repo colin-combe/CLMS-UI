@@ -5,9 +5,9 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     var url = "http://129.215.14.63/xiAnnotator/annotate/"
         + match.searchId + "/" + (randId || "12345") + "/" + match.id 
         + "/?peptide=" + match.pepSeq1raw 
-        + "&peptide=" + match.pepSeq2raw
-        + "&link=" + match.linkPos1
-        + "&link=" + match.linkPos2
+        + ((match.pepSeq2raw)? ("&peptide=" + match.pepSeq2raw) : "")
+        + ((match.linkPos1)? ("&link=" + match.linkPos1) : "")
+        + ((match.linkPos2)? ("&link=" + match.linkPos2) : "")
     ;
     
     d3.json (url, function(error, json) {

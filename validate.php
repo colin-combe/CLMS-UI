@@ -141,29 +141,30 @@ header('Content-type: text/html; charset=utf-8');
 
     <script type="text/javascript" src="./vendor/dynamic_table.js"></script>
 
-    <style>
-
-/*      
-
-        tr.selected {
-            color: #fff;
-            background-color: #091D42;
-        }
-
-        #main .mainContent {
-            top:20px;
-        }
-        #spectrumControls div {
-            padding-bottom: 20px;
-            border-bottom: none;
-        } */
-        
+    <style>       
         #spectrumControlsTop{
             background-color: #091D42;
         }
+        .dynDiv_moveParentDiv{
+			display: none;
+		}
+		.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
+			display:none;
+		}
+		#spectrumPanel {
+			width: calc(100% - 20px);
+		}
 
+		#t1 .dynamic-table-downarrow{
+			display:none;
+		}
 
+		input.filterTypeText {
+			margin-right: 5px;
+		}
+		
     </style>
+    
     </head>
 
     <body>
@@ -375,12 +376,15 @@ header('Content-type: text/html; charset=utf-8');
 
         };
 
-        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical", sizes: [60,40], minSize: [200,10], });
+        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
+					sizes: [60,40], minSize: [200,10],
+					onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+			} });
 
-        var gutter = document.getElementsByClassName('gutter')[0];
-        gutter.addEventListener("mouseup", function (){
-                CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-            });
+        //~ var gutter = document.getElementsByClassName('gutter')[0];
+        //~ gutter.addEventListener("mouseup", function (){
+                //~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+            //~ });
         window.onresize = function(event) {
             CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
         };

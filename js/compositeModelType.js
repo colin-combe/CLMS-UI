@@ -8,18 +8,20 @@
             var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
-                crossLink.filteredMatches = [];
+                crossLink.filteredMatchesAndPeptidePositions = [];
                 crossLink.ambiguous = true;
-                var unfilteredMatchCount = crossLink.matches.length;
-                for (var i = 0; i < unfilteredMatchCount; i++){
-                    var match = crossLink.matches[i];
-                    var result = filterModel.filter(match[0]); // terrible hack here, that match shouldn't be an array
-                    //console.log("result:"+result);
+                crossLink.confirmedHomomultimer = false;
+                for (matchAndPepPos of crossLink.matchesAndPeptidePositions) {	
+                    var match = matchAndPepPos.match;
+                    var result = filterModel.filter(match);
                     if (result === true){
-                        crossLink.filteredMatches.push(match);
-                        if (match[0].crossLinks.length === 1) {
+                        crossLink.filteredMatchesAndPeptidePositions.push(matchAndPepPos);
+                        if (match.crossLinks.length === 1) {
                             crossLink.ambiguous = false;
                         }
+                        if (match.crossLinks.hd === true) {
+                            crossLink.confirmedHomomultimer = true;
+                        }                       
                     }
                 }
             }

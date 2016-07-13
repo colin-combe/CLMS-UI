@@ -36,16 +36,16 @@
         render: function () {
 			//~ DynamicTable.destroy("t1");
             this.updateTable ();
-             opt1 = {
-                  colTypes: ["alpha","alpha", "alpha", "alpha","alpha","alpha", "alpha", "alpha"]
-			  };
-            //~ new DynamicTable("t1");//, opt1);
-       },
+            //~ opt1 = {
+                  //~ colTypes: ["none","alpha", "alpha", "alpha","alpha","alpha", "alpha", "alpha"]
+			//~ };
+			//~ new DynamicTable("t1");//, opt1);
+		},
         
         updateTable: function () {
             var selectedXLinkArray = this.model.get("selection")
-                .filter (function (xlink) { return xlink.filteredMatches.length > 0; })
-                .sort (function (a,b) { return b.filteredMatches[0][0].score - a.filteredMatches[0][0].score; })    // sorts links by top match score
+                .filter (function (xlink) { return xlink.filteredMatchesAndPeptidePositions.length > 0; })
+                .sort (function (a,b) { return b.filteredMatchesAndPeptidePositions[0].match.score - a.filteredMatchesAndPeptidePositions[0].match.score; })    // sorts links by top match score
             ;
             var selectedXLinkCount = selectedXLinkArray.length;
             
@@ -76,7 +76,7 @@
                     "validated": "Manual",
                     "group": "Group",
                     "runName": "Run Name",
-                    "scanNumber": "Scan Number",	
+                    "scanNumber": "Scan Number",    
                     "precursorCharge": "Charge",
                 };
                 
@@ -87,8 +87,8 @@
                 
                 // entries commented out until a replacement is found for xlv
                 var headerFilterFuncs = {
-                    //"autovalidated": function () { return xlv.autoValidatedFound; },
-                    //"validated": function () { return xlv.manualValidatedFound; },
+                    "autovalidated": function () { return CLMS.model.autoValidatedFound; },
+                    "validated": function () { return CLMS.model.manualValidatedFound; },
                 };
                 
                 var filteredProps = tableDataPropOrder.filter(
@@ -129,15 +129,17 @@
             // helper functions
             // return filtered matches from given crosslink
             var getMatches = function (xlink) {
-                var matches = xlink.filteredMatches.map (function (m) {
-                    return m[0];
+                var matches = xlink.filteredMatchesAndPeptidePositions.map (function (m) {
+                    return m.match;
                 });
                 return matches;
             };
                                     
             // make nice id string from cross link object
             var niceCrossLinkName = function (crosslink, i) {
-                return /*(i+1)+". "+*/"Matches for "+crosslink.fromProtein.name+", "+crosslink.fromResidue+" --- "+crosslink.toProtein.name+", "+crosslink.toResidue;      
+                return /*(i+1)+". "+*/"Matches for "+crosslink.fromProtein.name+", "
+                    + (crosslink.toProtein? (crosslink.fromResidue+" --- "
+                    +  crosslink.toProtein.name+", "+crosslink.toResidue) : "linear peptides");     
             }; 
             
             // table building starts here
@@ -145,7 +147,7 @@
             var xlinkTBodyJoin = d3.select(this.el).select("TABLE").selectAll("TBODY")
                 .data(selectedLinkArray, function(d) { return d.id; })
             ;
-        //~ 
+
             xlinkTBodyJoin.exit().remove();
             xlinkTBodyJoin.enter()
                 .append("TBODY")
