@@ -71,6 +71,25 @@
     cursor: pointer;
 }
 
+.proteinInfoPanel .hit:hover, .proteinInfoPanel .hit.selected:hover {
+    background: #fdc086;
+}
+
+.proteinInfoPanel .hit.filteredOutResidue {
+    background: none;
+    color: grey;
+    pointer-events: none;
+    cursor: text;
+}
+
+.proteinInfoPanel .hit.selected {
+    background: yellow;
+}
+
+.proteinInfoPanel .hit.highlighted {
+    background: #fdc086;
+}
+
 .proteinInfoPanel .fixedSizeFont {
     font-family: monospace;
     line-height: 1em;

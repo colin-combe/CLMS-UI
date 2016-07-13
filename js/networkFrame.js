@@ -122,7 +122,7 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
 		alignColl: alignmentCollectionInst,
 		selection: [], //will contain cross-link objects
 		highlights: [], //will contain cross-link objects
-		linkColourAssignment: CLMSUI.linkColour.defaultColours,
+		linkColourAssignment: CLMSUI.linkColour.defaultColoursBB,
 		selectedProtein: null, //what type should this be? Set?
 		groupColours: null // will be d3.scale for colouring by search/group
 	});
@@ -136,11 +136,15 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
 		this.applyFilter();
 		this.trigger ("filteringDone");
 	});
+    
+    // Set up colour models, some (most) of which depend on data properties	
+    CLMSUI.linkColour.setupColourModels();
 
 	// Start the asynchronous blosum fetching after the above events have been set up
 	CLMSUI.blosumCollInst.fetch();
-}
+};
 
+/*
 changeLinkColours = function (e) {
 	var colMap = {
 		"Default": CLMSUI.linkColour.defaultColours,
@@ -149,6 +153,7 @@ changeLinkColours = function (e) {
 	var colourSelection = document.getElementById("linkColourSelect").value;
 	CLMSUI.compositeModelInst.set("linkColourAssignment", colMap[colourSelection]);
 }
+*/
 
 CLMSUI.init.views = function () {
     
@@ -254,13 +259,6 @@ CLMSUI.init.views = function () {
                 {name: "Residues", func: downloadResidueCount}, {name: "SVG", func: downloadSVG}
             ]
         }
-    })
-
-    // This generates the legend div, we don't keep a handle to it - the event object has one
-    new CLMSUI.KeyViewBB ({
-        el: "#keyPanel",
-        displayEventName: "keyShow",
-        model: CLMSUI.compositeModelInst,
     });
     
     new CLMSUI.CircularViewBB ({
@@ -271,17 +269,34 @@ CLMSUI.init.views = function () {
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
-	
+    
+    // This generates the legend div, we don't keep a handle to it - the event object has one
+    new CLMSUI.KeyViewBB ({
+        el: "#keyPanel",
+        displayEventName: "keyShow",
+        model: CLMSUI.compositeModelInst,
+    });
+    
+    var colourSelector = new CLMSUI.utils.ColourCollectionOptionViewBB ({
+        el: "#colourSelect",
+        model: CLMSUI.linkColour.Collection,
+        choiceFunc: function (colModel) { CLMSUI.compositeModelInst.set("linkColourAssignment", colModel); },
+    });
+    colourSelector.listenTo (CLMSUI.compositeModelInst, "change:linkColourAssignment", function (compModel, newColourModel) {
+        //console.log ("colourSelector listening to change Link Colour Assignment", this, arguments); 
+        this.setSelected (newColourModel);
+    });
+    
+    // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
+    CLMSUI.compositeModelInst.set (
+        "linkColourAssignment", 
+        CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
+    );
+    
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
     var tooltipView = new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
         model: CLMSUI.compositeModelInst.get("tooltipModel")
-    });
-
-    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
-        el: "#networkDiv", 
-        model: CLMSUI.compositeModelInst,
-        myOptions: {layout: storedLayout}
     });
 
     var distoViewer = new CLMSUI.DistogramBB ({
@@ -293,7 +308,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             seriesName: "Actual"
         }
     });
-    
     
     // World of code smells vol.1
     // selectionViewer declared before spectrumWrapper because...
@@ -313,6 +327,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
     split.collapse (true);
     selectionViewer.setVisible (false);
+    
+    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
+        el: "#networkDiv", 
+        model: CLMSUI.compositeModelInst,
+        myOptions: {layout: storedLayout}
+    });
     
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:"#spectrumPanelWrapper",
