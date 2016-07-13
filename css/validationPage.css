@@ -1,0 +1,36 @@
+#spectrumControlsTop {
+	background-color: #091D42;
+	display: inline-block;
+	padding:5px;
+}
+#spectrumControlsBottom {
+	display: inline-block;
+	margin-left: 10px;
+}
+.dynDiv_moveParentDiv{
+	display: none;
+}
+.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
+	display:none;
+}
+#spectrumPanel {
+	width: calc(100% - 20px);
+}
+
+#t1 .dynamic-table-downarrow{
+	display:none;
+}
+
+input.filterTypeText {
+	margin-right: 5px;
+}
+.sideOn {
+	display: none;
+}
+
+#colorSelector{
+	display: none;
+}
+#spectrumControls label#colorSelectorLabel{
+	display: none;
+}

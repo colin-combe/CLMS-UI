@@ -46,32 +46,25 @@ header('Content-type: text/html; charset=utf-8');
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <meta name="apple-mobile-web-app-capable" content="yes">
             <meta name="apple-mobile-web-app-status-bar-style" content="black">
-            <link rel="stylesheet" href="css/reset.css" />
-            <link rel="stylesheet" href="css/style.css" />
-            <link rel="stylesheet" href="css/dynamic_table.css" />
-            <link rel="stylesheet" href="css/validate.css" />
+      
         <link rel="stylesheet" href="./css/reset.css" />
-        <link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
         <link rel="stylesheet" href="./css/style.css" />
-        <link rel="stylesheet" href="./css/xiNET.css">
-        <link rel="stylesheet" href="./css/matrix.css">
         <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
         <link rel="stylesheet" href="./css/minigram.css">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
-        <link rel="stylesheet" href="./css/alignViewBB.css">
-        <link rel="stylesheet" href="./css/selectionViewBB.css">
-        <link rel="stylesheet" href="./css/circularViewBB.css">
+		<link rel="stylesheet" href="./css/selectionViewBB.css">
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
         <link rel="stylesheet" href="./css/validate.css">
-        <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
-        <link rel="stylesheet" href="./css/key.css">
+		<link rel="stylesheet" href="./css/validationPage.css">
 
         <script type="text/javascript" src="./vendor/d3.js"></script>
-        <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
+		<script type="text/javascript" src="./vendor/colorbrewer.js"></script>
+       <!--
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
         <script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
         <script type="text/javascript" src="./vendor/crosslink.js"></script>
+-->
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
@@ -93,37 +86,19 @@ header('Content-type: text/html; charset=utf-8');
        <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
 -->
 
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
-
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/models.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
-        <script type="text/javascript" src="./js/distogramViewBB.js"></script>
-        <script type="text/javascript" src="./js/DistanceSliderBB.js"></script>
-        <script type="text/javascript" src="./js/filterViewBB.js"></script>
-        <script type="text/javascript" src="./js/matrixViewBB.js"></script>
-        <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
+		<script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
-        <script type="text/javascript" src="./js/NGLViewBB.js"></script>
-        <script type="text/javascript" src="./js/bioseq32.js"></script>
-        <script type="text/javascript" src="./js/alignModelType.js"></script>
-        <script type="text/javascript" src="./js/alignViewBB3.js"></script>
-        <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
+        <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
-        <script type="text/javascript" src="./js/circularViewBB.js"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
         <script type="text/javascript" src="./js/validate.js"></script>
-        <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
-        <script type="text/javascript" src="./js/keyViewBB.js"></script>
 
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
@@ -139,31 +114,6 @@ header('Content-type: text/html; charset=utf-8');
     <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
     <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
 
-    <script type="text/javascript" src="./vendor/dynamic_table.js"></script>
-
-    <style>       
-        #spectrumControlsTop{
-            background-color: #091D42;
-        }
-        .dynDiv_moveParentDiv{
-			display: none;
-		}
-		.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
-			display:none;
-		}
-		#spectrumPanel {
-			width: calc(100% - 20px);
-		}
-
-		#t1 .dynamic-table-downarrow{
-			display:none;
-		}
-
-		input.filterTypeText {
-			margin-right: 5px;
-		}
-		
-    </style>
     
     </head>
 

@@ -26,13 +26,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Unval.", "id":"unval"}
             ],
             textFilters: [
-                {"label":"Peptide:", "id":"pepSeq", "chars":9},
-                {"label":"Protein:", "id":"protNames", "chars":9},
+                {"label":"  Pep.:", "id":"pepSeq", "chars":7},
+                {"label":"Prot.:", "id":"protNames", "chars":7},
                 {"label":"Charge:", "id":"charge", "chars":1},
-                {"label":"Run:", "id":"runName","chars":9},
+                {"label":"Run:", "id":"runName","chars":5},
                 {"label":"Scan:", "id":"scanNumber", "chars":5}
             ],
             toggleSpecials: [
+                {"label":"Decoys", "id":"decoys"},
                 {"label":"Linears", "id":"linears"},
                 {"label":"Ambig.", "id":"ambig"},
                 {"label":"Self links", "id":"selfLinks"}
@@ -47,24 +48,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         mainDivSel.append("span").attr("class", "sideOn").text("Filters");
         
-        mainDivSel.selectAll("label")
-            .data(this.options.toggles, function(d) { return d.id; })
-            .enter()
-            .append ("label")
-                .text (function(d) { return d.label; })
-                .append ("input")
-                    .attr ("id", function(d) { return d.id; })
-                    .attr ("class", "filterTypeToggle")
-                    .attr ("type", "checkbox")
-                    .property ("checked", function(d) { return self.model.get(d.id); })
-        ;
-        
-        
-        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");  
-        // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel' style='text-align:right'></P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'></P>");
-        sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));       
-        
         mainDivSel.selectAll("label.toggles")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
             .enter()
@@ -77,19 +60,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .attr ("type", "checkbox")
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
+        
+        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");  
+        // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
+        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel' style='text-align:right'></P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'></P>");
+        sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));       
+        
         sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : 'inline-block');
-        
-        //this.displayEventName = viewOptions.displayEventName;
 
-        /*
-        //this.listenTo (this.model, "change", this.render);
-
-        if (viewOptions.displayEventName) {
-            this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible)
-        }
-        */
-        
         this.listenTo (this.model, "change:cutoff", function(model, val) {
             var min = CLMSUI.utils.dpNumber (val[0], this.sliderDecimalPlaces, Math.floor); 
             mainDivSel.select(".cutoffLabel.vmin").html("&gt;"+min); // min label
@@ -97,7 +75,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             var max = CLMSUI.utils.dpNumber (val[1], this.sliderDecimalPlaces, Math.ceil); 
             mainDivSel.select(".cutoffLabel.vmax").html("&lt;"+max); // max label
         });
-
+		              
+        mainDivSel.selectAll("label")
+            .data(this.options.toggles, function(d) { return d.id; })
+            .enter()
+            .append ("label")
+                .text (function(d) { return d.label; })
+                .append ("input")
+                    .attr ("id", function(d) { return d.id; })
+                    .attr ("class", "filterTypeToggle")
+                    .attr ("type", "checkbox")
+                    .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+		
         mainDivSel.selectAll("label.textFilters")
             .data(this.options.textFilters, function(d) { return d.id; })
             .enter()
@@ -126,7 +116,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		var target = evt.target;
         var id = target.id;
         console.log ("filter set", id, target.value);
-        this.model.set (id, target.checked);
+        this.model.set (id, target.value);
     },
     
     filterSpecial: function (evt) {

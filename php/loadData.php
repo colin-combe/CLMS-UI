@@ -240,7 +240,7 @@
 			}
 			$positions = $line['positions'];
 			echo '{"id":' . $line["id"] . ','
-				. '"seq":"' . $line["sequence"] . '",' 
+				. '"seq_mods":"' . $line["sequence"] . '",' 
 				. '"prt":["' . implode($proteinsArray, '","') . '"],' 
 				. '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']' 
 				. "}";
@@ -281,7 +281,7 @@
 				. '"name":"' . $line["name"] . '",' 
 				. '"description":"' . $line["description"] . '",' 
 				. '"accession":"' .$line["accession_number"]  . '",'
-				. '"seq":"' .$line["sequence"] . '",' 
+				. '"seq_mods":"' .$line["sequence"] . '",' 
 				. '"is_decoy":' .$isDecoy 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);

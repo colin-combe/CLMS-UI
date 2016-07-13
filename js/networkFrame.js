@@ -23,8 +23,10 @@ CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
 // for NGL
-NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
-var stage;
+if (typeof NGL != "undefined") {
+	NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
+	var stage;
+}
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 var allDataLoaded = _.after (2, function() {
