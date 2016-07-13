@@ -280,11 +280,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     var colourSelector = new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#colourSelect",
         model: CLMSUI.linkColour.Collection,
-        choiceFunc: function (colModel) { CLMSUI.compositeModelInst.set("linkColourAssignment", colModel); },
-    });
-    colourSelector.listenTo (CLMSUI.compositeModelInst, "change:linkColourAssignment", function (compModel, newColourModel) {
-        //console.log ("colourSelector listening to change Link Colour Assignment", this, arguments); 
-        this.setSelected (newColourModel);
+        storeSelectedAt: {model: CLMSUI.compositeModelInst, attr: "linkColourAssignment"},
     });
     
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
