@@ -120,6 +120,8 @@
                 .attr ("transform", function(d) { return "translate(0,0) scale("+(flip[d])+",1)"; })
                 .attr ("d", "M 1 0 V 20 L 10 10 Z")
             ;
+            
+            this.listenTo (this.model, "change", this.redrawBrush);
 
             this.relayout();
             this.render();
@@ -189,6 +191,16 @@
             }, this);
 
             return countArrays;
+        },
+        
+        redrawBrush: function () {
+            console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
+            console.log ("c3 chart", this.chart.internal);
+            // Have to go via c3 chart internal properties as it isn't exposed via API
+            this.chart.internal.brush
+                .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])
+                .update()
+            ;
         },
 
         relayout: function () {

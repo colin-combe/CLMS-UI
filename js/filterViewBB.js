@@ -53,7 +53,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");  
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel' style='text-align:right'></P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'></P>");
+        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel'>&gt;</P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'>&lt;</P>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));       
         
         mainDivSel.selectAll("label")
@@ -67,7 +67,23 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .attr ("type", "checkbox")
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
+        
+        mainDivSel.selectAll("p.cutoffLabel")
+            .append("input")
+            .attr({
+                type: "number",
+                step: 0.01,
+                min: 0,
+            })
+            .on ("input", function() {
+                var val = +this.value;
+                var isMinInput = d3.select(this.parentNode).classed("vmin");
+                var cutoff = self.model.get("cutoff");
+                var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val].sort(function(a,b) { return a - b;});
+                self.model.set("cutoff", newVals);
+            })
+        ;
+            
         // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
 		// onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
  
@@ -75,20 +91,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         this.displayEventName = viewOptions.displayEventName;
 
-        /*
-        //this.listenTo (this.model, "change", this.render);
-
-        if (viewOptions.displayEventName) {
-            this.listenTo (CLMSUI.vent, viewOptions.displayEventName, this.setVisible)
-        }
-        */
-        
         this.listenTo (this.model, "change:cutoff", function(model, val) {
+            console.log ("cutoff", val);
             var min = CLMSUI.utils.dpNumber (val[0], this.sliderDecimalPlaces, Math.floor); 
-            mainDivSel.select(".cutoffLabel.vmin").html("&gt;"+min); // min label
+            mainDivSel.select(".cutoffLabel.vmin input").property("value", min); // min label
             
             var max = CLMSUI.utils.dpNumber (val[1], this.sliderDecimalPlaces, Math.ceil); 
-            mainDivSel.select(".cutoffLabel.vmax").html("&lt;"+max); // max label
+            mainDivSel.select(".cutoffLabel.vmax input").property("value", max); // max label
         });
     },
     
@@ -107,7 +116,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.model.set (id, target.checked);
     }, 
     
-    sliderDecimalPlaces: 1,
+    sliderDecimalPlaces: 2,
           
     render: function () {
         return this;

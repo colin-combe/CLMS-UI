@@ -197,15 +197,18 @@ CLMSUI.init.views = function () {
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
+        //console.log ("minidist model domain changed");
         this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]); 
     }, this);
 
 
     // If the ClmsModel matches attribute changes then tell the mini histogram view
     scoreDistributionView
-        .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
-        // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
-        //.listenTo (this.model.get("filterModel"), "change", this.render)  
+        .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
+        .listenTo (filterModel, "change:cutoff", function (filterModel, newCutoff) {
+            this.model.set ({domainStart: newCutoff[0], domainEnd: newCutoff[1]});
+            console.log ("cutoff changed");
+        })  
     ;       
 
     // Generate checkboxes
