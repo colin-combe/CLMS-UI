@@ -11,9 +11,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-            "A": true, "B": true, "C": true, "Q": true, "R": false, "unval": false, 
+            "A": true, "B": true, "C": true, "Q": true, "R": false, "unval": true, 
             "AUTO": true,
-            "linears": false,
+            "linears": true,
             "decoys": false,
             "pepSeq": "",
             "protNames": "",
@@ -68,6 +68,25 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				return false;
 			};
 			
+			//charge check
+			var chargeFilter = this.get("charge");
+			if (chargeFilter && match.charge != chargeFilter){
+				return false;
+			}
+
+			//run name check
+			var runNameFilter = this.get("runName");
+			if (runNameFilter && 
+					match.runName.toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1){
+				return false;
+			}
+
+			//scan number check
+			var scanNumberFilter = this.get("scanNumber");
+			if (scanNumberFilter && 
+					match.scanNumber.toLowerCase().indexOf(scanNumberFilter.toLowerCase()) == -1){
+				return false;
+			}
 
             var vChar = match.validated;
             if (vChar == 'A' && this.get("A")) return true;
@@ -79,7 +98,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
             return false;
             
-            function seqCheck(searchString) {
+            //peptide seq check function
+			function seqCheck(searchString) {
 				if (searchString) {
 					var pepStrings = searchString.split('-');
 					if (pepStrings.length ==1) {
@@ -113,7 +133,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				return true;
 			}            
 			
-            function proteinNameCheck(searchString) {
+            //protein name check
+			function proteinNameCheck(searchString) {
 				if (searchString) {
 					var nameStrings = searchString.split('-');
 					if (nameStrings.length ==1) {

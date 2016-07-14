@@ -160,34 +160,28 @@ header('Content-type: text/html; charset=utf-8');
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
-            include './php/loadData.php';
+            //include './loadData.php';
             //~ if (file_exists('../annotations.php')){
                 //~ include '../annotations.php';
             //~ }
         ?>
 
-        var optionsContainingClmsData = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
+        //~ var optionsContainingClmsData = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
 
-        var clmsModelInst = new window.CLMS.model.SearchResultsModel (optionsContainingClmsData);
+        var clmsModelInst = new window.CLMS.model.SearchResultsModel (<?php
+            include './loadData.php';
+        ?>);
 
 		var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
 			scores: clmsModelInst.get("scores")
 		});
 
-		var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
-			distances: distances
-		});
-
-		var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
-			scale: d3.scale.linear()
-		});
-
 		var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
 		CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-			distancesModel: distancesInst,
+			//~ distancesModel: distancesInst,
 			clmsModel: clmsModelInst,
-			rangeModel: rangeModelInst,
+			//~ rangeModel: rangeModelInst,
 			filterModel: filterModelInst,
 			tooltipModel: tooltipModelInst,
 			alignColl: null,//alignmentCollectionInst,
@@ -319,7 +313,37 @@ header('Content-type: text/html; charset=utf-8');
                     this.model.clear();
                 }
             });
-
+			spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+				if (match) { 
+					//~ //var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+					//~ //CLMSUI.loadSpectra (match, randId, this.model);
+					var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+					var url = "./loadData.php?spectrum="  + match.spectrumId;
+					d3.json (url, function(error, json) {
+						if (error) {
+							console.log ("error", error, "for", url);
+							//~ d3.select("#range-error").text ("Cannot load spectra from URL");
+							//~ spectrumModel.clear();
+						} else {
+							console.log(json);
+							var altModel = new window.CLMS.model.SearchResultsModel (json);
+	
+							var allCrossLinks = Array.from(
+							altModel.get("crossLinks").values());
+							spectrumWrapper.alternativesModel.set("clmsModel", altModel);
+							spectrumWrapper.alternativesModel.applyFilter();
+							console.log("CL>"+allCrossLinks.length);
+							spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+							//~ d3.select("#range-error").text ("");
+							//~ spectrumModel.set ({JSONdata: json, match: match, randId: randId}); 
+							
+						}
+					});
+				} else {
+					//~ //this.model.clear();
+				}
+			});
+            
             var allCrossLinks = Array.from(
                 CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
             CLMSUI.compositeModelInst.set("selection", allCrossLinks);
