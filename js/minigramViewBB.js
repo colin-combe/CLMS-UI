@@ -93,16 +93,15 @@
                 subchart: {
                     show: true,
                     onbrush: function (domain) {
-                        console.log ("brush domain", self.chart.internal.brush.extent(),  self.chart.internal);
                         // eventually do snapping: http://bl.ocks.org/mbostock/6232620
 
                         // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
-                        console.log ("minigram domain", domain[0], domain[1]);
+                        //console.log ("minigram domain", domain[0], domain[1]);
                         var interval = 0.1;
                         var roundDomain = domain.map (function (v) { 
                             return +((Math.round (v/interval) * interval).toFixed(1)); 
                         });
-                        console.log ("roundDomain", roundDomain[0], roundDomain[1]);
+                        //console.log ("roundDomain", roundDomain[0], roundDomain[1]);
                         self.model.set ({"domainStart": roundDomain[0], "domainEnd": roundDomain[1]});
                     },
                     size: {
@@ -198,14 +197,14 @@
         },
         
         redrawBrush: function () {
-            console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
+            //console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
             // Have to go via c3 chart internal properties as it isn't exposed via API
             this.chart.internal.brush
                 .clamp(true)
                 .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])
                 .update()
             ;
-            console.log ("extent", this.chart.internal.brush.extent());
+            //console.log ("extent", this.chart.internal.brush.extent());
         },
 
         relayout: function () {

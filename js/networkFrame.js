@@ -183,7 +183,7 @@ CLMSUI.init.views = function () {
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
         var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
-        console.log ("matches", matches);
+        //console.log ("matches", matches);
         return matches; // matches is now an array of arrays    //  [matches, []];
     };
 
@@ -214,7 +214,7 @@ CLMSUI.init.views = function () {
         .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
         .listenTo (filterModel, "change:cutoff", function (filterModel, newCutoff) {
             this.model.set ({domainStart: newCutoff[0], domainEnd: newCutoff[1]});
-            console.log ("cutoff changed");
+            //console.log ("cutoff changed");
         })  
     ;       
 
