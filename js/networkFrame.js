@@ -100,7 +100,11 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
 	var clmsModelInst = new window.CLMS.model.SearchResultsModel (optionsContainingClmsData);
 
 	var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-		scores: clmsModelInst.get("scores")
+     // set original cutoff to be the extent of all scores (rounded up and down nicely)
+     cutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
+        return Math[i == 0 ? "floor" : "ceil"](ex);
+     }),
+     scores: clmsModelInst.get("scores")
 	});
 
 	var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
@@ -168,6 +172,8 @@ CLMSUI.init.views = function () {
         ;
     });
     
+    
+    
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");     
     var filterViewGroup = new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder", 
@@ -177,6 +183,7 @@ CLMSUI.init.views = function () {
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
         var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
+        console.log ("matches", matches);
         return matches; // matches is now an array of arrays    //  [matches, []];
     };
 

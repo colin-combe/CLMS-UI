@@ -19,7 +19,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
         initialize: function () {
             // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
-            this.set ("cutoff", [0,100]);
+            if (!this.get("cutoff")) {
+                this.set ("cutoff", [0,100]);
+            }
         },
 
         filter: function (match) {

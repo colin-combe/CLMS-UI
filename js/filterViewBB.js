@@ -72,10 +72,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .append("input")
             .attr({
                 type: "number",
-                step: 0.01,
+                step: 0.1,
                 min: 0,
             })
-            .on ("input", function() {
+            .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                //console.log ("model", self.model);    
                 var val = +this.value;
                 var isMinInput = d3.select(this.parentNode).classed("vmin");
                 var cutoff = self.model.get("cutoff");
@@ -85,19 +86,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
             
         // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
-		// onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
+        // onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
  
         sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : 'inline-block');
         
         this.displayEventName = viewOptions.displayEventName;
 
         this.listenTo (this.model, "change:cutoff", function(model, val) {
-            console.log ("cutoff", val);
-            var min = CLMSUI.utils.dpNumber (val[0], this.sliderDecimalPlaces, Math.floor); 
-            mainDivSel.select(".cutoffLabel.vmin input").property("value", min); // min label
-            
-            var max = CLMSUI.utils.dpNumber (val[1], this.sliderDecimalPlaces, Math.ceil); 
-            mainDivSel.select(".cutoffLabel.vmax input").property("value", max); // max label
+            //console.log ("cutoff", val);
+            mainDivSel.select(".vmin input").property("value", val[0]); // min label
+            mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
     },
     
