@@ -125,7 +125,7 @@
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
-			WHERE ".$WHERE_withRand." AND dynamic_rank AND (NOT is_decoy)
+			WHERE (".$WHERE_withRand.") AND dynamic_rank 
 			AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR
 			(sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')
 			OR (sm.validated LIKE '?')) 
@@ -138,7 +138,7 @@
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 	
 		INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized 
 			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
-			AND (NOT is_decoy)) r ON sm.id = r.spectrum_match_id		
+			) r ON sm.id = r.spectrum_match_id		
 		ORDER BY score DESC, sm.id, mp.match_type;";
 		
 	//New DB

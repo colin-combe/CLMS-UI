@@ -102,7 +102,7 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
 	var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
      // set original cutoff to be the extent of all scores (rounded up and down nicely)
      cutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
-        return Math[i == 0 ? "floor" : "ceil"](ex);
+        return Math[i === 0 ? "floor" : "ceil"](ex);
      }),
      scores: clmsModelInst.get("scores")
 	});

@@ -73,7 +73,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr({
                 type: "number",
                 step: 0.1,
-                min: 0,
+                //min: 0,
             })
             .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                 //console.log ("model", self.model);    
