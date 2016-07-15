@@ -206,14 +206,14 @@
         },
         
         brushRecalc: function () {
-            console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
+            //console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
             // Have to go via c3 chart internal properties as it isn't exposed via API
             this.chart.internal.brush
                 .clamp(true)
                 .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])
                 .update()
             ;
-            console.log ("extent", this.chart.internal.brush.extent());
+            //console.log ("extent", this.chart.internal.brush.extent());
         },
         
         redrawBrush: function () {

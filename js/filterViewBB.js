@@ -80,7 +80,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var val = +this.value;
                 var isMinInput = d3.select(this.parentNode).classed("vmin");
                 var cutoff = self.model.get("cutoff");
-                var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val].sort(function(a,b) { return a - b;});
+                var scoreExtent = self.model.scoreExtent;
+                // take new values, along with score extents, sort them and discard extremes for new cutoff settings
+                var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val, scoreExtent[0], scoreExtent[1]]
+                    .sort(function(a,b) { return a - b;})
+                    .slice (1,3)
+                ;
                 self.model.set("cutoff", newVals);
             })
         ;

@@ -22,6 +22,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (!this.get("cutoff")) {
                 this.set ("cutoff", [0,100]);
             }
+            // scoreExtent used to restrain text input values
+            this.scoreExtent = this.get("cutoff").slice(0);
         },
 
         filter: function (match) {
