@@ -46,20 +46,20 @@ header('Content-type: text/html; charset=utf-8');
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <meta name="apple-mobile-web-app-capable" content="yes">
             <meta name="apple-mobile-web-app-status-bar-style" content="black">
-      
+
         <link rel="stylesheet" href="./css/reset.css" />
         <link rel="stylesheet" href="./css/style.css" />
         <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
         <link rel="stylesheet" href="./css/minigram.css">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
-		<link rel="stylesheet" href="./css/selectionViewBB.css">
+        <link rel="stylesheet" href="./css/selectionViewBB.css">
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
         <link rel="stylesheet" href="./css/validate.css">
-		<link rel="stylesheet" href="./css/validationPage.css">
+        <link rel="stylesheet" href="./css/validationPage.css">
 
         <script type="text/javascript" src="./vendor/d3.js"></script>
-		<script type="text/javascript" src="./vendor/colorbrewer.js"></script>
+        <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
        <!--
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
         <script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
@@ -92,7 +92,7 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
-		<script type="text/javascript" src="./js/filterViewBB.js"></script>
+        <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
@@ -114,7 +114,7 @@ header('Content-type: text/html; charset=utf-8');
     <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
     <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
 
-    
+
     </head>
 
     <body>
@@ -172,35 +172,35 @@ header('Content-type: text/html; charset=utf-8');
             include './loadData.php';
         ?>);
 
-		var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-			scores: clmsModelInst.get("scores")
-		});
+        var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
+            scores: clmsModelInst.get("scores")
+        });
 
-		var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
+        var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
-		CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-			//~ distancesModel: distancesInst,
-			clmsModel: clmsModelInst,
-			//~ rangeModel: rangeModelInst,
-			filterModel: filterModelInst,
-			tooltipModel: tooltipModelInst,
-			alignColl: null,//alignmentCollectionInst,
-			selection: [], //will contain cross-link objects
-			highlights: [], //will contain cross-link objects
-			linkColourAssignment: CLMSUI.linkColour.defaultColours,
-			selectedProtein: null, //what type should this be? Set?
-			groupColours: null // will be d3.scale for colouring by search/group
-		});
+        CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
+            //~ distancesModel: distancesInst,
+            clmsModel: clmsModelInst,
+            //~ rangeModel: rangeModelInst,
+            filterModel: filterModelInst,
+            tooltipModel: tooltipModelInst,
+            alignColl: null,//alignmentCollectionInst,
+            selection: [], //will contain cross-link objects
+            highlights: [], //will contain cross-link objects
+            linkColourAssignment: CLMSUI.linkColour.defaultColours,
+            selectedProtein: null, //what type should this be? Set?
+            groupColours: null // will be d3.scale for colouring by search/group
+        });
 
-		CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
+        CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
-		// instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
-		// and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
-		// the views are only notified once the changed data is ready.
-		CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
-			this.applyFilter();
-			this.trigger ("filteringDone");
-		});
+        // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
+        // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
+        // the views are only notified once the changed data is ready.
+        CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
+            this.applyFilter();
+            this.trigger ("filteringDone");
+        });
 
         var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         document.title = Array.from(searches.keys()).join();
@@ -313,37 +313,49 @@ header('Content-type: text/html; charset=utf-8');
                     this.model.clear();
                 }
             });
-			spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-				if (match) { 
-					//~ //var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-					//~ //CLMSUI.loadSpectra (match, randId, this.model);
-					var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-					var url = "./loadData.php?spectrum="  + match.spectrumId;
-					d3.json (url, function(error, json) {
-						if (error) {
-							console.log ("error", error, "for", url);
-							//~ d3.select("#range-error").text ("Cannot load spectra from URL");
-							//~ spectrumModel.clear();
-						} else {
-							console.log(json);
-							var altModel = new window.CLMS.model.SearchResultsModel (json);
-	
-							var allCrossLinks = Array.from(
-							altModel.get("crossLinks").values());
-							spectrumWrapper.alternativesModel.set("clmsModel", altModel);
-							spectrumWrapper.alternativesModel.applyFilter();
-							console.log("CL>"+allCrossLinks.length);
-							spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-							//~ d3.select("#range-error").text ("");
-							//~ spectrumModel.set ({JSONdata: json, match: match, randId: randId}); 
-							
-						}
-					});
-				} else {
-					//~ //this.model.clear();
-				}
-			});
-            
+            spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+                if (match) {
+                    var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel" ), match);
+                    var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+                    var url = "./loadData.php?spectrum="  + match.spectrumId;
+                    d3.json (url, function(error, json) {
+                        if (error) {
+                            console.log ("error", error, "for", url);
+                            //~ d3.select("#range-error").text ("Cannot load spectra from URL");
+                            //~ spectrumModel.clear();
+                        } else {
+                            console.log(json);
+                            var altModel = new window.CLMS.model.SearchResultsModel (json);
+
+                            var allCrossLinks = Array.from(
+                            altModel.get("crossLinks").values());
+                            spectrumWrapper.alternativesModel.set("clmsModel", altModel);
+                            spectrumWrapper.alternativesModel.applyFilter();
+                            console.log("CL>"+allCrossLinks.length);
+                            spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+                            //~ d3.select("#range-error").text ("");
+                            //~ spectrumModel.set ({JSONdata: json, match: match, randId: randId});
+
+                        }
+                    });
+                } else {
+                            console.log ("error", error, "for", url);
+                            //~ d3.select("#range-error").text ("Cannot load spectra from URL");
+                            //~ spectrumModel.clear();
+                        } else {
+                            console.log(json);
+                            var altModel = new window.CLMS.model.SearchResultsModel (json);
+
+                            var allCrossLinks = Array.from(
+                            altModel.get("crossLinks").values());
+                            spectrumWrapper.alternativesModel.set("clmsModel", altModel);
+                            spectrumWrapper.alternativesModel.applyFilter();
+                            console.log("CL>"+allCrossLinks.length);
+                            spectrumWrapper.alternativesModel.set("selec
+                    //~ //this.model.clear();
+                }
+            });
+
             var allCrossLinks = Array.from(
                 CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
             CLMSUI.compositeModelInst.set("selection", allCrossLinks);
@@ -351,9 +363,9 @@ header('Content-type: text/html; charset=utf-8');
         };
 
         var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
-					sizes: [60,40], minSize: [200,10],
-					onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-			} });
+                    sizes: [60,40], minSize: [200,10],
+                    onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+            } });
 
         //~ var gutter = document.getElementsByClassName('gutter')[0];
         //~ gutter.addEventListener("mouseup", function (){

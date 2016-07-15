@@ -195,15 +195,14 @@
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
-            include './php/loadData.php';
             //~ if (file_exists('../annotations.php')){
                 //~ include '../annotations.php';
             //~ }
         ?>
 
-        var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: searchMeta};
+      //  var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: searchMeta};
 
-        CLMSUI.init.models (options);
+        CLMSUI.init.models (<?php include './loadData.php'; ?>);
 
         var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         document.title = Array.from(searches.keys()).join();

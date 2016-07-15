@@ -32,7 +32,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         var sectionData = [
             {
                 id: "colourKey",
-                header: "Colour Scheme",
+                header: "Link Colour Scheme",
                 rows: []
             },
             {
@@ -112,7 +112,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     
     render: function () {
         var colourSection =[{
-            header: "Colour Scheme",
+            header: "Link Colour Scheme",
             rows: []
         }];
         

@@ -557,6 +557,13 @@ tbody tr:hover td, tbody tr:hover td  {
 .scoreSlider .cutoffLabel {
     min-width: 3em;
 }
+.scoreSlider .cutoffLabel.vmin {
+    text-align: right;
+}
+.scoreSlider .cutoffLabel input {
+    width: 4em;
+    color: black;
+}
 .sliderInput {
     background: none;
     position: relative;

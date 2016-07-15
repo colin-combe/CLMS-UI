@@ -177,7 +177,7 @@
             tjoin
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
-                    self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
+                    CLMSUI.compositeModelInst.set ("lastSelectedMatch", {match: d, directSelection: true});
                 })
                 .classed ("spectrumShown2", function(d) {
                     var lsm = self.model.get("lastSelectedMatch");

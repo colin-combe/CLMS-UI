@@ -32,28 +32,37 @@
             var result = new Map;
 
             crossLinks.forEach (function (value, key) {
-                if (!value.filteredMatches || value.filteredMatches.length > 0) { result.set (key, value); }
+                if (!value.filteredMatchesAndPeptidePositions
+						|| value.filteredMatchesAndPeptidePositions.length > 0) {
+							result.set (key, value);
+				}
             }, this);
 
             return result;
 
             //return crossLinks.filter (function(cLink) {
-            //    return cLink.filteredMatches.length > 0;
+            //    return cLink.filteredMatchesAndPeptidePositions.length > 0;
             //}); 
         },
         
         collateMatchRegions: function (crossLinks) {
             var fromPeptides = [], toPeptides = [], regs = [], prots = {};
             crossLinks.forEach (function (crossLink) {
-                crossLink.filteredMatches.forEach (function (match) {
-                    console.log ("mmatch", match);
-                    var smatch = match[0];
+                crossLink.filteredMatchesAndPeptidePositions.forEach (function (matchAndPepPos) {
+                    console.log ("match", match);
+                    var smatch = matchAndPepPos.match;
                     var prot1 = smatch.protein1[0];
                     var prot2 = smatch.protein2[0];
                     prots[prot1] = prots[prot1] || [];
                     prots[prot2] = prots[prot2] || [];
-                    prots[prot1].push ({protein: prot1, start: match[1], end: match[1] + match[2] });
-                    prots[prot2].push ({protein: prot2, start: match[3], end: match[3] + match[4] }); 
+
+                    var fromPepStart = matchAndPepPos.pepPos[0].start - 1;
+                    var fromPepLength = matchAndPepPos.pepPos[0].length;
+                    var toPepStart = matchAndPepPos.pepPos[1].start - 1;
+                    var toPepLength = matchAndPepPos.pepPos[1].length;
+                    
+                    prots[prot1].push ({protein: prot1, start: fromPepStart, end: fromPepStart + fromPepStart });
+                    prots[prot2].push ({protein: prot2, start: toPepStart, end: toPepStart + toPepLength }); 
                 });
             });
             
@@ -84,9 +93,9 @@
         },
 
         recurseAmbiguity: function (crossLink, crossLinkMap) {
-            var matches = crossLink.filteredMatches;
+            var matches = crossLink.filteredMatchesAndPeptidePositions;
             matches.forEach (function (match) {
-                var matchData = match[0];
+                var matchData = match.match;
                 if (matchData.isAmbig()) {
                     matchData.crossLinks.forEach (function (overlapCrossLink) {
                         if (!crossLinkMap.has (overlapCrossLink.id)) {
