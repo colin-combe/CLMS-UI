@@ -130,6 +130,8 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
 		selectedProtein: null, //what type should this be? Set?
 		groupColours: null // will be d3.scale for colouring by search/group
 	});
+    
+    console.log ("MODEL", CLMSUI.compositeModelInst);
 
 	CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 

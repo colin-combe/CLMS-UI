@@ -96,6 +96,7 @@
         <script type="text/javascript" src="./js/models.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
+        <script type="text/javascript" src="./js/fdr.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
         <script type="text/javascript" src="./js/DistanceSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
