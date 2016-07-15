@@ -102,7 +102,16 @@
                             return +((Math.round (v/interval) * interval).toFixed(1)); 
                         });
                         //console.log ("roundDomain", roundDomain[0], roundDomain[1]);
+
+                        // We want these rounded values to be communicated to the model and onwards,
+                        // but we don't want them bouncing back to the brush (which it should if the model values are obtained from elsewhere)
+                        // as over time the constant rounding absolutely kicks the crap out of the brush integrity (range shrinks / grows etc)
+                        // so I have a flag that temporarily stops the model recalling the brush to redraw itself at this point
+                        //
+                        // a variation on http://stackoverflow.com/questions/23965326/backbone-js-prevent-listener-event-from-firing-when-model-changes
+                        self.stopRebounds = true;
                         self.model.set ({"domainStart": roundDomain[0], "domainEnd": roundDomain[1]});
+                        self.stopRebounds = false;
                     },
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
@@ -196,17 +205,23 @@
             return countArrays;
         },
         
-        redrawBrush: function () {
-            //console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
+        brushRecalc: function () {
+            console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
             // Have to go via c3 chart internal properties as it isn't exposed via API
             this.chart.internal.brush
                 .clamp(true)
                 .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])
                 .update()
             ;
-            //console.log ("extent", this.chart.internal.brush.extent());
+            console.log ("extent", this.chart.internal.brush.extent());
         },
-
+        
+        redrawBrush: function () {
+            if (!this.stopRebounds) {
+                this.brushRecalc();
+            }
+        },
+        
         relayout: function () {
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
