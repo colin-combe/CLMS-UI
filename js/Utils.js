@@ -370,6 +370,38 @@ CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
     }
 });
 
+
+CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
+    initialize: function () {
+        CLMSUI.utils.FDRViewBB.__super__.initialize.apply (this, arguments);
+        
+        var chartDiv = d3.select(this.el).append("div")
+            .attr("class", "panelInner")
+        ;       
+        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        chartDiv.html ("<H1>Basic FDR Calculation</H1>");
+        var self = this;
+        var options = [0.01, 0.02, 0.05, 0.1, 0.2];
+        chartDiv.selectAll("button.fdr").data(options)
+            .enter()
+            .append("button")
+            .attr("class", "fdr btn btn-1 btn-1a")
+            .text(function(d) { return d3.format("%")(d); })
+            .on ("click", function(d) {
+                var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), d);
+                chartDiv.select(".fdrResult")
+                    .text("Cutoff for "+d3.format("%")(d)+" is "+(result.thresholdMet ? result.fdr : "<"+result.fdr+" (Target not met)"))
+                    .style("display", "block")
+                ;
+            })
+        ;
+        
+        chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
+        return this;
+    }
+});
+
+
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);
     

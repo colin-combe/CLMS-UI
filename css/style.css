@@ -506,7 +506,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox {
+#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #fdrPanel {
     display:none;
     top:80px;
 }
@@ -552,6 +552,12 @@ tbody tr:hover td, tbody tr:hover td  {
     left: 40px;
     width: 40em;
     height: 25em;
+}
+
+#fdrPanel {
+    left: 40px;
+    width: 25em;
+    height: 9em;
 }
 
 #clmsErrorBox {
@@ -633,4 +639,15 @@ A.btn {
 .gutter.gutter-vertical {
   background-image: url('../images/grips/horizontal.png');
   cursor: ns-resize;
+}
+
+.fdrResult {
+    background: #55e;
+    border: 1px solid black;
+    padding: 0.2em 0.5em;
+    margin-top: 0.3em;
+    user-select: text;
+     -moz-user-select: text;
+     -ms-user-select: text;
+     -webkit-user-select: text;
 }
