@@ -4,7 +4,8 @@
     CLMSUI.SelectionTableViewBB = Backbone.View.extend ({
         events: {},
 
-        initialize: function () {
+        initialize: function (options) {
+			this.options = options;
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
             holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE id='t1' ><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
             
@@ -35,17 +36,11 @@
                 if (selMatch && selMatch.match) {
                     d3.select(this.el).select("tr#match"+selMatch.match.id).classed ("spectrumShown2", true);
                 }
-            });
-            
+            }); 
          },
         
         render: function () {
-			//~ DynamicTable.destroy("t1");
             this.updateTable ();
-            //~ opt1 = {
-                  //~ colTypes: ["none","alpha", "alpha", "alpha","alpha","alpha", "alpha", "alpha"]
-			//~ };
-			//~ new DynamicTable("t1");//, opt1);
 		},
         
         updateTable: function () {
@@ -177,7 +172,12 @@
             tjoin
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
-                    CLMSUI.compositeModelInst.set ("lastSelectedMatch", {match: d, directSelection: true});
+					var secondaryModel = self.options.secondaryModel;
+					if (secondaryModel) {
+						secondaryModel.set ("lastSelectedMatch", {match: d, directSelection: true});
+					} else {
+						self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
+					}
                 })
                 .classed ("spectrumShown2", function(d) {
                     var lsm = self.model.get("lastSelectedMatch");

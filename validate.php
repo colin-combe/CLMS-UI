@@ -315,14 +315,12 @@ header('Content-type: text/html; charset=utf-8');
             });
             spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
                 if (match) {
-                    var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel" ), match);
-                    var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-                    var url = "./loadData.php?spectrum="  + match.spectrumId;
+                    var url = "./loadData.php?sid=" 
+						+ CLMSUI.compositeModelInst.get("clmsModel").get("sid")
+						+ "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
                     d3.json (url, function(error, json) {
                         if (error) {
                             console.log ("error", error, "for", url);
-                            //~ d3.select("#range-error").text ("Cannot load spectra from URL");
-                            //~ spectrumModel.clear();
                         } else {
                             console.log(json);
                             var altModel = new window.CLMS.model.SearchResultsModel (json);
@@ -333,26 +331,10 @@ header('Content-type: text/html; charset=utf-8');
                             spectrumWrapper.alternativesModel.applyFilter();
                             console.log("CL>"+allCrossLinks.length);
                             spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-                            //~ d3.select("#range-error").text ("");
-                            //~ spectrumModel.set ({JSONdata: json, match: match, randId: randId});
-
                         }
                     });
-                } else {
-                            console.log ("error", error, "for", url);
-                            //~ d3.select("#range-error").text ("Cannot load spectra from URL");
-                            //~ spectrumModel.clear();
-                        } else {
-                            console.log(json);
-                            var altModel = new window.CLMS.model.SearchResultsModel (json);
-
-                            var allCrossLinks = Array.from(
-                            altModel.get("crossLinks").values());
-                            spectrumWrapper.alternativesModel.set("clmsModel", altModel);
-                            spectrumWrapper.alternativesModel.applyFilter();
-                            console.log("CL>"+allCrossLinks.length);
-                            spectrumWrapper.alternativesModel.set("selec
-                    //~ //this.model.clear();
+                } else { // no match
+                        //~ //this.model.clear();
                 }
             });
 

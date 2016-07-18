@@ -18,90 +18,113 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-	$pageStartTime = microtime(true);
-	include('../connectionString.php');
-	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
+//$pageStartTime = microtime(true);
+include('../connectionString.php');
+$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
-	echo "{";
-	$WHERE_withRand = ' ';
-	$WHERE_withoutRand = ' ';
-	$sid = urldecode($_GET["sid"]);
-	if ($sid) {
-		$id_rands = explode("," , $sid);
-		$sid = str_replace(',','', $sid );
-		$sid = str_replace('-','', $sid );
-		
-		$pattern = '/[^0-9,\-]/';
-		if (preg_match($pattern, $sid)){
-			exit;
-		}
+$sid = urldecode($_GET["sid"]);
+//SQL injection defense 
+$pattern = '/[^0-9,\-]/';
+if (preg_match($pattern, $sid)){
+	exit;
+}
 
-		$searchId_randGroup = [];
-		
-		for ($i = 0; $i < count($id_rands); $i++) {
-			$s = [];		
-			$dashSeperated = explode("-" , $id_rands[$i]);
-			$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
-			$id = $dashSeperated[0];
-			$res = pg_query("SELECT search.name, sequence_file.file_name"
-						." FROM search, search_sequencedb, sequence_file "
-						."WHERE search.id = search_sequencedb.search_id "
-						."AND search_sequencedb.seqdb_id = sequence_file.id "
-						."AND search.id = '".$id."';") 
-						or die('Query failed: ' . pg_last_error());
-			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
-			$name = $line['name'];
-			$filename = $line['file_name'];
-			
-			$s["id"] = $id;
-			$s["randId"] = $randId;
-			$s["name"] = $name;
-			$s["filename"] = $filename;
-			if (count($dashSeperated) == 6){
-				$s["group"] = $dashSeperated[5];
-			} else {
-				$s["group"] = "'NA'";
-			}
-			$searchId_randGroup[$id] = $s;
+$unval = false;
+if (isset($_GET['unval'])){
+    if ($_GET['unval'] === '1' || $_GET['unval'] === '0'){
+        $unval = (bool) $_GET['unval'];
+    }
+}
 
-		}
-		echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\n";
-		
-		
-		//~ echo "storedLayout = null;\n\n";
-		//~ if (count($searchId_randGroup) == 1) {
-			//~ $layoutQuery = "SELECT t1.layout AS l "
-					//~ . " FROM layouts AS t1 "
-					//~ . " LEFT OUTER JOIN layouts AS t2 "
-					//~ . " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
-					//~ . " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
-			//~ $layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
-			//~ while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-				//~ 
-				//~ echo "storedLayout = " . stripslashes($line["l"]) . ";\n\n";
-				//~ 
-			//~ }
-		//~ }
-		$WHERE_withoutRand = ' WHERE'; 
-		for ($i = 0; $i < count($searchId_randGroup); $i++) {
-			$search = array_values($searchId_randGroup)[$i];
-			if ($i > 0){
-				$WHERE_withRand = $WHERE_withRand.' OR ';
-				$WHERE_withoutRand = $WHERE_withoutRand.' OR ';
-			}
-			$randId = $search["randId"];
-			$id = $search["id"];
-			$WHERE_withRand = $WHERE_withRand.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
-			$WHERE_withoutRand = $WHERE_withoutRand.'(search_id = '.$id.')';
-		}		
-		$WHERE_withRand = $WHERE_withRand.' AND dynamic_rank ';
+$decoys = false;
+if (isset($_GET['decoys'])){
+    if ($_GET['decoys'] === '1' || $_GET['decoys'] === '0'){
+        $decoys = (bool) $_GET['decoys'];
+    }
+}
+
+$linears = false;
+if (isset($_GET['linears'])) {
+    if ($_GET['linears'] === '1' || $_GET['linears'] === '0')     {
+        $linears = (bool) $_GET['linears'];
+    }
+}
+
+$spectrum = '';
+if (isset($_GET['spectrum'])) {
+	$spectrum= (string) $_GET['spectrum'];
+}
+
+//keep the long identifier for this combination of searches 
+echo '{"sid":"'.$sid.'",';
+
+//get search meta data
+$id_rands = explode("," , $sid);
+$searchId_randGroup = [];
+for ($i = 0; $i < count($id_rands); $i++) {
+	$s = [];		
+	$dashSeperated = explode("-" , $id_rands[$i]);
+	$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
+	$id = $dashSeperated[0];
+	$res = pg_query("SELECT search.name, sequence_file.file_name"
+				." FROM search, search_sequencedb, sequence_file "
+				."WHERE search.id = search_sequencedb.search_id "
+				."AND search_sequencedb.seqdb_id = sequence_file.id "
+				."AND search.id = '".$id."';") 
+				or die('Query failed: ' . pg_last_error());
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	$name = $line['name'];
+	$filename = $line['file_name'];
+	
+	$s["id"] = $id;
+	$s["randId"] = $randId;
+	$s["name"] = $name;
+	$s["filename"] = $filename;
+	if (count($dashSeperated) == 6){
+		$s["group"] = $dashSeperated[5];
+	} else {
+		$s["group"] = "'NA'";
 	}
-	else{
-		$spectrum = urldecode($_GET["spectrum"]);
-		$WHERE_withRand = ' spectrum_id = '.$spectrum;
-		//~ $WHERE_withoutRand = ''; // TODO - have spec id in matched_peptide for sub query?
+	$searchId_randGroup[$id] = $s;
+}
+echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\n";
+				
+//load data - 
+$WHERE_spectrumMatch = ' ( ';
+$WHERE_matchedPeptide = ' ( ';
+for ($i = 0; $i < count($searchId_randGroup); $i++) {
+	$search = array_values($searchId_randGroup)[$i];
+	if ($i > 0){
+		$WHERE_spectrumMatch = $WHERE_spectrumMatch.' OR ';
+		$WHERE_matchedPeptide = $WHERE_matchedPeptide.' OR ';
 	}
+	$randId = $search["randId"];
+	$id = $search["id"];
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
+	$WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
+}		
+$WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) ';
+$WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
 
+if ($decoys == false){
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND (NOT is_decoy) ';
+}
+
+if ($unval == false){
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch." AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR
+				(sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')
+				OR (sm.validated LIKE '?')) ";
+}
+
+if ($linears == false){
+	$WHERE_matchedPeptide = $WHERE_matchedPeptide." AND link_position != -1 ";
+}
+
+if ($spectrum) {
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND spectrum_id = ' . $spectrum . ' ';
+} else {
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
+}
 
 
 	
@@ -122,7 +145,7 @@
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
-			WHERE ".$WHERE_withRand." AND dynamic_rank AND (NOT is_decoy)
+			WHERE ".$WHERE_spectrumMatch." AND dynamic_rank AND (NOT is_decoy)
 			AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR
 			(sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')
 			OR (sm.validated LIKE '?')) 
@@ -134,7 +157,7 @@
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 	
 		INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized 
-			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
+			WHERE (".$WHERE_matchedPeptide.") AND dynamic_rank = true 
 			AND (NOT is_decoy)) r ON sm.id = r.spectrum_match_id		
 		ORDER BY score DESC, sm.id, mp.match_type;";*/
 		
@@ -150,11 +173,11 @@
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
-			WHERE ".$WHERE_withRand." AND (NOT is_decoy)) sm 
+			WHERE ".$WHERE_spectrumMatch.") sm 
 		INNER JOIN 
 			(SELECT mp.match_id, mp.match_type, mp.peptide_id, 
 			mp.link_position
-			FROM matched_peptide mp ".$WHERE_withoutRand.") mp 
+			FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
 		ORDER BY score DESC, sm.id;";
@@ -297,4 +320,22 @@
 	pg_free_result($res);
 	// Closing connection
 	pg_close($dbconn);
+	
+	
+	
+			//TODO - fix stored layouts
+		//~ echo "storedLayout = null;\n\n";
+		//~ if (count($searchId_randGroup) == 1) {
+			//~ $layoutQuery = "SELECT t1.layout AS l "
+					//~ . " FROM layouts AS t1 "
+					//~ . " LEFT OUTER JOIN layouts AS t2 "
+					//~ . " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
+					//~ . " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
+			//~ $layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+			//~ while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
+				//~ 
+				//~ echo "storedLayout = " . stripslashes($line["l"]) . ";\n\n";
+				//~ 
+			//~ }
+		//~ }
 ?>

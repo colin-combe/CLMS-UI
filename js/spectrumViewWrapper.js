@@ -116,13 +116,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 
 		this.alternativesModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
 			filterModel: filterModelInst,
-			//~ tooltipModel: tooltipModelInst,
-			//~ alignColl: null,//alignmentCollectionInst,
 			selection: [], //will contain cross-link objects
-			//~ highlights: [], //will contain cross-link objects
-			//~ linkColourAssignment: CLMSUI.linkColour.defaultColours,
-			//~ selectedProtein: null, //what type should this be? Set?
-			//~ groupColours: null // will be d3.scale for colouring by search/group
 		});
 		
 		// World of code smells vol.1
@@ -134,6 +128,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 		var selectionViewer = new CLMSUI.SelectionTableViewBB ({
 			el: "#alternatives",
 			model: this.alternativesModel,
+			secondaryModel: this.model
 		});
 		// redraw / hide table on selected cross-link change
 		selectionViewer.listenTo (this.alternativesModel, "change:selection", function (model, selection) {
