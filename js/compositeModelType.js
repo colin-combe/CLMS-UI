@@ -9,16 +9,31 @@
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
                 crossLink.filteredMatches = [];
-                crossLink.ambiguous = true;
-                var unfilteredMatchCount = crossLink.matches.length;
-                for (var i = 0; i < unfilteredMatchCount; i++){
-                    var match = crossLink.matches[i];
-                    var result = filterModel.filter(match[0]); // terrible hack here, that match shouldn't be an array
-                    //console.log("result:"+result);
-                    if (result === true){
-                        crossLink.filteredMatches.push(match);
-                        if (match[0].crossLinks.length === 1) {
-                            crossLink.ambiguous = false;
+                
+                console.log ("applying filtering");
+                if (filterModel.get("intraFDRCut") > 0) {
+                    console.log ("yo fdring");
+                    var pass = filterModel.filterLink (crossLink);
+                    if (pass) {
+                        crossLink.filteredMatches = crossLink.matches.slice(0);
+                        crossLink.ambiguous = 
+                            !crossLink.filteredMatches.some (function (match) {
+                                return match[0].crossLinks.length === 1;
+                            })
+                        ;    
+                    }
+                } else {
+                    crossLink.ambiguous = true;
+                    var unfilteredMatchCount = crossLink.matches.length;
+                    for (var i = 0; i < unfilteredMatchCount; i++){
+                        var match = crossLink.matches[i];
+                        var result = filterModel.filter(match[0]); // terrible hack here, that match shouldn't be an array
+                        //console.log("result:"+result);
+                        if (result === true){
+                            crossLink.filteredMatches.push(match);
+                            if (match[0].crossLinks.length === 1) {
+                                crossLink.ambiguous = false;
+                            }
                         }
                     }
                 }

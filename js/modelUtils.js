@@ -271,4 +271,8 @@ CLMSUI.modelUtils = {
     isReverseProtein: function (prot1, prot2) {
         return (prot1.description === prot2.description && (prot1.is_decoy ^ prot2.is_decoy));
     },
+    
+    isIntraLink: function (crossLink) {
+         return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
+    },
 };

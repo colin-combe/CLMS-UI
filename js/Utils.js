@@ -381,24 +381,35 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
         chartDiv.html ("<H1>Basic FDR Calculation</H1>");
         var self = this;
-        var options = [0.01, 0.05, 0.1, 0.2, 0.5];
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5, 1];
         chartDiv.selectAll("button.fdr").data(options)
             .enter()
             .append("button")
             .attr("class", "fdr btn btn-1 btn-1a")
-            .text(function(d) { return d3.format("%")(d); })
+            .text(function(d) { return d < 1 ? d3.format("%")(d) : "Off"; })
             .on ("click", function(d) {
                 self.lastSetting = d;
                 var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
+                if (d === 1) {
+                    result.forEach (function(r) {
+                        r.fdr = 0;
+                    });
+                }
                 chartDiv.select(".fdrResult").style("display", "block").html("");
                 chartDiv.select(".fdrResult").selectAll("p").data(result)
                     .enter()
                     .append("p")
                     .text(function(d) {
-                        return d.label+" cutoff for "+d3.format("%")(self.lastSetting)+" is "+(d.thresholdMet ? d.fdr : (d.fdr ? "<" : "")+d.fdr+" (Target not met)");
+                        return d.label+" cutoff for "+d3.format("%")(self.lastSetting)+" is "+(d.thresholdMet ? ">="+d.fdr : ">"+d.fdr+" (Rate not met)");
                     })
                 ;
                 chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
+            
+                self.model.get("filterModel")
+                    .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
+                ;
+            
+                console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
             })
         ;
         

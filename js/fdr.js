@@ -8,13 +8,10 @@ CLMSUI.fdr = function (crossLinks, options) {
     var defaultPeptideLength = 4;
     var peptideLength = options.peptideLength || defaultPeptideLength;
     
-    console.log ("options", options);
-    
     
     var defaultScoreCalcFunc = function (crossLink) {      // default is quadratic mean (rms)
         var filtered = crossLink.matches
             .filter (function (match) {
-                //console.log ("match", match);
                 return match[0].pepSeq1.length > peptideLength && match[0].pepSeq2.length > peptideLength;
             })
         ;
@@ -23,7 +20,8 @@ CLMSUI.fdr = function (crossLinks, options) {
     var scoreCalcFunc = options.scoreCalcFunc || defaultScoreCalcFunc;
     
     crossLinks.forEach (function (crossLink) {
-        crossLink.fdrScore = scoreCalcFunc (crossLink);
+        crossLink.meta = crossLink.meta || {};
+        crossLink.meta.fdrScore = scoreCalcFunc (crossLink);
     });
     
     
@@ -31,53 +29,56 @@ CLMSUI.fdr = function (crossLinks, options) {
     var linkArrs = [[],[]];
     var arrLabels = ["Inter", "Intra"];
     clinkArr.forEach (function (crossLink) {
-        var intra = ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein)) ? 1 : 0;
+        var intra = CLMSUI.modelUtils.isIntraLink (crossLink) ? 1 : 0;
         linkArrs[intra].push(crossLink);
     });
     linkArrs.forEach (function (linkArr) { 
-        linkArr.sort (function(a,b) { return a.fdrScore - b.fdrScore; }); 
-    });  // in ascending order
+        linkArr.sort (function(a,b) { return a.meta.fdrScore - b.meta.fdrScore; }); 
+    });  // in ascending order (smallest first)
 
     console.log ("linkArrs", linkArrs);
+    
+    function decoyClass (link) {
+        return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
+    }
     
     var fdrResult = linkArrs.map (function (linkArr, index) {
         var fdr = 1, t = [0,0,0], i = 0, lastLink = {fdrScore: undefined};
         var runningFdr = [];
         if (linkArr.length) {
+            // count tt, td, and dd
             linkArr.forEach (function (link) {
-                if (link.fdrScore > 0) {
-                    var a = (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
-                    t[a]++;
+                if (link.meta.fdrScore > 0) {
+                    t[decoyClass(link)]++;
                 }
             });
 
             i = 0;
             console.log ("totals tt td dd", t);
             
+            // decrement the counters on second run
             while (fdr > threshold && i < linkArr.length) {
                 var link = linkArr[i];
-
-                fdr = (t[1] - t[2]) / t[0];
+                fdr = (t[1] - t[2]) / (t[0] || 1);
                 runningFdr.push (fdr);
-                if (link.fdrScore > 0) {
-                    t[(link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0)]--;
+                console.log ("fdr", arrLabels[index], fdr, t, link.meta.fdrScore);
+                
+                if (link.meta.fdrScore > 0) {
+                    t[decoyClass(link)]--;
                 }
-                console.log ("fdr", arrLabels[index], fdr, t);
                 i++;
             }
 
             console.log ("post totals tt td dd", t);
             console.log ("runningFdr", runningFdr);
-            i--;
+            i = Math.max (i-1, 0);
             lastLink = linkArr[i];
             console.log ("i", i, lastLink);
-            console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", lastLink.fdrScore);
+            console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", lastLink.meta.fdrScore);
         }
 
-        return {label: arrLabels[index], index: i, fdr: lastLink.fdrScore, totals: t, thresholdMet: !(fdr > threshold)};
+        return {label: arrLabels[index], index: i, fdr: lastLink.meta.fdrScore, totals: t, thresholdMet: !(fdr > threshold)};
     });
-    
-    
     
     return fdrResult;
 };

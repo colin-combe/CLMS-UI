@@ -15,6 +15,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             "AUTO": false,
             "selfLinks": true,
             "ambig": true,
+            interFDRCut: 0,
+            intraFDRCut: 0,
         },
 
         initialize: function () {
@@ -37,6 +39,15 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
             if (match.autovalidated && this.get("AUTO")) return true;
+            return false;
+        },
+        
+        filterLink: function (link) {
+            if (link.meta && link.meta.fdrScore !== undefined) {
+                var fdr = link.meta.fdrScore;
+                var intra = CLMSUI.modelUtils.isIntraLink (link);
+                return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
+            }
             return false;
         }
     }),
