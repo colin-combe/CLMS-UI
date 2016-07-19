@@ -556,7 +556,7 @@ tbody tr:hover td, tbody tr:hover td  {
 
 #fdrPanel {
     left: 40px;
-    width: 25em;
+    width: 30em;
     height: 9em;
 }
 
@@ -650,4 +650,13 @@ A.btn {
      -moz-user-select: text;
      -ms-user-select: text;
      -webkit-user-select: text;
+}
+
+.fdrBoost {
+    /*display: none;*/
+}
+
+.btn:disabled {
+    color: gray;
+    border-color: gray;
 }

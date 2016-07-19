@@ -381,21 +381,28 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
         chartDiv.html ("<H1>Basic FDR Calculation</H1>");
         var self = this;
-        var options = [0.01, 0.02, 0.05, 0.1, 0.2];
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5];
         chartDiv.selectAll("button.fdr").data(options)
             .enter()
             .append("button")
             .attr("class", "fdr btn btn-1 btn-1a")
             .text(function(d) { return d3.format("%")(d); })
             .on ("click", function(d) {
-                var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), d);
-                chartDiv.select(".fdrResult")
-                    .text("Cutoff for "+d3.format("%")(d)+" is "+(result.thresholdMet ? result.fdr : "<"+result.fdr+" (Target not met)"))
-                    .style("display", "block")
+                self.lastSetting = d;
+                var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
+                chartDiv.select(".fdrResult").style("display", "block").html("");
+                chartDiv.select(".fdrResult").selectAll("p").data(result)
+                    .enter()
+                    .append("p")
+                    .text(function(d) {
+                        return d.label+" cutoff for "+d3.format("%")(self.lastSetting)+" is "+(d.thresholdMet ? d.fdr : (d.fdr ? "<" : "")+d.fdr+" (Target not met)");
+                    })
                 ;
+                chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
             })
         ;
         
+        chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
         chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
         return this;
     }
