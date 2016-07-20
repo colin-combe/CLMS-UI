@@ -379,38 +379,61 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
             .attr("class", "panelInner")
         ;       
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        chartDiv.html ("<H1>Basic FDR Calculation</H1>");
+        chartDiv.html ("<fieldset><legend>Basic FDR Calculation</legend><span></span></fieldset>");
         var self = this;
-        var options = [0.01, 0.05, 0.1, 0.2, 0.5, 1];
-        chartDiv.selectAll("button.fdr").data(options)
-            .enter()
-            .append("button")
-            .attr("class", "fdr btn btn-1 btn-1a")
-            .text(function(d) { return d < 1 ? d3.format("%")(d) : "Off"; })
-            .on ("click", function(d) {
-                self.lastSetting = d;
-                var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
-                if (d === 1) {
-                    result.forEach (function(r) {
-                        r.fdr = 0;
-                    });
-                }
-                chartDiv.select(".fdrResult").style("display", "block").html("");
-                chartDiv.select(".fdrResult").selectAll("p").data(result)
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5, undefined];
+        var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
+        
+        function doFDR (d) {
+            self.lastSetting = d;
+            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
+            chartDiv.select(".fdrResult")
+                .style("display", "block")
+                .html("")
+                .selectAll("p").data(result)
                     .enter()
                     .append("p")
                     .text(function(d) {
-                        return d.label+" cutoff for "+d3.format("%")(self.lastSetting)+" is "+(d.thresholdMet ? ">="+d.fdr : ">"+d.fdr+" (Rate not met)");
+                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+d.fdr : ">"+d.fdr+" (Rate not met)");
                     })
-                ;
-                chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
-            
-                self.model.get("filterModel")
-                    .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
-                ;
-            
-                console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
-            })
+            ;
+            chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
+
+            // bit that communicates to rest of system
+            self.model.get("filterModel")
+                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
+            ;
+
+            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
+        }
+        
+        chartDiv.select("span").selectAll("label.fixed").data(options)
+            .enter()
+            .append("label")
+            .classed ("horizontalFlow fixed", true)
+            .text(labelFunc)
+            .append("input")
+                .attr("type", "radio")
+                .attr("value", function(d) { return d; })
+                .attr("name", "fdrPercent")
+                .on ("click", function(d) {
+                    d3.select(self.el).select("input[type='number']").property("value", "");
+                    doFDR (d);
+                })
+        ;
+        
+        chartDiv.select("span").append("label")
+            .text("Other %")
+            .attr("class", "horizontalFlow")
+            .append("input")
+                .attr("type", "number")
+                .attr("min", 0)
+                .attr("max", 100)
+                .attr("step", 1)
+                .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                    d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
+                    doFDR ((+this.value) / 100);
+                })
         ;
         
         chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);

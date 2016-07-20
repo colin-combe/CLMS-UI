@@ -10,9 +10,8 @@
             for (var crossLink of crossLinks) {
                 crossLink.filteredMatches = [];
                 
-                console.log ("applying filtering");
                 if (filterModel.get("intraFDRCut") > 0) {
-                    console.log ("yo fdring");
+                    //console.log ("yo fdring");
                     var pass = filterModel.filterLink (crossLink);
                     if (pass) {
                         crossLink.filteredMatches = crossLink.matches.slice(0);

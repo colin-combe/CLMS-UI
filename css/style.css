@@ -605,10 +605,14 @@ label.verticalFlow {
     display: block;
 }
 
-label.horizontalFlow {
+label.horizontalFlow:not(:first-child) {
     display: inline;
-    padding-left: 0.2em;
+    padding-left: 0.3em;
     border-left: 1px solid grey;
+    margin-left: 0.2em;
+}
+
+label.horizontalFlow input[type=number] {
     margin-left: 0.2em;
 }
 
@@ -653,7 +657,7 @@ A.btn {
 }
 
 .fdrBoost {
-    /*display: none;*/
+    display: none;
 }
 
 .btn:disabled {

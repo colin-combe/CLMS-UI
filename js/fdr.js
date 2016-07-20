@@ -2,8 +2,7 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.fdr = function (crossLinks, options) {
     
-    var defaultThreshold = 0.05;
-    var threshold = options.threshold || defaultThreshold;
+    var threshold = options.threshold;  // can be legitimately undefined to have no fdr
     
     var defaultPeptideLength = 4;
     var peptideLength = options.peptideLength || defaultPeptideLength;
@@ -43,9 +42,9 @@ CLMSUI.fdr = function (crossLinks, options) {
     }
     
     var fdrResult = linkArrs.map (function (linkArr, index) {
-        var fdr = 1, t = [0,0,0], i = 0, lastLink = {fdrScore: undefined};
-        var runningFdr = [];
-        if (linkArr.length) {
+        var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScore = -10;
+        
+        if (linkArr.length && threshold !== undefined) {
             // count tt, td, and dd
             linkArr.forEach (function (link) {
                 if (link.meta.fdrScore > 0) {
@@ -53,7 +52,6 @@ CLMSUI.fdr = function (crossLinks, options) {
                 }
             });
 
-            i = 0;
             console.log ("totals tt td dd", t);
             
             // decrement the counters on second run
@@ -61,23 +59,24 @@ CLMSUI.fdr = function (crossLinks, options) {
                 var link = linkArr[i];
                 fdr = (t[1] - t[2]) / (t[0] || 1);
                 runningFdr.push (fdr);
-                console.log ("fdr", arrLabels[index], fdr, t, link.meta.fdrScore);
-                
+                //console.log ("fdr", arrLabels[index], fdr, t, link.meta.fdrScore);
+
                 if (link.meta.fdrScore > 0) {
                     t[decoyClass(link)]--;
                 }
                 i++;
             }
 
+            i = Math.max (i-1, 0);
+            var lastLink = linkArr[i];
+            fdrScore = lastLink.meta.fdrScore;
+
             console.log ("post totals tt td dd", t);
             console.log ("runningFdr", runningFdr);
-            i = Math.max (i-1, 0);
-            lastLink = linkArr[i];
-            console.log ("i", i, lastLink);
-            console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", lastLink.meta.fdrScore);
+            console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScore);
         }
 
-        return {label: arrLabels[index], index: i, fdr: lastLink.meta.fdrScore, totals: t, thresholdMet: !(fdr > threshold)};
+        return {label: arrLabels[index], index: i, fdr: fdrScore, totals: t, thresholdMet: !(fdr > threshold)};
     });
     
     return fdrResult;

@@ -102,6 +102,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
+        
+        this.listenTo (this.model, "change:interFDRCut", function (model, val) {
+            d3.select(this.el)
+                .style("opacity", val >= 0 ? 0.2 : null)
+                .style("pointer-events", val >= 0 ? "none" : null)
+            ;    
+        });
     },
     
     filter: function (evt) {
