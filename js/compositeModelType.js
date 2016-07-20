@@ -8,22 +8,36 @@
             var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
-                crossLink.filteredMatchesAndPeptidePositions = [];
-                crossLink.ambiguous = true;
-                crossLink.confirmedHomomultimer = false;
-                for (matchAndPepPos of crossLink.matchesAndPeptidePositions) {	
-                    var match = matchAndPepPos.match;
-                    var result = filterModel.filter(match);
-                    if (result === true){
-                        crossLink.filteredMatchesAndPeptidePositions.push(matchAndPepPos);
-                        if (match.crossLinks.length === 1) {
-                            crossLink.ambiguous = false;
-                        }
-                        if (match.crossLinks.hd === true) {
-                            crossLink.confirmedHomomultimer = true;
-                        }                       
+                
+                if (filterModel.get("intraFDRCut") > 0) {
+                    //console.log ("yo fdring");
+                    var pass = filterModel.filterLink (crossLink);
+                    if (pass) {
+                        crossLink.filteredMatchesAndPeptidePositions = crossLink.matchesAndPeptidePositions.slice(0);
+                        crossLink.ambiguous = 
+                            !crossLink.filteredMatchesAndPeptidePositions.some (function (matchAndPepPos) {
+                                return matchAndPepPos.match.crossLinks.length === 1;
+                            })
+                        ;    
                     }
-                }
+                } else {
+					crossLink.filteredMatchesAndPeptidePositions = [];
+					crossLink.ambiguous = true;
+					crossLink.confirmedHomomultimer = false;
+					for (matchAndPepPos of crossLink.matchesAndPeptidePositions) {	
+						var match = matchAndPepPos.match;
+						var result = filterModel.filter(match);
+						if (result === true){
+							crossLink.filteredMatchesAndPeptidePositions.push(matchAndPepPos);
+							if (match.crossLinks.length === 1) {
+								crossLink.ambiguous = false;
+							}
+							if (match.crossLinks.hd === true) {
+								crossLink.confirmedHomomultimer = true;
+							}                       
+						}
+					}
+				}
             }
         },
 

@@ -22,6 +22,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             "scanNumber": "",            
             "selfLinks": true,
             "ambig": true,
+            interFDRCut: 0,
+            intraFDRCut: 0,
         },
 
         initialize: function () {
@@ -29,6 +31,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (!this.get("cutoff")) {
                 this.set ("cutoff", [0,100]);
             }
+            // scoreExtent used to restrain text input values
+            this.scoreExtent = this.get("cutoff").slice(0);
         },
 
         filter: function (match) {
@@ -176,7 +180,15 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				}
 				return true;
 			}
-            
+        },
+        
+        filterLink: function (link) {
+            if (link.meta && link.meta.fdrScore !== undefined) {
+                var fdr = link.meta.fdrScore;
+                var intra = CLMSUI.modelUtils.isIntraLink (link);
+                return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
+            }
+            return false;
         }
     }),
 

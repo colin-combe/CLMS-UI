@@ -107,14 +107,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr({
                 type: "number",
                 step: 0.1,
-                min: 0,
+                //min: 0,
             })
             .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                 //console.log ("model", self.model);
                 var val = +this.value;
                 var isMinInput = d3.select(this.parentNode).classed("vmin");
                 var cutoff = self.model.get("cutoff");
-                var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val].sort(function(a,b) { return a - b;});
+                var scoreExtent = self.model.scoreExtent;
+                // take new values, along with score extents, sort them and discard extremes for new cutoff settings
+                var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val, scoreExtent[0], scoreExtent[1]]
+                    .sort(function(a,b) { return a - b;})
+                    .slice (1,3)
+                ;
                 self.model.set("cutoff", newVals);
             })
         ;
@@ -130,6 +135,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             //console.log ("cutoff", val);
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
+        });
+        
+        this.listenTo (this.model, "change:interFDRCut", function (model, val) {
+            d3.select(this.el)
+                .style("opacity", val >= 0 ? 0.2 : null)
+                .style("pointer-events", val >= 0 ? "none" : null)
+            ;    
         });
     },
 

@@ -104,7 +104,7 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
      // set original cutoff to be the extent of all scores (rounded up and down nicely)
      cutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
-        return Math[i == 0 ? "floor" : "ceil"](ex);
+        return Math[i === 0 ? "floor" : "ceil"](ex);
      }),
      scores: clmsModelInst.get("scores")
     });
@@ -120,7 +120,6 @@ CLMSUI.init.models = function (optionsContainingClmsData) {
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
     CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-        //~ distancesModel: distancesInst,
         clmsModel: clmsModelInst,
         rangeModel: rangeModelInst,
         filterModel: filterModelInst,
@@ -162,8 +161,13 @@ changeLinkColours = function (e) {
 */
 
 CLMSUI.init.views = function () {
+<<<<<<< HEAD
 
     var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel"];
+=======
+    
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel"];
+>>>>>>> 3dafa1e01274dc25c033e391844caa6cbd551aeb
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -230,6 +234,7 @@ CLMSUI.init.views = function () {
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
+        {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
@@ -471,7 +476,17 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "proteinInfoShow",
         model: CLMSUI.compositeModelInst,
     });
+<<<<<<< HEAD
 
+=======
+    
+    new CLMSUI.utils.FDRViewBB ({
+        el: "#fdrPanel",
+        displayEventName: "fdrShow",
+        model: CLMSUI.compositeModelInst,
+    });
+    
+>>>>>>> 3dafa1e01274dc25c033e391844caa6cbd551aeb
 };
 
 
