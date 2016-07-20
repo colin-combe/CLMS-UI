@@ -247,11 +247,15 @@ CLMSUI.init.views = function () {
         }
     });
 
+    console.log ("MODEL", CLMSUI.compositeModelInst);
+    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+    //HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
+    console.log ("HSA", HSA_Active);
 
     if (HSA_Active){
         /*Distance slider */
         var distSliderDiv = d3.select("#sliderDiv");
-        var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
+        var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.compositeModelInst.get("rangeModel") });
         distSlider.brushmove();
         //CLMSUI.rangeModelInst.set ("scale", scale);
         //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");

@@ -15,8 +15,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             "AUTO": false,
             "selfLinks": true,
             "ambig": true,
-            interFDRCut: 0,
-            intraFDRCut: 0,
+            interFDRCut: undefined,
+            intraFDRCut: undefined,
         },
 
         initialize: function () {

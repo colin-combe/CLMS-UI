@@ -10,7 +10,7 @@
             for (var crossLink of crossLinks) {
                 crossLink.filteredMatches = [];
                 
-                if (filterModel.get("intraFDRCut") > 0) {
+                if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
                     //console.log ("yo fdring");
                     var pass = filterModel.filterLink (crossLink);
                     if (pass) {

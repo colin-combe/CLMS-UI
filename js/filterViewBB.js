@@ -103,10 +103,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
         
-        this.listenTo (this.model, "change:interFDRCut", function (model, val) {
+        this.listenTo (this.model, "change:interFDRCut change:intraFDRCut", function (model) {
+            var hide = (model.get("intraFDRCut") !== undefined) || (model.get("interFDRCut") !== undefined);
             d3.select(this.el)
-                .style("opacity", val >= 0 ? 0.2 : null)
-                .style("pointer-events", val >= 0 ? "none" : null)
+                .style("opacity", hide ? 0.2 : null)
+                .style("pointer-events", hide ? "none" : null)
             ;    
         });
     },
