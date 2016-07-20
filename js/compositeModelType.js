@@ -9,7 +9,7 @@
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
                 
-                if (filterModel.get("intraFDRCut") > 0) {
+                if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
                     //console.log ("yo fdring");
                     var pass = filterModel.filterLink (crossLink);
                     if (pass) {

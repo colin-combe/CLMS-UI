@@ -161,13 +161,8 @@ changeLinkColours = function (e) {
 */
 
 CLMSUI.init.views = function () {
-<<<<<<< HEAD
-
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel"];
-=======
-    
+   
     var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel"];
->>>>>>> 3dafa1e01274dc25c033e391844caa6cbd551aeb
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -251,11 +246,19 @@ CLMSUI.init.views = function () {
         }
     });
 
+<<<<<<< HEAD
 /*
+=======
+    console.log ("MODEL", CLMSUI.compositeModelInst);
+    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+    //HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
+    console.log ("HSA", HSA_Active);
+
+>>>>>>> ec988e392edffd582fddf60daf534e35a93900f0
     if (HSA_Active){
         // Distance slider
         var distSliderDiv = d3.select("#sliderDiv");
-        var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.rangeModelInst });
+        var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.compositeModelInst.get("rangeModel") });
         distSlider.brushmove();
         //CLMSUI.rangeModelInst.set ("scale", scale);
         //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
@@ -476,17 +479,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "proteinInfoShow",
         model: CLMSUI.compositeModelInst,
     });
-<<<<<<< HEAD
 
-=======
-    
     new CLMSUI.utils.FDRViewBB ({
         el: "#fdrPanel",
         displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
     });
     
->>>>>>> 3dafa1e01274dc25c033e391844caa6cbd551aeb
 };
 
 

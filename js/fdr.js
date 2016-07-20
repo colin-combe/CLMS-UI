@@ -42,7 +42,7 @@ CLMSUI.fdr = function (crossLinks, options) {
     }
     
     var fdrResult = linkArrs.map (function (linkArr, index) {
-        var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScore = -10;
+        var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScore = undefined;
         
         if (linkArr.length && threshold !== undefined) {
             // count tt, td, and dd
@@ -76,7 +76,7 @@ CLMSUI.fdr = function (crossLinks, options) {
             console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScore);
         }
 
-        return {label: arrLabels[index], index: i, fdr: fdrScore, totals: t, thresholdMet: !(fdr > threshold)};
+        return {label: arrLabels[index], index: i, fdr: fdrScore, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
     });
     
     return fdrResult;
