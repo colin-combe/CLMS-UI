@@ -72,7 +72,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-	var csv = '"Id","Protein1","PepPos1","PepSeq1","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","Group"\r\n';
+	var csv = '"Id","Protein1","PepPos1","PepSeq1","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","AutoVal","Val","Search"\r\n';
 	var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 	var matchCount = matches.length;
 	var filterModel = CLMSUI.compositeModelInst.get("filterModel");
@@ -85,20 +85,20 @@ function getMatchesCSV () {
 				+ match.pepSeq1 + '","' + match.linkPos1 + '","' 
 				+ CLMSUI.utils.proteinConcat(match, "protein2") + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
 				+ match.pepSeq2 + '","' + match.linkPos2 + '","'
-				+ match.score + '","' + match.group + '"\r\n';
+				+ match.score + '","' + match.autovalidated + '","' + match.validated + '","' + match.searchId + '"\r\n';
 		}
 	}
 	return csv;
 }
 
 function getLinksCSV(){
-	var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore"';
+	var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val"';
 	
 	var searchIds = [];
 	var i = 0;
-	for (var name in CLMSUI.searchesShown) {
-		csv += ',"Search_'+ name +'"';
-		searchIds[i] = name;
+	for (id of CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys()) {
+		csv += ',"Search_'+ id +'"';
+		searchIds[i] = id;
 		i++;
 	}
 	
@@ -118,16 +118,23 @@ function getLinksCSV(){
 			
 			var highestScore = null;
 			var searchesFound = new Array (searchIds.length);
+			var filteredMatchCount = filteredMatches.length;
+			var linkAutovalidated = false;
+			var validationStats = []
 			for (matchAndPepPos of filteredMatchesAndPepPos) {
 				var match = matchAndPepPos.match;
 				if (highestScore == null || match.score > highestScore) {
 					highestScore = match.score.toFixed(4);
 				}
-				var si = searchIds.indexOf(match.group + "");
+				if (match.autovalidated == true) {linkAutovalidated = true;}
+				validationStats.push(match.validated);
+				var si = searchIds.indexOf(match.searchId + "");
 				searchesFound[si] = "X";
 			}
 			csv += '","' + highestScore;
-			console.log(searchesFound);
+			csv += 	'","' + linkAutovalidated;
+			csv += 	'","' + validationStats.toString();
+			
 			for (var s = 0; s < searchIds.length; s++){					
 				csv +=  '","';
 				if (searchesFound[s] === "X") csv += "X";				
