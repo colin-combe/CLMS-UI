@@ -160,183 +160,18 @@ header('Content-type: text/html; charset=utf-8');
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
-            //include './loadData.php';
-            //~ if (file_exists('../annotations.php')){
-                //~ include '../annotations.php';
-            //~ }
         ?>
 
-        //~ var optionsContainingClmsData = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
-
-        var clmsModelInst = new window.CLMS.model.SearchResultsModel (<?php
+        CLMSUI.init.modelsEssential(<?php
             include './loadData.php';
         ?>);
-
-        var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-            scores: clmsModelInst.get("scores")
-        });
-
-        var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
-
-        CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-            //~ distancesModel: distancesInst,
-            clmsModel: clmsModelInst,
-            //~ rangeModel: rangeModelInst,
-            filterModel: filterModelInst,
-            tooltipModel: tooltipModelInst,
-            alignColl: null,//alignmentCollectionInst,
-            selection: [], //will contain cross-link objects
-            highlights: [], //will contain cross-link objects
-            linkColourAssignment: CLMSUI.linkColour.defaultColours,
-            selectedProtein: null, //what type should this be? Set?
-            groupColours: null // will be d3.scale for colouring by search/group
-        });
-
-        CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
-
-        // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
-        // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
-        // the views are only notified once the changed data is ready.
-        CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
-            this.applyFilter();
-            this.trigger ("filteringDone");
-        });
 
         var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
         document.title = Array.from(searches.keys()).join();
 
         var windowLoaded = function () {
 
-            //CLMSUI.init.views();
-            var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-            var filterViewGroup = new CLMSUI.FilterViewBB ({
-                el: "#filterPlaceholder",
-                model: filterModel
-            });
-
-            var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
-            miniDistModelInst.data = function() {
-                var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
-                return matches; // matches is now an array of arrays    //  [matches, []];
-            };
-
-            var scoreDistributionView = new CLMSUI.MinigramViewBB ({
-                el: "#filterPlaceholderSliderHolder",
-                model: miniDistModelInst,
-                myOptions: {
-                    maxX: 0,    // let data decide
-                    seriesNames: ["Matches", "Decoys"],
-                    //scaleOthersTo: "Matches",
-                    xlabel: "Score",
-                    ylabel: "Count",
-                    height: 50,
-                    colors: {"Matches":"blue", "Decoys":"red"}
-                }
-            });
-
-
-            // When the range changes on the mini histogram model pass the values onto the filter model
-            filterModel.listenTo (miniDistModelInst, "change", function (model) {
-                this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
-            }, this);
-
-
-            // If the ClmsModel matches attribute changes then tell the mini histogram view
-            scoreDistributionView
-                .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches changes (likely?) need to re-render the view too
-                // below should be bound eventually if filter changes, but c3 currently can't change brush pos without internal poking about
-                //.listenTo (this.model.get("filterModel"), "change", this.render)
-            ;
-
-            new CLMSUI.DropDownMenuViewBB ({
-                el: "#expDropdownPlaceholder",
-                model: CLMSUI.clmsModelInst,
-                myOptions: {
-                    title: "Export",
-                    menu: [
-                        {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                        {name: "Residues", func: downloadResidueCount}
-                    ]
-                }
-            });
-
-            //allDataAndWindowLoaded ();
-
-            // World of code smells vol.1
-            // selectionViewer declared before spectrumWrapper because...
-            // 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
-            // 2. Event A in spectrumWrapper fires event B
-            // 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
-            // 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
-            var selectionViewer = new CLMSUI.SelectionTableViewBB ({
-                el: "#bottomDiv",
-                model: CLMSUI.compositeModelInst,
-            });
-            // redraw / hide table on selected cross-link change
-            selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-                var emptySelection = (selection.length === 0);
-                split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-                this.setVisible (!emptySelection);
-            });
-            split.collapse (true);
-            selectionViewer.setVisible (false);
-
-            var spectrumWrapper = new SpectrumViewWrapper ({
-                el:"#topDiv",
-                model: CLMSUI.compositeModelInst,
-                displayEventName: "spectrumShow",
-                myOptions: {wrapperID: "spectrumPanel"}
-            });
-
-            var spectrumModel = new AnnotatedSpectrumModel();
-            var spectrumViewer = new SpectrumView ({
-                model: spectrumModel,
-                el:"#spectrumPanel",
-            });
-            var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
-
-            // Update spectrum view when extrenal resize event called
-            spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-                this.resize();
-            });
-            fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-                this.resize();
-            });
-
-            // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
-            // used to transport one Match between views
-            spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-                if (match) {
-                    var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-                    CLMSUI.loadSpectra (match, randId, this.model);
-                } else {
-                    this.model.clear();
-                }
-            });
-            spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-                if (match) {
-                    var url = "./loadData.php?sid=" 
-						+ CLMSUI.compositeModelInst.get("clmsModel").get("sid")
-						+ "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
-                    d3.json (url, function(error, json) {
-                        if (error) {
-                            console.log ("error", error, "for", url);
-                        } else {
-                            console.log(json);
-                            var altModel = new window.CLMS.model.SearchResultsModel (json);
-
-                            var allCrossLinks = Array.from(
-                            altModel.get("crossLinks").values());
-                            spectrumWrapper.alternativesModel.set("clmsModel", altModel);
-                            spectrumWrapper.alternativesModel.applyFilter();
-                            console.log("CL>"+allCrossLinks.length);
-                            spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-                        }
-                    });
-                } else { // no match
-                        //~ //this.model.clear();
-                }
-            });
+            CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
 
             var allCrossLinks = Array.from(
                 CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
@@ -349,10 +184,7 @@ header('Content-type: text/html; charset=utf-8');
                     onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
             } });
 
-        //~ var gutter = document.getElementsByClassName('gutter')[0];
-        //~ gutter.addEventListener("mouseup", function (){
-                //~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-            //~ });
+
         window.onresize = function(event) {
             CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
         };

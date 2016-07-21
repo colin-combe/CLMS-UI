@@ -160,7 +160,7 @@ if ($spectrum) {
 			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
 			) r ON sm.id = r.spectrum_match_id		
 		ORDER BY score DESC, sm.id, mp.match_type;";
-		
+		*/
 	//New DB
 	$query = "	
 		SELECT 
@@ -185,8 +185,8 @@ if ($spectrum) {
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
-	//~ echo '/*db time: '.($endTime - $startTime)."ms*/\n";
-	//~ echo '/*rows:'.pg_num_rows($res)."*/\n";
+	//~ echo '/*db time: '.($endTime - $startTime)."ms\n";
+	//~ echo '/*rows:'.pg_num_rows($res)."\n";
 	$startTime = microtime(true);
 	echo "\"rawMatches\":[\n";
 	$peptideIds = array();
@@ -224,7 +224,7 @@ if ($spectrum) {
 	}
 	echo "\n],\n";
 	$endTime = microtime(true);
-	//~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
+	//~ echo '/*php time: '.($endTime - $startTime)."ms\n\n";
 	
 	$proteinIdField = "hp.protein_id";
 	if (count($searchId_randGroup) > 1) {
