@@ -52,7 +52,16 @@
             var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
             var fullResults = this.get("compSeqs").map (function (cSeq) {
-                return aligner.align (cSeq, refSeq, scores, this.get("local"));
+                if (refSeq.length < 8000) {
+                    return aligner.align (cSeq, refSeq, scores, this.get("local"));
+                } else { // it's too big :-(
+                    var identityTransform = d3.range (0, refSeq.length);
+                    return { 
+                        fmt: [cSeq, refSeq],
+                        indx: { qToTarget: identityTransform, tToQuery: identityTransform},
+                        res: [1, null, null],
+                    }
+                }
             }, this);
             
             var refResults = fullResults.map (function (res) {
