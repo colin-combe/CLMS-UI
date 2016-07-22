@@ -35,6 +35,8 @@
 }
 
 .validationControls {
+	padding:10px;
+	background: white;
 /*
     display: table-row;
 */
@@ -60,26 +62,12 @@
 
 #alternatives {
     background: rgba(9, 29, 66, 0.9);
+    padding: 10px;
 /*
-    max-width:100%;
-    position:relative;
+    max-height:60px;
 */
 }
-/*
-.selectView {
-    max-width:100%;
-    position:relative;
-}
+
 .scrollHolder {
-    max-width:100%;
-    position:relative;
+    color: #888;
 }
-.scrollHolder {
-    max-width:100%;
-    position:relative;
-}
-table {
-    max-width:100%;
-    position:relative;
-}
-*/

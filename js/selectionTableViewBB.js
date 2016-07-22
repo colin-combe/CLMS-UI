@@ -55,6 +55,8 @@
             var panelHeading = d3.select(this.el).select(".crossLinkTotal");
             if (!self.options.secondaryModel) {
 				panelHeading.text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
+			} else {
+				panelHeading.text("Alternative Explanations:");
 			}
             // draw if selected crosslink count > 0 or is 'freshly' zero
             if (selectedXLinkCount > 0 || this.lastCount > 0) {

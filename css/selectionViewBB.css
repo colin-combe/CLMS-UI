@@ -5,7 +5,7 @@
 
 .selectView > DIV.scrollHolder {
     height: calc(100% - 30px);
-    overflow: scroll;
+    overflow: auto;
 }
 
 .selectView TABLE  {
@@ -69,3 +69,6 @@
     background: #afa;
 }
 
+.crossLinkTotal{
+	color:white;
+}

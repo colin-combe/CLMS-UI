@@ -13,12 +13,16 @@
 .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
 	display:none;
 }
+#spectrum {
+	width: 100%;
+}
 #spectrumPanel {
-	width: calc(100% - 20px);
+	width: 100%;
+	padding: 0px 10px;
 }
 
-#t1 .dynamic-table-downarrow{
-	display:none;
+.heightFill {
+	width: 100%;
 }
 
 .sideOn {
