@@ -55,6 +55,8 @@
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
+		<link rel="stylesheet" href="./css/filter.css">
+		<link rel="stylesheet" href="./css/networkPage.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -135,16 +137,17 @@
         <div id="main">
 
             <div class="container">
-        <h1 class="page-header">
-            <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
-            <p class="btn">Layout:</p>
-            <button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
-            <button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
-            <p id="expDropdownPlaceholder"></p>
-            <p id="viewDropdownPlaceholder"></p>
-            <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
-        </h1>
-    </div>
+				<h1 class="page-header">
+					<i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
+					<p class="btn">Layout:</p>
+					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
+					<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
+					<p id="expDropdownPlaceholder"></p>
+					<p id="viewDropdownPlaceholder"></p>
+					<a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
+					<span id="colourSelect" class="btn btn-1 btn-1a righty"></span> <!-- placeholder for new colour scheme selector -->
+				</h1>
+			</div>
 
             <div class="mainContent">
                 <div id="topDiv">
@@ -155,36 +158,8 @@
             </div>
 
             <div class="controls">
-     <span id="filterPlaceholder"></span>
-
-                    <div style='float:right'>
-
-<!--
-    <label style="margin-left:20px;"><span>Annotations:</span>
-                            <select id="annotationsSelect" onChange="changeAnnotations();">
-                                <option>None</option>
-                                <option selected>Custom</option>
-                                <option>UniprotKB</option>
-                                <option>SuperFamily</option>
-                                <option>Lysines</option>
-                            </select>
-                        </label>
--->
-                        
-<!--
-                        <label style="margin-left:20px;">Link colours:
-                            <select id="linkColourSelect" onChange="changeLinkColours();">
-                                <option selected>Default</option>
-                                <option>Group</option>
-                                <option>SAS dist.</option>
-                                <option>Euclidean dist.</option>
-
-                            </select>
-                        </label>
--->
-                        <span id="colourSelect"></span> <!-- placeholder for new colour scheme selector -->
-                    </div>
-                </div>
+				<span id="filterPlaceholder"></span>
+            </div>
         </div><!-- MAIN -->
 
 

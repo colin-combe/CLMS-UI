@@ -33,10 +33,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Scan:", "id":"scanNumber", "chars":5}
             ],
             toggleSpecials: [
-                {"label":"Decoys", "id":"decoys"},
-                {"label":"Linears", "id":"linears"},
+                {"label":"Decoy", "id":"decoys"},
+                {"label":"Linear", "id":"linears"},
                 {"label":"Ambig.", "id":"ambig"},
-                {"label":"Self links", "id":"selfLinks"}
+                {"label":"Self", "id":"selfLinks"}
             ]
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -46,13 +46,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        mainDivSel.append("span").attr("class", "sideOn").text("Filters");
-
+        //mainDivSel.append("span").attr("class", "sideOn").text("Filters");
+        
         mainDivSel.selectAll("label.toggles")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
             .enter()
             .append ("label")
                 .attr("class", "toggles")
+                .attr("id", function(d) { return "toggles_" + d.id; })
                 .text (function(d) { return d.label; })
                 .append ("input")
                     .attr ("id", function(d) { return d.id; })

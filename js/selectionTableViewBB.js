@@ -7,7 +7,7 @@
         initialize: function (options) {
 			this.options = options;
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
-            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE id='t1' ><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
+            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
             
             // redraw table on filter change if crosslinks selected (matches may have changed)
             this.listenTo (this.model, "filteringDone", function () {
@@ -50,8 +50,12 @@
             ;
             var selectedXLinkCount = selectedXLinkArray.length;
             
-            d3.select(this.el).select(".crossLinkTotal").text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
-
+            var self = this;
+                
+            var panelHeading = d3.select(this.el).select(".crossLinkTotal");
+            if (!self.options.secondaryModel) {
+				panelHeading.text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
+			}
             // draw if selected crosslink count > 0 or is 'freshly' zero
             if (selectedXLinkCount > 0 || this.lastCount > 0) {
                 this.lastCount = selectedXLinkCount;
@@ -81,7 +85,6 @@
                     "precursorCharge": "Charge",
                 };
                 
-                var self = this;
                 this.numberColumns = d3.set (["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
                 this.colSectionStarts = d3.set (["protein2", "score"]);
                 this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);

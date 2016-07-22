@@ -40,12 +40,12 @@ header('Content-type: text/html; charset=utf-8');
             }
             $pageName = "Validation";
         ?>
-            <title><?php echo $pageName ?></title>
-            <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-            <meta name="description" content="common platform for downstream analysis of CLMS data" />
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <meta name="apple-mobile-web-app-capable" content="yes">
-            <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <title><?php echo $pageName ?></title>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name="description" content="common platform for downstream analysis of CLMS data" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
         <link rel="stylesheet" href="./css/reset.css" />
         <link rel="stylesheet" href="./css/style.css" />
@@ -56,15 +56,12 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/selectionViewBB.css">
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
         <link rel="stylesheet" href="./css/validate.css">
+        <link rel="stylesheet" href="./css/filter.css">
         <link rel="stylesheet" href="./css/validationPage.css">
 
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
-       <!--
-        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
-        <script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
-        <script type="text/javascript" src="./vendor/crosslink.js"></script>
--->
+
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
@@ -72,19 +69,12 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
 
-<!--
-        <script type="text/javascript" src="./vendor/CLMS_model.js"></script>
--->
-
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
 
-<!--
-       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
--->
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
@@ -105,14 +95,14 @@ header('Content-type: text/html; charset=utf-8');
 
 
         <!-- Spectrum view .js files -->
-    <script type="text/javascript" src="../spectrum/src/model.js"></script>
-    <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
-    <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
-    <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
-    <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
-    <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-    <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
-    <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
+        <script type="text/javascript" src="../spectrum/src/model.js"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
+        <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
 
 
     </head>
@@ -137,19 +127,18 @@ header('Content-type: text/html; charset=utf-8');
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
             </h1>
-
+			</div> <!-- CONTAINER -->
+			
             <div class="mainContent">
                 <div id="topDiv">
                 </div>
                 <div id="bottomDiv"></div>
             </div>
 
-
-        </div> <!-- CONTAINER -->
-
-            <div class="controls">
-     <span id="filterPlaceholder"></span>
-</div>
+			<div class="controls">
+				<span id="filterPlaceholder"></span>
+			</div>
+        </div><!-- MAIN -->
 
 
         <script>

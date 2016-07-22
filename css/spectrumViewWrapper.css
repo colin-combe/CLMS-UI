@@ -35,7 +35,9 @@
 }
 
 .validationControls {
+/*
     display: table-row;
+*/
 }
 
 #spectrumSVG {
@@ -58,4 +60,26 @@
 
 #alternatives {
     background: rgba(9, 29, 66, 0.9);
+/*
+    max-width:100%;
+    position:relative;
+*/
 }
+/*
+.selectView {
+    max-width:100%;
+    position:relative;
+}
+.scrollHolder {
+    max-width:100%;
+    position:relative;
+}
+.scrollHolder {
+    max-width:100%;
+    position:relative;
+}
+table {
+    max-width:100%;
+    position:relative;
+}
+*/
