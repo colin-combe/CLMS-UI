@@ -76,7 +76,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			
 			//charge check
 			var chargeFilter = this.get("charge");
-			if (chargeFilter && match.charge != chargeFilter){
+			if (chargeFilter && match.precursorCharge != chargeFilter){
 				return false;
 			}
 
@@ -90,7 +90,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			//scan number check
 			var scanNumberFilter = this.get("scanNumber");
 			if (scanNumberFilter && 
-					match.scanNumber.toLowerCase().indexOf(scanNumberFilter.toLowerCase()) == -1){
+					match.scanNumber.toString().toLowerCase()
+						.indexOf(scanNumberFilter.toLowerCase()) == -1){
 				return false;
 			}
 
