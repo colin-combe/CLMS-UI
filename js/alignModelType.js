@@ -53,7 +53,7 @@
             var aligner = this.get("sequenceAligner");
             var fullResults = this.get("compSeqs").map (function (cSeq) {
                 if (refSeq.length < 8000) {
-                   return aligner.align (cSeq, refSeq, scores, this.get("local"));
+					return aligner.align (cSeq, refSeq, scores, this.get("local"));
                 } else { // it's too big :-(
                     var identityTransform = d3.range (0, refSeq.length);
                     return { 
