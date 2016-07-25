@@ -96,10 +96,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                             var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
                             if (fromId === pos) {
                                 return [xlink.toProtein.name, xlink.toResidue,
-									xlink.filteredMatchesAndPeptidePositions.length];
+									xlink.filteredMatches_pp.length];
                             } else {
                                 return [xlink.fromProtein.name, xlink.fromResidue,
-									xlink.filteredMatchesAndPeptidePositions.length];
+									xlink.filteredMatches_pp.length];
                             }
                         });
                         ttinfo.unshift (["Protein", "Pos", "Matches"]);
@@ -159,7 +159,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             });
             if (filter){
                 crossLinks = crossLinks.filter (function (xlink) {
-                    return xlink.filteredMatchesAndPeptidePositions.length > 0;    
+                    return xlink.filteredMatches_pp.length > 0;    
                 });
             }
             return crossLinks;

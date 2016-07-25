@@ -45,8 +45,8 @@
         
         updateTable: function () {
             var selectedXLinkArray = this.model.get("selection")
-                .filter (function (xlink) { return xlink.filteredMatchesAndPeptidePositions.length > 0; })
-                .sort (function (a,b) { return b.filteredMatchesAndPeptidePositions[0].match.score - a.filteredMatchesAndPeptidePositions[0].match.score; })    // sorts links by top match score
+                .filter (function (xlink) { return xlink.filteredMatches_pp.length > 0; })
+                .sort (function (a,b) { return b.filteredMatches_pp[0].match.score - a.filteredMatches_pp[0].match.score; })    // sorts links by top match score
             ;
             var selectedXLinkCount = selectedXLinkArray.length;
             
@@ -135,7 +135,7 @@
             // helper functions
             // return filtered matches from given crosslink
             var getMatches = function (xlink) {
-                var matches = xlink.filteredMatchesAndPeptidePositions.map (function (m) {
+                var matches = xlink.filteredMatches_pp.map (function (m) {
                     return m.match;
                 });
                 return matches;

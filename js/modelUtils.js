@@ -239,14 +239,14 @@ CLMSUI.modelUtils = {
     },
     
     linkHasHomomultimerMatch: function (xlink) {
-        return xlink.filteredMatchesAndPeptidePositions.some (function (matchAndPepPos) {
+        return xlink.filteredMatches_pp.some (function (matchAndPepPos) {
             return matchAndPepPos.match.confirmedHomomultimer;    
         });
     },
     
     aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
-            return xlink.filteredMatchesAndPeptidePositions;
+            return xlink.filteredMatches_pp;
         });
         return [].concat.apply([], nestedArr);
     },

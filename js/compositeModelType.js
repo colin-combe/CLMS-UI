@@ -13,22 +13,22 @@
                     //console.log ("yo fdring");
                     var pass = filterModel.filterLink (crossLink);
                     if (pass) {
-                        crossLink.filteredMatchesAndPeptidePositions = crossLink.matchesAndPeptidePositions.slice(0);
+                        crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
                         crossLink.ambiguous = 
-                            !crossLink.filteredMatchesAndPeptidePositions.some (function (matchAndPepPos) {
+                            !crossLink.filteredMatches_pp.some (function (matchAndPepPos) {
                                 return matchAndPepPos.match.crossLinks.length === 1;
                             })
                         ;    
                     }
                 } else {
-					crossLink.filteredMatchesAndPeptidePositions = [];
+					crossLink.filteredMatches_pp = [];
 					crossLink.ambiguous = true;
 					crossLink.confirmedHomomultimer = false;
-					for (matchAndPepPos of crossLink.matchesAndPeptidePositions) {	
+					for (matchAndPepPos of crossLink.matches_pp) {	
 						var match = matchAndPepPos.match;
 						var result = filterModel.filter(match);
 						if (result === true){
-							crossLink.filteredMatchesAndPeptidePositions.push(matchAndPepPos);
+							crossLink.filteredMatches_pp.push(matchAndPepPos);
 							if (match.crossLinks.length === 1) {
 								crossLink.ambiguous = false;
 							}
@@ -46,8 +46,8 @@
             var result = new Map;
 
             crossLinks.forEach (function (value, key) {
-                if (!value.filteredMatchesAndPeptidePositions
-						|| value.filteredMatchesAndPeptidePositions.length > 0) {
+                if (!value.filteredMatches_pp
+						|| value.filteredMatches_pp.length > 0) {
 							result.set (key, value);
 				}
             }, this);
@@ -55,14 +55,14 @@
             return result;
 
             //return crossLinks.filter (function(cLink) {
-            //    return cLink.filteredMatchesAndPeptidePositions.length > 0;
+            //    return cLink.filteredMatches_pp.length > 0;
             //}); 
         },
         
         collateMatchRegions: function (crossLinks) {
             var fromPeptides = [], toPeptides = [], regs = [], prots = {};
             crossLinks.forEach (function (crossLink) {
-                crossLink.filteredMatchesAndPeptidePositions.forEach (function (matchAndPepPos) {
+                crossLink.filteredMatches_pp.forEach (function (matchAndPepPos) {
                     console.log ("match", match);
                     var smatch = matchAndPepPos.match;
                     var prot1 = smatch.protein1[0];
@@ -107,7 +107,7 @@
         },
 
         recurseAmbiguity: function (crossLink, crossLinkMap) {
-            var matches = crossLink.filteredMatchesAndPeptidePositions;
+            var matches = crossLink.filteredMatches_pp;
             matches.forEach (function (match) {
                 var matchData = match.match;
                 if (matchData.isAmbig()) {

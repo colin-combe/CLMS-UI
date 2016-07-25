@@ -106,7 +106,7 @@ function getLinksCSV(){
 
 	var crossLinks = CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values();
 	for (residueLink of crossLinks){
-		var filteredMatchesAndPepPos = residueLink.filteredMatchesAndPeptidePositions;
+		var filteredMatchesAndPepPos = residueLink.filteredMatches_pp;
 		if (filteredMatchesAndPepPos.length > 0){
 			csv += '"' + mostReadableId(residueLink.fromProtein) + '","' 
 				+ residueLink.fromResidue + '","' + residueLink.fromProtein.sequence[residueLink.fromResidue - 1] + '","'
@@ -162,7 +162,7 @@ function getResidueCount() {
 			
 	var crossLinks = CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values();
 	for (residueLink of crossLinks){
-		if (residueLink.filteredMatchesAndPeptidePositions.length > 0){
+		if (residueLink.filteredMatches_pp.length > 0){
 
 			var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
 			var linkedRes2 = residueLink.toProtein.sequence[residueLink.toResidue - 1];

@@ -234,7 +234,7 @@
                     .set("contents", [
                         ["From", xlink.fromResidue, xlink.fromProtein.name],
                         ["To", xlink.toResidue, xlink.toProtein.name],
-                        ["Matches", xlink.filteredMatchesAndPeptidePositions.length]
+                        ["Matches", xlink.filteredMatches_pp.length]
                     ])
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
@@ -360,7 +360,7 @@
         filterCrossLinks: function (crossLinks) {
             var filteredCrossLinks = [];
             crossLinks.forEach (function (value) {
-                if (value.filteredMatchesAndPeptidePositions && value.filteredMatchesAndPeptidePositions.length > 0 && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
+                if (value.filteredMatches_pp && value.filteredMatches_pp.length > 0 && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
                     filteredCrossLinks.push (value);
                 }
             });
