@@ -271,10 +271,13 @@
         var qlen = qp[0].length;
 
         // adjust band width
-        var max_len = qlen > t.length? qlen : t.length;
+        var orig_w = w;
+        var max_len = Math.max (qlen, t.length);
         w = w == null || w < 0? max_len : w;
-        var len_diff = t.target > qlen? t.target - qlen : qlen - t.target;
-        w = w > len_diff? w : len_diff;
+        var len_diff = Math.abs (t.length - qlen); // MJG - think t.target was a mistake, replace with t.length
+        w = Math.max (w, len_diff);
+        
+        //console.log ("w", w, orig_w, qlen, t.length, len_diff);
 
         // set gap score
 		var gapo, gape, gapswg; // these are penalties which should be non-negative
@@ -299,18 +302,20 @@
             }
         }
 
+        var badGapswg = (gapswg === undefined || isNaN(gapswg));
         // the DP loop
         for (var i = 0; i < t.length; ++i) {
             var h1 = 0, f = 0, m = 0, mj = -1;
             var zi, qpi = qp[t[i]];
-            zi = z[i] = makeIntArray (qlen, 32) ;//[];
-            var beg = i > w? i - w : 0;
-            var end = i + w + 1 < qlen? i + w + 1 : qlen; // only loop through [beg,end) of the query sequence
+            var beg = Math.max (i - w, 0);
+            var end = Math.min (i + w + 1, qlen); // only loop through [beg,end) of the query sequence
             if (!is_local) {
                 // changed so don't have to penalise a start gap (set gapswg to 0) (hopefully)
-                h1 = beg > 0? NEG_INF : (gapswg === undefined || isNaN(gapswg) ? -gapoe - gape * i : gapswg); 
-                f = beg > 0? NEG_INF : -gapoe - gapoe - gape * i;
+                h1 = beg > 0 ? NEG_INF : (badGapswg ? -gapoe - gape * i : gapswg); 
+                f = beg > 0 ? NEG_INF : -gapoe - gapoe - gape * i;
             }
+            //zi = z[i] = makeIntArray (qlen, 32) ;//[];
+            zi = z[i] = makeIntArray (end - beg + 1, 32);   // MJG - crucial end-beg not qlen or end
 
             for (var j = beg; j < end; ++j) {
                 // At the beginning of the loop: h=H[j]=H(i-1,j-1), e=E[j]=E(i,j), f=F(i,j) and h1=H(i,j-1)
@@ -354,17 +359,18 @@
                 } else {
                     f = h;
                 }  
-                zi[j] = d;           // z[i,j] keeps h for the current cell and e/f for the next cell
+                zi[j - beg] = d;           // z[i,j] keeps h for the current cell and e/f for the next cell // MJG: j-beg -- crucial
             }
             H[end] = h1, E[end] = is_local? 0 : NEG_INF;
             if (m > max) max = m, end_i = i, end_j = mj;
         }
-        if (is_local && max == 0) return null;
+        if (is_local && max === 0) return null;
         score = is_local? max : H[qlen];
+        
 
         // backtrack to recover the alignment/cigar
         function push_cigar(ci, op, len) {
-            if (ci.length == 0 || op != (ci[ci.length-1]&0xf))
+            if (ci.length === 0 || op != (ci[ci.length-1]&0xf))
                 ci.push(len<<4|op);
             else ci[ci.length-1] += len<<4;
         }
@@ -390,11 +396,13 @@
             if (i >= 0) push_cigar(cigar, 2, i + 1);
             if (k >= 0) push_cigar(cigar, 1, k + 1);
         }
-        //cigar.reverse();
+        cigar.reverse();
+        /*
         var cl = cigar.length;
         for (var i = 0; i < cl>>1; ++i) { // reverse CIGAR
             tmp = cigar[i], cigar[i] = cigar[cl-1-i], cigar[cl-1-i] = tmp;
         }
+        */
         return [score, start_i, cigar];
     }
 
@@ -472,18 +480,17 @@
         return s.join("");
     }
 
-    function align (query, target, scores, isLocal) {
+    function align (query, target, scores, isLocal, windowSize) {
         var target = target || 'ATAGCTAGCTAGCATAAGC';
         var query  = query || 'AGCTAcCGCAT';
         var isLocal = isLocal || false;
         var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1, gapAtStart: undefined}, scores || {});
         var matrix = scores.matrix || Blosum80Map;
         var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
-        var rst = bsa_align(isLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], undefined, table);
+        var rst = bsa_align (isLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], windowSize, table);
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
         var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);
-        //var indx = null;
         return {res: rst, fmt: fmt, str: str, indx: indx};
     }
     
@@ -495,7 +502,7 @@
     }
     
     function combine () {
-        align.apply (this, arguments);
+        return align.apply (this, arguments);
     }
 /*
     function main() {
