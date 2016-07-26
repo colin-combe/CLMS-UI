@@ -34,7 +34,8 @@
 		}*/
 		$status = ' <strong>['.$status.']<strong>';
 		
-		echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($urlPart) . "'>" . $line['name'] . "</a>" .$status. "</td>";
+		echo "<tr><td><a id=".$line['name']." href='./network.php?sid=" . urlencode($urlPart) 
+					. "&decoys=1&unval=1'>" . $line['name'] . "</a>" .$status. "</td>";
 			
 		echo "<td title='".$line['notes']."'>" .substr($line['notes'], 0, 16). "<div style='display:none'>".$line['notes']."</div></td>";
 
@@ -48,7 +49,8 @@
 		//~ }
 		//~ echo "<td><strong>" .$status. "</strong></td>";
 
-		echo "<td><a id='".$line['name']."' href='./validate.php?sid=" . urlencode($urlPart) . "'>validate</a>" . "</td>";
+		echo "<td><a id='".$line['name']."' href='./validate.php?sid=" . urlencode($urlPart) 
+					. "&decoys=1&unval=1&linears=1'>validate</a>" . "</td>";
 	
 
 		echo "<td style='width:100px;'>" .$searchFile. "</td>";

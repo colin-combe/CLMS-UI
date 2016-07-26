@@ -1,3 +1,15 @@
+.pager {
+    display: inline-block;
+}
+.panelHeading {
+    display: inline-block;
+}
+
+.selectView {
+    height: calc(100%);
+    overflow: hidden;
+}
+
 .selectView {
     height: calc(100%);
     overflow: hidden;

@@ -44,8 +44,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<div class='validationControls'>"
             +"</div>"
             //~ +"</div>"
-            +"<div id='alternatives'>"
-            +"</div>"
+            //~ +"<div id='alternatives'>"
+            //~ +"</div>"
         ;
 
         d3.select(this.el)

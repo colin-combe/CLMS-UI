@@ -7,7 +7,7 @@
         initialize: function (options) {
 			this.options = options;
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
-            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
+            holdingDiv.html ("<DIV class='crossLinkTotal'></DIV><DIV class='pager'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>"); 
             
             // redraw table on filter change if crosslinks selected (matches may have changed)
             this.listenTo (this.model, "filteringDone", function () {
@@ -44,17 +44,71 @@
 		},
         
         updateTable: function () {
-            var selectedXLinkArray = this.model.get("selection")
+            this.selectedXLinkArray = this.model.get("selection")
                 .filter (function (xlink) { return xlink.filteredMatches_pp.length > 0; })
                 .sort (function (a,b) { return b.filteredMatches_pp[0].match.score - a.filteredMatches_pp[0].match.score; })    // sorts links by top match score
             ;
-            var selectedXLinkCount = selectedXLinkArray.length;
+            var selectedXLinkCount = this.selectedXLinkArray.length;
             
             var self = this;
+            
+            //http://stackoverflow.com/questions/11978040/pagination-with-d3-js
+            this.page = 0;
+            this.pageSize = 100;
+            var tablePage;
                 
             var panelHeading = d3.select(this.el).select(".crossLinkTotal");
+            
+            var pager = d3.select(this.el).select(".pager");
             if (!self.options.secondaryModel) {
-				panelHeading.text(selectedXLinkCount+" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
+				if (this.selectedXLinkArray.length > this.pageSize) {
+					//~ pager.append("button")
+						//~ .attr ("class", "btn" ).style ("display", "inline-block")
+						//~ .text ("<last")
+						//~ .on ("click", function (d) {
+							//~ if (self.page > 0) { 
+								//~ self.page--; 
+								//~ self.setPage(self.page);
+							//~ }
+						//~ });
+					
+					
+					
+					var pageCount = (this.selectedXLinkArray.length / this.pageSize);
+					var buttonData = [];
+					for (var p = 0; p < pageCount; p++){
+						buttonData.push({"pg":p});
+					}
+					// Add page buttons
+					var pgData = pager.style ("display", "inline-block")
+						.selectAll("button")
+						.data (buttonData);
+					pgData.exit().remove()
+						
+					pgData.enter()
+						.append("button")
+							.attr ("class", "btn")
+							.text (function(d) { return d.pg + 1; })
+							.on ("click", function (d) {
+								self.page = d.pg;
+								self.setPage(self.page);
+							});
+							
+					//~ pager.append("button")
+						//~ .attr ("class", "btn" )
+						//~ .text ("next>")
+						//~ .on ("click", function (d) {
+							//~ self.page++;
+							//~ self.setPage(self.page);
+							//~ 
+						//~ });
+						
+					tablePage = this.selectedXLinkArray.slice(this.page * this.pageSize,(this.page + 1) * this.pageSize);
+				} else {
+					panelHeading.text(selectedXLinkCount + 
+						" CrossLink"+(selectedXLinkCount !== 1 ? "s" : "")+ " selected.");
+					tablePage = this.selectedXLinkArray;
+				}
 			} else {
 				panelHeading.text("Alternative Explanations:");
 			}
@@ -101,7 +155,7 @@
                     "validated": function () { return CLMS.model.manualValidatedFound; },
                 };
                 
-                var filteredProps = tableDataPropOrder.filter(
+                this.filteredProps = tableDataPropOrder.filter(
                     function (prop) { 
                         var f = headerFilterFuncs [prop];
                         return f ? f() : true;
@@ -109,7 +163,7 @@
                 );
                                                                                    
                 var headerRow = d3.select(this.el).select("THEAD TR");
-                var headerJoin = headerRow.selectAll("TH").data(filteredProps, function(d) { return d; });
+                var headerJoin = headerRow.selectAll("TH").data(this.filteredProps, function(d) { return d; });
                 
                 headerJoin.exit().remove();
                 // See https://github.com/mbostock/d3/issues/2722 as I kick off about case sensitivity
@@ -120,15 +174,29 @@
                     })
                 ;
 
-                this.addRows (selectedXLinkArray, filteredProps);
+                this.addRows (tablePage, this.filteredProps);
             }
         },
-
 
         clearTableHighlights : function() {
             d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
         },
 
+        setPage : function(pg) {
+			var panelHeading = d3.select(this.el).select(".crossLinkTotal");
+			var lower = (pg * this.pageSize) + 1;
+			var upper = ((pg + 1) * this.pageSize);
+			var selectedXLinkCount = this.selectedXLinkArray.length;
+			if (upper > selectedXLinkCount) {
+				upper = selectedXLinkCount;
+			}
+			panelHeading.text(lower + " - " + upper + " of " + selectedXLinkCount + " cross-links");
+
+            //d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
+      		var tablePage = this.selectedXLinkArray.slice(this.page * this.pageSize,
+												(this.page + 1) * this.pageSize);
+			this.addRows (tablePage, this.filteredProps);
+		},
     
         addRows : function (selectedLinkArray, filteredProps) {   
             var self = this;
@@ -195,7 +263,7 @@
             ;
         
             // Within each row, match cells up to individual pieces of match information
-            var cellJoin = tjoin.selectAll("TD").data (filteredProps, function(d) { return d; });
+            var cellJoin = tjoin.selectAll("TD").data (this.filteredProps, function(d) { return d; });
             cellJoin.exit().remove();
             cellJoin.enter().append("td");
             
