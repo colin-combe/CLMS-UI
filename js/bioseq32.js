@@ -486,8 +486,13 @@
         var isLocal = isLocal || false;
         var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1, gapAtStart: undefined}, scores || {});
         var matrix = scores.matrix || Blosum80Map;
-        var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
-        var rst = bsa_align (isLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], windowSize, table);
+        var rst;
+        if (target === query) {
+            rst = [Number.MAX_VALUE, 0, [target.length << 4]];  // completely equal
+        } else {
+            var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
+            var rst = bsa_align (isLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], windowSize, table);
+        }
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
         var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);
