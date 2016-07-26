@@ -93,6 +93,10 @@
                 
                 // entries commented out until a replacement is found for xlv
                 var headerFilterFuncs = {
+                    "protein1": function () { return false; },
+                    "protein2": function () { return false; },
+                    "pepPos1": function () { return false; },
+                    "pepPos2": function () { return false; }, 
                     "autovalidated": function () { return CLMS.model.autoValidatedFound; },
                     "validated": function () { return CLMS.model.manualValidatedFound; },
                 };

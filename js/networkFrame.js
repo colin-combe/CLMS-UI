@@ -347,7 +347,7 @@ CLMSUI.init.viewsEssential = function (options) {
             this.model.clear();
         }
     });
-
+/*
 	spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
 		if (match) { 
                     var url = "./loadData.php?sid=" 
@@ -372,7 +372,7 @@ CLMSUI.init.viewsEssential = function (options) {
 			//~ //this.model.clear();
 		}
 	});
-
+*/
 }
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {

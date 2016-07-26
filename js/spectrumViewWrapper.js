@@ -111,7 +111,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 					})
 			;
 		}
-
+/*
 		var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ();
 
 		this.alternativesModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
@@ -150,7 +150,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 		//~ selectionViewer.setVisible (false);
 
 
-
+*/
         // Only if spectrum viewer visible...
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
