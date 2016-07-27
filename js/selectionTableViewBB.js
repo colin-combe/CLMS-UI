@@ -87,7 +87,7 @@
 						
 					pgData.enter()
 						.append("button")
-							.attr ("class", "btn")
+							.attr ("class", "btn btn-1 btn-1a")
 							.text (function(d) { return d.pg + 1; })
 							.on ("click", function (d) {
 								self.page = d.pg;
@@ -192,7 +192,7 @@
 			}
 			panelHeading.text(lower + " - " + upper + " of " + selectedXLinkCount + " cross-links");
 
-            //d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
+            //~ d3.select(this.el).selectAll("button").classed('buttonPressed', false);
       		var tablePage = this.selectedXLinkArray.slice(this.page * this.pageSize,
 												(this.page + 1) * this.pageSize);
 			this.addRows (tablePage, this.filteredProps);

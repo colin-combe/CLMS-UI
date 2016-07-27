@@ -1,10 +1,3 @@
-.pager {
-    display: inline-block;
-}
-.panelHeading {
-    display: inline-block;
-}
-
 .selectView {
     height: calc(100%);
     overflow: hidden;
@@ -82,5 +75,16 @@
 }
 
 .crossLinkTotal{
+    display: inline-block;
 	color:white;
+}
+
+.pager {
+    display: inline-block;
+    padding:5px;
+}
+
+.buttonPressed{
+    color: #091D42;
+    background: #fff;
 }
