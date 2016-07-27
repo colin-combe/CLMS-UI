@@ -222,7 +222,7 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        //{id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
+        {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
@@ -249,7 +249,7 @@ CLMSUI.init.views = function () {
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    //HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
+    HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
     console.log ("HSA", HSA_Active);
 
     if (HSA_Active){
