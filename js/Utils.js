@@ -52,7 +52,23 @@ CLMSUI.utils = {
     
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
-        return (zeptoElem.css('display') != 'none' && zeptoElem.css('visibility') != 'hidden' && zeptoElem.height()>0);
+		//~ var start = window.performance.now();
+		//~ console.log("how many things in topDiv?" + (d3.select("#topDiv").selectAll("*").size()));
+		//~ console.log("d3 search time:", (window.performance.now() - start));
+        var start = window.performance.now();
+		var height = zeptoElem.height()>0;
+        console.log("checking height time:", (window.performance.now() - start));
+                
+		var start = window.performance.now();
+		var visibility = zeptoElem.css('visibility') != 'hidden'; 
+        console.log("checking visibility time:", (window.performance.now() - start));
+	
+		var start = window.performance.now();
+		var display = zeptoElem.css('display') != 'none'; 
+        console.log("checking display time:", (window.performance.now() - start));
+
+           
+        return (display && visibility && height);
     },
     
     // try .layerX / .layerY first as .offsetX / .offsetY is wrong in firefox
@@ -293,7 +309,12 @@ CLMSUI.utils = {
         
         // Ask if view is currently visible in the DOM
         isVisible: function () {
-            return CLMSUI.utils.isZeptoDOMElemVisible (this.$el);   
+			var start = window.performance.now();
+			console.log(this.$el.toString() + "isVis start:" + start);
+			var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
+			console.log(this.$el, "isVis time:" + answer , (window.performance.now() - start));
+			
+            return answer;   
         },
         
         // removes view

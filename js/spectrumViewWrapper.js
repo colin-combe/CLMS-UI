@@ -155,7 +155,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
         this.listenTo (this.model, "change:selection", function (model, selection) {
-            var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
+			var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
 
             if (fMatches.length === 0) {
                 this.model.set ("lastSelectedMatch", {match: null, directSelection: false});
