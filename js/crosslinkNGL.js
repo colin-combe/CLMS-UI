@@ -42,6 +42,7 @@ function initNGL(){
 
 var CrosslinkWidget = function( structureComp, csvData ){
 
+    /*
 	var linkList = [];
 
 	csvData.data.forEach( function( row ){
@@ -52,6 +53,13 @@ var CrosslinkWidget = function( structureComp, csvData ){
 		} );
 
 	} );
+    */
+    var linkList = csvData.data.map (function(row) {
+		      return {
+			         fromResidue: parseInt(row[0]),
+			         toResidue: parseInt(row[2])
+		      };
+	   });
 
 	linkList = transformLinkList( linkList, "A" );
 
@@ -74,6 +82,8 @@ var CrosslinkWidget = function( structureComp, csvData ){
 				newLinkList.push( linkList[ i ] );
 			}
 		}
+     
+     console.log ("newLinkList", newLinkList);
 
 		crosslinkData.setLinkList( newLinkList );
 

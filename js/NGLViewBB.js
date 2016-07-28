@@ -78,6 +78,7 @@
             this.chartDiv.selectAll("*").remove();
             
 			//create 3D network viewer
+    var self = this;
 			if ( ! Detector.webgl ) {
 				Detector.addGetWebGLMessage(mainDivSel); 
 			}
@@ -86,48 +87,62 @@
 				this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
 
 
-				.then( function(
-				structureComp ){
-
-					var linkList = [];
+				.then (function (structureComp) {
 					
-					for(var crossLink of self.model.get("clmsModel").get("crossLinks").values()){
+					   var crosslinkData = self.makeLinkList (self.model.get("clmsModel").get("crossLinks"));
 
-						linkList.push( {
-							fromResidue: crossLink.fromResidue,
-							toResidue: crossLink.toResidue
-						} );
-
-					}
-					
-					linkList = transformLinkList( linkList, "A" );
-					
-					var crosslinkData = new CrosslinkData( linkList );
-
-					var xlRepr = new CrosslinkRepresentation(
-						self.stage, structureComp, crosslinkData, {
-							highlightedColor: "lightgreen",
-							sstrucColor: "wheat",
-							displayedDistanceColor: "tomato"
-						}
-					);
+					   self.xlRepr = new CrosslinkRepresentation(
+						      self.stage, structureComp, crosslinkData, {
+							         highlightedColor: "lightgreen",
+							         sstrucColor: "wheat",
+							         displayedDistanceColor: "tomato"
+						      }
+					   );
                     
-                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                    console.log ("stage", self.stage, "\nhas sequences", sequences);
-                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                    self.model.trigger ("3dsync", sequences);   
+        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+        console.log ("stage", self.stage, "\nhas sequences", sequences);
+        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+        self.model.trigger ("3dsync", sequences);  
+        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+        //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+        self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
 				});
 				
 			}        
 
-            this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-            //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+
         },
         
-
+        showSelected: function () {
+            console.log ("stage", this.stage);
+        },
+        
+        makeLinkList: function (linkModel) {
+            var linkList = [];
+					
+					       for(var crossLink of linkModel.values()){
+						          linkList.push( {
+							             fromResidue: crossLink.fromResidue,
+							             toResidue: crossLink.toResidue
+						          } );     
+            }
+					
+					       linkList = transformLinkList( linkList, "A" );
+					
+					       var crosslinkData = new CrosslinkData( linkList );
+            return crosslinkData;
+        },
+        
+        showFiltered: function () {
+            var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            console.log ("xlRepr", this.xlRepr);
+            var availableLinks = this.xlRepr._getAvailableLinks();
+            console.log ("linx", crossLinks, availableLinks);
+            this.xlRepr.setDisplayedLinks (this.makeLinkList (crossLinks));
+        },
 
         downloadImage: function () {
-			this.stage.exportImage( 1, true, false, false );
+			         this.stage.exportImage( 1, true, false, false );
             //~ var png = NGL.screenshot(this.stage.viewer);
             //~ download(png , 'image/png', 'ngl.png');
         },

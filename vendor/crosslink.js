@@ -219,7 +219,7 @@ var CrosslinkRepresentation = function( stage, structureComp, crosslinkData, par
         p.displayedResiduesColor = "lightgrey";
     }
     if( p.displayedLinksColor === undefined && p.displayedColor === undefined ){
-        p.displayedLinksColor = "lightgrey";
+        p.displayedLinksColor = "lightblue";
     }
     if( p.highlightedResiduesColor === undefined && p.highlightedColor === undefined ){
         p.highlightedResiduesColor = "lightgreen";
