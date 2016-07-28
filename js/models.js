@@ -50,12 +50,22 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			//self-links? - if self links's not selected and match is self link return false
 			// possible an ambiguous self link will still get displayed
 			if (this.get("selfLinks") == false) {
+				var isSelfLink = true;
 				var p1 = match.protein1[0];
 				for (var i = 1; i < match.protein1.length; i++) {
-					if (match.protein1[i] != p1) return false;
+					if (match.protein1[i] != p1){
+						 isSelfLink = false;
+						 break;
+					 }
 				}
 				for (var i = 0; i < match.protein2.length; i++) {
-					if (match.protein2[i] != p1) return false;
+					if (match.protein2[i] != p1){
+						isSelfLink = false;
+						break;
+					}
+				}
+				if (isSelfLink) {
+					return false;
 				}
 			}
 

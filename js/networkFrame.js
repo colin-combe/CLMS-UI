@@ -53,7 +53,7 @@ CLMSUI.init.models = function (options) {
 	options.alignmentCollectionInst = alignmentCollectionInst;
 	
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
-        console.log("Interactors", clmsModel.get("interactors"));
+        //console.log("Interactors", clmsModel.get("interactors"));
 
         clmsModel.get("interactors").forEach (function (entry) {
             console.log ("entry", entry);
@@ -157,20 +157,9 @@ CLMSUI.init.modelsEssential = function (options) {
 	
 }
 
-
-/*
-changeLinkColours = function (e) {
-    var colMap = {
-        "Default": CLMSUI.linkColour.defaultColours,
-        "Group": CLMSUI.linkColour.byGroup,
-    }
-    var colourSelection = document.getElementById("linkColourSelect").value;
-    CLMSUI.compositeModelInst.set("linkColourAssignment", colMap[colourSelection]);
-}
-*/
-
 CLMSUI.init.views = function () {
-   
+	CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
+	
     var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
@@ -186,7 +175,7 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        //{id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
+        {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
@@ -214,7 +203,7 @@ CLMSUI.init.views = function () {
 /*
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    //HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
+    HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
     console.log ("HSA", HSA_Active);
 
     if (HSA_Active){

@@ -180,7 +180,7 @@
 
 					var json = JSON.parse(xmlhttp.responseText);
 					
-					CLMSUI.init.modelsEssential(json);
+					CLMSUI.init.models(json);
 
 					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
 					document.title = Array.from(searches.keys()).join();
@@ -191,7 +191,7 @@
 
 					CLMSUI.init.views();
 
-					allDataAndWindowLoaded ();
+					allDataLoaded ();
 
 				}
 			};

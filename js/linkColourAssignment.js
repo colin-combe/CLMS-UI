@@ -145,9 +145,8 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         // (only do once)
         //check if link uniquely belongs to one group
         var groupCheck = d3.set();
-        var filteredMatches = crossLink.filteredMatches;
-        for (var match of filteredMatches) {
-            var match = match[0];   //fix this weirdness with array ( [0] ), its so wrong
+        for (var match_pp of crossLink.filteredMatches_pp) {
+            var match = match_pp.match; 
             var group = this.searchMap.get(match.searchId).group; 	
             groupCheck.add(group);
         }
