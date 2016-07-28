@@ -103,8 +103,6 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
-
-
     </head>
 
     <body>
@@ -152,17 +150,6 @@ header('Content-type: text/html; charset=utf-8');
 				}
 			?>
 			
-			
-			//~ $.ajax ({
-				//~ type: "POST",
-				//~ url: "./loadData.php",
-				//~ data: window.location.search.substr(1),
-				//~ contentType: "application/x-www-form-urlencoded",
-				//~ success: function (data, status, xhr){
-					//~ console.log ("SUCCESS LOAD", data, status, xhr.responseText);
-					//~ successCallBack();
-				//~ },
-			//~ });
 			var xmlhttp = new XMLHttpRequest();
 			var url = "./loadData.php" + window.location.search;
 			var params =  window.location.search.substr(1);
@@ -194,7 +181,7 @@ header('Content-type: text/html; charset=utf-8');
 						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
 					};					
 				}
-			}
+			};
 			xmlhttp.send();
         //~ };
 

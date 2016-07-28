@@ -273,7 +273,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
                 order = shuffledOrder;
             }
             shuffledOrder = shuffle(order);
-            console.log (crossings, shuffledOrder, "cur | min", min, order);
+            //console.log (crossings, shuffledOrder, "cur | min", min, order);
         }
 
         return order;

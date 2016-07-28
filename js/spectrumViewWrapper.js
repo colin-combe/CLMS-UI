@@ -44,8 +44,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<div class='validationControls'>"
             +"</div>"
             //~ +"</div>"
-            //~ +"<div id='alternatives'>"
-            //~ +"</div>"
+            +"<div id='alternatives'>"
+            +"</div>"
         ;
 
         d3.select(this.el)
@@ -111,7 +111,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 					})
 			;
 		}
-/*
+
 		var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ();
 
 		this.alternativesModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
@@ -125,7 +125,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 		// 2. Event A in spectrumWrapper fires event B
 		// 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
 		// 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
-		var selectionViewer = new CLMSUI.SelectionTableViewBB ({
+		var altsSelectionViewer = new CLMSUI.SelectionTableViewBB ({
 			el: "#alternatives",
 			model: this.alternativesModel,
 			secondaryModel: this.model
@@ -138,19 +138,19 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         //~ );
 		
 		// redraw / hide table on selected cross-link change
-		selectionViewer.listenTo (this.alternativesModel, "change:selection", function (model, selection) {
-			selectionViewer.render();
+		altsSelectionViewer.listenTo (this.alternativesModel, "change:selection", function (model, selection) {
+			altsSelectionViewer.render();
 			//~ alert();
 			//~ var emptySelection = (selection.length === 0);
 			//~ split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
 
 		});
-		selectionViewer.setVisible (true);
+		altsSelectionViewer.setVisible (true);
 		//~ split.collapse (true);
 		//~ selectionViewer.setVisible (false);
 
 
-*/
+
         // Only if spectrum viewer visible...
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match

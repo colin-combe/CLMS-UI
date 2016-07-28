@@ -71,19 +71,11 @@
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
 
-<!--
-        <script type="text/javascript" src="./vendor/CLMS_model.js"></script>
--->
-
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
-
-<!--
-       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
--->
 
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
@@ -166,6 +158,7 @@
     <script>
     //<![CDATA[
 
+        //~ var windowLoaded = function () {
         var CLMSUI = CLMSUI || {};
         <?php
             if (isset($_SESSION['session_name'])) {
@@ -176,28 +169,36 @@
             //~ }
         ?>
 
-      //  var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches, searches: searchMeta};
+ 			var xmlhttp = new XMLHttpRequest();
+			var url = "./loadData.php" + window.location.search;
+			var params =  window.location.search.substr(1);
+			xmlhttp.open("POST", url, true);
+			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					//~ console.log(xmlhttp.responseText);
 
-        CLMSUI.init.models (<?php include './loadData.php'; ?>);
+					var json = JSON.parse(xmlhttp.responseText);
+					
+					CLMSUI.init.modelsEssential(json);
 
-        var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-        document.title = Array.from(searches.keys()).join();
+					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+					document.title = Array.from(searches.keys()).join();
+        
+					CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
+									{ direction: "vertical", sizes: [60,40], minSize: [200,10] }
+							);
 
-        var windowLoaded = function () {
+					CLMSUI.init.views();
 
-            CLMSUI.init.views();
+					allDataAndWindowLoaded ();
 
-            allDataAndWindowLoaded ();
+				}
+			};
+			xmlhttp.send();
+		//~ };
 
-        };
-
-        CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
-                { direction: "vertical", sizes: [60,40], minSize: [200,10] }
-        );
-
-        //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
-        window.addEventListener("load", windowLoaded);
-
+        //~ window.addEventListener("load", windowLoaded);
     //]]>
     </script>
 
