@@ -55,7 +55,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 					if (match.protein1[i] != p1) return false;
 				}
 				for (var i = 0; i < match.protein2.length; i++) {
-					if (match.protein1[i] != p1) return false;
+					if (match.protein2[i] != p1) return false;
 				}
 			}
 

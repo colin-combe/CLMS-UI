@@ -309,10 +309,10 @@ CLMSUI.init.viewsEssential = function (options) {
     // redraw / hide table on selected cross-link change
     selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
         var emptySelection = (selection.length === 0);
-        split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
+        CLMSUI.split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
         this.setVisible (!emptySelection);
     });
-    split.collapse (true);
+    CLMSUI.split.collapse (true);
     selectionViewer.setVisible (false);
 
     var spectrumWrapper = new SpectrumViewWrapper ({
@@ -541,8 +541,9 @@ function saveLayout () {
     var layout = crosslinkViewer.getLayout();
     var xmlhttp = new XMLHttpRequest();
     var url = "./php/saveLayout.php";
-    console.log(CLMSUI.sid);
-    var params =  "sid=" + CLMSUI.sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
+    var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+    console.log(sid);
+    var params =  "sid=" + sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
     xmlhttp.open("POST", url, true);
     //Send the proper header information along with the request
     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");

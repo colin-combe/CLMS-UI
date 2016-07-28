@@ -143,43 +143,62 @@ header('Content-type: text/html; charset=utf-8');
 
         <script>
         //<![CDATA[
+        
+        //~ var windowLoaded = function () {
+			var CLMSUI = CLMSUI || {};
+			<?php
+				if (isset($_SESSION['session_name'])) {
+					echo "CLMSUI.loggedIn = true;";
+				}
+			?>
+			
+			
+			//~ $.ajax ({
+				//~ type: "POST",
+				//~ url: "./loadData.php",
+				//~ data: window.location.search.substr(1),
+				//~ contentType: "application/x-www-form-urlencoded",
+				//~ success: function (data, status, xhr){
+					//~ console.log ("SUCCESS LOAD", data, status, xhr.responseText);
+					//~ successCallBack();
+				//~ },
+			//~ });
+			var xmlhttp = new XMLHttpRequest();
+			var url = "./loadData.php" + window.location.search;
+			var params =  window.location.search.substr(1);
+			xmlhttp.open("POST", url, true);
+			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					//~ console.log(xmlhttp.responseText);
+					
+					var json = JSON.parse(xmlhttp.responseText);
+					
+					CLMSUI.init.modelsEssential(json);
 
-        var CLMSUI = CLMSUI || {};
-        <?php
-            if (isset($_SESSION['session_name'])) {
-                echo "CLMSUI.loggedIn = true;";
-            }
-        ?>
+					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+					document.title = Array.from(searches.keys()).join();
+					
+					CLMSUI.split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
+								sizes: [60,40], minSize: [200,10],
+								onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+						} });	
+										
+					CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
 
-        CLMSUI.init.modelsEssential(<?php
-            include './loadData.php';
-        ?>);
+					var allCrossLinks = Array.from(
+						CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+					CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
 
-        var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-        document.title = Array.from(searches.keys()).join();
+					window.onresize = function(event) {
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					};					
+				}
+			}
+			xmlhttp.send();
+        //~ };
 
-        var windowLoaded = function () {
-
-            CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
-
-            var allCrossLinks = Array.from(
-                CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
-            CLMSUI.compositeModelInst.set("selection", allCrossLinks);
-
-        };
-
-        var split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
-                    sizes: [60,40], minSize: [200,10],
-                    onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-            } });
-
-
-        window.onresize = function(event) {
-            CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-        };
-
-        //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
-        window.addEventListener("load", windowLoaded);
+        //~ window.addEventListener("load", windowLoaded);
 
         //]]>
         </script>

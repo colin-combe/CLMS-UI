@@ -191,7 +191,7 @@
 
         };
 
-        var split = Split (["#topDiv", "#bottomDiv"], 
+        CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
                 { direction: "vertical", sizes: [60,40], minSize: [200,10] }
         );
 

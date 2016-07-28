@@ -41,19 +41,20 @@
             
 
 			var tableDataPropOrder = [
-				"protein1", "pepPos1", "pepSeq1raw", "linkPos1",
+				"ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
 				"protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", "precursorCharge",
 				"autovalidated", "validated", "group", "runName", "scanNumber",
 			];
 
 			this.headerLabels = {
-			   "protein1": "Protein 1",
+				"ambiguity": "Ambiguity",
+				"protein1": "Protein 1",
 				"pepPos1": "Pep Pos",
-				"pepSeq1raw": "Pep Sequence",
+				"pepSeq1raw": "Pep 1 Sequence",
 				"linkPos1": "Link Pos",
 				"protein2": "Protein 2",
 				"pepPos2": "Pep Pos",
-				"pepSeq2raw": "Pep Sequence",
+				"pepSeq2raw": "Pep 2 Sequence",
 				"linkPos2": "Link Pos",
 				"score": "Score",
 				"autovalidated": "Auto",
@@ -64,7 +65,7 @@
 				"precursorCharge": "Charge",
 			};
 
-			this.numberColumns = d3.set (["score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
+			this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
 			this.colSectionStarts = d3.set (["protein2", "score"]);
 			this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
 
@@ -86,6 +87,8 @@
 			);
 
             this.cellFuncs = {
+					"ambiguity": function (d) { return d.protein1.length * 
+									((d.protein2.length != 0)? d.protein2.length : 1); },
 					"protein1": function (d) { return CLMSUI.utils.proteinConcat (d, "protein1"); },
 					"protein2": function (d) { return CLMSUI.utils.proteinConcat (d, "protein2"); },
 					"pepPos1": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos1"); },
@@ -95,8 +98,9 @@
 					"score": function (d) { return d.score; }
             };
             
+            var self = this;
             this.page = 1;
-            this.pageSize = 100;
+            this.pageSize = 50;
             var pager = d3.select(this.el).select(".pager");
             //~ if (!self.options.secondaryModel) {		
 				pager.append("p").text("Page:").style ("display", "inline-block");
