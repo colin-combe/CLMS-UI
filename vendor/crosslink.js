@@ -416,6 +416,8 @@ CrosslinkRepresentation.prototype = {
             labelVisible: this.displayedDistanceVisible,
             name: "link"
         } );
+        
+        console.log ("comp & repr", comp, this.linkRepr);
 
         this.linkEmphRepr = comp.addRepresentation( "distance", {
             atomPair: xlPairEmph,
@@ -590,10 +592,13 @@ CrosslinkRepresentation.prototype = {
 
         this._displayedLinks = links;
         var availableLinks = this._getAvailableLinks( links );
+        //console.log ("disp links", availableLinks);
 
-        this.linkRepr.setParameters( {
-            atomPair: this._getAtomPairsFromLink( availableLinks ),
-        } );
+        var atomPairs = this._getAtomPairsFromLink (availableLinks);
+        //console.log ("atom pairs", atomPairs);
+        this.linkRepr.setParameters ({
+            atomPair: atomPairs,
+        });
 
     },
 

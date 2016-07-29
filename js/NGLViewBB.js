@@ -119,7 +119,6 @@
         
         makeLinkList: function (linkModel) {
             var linkList = [];
-            console.log ("linkModel", linkModel);
 					
             for(var crossLink of linkModel.values()) {
 				linkList.push( {
@@ -142,12 +141,15 @@
         },
         
         showFiltered: function () {
-            var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = this.filterCrossLinks (crossLinks);
-            console.log ("xlRepr", this.xlRepr);
-            //var availableLinks = this.xlRepr._getAvailableLinks();
-            console.log ("linx", filteredCrossLinks, filteredCrossLinks.size);
-            this.xlRepr.setDisplayedLinks (this.makeLinkList (filteredCrossLinks));
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                var crossLinks = this.model.get("clmsModel").get("crossLinks");
+                var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+                //console.log ("linx", filteredCrossLinks, filteredCrossLinks.size);
+
+                var linkList = this.makeLinkList (filteredCrossLinks);
+                this.xlRepr.setDisplayedLinks (linkList);  // seems to be equivalent to line below but doesn't incur spacefill calcs?
+                //this.xlRepr.crosslinkData.setLinkList (linkList);
+            }
         },
 
         downloadImage: function () {

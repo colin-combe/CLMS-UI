@@ -202,7 +202,7 @@ CLMSUI.init.views = function () {
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    HSA_Active = false; //Array.from(searches.values())[0].filename.startsWith("HSA-Active");    // HSa hack
+    HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");    // HSa hack
     console.log ("HSA", HSA_Active);
 
     if (HSA_Active){
