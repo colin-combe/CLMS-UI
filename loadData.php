@@ -18,93 +18,113 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-	$pageStartTime = microtime(true);
-	include('../connectionString.php');
-	$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
+//$pageStartTime = microtime(true);
+include('../connectionString.php');
+$dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
+$sid = urldecode($_GET["sid"]);
+//SQL injection defense 
+$pattern = '/[^0-9,\-]/';
+if (preg_match($pattern, $sid)){
+	exit;
+}
 
-	$sid = urldecode($_GET["sid"]);
-	$id_rands = explode("," , $sid);
-	$sid = str_replace(',','', $sid );
-	$sid = str_replace('-','', $sid );
-	
-	$pattern = '/[^0-9,\-]/';
-	if (preg_match($pattern, $sid)){
-		exit;
-	}
+$unval = false;
+if (isset($_GET['unval'])){
+    if ($_GET['unval'] === '1' || $_GET['unval'] === '0'){
+        $unval = (bool) $_GET['unval'];
+    }
+}
 
-	$searchId_randGroup = [];
-	
-	for ($i = 0; $i < count($id_rands); $i++) {
-		$s = [];		
-		$dashSeperated = explode("-" , $id_rands[$i]);
-		$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
-		$id = $dashSeperated[0];
-		$res = pg_query("SELECT search.name, sequence_file.file_name"
-					." FROM search, search_sequencedb, sequence_file "
-					."WHERE search.id = search_sequencedb.search_id "
-					."AND search_sequencedb.seqdb_id = sequence_file.id "
-					."AND search.id = '".$id."';") 
-					or die('Query failed: ' . pg_last_error());
-		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
-		$name = $line['name'];
-		$filename = $line['file_name'];
-		
-		$s["id"] = $id;
-		$s["randId"] = $randId;
-		$s["name"] = $name;
-		$s["filename"] = $filename;
-		if (count($dashSeperated) == 6){
-			$s["group"] = $dashSeperated[5];
-		} else {
-            $s["group"] = "'NA'";
-        }
-		$searchId_randGroup[$id] = $s;
+$decoys = false;
+if (isset($_GET['decoys'])){
+    if ($_GET['decoys'] === '1' || $_GET['decoys'] === '0'){
+        $decoys = (bool) $_GET['decoys'];
+    }
+}
 
-	}
-	$searchMeta = "var searchMeta = " . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ";\n";
-	
-	echo "CLMSUI.sid = '".$sid."';\n";// TODO - this needs to change
-	
-	echo $searchMeta;
-	
-	if (false){//$filename == "HSA-Active.FASTA"){
-		echo "var HSA_Active = true;\n";
-		include('./php/distances.php');
-	}
-	else {
-		echo "var HSA_Active = false;\n";
-		echo "var distances = [];\n";
-	}
-	
-	echo "storedLayout = null;\n\n";
-	if (count($searchId_randGroup) == 1) {
-		$layoutQuery = "SELECT t1.layout AS l "
-				. " FROM layouts AS t1 "
-				. " LEFT OUTER JOIN layouts AS t2 "
-				. " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
-				. " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
-		$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
-		while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-			
-			echo "storedLayout = " . stripslashes($line["l"]) . ";\n\n";
-			
-		}
-	}
+$linears = false;
+if (isset($_GET['linears'])) {
+    if ($_GET['linears'] === '1' || $_GET['linears'] === '0')     {
+        $linears = (bool) $_GET['linears'];
+    }
+}
 
-	$WHERE_withRand = ' ';
-	$WHERE_withoutRand = ' ';
-	for ($i = 0; $i < count($searchId_randGroup); $i++) {
-		$search = array_values($searchId_randGroup)[$i];
-		if ($i > 0){
-			$WHERE_withRand = $WHERE_withRand.' OR ';
-			$WHERE_withoutRand = $WHERE_withoutRand.' OR ';
-		}
-		$randId = $search["randId"];
-		$id = $search["id"];
-		$WHERE_withRand = $WHERE_withRand.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
-		$WHERE_withoutRand = $WHERE_withoutRand.'(search_id = '.$id.')';
+$spectrum = '';
+if (isset($_GET['spectrum'])) {
+	$spectrum= (string) $_GET['spectrum'];
+}
+
+//keep the long identifier for this combination of searches 
+echo '{"sid":"'.$sid.'",';
+
+//get search meta data
+$id_rands = explode("," , $sid);
+$searchId_randGroup = [];
+for ($i = 0; $i < count($id_rands); $i++) {
+	$s = [];		
+	$dashSeperated = explode("-" , $id_rands[$i]);
+	$randId = implode('-' , array_slice($dashSeperated, 1 , 4));
+	$id = $dashSeperated[0];
+	$res = pg_query("SELECT search.name, sequence_file.file_name"
+				." FROM search, search_sequencedb, sequence_file "
+				."WHERE search.id = search_sequencedb.search_id "
+				."AND search_sequencedb.seqdb_id = sequence_file.id "
+				."AND search.id = '".$id."';") 
+				or die('Query failed: ' . pg_last_error());
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	$name = $line['name'];
+	$filename = $line['file_name'];
+	
+	$s["id"] = $id;
+	$s["randId"] = $randId;
+	$s["name"] = $name;
+	$s["filename"] = $filename;
+	if (count($dashSeperated) == 6){
+		$s["group"] = $dashSeperated[5];
+	} else {
+		$s["group"] = "'NA'";
 	}
+	$searchId_randGroup[$id] = $s;
+}
+echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\n";
+				
+//load data - 
+$WHERE_spectrumMatch = ' ( ';
+$WHERE_matchedPeptide = ' ( ';
+for ($i = 0; $i < count($searchId_randGroup); $i++) {
+	$search = array_values($searchId_randGroup)[$i];
+	if ($i > 0){
+		$WHERE_spectrumMatch = $WHERE_spectrumMatch.' OR ';
+		$WHERE_matchedPeptide = $WHERE_matchedPeptide.' OR ';
+	}
+	$randId = $search["randId"];
+	$id = $search["id"];
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
+	$WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
+}		
+$WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) ';
+$WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
+
+if ($decoys == false){
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND (NOT is_decoy) ';
+}
+
+if ($unval == false){
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch." AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR
+				(sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')
+				OR (sm.validated LIKE '?')) ";
+}
+
+if ($linears == false){
+	$WHERE_matchedPeptide = $WHERE_matchedPeptide." AND link_position != -1 ";
+}
+
+if ($spectrum) {
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND spectrum_id = ' . $spectrum . ' ';
+} else {
+	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
+}
 
 
 	
@@ -114,7 +134,7 @@
 	
 	
 	//old DB
-	$query = "	
+	/*$query = "	
 		SELECT 
 			mp.match_id, mp.match_type, mp.peptide_id, 
 			mp.link_position + 1 AS link_position, 
@@ -140,35 +160,35 @@
 			WHERE (".$WHERE_withoutRand.") AND dynamic_rank = true 
 			) r ON sm.id = r.spectrum_match_id		
 		ORDER BY score DESC, sm.id, mp.match_type;";
-		
+		*/
 	//New DB
-	/*
 	$query = "	
 		SELECT 
 			mp.match_id, mp.match_type, mp.peptide_id, 
-			mp.link_position + 1 AS link_position, 
+			mp.link_position + 1 AS link_position, sm.spectrum_id, 
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
-			sp.scan_number
+			sp.scan_number, 'run_name' as run_name
 		FROM 
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id 
-			WHERE ".$WHERE_withRand." AND dynamic_rank) sm 
+			WHERE ".$WHERE_spectrumMatch.") sm 
 		INNER JOIN 
 			(SELECT mp.match_id, mp.match_type, mp.peptide_id, 
 			mp.link_position
-			FROM matched_peptide mp WHERE ".$WHERE_withoutRand.") mp 
+			FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
-		ORDER BY sm.id;";*/
+		ORDER BY score DESC, sm.id;";
+		
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
-	echo '//db time: '.($endTime - $startTime)."ms\n";
-	echo '//rows:'.pg_num_rows($res)."\n";
+	//~ echo '/*db time: '.($endTime - $startTime)."ms\n";
+	//~ echo '/*rows:'.pg_num_rows($res)."\n";
 	$startTime = microtime(true);
-	echo "var tempMatches = [\n";
+	echo "\"rawMatches\":[\n";
 	$peptideIds = array();
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
@@ -179,7 +199,8 @@
 				. '"ty":' . $line["match_type"] . ','
 				. '"pi":' . $peptideId . ','
 				. '"lp":'. $line["link_position"]. ','
-				. '"sc":' . round($line["score"], 5) . ','
+				. '"spec":' . $line["spectrum_id"] . ','
+				. '"sc":' . round($line["score"], 3) . ','
 				. '"si":' . $line["search_id"] . ','
 				. '"dc":"' . $line["is_decoy"] . '",';
 			$autoVal =  $line["autovalidated"];
@@ -201,9 +222,9 @@
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}
 	}
-	echo "\n];\n";
+	echo "\n],\n";
 	$endTime = microtime(true);
-	echo '//php time: '.($endTime - $startTime)."ms\n\n";
+	//~ echo '/*php time: '.($endTime - $startTime)."ms\n\n";
 	
 	$proteinIdField = "hp.protein_id";
 	if (count($searchId_randGroup) > 1) {
@@ -227,9 +248,9 @@
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
-	echo '//db time: '.($endTime - $startTime)."ms\n";
-	echo '//rows:'.pg_num_rows($res)."\n";
-	echo "var peptides = [\n";
+	//~ echo '//db time: '.($endTime - $startTime)."ms\n";
+	//~ echo '//rows:'.pg_num_rows($res)."\n";
+	echo "\"peptides\":[\n";
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 			$proteins = $line["proteins"];
@@ -240,16 +261,16 @@
 			}
 			$positions = $line['positions'];
 			echo '{"id":' . $line["id"] . ','
-				. '"seq":"' . $line["sequence"] . '",' 
+				. '"seq_mods":"' . $line["sequence"] . '",' 
 				. '"prt":["' . implode($proteinsArray, '","') . '"],' 
 				. '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']' 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}
 			}
-	echo "\n];\n";
+	echo "\n],\n";
 	$endTime = microtime(true);
-	echo '//php time: '.($endTime - $startTime)."ms\n\n";
+	//~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
 	
 	/*
 	 * PROTEINS
@@ -268,9 +289,9 @@
 	$startTime = microtime(true);
 	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
 	$endTime = microtime(true);
-	echo '//db time: '.($endTime - $startTime)."ms\n";
-	echo '//rows:'.pg_num_rows($res)."\n";
-	echo "var proteins = [\n";
+	//~ echo '/*db time: '.($endTime - $startTime)."ms*/\n";
+	//~ echo '/*rows:'.pg_num_rows($res)."*/\n";
+	echo "\"proteins\":[\n";
 	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 			$isDecoy = ($line["is_decoy"] == "t")? 'true' : 'false';
@@ -281,22 +302,40 @@
 				. '"name":"' . $line["name"] . '",' 
 				. '"description":"' . $line["description"] . '",' 
 				. '"accession":"' .$line["accession_number"]  . '",'
-				. '"seq":"' .$line["sequence"] . '",' 
+				. '"seq_mods":"' .$line["sequence"] . '",' 
 				. '"is_decoy":' .$isDecoy 
 				. "}";
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}
 		}
-	echo "\n];\n";
+	echo "\n]}\n";
 	$endTime = microtime(true);
-	echo '//php time: '.($endTime - $startTime)."ms\n\n";
+	//~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
 	
 	
 	$endTime = microtime(true);
-	echo "\n//page time: ".($endTime - $pageStartTime)."ms\n\n";
+	//~ echo "\n/*page time: ".($endTime - $pageStartTime)."ms*/\n\n";
 
 	// Free resultset
 	pg_free_result($res);
 	// Closing connection
 	pg_close($dbconn);
+	
+	
+	
+			//TODO - fix stored layouts
+		//~ echo "storedLayout = null;\n\n";
+		//~ if (count($searchId_randGroup) == 1) {
+			//~ $layoutQuery = "SELECT t1.layout AS l "
+					//~ . " FROM layouts AS t1 "
+					//~ . " LEFT OUTER JOIN layouts AS t2 "
+					//~ . " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
+					//~ . " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
+			//~ $layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+			//~ while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
+				//~ 
+				//~ echo "storedLayout = " . stripslashes($line["l"]) . ";\n\n";
+				//~ 
+			//~ }
+		//~ }
 ?>

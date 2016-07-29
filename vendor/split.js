@@ -200,7 +200,7 @@ var global = this
             // Both sizes are calculated from the initial parent percentage.
             this.aPerc = offset / this.size * this.percentage;
             this.bPerc = this.percentage - (offset / this.size * this.percentage);
-            console.log ("adj", offset, this.size, this.percentage, this.aPerc);
+            //~ console.log ("adj", offset, this.size, this.percentage, this.aPerc);
             this.a.style[dimension] = calc + '(' + (this.aPerc) + '% - ' + this.aGutterSize + 'px)'
             this.b.style[dimension] = calc + '(' + (this.bPerc) + '% - ' + this.bGutterSize + 'px)'
         }

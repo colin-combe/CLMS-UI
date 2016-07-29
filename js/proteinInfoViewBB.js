@@ -95,9 +95,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var ttinfo = crossLinks.map (function (xlink) {
                             var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
                             if (fromId === pos) {
-                                return [xlink.toProtein.name, xlink.toResidue, xlink.filteredMatches.length];
+                                return [xlink.toProtein.name, xlink.toResidue,
+									xlink.filteredMatches_pp.length];
                             } else {
-                                return [xlink.fromProtein.name, xlink.fromResidue, xlink.filteredMatches.length];
+                                return [xlink.fromProtein.name, xlink.fromResidue,
+									xlink.filteredMatches_pp.length];
                             }
                         });
                         ttinfo.unshift (["Protein", "Pos", "Matches"]);
@@ -157,7 +159,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             });
             if (filter){
                 crossLinks = crossLinks.filter (function (xlink) {
-                    return xlink.filteredMatches.length > 0;    
+                    return xlink.filteredMatches_pp.length > 0;    
                 });
             }
             return crossLinks;
@@ -173,7 +175,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     endPoints[fromRes] = endPoints[fromRes] || [];
                     endPoints[fromRes].push (xlink);
                 }
-                if (proteinId === xlink.toProtein.id) {
+                //added check for no toProtein (for linears)
+                if (xlink.toProtein && proteinId === xlink.toProtein.id) { 
                     var toRes = xlink.toResidue;
                     endPoints[toRes] = endPoints[toRes] || [];
                     endPoints[toRes].push (xlink);

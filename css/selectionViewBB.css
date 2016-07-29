@@ -3,9 +3,14 @@
     overflow: hidden;
 }
 
+.selectView {
+    height: calc(100%);
+    overflow: hidden;
+}
+
 .selectView > DIV.scrollHolder {
     height: calc(100% - 30px);
-    overflow: scroll;
+    overflow: auto;
 }
 
 .selectView TABLE  {
@@ -69,3 +74,17 @@
     background: #afa;
 }
 
+.crossLinkTotal{
+    display: inline-block;
+	color:white;
+}
+
+.pager {
+    display: inline-block;
+    padding:5px;
+}
+
+.buttonPressed{
+    color: #091D42;
+    background: #fff;
+}

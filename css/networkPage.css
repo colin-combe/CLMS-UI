@@ -1,0 +1,18 @@
+/* martin - i'm putting css changes for the network /results page
+ * in this new file, rather than add more to style.css.
+ * Might help tidy up style.css*/ 
+
+#toggles_decoys {
+	display: none;
+}
+#toggles_linears {
+	display: none;
+}
+/*
+#colorSelector{
+	display: none;
+}
+#spectrumControls label#colorSelectorLabel{
+	display: none;
+}
+*/

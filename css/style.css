@@ -157,7 +157,7 @@ body, html{
 }
 body, input, select, textarea {
     Font-family: "Lato-Regular", Helvetica, Arial, sans-serif;
-    font-size: 13pt;
+    font-size: 10pt;
     font-weight: 300;
     line-height: 1.75em;
     color: #888;
@@ -344,8 +344,6 @@ body, input, select, textarea {
 }
 
 #bottomDiv {
-    margin-left: 10px;
-    margin-right: 10px;
     background: rgba(9, 29, 66, 0.9);
     padding:0px 10px;
     position: relative; /* will overlay previous absolute divs i.e. distance slider */
@@ -457,9 +455,6 @@ tbody tr:hover td, tbody tr:hover td  {
     
     background:#ecedf2;
     color:#091D42;
-/*
-    padding: 20px;
-*/
     margin-bottom: 10px;
     margin-top: 10px;
     padding-top: 10px;
@@ -482,7 +477,7 @@ tbody tr:hover td, tbody tr:hover td  {
     display: inline-block;
 }
 .scoreSlider .cutoffLabel {
-    min-width: 4em;
+    min-width: 3em;
 }
 .scoreSlider .cutoffLabel.vmin {
     text-align: right;

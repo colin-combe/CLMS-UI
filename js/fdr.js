@@ -9,12 +9,12 @@ CLMSUI.fdr = function (crossLinks, options) {
     
     
     var defaultScoreCalcFunc = function (crossLink) {      // default is quadratic mean (rms)
-        var filtered = crossLink.matches
-            .filter (function (match) {
-                return match[0].pepSeq1.length > peptideLength && match[0].pepSeq2.length > peptideLength;
+        var filtered = crossLink.matches_pp
+            .filter (function (match_pp) {
+                return match_pp.match.pepSeq1.length > peptideLength && match_pp.match.pepSeq2.length > peptideLength;
             })
         ;
-        return Math.sqrt (d3.mean (filtered, function(match) { return match[0].score * match[0].score; }) || 0);
+        return Math.sqrt (d3.mean (filtered, function(match_pp) { return match_pp.match.score * match_pp.match.score; }) || 0);
     };
     var scoreCalcFunc = options.scoreCalcFunc || defaultScoreCalcFunc;
     

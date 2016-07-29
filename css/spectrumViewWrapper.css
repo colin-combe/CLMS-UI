@@ -35,7 +35,11 @@
 }
 
 .validationControls {
+	padding:10px;
+	background: white;
+/*
     display: table-row;
+*/
 }
 
 #spectrumSVG {
@@ -56,3 +60,10 @@
     line-height: normal;
 }
 
+#alternatives {
+    padding: 10px;
+}
+
+.scrollHolder {
+    color: #888;
+}
