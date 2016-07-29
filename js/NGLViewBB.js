@@ -99,13 +99,13 @@
 						      }
 					   );
                     
-        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-        console.log ("stage", self.stage, "\nhas sequences", sequences);
-        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-        self.model.trigger ("3dsync", sequences);  
-        //self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-        //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
-        //self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
+                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                        console.log ("stage", self.stage, "\nhas sequences", sequences);
+                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                        self.model.trigger ("3dsync", sequences);  
+                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                        //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+                        self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
 				});
 				
 			}        
@@ -128,14 +128,13 @@
 				});     
             }
 					
-            linkList = transformLinkList (linkList, "A");	
-            return linkList;
+            return transformLinkList (linkList, "A");	
         },
         
         filterCrossLinks: function (crossLinks) {
             var filteredCrossLinks = [];
             crossLinks.forEach (function (value) {
-                if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
+                if (value.filteredMatches_pp && value.filteredMatches_pp.length > 0 && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
                     filteredCrossLinks.push (value);
                 }
             });

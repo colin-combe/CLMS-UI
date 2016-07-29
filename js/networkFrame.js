@@ -200,10 +200,9 @@ CLMSUI.init.views = function () {
         }
     });
 
-/*
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");
+    HSA_Active = false; //Array.from(searches.values())[0].filename.startsWith("HSA-Active");    // HSa hack
     console.log ("HSA", HSA_Active);
 
     if (HSA_Active){
@@ -219,7 +218,7 @@ CLMSUI.init.views = function () {
         // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
         //d3.select('#viewDropdownPlaceholder').style("display", "none");
     }
-*/
+
     new CLMSUI.DropDownMenuViewBB ({
         el: "#expDropdownPlaceholder",
         model: CLMSUI.clmsModelInst,
@@ -469,13 +468,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         console.log ("3D sequences poked to collection", this);
     });
 
-/*    if (HSA_Active) {
+    if (HSA_Active) {
         var nglViewer = new CLMSUI.NGLViewBB ({
             el: "#nglPanel",
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
         });
-    } */
+    } 
 
 
     new CLMSUI.ProteinInfoViewBB ({
