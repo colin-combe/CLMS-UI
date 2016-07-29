@@ -1,3 +1,7 @@
+#toggles_decoys {
+	display: none;
+}
+
 #spectrumControlsTop {
 	background-color: #091D42;
 	display: inline-block;

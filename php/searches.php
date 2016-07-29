@@ -50,7 +50,7 @@
 		//~ echo "<td><strong>" .$status. "</strong></td>";
 
 		echo "<td><a id='".$line['name']."' href='./validate.php?sid=" . urlencode($urlPart) 
-					. "&decoys=1&unval=1&linears=1'>validate</a>" . "</td>";
+					. "&unval=1&linears=1'>validate</a>" . "</td>";
 	
 
 		echo "<td style='width:100px;'>" .$searchFile. "</td>";
