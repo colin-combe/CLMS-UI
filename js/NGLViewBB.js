@@ -89,7 +89,7 @@
 
 				.then (function (structureComp) {
 					
-					   var crosslinkData = self.makeLinkList (self.model.get("clmsModel").get("crossLinks"));
+					   var crosslinkData = new CrosslinkData (self.makeLinkList (self.model.get("clmsModel").get("crossLinks")));
 
 					   self.xlRepr = new CrosslinkRepresentation(
 						      self.stage, structureComp, crosslinkData, {
@@ -103,9 +103,9 @@
         console.log ("stage", self.stage, "\nhas sequences", sequences);
         // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
         self.model.trigger ("3dsync", sequences);  
-        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+        //self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
         //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
-        self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
+        //self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
 				});
 				
 			}        
@@ -119,30 +119,40 @@
         
         makeLinkList: function (linkModel) {
             var linkList = [];
+            console.log ("linkModel", linkModel);
 					
-					       for(var crossLink of linkModel.values()){
-						          linkList.push( {
-							             fromResidue: crossLink.fromResidue,
-							             toResidue: crossLink.toResidue
-						          } );     
+            for(var crossLink of linkModel.values()) {
+				linkList.push( {
+				    fromResidue: crossLink.fromResidue,
+				    toResidue: crossLink.toResidue
+				});     
             }
 					
-					       linkList = transformLinkList( linkList, "A" );
-					
-					       var crosslinkData = new CrosslinkData( linkList );
-            return crosslinkData;
+            linkList = transformLinkList (linkList, "A");	
+            return linkList;
+        },
+        
+        filterCrossLinks: function (crossLinks) {
+            var filteredCrossLinks = [];
+            crossLinks.forEach (function (value) {
+                if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
+                    filteredCrossLinks.push (value);
+                }
+            });
+            return filteredCrossLinks;
         },
         
         showFiltered: function () {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.filterCrossLinks (crossLinks);
             console.log ("xlRepr", this.xlRepr);
-            var availableLinks = this.xlRepr._getAvailableLinks();
-            console.log ("linx", crossLinks, availableLinks);
-            this.xlRepr.setDisplayedLinks (this.makeLinkList (crossLinks));
+            //var availableLinks = this.xlRepr._getAvailableLinks();
+            console.log ("linx", filteredCrossLinks, filteredCrossLinks.size);
+            this.xlRepr.setDisplayedLinks (this.makeLinkList (filteredCrossLinks));
         },
 
         downloadImage: function () {
-			         this.stage.exportImage( 1, true, false, false );
+			 this.stage.exportImage( 1, true, false, false );
             //~ var png = NGL.screenshot(this.stage.viewer);
             //~ download(png , 'image/png', 'ngl.png');
         },

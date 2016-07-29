@@ -61,6 +61,7 @@
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
         <script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
+        <!-- <script type="text/javascript" src="./vendor/ngl.js"></script> -->
         <script type="text/javascript" src="./vendor/crosslink.js"></script>
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
