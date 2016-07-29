@@ -178,9 +178,9 @@
 			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 					//~ console.log(xmlhttp.responseText);
-
+                    
 					var json = JSON.parse(xmlhttp.responseText);
-					
+                    
 					CLMSUI.init.models(json);
 
 					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
