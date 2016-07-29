@@ -9,6 +9,8 @@
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
                 
+                crossLink.filteredMatches_pp = [];
+                
                 if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
                     //console.log ("yo fdring");
                     var pass = filterModel.filterLink (crossLink);
@@ -21,10 +23,9 @@
                         ;    
                     }
                 } else {
-					crossLink.filteredMatches_pp = [];
 					crossLink.ambiguous = true;
 					crossLink.confirmedHomomultimer = false;
-					for (matchAndPepPos of crossLink.matches_pp) {	
+					for (var matchAndPepPos of crossLink.matches_pp) {	
 						var match = matchAndPepPos.match;
 						var result = filterModel.filter(match);
 						if (result === true){

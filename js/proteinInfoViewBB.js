@@ -124,7 +124,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
     
         showState: function () {
             var self = this;
-            console.log ("in prot info filter");
+            //console.log ("in prot info filter");
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 var selectedLinks = self.model.get("selection");
                 var selidset = d3.set (selectedLinks.map (function (xlink) { return xlink.id; }));

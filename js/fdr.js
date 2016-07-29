@@ -45,7 +45,7 @@ CLMSUI.fdr = function (crossLinks, options) {
         var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScore = undefined;
         
         if (linkArr.length && threshold !== undefined) {
-            // count tt, td, and dd
+            // first run, count tt, td, and dd
             linkArr.forEach (function (link) {
                 if (link.meta.fdrScore > 0) {
                     t[decoyClass(link)]++;
@@ -71,9 +71,11 @@ CLMSUI.fdr = function (crossLinks, options) {
             var lastLink = linkArr[i];
             fdrScore = lastLink.meta.fdrScore;
 
-            console.log ("post totals tt td dd", t);
-            console.log ("runningFdr", runningFdr);
-            console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScore);
+            if (false) {
+                console.log ("post totals tt td dd", t);
+                console.log ("runningFdr", runningFdr);
+                console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScore);
+            }
         }
 
         return {label: arrLabels[index], index: i, fdr: fdrScore, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
