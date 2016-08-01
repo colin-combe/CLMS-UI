@@ -5,7 +5,7 @@ function transformLinkList( linkList, chainname, structureId ){
     chainname = chainname === undefined ? "A" : chainname;
 
     var tLinkList = [];
-    var nextLinkId = 0;
+    //var nextLinkId = 0;
     var nextResidueId = 0;
 
     var residueDict = {};
@@ -14,16 +14,15 @@ function transformLinkList( linkList, chainname, structureId ){
         // TODO in NMR structures there are multiple models
         var key = resno + ":" + chainname;
         if( residueDict[ key ] === undefined ){
-            residueDict[ key ] = nextResidueId
+            residueDict[ key ] = nextResidueId;
             nextResidueId += 1;
         }
         return residueDict[ key ];
     }
 
-    linkList.forEach( function( rl ){
-
-        tLinkList.push( {
-            linkId: nextLinkId,
+    tLinkList = linkList.map( function(rl, i) {
+        return {
+            linkId: i,
             residueA: {
                 residueId: getResidueId( rl.fromResidue ),
                 resno: rl.fromResidue,
@@ -36,10 +35,7 @@ function transformLinkList( linkList, chainname, structureId ){
                 chainname: chainname,
                 structureId: structureId
             }
-        } );
-
-        nextLinkId += 1;
-
+        };
     } );
 
     return tLinkList;
@@ -164,7 +160,7 @@ CrosslinkData.prototype = {
         var idB = residueB.residueId;
         var linklist = this._linkList;
 
-        var links = []
+        var links = [];
 
         for( var i = 0, il = linklist.length; i < il; ++i ){
             var l = linklist[ i ];
@@ -311,6 +307,8 @@ CrosslinkRepresentation.prototype = {
 
                 if( a1 && a2 ){
                     atomPairs.push( [ resToSele( resA ), resToSele( resB ) ] );
+                } else {
+                    console.log ("dodgy pair", rl, a1, a2);
                 }
 
             } );
@@ -318,7 +316,46 @@ CrosslinkRepresentation.prototype = {
         }
 
         return atomPairs;
+    },
+    
+    _getAtomObjectPairsFromLink: function( linkList ){
 
+        var atomPairs = [];
+
+        if( !linkList || ( Array.isArray( linkList ) && !linkList.length ) ){
+
+            // atomPairs = [];
+
+        }else if( linkList === "all" ){
+
+            atomPairs = this._getAllAtomObjectPairs();
+
+        }else{
+
+            var structure = this.structureComp.structure;
+            var resToSele = this._getSelectionFromResidue;
+
+            atomPairs = linkList.map ( function( rl ){
+                var a1 = structure.getAtoms( resToSele( rl.residueA, true ), true );
+                var a2 = structure.getAtoms( resToSele( rl.residueB, true ), true );
+                console.log (rl.residueA, rl.residueB, a1, a2);
+                return [a1, a2]; // don't filter out null/undefined a1/a2s; ensures atomPair array index order matches linklist array order
+            } );
+
+        }
+
+        return atomPairs;
+    },
+    
+    _getAllAtomObjectPairs: function() {
+        return this._getAtomObjectPairsFromLink (this.crosslinkData.getLinks());
+    },
+    
+    
+    getLinkDistances: function (atomObjPairs) {
+        return atomObjPairs.map (function (pair) {
+            return pair[0] && pair[1] ? pair[0].distanceTo (pair[1]) : undefined;    
+        }); 
     },
 
     _getAtomPairsFromResidue: function( residue ){

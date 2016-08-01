@@ -13,19 +13,8 @@ function initNGL(){
 		.then( function(
 		structureComp ){
 
-			var linkList = [];
-			
-			for(var crossLink of CLMSUI.xlv.crossLinks.values()){
-
-				linkList.push( {
-					fromResidue: crossLink.fromResidue,
-					toResidue: crossLink.toResidue
-				} );
-
-			}
-			
+			var linkList = Array.from (CLMSUI.xlv.crossLinks.values());
 			linkList = transformLinkList( linkList, "A" );
-			
 			var crosslinkData = new CrosslinkData( linkList );
 
 			var xlRepr = new CrosslinkRepresentation(

@@ -78,7 +78,7 @@
             this.chartDiv.selectAll("*").remove();
             
 			//create 3D network viewer
-    var self = this;
+            var self = this;
 			if ( ! Detector.webgl ) {
 				Detector.addGetWebGLMessage(mainDivSel); 
 			}
@@ -89,23 +89,29 @@
 
 				.then (function (structureComp) {
 					
-					   var crosslinkData = new CrosslinkData (self.makeLinkList (self.model.get("clmsModel").get("crossLinks")));
+                    var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                    var crosslinkData = new CrosslinkData (self.makeLinkList (crossLinks));
 
-					   self.xlRepr = new CrosslinkRepresentation(
-						      self.stage, structureComp, crosslinkData, {
-							         highlightedColor: "lightgreen",
-							         sstrucColor: "wheat",
-							         displayedDistanceColor: "tomato"
-						      }
-					   );
-                    
-                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                        console.log ("stage", self.stage, "\nhas sequences", sequences);
-                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                        self.model.trigger ("3dsync", sequences);  
-                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                        //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
-                        self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
+                   self.xlRepr = new CrosslinkRepresentation(
+                          self.stage, structureComp, crosslinkData, {
+                                 highlightedColor: "lightgreen",
+                                 sstrucColor: "wheat",
+                                 displayedDistanceColor: "tomato"
+                          }
+                   );
+
+                    console.log ("xlRepr", self.xlRepr);
+                    console.log ("crossLinks", crossLinks);
+                    var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
+                    console.log ("distances", dd.length, dd);
+
+                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                    console.log ("stage", self.stage, "\nhas sequences", sequences);
+                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                    self.model.trigger ("3dsync", sequences);  
+                    self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                    //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+                    self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
 				});
 				
 			}        
@@ -117,16 +123,34 @@
             console.log ("stage", this.stage);
         },
         
+        // TODO, need to check if a) alignments are loaded and b) check for decoys (protein has no alignment)
+        align: function (resIndex, proteinID) {
+            var alignModel = this.model.get("alignColl").get (proteinID);
+            //console.log ("am", proteinID, alignModel);
+            //console.log ("ids", alignModel.get("compAlignments"));
+            var alignPos = resIndex;
+            /*
+            if (alignModel) {
+                alignPos = alignModel.mapFromSearch ("3D_p0", resIndex);
+                console.log (resIndex, "->", alignPos);
+                if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
+            }
+            */
+            return alignPos;
+        },
+        
         makeLinkList: function (linkModel) {
             var linkList = [];
-					
-            for(var crossLink of linkModel.values()) {
-				linkList.push( {
-				    fromResidue: crossLink.fromResidue,
-				    toResidue: crossLink.toResidue
-				});     
+            console.log ("aligns", this.model.get("alignColl"));
+            console.log ("alignModel", this.model.get("alignColl"));
+            for (var xlink of linkModel.values()) {
+                console.log ("xl", xlink);
+                linkList.push ({
+                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id),
+                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id),
+                });
             }
-					
+            console.log ("ll", linkList);
             return transformLinkList (linkList, "A");	
         },
         
