@@ -157,6 +157,16 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
     },
 });
 
+CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
+    initialize: function () {
+        this.set("labels", this.get("colScale").copy().range(["Short", "Average", "Overlong"]));
+    },
+    getColour: function (crossLink) {
+        //return this.get("colScale")(getDistance (crossLink));
+        //return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null);
+    },
+});
+
 
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
@@ -169,7 +179,12 @@ CLMSUI.linkColour.setupColourModels = function () {
     }, {
         searchMap: CLMSUI.compositeModelInst.get("clmsModel").get("searches"),
     });
+    
+    CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
+       colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']) 
+    });
 
+    // add distanceColoursBB to this collection later if needed
     CLMSUI.linkColour.Collection = new CLMSUI.BackboneModelTypes.ColourModelCollection ([
         CLMSUI.linkColour.defaultColoursBB,
         CLMSUI.linkColour.groupColoursBB,

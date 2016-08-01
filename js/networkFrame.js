@@ -207,9 +207,11 @@ CLMSUI.init.views = function () {
 
     if (HSA_Active){
         // Distance slider
-        var distSliderDiv = d3.select("#sliderDiv");
-        var distSlider = new CLMSUI.DistanceSliderBB ({el: "#sliderDiv", model: CLMSUI.compositeModelInst.get("rangeModel") });
-        distSlider.brushmove();
+        var distSlider = new CLMSUI.ThreeColourSliderBB ({
+            el: "#sliderDiv", 
+            model: CLMSUI.compositeModelInst.get("rangeModel"),
+            underlyingScale: CLMSUI.linkColour.distanceColoursBB,
+        });
         //CLMSUI.rangeModelInst.set ("scale", scale);
         //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
         //distoViewer.setData(xlv.distances,xlv);
@@ -390,7 +392,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
-  /*  var distoViewer = new CLMSUI.DistogramBB ({
+    /*
+    var distoViewer = new CLMSUI.DistogramBB ({
         el: "#distoPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "distoShow",
@@ -398,8 +401,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             chartTitle: "Cross-Link Distogram",
             seriesName: "Actual"
         }
-    }); */
-
+    }); 
+    */
 
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({

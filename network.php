@@ -93,7 +93,7 @@
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/fdr.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
-        <script type="text/javascript" src="./js/DistanceSliderBB.js"></script>
+        <script type="text/javascript" src="./js/ThreeColourSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
