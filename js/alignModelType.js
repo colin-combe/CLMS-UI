@@ -16,6 +16,7 @@
             "compSeqs": ["CAT"],
             "compIDs": ["Demo"],
             "local": false,
+            "maxAlignWindow": 1000,
             "sequenceAligner": CLMSUI.GotohAligner,
         },
         
@@ -52,7 +53,8 @@
             var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
             var fullResults = this.get("compSeqs").map (function (cSeq) {
-                return aligner.align (cSeq, refSeq, scores, this.get("local"));
+                var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
+                return aligner.align (cSeq, refSeq, scores, this.get("local"), alignWindowSize);
             }, this);
             
             var refResults = fullResults.map (function (res) {

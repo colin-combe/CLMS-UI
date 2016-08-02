@@ -11,28 +11,194 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-            "A": true, "B": true, "C": true, "Q": false,
-            "AUTO": false,
+            "A": true, "B": true, "C": true, "Q": true, "R": false, "unval": true, 
+            "AUTO": true,
+            "linears": true,
+            "decoys": false,
+            "pepSeq": "",
+            "protNames": "",
+            "charge": "",
+            "runName": "",
+            "scanNumber": "",            
             "selfLinks": true,
             "ambig": true,
+            interFDRCut: undefined,
+            intraFDRCut: undefined,
         },
 
         initialize: function () {
             // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
-            this.set ("cutoff", [0,100]);
+            if (!this.get("cutoff")) {
+                this.set ("cutoff", [0,100]);
+            }
+            // scoreExtent used to restrain text input values
+            this.scoreExtent = this.get("cutoff").slice(0);
         },
 
         filter: function (match) {
-            //~ match = match[0];
-            var vChar = match.validated;
-            var scorePass = (!match.score || (match.score >= this.get("cutoff")[0] && match.score <= this.get("cutoff")[1]));
-            if (!scorePass) { return false; }
+			//linears? - if linear and linears not selected return false
+            if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
 
+			//decoys? - if decoy and decoys not selected return false
+            if (match.is_decoy && this.get("decoys")  == false) return false; 
+
+			//ambigs? - if ambig's not selected and match is ambig return false
+			if (this.get("ambig") == false) {
+				if (match.pepPos1.length > 1 || match.pepPos2.length > 1) return false;
+			}
+
+			//self-links? - if self links's not selected and match is self link return false
+			// possible an ambiguous self link will still get displayed
+			if (this.get("selfLinks") == false) {
+				var isSelfLink = true;
+				var p1 = match.protein1[0];
+				for (var i = 1; i < match.protein1.length; i++) {
+					if (match.protein1[i] != p1){
+						 isSelfLink = false;
+						 break;
+					 }
+				}
+				for (var i = 0; i < match.protein2.length; i++) {
+					if (match.protein2[i] != p1){
+						isSelfLink = false;
+						break;
+					}
+				}
+				if (isSelfLink) {
+					return false;
+				}
+			}
+
+			// if fail score cut off, return false;
+            if (match.score < this.get("cutoff")[0] || match.score > this.get("cutoff")[1]){
+				return false;
+			}
+			
+			//peptide seq check
+			if (seqCheck(this.get("pepSeq")) == false) {
+				return false;
+			};
+			
+			//protein name check
+			if (proteinNameCheck(this.get("protNames")) == false) {
+				return false;
+			};
+			
+			//charge check
+			var chargeFilter = this.get("charge");
+			if (chargeFilter && match.precursorCharge != chargeFilter){
+				return false;
+			}
+
+			//run name check
+			var runNameFilter = this.get("runName");
+			if (runNameFilter && 
+					match.runName.toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1){
+				return false;
+			}
+
+			//scan number check
+			var scanNumberFilter = this.get("scanNumber");
+			if (scanNumberFilter && 
+					match.scanNumber.toString().toLowerCase()
+						.indexOf(scanNumberFilter.toLowerCase()) == -1){
+				return false;
+			}
+
+            var vChar = match.validated;
             if (vChar == 'A' && this.get("A")) return true;
             if (vChar == 'B' && this.get("B")) return true;
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
+            if (vChar == 'R' && this.get("R")) return true;
             if (match.autovalidated && this.get("AUTO")) return true;
+			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
+            return false;
+            
+            //peptide seq check function
+			function seqCheck(searchString) {
+				if (searchString) {
+					var pepStrings = searchString.split('-');
+					if (pepStrings.length ==1) {
+						for (matchedPeptide of match.matchedPeptides) {
+							if (matchedPeptide.sequence.indexOf(searchString.toUpperCase()) != -1
+								|| matchedPeptide.seq_mods.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
+								return true;
+							}
+						}
+						return false;
+					}
+					
+					var used = [], matchedPepCount = match.matchedPeptides.length;
+					for (pepString of pepStrings) {
+						if (pepString){
+							var found = false;
+							for (var i = 0; i < matchedPepCount; i++){
+								var matchedPeptide = match.matchedPeptides[i];
+								if (found === false && typeof used[i] == 'undefined'){
+									if (matchedPeptide.sequence.indexOf(pepString.toUpperCase()) != -1
+									 || matchedPeptide.seq_mods.toLowerCase().indexOf(pepString.toLowerCase()) != -1) {
+										 found = true;
+										 used[i] = true;
+									}
+								}
+							}
+							if (found === false) return false;					
+						}
+					}
+				}
+				return true;
+			}            
+			
+            //protein name check
+			function proteinNameCheck(searchString) {
+				if (searchString) {
+					var nameStrings = searchString.split('-');
+					if (nameStrings.length ==1) {
+						for (matchedPeptide of match.matchedPeptides) {
+							for (pid of matchedPeptide.prt) {
+								var name = 
+								CLMSUI.compositeModelInst.get("clmsModel").get("interactors").get(pid).name;
+								if (name.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
+									return true;
+								}
+							
+							}
+						}
+						return false;
+					}
+					
+					var used = [], matchedPepCount = match.matchedPeptides.length;
+					for (nameString of nameStrings) {
+						if (nameString){
+							var found = false;
+							for (var i = 0; i < matchedPepCount; i++){
+								var matchedPeptide = match.matchedPeptides[i];
+								if (found === false && typeof used[i] == 'undefined'){
+									for (pid of matchedPeptide.prt) {
+										var name = CLMSUI.compositeModelInst.get("clmsModel")
+												.get("interactors").get(pid).name;
+										if (name.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
+											found = true;
+											used[i] = true;
+										}
+									}
+								}
+							}
+							if (found === false) return false;					
+						}
+					}
+				}
+				return true;
+			}
+        },
+        
+        filterLink: function (link) {
+            if (link.meta && link.meta.fdrScore !== undefined) {
+                var fdr = link.meta.fdrScore;
+                var intra = CLMSUI.modelUtils.isIntraLink (link);
+                return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
+            }
             return false;
         }
     }),

@@ -32,7 +32,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         var sectionData = [
             {
                 id: "colourKey",
-                header: "Colour Scheme",
+                header: "Link Colour Scheme",
                 rows: []
             },
             {
@@ -81,14 +81,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc);
         
-        var colScheme = CLMSUI.linkColour.defaultColours;
+        var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var cols = {
             intra: {isSelfLink: function () { return true;}}, 
             inter: {isSelfLink: function () { return false;}}
         };
         d3.keys(cols).forEach (function(key) {
-            cols[key].colour = colScheme (cols[key]);
-        });
+            cols[key].colour = colScheme.getColour(cols[key]);
+        }, colScheme);
         
         chartDiv.selectAll("table").selectAll("path,line")
             .filter (function() {
@@ -112,27 +112,30 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     
     render: function () {
         var colourSection =[{
-            header: "Colour Scheme",
+            header: "Link Colour Scheme",
             rows: []
         }];
         
         var colourAssign = this.model.get("linkColourAssignment");
-        colourAssign.init();
-        var colourDomain = colourAssign.colScale.domain();
-        colourSection[0].rows = colourDomain.map (function (val) {
-            return ["<span class='colourSwatch' style='background-color:"+colourAssign.colScale(val)+"'></span>", colourAssign.labels(val)];
-        });
-        
-        var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
-        updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.title; });
-        
-        var rowSel = updateSection.select("tbody").selectAll("tr").data(function(d) { return d.rows; });
-        rowSel.exit().remove();
-        rowSel.enter().append("tr");
-        
-        var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
-        cellSel.enter().append("td");
-        cellSel.html (function(d) { return d; });
+        if (colourAssign) {
+            //colourAssign.init();
+            // var colScale = colourAssign.colScale;
+            var colScale = colourAssign.get("colScale");
+            colourSection[0].rows = colScale.domain().map (function (val) {
+                return ["<span class='colourSwatch' style='background-color:"+colScale(val)+"'></span>", colourAssign.get("labels")(val)];
+            });
+
+            var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
+            updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.get("title"); });
+
+            var rowSel = updateSection.select("tbody").selectAll("tr").data(function(d) { return d.rows; });
+            rowSel.exit().remove();
+            rowSel.enter().append("tr");
+
+            var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
+            cellSel.enter().append("td");
+            cellSel.html (function(d) { return d; });
+        }
         
         return this;
     }

@@ -71,6 +71,11 @@ CLMSUI.modelUtils = {
         */
     },
     
+    // lots of scores, what's the extent (min and max values)?
+    getScoreExtent: function (matchesArr) {
+        return d3.extent (matchesArr.map (function(d) { return d.score; }));
+    },
+     
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
     // lys = k, ser = s, thr = t, tyr = y
@@ -234,14 +239,14 @@ CLMSUI.modelUtils = {
     },
     
     linkHasHomomultimerMatch: function (xlink) {
-        return xlink.filteredMatches.some (function (match) {
-            return match[0].confirmedHomomultimer;    
+        return xlink.filteredMatches_pp.some (function (matchAndPepPos) {
+            return matchAndPepPos.match.confirmedHomomultimer;    
         });
     },
     
     aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
-            return xlink.getFilteredMatches();
+            return xlink.filteredMatches_pp;
         });
         return [].concat.apply([], nestedArr);
     },
@@ -261,5 +266,13 @@ CLMSUI.modelUtils = {
         var searchData = searchMap.get(searchId);
         var randId = searchData.randId;    
         return randId;
+    },
+    
+    isReverseProtein: function (prot1, prot2) {
+        return (prot1.description === prot2.description && (prot1.is_decoy ^ prot2.is_decoy));
+    },
+    
+    isIntraLink: function (crossLink) {
+         return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
     },
 };

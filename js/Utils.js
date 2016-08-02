@@ -52,7 +52,10 @@ CLMSUI.utils = {
     
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
-        return (zeptoElem.css('display') != 'none' && zeptoElem.css('visibility') != 'hidden' && zeptoElem.height()>0);
+		var height = zeptoElem.height()>0;
+        var visibility = zeptoElem.css('visibility') != 'hidden'; 
+        var display = zeptoElem.css('display') != 'none'; 
+        return (display && visibility && height);
     },
     
     // try .layerX / .layerY first as .offsetX / .offsetY is wrong in firefox
@@ -293,7 +296,12 @@ CLMSUI.utils = {
         
         // Ask if view is currently visible in the DOM
         isVisible: function () {
-            return CLMSUI.utils.isZeptoDOMElemVisible (this.$el);   
+			var start = window.performance.now();
+			console.log(this.$el.toString() + "isVis start:" + start);
+			var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
+			console.log(this.$el, "isVis time:" + answer , (window.performance.now() - start));
+			
+            return answer;   
         },
         
         // removes view
@@ -320,18 +328,39 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             .append("select")
             .attr("id", "linkColourSelect")
             .on ("change", function () {
-                var colourModel = self.model.at (d3.event.target.selectedIndex);
-                if (options.choiceFunc) { options.choiceFunc (colourModel); }
-                //CLMSUI.compositeModelInst.set("linkColourAssignment", colourModel);
+                if (options.storeSelectedAt) { 
+                    var colourModel = self.model.at (d3.event.target.selectedIndex);
+                    //CLMSUI.compositeModelInst.set("linkColourAssignment", colourModel);
+                    options.storeSelectedAt.model.set (options.storeSelectedAt.attr, colourModel);
+                }   
             })
             .selectAll("option")
             .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
             .enter()
             .append("option")
                 .text (function(d) { return d; })
-                .property("selected", function(d,i) { return i === 0; })
         ;
+        
+        if (options.storeSelectedAt) {
+            this.listenTo (options.storeSelectedAt.model, "change:"+options.storeSelectedAt.attr, function (compModel, newColourModel) {
+                //console.log ("colourSelector listening to change Link Colour Assignment", this, arguments); 
+                this.setSelected (newColourModel);
+            });
+        }
+        
+        return this;
     },
+    
+    setSelected: function (model) {
+        d3.select(this.el)
+            .selectAll("option")
+            .property ("selected", function(d) {
+                return d === model.get("title");
+            })
+        ;
+        
+        return this;
+    }
 });
 
 
@@ -348,6 +377,79 @@ CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
         return this;
     }
 });
+
+
+CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
+    initialize: function () {
+        CLMSUI.utils.FDRViewBB.__super__.initialize.apply (this, arguments);
+        
+        var chartDiv = d3.select(this.el).append("div")
+            .attr("class", "panelInner")
+        ;       
+        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        chartDiv.html ("<fieldset><legend>Basic FDR Calculation</legend><span></span></fieldset>");
+        var self = this;
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5, undefined];
+        var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
+        
+        function doFDR (d) {
+            self.lastSetting = d;
+            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
+            chartDiv.select(".fdrResult")
+                .style("display", "block")
+                .html("")
+                .selectAll("p").data(result)
+                    .enter()
+                    .append("p")
+                    .text(function(d) {
+                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+d.fdr : ">"+d.fdr+" (Rate not met)");
+                    })
+            ;
+            chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
+
+            // bit that communicates to rest of system
+            self.model.get("filterModel")
+                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
+            ;
+
+            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
+        }
+        
+        chartDiv.select("span").selectAll("label.fixed").data(options)
+            .enter()
+            .append("label")
+            .classed ("horizontalFlow fixed", true)
+            .text(labelFunc)
+            .append("input")
+                .attr("type", "radio")
+                .attr("value", function(d) { return d; })
+                .attr("name", "fdrPercent")
+                .on ("click", function(d) {
+                    d3.select(self.el).select("input[type='number']").property("value", "");
+                    doFDR (d);
+                })
+        ;
+        
+        chartDiv.select("span").append("label")
+            .text("Other %")
+            .attr("class", "horizontalFlow")
+            .append("input")
+                .attr("type", "number")
+                .attr("min", 0)
+                .attr("max", 100)
+                .attr("step", 1)
+                .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                    d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
+                    doFDR ((+this.value) / 100);
+                })
+        ;
+        
+        chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
+        chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
+        return this;
+    }
+});
+
 
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);
