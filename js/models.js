@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {}, 
+CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
 {
     DistancesModel: Backbone.Model.extend({
@@ -15,6 +15,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             "AUTO": false,
             "selfLinks": true,
             "ambig": true,
+            "seqSep": "",
         },
 
         initialize: function () {
@@ -27,6 +28,18 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             var vChar = match.validated;
             var scorePass = (!match.score || (match.score >= this.get("cutoff")[0] && match.score <= this.get("cutoff")[1]));
             if (!scorePass) { return false; }
+
+            var seqSepFilter = this.get("seqSep");
+            if (!isNaN(seqSepFilter)) {
+                 //if not ambig && is selfLink
+                if (match.protein1.length == 1 && match.protein2
+                        && match.protein1[0] == match.protein2[0]) {
+                    var unambigCrossLink = match.crossLinks[0];
+                    if ((unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < seqSepFilter){
+                        return false;
+                    }
+                }
+            }
 
             if (vChar == 'A' && this.get("A")) return true;
             if (vChar == 'B' && this.get("B")) return true;
@@ -79,7 +92,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         },
 
         initialize: function () {
-            // http://stackoverflow.com/questions/6433795/backbone-js-handling-of-attributes-that-are-arrays    
+            // http://stackoverflow.com/questions/6433795/backbone-js-handling-of-attributes-that-are-arrays
             // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
             this.set ("secondaries", ["blee", "whee"]);
         },
@@ -88,7 +101,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 });
 
 // this is separate to get round the fact BlosumModel won't be available within the same declaration
-CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {}, 
+CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 {
     BlosumCollection: Backbone.Collection.extend ({
         model: CLMSUI.BackboneModelTypes.BlosumModel,
