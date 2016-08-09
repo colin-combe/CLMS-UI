@@ -111,7 +111,7 @@ var CrosslinkWidget = function( structureComp, csvData ){
 
 	}
 
-	xlRepr.signals.onPicking.add( handlePicking );
+	xlRepr.signals.clicked.add( handlePicking );
 
 	//
 
@@ -208,7 +208,7 @@ var CrosslinkWidget = function( structureComp, csvData ){
 
 			}
 
-			xlRepr.signals.onPicking.add( handlePicking );
+			xlRepr.signals.clicked.add( handlePicking );
 
 		} );
 
@@ -243,7 +243,7 @@ function initNGL(){
 			onLoad: prepareStructure,
 			sele: ":A"
 		} );
-		//~ stage.signals.onPicking.add( handlePicking );
+		//~ stage.signals.clicked.add( handlePicking );
 
 		 //~ register callbacks for ngl
 
@@ -389,7 +389,8 @@ function prepareStructure( comp ){
 
 	comp.addRepresentation( "spacefill", {
 		sele: "none",
-		color: new THREE.Color( "white" ).getHex(),
+		//color: new THREE.Color( "white" ).getHex(),
+        color: new NGL.Color( "white" ).getHex(),
 		scale: 0.6,
 		name: "allRes"
 	} );
@@ -461,7 +462,8 @@ function prepareCrosslinkData(){
 	strucComp.addRepresentation( "distance", {
 			atomPair: xlPair,
 			sele: "none",
-			color: new THREE.Color( "fuchsia" ).getHex(),
+			//color: new THREE.Color( "fuchsia" ).getHex(),
+            color: new NGL.Color( "fuchsia" ).getHex(),
 			labelSize: 2.0,
 			scale: 1.5,
 			//~ transparent: true,

@@ -79,44 +79,42 @@
             
 			//create 3D network viewer
             var self = this;
-			if ( ! Detector.webgl ) {
+			if (false /* ! Detector.webgl*/ ) {
 				Detector.addGetWebGLMessage(mainDivSel); 
 			}
 			else {
 				this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
 				this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
+                    .then (function (structureComp) {
 
+                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                        var crosslinkData = new CrosslinkData (self.makeLinkList (Array.from (crossLinks.values())));
 
-				.then (function (structureComp) {
-					
-                    var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                    var crosslinkData = new CrosslinkData (self.makeLinkList (crossLinks));
+                        
+                       self.xlRepr = new CrosslinkRepresentation(
+                              self.stage, structureComp, crosslinkData, {
+                                     highlightedColor: "lightgreen",
+                                     sstrucColor: "wheat",
+                                     displayedDistanceColor: "tomato"
+                              }
+                       );
+                       
 
-                   self.xlRepr = new CrosslinkRepresentation(
-                          self.stage, structureComp, crosslinkData, {
-                                 highlightedColor: "lightgreen",
-                                 sstrucColor: "wheat",
-                                 displayedDistanceColor: "tomato"
-                          }
-                   );
+                        //console.log ("xlRepr", self.xlRepr);
+                        //console.log ("crossLinks", crossLinks);
+                        //var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
+                        //console.log ("distances", dd.length, dd);
 
-                    console.log ("xlRepr", self.xlRepr);
-                    console.log ("crossLinks", crossLinks);
-                    var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
-                    console.log ("distances", dd.length, dd);
-
-                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                    console.log ("stage", self.stage, "\nhas sequences", sequences);
-                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                    self.model.trigger ("3dsync", sequences);  
-                    self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                    //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
-                    self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
-				});
-				
+                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                        console.log ("stage", self.stage, "\nhas sequences", sequences);
+                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                        self.model.trigger ("3dsync", sequences);  
+                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                        //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+                        self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
+                    })
+                ;
 			}        
-
-
         },
         
         showSelected: function () {
@@ -140,17 +138,17 @@
         },
         
         makeLinkList: function (linkModel) {
-            var linkList = [];
-            console.log ("aligns", this.model.get("alignColl"));
-            console.log ("alignModel", this.model.get("alignColl"));
-            for (var xlink of linkModel.values()) {
-                console.log ("xl", xlink);
-                linkList.push ({
+            //console.log ("aligns", this.model.get("alignColl"));
+            //console.log ("alignModel", this.model.get("alignColl"));
+            //console.log ("linkModel", linkModel);
+            var linkList = linkModel.map (function (xlink) {
+                //console.log ("xl", xlink);
+                return {
                     fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id),
                     toResidue: this.align (xlink.toResidue, xlink.toProtein.id),
-                });
-            }
-            console.log ("ll", linkList);
+                };
+            }, this);
+            //console.log ("ll", linkList);
             return transformLinkList (linkList, "A");	
         },
         
@@ -171,8 +169,8 @@
                 //console.log ("linx", filteredCrossLinks, filteredCrossLinks.size);
 
                 var linkList = this.makeLinkList (filteredCrossLinks);
-                this.xlRepr.setDisplayedLinks (linkList);  // seems to be equivalent to line below but doesn't incur spacefill calcs?
-                //this.xlRepr.crosslinkData.setLinkList (linkList);
+                //this.xlRepr.setDisplayedLinks (linkList);  // seems to be equivalent to line below but doesn't incur spacefill calcs?
+                this.xlRepr.crosslinkData.setLinkList (linkList);
             }
         },
 

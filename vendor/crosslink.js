@@ -46,7 +46,8 @@ function transformLinkList( linkList, chainname, structureId ){
 var CrosslinkData = function( linkList ){
 
     this.signals = {
-        linkListChanged: new signals.Signal()
+        //linkListChanged: new signals.Signal()
+        linkListChanged: new NGL.Signal()
     };
 
     this.setLinkList( linkList );
@@ -244,7 +245,8 @@ var CrosslinkRepresentation = function( stage, structureComp, crosslinkData, par
     //
 
     this.signals = {
-        onPicking: new signals.Signal()
+        //onPicking: new signals.Signal()
+        clicked: new NGL.Signal()
     };
 
     this.stage = stage;
@@ -266,8 +268,10 @@ var CrosslinkRepresentation = function( stage, structureComp, crosslinkData, par
 
     this._initStructureRepr();
     this._initLinkRepr();
+    
+    console.log ("stage", this.stage);
 
-    this.stage.signals.onPicking.add(
+    this.stage.signals.clicked.add(
         this._handlePicking, this
     );
     this.crosslinkData.signals.linkListChanged.add(
@@ -301,14 +305,31 @@ CrosslinkRepresentation.prototype = {
 
                 var resA = rl.residueA;
                 var resB = rl.residueB;
+                
+                var selA = resToSele (resA, false);
+                var selB = resToSele (resB, false);
+                
+                //console.log ("structure", structure, resA, selA);
 
-                var a1 = structure.getAtoms( resToSele( resA, true ), true );
-                var a2 = structure.getAtoms( resToSele( resB, true ), true );
+                //var a1 = structure.getAtoms( resToSele( resA, true ), true );
+                //var a2 = structure.getAtoms( resToSele( resB, true ), true );
+                
+                //var a1 = structure.getAtomSet (selA, true );
+                //var a2 = structure.getAtomSet( resToSele( resB, true ), true );
+                
+                //structure.eachAtom (function(atom) {
+                //    console.log ("atom", atom, arguments);
+                //}, selA);
+                
+                //var a3 = structure.getAtomIndices (selA);
+                //var a4 = structure.getAtomIndices (selB);
+                
+                //console.log ("aa", a3, a4);
 
-                if( a1 && a2 ){
-                    atomPairs.push( [ resToSele( resA ), resToSele( resB ) ] );
+                if( selA && selB ){
+                    atomPairs.push( [selA, selB] );
                 } else {
-                    console.log ("dodgy pair", rl, a1, a2);
+                    console.log ("dodgy pair", rl);
                 }
 
             } );
@@ -336,10 +357,16 @@ CrosslinkRepresentation.prototype = {
             var resToSele = this._getSelectionFromResidue;
 
             atomPairs = linkList.map ( function( rl ){
-                var a1 = structure.getAtoms( resToSele( rl.residueA, true ), true );
-                var a2 = structure.getAtoms( resToSele( rl.residueB, true ), true );
-                console.log (rl.residueA, rl.residueB, a1, a2);
-                return [a1, a2]; // don't filter out null/undefined a1/a2s; ensures atomPair array index order matches linklist array order
+                //var a1 = structure.getAtoms( resToSele( rl.residueA, true ), true );
+                //var a2 = structure.getAtoms( resToSele( rl.residueB, true ), true );
+                var selA = resToSele( rl.residueA, false);
+                var selB = resToSele( rl.residueB, false );
+                //var a1 = structure.getAtomSet( resToSele( rl.residueA, true ), true );
+                //var a2 = structure.getAtomSet( resToSele( rl.residueB, true ), true );
+                var a3 = structure.getAtomIndices (selA);
+                var a4 = structure.getAtomIndices (selB);
+                //console.log (rl.residueA, rl.residueB, a1, a2);
+                return [a3[0], a4[0]]; // don't filter out null/undefined a1/a2s; ensures atomPair array index order matches linklist array order
             } );
 
         }
@@ -382,12 +409,10 @@ CrosslinkRepresentation.prototype = {
 
             if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
 
-            var tmp = [];
-
-            resnoList.forEach( function( r ){
+            var tmp = resnoList.map ( function( r ){
                 var rsele = r.resno;
-                if( r.chainname ) rsele + ":" + r.chainname;
-                tmp.push( rsele );
+                //if( r.chainname ) { rsele = rsele + ":" + r.chainname; }
+                return rsele;
             } );
 
             sele = "( " + tmp.join( " OR " ) + " ) AND .CA";
@@ -447,18 +472,18 @@ CrosslinkRepresentation.prototype = {
 
         this.linkRepr = comp.addRepresentation( "distance", {
             atomPair: xlPair,
-            color: this.displayedLinksColor,
-            labelSize: 2.0,
-            labelColor: this.displayedDistanceColor,
-            labelVisible: this.displayedDistanceVisible,
+            colorValue: this.displayedLinksColor,
+            //labelSize: 2.0,
+            //labelColor: this.displayedDistanceColor,
+            //labelVisible: this.displayedDistanceVisible,
             name: "link"
         } );
         
-        console.log ("comp & repr", comp, this.linkRepr);
+        console.log ("comp & repr", comp, this.linkRepr, xlPair);
 
         this.linkEmphRepr = comp.addRepresentation( "distance", {
             atomPair: xlPairEmph,
-            color: this.highlightedLinksColor,
+            colorValue: this.highlightedLinksColor,
             labelSize: 2.0,
             labelColor: this.highlightedDistanceColor,
             labelVisible: this.highlightedDistanceVisible,
@@ -494,8 +519,10 @@ CrosslinkRepresentation.prototype = {
         }, "linkCount" );
 
         this.colorOptions[ "linkCount" ] = this.linkCountScheme;
-        this.colorOptions[ "white" ] = new THREE.Color( "white" ).getHex();
-        this.colorOptions[ "lightgrey" ] = new THREE.Color( "lightgrey" ).getHex();
+        //this.colorOptions[ "white" ] = new THREE.Color( "white" ).getHex();
+        //this.colorOptions[ "lightgrey" ] = new THREE.Color( "lightgrey" ).getHex();
+        this.colorOptions[ "white" ] = new NGL.Color( "white" ).getHex();
+        this.colorOptions[ "lightgrey" ] = new NGL.Color( "lightgrey" ).getHex();
 
     },
 
@@ -539,7 +566,7 @@ CrosslinkRepresentation.prototype = {
 
         }
 
-        this.signals.onPicking.dispatch( pd2 );
+        this.signals.clicked.dispatch( pd2 );
 
     },
 
@@ -590,7 +617,6 @@ CrosslinkRepresentation.prototype = {
     // API
 
     setDisplayed: function( residues, links ){
-
         this.setDisplayedResidues( residues );
         this.setDisplayedLinks( links );
 
@@ -626,13 +652,11 @@ CrosslinkRepresentation.prototype = {
     },
 
     setDisplayedLinks: function( links ){
-
         this._displayedLinks = links;
         var availableLinks = this._getAvailableLinks( links );
         //console.log ("disp links", availableLinks);
-
         var atomPairs = this._getAtomPairsFromLink (availableLinks);
-        //console.log ("atom pairs", atomPairs);
+        console.log ("atom pairs", atomPairs);
         this.linkRepr.setParameters ({
             atomPair: atomPairs,
         });
@@ -756,7 +780,7 @@ CrosslinkRepresentation.prototype = {
 
     dispose: function(){
 
-        this.stage.signals.onPicking.remove(
+        this.stage.signals.clicked.remove(
             this._handlePicking, this
         );
         this.crosslinkData.signals.linkListChanged.remove(
