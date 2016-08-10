@@ -475,7 +475,7 @@ CrosslinkRepresentation.prototype = {
             colorValue: this.displayedLinksColor,
             //labelSize: 2.0,
             //labelColor: this.displayedDistanceColor,
-            //labelVisible: this.displayedDistanceVisible,
+            labelVisible: false, //this.displayedDistanceVisible,
             name: "link"
         } );
         
@@ -656,7 +656,7 @@ CrosslinkRepresentation.prototype = {
         var availableLinks = this._getAvailableLinks( links );
         //console.log ("disp links", availableLinks);
         var atomPairs = this._getAtomPairsFromLink (availableLinks);
-        console.log ("atom pairs", atomPairs);
+        //console.log ("atom pairs", atomPairs);
         this.linkRepr.setParameters ({
             atomPair: atomPairs,
         });
@@ -668,6 +668,7 @@ CrosslinkRepresentation.prototype = {
         this._highlightedLinks = links;
         var availableLinks = this._getAvailableLinks( links );
 
+        //console.log ("this", this.linkEmphRepr);
         this.linkEmphRepr.setParameters( {
             atomPair: this._getAtomPairsFromLink( availableLinks ),
         } );

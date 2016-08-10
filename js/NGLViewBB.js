@@ -87,10 +87,16 @@
 				this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
                     .then (function (structureComp) {
 
+                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                        console.log ("stage", self.stage, "\nhas sequences", sequences);
+                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                        self.model.trigger ("3dsync", sequences);
+                    
+                    
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as itneeds aligning)
                         var crossLinks = self.model.get("clmsModel").get("crossLinks");
                         var crosslinkData = new CrosslinkData (self.makeLinkList (Array.from (crossLinks.values())));
 
-                        
                        self.xlRepr = new CrosslinkRepresentation(
                               self.stage, structureComp, crosslinkData, {
                                      highlightedColor: "lightgreen",
@@ -98,17 +104,12 @@
                                      displayedDistanceColor: "tomato"
                               }
                        );
-                       
-
+                    
                         //console.log ("xlRepr", self.xlRepr);
                         //console.log ("crossLinks", crossLinks);
                         //var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
-                        //console.log ("distances", dd.length, dd);
-
-                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                        console.log ("stage", self.stage, "\nhas sequences", sequences);
-                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                        self.model.trigger ("3dsync", sequences);  
+                        //console.log ("distances", dd.length, dd);    
+                    
                         self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
                         //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
                         self.listenTo (self.model.get("clmsModel"), "change:selection", self.showSelected);
@@ -127,13 +128,13 @@
             //console.log ("am", proteinID, alignModel);
             //console.log ("ids", alignModel.get("compAlignments"));
             var alignPos = resIndex;
-            /*
+            
             if (alignModel) {
                 alignPos = alignModel.mapFromSearch ("3D_p0", resIndex);
-                console.log (resIndex, "->", alignPos);
+                //console.log (resIndex, "->", alignPos, alignModel);
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }
-            */
+            
             return alignPos;
         },
         
@@ -148,6 +149,10 @@
                     toResidue: this.align (xlink.toResidue, xlink.toProtein.id),
                 };
             }, this);
+            
+            linkList = linkList.filter (function (link) {
+                return link.fromResidue > 0 && link.toResidue > 0;
+            });
             //console.log ("ll", linkList);
             return transformLinkList (linkList, "A");	
         },

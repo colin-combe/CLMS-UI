@@ -224,12 +224,16 @@ CLMSUI.modelUtils = {
             
             comp.structure.eachModel (function(m) {
                 var resList = [];
+                console.log ("model", m);
 
                 m.eachChain (function(c) {
-                    c.eachResidue (function (r) {
-                        var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
-                        resList.push (oneLetter || "X");    
-                    });
+                    console.log ("chain", c, c.residueCount, c.residueOffset);
+                    if (c.residueOffset === 0) {    // just use first chain for the moment. is a hack.
+                        c.eachResidue (function (r) {
+                            var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
+                            resList.push (oneLetter || "X");    
+                        });
+                    }
                 });
                 sequences[sequences.length] = {id: pid, name: "3D_p"+m.index, data: resList.join("")};
             });
