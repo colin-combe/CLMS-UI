@@ -92,13 +92,14 @@
                         // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
                         self.model.trigger ("3dsync", sequences);
                     
+                        console.log ("strcomp", structureComp);
                     
                         // Now 3d sequence is added we can make a new crosslinkrepresentation (as itneeds aligning)
                         var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                        var crosslinkData = new CrosslinkData (self.makeLinkList (Array.from (crossLinks.values())));
+                        var crosslinkData = new CrosslinkData (self.makeLinkList (Array.from (crossLinks.values()), structureComp.structure.residueStore));
 
                        self.xlRepr = new CrosslinkRepresentation(
-                              self.stage, structureComp, crosslinkData, {
+                              self.model, self.stage, structureComp, crosslinkData, {
                                      highlightedColor: "lightgreen",
                                      sstrucColor: "wheat",
                                      displayedDistanceColor: "tomato"
@@ -119,6 +120,7 @@
         },
         
         showSelected: function () {
+            console.log ("3d selected arguments", arguments);
             console.log ("stage", this.stage);
         },
         
@@ -138,7 +140,9 @@
             return alignPos;
         },
         
-        makeLinkList: function (linkModel) {
+        // residueStore maps the NGL-indexed resides to PDB-index
+        // so we take our alignment index --> which goes to NGL-sequence index with align() --> which goes to PDB index with residueStore
+        makeLinkList: function (linkModel, residueStore) {
             //console.log ("aligns", this.model.get("alignColl"));
             //console.log ("alignModel", this.model.get("alignColl"));
             //console.log ("linkModel", linkModel);
@@ -147,6 +151,7 @@
                 return {
                     fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id),
                     toResidue: this.align (xlink.toResidue, xlink.toProtein.id),
+                    id: xlink.id,
                 };
             }, this);
             
@@ -154,7 +159,7 @@
                 return link.fromResidue > 0 && link.toResidue > 0;
             });
             //console.log ("ll", linkList);
-            return transformLinkList (linkList, "A");	
+            return transformLinkList (linkList, "A", null, residueStore);	
         },
         
         filterCrossLinks: function (crossLinks) {
@@ -173,7 +178,7 @@
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 //console.log ("linx", filteredCrossLinks, filteredCrossLinks.size);
 
-                var linkList = this.makeLinkList (filteredCrossLinks);
+                var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
                 //this.xlRepr.setDisplayedLinks (linkList);  // seems to be equivalent to line below but doesn't incur spacefill calcs?
                 this.xlRepr.crosslinkData.setLinkList (linkList);
             }

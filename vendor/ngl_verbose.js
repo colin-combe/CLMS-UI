@@ -77510,7 +77510,7 @@
 	                position[ i3 + 2 ] = ( ap1.z + ap2.z ) / 2;
 
 	            }else{
-
+                             console.log ("bad bond", pair, nasty);
 	                j += 1;
 
 	            }
