@@ -211,36 +211,18 @@ CrosslinkData.prototype = {
 
 var CrosslinkRepresentation = function( CLMSmodel, stage, structureComp, crosslinkData, params ){
 
-    var p = Object.assign( {}, params );
-
-    if( p.displayedResiduesColor === undefined && p.displayedColor === undefined ){
-        p.displayedResiduesColor = "lightgrey";
-    }
-    if( p.displayedLinksColor === undefined && p.displayedColor === undefined ){
-        p.displayedLinksColor = "lightblue";
-    }
-    if( p.highlightedResiduesColor === undefined && p.highlightedColor === undefined ){
-        p.highlightedResiduesColor = "lightgreen";
-    }
-    if( p.highlightedLinksColor === undefined && p.highlightedColor === undefined ){
-        p.highlightedLinksColor = "lightgreen";
-    }
-    if( p.sstrucColor === undefined ){
-        p.sstrucColor = "wheat";
-    }
-    if( p.displayedDistanceColor === undefined ){
-        p.displayedDistanceColor = "tomato";
-    }
-    if( p.highlightedDistanceColor === undefined ){
-        p.highlightedDistanceColor = "white";
-    }
-    if( p.displayedDistanceVisible === undefined ){
-        p.displayedDistanceVisible = false;
-    }
-    if( p.highlightedDistanceVisible === undefined ){
-        p.highlightedDistanceVisible = true;
-    }
-
+    var defaults = {
+        sstrucColor: "wheat",
+        displayedDistanceColor: "tomato",
+        highlightedDistanceColor: "white",
+        displayedDistanceVisible: false,
+        highlightedDistanceVisible: true,
+        displayedResiduesColor: params.displayedColor ? undefined : "lightgrey",
+        displayedLinksColor: params.displayedColor ? undefined : "lighblue",
+        highlightedResiduesColor: params.highlightedColor ? undefined : "lightgreen",
+        highlightedLinksColor: params.highlightedColor ? undefined : "lightgreen",
+    };
+    var p = _.extend({}, defaults, params);
     this.setParameters( p, true );
 
     //
@@ -250,7 +232,7 @@ var CrosslinkRepresentation = function( CLMSmodel, stage, structureComp, crossli
         clicked: new NGL.Signal()
     };
 
-    this.CLMSmodel = CLMSmodel;
+    this.model = CLMSmodel;
     this.stage = stage;
     this.structureComp = structureComp;
     this.crosslinkData = crosslinkData;
@@ -397,7 +379,7 @@ CrosslinkRepresentation.prototype = {
 
             var tmp = resnoList.map ( function( r ){
                 var rsele = r.resno;
-                //if( r.chainname ) { rsele = rsele + ":" + r.chainname; }
+                if( r.chainname ) { rsele = rsele + ":" + r.chainname; }
                 return rsele;
             } );
 
@@ -485,47 +467,23 @@ CrosslinkRepresentation.prototype = {
 
         var self = this;
 
-        var linkCountScale = chroma
-            .scale( 'YlGn' )
-            .mode('lch')
-            .domain( [ 0, 8 ] );
-
-        this.linkCountScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
-
-            this.atomColor = function( atom ){
-
-                var count = self.xlRes[ atom.resno ].length;
-
-                var _c = linkCountScale( count )._rgb;
-                var c = _c[0] << 16 | _c[1] << 8 | _c[2];
-
-                return c;
-
-            }
-
-        }, "linkCount" );
-
-        this.colorOptions[ "linkCount" ] = this.linkCountScheme;
-        //this.colorOptions[ "white" ] = new THREE.Color( "white" ).getHex();
-        //this.colorOptions[ "lightgrey" ] = new THREE.Color( "lightgrey" ).getHex();
-        this.colorOptions[ "white" ] = new NGL.Color( "white" ).getHex();
-        this.colorOptions[ "lightgrey" ] = new NGL.Color( "lightgrey" ).getHex();
+        this.colorOptions.white = new NGL.Color("white").getHex();
+        this.colorOptions.lightgrey = new NGL.Color("lightgrey").getHex();
         
-        var selColourScheme = function(params) {
-            this.atomColor = function( a ){
-                console.log ("atom", a);
+        var selColourScheme = function (params) {
+            this.atomColor = function () {
                 return 255;
             };
             
             this.bondColor = function(b, fromTo) {
-                console.log ("bond", b);
+                //console.log ("bond", b);
                 var origLinkId = self.origIds[b.index];
-                console.log ("origLink", origLinkId);
-                var link = self.CLMSmodel.get("clmsModel").get("crossLinks").get(origLinkId);
-                console.log ("link", link);
-                var col = self.CLMSmodel.get("linkColourAssignment").get("colScale")(link);
+                //console.log ("origLink", origLinkId);
+                var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
+                //console.log ("link", link);
+                var col = self.model.get("linkColourAssignment").get("colScale")(link);
 
-                console.log ("col", col);
+                //console.log ("col", col);
                 var col3 = d3.rgb(col);
                 return col ? (col3.r << 16) + (col3.g << 8) + col3.b : 255;
             };
@@ -537,8 +495,8 @@ CrosslinkRepresentation.prototype = {
     },
 
     _handlePicking: function( pickingData ){
-
         var pd = pickingData;
+        console.log ("pickingData", pd, pd.atom ? pd.atom.resno : "no atom");
         var crosslinkData = this.crosslinkData;
 
         var pd2 = {
@@ -575,6 +533,8 @@ CrosslinkRepresentation.prototype = {
             }
 
         }
+        
+        console.log ("pd2", pd2);
 
         this.signals.clicked.dispatch( pd2 );
 

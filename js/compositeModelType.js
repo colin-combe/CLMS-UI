@@ -89,22 +89,24 @@
         // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
         // to fill in the model
         calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
-            if (add) {
-                var existingCrossLinks = this.get (modelProperty);
-                crossLinks = crossLinks.concat (existingCrossLinks);
-                console.log ("excl", existingCrossLinks);
-            }
-            var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
+            if (crossLinks) {   // if undefined nothing happens, to remove selection pass an empty array - []
+                if (add) {
+                    var existingCrossLinks = this.get (modelProperty);
+                    crossLinks = crossLinks.concat (existingCrossLinks);
+                    console.log ("excl", existingCrossLinks);
+                }
+                var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
 
-            if (andAlternatives) {
-                crossLinks.forEach (function (crossLink) {
-                    if (crossLink.ambiguous || crossLink.ambig) {
-                       this.recurseAmbiguity (crossLink, crossLinkMap);
-                    }
-                }, this);
+                if (andAlternatives) {
+                    crossLinks.forEach (function (crossLink) {
+                        if (crossLink.ambiguous || crossLink.ambig) {
+                           this.recurseAmbiguity (crossLink, crossLinkMap);
+                        }
+                    }, this);
+                }
+                var dedupedCrossLinks = crossLinkMap.values();
+                this.set (modelProperty, dedupedCrossLinks);
             }
-            var dedupedCrossLinks = crossLinkMap.values();
-            this.set (modelProperty, dedupedCrossLinks);
         },
 
         recurseAmbiguity: function (crossLink, crossLinkMap) {
