@@ -258,7 +258,6 @@
 CLMSUI.CrosslinkData = function( linkList ){
 
     this.signals = {
-        //linkListChanged: new signals.Signal()
         linkListChanged: new NGL.Signal()
     };
 
@@ -314,6 +313,7 @@ CLMSUI.CrosslinkData.prototype = {
         this._linkIdToLink = linkIdToLink;
         this._residueIdToResidue = residueIdToResidue;
 
+        console.log ("stlinklist", linkList, linkIdToLink);
         this._linkList = linkList;
         this._residueList = residueList;
 
@@ -633,6 +633,18 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "link"
         } );
         
+        var wunction2 = function (pd) {
+            console.log ("WUNCTION 2", pd);
+             if( pd.bond !== undefined ){
+                console.log ("pd handle 2. bond", pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2, pd.bond.atom1.chainname, pd.bond.atom2.chainname);
+             }
+        };
+         this.linkRepr.signals.clicked = new NGL.Signal();
+        this.linkRepr.signals.clicked.add (wunction2, this);
+        this.stage.signals.clicked.add(
+            this._handlePicking, this
+        );
+        
         console.log ("comp & repr", comp, this.linkRepr, xlPair);
 
         this.linkEmphRepr = comp.addRepresentation( "distance", {
@@ -659,9 +671,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             this.atomColor = function () {
                 return 255;
             };
-            
+            var z = 0;
             this.bondColor = function(b, fromTo) {
                 //console.log ("bond", b);
+                if (!z) {
+                    console.log ("bond", z, b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
+                    z++;
+                }
                 var origLinkId = self.origIds[b.index];
                 //console.log ("origLink", origLinkId);
                 var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
@@ -691,6 +707,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         if( pd.atom !== undefined && pd.bond === undefined ){
 
+            console.log ("atom", pd.atom.resno);
             var residues = crosslinkData.findResidues(
                 pd.atom.resno, pd.atom.chainname
             );
@@ -700,15 +717,28 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             }
 
         }else if( pd.bond !== undefined ){
-            console.log ("bond", pd.bond.atom1.resno, pd.bond.atom2.resno);
+             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
+            console.log ("picked bond", pd.bond.index, pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2);
 
-            var residuesA = crosslinkData.findResidues(
-                pd.bond.atom1.resno, pd.bond.atom1.chainname
-            );
-
-            var residuesB = crosslinkData.findResidues(
-                pd.bond.atom2.resno, pd.bond.atom2.chainname
-            );
+            var bp2 = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
+            var ai1 = bp2.atomIndex1[pd.bond.index];
+            var ai2 = bp2.atomIndex2[pd.bond.index];
+            console.log ("atom index via distance rep bondstore", this.linkRepr.repr, bp2, ai1, ai2);
+            
+            var resStore = pd.bond.structure.residueStore;
+            var aStore = pd.bond.structure.atomStore;
+            var ri1 = aStore.residueIndex[ai1];
+            var ri2 = aStore.residueIndex[ai2];
+            var r1 = resStore.resno[ri1];
+            var r2 = resStore.resno[ri2];
+            
+            // r1 and r2 are now correct and I can grab data through the existing crosslinkData interface
+            console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
+            
+            var residuesA = crosslinkData.findResidues (r1, pd.bond.atom1.chainname);
+            var residuesB = crosslinkData.findResidues (r2, pd.bond.atom2.chainname);
+            
+            console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
 
             if( residuesA && residuesB ){
                 pdtrans.links = crosslinkData.findLinks(residuesA[0], residuesB[0]);
@@ -727,11 +757,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     _handleDataChange: function(){
-        this.setDisplayedResidues( this._displayedResidues );
-        this.setHighlightedResidues( this._highlightedResidues );
+        this.setDisplayedResidues( this.crosslinkData.getResidues() );
+        this.setHighlightedResidues( [] );
 
-        this.setDisplayedLinks( this._displayedLinks );
-        this.setHighlightedLinks( this._highlightedLinks );
+        this.setDisplayedLinks( this.crosslinkData.getLinks());
+        this.setHighlightedLinks( this.crosslinkData.getLinks() );
     },
 
     _getAvailableResidues: function( residues ){
@@ -809,10 +839,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
        // console.log ("disp links", availableLinks);
         //console.log ("resids", this.crosslinkData._residueIdToLinkIds, this.crosslinkData._linkIdToResidueIds);
         var atomPairs = this._getAtomPairsFromLink (availableLinks);
-        //console.log ("atom pairs", atomPairs);
+        console.log ("atom pairs", atomPairs);
         
-        //console.log ("this", this.linkRepr);
-        //console.log ("bonddata", this.tinkerWithBonds (this.linkRepr.repr));
         this.linkRepr.setParameters ({
             atomPair: atomPairs,
         });
@@ -826,8 +854,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     setHighlightedLinks: function( links ){
-        this._highlightedLinks = this.filterToHighlightedLinks (this._displayedLinks);
+        this._highlightedLinks = this.filterToHighlightedLinks (links);
         var availableLinks = this._getAvailableLinks (this._highlightedLinks);
+        console.log ("highlinks", this._highlightedLinks);
 
         //console.log ("this emph repr", this.linkEmphRepr, availableLinks);
         this.linkEmphRepr.setParameters( {
@@ -910,7 +939,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         // pass params to representations
 
         if( !initialize ){
-
             this.resRepr.setColor( resParams.color );
             this.linkRepr.setColor( linkParams.color );
             this.resEmphRepr.setColor( resEmphParams.color );
@@ -922,9 +950,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             this.resEmphRepr.setParameters( resEmphParams );
             this.linkEmphRepr.setParameters( linkEmphParams );
             this.sstrucRepr.setParameters( sstrucParams );
-
         }
-
     },
 
     dispose: function(){
@@ -941,7 +967,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.stage.removeRepresentation( this.resEmphRepr );
         this.stage.removeRepresentation( this.linkRepr );
         this.stage.removeRepresentation( this.linkEmphRepr );
-
     }
 
 };

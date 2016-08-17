@@ -12,7 +12,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     events: {
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
-        "click input.filterSpecialToggle": "filterSpecial"
+        "click input.filterSpecialToggle": "filterSpecial",
+        "change input.filterSeqSep": "filterSeqSep"
     },
 
     initialize: function (viewOptions) {
@@ -47,8 +48,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         var mainDivSel = d3.select(this.el);
 
         //mainDivSel.append("span").attr("class", "sideOn").text("Filters");
-        
-        mainDivSel.selectAll("label.toggles")
+
+         mainDivSel.selectAll("label.toggles")
             .data(this.options.toggleSpecials, function(d) { return d.id; })
             .enter()
             .append ("label")
@@ -61,12 +62,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .attr ("type", "checkbox")
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
-        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
-        // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel'>&gt;</P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'>&lt;</P>");
-        sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
-
+        
+        
         mainDivSel.selectAll("label")
             .data(this.options.toggles, function(d) { return d.id; })
             .enter()
@@ -89,9 +86,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .attr ("id", function(d) { return d.id; })
                     .attr ("class", "filterTypeText")
                     .attr ("type", "textbox")
-                    .attr ("size", function(d) { return d.chars; });
+                    .attr ("size", function(d) { return d.chars; })
                     //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
+        
+
+        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
+        // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
+        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel'>&gt;</P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'>&lt;</P>");
+        sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
+
 
         mainDivSel.selectAll("p.cutoffLabel")
             .append("input")
@@ -114,6 +118,18 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 self.model.set("cutoff", newVals);
             })
         ;
+        
+        mainDivSel.append ("label")
+                .text ("Min.seq.sep.")
+                .append ("input")
+                    .attr ("id", "seqSepFilter")
+                    .attr ("class", "filterSeqSep")
+                    .attr ("type", "number")
+                    .attr ("min", 0)
+                    .attr ("max", 999)
+        ;
+
+
 
         // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
         // onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
@@ -160,6 +176,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 
     sliderDecimalPlaces: 2,
+
+    filterSeqSep: function (evt) {
+        console.log ("this filterBB filterSeqSep", evt);
+        var target = evt.target;
+        console.log(">>seqSep", target.value);
+        this.model.set("seqSep", target.value);
+    },
+
 
     render: function () {
         return this;
