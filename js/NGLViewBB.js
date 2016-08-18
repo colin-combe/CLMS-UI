@@ -48,21 +48,21 @@
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Centre");
 			
-			toolbar.append("label")
+			         toolbar.append("label")
                 .attr("class", "btn")
                 .text("Distance labels")
                 .append("input")
                 .attr("type", "checkbox")
                 .attr("class", "distanceLabelCB");
 			
-			toolbar.append("label")
+			         toolbar.append("label")
                 .attr("class", "btn")
                 .text("Selected only")
                 .append("input")
                 .attr("type", "checkbox")
                 .attr("class", "selectedOnlyCB");
 			
-			toolbar.append("button")
+			         toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image");
 			
@@ -77,49 +77,44 @@
  
             this.chartDiv.selectAll("*").remove();
             
-			//create 3D network viewer
+           //create 3D network viewer
             var self = this;
-			if (false /* ! Detector.webgl*/ ) {
-				Detector.addGetWebGLMessage(mainDivSel); 
-			}
-			else {
-				this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
-				this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
-                    .then (function (structureComp) {
+            this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
+            this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
+                .then (function (structureComp) {
 
-                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                        console.log ("stage", self.stage, "\nhas sequences", sequences);
-                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                        self.model.trigger ("3dsync", sequences);
-                    
-                        console.log ("strcomp", structureComp);
-                    
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as itneeds aligning)
-                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                        var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                        var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
+                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                    console.log ("stage", self.stage, "\nhas sequences", sequences);
+                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                    self.model.trigger ("3dsync", sequences);
 
-                       self.xlRepr = new CLMSUI.CrosslinkRepresentation(
-                              self.model, self.stage, structureComp, crosslinkData, {
-                                     highlightedColor: "lightgreen",
-                                     highlightedLinksColor: "yellow",
-                                     sstrucColor: "wheat",
-                                     displayedDistanceColor: "tomato"
-                              }
-                       );
-                    
-                        //console.log ("xlRepr", self.xlRepr);
-                        //console.log ("crossLinks", crossLinks);
-                        //var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
-                        //console.log ("distances", dd.length, dd);    
-                    
-                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                        self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
-                        //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); // if distance color model changes
-                        self.listenTo (self.model, "change:selection", self.showFiltered);
-                    })
-                ;
-			}        
+                    console.log ("strcomp", structureComp);
+
+                    // Now 3d sequence is added we can make a new crosslinkrepresentation (as itneeds aligning)
+                    var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                    var filterCrossLinks = self.filterCrossLinks (crossLinks);
+                    var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
+
+                   self.xlRepr = new CLMSUI.CrosslinkRepresentation(
+                          self.model, self.stage, structureComp, crosslinkData, {
+                                 highlightedColor: "lightgreen",
+                                 highlightedLinksColor: "yellow",
+                                 sstrucColor: "wheat",
+                                 displayedDistanceColor: "tomato"
+                          }
+                   );
+
+                    //console.log ("xlRepr", self.xlRepr);
+                    //console.log ("crossLinks", crossLinks);
+                    //var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
+                    //console.log ("distances", dd.length, dd);    
+
+                    self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                    self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
+                    //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); // if distance color model changes
+                    self.listenTo (self.model, "change:selection", self.showFiltered);
+                })
+            ;      
         },
         
         showSelected: function () {
@@ -151,9 +146,15 @@
         },
 
         downloadImage: function () {
-			 this.stage.exportImage( 1, true, false, false );
-            //~ var png = NGL.screenshot(this.stage.viewer);
-            //~ download(png , 'image/png', 'ngl.png');
+            // https://github.com/arose/ngl/issues/33
+			         this.stage.makeImage({
+                factor: 2,  // make it big so it can be used for piccy
+                antialias: true,
+                trim: true, // https://github.com/arose/ngl/issues/188
+                transparent: true
+            }).then( function( blob ){
+                NGL.download( blob, "screenshot.png" );
+            });
         },
 
         render: function () {
@@ -196,7 +197,6 @@
         // so we take our alignment index --> which goes to NGL-sequence index with align() --> which goes to PDB index with residueStore
         makeLinkList: function (linkModel, residueStore) {
             var linkList = linkModel.map (function (xlink) {
-                //console.log ("xl", xlink);
                 return {
                     fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id),
                     toResidue: this.align (xlink.toResidue, xlink.toProtein.id),
@@ -424,13 +424,11 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, structureComp, cros
     this.stage = stage;
     this.structureComp = structureComp;
     this.crosslinkData = crosslinkData;
+    this.origIds = {};
 
     
     this._displayedResidues = this.crosslinkData.getResidues();
     this._highlightedResidues = [];
-
-    this._displayedLinks = this.crosslinkData.getLinks();
-    this._highlightedLinks = [];
 
 
     this.colorOptions = {};
@@ -456,7 +454,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _getAtomPairsFromLink: function( linkList ){
 
         var atomPairs = [];
-        var origIds = [];
 
         if( !linkList || ( Array.isArray( linkList ) && !linkList.length ) ){
 
@@ -470,7 +467,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
             console.log ("linkList", linkList);
             var resToSele = this._getSelectionFromResidue;
-
             linkList.forEach( function( rl ){
   
                 var selA = resToSele (rl.residueA, false);
@@ -478,16 +474,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
                 if( selA && selB ){
                     atomPairs.push( [selA, selB, rl.origId] );
-                    origIds.push (rl.origId);
+                    this.origIds[rl.residueA.resno+"-"+rl.residueB.resno] = rl.origId;
                 } else {
                     console.log ("dodgy pair", rl);
                 }
 
-            } );
-
+            }, this);
+            
+             console.log ("getAtomPairs", linkList, this.origIds);
         }
-        
-        this.origIds = origIds;
 
         return atomPairs;
     },
@@ -615,13 +610,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLinkRepr: function(){
 
         var comp = this.structureComp;
+        var links = this.crosslinkData.getLinks();
 
-        var xlPair = this._getAtomPairsFromLink(
-            this._displayedLinks
-        );
-        var xlPairEmph = this._getAtomPairsFromLink(
-            this._highlightedLinks
-        );
+        var xlPair = this._getAtomPairsFromLink (links);
+        var xlPairEmph = this._getAtomPairsFromLink (this.filterToHighlightedLinks (links));
 
         this.linkRepr = comp.addRepresentation( "distance", {
             atomPair: xlPair,
@@ -629,21 +621,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             colorScheme: this.colorOptions.selScheme,
             labelSize: 2.0,
             labelColor: this.displayedDistanceColor,
-            labelVisible: false, //this.displayedDistanceVisible,
+            labelVisible: this.displayedDistanceVisible,
             name: "link"
         } );
-        
-        var wunction2 = function (pd) {
-            console.log ("WUNCTION 2", pd);
-             if( pd.bond !== undefined ){
-                console.log ("pd handle 2. bond", pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2, pd.bond.atom1.chainname, pd.bond.atom2.chainname);
-             }
-        };
-         this.linkRepr.signals.clicked = new NGL.Signal();
-        this.linkRepr.signals.clicked.add (wunction2, this);
-        this.stage.signals.clicked.add(
-            this._handlePicking, this
-        );
         
         console.log ("comp & repr", comp, this.linkRepr, xlPair);
 
@@ -676,17 +656,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 //console.log ("bond", b);
                 if (!z) {
                     console.log ("bond", z, b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
-                    z++;
                 }
-                var origLinkId = self.origIds[b.index];
+                var origLinkId = self.origIds[b.atom1.resno+"-"+b.atom2.resno];
                 //console.log ("origLink", origLinkId);
                 var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
-                
-                //console.log ("link", link);
                 var col = self.model.get("linkColourAssignment").get("colScale")(link);
 
                 //console.log ("col", col);
                 var col3 = d3.rgb(col);
+                z++;
                 return col ? (col3.r << 16) + (col3.g << 8) + col3.b : 255;
             };
         };
@@ -834,7 +812,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     setDisplayedLinks: function( links ){
-        this._displayedLinks = links;
         var availableLinks = this._getAvailableLinks( links );
        // console.log ("disp links", availableLinks);
         //console.log ("resids", this.crosslinkData._residueIdToLinkIds, this.crosslinkData._linkIdToResidueIds);
@@ -854,11 +831,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     setHighlightedLinks: function( links ){
-        this._highlightedLinks = this.filterToHighlightedLinks (links);
-        var availableLinks = this._getAvailableLinks (this._highlightedLinks);
-        console.log ("highlinks", this._highlightedLinks);
-
-        //console.log ("this emph repr", this.linkEmphRepr, availableLinks);
+        var availableLinks = this._getAvailableLinks (this.filterToHighlightedLinks (links));
         this.linkEmphRepr.setParameters( {
             atomPair: this._getAtomPairsFromLink (availableLinks),
         } );
@@ -968,5 +941,4 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.stage.removeRepresentation( this.linkRepr );
         this.stage.removeRepresentation( this.linkEmphRepr );
     }
-
 };
