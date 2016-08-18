@@ -30,6 +30,8 @@
                 //~ seriesName: "Cross Links",
                 //~ chartTitle: "Distogram",
                 //~ maxX: 80
+                labelVisible: false,
+                selectedOnly: false,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -52,15 +54,30 @@
                 .attr("class", "btn")
                 .text("Distance labels")
                 .append("input")
-                .attr("type", "checkbox")
-                .attr("class", "distanceLabelCB");
+                    .attr("type", "checkbox")
+                    .attr("class", "distanceLabelCB")
+                    .property ("checked", this.options.labelVisible)
+                    .on ("click", function() {
+                        var chk = d3.select(this).property("checked");
+                        self.xlRepr.displayedDistanceVisible = chk;
+                        self.xlRepr.linkRepr.setParameters ({
+                            labelVisible: chk,
+                        });
+                    })
+            ;
 			
 			         toolbar.append("label")
                 .attr("class", "btn")
                 .text("Selected only")
                 .append("input")
-                .attr("type", "checkbox")
-                .attr("class", "selectedOnlyCB");
+                    .attr("type", "checkbox")
+                    .attr("class", "selectedOnlyCB")
+                    .property ("checked", this.options.selectedOnly)
+                    .on ("click", function() {
+                        var chk = d3.select(this).property("checked");
+                        self.xlRepr.linkRepr.setVisibility (chk);
+                    })
+            ;
 			
 			         toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
@@ -100,7 +117,8 @@
                                  highlightedColor: "lightgreen",
                                  highlightedLinksColor: "yellow",
                                  sstrucColor: "wheat",
-                                 displayedDistanceColor: "tomato"
+                                 displayedDistanceColor: "tomato",
+                                displayedDistanceVisible: self.options.labelVisible,
                           }
                    );
 
