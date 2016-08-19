@@ -163,7 +163,6 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
     },
     getColour: function (crossLink) {
         //return this.get("colScale")(getDistance (crossLink));
-        //return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null);
     },
 });
 
@@ -181,12 +180,14 @@ CLMSUI.linkColour.setupColourModels = function () {
     });
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
-       colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']) 
+       colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']),
+        title: "Distance",
     });
 
     // add distanceColoursBB to this collection later if needed
     CLMSUI.linkColour.Collection = new CLMSUI.BackboneModelTypes.ColourModelCollection ([
         CLMSUI.linkColour.defaultColoursBB,
         CLMSUI.linkColour.groupColoursBB,
+        CLMSUI.linkColour.distanceColoursBB,
     ]);
 };

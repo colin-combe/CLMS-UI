@@ -106,13 +106,13 @@
 
                     console.log ("strcomp", structureComp);
 
-                    // Now 3d sequence is added we can make a new crosslinkrepresentation (as itneeds aligning)
+                    // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
                     var crossLinks = self.model.get("clmsModel").get("crossLinks");
                     var filterCrossLinks = self.filterCrossLinks (crossLinks);
                     var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
 
                    self.xlRepr = new CLMSUI.CrosslinkRepresentation(
-                          self.model, self.stage, structureComp, crosslinkData, {
+                          self.model, self.stage, self.align, structureComp, crosslinkData, {
                                  highlightedColor: "lightgreen",
                                  highlightedLinksColor: "yellow",
                                  sstrucColor: "wheat",
@@ -123,8 +123,9 @@
 
                     //console.log ("xlRepr", self.xlRepr);
                     //console.log ("crossLinks", crossLinks);
-                    //var dd = self.xlRepr.getLinkDistances (self.xlRepr._getAllAtomObjectPairs());
-                    //console.log ("distances", dd.length, dd);    
+                    var dd = self.xlRepr.getDistances ();
+
+                    console.log ("distances", dd.length, dd);    
 
                     self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
                     self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
@@ -207,22 +208,23 @@
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }
             
-            return alignPos;
+            return alignPos;    //this will be 1-indexed
         },
         
         // residueStore maps the NGL-indexed resides to PDB-index
-        // so we take our alignment index --> which goes to NGL-sequence index with align() --> which goes to PDB index with residueStore
+        // so we take our alignment index --> which goes to NGL-sequence index with align() --> 
+        // then need to subtract 1, then --> which goes to PDB index with residueStore
         makeLinkList: function (linkModel, residueStore) {
             var linkList = linkModel.map (function (xlink) {
                 return {
-                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id),
-                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id),
+                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id) - 1,  // 0-indexed in NGL so -1
+                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id) - 1,    // 0-indexed in NGL so -1
                     id: xlink.id,
                 };
             }, this);
             
             linkList = linkList.filter (function (link) {
-                return link.fromResidue > 0 && link.toResidue > 0;
+                return link.fromResidue >= 0 && link.toResidue >= 0;
             });
             return this.transformLinkList (linkList, "A", null, residueStore);	
         },
@@ -420,7 +422,7 @@ CLMSUI.CrosslinkData.prototype = {
 };
 
 
-CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, structureComp, crosslinkData, params ){
+CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structureComp, crosslinkData, params ){
 
     var defaults = {
         sstrucColor: "wheat",
@@ -439,6 +441,7 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, structureComp, cros
 
     this.model = CLMSmodel;
     this.stage = stage;
+    this.alignFunc = alignFunc;
     this.structureComp = structureComp;
     this.crosslinkData = crosslinkData;
     this.origIds = {};
@@ -520,17 +523,17 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
             var structure = this.structureComp.structure;
             var resToSele = this._getSelectionFromResidue;
+            var sele1 = new NGL.Selection();
+            var sele2 = new NGL.Selection();
 
             atomPairs = linkList.map ( function( rl ){
-                //var a1 = structure.getAtoms( resToSele( rl.residueA, true ), true );
-                //var a2 = structure.getAtoms( resToSele( rl.residueB, true ), true );
                 var selA = resToSele( rl.residueA, false);
                 var selB = resToSele( rl.residueB, false );
-                //var a1 = structure.getAtomSet( resToSele( rl.residueA, true ), true );
-                //var a2 = structure.getAtomSet( resToSele( rl.residueB, true ), true );
-                var a3 = structure.getAtomIndices (selA);
-                var a4 = structure.getAtomIndices (selB);
-                //console.log (rl.residueA, rl.residueB, a1, a2);
+                sele1.setString (selA);
+                sele2.setString (selB);
+                var a3 = structure.getAtomIndices (sele1);
+                var a4 = structure.getAtomIndices (sele2);
+                console.log (rl.residueA, rl.residueB, selA, selB, a3, a4);
                 return [a3[0], a4[0]]; // don't filter out null/undefined a1/a2s; ensures atomPair array index order matches linklist array order
             } );
 
@@ -545,17 +548,86 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     
     getLinkDistances: function (atomObjPairs) {
+        var ap1 = this.structureComp.structureView.getAtomProxy();
+        var ap2 = this.structureComp.structureView.getAtomProxy();
         return atomObjPairs.map (function (pair) {
+            
             return pair[0] && pair[1] ? pair[0].distanceTo (pair[1]) : undefined;    
         }); 
     },
+    
+    getDistances: function () {
+        console.log ("this dist", this.structureComp, this.stage);  
+        var rp = this.structureComp.structure.residueStore;
+        
+        var prots = this.model.get("clmsModel").get("interactors").values();
+        var protsArr = Array.from (prots);
+        protsArr = protsArr.filter (function(p) { return !p.is_decoy; });
+        
+        var matrix;
+        var prot = protsArr[0];
+        
+        if (prot.size < 600) {
+            var atomIndices = this.getCAtomsAllResidues (prot);
+            console.log ("ai", atomIndices);
+            
+            var ap1 = this.structureComp.structureView.getAtomProxy();
+            var ap2 = this.structureComp.structureView.getAtomProxy();
+            matrix = [];
+            for (var n = 1; n < atomIndices.length; n++) {
+                //var n3dindex = this.alignFunc (n, pid, false);
+                //var nresatom = rp
+                var nindex = atomIndices[n];
+                ap1.index = nindex;
+                matrix[n] = [];
+                for (var m = 1; m < atomIndices.length; m++) {
+                    //var m3dindex = this.alignFunc (m, pid, false);
+                    var d = undefined;
+                    var mindex = atomIndices[m];
+                    if (m !== n) {
+                        ap2.index = mindex;
+                        if (mindex !== undefined && nindex !== undefined) {
+                            d = ap1.distanceTo(ap2);
+                        }
+                    } else {
+                        d = 0;
+                    }
+                    matrix[n][m] = d;
+                }
+            }
+            
+            
+        } else {
+            
+
+        }
+        
+        return matrix;
+    },
+    
+    getCAtomsAllResidues : function (prot) {
+        var rp = this.structureComp.structure.residueStore;
+        console.log ("rp", rp);
+        var pid = prot.id;
+        var sele = new NGL.Selection();
+        var atomIndices = [];
+        
+        for (var n = 1; n < prot.size; n++) {
+             var index = this.alignFunc (n, pid, false) - 1;
+             var resno = rp.resno[index];
+            console.log ("align", n, index, resno);
+             var selString = resno+" AND .CA";
+            sele.setString (selString);
+            var a = this.structureComp.structure.getAtomIndices (sele);
+            atomIndices[n] = a[0];
+        }
+        
+        return atomIndices;
+    },
 
     _getAtomPairsFromResidue: function( residue ){
-
         var linkList = this.crosslinkData.getLinks( residue );
-
         return this._getAtomPairsFromLink( linkList );
-
     },
 
     _getSelectionFromResidue: function( resnoList, asSelection ){
@@ -670,16 +742,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
             var z = 0;
             this.bondColor = function(b, fromTo) {
-                //console.log ("bond", b);
                 if (!z) {
                     console.log ("bond", z, b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
                 }
                 var origLinkId = self.origIds[b.atom1.resno+"-"+b.atom2.resno];
-                //console.log ("origLink", origLinkId);
                 var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
-                var col = self.model.get("linkColourAssignment").get("colScale")(link);
-
-                //console.log ("col", col);
+                var col = self.model.get("linkColourAssignment").getColour(link);
                 var col3 = d3.rgb(col);
                 z++;
                 return col ? (col3.r << 16) + (col3.g << 8) + col3.b : 255;
