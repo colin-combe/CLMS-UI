@@ -66,7 +66,7 @@
                     })
             ;
 			
-			         toolbar.append("label")
+			 toolbar.append("label")
                 .attr("class", "btn")
                 .text("Selected only")
                 .append("input")
@@ -74,17 +74,16 @@
                     .attr("class", "selectedOnlyCB")
                     .property ("checked", this.options.selectedOnly)
                     .on ("click", function() {
-                        var chk = d3.select(this).property("checked");
-                        self.xlRepr.linkRepr.setVisibility (chk);
+                        self.xlRepr.linkRepr.setVisibility (!d3.select(this).property("checked"));
                     })
-            ;
+                ;
 			
 			         toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Download Image");
+                .text("Download Image")
+            ;
 			
 		
-
             this.chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner")
                 .attr("id", "ngl")
