@@ -102,7 +102,7 @@
             this.page = 1;
             this.pageSize = 50;
             var pager = d3.select(this.el).select(".pager");
-            //~ if (!self.options.secondaryModel) {		
+            if (!self.options.secondaryModel) {		
 				pager.append("p").text("Page:").style ("display", "inline-block");
 				
 				pager.append("input")
@@ -115,9 +115,9 @@
 					.on ("change", function (d) {
 							self.setPage(this.value);
 					});
-			//~ } else {
-//~ 
-			//~ }            
+			} else {
+				pager.append("p").text("Alternative Explanations");
+			}            
          },
 
         render: function () {
