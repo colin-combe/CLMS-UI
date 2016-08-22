@@ -121,8 +121,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             //colourAssign.init();
             // var colScale = colourAssign.colScale;
             var colScale = colourAssign.get("colScale");
+            //console.log ("domain", colScale.domain(), "range", colScale.range(), "labels d", colourAssign.get("labels").domain(), "labels r", colourAssign.get("labels").range());
+            /*
             colourSection[0].rows = colScale.domain().map (function (val) {
                 return ["<span class='colourSwatch' style='background-color:"+colScale(val)+"'></span>", colourAssign.get("labels")(val)];
+            });
+            */
+            colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
+                return ["<span class='colourSwatch' style='background-color:"+colScale.range()[i]+"'></span>", val];
             });
 
             var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });

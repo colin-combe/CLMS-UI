@@ -14,7 +14,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
     events: {},
     initialize: function (options) {
 
-        this.underlyingScale = options.underlyingScale;
+        this.underlyingScale = options.underlyingScale; // a CLMSUI.BackboneModelTypes.ColourModel
         this.cx = this.el.clientWidth;
         this.cy = this.el.clientHeight;
 
@@ -53,6 +53,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .attr("width", 50).attr("fill",this.underlyingScale.get("colScale").range()[2]);
         this.lowerRange = svg.append("rect").attr("x", 0)
             .attr("width", 50).attr("fill",this.underlyingScale.get("colScale").range()[0]);
+        this.textFormat = d3.format(".2f");
         
         var brushg = svg.append("g")
             .attr("class", "brush")
@@ -71,6 +72,15 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
                 .attr("d", "M0 0 L20 -20")
         ;
         
+        brushg.selectAll(".resize")
+            .append ("text")
+                .attr("transform", function(d,i) {
+                    return "translate(0,"+(-2 + (i*13))+")";
+                })
+                .attr ("class", "brushValueText")
+                .text ("0")
+        ;
+        
         brushg.selectAll("rect")
             .attr("width", 50);
         
@@ -83,6 +93,10 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         var s = this.brush.extent();
         this.upperRange.attr("height", this.y(s[1]) + 10);
         this.lowerRange.attr("height", this.height - this.y(s[0])).attr("y", this.y(s[0]));
+        var self = this;
+        d3.select(this.el).selectAll(".brushValueText")
+            .text (function(d,i) { return self.textFormat(s[s.length - i - 1]); })
+        ;
     },
 
 	brushstart: function () {  
@@ -99,7 +113,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		  .range(this.underlyingScale.get("colScale").range())
         ;
         
-        this.underlyingScale.get("colScale").domain ([s[0], s[1]]);
+        this.underlyingScale.setDomain ([s[0], s[1]]);
         this.model.set ("scale", scale);
         
         return this;     

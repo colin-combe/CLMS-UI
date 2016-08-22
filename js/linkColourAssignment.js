@@ -83,6 +83,14 @@
 CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     defaults: {
         title: undefined,
+    },
+    setDomain : function (twoValArr) {
+        this.get("colScale").domain(twoValArr);
+        //console.log ("triggering colour domain change", this, this.collection);
+        this.trigger ("colourScaleChanged", twoValArr);
+        if (this.collection) {
+            this.collection.trigger ("aColourModelChanged", this, twoValArr);
+        }
     }
 });
 
@@ -161,8 +169,11 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
     initialize: function () {
         this.set("labels", this.get("colScale").copy().range(["Short", "Average", "Overlong"]));
     },
+    getDistance : function (crossLink) {
+        return CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
+    },
     getColour: function (crossLink) {
-        //return this.get("colScale")(getDistance (crossLink));
+        return this.get("colScale")(this.getDistance (crossLink));
     },
 });
 

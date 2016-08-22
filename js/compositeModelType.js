@@ -137,6 +137,20 @@
             this.set ("selectedProtein", map);
             this.trigger ("change:selectedProtein", this);
             console.log ("map", this.get("selectedProtein"));
+        },
+        
+        getSingleCrosslinkDistance: function (xlink) {
+            if (xlink.toProtein === xlink.fromProtein) {
+                var distances = xlink.toProtein.distances;
+                if (distances) {
+                    var highRes = Math.max (xlink.toResidue, xlink.fromResidue);
+                    var lowRes = Math.min (xlink.toResidue, xlink.fromResidue);
+                    var dist = distances[highRes] ? distances[highRes][lowRes] : null;
+                    //console.log ("dist", dist);
+                    return dist;
+                }
+            }
+            return null;
         }
     
     });

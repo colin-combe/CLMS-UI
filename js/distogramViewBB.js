@@ -40,7 +40,7 @@
             mainDivSel.append("div").style("height", "40px")
                 .append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Download Image");
+                .text("Export SVG");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner distoDiv")
@@ -150,7 +150,7 @@
             //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
             this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
-
+            
             this.recalcRandomBinning();
             
             return this;
@@ -165,13 +165,16 @@
                 //~ var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
                 //~ var pp1 = allProtProtLinks.next().value;
                 var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-                var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
-                var distances = this.model.get("distancesModel").get("distances");
+                var interactorMap = this.model.get("clmsModel").get("interactors");
+                var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
+                //console.log ("fcl", filteredCrossLinks);
                 
-                var distArr = CLMSUI.modelUtils.getCrossLinkDistances (filteredCrossLinks, distances);
+                var distArr = CLMSUI.modelUtils.getCrossLinkDistances2 (filteredCrossLinks.values(), interactorMap);
+                //console.log ("distArr", distArr);
 
                 var series = [distArr, []];
-                var seriesLengths = [crossLinkMap.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                var seriesLengths = [/*crossLinkMap.size*/ filteredCrossLinks.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                //console.log ("seriesLengths", seriesLengths);
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
@@ -186,7 +189,9 @@
                 
                 //console.log ("thresholds", thresholds);
                 var curMaxY = this.chart.axis.max().y;
-                if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+                // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
+                // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
+                if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
                     console.log ("resetting axis max from", curMaxY, "to", maxY);
                     this.chart.axis.max({y: maxY});
                 }
@@ -235,8 +240,10 @@
         },
 
         recalcRandomBinning: function () {
-            console.log ("precalcing random bins for distogram view");
-            var randArr = this.model.get("distancesModel").flattenedDistances();
+            //console.log ("precalcing random bins for distogram view");
+            //var randArr = this.model.get("distancesModel").flattenedDistances();
+            var randArr = CLMSUI.modelUtils.getFlattenedDistances (Array.from (this.model.get("clmsModel").get("interactors").values()));
+            //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)

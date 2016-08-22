@@ -176,7 +176,7 @@ CLMSUI.init.views = function () {
     // Generate checkboxes
     var checkBoxData = [
         {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
-        //{id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
+        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
@@ -212,9 +212,6 @@ CLMSUI.init.views = function () {
             model: CLMSUI.compositeModelInst.get("rangeModel"),
             underlyingScale: CLMSUI.linkColour.distanceColoursBB,
         });
-        //CLMSUI.rangeModelInst.set ("scale", scale);
-        //var stats = d3.select(this.targetDiv).append("div").attr("id","statsDiv");
-        //distoViewer.setData(xlv.distances,xlv);
     }
     else {
         // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
@@ -379,6 +376,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.linkColour.Collection,
         storeSelectedAt: {model: CLMSUI.compositeModelInst, attr: "linkColourAssignment"},
     });
+    
+    CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", function (colourModel, newDomain) {
+        console.log ("col change args", arguments, this);
+        if (this.get("linkColourAssignment") === colourModel) {
+            this.trigger ("currentColourModelChanged", colourModel, newDomain);
+        }
+    });
 
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
     CLMSUI.compositeModelInst.set (
@@ -391,18 +395,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#tooltip2",
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
-
-    /*
-    var distoViewer = new CLMSUI.DistogramBB ({
-        el: "#distoPanel",
-        model: CLMSUI.compositeModelInst,
-        displayEventName: "distoShow",
-        myOptions: {
-            chartTitle: "Cross-Link Distogram",
-            seriesName: "Actual"
-        }
-    }); 
-    */
 
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
@@ -471,8 +463,41 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         console.log ("3D sequences poked to collection", this);
     });
 
+    // if 3d info about
     if (HSA_Active) {
-        var nglViewer = new CLMSUI.NGLViewBB ({
+        
+        // Set up listener that waits for distance info to become available
+        CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst, "distancesAvailable", function (distanceInfo) {
+            this.set ("distancesAvailable event triggered");
+            this.set("distanceInfo", distanceInfo);
+            console.log ("di this", this);
+            // if distance data present, append it to the correct interactor (protein) object
+            distanceInfo.forEach (function (distanceData) {
+                var protein = this.get("interactors").get (distanceData.proteinID);
+                if (protein) {
+                    protein.distances = distanceData.distances;
+                }
+            }, this);
+            
+            new CLMSUI.DistogramBB ({
+                el: "#distoPanel",
+                model: CLMSUI.compositeModelInst,
+                displayEventName: "distoShow",
+                myOptions: {
+                    chartTitle: "Cross-Link Distogram",
+                    seriesName: "Actual"
+                }
+            }); 
+            
+            // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the DistogramView is too late to be picked up
+            // so we run it again here, doesn't do any harm
+            ByRei_dynDiv.init.main();
+        });
+        
+        // Make new ngl view with pdb dataset
+        // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync and distancesAvailable
+        // events that other views are waiting for.
+        new CLMSUI.NGLViewBB ({
             el: "#nglPanel",
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
@@ -494,39 +519,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     
 };
 
-
-function onDistanceSliderChange3D(scale){
-    //showKeyPanel(false);
-    var domain = scale.domain();
-    var lowerLimit = domain[1];
-    var upperLimit = domain[2];
-    var rLinks = xlv.proteinLinks.values()[0].residueLinks.values();
-    var rc = rLinks.length;
-
-    var within = [];
-
-    for (var j = 0; j < rc; j++) {
-        var resLink = rLinks[j];
-
-        var d = null;
-        if (distances[resLink.toResidue]) {
-            d = distances[resLink.toResidue][resLink.fromResidue];
-        }
-        var d = parseFloat(d);
-        if (isNaN(d) === true){
-            d = -1;
-        }
-
-        if (d > 0 && d < lowerLimit) {
-            within.push(resLink);
-        }
-
-    }
-
-    for (var w = 0; w < within.length; w++){
-
-    }
-}
 
 function saveLayout () {
     var layout = crosslinkViewer.getLayout();

@@ -25,9 +25,18 @@ CLMSUI.modelUtils = {
     },
     
     flattenDistanceMatrix: function (distanceMatrix) {
-        var distanceList =  [].concat.apply([], distanceMatrix);
-        distanceList = distanceList.filter(function(d) { return d !== null; });
+        var distanceList = [].concat.apply([], distanceMatrix);
+        distanceList = distanceList.filter(function(d) { return d !== null && d !== undefined; });
         return distanceList;
+    },
+    
+    getFlattenedDistances: function (interactorsArr) {
+        console.log ("interactors", interactorsArr);
+        var perProtDistances = interactorsArr.map (function (prot) {
+            return CLMSUI.modelUtils.flattenDistanceMatrix (prot.distances);    
+        });
+        var allDistances =  [].concat.apply([], perProtDistances);
+        return allDistances;
     },
     
     getCrossLinkDistances: function (crossLinks, distances) {
@@ -40,6 +49,26 @@ CLMSUI.modelUtils = {
             var dist = distances[highRes] ? distances[highRes][lowRes] : null;
             if (dist !== null) {
                 distArr.push(+dist); // + is to stop it being a string
+            }
+        }
+
+        return distArr;
+    },
+    
+    getCrossLinkDistances2: function (crossLinks, interactorMap) {
+        var distArr = [];
+        for (var crossLink of crossLinks) {
+            var toRes = crossLink.toResidue;
+            var fromRes = crossLink.fromResidue;
+            var toProt = crossLink.toProtein;
+            var distances = toProt.distances;
+            if (distances) {
+                var highRes = Math.max(toRes, fromRes);
+                var lowRes = Math.min(toRes, fromRes);
+                var dist = distances[highRes] ? distances[highRes][lowRes] : null;
+                if (dist !== null && dist !== undefined) {
+                    distArr.push(+dist); // + is to stop it being a string
+                }
             }
         }
 
