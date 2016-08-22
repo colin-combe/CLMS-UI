@@ -168,7 +168,7 @@ if ($spectrum) {
 			mp.link_position + 1 AS link_position, sm.spectrum_id, 
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
-			sp.scan_number, 'run_name' as run_name
+			sp.scan_number, ss.name as run_name
 		FROM 
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
@@ -180,6 +180,7 @@ if ($spectrum) {
 			FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp 
 			ON sm.id = mp.match_id 
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id 		
+		INNER JOIN spectrum_source ss ON sp.source_id = ss.id 		
 		ORDER BY score DESC, sm.id;";
 		
 	$startTime = microtime(true);
