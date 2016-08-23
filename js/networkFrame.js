@@ -360,8 +360,16 @@ CLMSUI.init.viewsEssential = function (options) {
 							altModel.get("crossLinks").values());
                     spectrumWrapper.alternativesModel.set("clmsModel", altModel);
                     spectrumWrapper.alternativesModel.applyFilter();
-                    console.log("CL>"+allCrossLinks.length);
-                    spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+                    //console.log("CL>"+allCrossLinks.length);
+                    if (altMatches.length == 1) {
+						d3.select("#alternatives").style("display", "none");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					} else {
+						d3.select("#alternatives").style("display", "block");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					}
                 }
             });
         } else {
