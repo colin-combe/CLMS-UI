@@ -345,12 +345,19 @@ CLMSUI.init.viewsEssential = function (options) {
                 } else {
                     console.log(json);
                     var altModel = new window.CLMS.model.SearchResultsModel (json);
-					//take out match that was selected out of list of alternatives 
+					//take match that was selected out of list of alternatives 
+					//warning - hack, going to set validation att to rejected for equiv match in alt model
 					var altMatches = altModel.get("matches");
-					var index = altMatches.indexOf(match);
-					altMatches = altMatches.splice(index, 1);
+					for (altMatch of altMatches) {
+						if (altMatch.id == match.id) {
+							altMatch.validated = "R";
+						}
+					}
+					//~ var index = altMatches.indexOf(match);
+					//~ console.log("i"+index);
+					//~ altMatches = altMatches.splice(index, 1);
                     var allCrossLinks = Array.from(
-                    altModel.get("crossLinks").values());
+							altModel.get("crossLinks").values());
                     spectrumWrapper.alternativesModel.set("clmsModel", altModel);
                     spectrumWrapper.alternativesModel.applyFilter();
                     console.log("CL>"+allCrossLinks.length);

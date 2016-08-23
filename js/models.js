@@ -11,7 +11,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-            "A": true, "B": true, "C": true, "Q": true, "R": false, "unval": true, 
+            "A": true, "B": true, "C": true, "Q": true, "unval": true, 
             "AUTO": true,
             "linears": true,
             "decoys": false,
@@ -120,11 +120,12 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             }
 
             var vChar = match.validated;
+            if (vChar == 'R') return false;
             if (vChar == 'A' && this.get("A")) return true;
             if (vChar == 'B' && this.get("B")) return true;
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
-            if (vChar == 'R' && this.get("R")) return true;
+            
             if (match.autovalidated && this.get("AUTO")) return true;
 			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
             return false;
