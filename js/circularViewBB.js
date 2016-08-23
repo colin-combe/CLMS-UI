@@ -261,7 +261,6 @@
 
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });
-            //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout);
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
             this.listenTo (this.model.get("alignColl"), "change:compAlignments", function (alignModel, alignColl) {
@@ -269,6 +268,7 @@
                 this.render ({changed : d3.set(["features"]), });
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
+            this.listenTo (this.model, "currentColourModelChanged", function () { this.render ({changed : d3.set(["links"]), }); });
             this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
             return this;
         },

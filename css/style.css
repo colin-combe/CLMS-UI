@@ -339,8 +339,9 @@ body, input, select, textarea {
 .brush .extent {
 /*
   fill-opacity: .125;
-*/
+
   fill:#FDB863;
+    */
 }
 
 #bottomDiv {
@@ -534,7 +535,6 @@ tbody tr:hover td, tbody tr:hover td  {
     left: 40px;
     width:500px;
     height:300px;
-    position: absolute;
 }
 
 #circularPanel {
@@ -658,4 +658,10 @@ A.btn {
 .btn:disabled {
     color: gray;
     border-color: gray;
+}
+
+.brushValueText {
+    font-size: 0.75em;
+    fill: #ddd;
+    stroke: none;
 }
