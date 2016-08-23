@@ -339,8 +339,9 @@ body, input, select, textarea {
 .brush .extent {
 /*
   fill-opacity: .125;
-*/
+
   fill:#FDB863;
+    */
 }
 
 #bottomDiv {

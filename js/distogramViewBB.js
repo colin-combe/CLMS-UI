@@ -28,6 +28,7 @@
                 maxX: 80
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.colourScaleModel = viewOptions.colourScaleModel;
 
             this.precalcedDistributions = {};
             this.displayEventName = viewOptions.displayEventName;
@@ -66,12 +67,12 @@
                         Random: "#aaa"
                     },
                     color: function (colour, d) {
-                        var rm = self.model.get("rangeModel");
-                        if (d.id && d.id !== "Random" && rm.get("active") && rm.get("scale")) {
-                            return rm.get("scale")(d.x);
+                        var rm = self.colourScaleModel;
+                        if (rm && d.id && d.id !== "Random") {
+                            return rm.get("colScale")(d.x);
                         }
-                        else if (!d.id && d !== "Random") {
-                            return rm.get("scale").range()[2];
+                        else if (rm && !d.id && d !== "Random") {
+                            return rm.get("colScale").range()[2];
                         }
                         return colour;
                     },
@@ -147,8 +148,8 @@
             });
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
-            this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+            //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
+            this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
             
             this.recalcRandomBinning();

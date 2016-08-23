@@ -209,8 +209,10 @@ CLMSUI.init.views = function () {
         // Distance slider
         var distSlider = new CLMSUI.ThreeColourSliderBB ({
             el: "#sliderDiv", 
-            model: CLMSUI.compositeModelInst.get("rangeModel"),
-            underlyingScale: CLMSUI.linkColour.distanceColoursBB,
+            model: CLMSUI.linkColour.distanceColoursBB,
+            rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
+            domain: [0,35],
+            extent: [15,25],
         });
     }
     else {
@@ -482,6 +484,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             new CLMSUI.DistogramBB ({
                 el: "#distoPanel",
                 model: CLMSUI.compositeModelInst,
+                colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
                 displayEventName: "distoShow",
                 myOptions: {
                     chartTitle: "Cross-Link Distogram",
