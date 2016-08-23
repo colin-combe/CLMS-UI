@@ -106,6 +106,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 								lsm.match.validated = d.label;
 								self.setButtonValidationState (lsm.match);
 								self.model.trigger ("matchValidationStateUpdated");
+								self.model.applyFilter();
+								self.model.trigger ("filteringDone");
 							});
 						}
 					})

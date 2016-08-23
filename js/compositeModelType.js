@@ -5,6 +5,7 @@
     
     CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend ({
         applyFilter: function () {
+			alert("!!");
             var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
