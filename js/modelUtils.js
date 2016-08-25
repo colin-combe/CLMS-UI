@@ -142,20 +142,21 @@ CLMSUI.modelUtils = {
         return seq[resIndex - 1];
     },
      
-    findResidueIDsInSquare : function (residueMap, sr1, er1, sr2, er2) {
+    findResidueIDsInSquare : function (fromProtID, toProtID, crossLinkMap, sr1, er1, sr2, er2) {
         var a = [];
         for (var n = sr1; n <= er1; n++) {
             for (var m = sr2; m <= er2; m++) {
-                var k = n+"-"+m;
-                if (residueMap.get(k)) {
-                    a.push (k);
+                var k = fromProtID+"_"+n+"-"+toProtID+"_"+m;
+                var crossLink = crossLinkMap.get(k);
+                if (crossLink) {
+                    a.push (crossLink);
                 }
             }
         }
         return a;
     },
     
-    findResidueIDsInSpiral : function (residueMap, cx, cy, side) {
+    findResidueIDsInSpiral : function (fromProtID, toProtID, crossLinkMap, cx, cy, side) {
         var a = [];
         var x = cx;
         var y = cy;
@@ -165,9 +166,10 @@ CLMSUI.modelUtils = {
     
             for (var m = 0; m < moves.length; m++) {
                 for (var l = 0; l < b; l++) {
-                    var k = x+"-"+y;
-                    if (residueMap.get(k)) {
-                        a.push (k);
+                    var k = fromProtID+"_"+x+"-"+toProtID+"_"+y;
+                    var crossLink = crossLinkMap.get(k);
+                    if (crossLink) {
+                        a.push (crossLink);
                     }
                     //console.log ("["+x+", "+y+"]");    
                     x += moves[m][0];
@@ -181,9 +183,10 @@ CLMSUI.modelUtils = {
         }
         // tidy up last leg of spiral
         for (var n = 0; n < b; n++) {
-            var k = x+"-"+y;
-            if (residueMap.get(k)) {
-                a.push (k);
+            var k = fromProtID+"_"+x+"-"+toProtID+"_"+y;
+            var crossLink = crossLinkMap.get(k);
+            if (crossLink) {
+                a.push (crossLink);
             }
             //console.log ("["+x+", "+y+"]");    
             x += moves[0][0];

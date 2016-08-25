@@ -600,15 +600,31 @@ label.verticalFlow {
     display: block;
 }
 
-label.horizontalFlow:not(:first-child) {
+label.horizontalFlow:not(:last-child) {
     display: inline;
-    padding-left: 0.3em;
-    border-left: 1px solid grey;
-    margin-left: 0.2em;
+    border-right: 1px solid grey;
+    margin-right: 0.4em;
 }
 
 label.horizontalFlow input[type=number] {
     margin-left: 0.2em;
+}
+
+/* See http://jsfiddle.net/7jx02upg/1/ */
+label.horizontalFlow input[type=radio], label.horizontalFlow input[type=checkbox] {
+    vertical-align: normal;
+}
+
+/* <label class='horizontalFlow'><span class='noBreak'>stuff you dont want split over multiple lines</span></label><more labels n spans...>
+
+/* span.noBreak asks for no line-breaks internally */
+span.noBreak {
+    white-space: nowrap;
+}
+
+/* and then put spaces after labels to give a known place for content to break */
+#fdrPanel .horizontalFlow::after {
+    content: " ";
 }
 
 A.btn {

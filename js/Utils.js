@@ -419,29 +419,34 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
             .enter()
             .append("label")
             .classed ("horizontalFlow fixed", true)
-            .text(labelFunc)
-            .append("input")
-                .attr("type", "radio")
-                .attr("value", function(d) { return d; })
-                .attr("name", "fdrPercent")
-                .on ("click", function(d) {
-                    d3.select(self.el).select("input[type='number']").property("value", "");
-                    doFDR (d);
-                })
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text(labelFunc)
+                .append("input")
+                    .attr("type", "radio")
+                    .attr("value", function(d) { return d; })
+                    .attr("name", "fdrPercent")
+                    .on ("click", function(d) {
+                        d3.select(self.el).select("input[type='number']").property("value", "");
+                        doFDR (d);
+                    })
         ;
         
-        chartDiv.select("span").append("label")
-            .text("Other %")
+        chartDiv.select("span")
+            .append("label")
             .attr("class", "horizontalFlow")
-            .append("input")
-                .attr("type", "number")
-                .attr("min", 0)
-                .attr("max", 100)
-                .attr("step", 1)
-                .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
-                    d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
-                    doFDR ((+this.value) / 100);
-                })
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text("Other %")
+                .append("input")
+                    .attr("type", "number")
+                    .attr("min", 0)
+                    .attr("max", 100)
+                    .attr("step", 1)
+                    .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                        d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
+                        doFDR ((+this.value) / 100);
+                    })
         ;
         
         chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
