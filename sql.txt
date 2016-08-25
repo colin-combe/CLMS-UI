@@ -103,3 +103,23 @@ alter table add column source_id int CONSTRAINT fk_spectrum_spectrum_source REFE
 CREATE index spectrum_source_id_idx ON spectrum (source_id);
 
 
+
+ALTER TABLE spectrum_match DROP COLUMN peptide_fdr;
+ALTER TABLE spectrum_match DROP COLUMN link_fdr;
+ALTER TABLE spectrum_match DROP COLUMN ppi_fdr;
+
+
+ALTER TABLE spectrum_match ADD ScoreDelta REAL;
+ALTER TABLE spectrum_match ADD ScoreModDelta REAL;
+
+
+ALTER TABLE spectrum_match ADD ScorePeptide1MatchedConservative SMALLINT;
+ALTER TABLE spectrum_match ADD ScorePeptide2MatchedConservative SMALLINT;
+ALTER TABLE spectrum_match ADD ScoreFragmentsMatchedConservative SMALLINT;
+
+ALTER TABLE spectrum_match ADD ScoreSpectrumPeaksExplained REAL;
+ALTER TABLE spectrum_match ADD ScoreSpectrumIntensityExplained REAL;
+
+ALTER TABLE spectrum_match ADD ScoreLinkSiteDelta REAL;
+
+
