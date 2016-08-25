@@ -113,10 +113,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 			;
 		}
 
-		var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ();
-
 		this.alternativesModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
-			filterModel: filterModelInst,
+			//~ filterModel: filterModelInst,
 			selection: [], //will contain cross-link objects
 		});
 

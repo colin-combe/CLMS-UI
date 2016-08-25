@@ -1,24 +1,24 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.utils = {
-	// return comma-separated list of protein names from array of protein ids
-    proteinConcat: function (d, field) {
-		var pnames =  d[field].map (function(pid) { 
-			return CLMSUI.compositeModelInst.get("clmsModel").get("interactors").get(pid).name; });
-		return pnames.join(",");
-	},
-	
-	arrayConcat: function (d, field) {
+    // return comma-separated list of protein names from array of protein ids
+    proteinConcat: function (d, field, clmsModel) {
+        console.log(clmsModel.get("interactors").keys());
+        var pnames =  d[field].map (function(pid) {return clmsModel.get("interactors").get(pid).name;});
+        return pnames.join(",");
+    },
+
+    arrayConcat: function (d, field) {
                 return d[field].join(", ");
     },
-    
+
     getSVG: function (d3SvgSelection) {
         console.log ("domElem", d3SvgSelection.node());
         var a = d3SvgSelection.node().outerHTML;
         a=a.replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" ');
         return'<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'+a;
     },
-    
+
     addFourCorners: function (d3DivSelection) {
         var classNames = ["dynDiv_resizeDiv_tl", "dynDiv_resizeDiv_tr", "dynDiv_resizeDiv_bl", "dynDiv_resizeDiv_br"];
         var fourCorners = d3DivSelection
@@ -30,7 +30,7 @@ CLMSUI.utils = {
         ;
         return fourCorners;
     },
-    
+
     addDynDivParentBar: function (d3DivSelection) {
         var parentBar = d3DivSelection
             .append("div")
@@ -44,52 +44,52 @@ CLMSUI.utils = {
         ;
         return parentBar;
     },
-    
+
     addDynDivScaffolding : function (d3DivSelection) {
         CLMSUI.utils.addDynDivParentBar (d3DivSelection);
         CLMSUI.utils.addFourCorners (d3DivSelection);
     },
-    
+
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
-		var height = zeptoElem.height()>0;
-        var visibility = zeptoElem.css('visibility') != 'hidden'; 
-        var display = zeptoElem.css('display') != 'none'; 
+        var height = zeptoElem.height()>0;
+        var visibility = zeptoElem.css('visibility') != 'hidden';
+        var display = zeptoElem.css('display') != 'none';
         return (display && visibility && height);
     },
-    
+
     // try .layerX / .layerY first as .offsetX / .offsetY is wrong in firefox
     // in fact don't use layerX / offsetX, they're unreliable cross-browser
     crossBrowserElementX : function (evt, optElem) {
         return evt.clientX - $(optElem || evt.target).offset().left;    // use evt.target if no optional element passed
-        //return (evt.layerX || evt.offsetX) - evt.target.offsetLeft;    
+        //return (evt.layerX || evt.offsetX) - evt.target.offsetLeft;
     },
-    
+
     crossBrowserElementY : function (evt) {
-        return evt.clientY - $(optElem || evt.target).offset().top; 
+        return evt.clientY - $(optElem || evt.target).offset().top;
     },
-    
+
     checkBoxView: Backbone.View.extend ({
         tagName: "span",
         className: "buttonPlaceholder",
         events: {
             "click input": "checkboxClicked"
         },
-    
+
         initialize: function (viewOptions) {
             var self = this;
             var defaultOptions = {
                 labelFirst: true
-            };   
+            };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
-                
+
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
             if (!sel.attr("id")) {
                 sel.attr("id", this.options.id);
             }
             var myid = "#" + sel.attr("id");
-            
+
             var labs = sel.append("label")
                 .attr("class", "btn")
                 .style("padding-left", "0px")
@@ -104,30 +104,30 @@ CLMSUI.utils = {
             if (!this.options.labelFirst) {
                 labs.append("span").text(this.options.label);
             }
-            
+
             this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
         },
-        
+
         showState : function (boolVal) {
             d3.select(this.el).select("input").property("checked", boolVal);
         },
-        
+
         checkboxClicked: function () {
             CLMSUI.vent.trigger (this.options.eventName, d3.select(this.el).select("input").property("checked"));
         }
     }),
-    
-    addCheckboxBackboneView : function (options) {                        
-        return new CLMSUI.utils.checkBoxView ({myOptions: options});        
+
+    addCheckboxBackboneView : function (options) {
+        return new CLMSUI.utils.checkBoxView ({myOptions: options});
     },
-    
+
     dpNumber: function (num, decimalPlaces, roundFunc) {
         var powerOfTen = Math.pow (10, decimalPlaces);
         return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
     },
-    
+
     niceRoundMap: {1: 1, 2: 2, 3: 3, 4: 5, 5: 5, 6: 10, 7: 10, 8: 10, 9: 10, 10: 10},
-    
+
     niceRound: function (val) {
         var log = Math.floor (Math.log10 (val));
         var pow = Math.pow (10, log);
@@ -136,21 +136,21 @@ CLMSUI.utils = {
         roundVal *= pow;
         return roundVal;
     },
-    
+
     displayError: function (condition, message) {
         if (condition()) {
             var box = d3.select("#clmsErrorBox");
             if (box.size() == 0) {
                 box = d3.select("body").append("div").attr("id", "clmsErrorBox");
             }
-            
+
             box
                 .style("display", "block")
                 .html (message)
             ;
         }
     },
-    
+
     RadioButtonFilterViewBB: Backbone.View.extend ({
         tagName: "div",
         events: {
@@ -164,24 +164,24 @@ CLMSUI.utils = {
                 eventName: undefined,
                 labelGroupFlow: "horizontalFlow"
             };
-            this.options = _.extend(defaultOptions, initData.myOptions);   
+            this.options = _.extend(defaultOptions, initData.myOptions);
             if (this.options.eventName) {
                 this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
             }
             this.render();
         },
-         
+
          render: function () {
              var self = this;
-             var con = d3.select(this.el);           
+             var con = d3.select(this.el);
              con.append("p").attr("class", "headerLabel").text(this.options.header);
-             
+
              var sel = con.selectAll("label.singleChoice").data(this.options.states);
              var labs = sel.enter()
                 .append ("label")
                 .attr("class", "singleChoice "+self.options.labelGroupFlow)
              ;
-             labs 
+             labs
                 .append ("input")
                 .attr("type", "radio")
                 .attr("name", self.el.id + "RBGroup")
@@ -192,7 +192,7 @@ CLMSUI.utils = {
             var labels = this.options.labels;
              labs.append("span").text(function(d,i) { return labels[i]; });
          },
-        
+
         showState : function (filterVal) {
             //console.log ("in show state rb", filterVal);
             var self = this;
@@ -200,27 +200,27 @@ CLMSUI.utils = {
                 .property("checked", function(d,i) { return self.options.states[i] == filterVal; })
             ;
         },
-         
+
          changeFilter: function (evt) {
              if (this.options.eventName) {
                 CLMSUI.vent.trigger (this.options.eventName, +evt.currentTarget.value);
              }
          }
      }),
-    
+
     BaseFrameView: Backbone.View.extend ({
-        
+
         events: {
-            // following line commented out, mouseup sometimes not called on element if pointer drifts outside element 
+            // following line commented out, mouseup sometimes not called on element if pointer drifts outside element
             // and dragend not supported by zepto, fallback to d3 instead (see later)
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
             "click .downloadButton": "downloadSVG",
             "click .closeButton": "hideView",
             "click": "bringToTop",
         },
-        
+
         initialize: function (viewOptions) {
-            
+
             this.displayEventName = viewOptions.displayEventName;
 
             var self = this;
@@ -236,22 +236,22 @@ CLMSUI.utils = {
             mainDivSel.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
                 .call (drag)
             ;
-            
+
             if (this.displayEventName) {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }
-            
+
             return this;
         },
-        
+
         render: function () {
             return this;
         },
-        
+
         relayout: function () {
             return this;
         },
-        
+
         downloadSVG: function () {
             //var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
             var svgSel = d3.select(this.el).selectAll("svg");
@@ -261,11 +261,11 @@ CLMSUI.utils = {
             //console.log ("xml", svgXML);
             download (svgXML, 'application/svg', "view.svg");
         },
-        
+
         hideView: function () {
             CLMSUI.vent.trigger (this.displayEventName, false);
         },
-        
+
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
@@ -293,22 +293,22 @@ CLMSUI.utils = {
                 this.bringToTop();
             }
         },
-        
+
         // Ask if view is currently visible in the DOM
         isVisible: function () {
-			var start = window.performance.now();
-			console.log(this.$el.toString() + "isVis start:" + start);
-			var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
-			console.log(this.$el, "isVis time:" + answer , (window.performance.now() - start));
-			
-            return answer;   
+            var start = window.performance.now();
+            console.log(this.$el.toString() + "isVis start:" + start);
+            var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
+            console.log(this.$el, "isVis time:" + answer , (window.performance.now() - start));
+
+            return answer;
         },
-        
+
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy a c3 view just to be sure)
         remove: function () {
             // remove drag listener
-            d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null); 
+            d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null);
 
             // this line destroys the containing backbone view and it's events
             Backbone.View.prototype.remove.call(this);
@@ -323,16 +323,16 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             .append("span")
             .text("Link Colours")
         ;
-        
+
         d3.select(this.el)
             .append("select")
             .attr("id", "linkColourSelect")
             .on ("change", function () {
-                if (options.storeSelectedAt) { 
+                if (options.storeSelectedAt) {
                     var colourModel = self.model.at (d3.event.target.selectedIndex);
                     //CLMSUI.compositeModelInst.set("linkColourAssignment", colourModel);
                     options.storeSelectedAt.model.set (options.storeSelectedAt.attr, colourModel);
-                }   
+                }
             })
             .selectAll("option")
             .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
@@ -340,17 +340,17 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             .append("option")
                 .text (function(d) { return d; })
         ;
-        
+
         if (options.storeSelectedAt) {
             this.listenTo (options.storeSelectedAt.model, "change:"+options.storeSelectedAt.attr, function (compModel, newColourModel) {
-                //console.log ("colourSelector listening to change Link Colour Assignment", this, arguments); 
+                //console.log ("colourSelector listening to change Link Colour Assignment", this, arguments);
                 this.setSelected (newColourModel);
             });
         }
-        
+
         return this;
     },
-    
+
     setSelected: function (model) {
         d3.select(this.el)
             .selectAll("option")
@@ -358,7 +358,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
                 return d === model.get("title");
             })
         ;
-        
+
         return this;
     }
 });
@@ -367,13 +367,13 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
 CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function () {
         CLMSUI.utils.KeyViewOldBB.__super__.initialize.apply (this, arguments);
-        
+
         var chartDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner")
-        ;       
+        ;
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
         chartDiv.html ("<img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
-        
+
         return this;
     }
 });
@@ -382,16 +382,16 @@ CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
 CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function () {
         CLMSUI.utils.FDRViewBB.__super__.initialize.apply (this, arguments);
-        
+
         var chartDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner")
-        ;       
+        ;
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
         chartDiv.html ("<fieldset><legend>Basic FDR Calculation</legend><span></span></fieldset>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5, undefined];
         var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
-        
+
         function doFDR (d) {
             self.lastSetting = d;
             var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
@@ -414,7 +414,7 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
 
             //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
         }
-        
+
         chartDiv.select("span").selectAll("label.fixed").data(options)
             .enter()
             .append("label")
@@ -429,7 +429,7 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     doFDR (d);
                 })
         ;
-        
+
         chartDiv.select("span").append("label")
             .text("Other %")
             .attr("class", "horizontalFlow")
@@ -443,7 +443,7 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     doFDR ((+this.value) / 100);
                 })
         ;
-        
+
         chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
         chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
         return this;
@@ -453,10 +453,10 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
 
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);
-    
+
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
-        var tableIsHidden = (assocTable.style("display") == "none");  
+        var tableIsHidden = (assocTable.style("display") == "none");
         d3.select(this)
             .style("background", tableIsHidden ? "none" : "#55a")
             .select("svg")
@@ -472,11 +472,11 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
         .on ("click", function(d) {
             var assocTable = d3.select("#"+idPrefix+d.id);
             var tableIsHidden = (assocTable.style("display") == "none");
-            assocTable.style("display", tableIsHidden ? "table" : "none");         
-            setArrow.call (this, d);  
+            assocTable.style("display", tableIsHidden ? "table" : "none");
+            setArrow.call (this, d);
         })
         .on ("mouseover", function(d) {
-            // eventually backbone shared highlighting code to go here   
+            // eventually backbone shared highlighting code to go here
         })
     ;
     newHeaders.append("svg")
@@ -504,7 +504,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
             t += "<TR>";
             d3.values(obj).forEach (function(h) {
                 t+="<TD>"+h+"</TD>";
-            }); 
+            });
             t += "</TR>";
         });
         t += "</TABLE>";
@@ -539,7 +539,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     var rowJoin = tbodies.selectAll("tr").data(function(d) { return arrayExpandFunc (d, rowFilterFunc (d)); });
     rowJoin.exit().remove();
     var newRows = rowJoin.enter().append("tr");
-    
+
     newRows.selectAll("td").data(function(d) { return [{key: d.key, value: d.key}, {key: d.key, value: d.value}]; })
         .enter()
         .append("td")

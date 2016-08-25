@@ -80,10 +80,10 @@ function getMatchesCSV () {
 		var match = matches[i];
 		var result = filterModel.filter(match);
 		if (result === true){
-			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1")
+			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1", CLMSUI.compositeModelInst.get("clmsModel"))
 				+ '","' + CLMSUI.utils.arrayConcat(match, "pepPos1") + '","' 
 				+ match.pepSeq1 + '","' + match.linkPos1 + '","' 
-				+ CLMSUI.utils.proteinConcat(match, "protein2") + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
+				+ CLMSUI.utils.proteinConcat(match, "protein2", CLMSUI.compositeModelInst.get("clmsModel")) + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
 				+ match.pepSeq2 + '","' + match.linkPos2 + '","'
 				+ match.score + '","' + match.autovalidated + '","' + match.validated + '","' + match.searchId + '"\r\n';
 		}

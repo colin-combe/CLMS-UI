@@ -38,86 +38,92 @@
                 }
             });
 
-            
 
-			var tableDataPropOrder = [
-				"ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
-				"protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", "precursorCharge",
-				"autovalidated", "validated", "group", "runName", "scanNumber",
-			];
 
-			this.headerLabels = {
-				"ambiguity": "Ambiguity",
-				"protein1": "Protein 1",
-				"pepPos1": "Pep Pos",
-				"pepSeq1raw": "Pep 1 Sequence",
-				"linkPos1": "Link Pos",
-				"protein2": "Protein 2",
-				"pepPos2": "Pep Pos",
-				"pepSeq2raw": "Pep 2 Sequence",
-				"linkPos2": "Link Pos",
-				"score": "Score",
-				"autovalidated": "Auto",
-				"validated": "Manual",
-				"group": "Group",
-				"runName": "Run Name",
-				"scanNumber": "Scan Number",
-				"precursorCharge": "Charge",
-			};
+            var tableDataPropOrder = [
+                "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
+                "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", "precursorCharge",
+                "autovalidated", "validated", "group", "runName", "scanNumber",
+            ];
 
-			this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
-			this.colSectionStarts = d3.set (["protein2", "score"]);
-			this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
-
-			// entries commented out until a replacement is found for xlv
-			var headerFilterFuncs = {
-				"protein1": function () { return false; },
-				"protein2": function () { return false; },
-				"pepPos1": function () { return false; },
-				"pepPos2": function () { return false; },
-				"autovalidated": function () { return CLMS.model.autoValidatedFound; },
-				"validated": function () { return CLMS.model.manualValidatedFound; },
-			};
-
-			this.filteredProps = tableDataPropOrder.filter(
-				function (prop) {
-					var f = headerFilterFuncs [prop];
-					return f ? f() : true;
-				}
-			);
-
-            this.cellFuncs = {
-					"ambiguity": function (d) { return d.protein1.length * 
-									((d.protein2.length != 0)? d.protein2.length : 1); },
-					"protein1": function (d) { return CLMSUI.utils.proteinConcat (d, "protein1"); },
-					"protein2": function (d) { return CLMSUI.utils.proteinConcat (d, "protein2"); },
-					"pepPos1": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos1"); },
-					"pepPos2": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos2"); },
-					"linkPos1": function(d) { return d.linkPos1; },
-					"linkPos2": function(d) { return d.linkPos2; },
-					"score": function (d) { return d.score; }
+            this.headerLabels = {
+                "ambiguity": "Ambiguity",
+                "protein1": "Protein 1",
+                "pepPos1": "Pep Pos",
+                "pepSeq1raw": "Pep 1 Sequence",
+                "linkPos1": "Link Pos",
+                "protein2": "Protein 2",
+                "pepPos2": "Pep Pos",
+                "pepSeq2raw": "Pep 2 Sequence",
+                "linkPos2": "Link Pos",
+                "score": "Score",
+                "autovalidated": "Auto",
+                "validated": "Manual",
+                "group": "Group",
+                "runName": "Run Name",
+                "scanNumber": "Scan Number",
+                "precursorCharge": "Charge",
             };
-            
+
+            this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
+            this.colSectionStarts = d3.set (["protein2", "score"]);
+            this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
+
+            // entries commented out until a replacement is found for xlv
+            var headerFilterFuncs = {
+                "ambiguity": function () { return false; },
+                //~ "protein1": function () { return false; },
+                //~ "protein2": function () { return false; },
+                //~ "pepPos1": function () { return false; },
+                //~ "pepPos2": function () { return false; },
+                "autovalidated": function () { return CLMS.model.autoValidatedFound; },
+                "validated": function () { return CLMS.model.manualValidatedFound; },
+            };
+
+            this.filteredProps = tableDataPropOrder.filter(
+                function (prop) {
+                    var f = headerFilterFuncs [prop];
+                    return f ? f() : true;
+                }
+            );
+
+            var self = this;
+            this.cellFuncs = {
+                    "ambiguity": function (d) { return d.protein1.length *
+                                    ((d.protein2.length != 0)? d.protein2.length : 1); },
+                    "protein1": function (d) {
+                        return CLMSUI.utils.proteinConcat (d, "protein1", self.model.get("clmsModel"));
+                    },
+                    "protein2": function (d) {
+                        return CLMSUI.utils.proteinConcat (d, "protein2", self.model.get("clmsModel"));
+                    },
+                    "pepPos1": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos1"); },
+                    "pepPos2": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos2"); },
+                    "linkPos1": function(d) { return d.linkPos1; },
+                    "linkPos2": function(d) { return d.linkPos2; },
+                    "score": function (d) { return d.score; }
+            };
+
             var self = this;
             this.page = 1;
             this.pageSize = 50;
             var pager = d3.select(this.el).select(".pager");
-            if (!self.options.secondaryModel) {		
-				pager.append("p").text("Page:").style ("display", "inline-block");
-				
-				pager.append("input")
-					.attr ("type", "number" )
-					.attr ("min", "1" )
-					.attr ("max", "999" )
-					//~ .attr ("class", "btn btn-1 btn-1a" )
-					.style ("display", "inline-block")
-					.text ("<last")
-					.on ("change", function (d) {
-							self.setPage(this.value);
-					});
-			} else {
-				pager.append("p").text("Alternative Explanations");
-			}            
+            if (!self.options.secondaryModel) {
+                pager.append("p").text("Page:").style ("display", "inline-block");
+
+                pager.append("input")
+                    .attr ("type", "number" )
+                    .attr ("min", "1" )
+                    .attr ("max", "999" )
+                    //~ .attr ("class", "btn btn-1 btn-1a" )
+                    .style ("display", "inline-block")
+                    .text ("<last")
+                    .on ("change", function (d) {
+                            self.setPage(this.value);
+                    });
+            } else {
+                pager.append("p").text("Alternative Explanations");
+            }
          },
 
         render: function () {
@@ -132,7 +138,7 @@
             var selectedXLinkCount = this.selectedXLinkArray.length;
 
             var self = this;
-			
+
             // draw if selected crosslink count > 0 or is 'freshly' zero
             if (selectedXLinkCount > 0 || this.lastCount > 0) {
                 this.lastCount = selectedXLinkCount;
@@ -159,13 +165,13 @@
         },
 
         setPage : function(pg) {
-			if (pg < 1) {pg = 1;}
-			var pageCount = Math.floor(this.selectedXLinkArray.length / this.pageSize) + 1;
-			if (pg > pageCount) {pg = pageCount;}
-			this.page = pg;                    
-			var input = d3.select(this.el).select(".pager>input");
-			input.property("value", pg);
-			var panelHeading = d3.select(this.el).select(".crossLinkTotal");
+            if (pg < 1) {pg = 1;}
+            var pageCount = Math.floor(this.selectedXLinkArray.length / this.pageSize) + 1;
+            if (pg > pageCount) {pg = pageCount;}
+            this.page = pg;
+            var input = d3.select(this.el).select(".pager>input");
+            input.property("value", pg);
+            var panelHeading = d3.select(this.el).select(".crossLinkTotal");
             var selectedXLinkCount = this.selectedXLinkArray.length;
             var lower = (selectedXLinkCount == 0)? 0 : ((pg - 1) * this.pageSize) + 1;
             var upper = (pg * this.pageSize);
@@ -173,8 +179,8 @@
                 upper = selectedXLinkCount;
             }
             panelHeading.text(lower + " - " + upper + " of " +
-				selectedXLinkCount + " cross-link" + ((selectedXLinkCount != 1)? "s":""));
-			var tablePage = this.selectedXLinkArray.slice((this.page - 1) * this.pageSize,
+                selectedXLinkCount + " cross-link" + ((selectedXLinkCount != 1)? "s":""));
+            var tablePage = this.selectedXLinkArray.slice((this.page - 1) * this.pageSize,
                                                 this.page * this.pageSize);
             this.addRows (tablePage, this.filteredProps);
         },

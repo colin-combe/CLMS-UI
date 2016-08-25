@@ -345,31 +345,20 @@ CLMSUI.init.viewsEssential = function (options) {
                 } else {
                     console.log(json);
                     var altModel = new window.CLMS.model.SearchResultsModel (json);
-					//take match that was selected out of list of alternatives 
-					//warning - hack, going to set validation att to rejected for equiv match in alt model
-					var altMatches = altModel.get("matches");
-					for (altMatch of altMatches) {
-						if (altMatch.id == match.id) {
-							altMatch.validated = "R";
-						}
-					}
-					//~ var index = altMatches.indexOf(match);
-					//~ console.log("i"+index);
-					//~ altMatches = altMatches.splice(index, 1);
-                    var allCrossLinks = Array.from(
-							altModel.get("crossLinks").values());
-                    spectrumWrapper.alternativesModel.set("clmsModel", altModel);
+                    var allCrossLinks = Array.from(altModel.get("crossLinks").values());
+					//empty selection first
+					spectrumWrapper.alternativesModel.set("selection", []);
+					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
                     spectrumWrapper.alternativesModel.applyFilter();
-                    //console.log("CL>"+allCrossLinks.length);
-                    if (altMatches.length == 1) {
-						d3.select("#alternatives").style("display", "none");
+                    //~ if (altModel.get("matches").length == 1) {
+						//~ d3.select("#alternatives").style("display", "none");
+						//~ spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						//~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					//~ } else {
+						//~ d3.select("#alternatives").style("display", "block");
 						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					} else {
-						d3.select("#alternatives").style("display", "block");
-						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					}
+						//~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					//~ }
                 }
             });
         } else {
