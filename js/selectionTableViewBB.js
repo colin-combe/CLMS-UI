@@ -39,12 +39,13 @@
             });
 
             var tableDataPropOrder = [
-                "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
+                "id","ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
                 "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", "precursorCharge",
                 "autovalidated", "validated", "group", "runName", "scanNumber",
             ];
 
             this.headerLabels = {
+                "id": "PSM ID",
                 "ambiguity": "Ambiguity",
                 "protein1": "Protein 1",
                 "pepPos1": "Pep Pos",
@@ -87,6 +88,7 @@
 
             var self = this;
             this.cellFuncs = {
+                    "id": function (d) { return d.id; },
                     "ambiguity": function (d) { return d.protein1.length *
                                     ((d.protein2.length != 0)? d.protein2.length : 1); },
                     "protein1": function (d) {
