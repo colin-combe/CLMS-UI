@@ -338,7 +338,7 @@ CLMSUI.init.viewsEssential = function (options) {
         if (match) {
             var url = "./loadData.php?sid="
                     + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
-                    + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
+                    + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
             d3.json (url, function(error, json) {
                 if (error) {
                     console.log ("error", error, "for", url);
@@ -350,15 +350,15 @@ CLMSUI.init.viewsEssential = function (options) {
 					spectrumWrapper.alternativesModel.set("selection", []);
 					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
                     spectrumWrapper.alternativesModel.applyFilter();
-                    //~ if (altModel.get("matches").length == 1) {
-						//~ d3.select("#alternatives").style("display", "none");
-						//~ spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						//~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					//~ } else {
-						//~ d3.select("#alternatives").style("display", "block");
+                    if (altModel.get("matches").length == 1) {
+						d3.select("#alternatives").style("display", "none");
 						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						//~ CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					//~ }
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					} else {
+						d3.select("#alternatives").style("display", "block");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					}
                 }
             });
         } else {
