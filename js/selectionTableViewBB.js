@@ -38,8 +38,6 @@
                 }
             });
 
-
-
             var tableDataPropOrder = [
                 "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
                 "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", "precursorCharge",

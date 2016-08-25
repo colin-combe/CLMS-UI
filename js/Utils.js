@@ -3,7 +3,6 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.utils = {
     // return comma-separated list of protein names from array of protein ids
     proteinConcat: function (d, field, clmsModel) {
-        console.log(clmsModel.get("interactors").keys());
         var pnames =  d[field].map (function(pid) {return clmsModel.get("interactors").get(pid).name;});
         return pnames.join(",");
     },
