@@ -212,6 +212,10 @@
 	/*
 	 * PEPTIDES
 	 */
+    if (sizeof($peptideIds) === 0) {
+        echo "var peptides = [];";
+        echo "var proteins = [];";
+    } else {
 	$implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
 	$query = "SELECT pep.id, (array_agg(pep.sequence))[1] as sequence, 
 		array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position + 1) as positions
@@ -293,8 +297,8 @@
 	
 	
 	$endTime = microtime(true);
-	echo "\n//page time: ".($endTime - $pageStartTime)."ms\n\n";
-
+        //~ echo "\n/*page time: ".($endTime - $pageStartTime)."ms*/\n\n";
+}
 	// Free resultset
 	pg_free_result($res);
 	// Closing connection
