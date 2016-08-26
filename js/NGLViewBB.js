@@ -17,6 +17,8 @@
           return _.extend({},parentEvents,{
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
+            "click .distanceLabelCB": "toggleLabels",
+            "click .selectedOnlyCB": "toggleNonSelectedLinks",
           });
         },
 
@@ -57,13 +59,6 @@
                     .attr("type", "checkbox")
                     .attr("class", "distanceLabelCB")
                     .property ("checked", this.options.labelVisible)
-                    .on ("click", function() {
-                        var chk = d3.select(this).property("checked");
-                        self.xlRepr.displayedDistanceVisible = chk;
-                        self.xlRepr.linkRepr.setParameters ({
-                            labelVisible: chk,
-                        });
-                    })
             ;
 			
 			 toolbar.append("label")
@@ -73,12 +68,9 @@
                     .attr("type", "checkbox")
                     .attr("class", "selectedOnlyCB")
                     .property ("checked", this.options.selectedOnly)
-                    .on ("click", function() {
-                        self.xlRepr.linkRepr.setVisibility (!d3.select(this).property("checked"));
-                    })
                 ;
 			
-			         toolbar.append("button")
+			     toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
             ;
@@ -193,6 +185,26 @@
 		centerView: function () {
 			this.stage.centerView();
             return this;
+        },
+        
+        toggleLabels: function (event) {
+           var chk = event.target.checked;
+            this.xlRepr.displayedDistanceVisible = chk;
+            this.xlRepr.linkRepr.setParameters ({
+                labelVisible: chk,
+            });
+        },
+        
+        toggleResidues: function (event) {
+           var chk = event.target.checked;
+            this.xlRepr.displayedDistanceVisible = chk;
+            this.xlRepr.linkRepr.setParameters ({
+                labelVisible: chk,
+            });
+        },
+        
+        toggleNonSelectedLinks: function (event) {
+            this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
                 
