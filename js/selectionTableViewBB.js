@@ -108,7 +108,7 @@
             this.page = 1;
             this.pageSize = 50;
             var pager = d3.select(this.el).select(".pager");
-            if (!self.options.secondaryModel) {
+            if (!self.options.mainModel) {
                 pager.append("p").text("Page:").style ("display", "inline-block");
 
                 pager.append("input")
@@ -236,12 +236,18 @@
             tjoin
                 .attr("id", function(d) { return 'match'+d.id; })
                 .on("click", function(d) {
-                    var secondaryModel = self.options.secondaryModel;
-                    if (secondaryModel) {
-                        secondaryModel.set ("lastSelectedMatch", {match: d, directSelection: true});
+                    var mainModel = self.options.mainModel;
+                    if (mainModel) {
+						if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
+							d3.select(".validationControls").style("display", "block");
+						} else {
+							d3.select(".validationControls").style("display", "none");
+                        }
+						mainModel.set ("lastSelectedMatch", {match: d, directSelection: true});
                     } else {
-                        self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
+                    	d3.select(".validationControls").style("display", "block");
                     }
+                    self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
                 })
                 .classed ("spectrumShown2", function(d) {
                     var lsm = self.model.get("lastSelectedMatch");

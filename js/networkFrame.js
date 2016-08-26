@@ -336,6 +336,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
+			spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
             var url = "./loadData.php?sid="
                     + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
                     + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
@@ -346,11 +347,13 @@ CLMSUI.init.viewsEssential = function (options) {
                     console.log(json);
                     var altModel = new window.CLMS.model.SearchResultsModel (json);
                     var allCrossLinks = Array.from(altModel.get("crossLinks").values());
-					//empty selection first
+					// empty selection first
+					// (important or it will crash coz selection contains links to proteins not in clms model)
 					spectrumWrapper.alternativesModel.set("selection", []);
 					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
-                    spectrumWrapper.alternativesModel.applyFilter();
-                    if (altModel.get("matches").length == 1) {
+					spectrumWrapper.alternativesModel.applyFilter();
+                    spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
+                    if (altModel.get("matches").size == 1) {
 						d3.select("#alternatives").style("display", "none");
 						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
 						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
