@@ -51,6 +51,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .attr("transform", "translate(-1,0)")
             .call(d3.svg.axis().scale(this.y).orient("left"));
 
+        console.log ("this", this.model);
         // upper brush rectangles with colours from underlying scale
         this.upperRange = svg.append("rect").attr("x", 0).attr("y", -10)
             .attr("width", 50).attr("fill",this.model.get("colScale").range()[2]);

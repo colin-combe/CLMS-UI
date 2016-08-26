@@ -207,9 +207,11 @@ CLMSUI.init.views = function () {
     if (HSA_Active){
         // Distance slider
         var distSlider = new CLMSUI.ThreeColourSliderBB ({
-            el: "#sliderDiv",
-            model: CLMSUI.compositeModelInst.get("rangeModel"),
-            underlyingScale: CLMSUI.linkColour.distanceColoursBB,
+            el: "#sliderDiv",            
+            model: CLMSUI.linkColour.distanceColoursBB,
+            rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
+            domain: [0,35],
+            extent: [15,25],
         });
     }
     else {
