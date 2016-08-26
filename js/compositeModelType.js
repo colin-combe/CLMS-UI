@@ -5,41 +5,46 @@
     
     CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend ({
         applyFilter: function () {
-            var filterModel = this.get("filterModel");
+			var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
             for (var crossLink of crossLinks) {
-                
-                crossLink.filteredMatches_pp = [];
-                
-                if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
-                    //console.log ("yo fdring");
-                    var pass = filterModel.filterLink (crossLink);
-                    if (pass) {
-                        crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
-                        crossLink.ambiguous = 
-                            !crossLink.filteredMatches_pp.some (function (matchAndPepPos) {
-                                return matchAndPepPos.match.crossLinks.length === 1;
-                            })
-                        ;    
-                    }
-                } else {
-					crossLink.ambiguous = true;
-					crossLink.confirmedHomomultimer = false;
-					for (var matchAndPepPos of crossLink.matches_pp) {	
-						var match = matchAndPepPos.match;
-						var result = filterModel.filter(match);
-						if (result === true){
-							crossLink.filteredMatches_pp.push(matchAndPepPos);
-							if (match.crossLinks.length === 1) {
-								crossLink.ambiguous = false;
+                if (filterModel) {
+					crossLink.filteredMatches_pp = [];
+					
+					if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
+						//console.log ("yo fdring");
+						var pass = filterModel.filterLink (crossLink);
+						if (pass) {
+							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
+							crossLink.ambiguous = 
+								!crossLink.filteredMatches_pp.some (function (matchAndPepPos) {
+									return matchAndPepPos.match.crossLinks.length === 1;
+								})
+							;    
+						}
+					} else {
+						crossLink.ambiguous = true;
+						crossLink.confirmedHomomultimer = false;
+						for (var matchAndPepPos of crossLink.matches_pp) {	
+							var match = matchAndPepPos.match;
+							var result = filterModel.filter(match);
+							if (result === true){
+								crossLink.filteredMatches_pp.push(matchAndPepPos);
+								if (match.crossLinks.length === 1) {
+									crossLink.ambiguous = false;
+								}
+								if (match.crossLinks.hd === true) {
+									crossLink.confirmedHomomultimer = true;
+								}                       
 							}
-							if (match.crossLinks.hd === true) {
-								crossLink.confirmedHomomultimer = true;
-							}                       
 						}
 					}
 				}
+				else {
+					crossLink.filteredMatches_pp = crossLink.matches_pp;
+				}
             }
+            this.trigger ("filteringDone");
         },
 
         getFilteredCrossLinks: function (crossLinks) {

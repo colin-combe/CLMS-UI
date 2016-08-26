@@ -47,11 +47,11 @@ var allDataAndWindowLoaded = _.after (2, function () {
 CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.models = function (options) {
-	
-	// define alignment model and listeners first, so they're ready to pick up events from other models
+
+    // define alignment model and listeners first, so they're ready to pick up events from other models
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
-	options.alignmentCollectionInst = alignmentCollectionInst;
-	
+    options.alignmentCollectionInst = alignmentCollectionInst;
+
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
         //console.log("Interactors", clmsModel.get("interactors"));
 
@@ -101,9 +101,9 @@ CLMSUI.init.models = function (options) {
     var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
         scale: d3.scale.linear()
     });
-	options.rangeModelInst = rangeModelInst;
-	
-	CLMSUI.init.modelsEssential(options);
+    options.rangeModelInst = rangeModelInst;
+
+    CLMSUI.init.modelsEssential(options);
 
     // Set up colour models, some (most) of which depend on data properties
     CLMSUI.linkColour.setupColourModels();
@@ -152,14 +152,13 @@ CLMSUI.init.modelsEssential = function (options) {
     // the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
         this.applyFilter();
-        this.trigger ("filteringDone");
     });
-	
+
 }
 
 CLMSUI.init.views = function () {
-	CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
-	
+    CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
+
     var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
@@ -171,7 +170,7 @@ CLMSUI.init.views = function () {
         ;
     });
 
-	CLMSUI.init.viewsEssential({"specWrapperDiv":"#spectrumPanelWrapper"});
+    CLMSUI.init.viewsEssential({"specWrapperDiv":"#spectrumPanelWrapper"});
 
     // Generate checkboxes
     var checkBoxData = [
@@ -208,11 +207,9 @@ CLMSUI.init.views = function () {
     if (HSA_Active){
         // Distance slider
         var distSlider = new CLMSUI.ThreeColourSliderBB ({
-            el: "#sliderDiv", 
-            model: CLMSUI.linkColour.distanceColoursBB,
-            rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
-            domain: [0,35],
-            extent: [15,25],
+            el: "#sliderDiv",
+            model: CLMSUI.compositeModelInst.get("rangeModel"),
+            underlyingScale: CLMSUI.linkColour.distanceColoursBB,
         });
     }
     else {
@@ -337,30 +334,40 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
-	spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-		if (match) { 
-                    var url = "./loadData.php?sid=" 
-						+ CLMSUI.compositeModelInst.get("clmsModel").get("sid")
-						+ "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
-			d3.json (url, function(error, json) {
-				if (error) {
-					console.log ("error", error, "for", url);
-				} else {
-					console.log(json);
-					var altModel = new window.CLMS.model.SearchResultsModel (json);
-
-					var allCrossLinks = Array.from(
-					altModel.get("crossLinks").values());
+    spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+        if (match) {
+			spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
+            var url = "./loadData.php?sid="
+                    + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
+                    + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
+            d3.json (url, function(error, json) {
+                if (error) {
+                    console.log ("error", error, "for", url);
+                } else {
+                    console.log(json);
+                    var altModel = new window.CLMS.model.SearchResultsModel (json);
+                    var allCrossLinks = Array.from(altModel.get("crossLinks").values());
+					// empty selection first
+					// (important or it will crash coz selection contains links to proteins not in clms model)
+					spectrumWrapper.alternativesModel.set("selection", []);
 					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
 					spectrumWrapper.alternativesModel.applyFilter();
-					console.log("CL>"+allCrossLinks.length);
-					spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-				}
-			});
-		} else {
-			//~ //this.model.clear();
-		}
-	});
+                    spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
+                    if (altModel.get("matches").size == 1) {
+						d3.select("#alternatives").style("display", "none");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					} else {
+						d3.select("#alternatives").style("display", "block");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					}
+                }
+            });
+        } else {
+            //~ //this.model.clear();
+        }
+    });
 
 }
 
@@ -398,6 +405,17 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
+    /*
+    var distoViewer = new CLMSUI.DistogramBB ({
+        el: "#distoPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "distoShow",
+        myOptions: {
+            chartTitle: "Cross-Link Distogram",
+            seriesName: "Actual"
+        }
+    });
+    */
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv",
@@ -507,7 +525,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
         });
-    } 
+    }
 
 
     new CLMSUI.ProteinInfoViewBB ({
@@ -521,7 +539,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
     });
-    
+
 };
 
 

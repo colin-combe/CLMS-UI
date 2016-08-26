@@ -75,21 +75,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     .attr ("type", "checkbox")
                     .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
-        mainDivSel.selectAll("label.textFilters")
-            .data(this.options.textFilters, function(d) { return d.id; })
-            .enter()
-            .append ("label")
-            .attr("class", "textFilters")
-                .text (function(d) { return d.label; })
-                .append ("input")
-                    .attr ("id", function(d) { return d.id; })
-                    .attr ("class", "filterTypeText")
-                    .attr ("type", "textbox")
-                    .attr ("size", function(d) { return d.chars; })
-                    //~ .property ("checked", function(d) { return self.model.get(d.id); })
-        ;
         
+        mainDivSel.append ("label")
+                .text ("Min.seq.sep.")
+                .append ("input")
+                    .attr ("id", "seqSepFilter")
+                    .attr ("class", "filterSeqSep")
+                    .attr ("type", "number")
+                    .attr ("min", 0)
+                    .attr ("max", 999)
+        ;
 
         var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
@@ -119,17 +114,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
         
-        mainDivSel.append ("label")
-                .text ("Min.seq.sep.")
+        mainDivSel.selectAll("label.textFilters")
+            .data(this.options.textFilters, function(d) { return d.id; })
+            .enter()
+            .append ("label")
+            .attr("class", "textFilters")
+                .text (function(d) { return d.label; })
                 .append ("input")
-                    .attr ("id", "seqSepFilter")
-                    .attr ("class", "filterSeqSep")
-                    .attr ("type", "number")
-                    .attr ("min", 0)
-                    .attr ("max", 999)
+                    .attr ("id", function(d) { return d.id; })
+                    .attr ("class", "filterTypeText")
+                    .attr ("type", "textbox")
+                    .attr ("size", function(d) { return d.chars; })
+                    //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
-
 
         // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
         // onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"

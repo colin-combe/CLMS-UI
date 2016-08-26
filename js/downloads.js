@@ -72,7 +72,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-	var csv = '"Id","Protein1","PepPos1","PepSeq1","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","AutoVal","Val","Search"\r\n';
+	var csv = '"Id","Protein1","PepPos1","PepSeq1","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","AutoVal","Val","Search","RunName","ScanNumber"\r\n';
 	var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 	var matchCount = matches.length;
 	var filterModel = CLMSUI.compositeModelInst.get("filterModel");
@@ -80,12 +80,13 @@ function getMatchesCSV () {
 		var match = matches[i];
 		var result = filterModel.filter(match);
 		if (result === true){
-			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1")
+			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1", CLMSUI.compositeModelInst.get("clmsModel"))
 				+ '","' + CLMSUI.utils.arrayConcat(match, "pepPos1") + '","' 
 				+ match.pepSeq1 + '","' + match.linkPos1 + '","' 
-				+ CLMSUI.utils.proteinConcat(match, "protein2") + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
+				+ CLMSUI.utils.proteinConcat(match, "protein2", CLMSUI.compositeModelInst.get("clmsModel")) + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
 				+ match.pepSeq2 + '","' + match.linkPos2 + '","'
-				+ match.score + '","' + match.autovalidated + '","' + match.validated + '","' + match.searchId + '"\r\n';
+				+ match.score + '","' + match.autovalidated + '","' + match.validated + '","'
+				+ match.searchId + '","' + match.runName + '","' + match.scanNumber + '"\r\n';
 		}
 	}
 	return csv;

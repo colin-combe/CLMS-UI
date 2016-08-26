@@ -130,7 +130,7 @@
 
             <div class="container">
 				<h1 class="page-header">
-					<i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
+					<i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
 					<p class="btn">Layout:</p>
 					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
 					<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
@@ -176,7 +176,7 @@
 			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-					//~ console.log(xmlhttp.responseText);
+					//console.log(xmlhttp.responseText);
                     
 					var json = JSON.parse(xmlhttp.responseText);
                     

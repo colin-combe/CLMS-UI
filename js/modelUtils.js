@@ -102,7 +102,7 @@ CLMSUI.modelUtils = {
     
     // lots of scores, what's the extent (min and max values)?
     getScoreExtent: function (matchesArr) {
-        return d3.extent (matchesArr.map (function(d) { return d.score; }));
+        return d3.extent (Array.from(matchesArr.values()).map (function(d) { return d.score; }));
     },
      
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
