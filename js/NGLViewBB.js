@@ -19,6 +19,7 @@
             "click .downloadButton": "downloadImage",
             "click .distanceLabelCB": "toggleLabels",
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
+            "click .showResiduesCB": "toggleResidues",
           });
         },
 
@@ -34,6 +35,7 @@
                 //~ maxX: 80
                 labelVisible: false,
                 selectedOnly: false,
+                showResidues: true,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -49,10 +51,11 @@
             
             
             toolbar.append("button")
-                .attr("class", "btn btn-1 btn-1a centreButton")
-                .text("Centre");
+                .attr("class", "btn btn-1 btn-1a downloadButton")
+                .text("Download Image")
+            ;
 			
-			         toolbar.append("label")
+			 toolbar.append("label")
                 .attr("class", "btn")
                 .text("Distance labels")
                 .append("input")
@@ -68,11 +71,20 @@
                     .attr("type", "checkbox")
                     .attr("class", "selectedOnlyCB")
                     .property ("checked", this.options.selectedOnly)
-                ;
+            ;
+            
+            toolbar.append("label")
+                .attr("class", "btn")
+                .text("Residues")
+                .append("input")
+                    .attr("type", "checkbox")
+                    .attr("class", "showResiduesCB")
+                    .property ("checked", this.options.showResidues)
+            ;
 			
-			     toolbar.append("button")
-                .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Download Image")
+            toolbar.append("button")
+                .attr("class", "btn btn-1 btn-1a centreButton")
+                .text("Re-Centre")
             ;
 			
 		
@@ -196,11 +208,7 @@
         },
         
         toggleResidues: function (event) {
-           var chk = event.target.checked;
-            this.xlRepr.displayedDistanceVisible = chk;
-            this.xlRepr.linkRepr.setParameters ({
-                labelVisible: chk,
-            });
+           this.xlRepr.resRepr.setVisibility (event.target.checked);
         },
         
         toggleNonSelectedLinks: function (event) {
