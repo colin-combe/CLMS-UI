@@ -89,9 +89,25 @@ for ($i = 0; $i < count($id_rands); $i++) {
 }
 echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\n";
 
+
+//Stored layouts
+if (count($searchId_randGroup) == 1) { // no saved layouts for aggregations at moment
+	$firstSearchId = $searchId_randGroup[0]["id"];  
+	$layoutQuery = "SELECT t1.layout AS l "
+			. " FROM layouts AS t1 "
+			. " WHERE t1.search_id LIKE '" . $sid . "' "
+			. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
+			. " WHERE t1.search_id LIKE '" . $sid . "' );";
+			
+	$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+	while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
+		echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
+	}
+}
+
 //load data -
-$WHERE_spectrumMatch = ' ( ';
-$WHERE_matchedPeptide = ' ( ';
+$WHERE_spectrumMatch = ' ( '; //WHERE clause for spectrumMatch table
+$WHERE_matchedPeptide = ' ( ';//WHERE clause for matchedPeptide table
 for ($i = 0; $i < count($searchId_randGroup); $i++) {
     $search = array_values($searchId_randGroup)[$i];
     if ($i > 0){
@@ -123,228 +139,207 @@ if ($spectrum) {
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
 }
 
-    /*
-     * SPECTRUM MATCHES AND MATCHED PEPTIDES
-     */
 
+$oldDB = true;
 
-    $oldDB = true;
-    if ($oldDB == true) {
-        //old DB
-        $query = "
-            SELECT
-                mp.match_id, mp.match_type, mp.peptide_id,
-                mp.link_position + 1 AS link_position,
-                sm.score, sm.autovalidated, sm.validated, sm.rejected,
-                sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id,
-                sp.scan_number, r.run_name
-            FROM
-                (SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
-                sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
-                FROM spectrum_match sm INNER JOIN search s ON search_id = s.id
-                WHERE (".$WHERE_spectrumMatch.")
-                AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR
-                (sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')
-                OR (sm.validated LIKE '?'))
-                ) sm
-            INNER JOIN
-                (SELECT mp.match_id, mp.match_type, mp.peptide_id,
-                mp.link_position
-                FROM matched_peptide mp WHERE link_position != -1) mp
-                ON sm.id = mp.match_id
-            INNER JOIN spectrum sp ON sm.spectrum_id = sp.id
-            INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized
-                WHERE (".$WHERE_matchedPeptide.")
-                ) r ON sm.id = r.spectrum_match_id
-            ORDER BY score DESC, sm.id, mp.match_type;";
-    }
-    else {
-        //New DB
+/*
+ * SPECTRUM MATCHES AND MATCHED PEPTIDES
+ */
 
-        if ($linears == false){
-            $WHERE_matchedPeptide = $WHERE_matchedPeptide." AND link_position != -1 ";
-        }
-
-        $query = "
-                SELECT
-                mp.match_id, mp.match_type, mp.peptide_id,
-                mp.link_position + 1 AS link_position, sm.spectrum_id,
-                sm.score, sm.autovalidated, sm.validated, sm.rejected,
-                sm.search_id, sm.precursor_charge, sm.is_decoy,
-                sp.scan_number, ss.name as run_name
-            FROM
-                (SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
-                sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
-                FROM spectrum_match sm INNER JOIN search s ON search_id = s.id
-                WHERE ".$WHERE_spectrumMatch.") sm
-            INNER JOIN
-                (SELECT mp.match_id, mp.match_type, mp.peptide_id,
-                mp.link_position
-                FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp
-                ON sm.id = mp.match_id
-            INNER JOIN spectrum sp ON sm.spectrum_id = sp.id
-            INNER JOIN spectrum_source ss ON sp.source_id = ss.id
-            ORDER BY score DESC, sm.id;";
-    }
-    $startTime = microtime(true);
-    $res = pg_query($query) or die('Query failed: ' . pg_last_error());
-    $endTime = microtime(true);
-    //~ echo '/*db time: '.($endTime - $startTime)."ms\n";
-    //~ echo '/*rows:'.pg_num_rows($res)."\n";
-    $startTime = microtime(true);
-    echo "\"rawMatches\":[\n";
-    $peptideIds = array();
-    $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-    while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-            $peptideId = $line["peptide_id"];
-            $peptideIds[$peptideId] = 1;
-            echo "{"
-                . '"id":' . $line["match_id"] . ','
-                . '"ty":' . $line["match_type"] . ','
-                . '"pi":' . $peptideId . ','
-                . '"lp":'. $line["link_position"]. ','
-                . '"spec":' . $line["spectrum_id"] . ','
-                . '"sc":' . round($line["score"], 3) . ','
-                . '"si":' . $line["search_id"] . ','
-                . '"dc":"' . $line["is_decoy"] . '",';
-            $autoVal =  $line["autovalidated"];
-            if (isset($autoVal)){
-                echo '"av":"' . $autoVal.'"' . ',';
-        }
-            $val = $line["validated"];
-            if (isset($val)){
-                echo '"v":"'.$val.'"' . ',';
-        }
-            $rej = $line["rejected"];
-            if (isset($rej)){
-                echo '"rj":"'.$rej.'"' . ',';
-        }
-            echo '"r":"' . $line["run_name"]. '",'//"run" . '",'
-                . '"sn":' . $line["scan_number"]. ','
-                . '"pc":' . $line["precursor_charge"]
-                . "}";
-        $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-            if ($line) {echo ",\n";}
-    }
-    echo "\n],\n";
-    $endTime = microtime(true);
-    //~ echo '/*php time: '.($endTime - $startTime)."ms\n\n";
-
-    $proteinIdField = "hp.protein_id";
-    if (count($searchId_randGroup) > 1) {
-        $proteinIdField = "p.accession_number";
-    }
-    /*
-     * PEPTIDES
-     */
-    if (sizeof($peptideIds) === 0) {
-        echo "\"peptides\":[],";
-        echo "\"proteins\":[]}";
-    } else {
-        $implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
-        $query = "SELECT pep.id, (array_agg(pep.sequence))[1] as sequence,
-            array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position + 1) as positions
-            FROM (SELECT id, sequence FROM peptide WHERE id IN "
-                    .$implodedPepIds.") pep
-            INNER JOIN (SELECT peptide_id, protein_id, peptide_position
-            FROM has_protein WHERE peptide_id IN "
-                    .$implodedPepIds.") hp ON pep.id = hp.peptide_id ";
-        if (count($searchId_randGroup) > 1) {
-            $query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
-        }
-        $query = $query."GROUP BY pep.id;";
-        $startTime = microtime(true);
-        $res = pg_query($query) or die('Query failed: ' . pg_last_error());
-        $endTime = microtime(true);
-        //~ echo '//db time: '.($endTime - $startTime)."ms\n";
-        //~ echo '//rows:'.pg_num_rows($res)."\n";
-        echo "\"peptides\":[\n";
-        $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-        while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-                $proteins = $line["proteins"];
-                $proteinsArray = explode(",",substr($proteins, 1, strlen($proteins) - 2));
-                $c = count($proteinsArray);
-                foreach ($proteinsArray as $v) {
-                    $proteinIds[$v] = 1;
-                }
-                $positions = $line['positions'];
-                echo '{"id":' . $line["id"] . ','
-                    . '"seq_mods":"' . $line["sequence"] . '",'
-                    . '"prt":["' . implode($proteinsArray, '","') . '"],'
-                    . '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']'
-                    . "}";
-                $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-                if ($line) {echo ",\n";}
-                }
-        echo "\n],\n";
-        $endTime = microtime(true);
-        //~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
-
-
-        /*
-         * PROTEINS
-         */
-
-        $proteinIdField = "id";
-        if (count($searchId_randGroup) > 1) {
-            $proteinIdField = "accession_number";
-        }
-
-        $query = "SELECT ".$proteinIdField." AS id,
-                CASE WHEN name IS NULL OR name = '' OR name = 'REV_' THEN accession_number
-                ELSE name END AS name,
-                description, accession_number, sequence, is_decoy
-                FROM protein WHERE ".$proteinIdField." IN ('".implode(array_keys($proteinIds), "','")."')";
-        $startTime = microtime(true);
-        $res = pg_query($query) or die('Query failed: ' . pg_last_error());
-        $endTime = microtime(true);
-        //~ echo '/*db time: '.($endTime - $startTime)."ms*/\n";
-        //~ echo '/*rows:'.pg_num_rows($res)."*/\n";
-        echo "\"proteins\":[\n";
-        $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-        while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-                $isDecoy = ($line["is_decoy"] == "t")? 'true' : 'false';
-                $pId = $line["id"];
-                //~ echo '"' . $pId . '":{'
-                echo '{'
-                    . '"id":"' . $pId . '",'
-                    . '"name":"' . $line["name"] . '",'
-                    . '"description":"' . $line["description"] . '",'
-                    . '"accession":"' .$line["accession_number"]  . '",'
-                    . '"seq_mods":"' .$line["sequence"] . '",'
-                    . '"is_decoy":' .$isDecoy
-                    . "}";
-                $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-                if ($line) {echo ",\n";}
-            }
-        echo "\n]}\n";
-        $endTime = microtime(true);
-        //~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
-
-
-        $endTime = microtime(true);
-        //~ echo "\n/*page time: ".($endTime - $pageStartTime)."ms*/\n\n";
+if ($oldDB == true) {
+	//old DB
+	$query = "
+		SELECT
+			mp.match_id, mp.match_type, mp.peptide_id,
+			mp.link_position + 1 AS link_position,
+			sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id,
+			sp.scan_number, r.run_name
+		FROM
+			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
+			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id
+			WHERE ".$WHERE_spectrumMatch.") sm
+		INNER JOIN
+			(SELECT mp.match_id, mp.match_type, mp.peptide_id,
+			mp.link_position
+			FROM matched_peptide mp WHERE link_position != -1) mp
+			ON sm.id = mp.match_id
+		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id
+		INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized
+			WHERE (".$WHERE_matchedPeptide.")
+			) r ON sm.id = r.spectrum_match_id
+		ORDER BY score DESC, sm.id, mp.match_type;";
 }
-    // Free resultset
-    pg_free_result($res);
-    // Closing connection
-    pg_close($dbconn);
+else {
+	//New DB
+
+	if ($linears == false){
+		$WHERE_matchedPeptide = $WHERE_matchedPeptide." AND link_position != -1 ";
+	}
+
+	$query = "
+			SELECT
+			mp.match_id, mp.match_type, mp.peptide_id,
+			mp.link_position + 1 AS link_position, sm.spectrum_id,
+			sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy,
+			sp.scan_number, ss.name as run_name
+		FROM
+			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
+			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
+			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id
+			WHERE ".$WHERE_spectrumMatch.") sm
+		INNER JOIN
+			(SELECT mp.match_id, mp.match_type, mp.peptide_id,
+			mp.link_position
+			FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp
+			ON sm.id = mp.match_id
+		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id
+		INNER JOIN spectrum_source ss ON sp.source_id = ss.id
+		ORDER BY score DESC, sm.id;";
+}
+$startTime = microtime(true);
+$res = pg_query($query) or die('Query failed: ' . pg_last_error());
+$endTime = microtime(true);
+//~ echo '/*db time: '.($endTime - $startTime)."ms\n";
+//~ echo '/*rows:'.pg_num_rows($res)."\n";
+$startTime = microtime(true);
+echo "\"rawMatches\":[\n";
+$peptideIds = array();
+$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+		$peptideId = $line["peptide_id"];
+		$peptideIds[$peptideId] = 1;
+		echo "{"
+			. '"id":' . $line["match_id"] . ','
+			. '"ty":' . $line["match_type"] . ','
+			. '"pi":' . $peptideId . ','
+			. '"lp":'. $line["link_position"]. ','
+			. '"spec":' . $line["spectrum_id"] . ','
+			. '"sc":' . round($line["score"], 3) . ','
+			. '"si":' . $line["search_id"] . ','
+			. '"dc":"' . $line["is_decoy"] . '",';
+		$autoVal =  $line["autovalidated"];
+		if (isset($autoVal)){
+			echo '"av":"' . $autoVal.'"' . ',';
+	}
+		$val = $line["validated"];
+		if (isset($val)){
+			echo '"v":"'.$val.'"' . ',';
+	}
+		$rej = $line["rejected"];
+		if (isset($rej)){
+			echo '"rj":"'.$rej.'"' . ',';
+	}
+		echo '"r":"' . $line["run_name"]. '",'//"run" . '",'
+			. '"sn":' . $line["scan_number"]. ','
+			. '"pc":' . $line["precursor_charge"]
+			. "}";
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+		if ($line) {echo ",\n";}
+}
+echo "\n],\n";
+$endTime = microtime(true);
+//~ echo '/*php time: '.($endTime - $startTime)."ms\n\n";
+
+$proteinIdField = "hp.protein_id";
+if (count($searchId_randGroup) > 1) {
+	$proteinIdField = "p.accession_number";
+}
+/*
+ * PEPTIDES
+ */
+if (sizeof($peptideIds) === 0) {
+	echo "\"peptides\":[],";
+	echo "\"proteins\":[]}";
+} else {
+	$implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
+	$query = "SELECT pep.id, (array_agg(pep.sequence))[1] as sequence,
+		array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position + 1) as positions
+		FROM (SELECT id, sequence FROM peptide WHERE id IN "
+				.$implodedPepIds.") pep
+		INNER JOIN (SELECT peptide_id, protein_id, peptide_position
+		FROM has_protein WHERE peptide_id IN "
+				.$implodedPepIds.") hp ON pep.id = hp.peptide_id ";
+	if (count($searchId_randGroup) > 1) {
+		$query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
+	}
+	$query = $query."GROUP BY pep.id;";
+	$startTime = microtime(true);
+	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
+	$endTime = microtime(true);
+	//~ echo '//db time: '.($endTime - $startTime)."ms\n";
+	//~ echo '//rows:'.pg_num_rows($res)."\n";
+	echo "\"peptides\":[\n";
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+			$proteins = $line["proteins"];
+			$proteinsArray = explode(",",substr($proteins, 1, strlen($proteins) - 2));
+			$c = count($proteinsArray);
+			foreach ($proteinsArray as $v) {
+				$proteinIds[$v] = 1;
+			}
+			$positions = $line['positions'];
+			echo '{"id":' . $line["id"] . ','
+				. '"seq_mods":"' . $line["sequence"] . '",'
+				. '"prt":["' . implode($proteinsArray, '","') . '"],'
+				. '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']'
+				. "}";
+			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+			if ($line) {echo ",\n";}
+			}
+	echo "\n],\n";
+	$endTime = microtime(true);
+	//~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
 
 
+	/*
+	 * PROTEINS
+	 */
 
-            //TODO - fix stored layouts
-        //~ echo "storedLayout = null;\n\n";
-        //~ if (count($searchId_randGroup) == 1) {
-            //~ $layoutQuery = "SELECT t1.layout AS l "
-                    //~ . " FROM layouts AS t1 "
-                    //~ . " LEFT OUTER JOIN layouts AS t2 "
-                    //~ . " ON (t1.search_id = t2.search_id AND t1.time < t2.time) "
-                    //~ . " WHERE t1.search_id LIKE '" . $sid . "' AND t2.search_id IS NULL;";
-            //~ $layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
-            //~ while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-                //~
-                //~ echo "storedLayout = " . stripslashes($line["l"]) . ";\n\n";
-                //~
-            //~ }
-        //~ }
+	$proteinIdField = "id";
+	if (count($searchId_randGroup) > 1) {
+		$proteinIdField = "accession_number";
+	}
+
+	$query = "SELECT ".$proteinIdField." AS id,
+			CASE WHEN name IS NULL OR name = '' OR name = 'REV_' THEN accession_number
+			ELSE name END AS name,
+			description, accession_number, sequence, is_decoy
+			FROM protein WHERE ".$proteinIdField." IN ('".implode(array_keys($proteinIds), "','")."')";
+	$startTime = microtime(true);
+	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
+	$endTime = microtime(true);
+	//~ echo '/*db time: '.($endTime - $startTime)."ms*/\n";
+	//~ echo '/*rows:'.pg_num_rows($res)."*/\n";
+	echo "\"proteins\":[\n";
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+			$isDecoy = ($line["is_decoy"] == "t")? 'true' : 'false';
+			$pId = $line["id"];
+			//~ echo '"' . $pId . '":{'
+			echo '{'
+				. '"id":"' . $pId . '",'
+				. '"name":"' . $line["name"] . '",'
+				. '"description":"' . $line["description"] . '",'
+				. '"accession":"' .$line["accession_number"]  . '",'
+				. '"seq_mods":"' .$line["sequence"] . '",'
+				. '"is_decoy":' .$isDecoy
+				. "}";
+			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+			if ($line) {echo ",\n";}
+		}
+	echo "\n]}\n";
+	$endTime = microtime(true);
+	//~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
+
+
+	$endTime = microtime(true);
+	//~ echo "\n/*page time: ".($endTime - $pageStartTime)."ms*/\n\n";
+}
+// Free resultset
+pg_free_result($res);
+// Closing connection
+pg_close($dbconn);
 ?>
