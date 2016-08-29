@@ -209,8 +209,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         },
         
         filterLink: function (link) {
-            if (link.meta && link.meta.fdrScore !== undefined) {
-                var fdr = link.meta.fdrScore;
+            if (link.meta && link.meta.meanMatchScore !== undefined) {
+                var fdr = link.meta.meanMatchScore;
                 var intra = CLMSUI.modelUtils.isIntraLink (link);
                 return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
             }

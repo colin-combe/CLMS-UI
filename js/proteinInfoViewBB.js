@@ -20,7 +20,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var self = this;
             var defaultOptions = {
                 fixedFontKeys: d3.set(["sequence", "seq"]),
-                removeTheseKeys: d3.set (["canonicalSeq"]),
+                removeTheseKeys: d3.set (["canonicalSeq", "seq_mods"]),
                 expandTheseKeys: d3.set (["uniprotFeatures"]),
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -66,7 +66,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                             entry.value = entry.value.length;
                         }
                         if (entry.key === "sequence") {
-                            entry.value =  self.makeInteractiveSeqString (d, d.sequence, d.crossLinks);
+                            entry.value =  self.makeInteractiveSeqString (d, d.sequence, d.crossLinks, true);
                         }
                         return ! ($.isFunction(entry.value) || $.isPlainObject(entry.value) || (badKeys && badKeys.has(entry.key))); 
                     });
@@ -165,8 +165,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             return crossLinks;
         },
     
-        makeInteractiveSeqString: function (protein, seq, xlinks) {
-             var proteinId = protein.id;
+        makeInteractiveSeqString: function (protein, seq, xlinks, filterDecoys) {
+            var proteinId = protein.id;
+            if (filterDecoys) {
+                xlinks = xlinks.filter (function(xlink) { return !xlink.fromProtein.is_decoy && !xlink.toProtein.is_decoy; });
+            }
             var map = d3.map (xlinks, function(d) { return d.id; });
             var endPoints = {};
             map.values().forEach (function (xlink) {

@@ -20,7 +20,7 @@ CLMSUI.fdr = function (crossLinks, options) {
     
     crossLinks.forEach (function (crossLink) {
         crossLink.meta = crossLink.meta || {};
-        crossLink.meta.fdrScore = scoreCalcFunc (crossLink);
+        crossLink.meta.meanMatchScore = scoreCalcFunc (crossLink);
     });
     
     
@@ -32,7 +32,7 @@ CLMSUI.fdr = function (crossLinks, options) {
         linkArrs[intra].push(crossLink);
     });
     linkArrs.forEach (function (linkArr) { 
-        linkArr.sort (function(a,b) { return a.meta.fdrScore - b.meta.fdrScore; }); 
+        linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; }); 
     });  // in ascending order (smallest first)
 
     console.log ("linkArrs", linkArrs);
@@ -42,26 +42,27 @@ CLMSUI.fdr = function (crossLinks, options) {
     }
     
     var fdrResult = linkArrs.map (function (linkArr, index) {
-        var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScore = undefined;
+        var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScoreCutoff = undefined;
         
         if (linkArr.length && threshold !== undefined) {
             // first run, count tt, td, and dd
             linkArr.forEach (function (link) {
-                if (link.meta.fdrScore > 0) {
+                if (link.meta.meanMatchScore > 0) {
                     t[decoyClass(link)]++;
                 }
             });
 
-            console.log ("totals tt td dd", t);
+            console.log ("totals tt td dd", t, linkArr);
             
             // decrement the counters on second run
             while (fdr > threshold && i < linkArr.length) {
                 var link = linkArr[i];
                 fdr = (t[1] - t[2]) / (t[0] || 1);
                 runningFdr.push (fdr);
-                //console.log ("fdr", arrLabels[index], fdr, t, link.meta.fdrScore);
+                link.meta.fdr = fdr;
+                //console.log ("fdr", arrLabels[index], fdr, t, link.meta.meanMatchScore);
 
-                if (link.meta.fdrScore > 0) {
+                if (link.meta.meanMatchScore > 0) {
                     t[decoyClass(link)]--;
                 }
                 i++;
@@ -69,16 +70,16 @@ CLMSUI.fdr = function (crossLinks, options) {
 
             i = Math.max (i-1, 0);
             var lastLink = linkArr[i];
-            fdrScore = lastLink.meta.fdrScore;
+            fdrScoreCutoff = lastLink.meta.meanMatchScore;
 
-            if (false) {
+            if (true) {
                 console.log ("post totals tt td dd", t);
                 console.log ("runningFdr", runningFdr);
-                console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScore);
+                console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScoreCutoff);
             }
         }
 
-        return {label: arrLabels[index], index: i, fdr: fdrScore, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
+        return {label: arrLabels[index], index: i, fdr: fdrScoreCutoff, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
     });
     
     return fdrResult;

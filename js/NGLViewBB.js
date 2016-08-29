@@ -28,18 +28,12 @@
             
             console.log("arg options", viewOptions);
             var defaultOptions = {
-                //~ xlabel: "Distance",
-                //~ ylabel: "Count",
-                //~ seriesName: "Cross Links",
-                //~ chartTitle: "Distogram",
-                //~ maxX: 80
                 labelVisible: false,
                 selectedOnly: false,
                 showResidues: true,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
-            //~ this.precalcedDistributions = {};
             this.displayEventName = viewOptions.displayEventName;
 
             var self = this;
@@ -111,8 +105,8 @@
 
                    self.xlRepr = new CLMSUI.CrosslinkRepresentation(
                           self.model, self.stage, self.align, structureComp, crosslinkData, {
-                                 highlightedColor: "lightgreen",
-                                 highlightedLinksColor: "yellow",
+                                 selectedColor: "lightgreen",
+                                 selectedLinksColor: "yellow",
                                  sstrucColor: "wheat",
                                  displayedDistanceColor: "tomato",
                                 displayedDistanceVisible: self.options.labelVisible,
@@ -129,8 +123,18 @@
                     self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
                     self.listenTo (self.model, "currentColourModelChanged", self.showFiltered); // if distance color model changes
                     self.listenTo (self.model, "change:selection", self.showFiltered);
+                    self.listenTo (self.model, "change:highlights", self.showHighlighted);
                 })
             ;      
+        },
+        
+        showHighlighted: function () {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                var selectedCrossLinks = this.model.get("highlights");
+                var filteredCrossLinks = this.filterCrossLinks (selectedCrossLinks);
+                var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
+                this.xlRepr.crosslinkData.setLinkList (linkList);
+            }
         },
         
         showSelected: function () {
@@ -442,13 +446,13 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structur
     var defaults = {
         sstrucColor: "wheat",
         displayedDistanceColor: "tomato",
-        highlightedDistanceColor: "white",
+        selectedDistanceColor: "white",
         displayedDistanceVisible: false,
-        highlightedDistanceVisible: true,
+        selectedDistanceVisible: true,
         displayedResiduesColor: params.displayedColor ? undefined : "lightgrey",
         displayedLinksColor: params.displayedColor ? undefined : "lighblue",
-        highlightedResiduesColor: params.highlightedColor ? undefined : "lightgreen",
-        highlightedLinksColor: params.highlightedColor ? undefined : "lightgreen",
+        selectedResiduesColor: params.selectedColor ? undefined : "lightgreen",
+        selectedLinksColor: params.selectedColor ? undefined : "lightgreen",
     };
     var p = _.extend({}, defaults, params);
     this.setParameters( p, true );
@@ -463,7 +467,7 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structur
 
     
     this._displayedResidues = this.crosslinkData.getResidues();
-    this._highlightedResidues = [];
+    this._selectedResidues = [];
 
 
     this.colorOptions = {};
@@ -474,12 +478,9 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structur
     
     console.log ("stage", this.stage);
 
-    this.stage.signals.clicked.add(
-        this._handlePicking, this
-    );
-    this.crosslinkData.signals.linkListChanged.add(
-        this._handleDataChange, this
-    );
+    this.stage.signals.clicked.add (this._selectionPicking, this);
+    this.stage.signals.hovered.add (this._highlightPicking, this);
+    this.crosslinkData.signals.linkListChanged.add (this._handleDataChange, this);
 };
 
 CLMSUI.CrosslinkRepresentation.prototype = {
@@ -681,9 +682,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var resSele = this._getSelectionFromResidue(
             this._displayedResidues
         );
-        var resEmphSele = this._getSelectionFromResidue(
-            this._highlightedResidues
-        );
+        var resEmphSele = this._getSelectionFromResidue (this._selectedResidues);
 
         this.sstrucRepr = comp.addRepresentation( "cartoon", {
             color: this.sstrucColor,
@@ -699,7 +698,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.resEmphRepr = comp.addRepresentation( "spacefill", {
             sele: resEmphSele,
-            color: this.highlightedResiduesColor,
+            color: this.selectedResiduesColor,
             scale: 0.9,
             opacity: 0.7,
             name: "resEmph"
@@ -716,7 +715,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var links = this.crosslinkData.getLinks();
 
         var xlPair = this._getAtomPairsFromLink (links);
-        var xlPairEmph = this._getAtomPairsFromLink (this.filterToHighlightedLinks (links));
+        var xlPairEmph = this._getAtomPairsFromLink (this.filterToSelectedLinks (links));
 
         this.linkRepr = comp.addRepresentation( "distance", {
             atomPair: xlPair,
@@ -732,10 +731,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.linkEmphRepr = comp.addRepresentation( "distance", {
             atomPair: xlPairEmph,
-            colorValue: this.highlightedLinksColor,
+            colorValue: this.selectedLinksColor,
             labelSize: 2.0,
-            labelColor: this.highlightedDistanceColor,
-            labelVisible: this.highlightedDistanceVisible,
+            labelColor: this.selectedDistanceColor,
+            labelVisible: this.selectedDistanceVisible,
             scale: 1.5,
             opacity: 0.6,
             name: "linkEmph"
@@ -772,7 +771,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         //console.log ("scheme", this.colorOptions.selScheme);
     },
 
-    _handlePicking: function( pickingData ){
+    _highlightPicking: function (pickingData) {
+        //console.log ("hovering", pickingData);
+        this._handlePicking (pickingData, "highlights", true);   
+    },
+    
+    _selectionPicking: function (pickingData) {
+        this._handlePicking (pickingData, "selection");   
+    },
+    
+    _handlePicking: function (pickingData, pickType, doEmpty) {
         var pd = pickingData;
         var crosslinkData = this.crosslinkData;
 
@@ -824,18 +832,20 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             pdtrans.xlinks = pdtrans.links.map (function(link) {
                 return xlinks.get (link.origId);
             }, this);
+        } else if (doEmpty) {
+            pdtrans.xlinks = [];
         }
         //console.log ("pd and pdtrans", pd, pdtrans);
         
-        this.model.calcMatchingCrosslinks ("selection", pdtrans.xlinks, false, false);
+        this.model.calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, false);
     },
 
     _handleDataChange: function(){
         this.setDisplayedResidues( this.crosslinkData.getResidues() );
-        this.setHighlightedResidues( [] );
+        this.setSelectedResidues( [] );
 
         this.setDisplayedLinks( this.crosslinkData.getLinks());
-        this.setHighlightedLinks( this.crosslinkData.getLinks() );
+        this.setSelectedLinks( this.crosslinkData.getLinks() );
     },
 
     _getAvailableResidues: function( residues ){
@@ -875,36 +885,29 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     setDisplayed: function( residues, links ){
         this.setDisplayedResidues( residues );
         this.setDisplayedLinks( links );
-
     },
 
-    setHighlighted: function( residues, links ){
-
-        this.setHighlightedResidues( residues );
-        this.setHighlightedLinks( links );
-
+    setSelected: function( residues, links ){
+        this.setSelectedResidues( residues );
+        this.setSelectedLinks( links );
     },
 
     setDisplayedResidues: function( residues ){
-
         this._displayedResidues = residues;
         var availableResidues = this._getAvailableResidues( residues );
 
         this.resRepr.setSelection(
             this._getSelectionFromResidue( availableResidues )
         );
-
     },
 
-    setHighlightedResidues: function( residues ){
-
-        this._highlightedResidues = residues;
+    setSelectedResidues: function( residues ){
+        this._selectedResidues = residues;
         var availableResidues = this._getAvailableResidues( residues );
 
         this.resEmphRepr.setSelection(
             this._getSelectionFromResidue( availableResidues )
         );
-
     },
 
     setDisplayedLinks: function( links ){
@@ -919,15 +922,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         });
     },
 
-    filterToHighlightedLinks: function (links) {  
+    filterToSelectedLinks: function (links) {  
         var selectedSet = d3.set (this.model.get("selection").map (function(d) { return d.id; }));
         return links.filter (function (l) {
             return selectedSet.has (l.origId);   
         });
     },
     
-    setHighlightedLinks: function( links ){
-        var availableLinks = this._getAvailableLinks (this.filterToHighlightedLinks (links));
+    setSelectedLinks: function( links ){
+        var availableLinks = this._getAvailableLinks (this.filterToSelectedLinks (links));
         this.linkEmphRepr.setParameters( {
             atomPair: this._getAtomPairsFromLink (availableLinks),
         } );
@@ -938,16 +941,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
      * params
      *
      * - displayedColor (sets residues and links color)
-     * - highlightedColor (sets residues and links color)
+     * - selectedColor (sets residues and links color)
      * - displayedResiduesColor
-     * - highlightedResiduesColor
+     * - selectedResiduesColor
      * - displayedLinksColor
-     * - highlightedLinksColor
+     * - selectedLinksColor
      * - sstrucColor
      * - displayedDistanceColor (can't be a color scheme)
-     * - highlightedDistanceColor (can't be a color scheme)
+     * - selectedDistanceColor (can't be a color scheme)
      * - displayedDistanceVisible
-     * - highlightedDistanceVisible
+     * - selectedDistanceVisible
      */
     setParameters: function( params, initialize ){
 
@@ -963,50 +966,35 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         resParams.color = p.displayedResiduesColor || p.displayedColor;
         linkParams.color = p.displayedLinksColor || p.displayedColor;
-        resEmphParams.color = p.highlightedResiduesColor || p.highlightedColor;
-        linkEmphParams.color = p.highlightedLinksColor || p.highlightedColor;
+        resEmphParams.color = p.selectedResiduesColor || p.selectedColor;
+        linkEmphParams.color = p.selectedLinksColor || p.selectedColor;
 
         sstrucParams.color = p.sstrucColor;
 
         linkParams.labelColor = p.displayedDistanceColor;
-        linkEmphParams.labelColor = p.highlightedDistanceColor;
+        linkEmphParams.labelColor = p.selectedDistanceColor;
         linkParams.labelVisible = p.displayedDistanceVisible;
-        linkEmphParams.labelVisible = p.highlightedDistanceVisible;
+        linkEmphParams.labelVisible = p.selectedDistanceVisible;
 
         // set object properties
-
-        if( resParams.color !== undefined ){
-            this.displayedResiduesColor = resParams.color;
-        }
-        if( linkParams.color !== undefined ){
-            this.displayedLinksColor = linkParams.color;
-        }
-        if( resEmphParams.color !== undefined ){
-            this.highlightedResiduesColor = resEmphParams.color;
-        }
-        if( linkEmphParams.color !== undefined ){
-            this.highlightedLinksColor = linkEmphParams.color;
-        }
-
-        if( sstrucParams.color !== undefined ){
-            this.sstrucColor = sstrucParams.color;
-        }
-
-        if( linkParams.labelColor !== undefined ){
-            this.displayedDistanceColor = linkParams.labelColor;
-        }
-        if( linkEmphParams.labelColor !== undefined ){
-            this.highlightedDistanceColor = linkEmphParams.labelColor;
-        }
-        if( linkParams.labelVisible !== undefined ){
-            this.displayedDistanceVisible = linkParams.labelVisible;
-        }
-        if( linkEmphParams.labelVisible !== undefined ){
-            this.highlightedDistanceVisible = linkEmphParams.labelVisible;
-        }
+        var objProps = {
+            "displayedResiduesColor": resParams.color,
+            "displayedLinksColor": linkParams.color,
+            "selectedResiduesColor": resEmphParams.color,
+            "selectedLinksColor": linkEmphParams.color,
+            "sstrucColor": sstrucParams.color,
+            "displayedDistanceColor": linkParams.labelColor,
+            "selectedDistanceColor": linkEmphParams.labelColor,
+            "displayedDistanceVisible": linkParams.labelVisible,
+            "selectedDistanceVisible": linkEmphParams.labelVisible,
+        };
+        d3.entries(objProps).forEach (function (entry) {
+            if (entry.value !== undefined) {
+                this[entry.key] = entry.value;
+            }
+        }, this);
 
         // pass params to representations
-
         if( !initialize ){
             this.resRepr.setColor( resParams.color );
             this.linkRepr.setColor( linkParams.color );
@@ -1024,12 +1012,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     dispose: function(){
 
-        this.stage.signals.clicked.remove(
-            this._handlePicking, this
-        );
-        this.crosslinkData.signals.linkListChanged.remove(
-            this._handleDataChange, this
-        );
+        this.stage.signals.clicked.remove (this._selectionPicking, this);
+        this.stage.signals.hovered.remove (this._highlightPicking, this);
+        this.crosslinkData.signals.linkListChanged.remove (this._handleDataChange, this);
 
         this.stage.removeRepresentation( this.sstrucRepr );
         this.stage.removeRepresentation( this.resRepr );
