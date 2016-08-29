@@ -31,6 +31,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         ;
               
         var self = this;
+        
 
         this.brush = d3.svg.brush()
             .y(this.y)
@@ -45,7 +46,29 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .attr("height", this.height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+        
+        // http://stackoverflow.com/questions/13069446/simple-fill-pattern-in-svg-diagonal-hatching
+        /*
+        var hatchPattern = svg.append("pattern")
+            .attr("id", this.el.id+"Hatch")
+            .attr("patternUnits", "userSpaceOnUse")
+            .attr ("width", 3)
+            .attr ("height", 3)
+        ;
+        
+        hatchPattern.append("rect")
+            .attr({x: 0, y: 0, width :3, height : 3})
+            .style ("fill", "#aaa")
+        ;     
+        hatchPattern.append("rect")
+            .attr({x: 0, y: 0, width :1, height : 1})
+            .style ("fill", "#ddd")
+        ;
+        hatchPattern.append("rect")
+            .attr({x: 1, y: 1, width :1, height : 1})
+            .style ("fill", "#777")
+        ;
+        */
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(-1,0)")
@@ -73,6 +96,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .append("path")
                 .attr("transform", "translate(50,0)")
                 .attr("d", "M0 0 L20 20 L20 -20 z")
+                //.style("fill", "url(#"+self.el.id+"Hatch)")
         ;
         
         // triangle highlighting bevel
