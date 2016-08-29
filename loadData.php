@@ -140,7 +140,8 @@ if ($spectrum) {
 }
 
 
-$oldDB = true;
+$oldDB = false;
+pg_query("SELECT * FROM spectrum_source LIMIT 0") or ($oldDB = true);
 
 /*
  * SPECTRUM MATCHES AND MATCHED PEPTIDES
