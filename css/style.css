@@ -623,7 +623,7 @@ span.noBreak {
 }
 
 /* and then put spaces after labels to give a known place for content to break */
-#fdrPanel .horizontalFlow::after {
+label.horizontalFlow::after, #nglPanel label.btn::before {
     content: " ";
 }
 
@@ -682,3 +682,8 @@ A.btn {
     stroke: none;
 }
 
+.verticalFlexContainer {
+    height: 100%;
+    display: flex;
+    flex-direction: column
+}

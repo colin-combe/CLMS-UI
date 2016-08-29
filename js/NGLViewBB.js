@@ -47,58 +47,52 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
 
-            var toolbar = mainDivSel.append("div").style("height", "40px");
+            var flexWrapperPanel = mainDivSel.append("div")
+                .attr ("class", "verticalFlexContainer")
+            ;
             
+            var toolbar = flexWrapperPanel.append("div");
             
             toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
+                .style ("margin-bottom", "0.2em")   // to give a vertical gap to any wrapping row of buttons
             ;
 			
-			 toolbar.append("label")
-                .attr("class", "btn")
-                .text("Distance labels")
-                .append("input")
-                    .attr("type", "checkbox")
-                    .attr("class", "distanceLabelCB")
-                    .property ("checked", this.options.labelVisible)
-            ;
-			
-			 toolbar.append("label")
-                .attr("class", "btn")
-                .text("Selected only")
-                .append("input")
-                    .attr("type", "checkbox")
-                    .attr("class", "selectedOnlyCB")
-                    .property ("checked", this.options.selectedOnly)
-            ;
+            var toggleButtonData = [
+                {initialState: this.options.labelVisible, klass: "distanceLabelCB", text: "Distance Labels"},
+                {initialState: this.options.selectedOnly, klass: "selectedOnlyCB", text: "Selected Only"},
+                {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues"},
+            ];
             
-            toolbar.append("label")
-                .attr("class", "btn")
-                .text("Residues")
-                .append("input")
-                    .attr("type", "checkbox")
-                    .attr("class", "showResiduesCB")
-                    .property ("checked", this.options.showResidues)
+            toolbar.selectAll("label").data(toggleButtonData)
+                .enter()
+                .append ("label")
+                .attr ("class", "btn")
+                    .append ("span")
+                    .attr("class", "noBreak")
+                    .text(function(d) { return d.text; })
+                    .append("input")
+                        .attr("type", "checkbox")
+                        .attr("class", function(d) { return d.klass; })
+                        .property ("checked", function(d) { return d.initialState; })
             ;
 			
             toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Re-Centre")
             ;
-			
 		
-            this.chartDiv = mainDivSel.append("div")
-                .attr("class", "panelInner")
-                .attr("id", "ngl")
-                //~ .style("position", "relative")
-                .style("height", "calc( 100% - 40px )")
+            this.chartDiv = flexWrapperPanel.append("div")
+                .attr ("class", "panelInner")
+                .attr ("flex-grow", 1)
+                .attr ("id", "ngl")
+                //.style ("border", "1px solid yellow")
             ;
  
-            this.chartDiv.selectAll("*").remove();
+            //this.chartDiv.selectAll("*").remove();
             
            //create 3D network viewer
-            var self = this;
             this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
             this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
                 .then (function (structureComp) {
