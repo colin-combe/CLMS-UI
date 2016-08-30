@@ -120,10 +120,10 @@
                     self.model.trigger ("distancesAvailable", [dd]);
 
                     self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                    self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
-                    self.listenTo (self.model, "currentColourModelChanged", self.showFiltered); // if distance color model changes
+                    self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);   // if colour model used is swapped for new one
+                    self.listenTo (self.model, "currentColourModelChanged", self.showFiltered); // if current colour model used changes internally (distance model)
                     self.listenTo (self.model, "change:selection", self.showFiltered);
-                    self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                    //self.listenTo (self.model, "change:highlights", self.showHighlighted);
                 })
             ;      
         },
@@ -835,7 +835,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         } else if (doEmpty) {
             pdtrans.xlinks = [];
         }
-        //console.log ("pd and pdtrans", pd, pdtrans);
+        console.log ("pd and pdtrans", pd, pdtrans.xlinks);
         
         this.model.calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, false);
     },
