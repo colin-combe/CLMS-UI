@@ -103,7 +103,7 @@
                     var filterCrossLinks = self.filterCrossLinks (crossLinks);
                     var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
 
-                   self.xlRepr = new CLMSUI.CrosslinkRepresentation(
+                   self.xlRepr = new CLMSUI.CrosslinkRepresentation (
                           self.model, self.stage, self.align, structureComp, crosslinkData, {
                                  selectedColor: "lightgreen",
                                  selectedLinksColor: "yellow",
@@ -122,7 +122,7 @@
                     self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
                     self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);   // if colour model used is swapped for new one
                     self.listenTo (self.model, "currentColourModelChanged", self.showFiltered); // if current colour model used changes internally (distance model)
-                    self.listenTo (self.model, "change:selection", self.showFiltered);
+                    self.listenTo (self.model, "change:selection", self.showSelected);
                     //self.listenTo (self.model, "change:highlights", self.showHighlighted);
                 })
             ;      
@@ -139,10 +139,8 @@
         
         showSelected: function () {
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                var selectedCrossLinks = this.model.get("selection");
-                var filteredCrossLinks = this.filterCrossLinks (selectedCrossLinks);
-                var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
-                this.xlRepr.crosslinkData.setLinkList (linkList);
+                //var selectedCrossLinks = this.model.get("selection");
+                this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
             }
         },
         
@@ -198,11 +196,9 @@
         },
         
         toggleLabels: function (event) {
-           var chk = event.target.checked;
+            var chk = event.target.checked;
             this.xlRepr.displayedDistanceVisible = chk;
-            this.xlRepr.linkRepr.setParameters ({
-                labelVisible: chk,
-            });
+            this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
         },
         
         toggleResidues: function (event) {
@@ -248,200 +244,158 @@
             return this.transformLinkList (linkList, "A", null, residueStore);	
         },
         
-        transformLinkList: function( linkList, chainname, structureId, residueStore ){
+        transformLinkList: function (linkList, chainname, structureId, residueStore) {
 
             chainname = chainname === undefined ? "A" : chainname;
 
-            var tLinkList = [];
             //var nextLinkId = 0;
             var nextResidueId = 0;
 
             var residueDict = {};
-            function getResidueId( resIndex ){
+            function getResidueId (resIndex) {
                 // TODO add structureId to key
                 // TODO in NMR structures there are multiple models
                 var key = resIndex + ":" + chainname;
-                if( residueDict[ key ] === undefined ){
-                    residueDict[ key ] = nextResidueId;
-                    nextResidueId += 1;
+                if (residueDict[key] === undefined) {
+                    residueDict[key] = nextResidueId;
+                    nextResidueId++;
                 }
                 return residueDict[ key ];
             }
 
-            tLinkList = linkList.map( function(rl, i) {
+            var tLinkList = linkList.map (function(rl, i) {
                 return {
                     origId: rl.id,
                     linkId: i,
                     residueA: {
                         resindex: rl.fromResidue,
-                        residueId: getResidueId( rl.fromResidue ),
+                        residueId: getResidueId (rl.fromResidue),
                         resno: residueStore.resno [rl.fromResidue], // ngl resindex to resno conversion, as Selection() works with resno not resindex
                         chainname: chainname,
                         structureId: structureId
                     },
                     residueB: {
                         resindex: rl.toResidue,
-                        residueId: getResidueId( rl.toResidue ),
+                        residueId: getResidueId (rl.toResidue),
                         resno: residueStore.resno [rl.toResidue],   // ngl resindex to resno conversion, as Selection() works with resno not resindex
                         chainname: chainname,
                         structureId: structureId
                     }
                 };
-            } );
+            });
 
             return tLinkList;
         },
     });
 
-CLMSUI.CrosslinkData = function( linkList ){
+CLMSUI.CrosslinkData = function (linkList) {
 
     this.signals = {
         linkListChanged: new NGL.Signal()
     };
 
-    this.setLinkList( linkList );
-
+    this.setLinkList (linkList);
 };
 
 CLMSUI.CrosslinkData.prototype = {
 
-    setLinkList: function( linkList ){
+    setLinkList: function (linkList) {
 
-        var linkIdToResidueIds = {};
         var residueIdToLinkIds = {};
-
-        var linkIdToLink = {};
-        var residueIdToResidue = {};
+        var linkIdMap = {};
+        var residueIdMap = {};
 
         var residueList = [];
 
-
-        linkList.forEach( function( rl ){
-            linkIdToResidueIds[ rl.linkId ] = [
-                rl.residueA.residueId,
-                rl.residueB.residueId
-            ];
-            linkIdToLink[ rl.linkId ] = rl;
-        } );
-
-        function insertResidue( residue, link ){
-            var list = residueIdToLinkIds[ residue.residueId ];
-            if( list === undefined ){
-                residueIdToLinkIds[ residue.residueId ] = [ link.linkId ];
-            }else if( list.indexOf( link.linkId ) === -1 ){
-                list.push( link.linkId );
+        function insertResidue (residue, link) {
+            var list = residueIdToLinkIds[residue.residueId];
+            if (list === undefined) {
+                residueIdToLinkIds[residue.residueId] = [link.linkId];
+            } else if (list.indexOf (link.linkId) === -1) {
+                list.push (link.linkId);
             }
-            residueIdToResidue[ residue.residueId ] = residue;
+            residueIdMap[residue.residueId] = residue;
         }
 
-        linkList.forEach( function( rl ){
-            insertResidue( rl.residueA, rl );
-            insertResidue( rl.residueB, rl );
-        } );
+        linkList.forEach (function(rl) {
+            linkIdMap[rl.linkId] = rl;
+            insertResidue (rl.residueA, rl);
+            insertResidue (rl.residueB, rl);
+        });
 
-        for( var residueId in residueIdToResidue ){
-            residueList.push( residueIdToResidue[ residueId ] );
+
+        for (var residueId in residueIdMap){
+            residueList.push (residueIdMap [residueId]);
         }
 
-        //
-
-        this._linkIdToResidueIds = linkIdToResidueIds;
         this._residueIdToLinkIds = residueIdToLinkIds;
+        this._linkIdMap = linkIdMap;
+        this._residueIdMap = residueIdMap;
 
-        this._linkIdToLink = linkIdToLink;
-        this._residueIdToResidue = residueIdToResidue;
-
-        //console.log ("stlinklist", linkList, linkIdToLink);
+        //console.log ("stlinklist", linkList, linkIdMap);
         this._linkList = linkList;
         this._residueList = residueList;
 
         this.signals.linkListChanged.dispatch();
-
-    },
-
-    getLinks: function( residue ){
-
-        if( residue === undefined ){
-
-            return this._linkList;
-
-        }else{
-            var linkIds = this._residueIdToLinkIds[ residue.residueId ];
-            var links = linkIds ? linkIds.map (function(l) {
-                return this._linkIdToLink[l];
-            }) : [];
-
-            return links;
-        }
-
-    },
-
-    getResidues: function( link ){
-
-        if( link === undefined ){
-
-            return this._residueList;
-
-        }else if( Array.isArray( link ) ){
-
-            var residues = [];
-            link.forEach( function( l ){
-                residues.push( l.residueA, l.residueB );
-            } );
-            return residues;
-
-        }else{
-
-            return [ link.residueA, link.residueB ];
-
-        }
-
-    },
-
-    findLinks: function( residueA, residueB ){
-        var idA = residueA.residueId;
-        var idB = residueB.residueId;
-        
-        var links = this.getLinks().filter (function (l) {
-            return l.residueA.residueId === idA && l.residueB.residueId === idB;
-        });
-
-        return links.length ? links : false;
     },
     
-    findLinks2: function (residue) {
-        var id = residue.residueId;
-        
-        var links = this.getLinks().filter (function (l) {
-            return l.residueA.residueId === id || l.residueB.residueId === id;
-        });
+    getResidueIdsFromLinkId: function (linkId) {
+        var link = this._linkList(linkId);
+        return link ? [link.residueA.residueId, link.residueB.residueId] : undefined;
+    },
 
-        return links.length ? links : false;
+    getLinks: function (residue) {
+        if (residue === undefined) {
+            return this._linkList;
+        } else {
+            var linkIds = this._residueIdToLinkIds[residue.residueId];
+            return linkIds ? linkIds.map (function(l) {
+                return this._linkIdMap[l];
+            }, this) : [];
+        }
+    },
+
+    getResidues: function (link) {
+        if (link === undefined) {
+            return this._residueList;
+        } else if (Array.isArray (link)) {
+            var residues = [];
+            link.forEach (function(l) {
+                residues.push (l.residueA, l.residueB);
+            });
+            return residues;
+        } else {
+            return [link.residueA, link.residueB];
+        }
+    },
+
+    getSharedLinks: function (residueA, residueB) {
+        var aLinks = this.getLinks (residueA);
+        var bLinks = this.getLinks (residueB);
+        var sharedLinks = CLMSUI.modelUtils.intersectObjectArrays (aLinks, bLinks, function(l) { return l.linkId; });
+        //console.log ("links", aLinks, bLinks, sharedLinks);
+        return sharedLinks.length ? sharedLinks : false;
     },
 
     findResidues: function( resno, chainname ){
         var residues = this.getResidues().filter (function (r) {
             return r.resno === resno && r.chainname === chainname;
         });
-
         console.log ("find r", resno, chainname, residues);
         return residues.length ? residues : false;
     },
 
-    hasResidue: function( residue ){
-        var id = residue.residueId;
-        return this._residueIdToResidue[ id ] === undefined ? false : true;
+    hasResidue: function (residue) {
+        return this._residueIdMap[residue.residueId] === undefined ? false : true;
     },
 
-    hasLink: function( link ){
-        var id = link.linkId;
-        return this._linkIdToLink[ id ] === undefined ? false : true;
+    hasLink: function (link) {
+        return this._linkIdMap[link.linkId] === undefined ? false : true;
     }
-
 };
 
 
-CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structureComp, crosslinkData, params ){
+CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, structureComp, crosslinkData, params) {
 
     var defaults = {
         sstrucColor: "wheat",
@@ -455,8 +409,7 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structur
         selectedLinksColor: params.selectedColor ? undefined : "lightgreen",
     };
     var p = _.extend({}, defaults, params);
-    this.setParameters( p, true );
-
+    this.setParameters (p, true);
 
     this.model = CLMSmodel;
     this.stage = stage;
@@ -465,14 +418,8 @@ CLMSUI.CrosslinkRepresentation = function( CLMSmodel, stage, alignFunc, structur
     this.crosslinkData = crosslinkData;
     this.origIds = {};
 
-    
-    this._displayedResidues = this.crosslinkData.getResidues();
-    this._selectedResidues = [];
-
-
     this.colorOptions = {};
     this._initColorSchemes();
-
     this._initStructureRepr();
     this._initLinkRepr();
     
@@ -487,87 +434,43 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     constructor: CLMSUI.CrosslinkRepresentation,
 
-    _getAtomPairsFromLink: function( linkList ){
+    _getAtomPairsFromLinks: function (linkList) {
 
         var atomPairs = [];
 
-        if( !linkList || ( Array.isArray( linkList ) && !linkList.length ) ){
-
+        if (!linkList || (Array.isArray (linkList) && !linkList.length)) {
             // atomPairs = [];
+        } else {
+            if (linkList === "all") {
+                linkList = this.crosslinkData.getLinks();
+            }
+            
+            linkList.forEach (function (rl) {
+                var selA = this._getSelectionFromResidue (rl.residueA, false);
+                var selB = this._getSelectionFromResidue (rl.residueB, false);
 
-        }else if( linkList === "all" ){
-
-            atomPairs = this._getAtomPairsFromResidue();
-
-        }else{
-
-            //console.log ("linkList", linkList);
-            var resToSele = this._getSelectionFromResidue;
-            linkList.forEach( function( rl ){
-  
-                var selA = resToSele (rl.residueA, false);
-                var selB = resToSele (rl.residueB, false);
-
-                if( selA && selB ){
-                    atomPairs.push( [selA, selB, rl.origId] );
+                if (selA && selB) {
+                    atomPairs.push ([selA, selB, rl.origId]);
                     this.origIds[rl.residueA.resno+"-"+rl.residueB.resno] = rl.origId;
                 } else {
                     console.log ("dodgy pair", rl);
                 }
-
             }, this);
-            
-             //console.log ("getAtomPairs", linkList, this.origIds);
+            //console.log ("getAtomPairs", linkList, this.origIds);
         }
 
         return atomPairs;
     },
     
-    _getAtomObjectPairsFromLink: function( linkList ){
-
-        var atomPairs = [];
-
-        if( !linkList || ( Array.isArray( linkList ) && !linkList.length ) ){
-
-            // atomPairs = [];
-
-        }else if( linkList === "all" ){
-
-            atomPairs = this._getAllAtomObjectPairs();
-
-        }else{
-
-            var structure = this.structureComp.structure;
-            var resToSele = this._getSelectionFromResidue;
-            var sele1 = new NGL.Selection();
-            var sele2 = new NGL.Selection();
-
-            atomPairs = linkList.map ( function( rl ){
-                var selA = resToSele( rl.residueA, false);
-                var selB = resToSele( rl.residueB, false );
-                sele1.setString (selA);
-                sele2.setString (selB);
-                var a3 = structure.getAtomIndices (sele1);
-                var a4 = structure.getAtomIndices (sele2);
-                //console.log (rl.residueA, rl.residueB, selA, selB, a3, a4);
-                return [a3[0], a4[0]]; // don't filter out null/undefined a1/a2s; ensures atomPair array index order matches linklist array order
-            } );
-
-        }
-
-        return atomPairs;
+    _getAtomPairsFromResidue: function (residue) {
+        var linkList = this.crosslinkData.getLinks (residue);
+        return this._getAtomPairsFromLinks (linkList);
     },
-    
-    _getAllAtomObjectPairs: function() {
-        return this._getAtomObjectPairsFromLink (this.crosslinkData.getLinks());
-    },
-    
     
     getLinkDistances: function (atomObjPairs) {
         var ap1 = this.structureComp.structureView.getAtomProxy();
         var ap2 = this.structureComp.structureView.getAtomProxy();
         return atomObjPairs.map (function (pair) {
-            
             return pair[0] && pair[1] ? pair[0].distanceTo (pair[1]) : undefined;    
         }); 
     },
@@ -594,7 +497,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 ap1.index = nindex;
                 matrix[n] = [undefined];
                 for (var m = 1; m < atomIndices.length; m++) {
-                    var d = undefined;
+                    var d;
                     var mindex = atomIndices[m];
                     if (m !== n) {
                         ap2.index = mindex;
@@ -608,10 +511,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 }
             }
             
-            
         } else {
             
-
         }
         
         return {"proteinID": prot.id, "distances": matrix};
@@ -621,15 +522,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var rp = this.structureComp.structure.residueStore;
         var pid = prot.id;
         var sele = new NGL.Selection();
-        var atomIndices = [undefined];  // 1-indexed array so first entry (0) is undefined
+        var atomIndices = [undefined];  // we're building a 1-indexed array so first entry (0) is undefined
         
         for (var n = 1; n < prot.size; n++) {
-            var index = this.alignFunc (n, pid, false) - 1;
+            var index = this.alignFunc (n, pid, false) - 1; // rp.resno is 0-indexed so take 1 off the alignment result
             if (index >= 0) {
                 var resno = rp.resno[index];
                 //console.log ("align", n, index, resno);
-                var selString = resno+" AND .CA";
-                sele.setString (selString);
+                sele.setString (resno+" AND .CA");
                 var a = this.structureComp.structure.getAtomIndices (sele);
                 atomIndices[n] = a[0];
             } else {
@@ -640,84 +540,71 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return atomIndices;
     },
 
-    _getAtomPairsFromResidue: function( residue ){
-        var linkList = this.crosslinkData.getLinks( residue );
-        return this._getAtomPairsFromLink( linkList );
-    },
-
-    _getSelectionFromResidue: function( resnoList, asSelection ){
+    _getSelectionFromResidue: function (resnoList, asSelection) {
 
         var sele;
 
-        if( !resnoList || ( Array.isArray( resnoList ) && !resnoList.length ) ){
-
+        if (!resnoList || (Array.isArray (resnoList) && !resnoList.length)) {
             sele = "none";
-
-        }else{
-
-            if( resnoList === "all" ){
+        } else {
+            if (resnoList === "all") {
                 resnoList = this.crosslinkData.getResidues();
             }
 
-            if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
+            if (!Array.isArray (resnoList)) resnoList = [resnoList];
 
-            var tmp = resnoList.map ( function( r ){
+            var tmp = resnoList.map (function (r) {
                 var rsele = r.resno;
-                if( r.chainname ) { rsele = rsele + ":" + r.chainname; }
+                if (r.chainname) { rsele = rsele + ":" + r.chainname; }
                 return rsele;
-            } );
+            });
 
             sele = "( " + tmp.join( " OR " ) + " ) AND .CA";
-
         }
 
-        return asSelection ? new NGL.Selection( sele ) : sele;
-
+        return asSelection ? new NGL.Selection (sele) : sele;
     },
 
-    _initStructureRepr: function(){
+    _initStructureRepr: function() {
 
         var comp = this.structureComp;
 
-        var resSele = this._getSelectionFromResidue(
-            this._displayedResidues
-        );
-        var resEmphSele = this._getSelectionFromResidue (this._selectedResidues);
+        var resSele = this._getSelectionFromResidue (this.crosslinkData.getResidues());
+        var resEmphSele = this._getSelectionFromResidue ([]);
 
-        this.sstrucRepr = comp.addRepresentation( "cartoon", {
+        this.sstrucRepr = comp.addRepresentation ("cartoon", {
             color: this.sstrucColor,
             name: "sstruc"
-        } );
+        });
 
-        this.resRepr = comp.addRepresentation( "spacefill", {
+        this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             color: this.displayedResiduesColor,
             scale: 0.6,
             name: "res"
-        } );
+        });
 
-        this.resEmphRepr = comp.addRepresentation( "spacefill", {
+        this.resEmphRepr = comp.addRepresentation ("spacefill", {
             sele: resEmphSele,
             color: this.selectedResiduesColor,
             scale: 0.9,
             opacity: 0.7,
             name: "resEmph"
-        } );
+        });
 
-        this.stage.centerView( true );
-        comp.centerView( true );
-
+        this.stage.centerView (true);
+        comp.centerView (true);
     },
 
-    _initLinkRepr: function(){
+    _initLinkRepr: function() {
 
         var comp = this.structureComp;
         var links = this.crosslinkData.getLinks();
 
-        var xlPair = this._getAtomPairsFromLink (links);
-        var xlPairEmph = this._getAtomPairsFromLink (this.filterToSelectedLinks (links));
+        var xlPair = this._getAtomPairsFromLinks (links);
+        var xlPairEmph = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "selection"));
 
-        this.linkRepr = comp.addRepresentation( "distance", {
+        this.linkRepr = comp.addRepresentation ("distance", {
             atomPair: xlPair,
             //colorValue: this.displayedLinksColor,
             colorScheme: this.colorOptions.selScheme,
@@ -725,11 +612,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
             name: "link"
-        } );
+        });
         
         //console.log ("comp & repr", comp, this.linkRepr, xlPair);
 
-        this.linkEmphRepr = comp.addRepresentation( "distance", {
+        this.linkEmphRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairEmph,
             colorValue: this.selectedLinksColor,
             labelSize: 2.0,
@@ -738,37 +625,31 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: 1.5,
             opacity: 0.6,
             name: "linkEmph"
-        } );
-
+        });
     },
 
-    _initColorSchemes: function(){
+    _initColorSchemes: function() {
 
         var self = this;
-
-        this.colorOptions.white = new NGL.Color("white").getHex();
-        this.colorOptions.lightgrey = new NGL.Color("lightgrey").getHex();
+        //this.colorOptions.white = new NGL.Color("white").getHex();
+        //this.colorOptions.lightgrey = new NGL.Color("lightgrey").getHex();
         
-        var selColourScheme = function (params) {
-            this.atomColor = function () {
-                return 255;
-            };
-            var z = 0;
-            this.bondColor = function(b, fromTo) {
-                if (!z) {
-                    console.log ("bond", z, b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
+        var selColourScheme = function () {
+            var first = true;
+            this.bondColor = function (b) {
+                if (first) {
+                    console.log ("bond", b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
+                    first = false;
                 }
                 var origLinkId = self.origIds[b.atom1.resno+"-"+b.atom2.resno];
                 var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
                 var col = self.model.get("linkColourAssignment").getColour(link);
-                var col3 = d3.rgb(col);
-                z++;
+                var col3 = d3.rgb (col);
                 return col ? (col3.r << 16) + (col3.g << 8) + col3.b : 255;
             };
         };
         
         this.colorOptions.selScheme = NGL.ColorMakerRegistry.addScheme (selColourScheme, "xlink");
-        //console.log ("scheme", this.colorOptions.selScheme);
     },
 
     _highlightPicking: function (pickingData) {
@@ -782,6 +663,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     _handlePicking: function (pickingData, pickType, doEmpty) {
         var pd = pickingData;
+        console.log ("pd", pd);
         var crosslinkData = this.crosslinkData;
 
         var pdtrans = {
@@ -790,24 +672,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             xlinks: undefined,
         };
 
-        if( pd.atom !== undefined && pd.bond === undefined ){
-            console.log ("atom", pd.atom.resno);
-            var residues = crosslinkData.findResidues(
-                pd.atom.resno, pd.atom.chainname
-            );
-            if( residues ){
-                pdtrans.residue = residues[ 0 ];
-                pdtrans.links = crosslinkData.findLinks2 (pdtrans.residue);
+        if (pd.atom !== undefined && pd.bond === undefined) {
+            console.log ("atom", pd.atom, pd.atom.resno);
+            var residues = crosslinkData.findResidues (pd.atom.resno, pd.atom.chainname);
+            if (residues) {
+                pdtrans.residue = residues[0];
+                pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
             }
-
-        }else if( pd.bond !== undefined ){
-             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
-            //console.log ("picked bond", pd.bond.index, pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2);
+        } else if (pd.bond !== undefined) {
+            // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
+            // console.log ("picked bond", pd.bond.index, pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2);
 
             var bp2 = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
-            var ai1 = bp2.atomIndex1[pd.bond.index];
-            var ai2 = bp2.atomIndex2[pd.bond.index];
-            //console.log ("atom index via distance rep bondstore", this.linkRepr.repr, bp2, ai1, ai2);
+            var ai1 = bp2.atomIndex1 [pd.bond.index];
+            var ai2 = bp2.atomIndex2 [pd.bond.index];
+            // console.log ("atom index via distance rep bondstore", this.linkRepr.repr, bp2, ai1, ai2);
             
             var resStore = pd.bond.structure.residueStore;
             var aStore = pd.bond.structure.atomStore;
@@ -817,13 +696,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var r2 = resStore.resno[ri2];
             
             // r1 and r2 are now correct and I can grab data through the existing crosslinkData interface
-            //console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
+            // console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
             var residuesA = crosslinkData.findResidues (r1, pd.bond.atom1.chainname);
             var residuesB = crosslinkData.findResidues (r2, pd.bond.atom2.chainname);
             
-            //console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
-            if( residuesA && residuesB ){
-                pdtrans.links = crosslinkData.findLinks(residuesA[0], residuesB[0]);
+            // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
+            if (residuesA && residuesB) {
+                pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);
             }
         }
         
@@ -840,100 +719,67 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.model.calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, false);
     },
 
-    _handleDataChange: function(){
-        this.setDisplayedResidues( this.crosslinkData.getResidues() );
-        this.setSelectedResidues( [] );
 
-        this.setDisplayedLinks( this.crosslinkData.getLinks());
-        this.setSelectedLinks( this.crosslinkData.getLinks() );
+    // These filter out any links / residues that aren't in the currently computed crossLinkData linkIdMap or residueIdMap caches
+    _getAvailableResidues: function (residues) {
+        if (!residues) return residues;
+
+        return residues.filter (function (r) {
+            return this.crosslinkData.hasResidue (r);
+        }, this);
     },
 
-    _getAvailableResidues: function( residues ){
+    _getAvailableLinks: function (links) {
+        if (!links) return links;
 
-        if( !residues ) return residues;
+        return links.filter (function (l) {
+            return this.crosslinkData.hasLink (l);
+        }, this);
+    },
+    
+    // fired when setLinkList called on representation's associated crosslinkData object
+    _handleDataChange: function() {
+        this.setDisplayedResidues (this.crosslinkData.getResidues());
+        this.setSelectedResidues ([]);
 
-        var crosslinkData = this.crosslinkData;
-        var availableResidues = [];
-
-        residues.forEach( function( r ){
-            if( crosslinkData.hasResidue( r ) ){
-                availableResidues.push( r );
-            }
-        } );
-
-        return availableResidues;
-
+        this.setDisplayedLinks (this.crosslinkData.getLinks());
+        this.setSelectedLinks (this.crosslinkData.getLinks());
     },
 
-    _getAvailableLinks: function( links ){
+    setDisplayedResidues: function (residues) {
+        var availableResidues = this._getAvailableResidues (residues);
 
-        if( !links ) return links;
-
-        var crosslinkData = this.crosslinkData;
-        var availableLinks = [];
-
-        links.forEach( function( l ){
-            if( crosslinkData.hasLink( l ) ){
-                availableLinks.push( l );
-            }
-        } );
-
-        return availableLinks;
-
-    },
-
-    setDisplayed: function( residues, links ){
-        this.setDisplayedResidues( residues );
-        this.setDisplayedLinks( links );
-    },
-
-    setSelected: function( residues, links ){
-        this.setSelectedResidues( residues );
-        this.setSelectedLinks( links );
-    },
-
-    setDisplayedResidues: function( residues ){
-        this._displayedResidues = residues;
-        var availableResidues = this._getAvailableResidues( residues );
-
-        this.resRepr.setSelection(
-            this._getSelectionFromResidue( availableResidues )
+        this.resRepr.setSelection (
+            this._getSelectionFromResidue (availableResidues)
         );
     },
 
-    setSelectedResidues: function( residues ){
-        this._selectedResidues = residues;
-        var availableResidues = this._getAvailableResidues( residues );
-
-        this.resEmphRepr.setSelection(
-            this._getSelectionFromResidue( availableResidues )
+    setSelectedResidues: function (residues) {
+        var availableResidues = this._getAvailableResidues (residues);
+        this.resEmphRepr.setSelection (
+            this._getSelectionFromResidue (availableResidues)
         );
     },
 
-    setDisplayedLinks: function( links ){
-        var availableLinks = this._getAvailableLinks( links );
-       // console.log ("disp links", availableLinks);
-        //console.log ("resids", this.crosslinkData._residueIdToLinkIds, this.crosslinkData._linkIdToResidueIds);
-        var atomPairs = this._getAtomPairsFromLink (availableLinks);
-        //console.log ("atom pairs", atomPairs);
-        
+    setDisplayedLinks: function (links) {
+        var availableLinks = this._getAvailableLinks (links);
         this.linkRepr.setParameters ({
-            atomPair: atomPairs,
+            atomPair: this._getAtomPairsFromLinks (availableLinks),
         });
     },
 
-    filterToSelectedLinks: function (links) {  
-        var selectedSet = d3.set (this.model.get("selection").map (function(d) { return d.id; }));
+    filterByModelLinkArray: function (links, linkType) {  
+        var selectedSet = d3.set (this.model.get(linkType).map (function(d) { return d.id; }));
         return links.filter (function (l) {
             return selectedSet.has (l.origId);   
         });
     },
     
-    setSelectedLinks: function( links ){
-        var availableLinks = this._getAvailableLinks (this.filterToSelectedLinks (links));
-        this.linkEmphRepr.setParameters( {
-            atomPair: this._getAtomPairsFromLink (availableLinks),
-        } );
+    setSelectedLinks: function (links) {
+        var availableLinks = this._getAvailableLinks (this.filterByModelLinkArray (links, "selection"));
+        this.linkEmphRepr.setParameters ({
+            atomPair: this._getAtomPairsFromLinks (availableLinks),
+        });
     },
     
 
@@ -963,7 +809,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var sstrucParams = {};
 
         // set params
-
         resParams.color = p.displayedResiduesColor || p.displayedColor;
         linkParams.color = p.displayedLinksColor || p.displayedColor;
         resEmphParams.color = p.selectedResiduesColor || p.selectedColor;
@@ -996,30 +841,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         // pass params to representations
         if( !initialize ){
-            this.resRepr.setColor( resParams.color );
-            this.linkRepr.setColor( linkParams.color );
-            this.resEmphRepr.setColor( resEmphParams.color );
-            this.linkEmphRepr.setColor( linkEmphParams.color );
-            this.sstrucRepr.setColor( sstrucParams.color );
-
-            this.resRepr.setParameters( resParams );
-            this.linkRepr.setParameters( linkParams );
-            this.resEmphRepr.setParameters( resEmphParams );
-            this.linkEmphRepr.setParameters( linkEmphParams );
-            this.sstrucRepr.setParameters( sstrucParams );
+            var repParamPairs = {"resRepr": resParams, "linkRepr": linkParams, "resEmphRepr": resEmphParams, "linkEmphRepr": linkEmphParams, "sstrucRepr": sstrucParams};
+            d3.entries(repParamPairs).forEach (function(entry) {
+                this[entry.key].setColor (entry.value.color);
+                this[entry.key].setParameters (entry.value);
+            }, this);
         }
     },
 
     dispose: function(){
-
         this.stage.signals.clicked.remove (this._selectionPicking, this);
         this.stage.signals.hovered.remove (this._highlightPicking, this);
         this.crosslinkData.signals.linkListChanged.remove (this._handleDataChange, this);
 
-        this.stage.removeRepresentation( this.sstrucRepr );
-        this.stage.removeRepresentation( this.resRepr );
-        this.stage.removeRepresentation( this.resEmphRepr );
-        this.stage.removeRepresentation( this.linkRepr );
-        this.stage.removeRepresentation( this.linkEmphRepr );
+        ["sstrucRepr", "resRepr", "resEmphRepr", "linkRepr", "linkEmphRepr"].forEach (function (rep) {
+            this.stage.removeRepresentation (this[rep]);
+        }, this);
     }
 };

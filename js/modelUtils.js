@@ -311,4 +311,15 @@ CLMSUI.modelUtils = {
     isIntraLink: function (crossLink) {
          return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
     },
+    
+    intersectObjectArrays: function (a, b, compFunc) {
+        if (a && b && a.length && b.length && compFunc) {
+            var map = d3.map (a, compFunc);
+            var result = b.filter (function (elem) {
+                return map.has (compFunc(elem));
+            });
+            return result;                    
+        }
+        return [];
+    },
 };
