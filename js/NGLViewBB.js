@@ -1,9 +1,8 @@
-//		a distance histogram
+//		Backbone view and controller for NGL 3D viewer
 //
-//		Martin Graham, Colin Combe, Rappsilber Laboratory, 2015
+//		Martin Graham, Colin Combe, Rappsilber Laboratory, Alex Rose, PDB
 //
-//		distogram/Distogram.js
-
+//		js/NGLViewBB.js
 
     var CLMSUI = CLMSUI || {};
     
@@ -26,7 +25,6 @@
         initialize: function (viewOptions) {
             CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
             
-            console.log("arg options", viewOptions);
             var defaultOptions = {
                 labelVisible: false,
                 selectedOnly: false,
@@ -81,7 +79,6 @@
                 .attr ("class", "panelInner")
                 .attr ("flex-grow", 1)
                 .attr ("id", "ngl")
-                //.style ("border", "1px solid yellow")
             ;
  
             //this.chartDiv.selectAll("*").remove();
@@ -186,12 +183,12 @@
         },
 
         relayout: function () {
-			this.stage.handleResize();
+           this.stage.handleResize();
             return this;
         },
 		
-		centerView: function () {
-			this.stage.centerView();
+        centerView: function () {
+            this.stage.centerView();
             return this;
         },
         
@@ -209,7 +206,6 @@
             this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
-                
         // TODO, need to check if a) alignments are loaded and b) check for decoys (protein has no alignment)
         align: function (resIndex, proteinID, from3D) {
             var alignModel = this.model.get("alignColl").get (proteinID);
@@ -426,7 +422,7 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, structur
     console.log ("stage", this.stage);
 
     this.stage.signals.clicked.add (this._selectionPicking, this);
-    this.stage.signals.hovered.add (this._highlightPicking, this);
+    //this.stage.signals.hovered.add (this._highlightPicking, this);
     this.crosslinkData.signals.linkListChanged.add (this._handleDataChange, this);
 };
 
@@ -438,9 +434,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         var atomPairs = [];
 
-        if (!linkList || (Array.isArray (linkList) && !linkList.length)) {
-            // atomPairs = [];
-        } else {
+        if (linkList) {
             if (linkList === "all") {
                 linkList = this.crosslinkData.getLinks();
             }
@@ -607,7 +601,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkRepr = comp.addRepresentation ("distance", {
             atomPair: xlPair,
             //colorValue: this.displayedLinksColor,
-            colorScheme: this.colorOptions.selScheme,
+            colorScheme: this.colorOptions.linkColourScheme,
             labelSize: 2.0,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
@@ -618,7 +612,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.linkEmphRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairEmph,
-            colorValue: this.selectedLinksColor,
+            //colorValue: this.selectedLinksColor,
+            colorScheme: this.colorOptions.selColourScheme,
             labelSize: 2.0,
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
@@ -629,12 +624,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     _initColorSchemes: function() {
-
         var self = this;
-        //this.colorOptions.white = new NGL.Color("white").getHex();
-        //this.colorOptions.lightgrey = new NGL.Color("lightgrey").getHex();
         
-        var selColourScheme = function () {
+        var linkColourScheme = function () {
             var first = true;
             this.bondColor = function (b) {
                 if (first) {
@@ -649,11 +641,20 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
         };
         
-        this.colorOptions.selScheme = NGL.ColorMakerRegistry.addScheme (selColourScheme, "xlink");
+        var selColourScheme = function () {
+            this.bondColor = function (b) {
+                var origLinkId = self.origIds[b.atom1.resno+"-"+b.atom2.resno];
+                var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
+                //console.log ("sel bond", b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2, origLinkId, link);
+                return (255 << 16) + (255 << 8) + 0;
+            };
+        };
+        
+        this.colorOptions.linkColourScheme = NGL.ColorMakerRegistry.addScheme (linkColourScheme, "xlink");
+        this.colorOptions.selColourScheme = NGL.ColorMakerRegistry.addScheme (selColourScheme, "selxlink");
     },
 
     _highlightPicking: function (pickingData) {
-        //console.log ("hovering", pickingData);
         this._handlePicking (pickingData, "highlights", true);   
     },
     
@@ -663,7 +664,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     _handlePicking: function (pickingData, pickType, doEmpty) {
         var pd = pickingData;
-        console.log ("pd", pd);
         var crosslinkData = this.crosslinkData;
 
         var pdtrans = {
@@ -673,21 +673,26 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
 
         if (pd.atom !== undefined && pd.bond === undefined) {
-            console.log ("atom", pd.atom, pd.atom.resno);
+            if (pickType === "selection") {
+                console.log (pd, "atom", pd.atom, pd.atom.resno);
+            }
             var residues = crosslinkData.findResidues (pd.atom.resno, pd.atom.chainname);
             if (residues) {
                 pdtrans.residue = residues[0];
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
             }
         } else if (pd.bond !== undefined) {
+            if (pickType === "selection") {
+                console.log (pd, "bond", pd.bond);
+            }
             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
             // console.log ("picked bond", pd.bond.index, pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2);
 
             var bp2 = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
             var ai1 = bp2.atomIndex1 [pd.bond.index];
             var ai2 = bp2.atomIndex2 [pd.bond.index];
-            // console.log ("atom index via distance rep bondstore", this.linkRepr.repr, bp2, ai1, ai2);
-            
+            console.log ("bondStores", pd.bond.bondStore, bp2, this.linkRepr, this.linkEmphRepr);
+            //console.log ("bondStores", pd.bond.bondStore, bp2, this.linkEmphRepr.repr.dataList[0].bondStore, this.linkRepr, this.linkEmphRepr);
             var resStore = pd.bond.structure.residueStore;
             var aStore = pd.bond.structure.atomStore;
             var ri1 = aStore.residueIndex[ai1];
@@ -800,38 +805,35 @@ CLMSUI.CrosslinkRepresentation.prototype = {
      */
     setParameters: function( params, initialize ){
 
-        var p = Object.assign( {}, params );
-
-        var resParams = {};
-        var linkParams = {};
-        var resEmphParams = {};
-        var linkEmphParams = {};
-        var sstrucParams = {};
+        var allParams = {};
+        var repNameArray = ["resRepr", "linkRepr", "resEmphRepr", "linkEmphRepr", "sstrucRepr"];
+        repNameArray.forEach (function (repName) { allParams[repName] = {}; });
 
         // set params
-        resParams.color = p.displayedResiduesColor || p.displayedColor;
-        linkParams.color = p.displayedLinksColor || p.displayedColor;
-        resEmphParams.color = p.selectedResiduesColor || p.selectedColor;
-        linkEmphParams.color = p.selectedLinksColor || p.selectedColor;
+        var p = Object.assign( {}, params );
+        allParams.resRepr.color = p.displayedResiduesColor || p.displayedColor;
+        allParams.linkRepr.color = p.displayedLinksColor || p.displayedColor;
+        allParams.resEmphRepr.color = p.selectedResiduesColor || p.selectedColor;
+        allParams.linkEmphRepr.color = p.selectedLinksColor || p.selectedColor;
 
-        sstrucParams.color = p.sstrucColor;
+        allParams.sstrucRepr.color = p.sstrucColor;
 
-        linkParams.labelColor = p.displayedDistanceColor;
-        linkEmphParams.labelColor = p.selectedDistanceColor;
-        linkParams.labelVisible = p.displayedDistanceVisible;
-        linkEmphParams.labelVisible = p.selectedDistanceVisible;
+        allParams.linkRepr.labelColor = p.displayedDistanceColor;
+        allParams.linkEmphRepr.labelColor = p.selectedDistanceColor;
+        allParams.linkRepr.labelVisible = p.displayedDistanceVisible;
+        allParams.linkEmphRepr.labelVisible = p.selectedDistanceVisible;
 
         // set object properties
         var objProps = {
-            "displayedResiduesColor": resParams.color,
-            "displayedLinksColor": linkParams.color,
-            "selectedResiduesColor": resEmphParams.color,
-            "selectedLinksColor": linkEmphParams.color,
-            "sstrucColor": sstrucParams.color,
-            "displayedDistanceColor": linkParams.labelColor,
-            "selectedDistanceColor": linkEmphParams.labelColor,
-            "displayedDistanceVisible": linkParams.labelVisible,
-            "selectedDistanceVisible": linkEmphParams.labelVisible,
+            "displayedResiduesColor": allParams.resRepr.color,
+            "displayedLinksColor": allParams.linkRepr.color,
+            "selectedResiduesColor": allParams.resEmphRepr.color,
+            "selectedLinksColor": allParams.linkEmphRepr.color,
+            "sstrucColor": allParams.sstrucRepr.color,
+            "displayedDistanceColor": allParams.linkRepr.labelColor,
+            "selectedDistanceColor": allParams.linkEmphRepr.labelColor,
+            "displayedDistanceVisible": allParams.linkRepr.labelVisible,
+            "selectedDistanceVisible": allParams.linkEmphRepr.labelVisible,
         };
         d3.entries(objProps).forEach (function (entry) {
             if (entry.value !== undefined) {
@@ -841,10 +843,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         // pass params to representations
         if( !initialize ){
-            var repParamPairs = {"resRepr": resParams, "linkRepr": linkParams, "resEmphRepr": resEmphParams, "linkEmphRepr": linkEmphParams, "sstrucRepr": sstrucParams};
-            d3.entries(repParamPairs).forEach (function(entry) {
-                this[entry.key].setColor (entry.value.color);
-                this[entry.key].setParameters (entry.value);
+            repNameArray.forEach (function (repName) {
+                this[repName].setColor (allParams[repName].color);
+                this[repName].setParameters (allParams[repName]);
             }, this);
         }
     },

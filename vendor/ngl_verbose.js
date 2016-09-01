@@ -3826,11 +3826,11 @@ GidPool$1.prototype = {
 
             if( o.type === "Structure" ){
 
-                if( offset <= o.atomStore.count ){
+                if( offset /*<=*/ < o.atomStore.count ){ // MJG off by one fix
 
                     entity = o.getAtomProxy( offset );
 
-                }else if( offset <= o.atomStore.count + o.bondStore.count ){
+                }else if( offset /*<=*/ < o.atomStore.count + o.bondStore.count ){  // MJG off by one fix
 
                     offset -= o.atomStore.count;
                     entity = o.getBondProxy( offset );
@@ -55739,8 +55739,10 @@ var PickingControls = function( viewer, params ){
         var pickingData = viewer.pick(
             mouse.canvasPosition.x, mouse.canvasPosition.y
         );
+        console.log ("nglpick", pickingData);   // mjg
         var instance = pickingData.instance;
         var picked = GidPool.getByGid( pickingData.gid );
+        console.log ("picked", picked, GidPool);    // mjg
 
         var pickedAtom, pickedBond, pickedVolume;
         if( picked && picked.type === "AtomProxy" ){
