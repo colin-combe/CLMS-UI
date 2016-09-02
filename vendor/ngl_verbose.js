@@ -55739,10 +55739,8 @@ var PickingControls = function( viewer, params ){
         var pickingData = viewer.pick(
             mouse.canvasPosition.x, mouse.canvasPosition.y
         );
-        console.log ("nglpick", pickingData);   // mjg
         var instance = pickingData.instance;
         var picked = GidPool.getByGid( pickingData.gid );
-        console.log ("picked", picked, GidPool);    // mjg
 
         var pickedAtom, pickedBond, pickedVolume;
         if( picked && picked.type === "AtomProxy" ){
@@ -55776,7 +55774,8 @@ var PickingControls = function( viewer, params ){
             "atom": pickedAtom,
             "bond": pickedBond,
             "volume": pickedVolume,
-            "instance": instance
+            "instance": instance,
+            "gid": pickingData.gid, // mjg
         };
     }
 

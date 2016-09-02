@@ -93,8 +93,6 @@
                     // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
                     self.model.trigger ("3dsync", sequences);
 
-                    console.log ("strcomp", structureComp);
-
                     // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
                     var crossLinks = self.model.get("clmsModel").get("crossLinks");
                     var filterCrossLinks = self.filterCrossLinks (crossLinks);
@@ -117,20 +115,28 @@
                     self.model.trigger ("distancesAvailable", [dd]);
 
                     self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                    self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);   // if colour model used is swapped for new one
-                    self.listenTo (self.model, "currentColourModelChanged", self.showFiltered); // if current colour model used changes internally (distance model)
+                    //self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
+                    //self.listenTo (self.model, "currentColourModelChanged", self.showFiltered);
+                    self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
+                    self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
                     self.listenTo (self.model, "change:selection", self.showSelected);
-                    //self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                    self.listenTo (self.model, "change:highlights", self.showHighlighted);
                 })
             ;      
         },
         
+        rerenderColours: function () {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                // using update dodges setParameters not firing a redraw if param is the same
+                this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
+                this.xlRepr.linkRepr.viewer.requestRender();
+            }
+        },
+        
         showHighlighted: function () {
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                var selectedCrossLinks = this.model.get("highlights");
-                var filteredCrossLinks = this.filterCrossLinks (selectedCrossLinks);
-                var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
-                this.xlRepr.crosslinkData.setLinkList (linkList);
+                //var selectedCrossLinks = this.model.get("selection");
+                this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
             }
         },
         
@@ -403,6 +409,7 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, structur
         displayedLinksColor: params.displayedColor ? undefined : "lighblue",
         selectedResiduesColor: params.selectedColor ? undefined : "lightgreen",
         selectedLinksColor: params.selectedColor ? undefined : "lightgreen",
+        highlightedLinksColor: params.highlightedColor ? undefined : "orange",
     };
     var p = _.extend({}, defaults, params);
     this.setParameters (p, true);
@@ -422,7 +429,7 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, structur
     console.log ("stage", this.stage);
 
     this.stage.signals.clicked.add (this._selectionPicking, this);
-    //this.stage.signals.hovered.add (this._highlightPicking, this);
+    this.stage.signals.hovered.add (this._highlightPicking, this);
     this.crosslinkData.signals.linkListChanged.add (this._handleDataChange, this);
 };
 
@@ -597,6 +604,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         var xlPair = this._getAtomPairsFromLinks (links);
         var xlPairEmph = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "selection"));
+        var xlPairHigh = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "highlights"));
 
         this.linkRepr = comp.addRepresentation ("distance", {
             atomPair: xlPair,
@@ -607,13 +615,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelVisible: this.displayedDistanceVisible,
             name: "link"
         });
-        
-        //console.log ("comp & repr", comp, this.linkRepr, xlPair);
 
         this.linkEmphRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairEmph,
-            //colorValue: this.selectedLinksColor,
-            colorScheme: this.colorOptions.selColourScheme,
+            colorValue: this.selectedLinksColor,
             labelSize: 2.0,
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
@@ -621,18 +626,29 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             opacity: 0.6,
             name: "linkEmph"
         });
+        
+        this.linkHighRepr = comp.addRepresentation ("distance", {
+            atomPair: xlPairHigh,
+            colorValue: this.highlightedLinksColor,
+            labelSize: 2.0,
+            labelColor: this.selectedDistanceColor,
+            labelVisible: this.selectedDistanceVisible,
+            scale: 1.8,
+            opacity: 0.6,
+            name: "linkHigh"
+        });
     },
 
     _initColorSchemes: function() {
         var self = this;
         
         var linkColourScheme = function () {
-            var first = true;
+            //var first = true;
             this.bondColor = function (b) {
-                if (first) {
-                    console.log ("bond", b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
-                    first = false;
-                }
+                //if (first) {
+                 //   console.log ("bond", b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
+                 //   first = false;
+                //}
                 var origLinkId = self.origIds[b.atom1.resno+"-"+b.atom2.resno];
                 var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
                 var col = self.model.get("linkColourAssignment").getColour(link);
@@ -641,17 +657,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
         };
         
-        var selColourScheme = function () {
-            this.bondColor = function (b) {
-                var origLinkId = self.origIds[b.atom1.resno+"-"+b.atom2.resno];
-                var link = self.model.get("clmsModel").get("crossLinks").get(origLinkId);
-                //console.log ("sel bond", b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2, origLinkId, link);
-                return (255 << 16) + (255 << 8) + 0;
-            };
-        };
-        
         this.colorOptions.linkColourScheme = NGL.ColorMakerRegistry.addScheme (linkColourScheme, "xlink");
-        this.colorOptions.selColourScheme = NGL.ColorMakerRegistry.addScheme (selColourScheme, "selxlink");
     },
 
     _highlightPicking: function (pickingData) {
@@ -673,26 +679,34 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
 
         if (pd.atom !== undefined && pd.bond === undefined) {
-            if (pickType === "selection") {
-                console.log (pd, "atom", pd.atom, pd.atom.resno);
-            }
             var residues = crosslinkData.findResidues (pd.atom.resno, pd.atom.chainname);
             if (residues) {
                 pdtrans.residue = residues[0];
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
             }
         } else if (pd.bond !== undefined) {
-            if (pickType === "selection") {
-                console.log (pd, "bond", pd.bond);
-            }
             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
             // console.log ("picked bond", pd.bond.index, pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2);
 
-            var bp2 = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
-            var ai1 = bp2.atomIndex1 [pd.bond.index];
-            var ai2 = bp2.atomIndex2 [pd.bond.index];
-            console.log ("bondStores", pd.bond.bondStore, bp2, this.linkRepr, this.linkEmphRepr);
-            //console.log ("bondStores", pd.bond.bondStore, bp2, this.linkEmphRepr.repr.dataList[0].bondStore, this.linkRepr, this.linkEmphRepr);
+            // this line worked with one distance rep, but not with two or more
+            // var altBondStore = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
+            
+            var curLinkBondStore = this.linkRepr.repr.dataList.length ? 
+                this.linkRepr.repr.dataList[0].bondStore : {count : 0}; // distance rep bondstore
+            var selLinkBondStore = this.linkEmphRepr.repr.dataList.length ? 
+                this.linkEmphRepr.repr.dataList[0].bondStore : {count: 0};    // selected rep bondstore
+            var highLinkBondStore = this.linkHighRepr.repr.dataList.length ? 
+                this.linkHighRepr.repr.dataList[0].bondStore : {count: 0};    // selected rep bondstore
+            //console.log ("pp", pd.gid, pd.bond.structure.atomCount, selLinkBondStore, highLinkBondStore);
+            var gid = pd.gid - pd.bond.structure.atomCount;
+            // gids seemed to be assigned to bonds in reverse order by representation
+            var altBondStore = (gid > highLinkBondStore.count + selLinkBondStore.count) ?
+                curLinkBondStore : (gid > highLinkBondStore.count ? selLinkBondStore : highLinkBondStore)
+            ;
+            
+            var ai1 = altBondStore.atomIndex1 [pd.bond.index];
+            var ai2 = altBondStore.atomIndex2 [pd.bond.index];
+            //console.log ("bondStores", pd.gid, pd.bond.bondStore, curLinkBondStore, selLinkBondStore, this.linkRepr, this.linkEmphRepr);
             var resStore = pd.bond.structure.residueStore;
             var aStore = pd.bond.structure.atomStore;
             var ri1 = aStore.residueIndex[ai1];
@@ -787,6 +801,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         });
     },
     
+    setHighlightedLinks: function (links) {
+        var availableLinks = this._getAvailableLinks (this.filterByModelLinkArray (links, "highlights"));
+        this.linkHighRepr.setParameters ({
+            atomPair: this._getAtomPairsFromLinks (availableLinks),
+        });
+    },
+    
 
     /**
      * params
@@ -806,7 +827,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     setParameters: function( params, initialize ){
 
         var allParams = {};
-        var repNameArray = ["resRepr", "linkRepr", "resEmphRepr", "linkEmphRepr", "sstrucRepr"];
+        var repNameArray = ["resRepr", "linkRepr", "resEmphRepr", "linkEmphRepr", "linkHighRepr", "sstrucRepr"];
         repNameArray.forEach (function (repName) { allParams[repName] = {}; });
 
         // set params
@@ -815,6 +836,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         allParams.linkRepr.color = p.displayedLinksColor || p.displayedColor;
         allParams.resEmphRepr.color = p.selectedResiduesColor || p.selectedColor;
         allParams.linkEmphRepr.color = p.selectedLinksColor || p.selectedColor;
+        allParams.linkHighRepr.color = p.highlightedLinksColor || p.highlightedColor;
 
         allParams.sstrucRepr.color = p.sstrucColor;
 
@@ -822,6 +844,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         allParams.linkEmphRepr.labelColor = p.selectedDistanceColor;
         allParams.linkRepr.labelVisible = p.displayedDistanceVisible;
         allParams.linkEmphRepr.labelVisible = p.selectedDistanceVisible;
+        allParams.linkHighRepr.labelVisible = false;
 
         // set object properties
         var objProps = {
@@ -829,11 +852,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             "displayedLinksColor": allParams.linkRepr.color,
             "selectedResiduesColor": allParams.resEmphRepr.color,
             "selectedLinksColor": allParams.linkEmphRepr.color,
+            "highlightedLinksColor": allParams.linkHighRepr.color,
             "sstrucColor": allParams.sstrucRepr.color,
             "displayedDistanceColor": allParams.linkRepr.labelColor,
             "selectedDistanceColor": allParams.linkEmphRepr.labelColor,
             "displayedDistanceVisible": allParams.linkRepr.labelVisible,
             "selectedDistanceVisible": allParams.linkEmphRepr.labelVisible,
+            "highlightedDistanceVisible": allParams.linkHighRepr.labelVisible,
         };
         d3.entries(objProps).forEach (function (entry) {
             if (entry.value !== undefined) {
@@ -855,7 +880,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.stage.signals.hovered.remove (this._highlightPicking, this);
         this.crosslinkData.signals.linkListChanged.remove (this._handleDataChange, this);
 
-        ["sstrucRepr", "resRepr", "resEmphRepr", "linkRepr", "linkEmphRepr"].forEach (function (rep) {
+        ["sstrucRepr", "resRepr", "resEmphRepr", "linkRepr", "linkEmphRepr", "linkHighRepr"].forEach (function (rep) {
             this.stage.removeRepresentation (this[rep]);
         }, this);
     }
