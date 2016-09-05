@@ -70,6 +70,7 @@
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
+        <script type="text/javascript" src="./vendor/spin.js"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
@@ -167,6 +168,8 @@
                 //~ include '../annotations.php';
             //~ }
         ?>
+        
+            var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
  			var xmlhttp = new XMLHttpRequest();
 			var url = "./loadData.php" + window.location.search;
@@ -176,6 +179,7 @@
 			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
 				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 					//console.log(xmlhttp.responseText);
+                    spinner.stop(); // stop spinner on ajax request returning
                     
 					var json = JSON.parse(xmlhttp.responseText);
                     

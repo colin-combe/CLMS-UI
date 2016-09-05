@@ -108,8 +108,6 @@
                           }
                    );
 
-                    //console.log ("xlRepr", self.xlRepr);
-                    //console.log ("crossLinks", crossLinks);
                     var dd = self.xlRepr.getDistances ();
                     //console.log ("distances", [dd]);
                     self.model.trigger ("distancesAvailable", [dd]);
@@ -420,12 +418,13 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, structur
     this.structureComp = structureComp;
     this.crosslinkData = crosslinkData;
     this.origIds = {};
-
+    this.residueToAtomIndexMap = {};
+    
     this.colorOptions = {};
     this._initColorSchemes();
     this._initStructureRepr();
     this._initLinkRepr();
-    
+
     console.log ("stage", this.stage);
 
     this.stage.signals.clicked.add (this._selectionPicking, this);
@@ -446,18 +445,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 linkList = this.crosslinkData.getLinks();
             }
             
+            var sele = new NGL.Selection ();
             linkList.forEach (function (rl) {
-                var selA = this._getSelectionFromResidue (rl.residueA, false);
-                var selB = this._getSelectionFromResidue (rl.residueB, false);
+                var atomA = this._getAtomIndexFromResidue (rl.residueA.resno, sele);
+                var atomB = this._getAtomIndexFromResidue (rl.residueB.resno, sele);
 
-                if (selA && selB) {
-                    atomPairs.push ([selA, selB, rl.origId]);
+                if (atomA !== undefined && atomB !== undefined) {
+                    atomPairs.push ([atomA, atomB, rl.origId]);
                     this.origIds[rl.residueA.resno+"-"+rl.residueB.resno] = rl.origId;
                 } else {
                     console.log ("dodgy pair", rl);
                 }
             }, this);
-            //console.log ("getAtomPairs", linkList, this.origIds);
+            //console.log ("getAtomPairs", atomPairs);
         }
 
         return atomPairs;
@@ -467,14 +467,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var linkList = this.crosslinkData.getLinks (residue);
         return this._getAtomPairsFromLinks (linkList);
     },
-    
-    getLinkDistances: function (atomObjPairs) {
-        var ap1 = this.structureComp.structureView.getAtomProxy();
-        var ap2 = this.structureComp.structureView.getAtomProxy();
-        return atomObjPairs.map (function (pair) {
-            return pair[0] && pair[1] ? pair[0].distanceTo (pair[1]) : undefined;    
-        }); 
-    },
+
     
     getDistances: function () {
         //console.log ("this dist", this.structureComp, this.stage);  
@@ -487,36 +480,68 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var prot = protsArr[0];
         
         if (prot.size < 600) {
-            var atomIndices = this.getCAtomsAllResidues (prot);
-            //console.log ("ai", atomIndices);
-            
-            var ap1 = this.structureComp.structureView.getAtomProxy();
-            var ap2 = this.structureComp.structureView.getAtomProxy();
-            matrix = [[]];
-            for (var n = 1; n < atomIndices.length; n++) {
-                var nindex = atomIndices[n];
-                ap1.index = nindex;
-                matrix[n] = [undefined];
-                for (var m = 1; m < atomIndices.length; m++) {
-                    var d;
-                    var mindex = atomIndices[m];
-                    if (m !== n) {
-                        ap2.index = mindex;
-                        if (mindex !== undefined && nindex !== undefined) {
-                            d = ap1.distanceTo(ap2);
-                        }
-                    } else {
-                        d = 0;
-                    }
-                    matrix[n][m] = d;
-                }
-            }
-            
+            matrix = this.getAllDistances (prot);
         } else {
-            
+            matrix = this.getLinkDistancesOnly (prot, prot);
         }
         
+        //console.log ("lds", this.getLinkDistancesOnly (prot, prot));
+        //console.log ("mat", matrix);
+        //console.log ("links", this.crosslinkData.getLinks());
         return {"proteinID": prot.id, "distances": matrix};
+    },
+    
+    getLinkDistancesOnly: function (prot1, prot2) {
+        var atomIndices1 = this.getCAtomsAllResidues (prot1);
+        var atomIndices2 = this.getCAtomsAllResidues (prot2);
+        var ap1 = this.structureComp.structureView.getAtomProxy();
+        var ap2 = this.structureComp.structureView.getAtomProxy();
+        var matrix = [[]];
+        
+        var links = this.crosslinkData.getLinks();
+        links.forEach (function (link) {
+            var idA = link.residueA.resno;
+            var idB = link.residueB.resno;
+             ap1.index = atomIndices1[idA];
+             ap2.index = atomIndices2[idB];
+             if (ap1.index !== undefined && ap2.index !== undefined) {
+                var d = ap1.distanceTo (ap2);
+                matrix[idA] = matrix[idA] || [];
+                 matrix[idA][idB] = matrix[idA][idB] || [];
+                 matrix[idA][idB] = d;
+             }
+        });
+        
+        return matrix;
+    },
+    
+    getAllDistances: function (prot) {
+        var atomIndices = this.getCAtomsAllResidues (prot);
+        //console.log ("ai", atomIndices);
+
+        var ap1 = this.structureComp.structureView.getAtomProxy();
+        var ap2 = this.structureComp.structureView.getAtomProxy();
+        var matrix = [[]];
+        for (var n = 1; n < atomIndices.length; n++) {
+            var nindex = atomIndices[n];
+            ap1.index = nindex;
+            matrix[n] = [undefined];
+            for (var m = 1; m < atomIndices.length; m++) {
+                var d;
+                var mindex = atomIndices[m];
+                if (m !== n) {
+                    ap2.index = mindex;
+                    if (mindex !== undefined && nindex !== undefined) {
+                        d = ap1.distanceTo(ap2);
+                    }
+                } else {
+                    d = 0;
+                }
+                matrix[n][m] = d;
+            }
+        }
+        
+        return matrix;
     },
     
     getCAtomsAllResidues : function (prot) {
@@ -529,16 +554,28 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var index = this.alignFunc (n, pid, false) - 1; // rp.resno is 0-indexed so take 1 off the alignment result
             if (index >= 0) {
                 var resno = rp.resno[index];
-                //console.log ("align", n, index, resno);
-                sele.setString (resno+" AND .CA");
-                var a = this.structureComp.structure.getAtomIndices (sele);
-                atomIndices[n] = a[0];
+                atomIndices[n] = this._getAtomIndexFromResidue (resno, sele);
             } else {
                 atomIndices[n] = undefined;
             }
         }
         
         return atomIndices;
+    },
+    
+    // used to generate a cache to speed up distance selections / calculations
+    _getAtomIndexFromResidue: function (resno, sele) {
+        if (resno !== undefined) {
+            var aIndex = this.residueToAtomIndexMap [resno];
+            if (aIndex === undefined) {
+                sele.setString (resno+" AND .CA");
+                var a = this.structureComp.structure.getAtomIndices (sele);
+                aIndex = a[0];
+                this.residueToAtomIndexMap[resno] = aIndex;
+            }
+            return aIndex;
+        }
+        return undefined;
     },
 
     _getSelectionFromResidue: function (resnoList, asSelection) {
@@ -552,7 +589,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 resnoList = this.crosslinkData.getResidues();
             }
 
-            if (!Array.isArray (resnoList)) resnoList = [resnoList];
+            if (!Array.isArray (resnoList)) { resnoList = [resnoList]; }
 
             var tmp = resnoList.map (function (r) {
                 var rsele = r.resno;
@@ -613,7 +650,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: 2.0,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
-            name: "link"
+            name: "link",
         });
 
         this.linkEmphRepr = comp.addRepresentation ("distance", {
@@ -624,7 +661,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelVisible: this.selectedDistanceVisible,
             scale: 1.5,
             opacity: 0.6,
-            name: "linkEmph"
+            name: "linkEmph",
         });
         
         this.linkHighRepr = comp.addRepresentation ("distance", {
@@ -634,8 +671,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
             scale: 1.8,
-            opacity: 0.6,
-            name: "linkHigh"
+            opacity: 0.4,
+            name: "linkHigh",
         });
     },
 
@@ -669,24 +706,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     _handlePicking: function (pickingData, pickType, doEmpty) {
-        var pd = pickingData;
         var crosslinkData = this.crosslinkData;
+        var atom = pickingData.atom;
+        var bond = pickingData.bond;
 
-        var pdtrans = {
-            residue: undefined,
-            links: undefined,
-            xlinks: undefined,
-        };
+        var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
 
-        if (pd.atom !== undefined && pd.bond === undefined) {
-            var residues = crosslinkData.findResidues (pd.atom.resno, pd.atom.chainname);
+        if (atom !== undefined && bond === undefined) {
+            var residues = crosslinkData.findResidues (atom.resno, atom.chainname);
             if (residues) {
                 pdtrans.residue = residues[0];
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
             }
-        } else if (pd.bond !== undefined) {
+        } else if (bond !== undefined) {
             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
-            // console.log ("picked bond", pd.bond.index, pd.bond.atom1.resno, pd.bond.atom2.resno, pd.bond.atomIndex1, pd.bond.atomIndex2);
+            // console.log ("picked bond", bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
 
             // this line worked with one distance rep, but not with two or more
             // var altBondStore = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
@@ -697,18 +731,18 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 this.linkEmphRepr.repr.dataList[0].bondStore : {count: 0};    // selected rep bondstore
             var highLinkBondStore = this.linkHighRepr.repr.dataList.length ? 
                 this.linkHighRepr.repr.dataList[0].bondStore : {count: 0};    // selected rep bondstore
-            //console.log ("pp", pd.gid, pd.bond.structure.atomCount, selLinkBondStore, highLinkBondStore);
-            var gid = pd.gid - pd.bond.structure.atomCount;
+            //console.log ("pp", pickingData.gid, bond.structure.atomCount, selLinkBondStore, highLinkBondStore);
+            var gid = pickingData.gid - bond.structure.atomCount;
             // gids seemed to be assigned to bonds in reverse order by representation
             var altBondStore = (gid > highLinkBondStore.count + selLinkBondStore.count) ?
                 curLinkBondStore : (gid > highLinkBondStore.count ? selLinkBondStore : highLinkBondStore)
             ;
             
-            var ai1 = altBondStore.atomIndex1 [pd.bond.index];
-            var ai2 = altBondStore.atomIndex2 [pd.bond.index];
-            //console.log ("bondStores", pd.gid, pd.bond.bondStore, curLinkBondStore, selLinkBondStore, this.linkRepr, this.linkEmphRepr);
-            var resStore = pd.bond.structure.residueStore;
-            var aStore = pd.bond.structure.atomStore;
+            var ai1 = altBondStore.atomIndex1 [bond.index];
+            var ai2 = altBondStore.atomIndex2 [bond.index];
+            //console.log ("bondStores", pickingData.gid, bond.bondStore, curLinkBondStore, selLinkBondStore, this.linkRepr, this.linkEmphRepr);
+            var resStore = bond.structure.residueStore;
+            var aStore = bond.structure.atomStore;
             var ri1 = aStore.residueIndex[ai1];
             var ri2 = aStore.residueIndex[ai2];
             var r1 = resStore.resno[ri1];
@@ -716,8 +750,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             
             // r1 and r2 are now correct and I can grab data through the existing crosslinkData interface
             // console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
-            var residuesA = crosslinkData.findResidues (r1, pd.bond.atom1.chainname);
-            var residuesB = crosslinkData.findResidues (r2, pd.bond.atom2.chainname);
+            var residuesA = crosslinkData.findResidues (r1, bond.atom1.chainname);
+            var residuesB = crosslinkData.findResidues (r2, bond.atom2.chainname);
             
             // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
             if (residuesA && residuesB) {
@@ -733,7 +767,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         } else if (doEmpty) {
             pdtrans.xlinks = [];
         }
-        console.log ("pd and pdtrans", pd, pdtrans.xlinks);
+        console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
         
         this.model.calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, false);
     },
@@ -741,7 +775,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     // These filter out any links / residues that aren't in the currently computed crossLinkData linkIdMap or residueIdMap caches
     _getAvailableResidues: function (residues) {
-        if (!residues) return residues;
+        if (!residues) { return residues; }
 
         return residues.filter (function (r) {
             return this.crosslinkData.hasResidue (r);
@@ -749,7 +783,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     _getAvailableLinks: function (links) {
-        if (!links) return links;
+        if (!links) { return links; }
 
         return links.filter (function (l) {
             return this.crosslinkData.hasLink (l);
