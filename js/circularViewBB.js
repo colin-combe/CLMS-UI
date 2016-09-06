@@ -234,7 +234,7 @@
                     .set("contents", [
                         ["From", xlink.fromResidue, xlink.fromProtein.name],
                         ["To", xlink.toResidue, xlink.toProtein.name],
-                        ["Matches", xlink.filteredMatches.length]
+                        ["Matches", xlink.filteredMatches_pp.length]
                     ])
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
@@ -261,7 +261,6 @@
 
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });
-            //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout);
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
             this.listenTo (this.model.get("alignColl"), "change:compAlignments", function (alignModel, alignColl) {
@@ -269,6 +268,7 @@
                 this.render ({changed : d3.set(["features"]), });
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
+            this.listenTo (this.model, "currentColourModelChanged", function () { this.render ({changed : d3.set(["links"]), }); });
             this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
             return this;
         },
@@ -360,7 +360,7 @@
         filterCrossLinks: function (crossLinks) {
             var filteredCrossLinks = [];
             crossLinks.forEach (function (value) {
-                if (value.filteredMatches && value.filteredMatches.length > 0 && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
+                if (value.filteredMatches_pp && value.filteredMatches_pp.length > 0 && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
                     filteredCrossLinks.push (value);
                 }
             });
@@ -384,14 +384,14 @@
                 console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
 
-                // If only one protein hide some options, and make links go in middle
-                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")
-                    .style("display", (interactors.size < 2) ? "none" : null)
-                ;
-                if (interactors.size < 2) { this.options.intraOutside = false; }
-
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+                
+                // If only one protein hide some options, and make links go in middle
+                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")
+                    .style("display", (filteredInteractors.length < 2) ? "none" : null)
+                ;
+                if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
 
                 // set interactors to same order as interactor order
                 //console.log ("ofi", filteredInteractors);
@@ -402,7 +402,6 @@
                         filteredInteractors.push (fmap.get(interactorId));
                     }
                 });
-                //console.log ("nfi", filteredInteractors);
 
                 // After rearrange interactors, because filtered features depends on the interactor order
                 var filteredFeatures = filteredInteractors.map (function (inter) {
@@ -513,7 +512,7 @@
             ;
             linkJoin
                 .attr("d", function(d) { return self.line(d.coords); })
-                .style("stroke", function(d) { return colourScheme (crossLinks.get(d.id)); })
+                .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
                 .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
             ;
         },
@@ -563,7 +562,7 @@
             var tickGap = CLMSUI.utils.niceRound (tickValGap);
 
             var groupTicks = function (d) {
-                var k = (d.end - d.start) / d.size;
+                var k = (d.end - d.start) / (d.size || 1);
                 var tRange = d3.range(0, d.size, tickGap);
                 // make first tick at 1, not 0 (as protein indices are 1-based)
                 tRange[0] = 1;
@@ -575,6 +574,7 @@
 
                 var labelCycle = self.options.tickLabelCycle;
                 return tRange.map(function(v, i) {
+                    //console.log ("d.start", d);
                     return {
                         angle: (((v-1) + 0.5) * k) + d.start, // v-1 cos we want 1 to be at the zero pos angle, +0.5 cos we want it to be a tick in the middle
                         // show label every labelCycle'th tick starting with first.

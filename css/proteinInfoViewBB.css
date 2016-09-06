@@ -94,3 +94,8 @@
     font-family: monospace;
     line-height: 1em;
 }
+
+.proteinInfoPanel tbody tr:hover td {
+    color: #000;
+    background-color: #fff;
+}

@@ -20,7 +20,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var self = this;
             var defaultOptions = {
                 fixedFontKeys: d3.set(["sequence", "seq"]),
-                removeTheseKeys: d3.set (["canonicalSeq"]),
+                removeTheseKeys: d3.set (["canonicalSeq", "seq_mods"]),
                 expandTheseKeys: d3.set (["uniprotFeatures"]),
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -66,7 +66,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                             entry.value = entry.value.length;
                         }
                         if (entry.key === "sequence") {
-                            entry.value =  self.makeInteractiveSeqString (d, d.sequence, d.crossLinks);
+                            entry.value =  self.makeInteractiveSeqString (d, d.sequence, d.crossLinks, true);
                         }
                         return ! ($.isFunction(entry.value) || $.isPlainObject(entry.value) || (badKeys && badKeys.has(entry.key))); 
                     });
@@ -95,9 +95,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var ttinfo = crossLinks.map (function (xlink) {
                             var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
                             if (fromId === pos) {
-                                return [xlink.toProtein.name, xlink.toResidue, xlink.filteredMatches.length];
+                                return [xlink.toProtein.name, xlink.toResidue,
+									xlink.filteredMatches_pp.length];
                             } else {
-                                return [xlink.fromProtein.name, xlink.fromResidue, xlink.filteredMatches.length];
+                                return [xlink.fromProtein.name, xlink.fromResidue,
+									xlink.filteredMatches_pp.length];
                             }
                         });
                         ttinfo.unshift (["Protein", "Pos", "Matches"]);
@@ -122,7 +124,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
     
         showState: function () {
             var self = this;
-            console.log ("in prot info filter");
+            //console.log ("in prot info filter");
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 var selectedLinks = self.model.get("selection");
                 var selidset = d3.set (selectedLinks.map (function (xlink) { return xlink.id; }));
@@ -157,14 +159,17 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             });
             if (filter){
                 crossLinks = crossLinks.filter (function (xlink) {
-                    return xlink.filteredMatches.length > 0;    
+                    return xlink.filteredMatches_pp.length > 0;    
                 });
             }
             return crossLinks;
         },
     
-        makeInteractiveSeqString: function (protein, seq, xlinks) {
-             var proteinId = protein.id;
+        makeInteractiveSeqString: function (protein, seq, xlinks, filterDecoys) {
+            var proteinId = protein.id;
+            if (filterDecoys) {
+                xlinks = xlinks.filter (function(xlink) { return !xlink.fromProtein.is_decoy && !xlink.toProtein.is_decoy; });
+            }
             var map = d3.map (xlinks, function(d) { return d.id; });
             var endPoints = {};
             map.values().forEach (function (xlink) {
@@ -173,7 +178,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     endPoints[fromRes] = endPoints[fromRes] || [];
                     endPoints[fromRes].push (xlink);
                 }
-                if (proteinId === xlink.toProtein.id) {
+                //added check for no toProtein (for linears)
+                if (xlink.toProtein && proteinId === xlink.toProtein.id) { 
                     var toRes = xlink.toResidue;
                     endPoints[toRes] = endPoints[toRes] || [];
                     endPoints[toRes].push (xlink);

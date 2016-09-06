@@ -25,9 +25,18 @@ CLMSUI.modelUtils = {
     },
     
     flattenDistanceMatrix: function (distanceMatrix) {
-        var distanceList =  [].concat.apply([], distanceMatrix);
-        distanceList = distanceList.filter(function(d) { return d !== null; });
+        var distanceList = [].concat.apply([], distanceMatrix);
+        distanceList = distanceList.filter(function(d) { return d !== null && d !== undefined; });
         return distanceList;
+    },
+    
+    getFlattenedDistances: function (interactorsArr) {
+        console.log ("interactors", interactorsArr);
+        var perProtDistances = interactorsArr.map (function (prot) {
+            return CLMSUI.modelUtils.flattenDistanceMatrix (prot.distances);    
+        });
+        var allDistances =  [].concat.apply([], perProtDistances);
+        return allDistances;
     },
     
     getCrossLinkDistances: function (crossLinks, distances) {
@@ -40,6 +49,26 @@ CLMSUI.modelUtils = {
             var dist = distances[highRes] ? distances[highRes][lowRes] : null;
             if (dist !== null) {
                 distArr.push(+dist); // + is to stop it being a string
+            }
+        }
+
+        return distArr;
+    },
+    
+    getCrossLinkDistances2: function (crossLinks, interactorMap) {
+        var distArr = [];
+        for (var crossLink of crossLinks) {
+            var toRes = crossLink.toResidue;
+            var fromRes = crossLink.fromResidue;
+            var toProt = crossLink.toProtein;
+            var distances = toProt.distances;
+            if (distances) {
+                var highRes = Math.max(toRes, fromRes);
+                var lowRes = Math.min(toRes, fromRes);
+                var dist = distances[highRes] ? distances[highRes][lowRes] : null;
+                if (dist !== null && dist !== undefined) {
+                    distArr.push(+dist); // + is to stop it being a string
+                }
             }
         }
 
@@ -71,6 +100,11 @@ CLMSUI.modelUtils = {
         */
     },
     
+    // lots of scores, what's the extent (min and max values)?
+    getScoreExtent: function (matchesArr) {
+        return d3.extent (Array.from(matchesArr.values()).map (function(d) { return d.score; }));
+    },
+     
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
     // lys = k, ser = s, thr = t, tyr = y
@@ -108,20 +142,21 @@ CLMSUI.modelUtils = {
         return seq[resIndex - 1];
     },
      
-    findResidueIDsInSquare : function (residueMap, sr1, er1, sr2, er2) {
+    findResidueIDsInSquare : function (fromProtID, toProtID, crossLinkMap, sr1, er1, sr2, er2) {
         var a = [];
         for (var n = sr1; n <= er1; n++) {
             for (var m = sr2; m <= er2; m++) {
-                var k = n+"-"+m;
-                if (residueMap.get(k)) {
-                    a.push (k);
+                var k = fromProtID+"_"+n+"-"+toProtID+"_"+m;
+                var crossLink = crossLinkMap.get(k);
+                if (crossLink) {
+                    a.push (crossLink);
                 }
             }
         }
         return a;
     },
     
-    findResidueIDsInSpiral : function (residueMap, cx, cy, side) {
+    findResidueIDsInSpiral : function (fromProtID, toProtID, crossLinkMap, cx, cy, side) {
         var a = [];
         var x = cx;
         var y = cy;
@@ -131,9 +166,10 @@ CLMSUI.modelUtils = {
     
             for (var m = 0; m < moves.length; m++) {
                 for (var l = 0; l < b; l++) {
-                    var k = x+"-"+y;
-                    if (residueMap.get(k)) {
-                        a.push (k);
+                    var k = fromProtID+"_"+x+"-"+toProtID+"_"+y;
+                    var crossLink = crossLinkMap.get(k);
+                    if (crossLink) {
+                        a.push (crossLink);
                     }
                     //console.log ("["+x+", "+y+"]");    
                     x += moves[m][0];
@@ -147,9 +183,10 @@ CLMSUI.modelUtils = {
         }
         // tidy up last leg of spiral
         for (var n = 0; n < b; n++) {
-            var k = x+"-"+y;
-            if (residueMap.get(k)) {
-                a.push (k);
+            var k = fromProtID+"_"+x+"-"+toProtID+"_"+y;
+            var crossLink = crossLinkMap.get(k);
+            if (crossLink) {
+                a.push (crossLink);
             }
             //console.log ("["+x+", "+y+"]");    
             x += moves[0][0];
@@ -219,12 +256,16 @@ CLMSUI.modelUtils = {
             
             comp.structure.eachModel (function(m) {
                 var resList = [];
+                console.log ("model", m);
 
                 m.eachChain (function(c) {
-                    c.eachResidue (function (r) {
-                        var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
-                        resList.push (oneLetter || "X");    
-                    });
+                    console.log ("chain", c, c.residueCount, c.residueOffset);
+                    if (c.residueOffset === 0) {    // just use first chain for the moment. is a hack.
+                        c.eachResidue (function (r) {
+                            var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
+                            resList.push (oneLetter || "X");    
+                        });
+                    }
                 });
                 sequences[sequences.length] = {id: pid, name: "3D_p"+m.index, data: resList.join("")};
             });
@@ -234,14 +275,14 @@ CLMSUI.modelUtils = {
     },
     
     linkHasHomomultimerMatch: function (xlink) {
-        return xlink.filteredMatches.some (function (match) {
-            return match[0].confirmedHomomultimer;    
+        return xlink.filteredMatches_pp.some (function (matchAndPepPos) {
+            return matchAndPepPos.match.confirmedHomomultimer;    
         });
     },
     
     aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
-            return xlink.getFilteredMatches();
+            return xlink.filteredMatches_pp;
         });
         return [].concat.apply([], nestedArr);
     },
@@ -261,5 +302,24 @@ CLMSUI.modelUtils = {
         var searchData = searchMap.get(searchId);
         var randId = searchData.randId;    
         return randId;
+    },
+    
+    isReverseProtein: function (prot1, prot2) {
+        return (prot1.description === prot2.description && (prot1.is_decoy ^ prot2.is_decoy));
+    },
+    
+    isIntraLink: function (crossLink) {
+         return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
+    },
+    
+    intersectObjectArrays: function (a, b, compFunc) {
+        if (a && b && a.length && b.length && compFunc) {
+            var map = d3.map (a, compFunc);
+            var result = b.filter (function (elem) {
+                return map.has (compFunc(elem));
+            });
+            return result;                    
+        }
+        return [];
     },
 };

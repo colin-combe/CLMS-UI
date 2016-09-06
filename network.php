@@ -55,34 +55,28 @@
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
+		<link rel="stylesheet" href="./css/filter.css">
+		<link rel="stylesheet" href="./css/networkPage.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
-        <script type="text/javascript" src="./vendor/ngl.embedded.min.js"></script>
-        <script type="text/javascript" src="./vendor/crosslink.js"></script>
+        <script type="text/javascript" src="./vendor/chroma.min.js"></script>
+        <script type="text/javascript" src="./vendor/ngl_verbose.js"></script>
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
-
-<!--
-        <script type="text/javascript" src="./vendor/CLMS_model.js"></script>
--->
+        <script type="text/javascript" src="./vendor/spin.js"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
-
-<!--
-       <script type="text/javascript" src="./vendor/crosslinkviewer.js"></script>
--->
-
+    
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
@@ -96,8 +90,9 @@
         <script type="text/javascript" src="./js/models.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
+        <script type="text/javascript" src="./js/fdr.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
-        <script type="text/javascript" src="./js/DistanceSliderBB.js"></script>
+        <script type="text/javascript" src="./js/ThreeColourSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
@@ -134,16 +129,17 @@
         <div id="main">
 
             <div class="container">
-        <h1 class="page-header">
-            <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
-            <p class="btn">Layout:</p>
-            <button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
-            <button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
-            <p id="expDropdownPlaceholder"></p>
-            <p id="viewDropdownPlaceholder"></p>
-            <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
-        </h1>
-    </div>
+				<h1 class="page-header">
+					<i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
+					<p class="btn">Layout:</p>
+					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
+					<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
+					<p id="expDropdownPlaceholder"></p>
+					<p id="viewDropdownPlaceholder"></p>
+					<a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
+					<span id="colourSelect" class="btn btn-1 btn-1a righty"></span> <!-- placeholder for new colour scheme selector -->
+				</h1>
+			</div>
 
             <div class="mainContent">
                 <div id="topDiv">
@@ -154,76 +150,58 @@
             </div>
 
             <div class="controls">
-     <span id="filterPlaceholder"></span>
-
-                    <div style='float:right'>
-
-<!--
-    <label style="margin-left:20px;"><span>Annotations:</span>
-                            <select id="annotationsSelect" onChange="changeAnnotations();">
-                                <option>None</option>
-                                <option selected>Custom</option>
-                                <option>UniprotKB</option>
-                                <option>SuperFamily</option>
-                                <option>Lysines</option>
-                            </select>
-                        </label>
--->
-                        <label style="margin-left:20px;">Link colours:
-                            <select id="linkColourSelect" onChange="changeLinkColours();">
-                                <option selected>Default</option>
-                                <option>Group</option>
-<!--
-                                <option>SAS dist.</option>
--->
-<!--
-                                <option>Euclidean dist.</option>
--->
-
-                            </select>
-                        </label>
-                        <span id="colourSelect"></span>
-                    </div>
-                </div>
+				<span id="filterPlaceholder"></span>
+            </div>
         </div><!-- MAIN -->
 
 
     <script>
     //<![CDATA[
 
+        //~ var windowLoaded = function () {
         var CLMSUI = CLMSUI || {};
         <?php
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
-            include './php/loadData.php';
             //~ if (file_exists('../annotations.php')){
                 //~ include '../annotations.php';
             //~ }
         ?>
+        
+            var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
-        var options = {proteins: proteins, peptides: peptides, rawMatches: tempMatches,  searches: searchMeta};
+ 			var xmlhttp = new XMLHttpRequest();
+			var url = "./loadData.php" + window.location.search;
+			var params =  window.location.search.substr(1);
+			xmlhttp.open("POST", url, true);
+			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					//console.log(xmlhttp.responseText);
+                    spinner.stop(); // stop spinner on ajax request returning
+                    
+					var json = JSON.parse(xmlhttp.responseText);
+                    
+					CLMSUI.init.models(json);
 
-        CLMSUI.init.models(options);
+					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+					document.title = Array.from(searches.keys()).join();
+        
+					CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
+									{ direction: "vertical", sizes: [60,40], minSize: [200,10] }
+							);
 
-        var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-        document.title = Array.from(searches.keys()).join();
+					CLMSUI.init.views();
 
-        var windowLoaded = function () {
+					allDataLoaded ();
 
-            CLMSUI.init.views();
+				}
+			};
+			xmlhttp.send();
+		//~ };
 
-            allDataAndWindowLoaded ();
-
-        };
-
-        var split = Split (["#topDiv", "#bottomDiv"], 
-                { direction: "vertical", sizes: [60,40], minSize: [200,10] }
-        );
-
-        //~ https://thechamplord.wordpress.com/2014/07/04/using-javascript-window-onload-event-properly/
-        window.addEventListener("load", windowLoaded);
-
+        //~ window.addEventListener("load", windowLoaded);
     //]]>
     </script>
 

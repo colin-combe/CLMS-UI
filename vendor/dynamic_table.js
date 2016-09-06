@@ -322,7 +322,13 @@ DynamicTable.prototype.filterRows = function(evt){
 	    for (var j = 0, fl = this.filters.length; j < fl; j++){
 		if (this.filters[j] == "none")
 		    continue;
-		var text = this.rowCells(tRows[i])[j].innerHTML;
+		var cell = this.rowCells(tRows[i])[j];
+		var text;
+		if (cell) {
+			text = cell.innerHTML;
+		} else {
+			text = "";
+		}
 		if (this.filterFunction(text, this.filters[j].value) == -1)
 		    bPush = false;
 	    }
