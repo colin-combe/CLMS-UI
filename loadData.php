@@ -92,7 +92,7 @@ echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\
 
 //Stored layouts
 if (count($searchId_randGroup) == 1) { // no saved layouts for aggregations at moment
-	$firstSearchId = $searchId_randGroup[0]["id"];  
+	//$firstSearchId = $searchId_randGroup[0]["id"];  // MJG. This just chucks an error and doesn't get used anywhere anyways
 	$layoutQuery = "SELECT t1.layout AS l "
 			. " FROM layouts AS t1 "
 			. " WHERE t1.search_id LIKE '" . $sid . "' "
@@ -139,9 +139,11 @@ if ($spectrum) {
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
 }
 
-
-$oldDB = false;
-pg_query("SELECT * FROM spectrum_source LIMIT 0") or ($oldDB = true);
+// MJG. 06/09/16. Changed query 'cos it crashed when using old db
+$isNewQuery = pg_query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'spectrum_source'");
+$isNewQueryRow = pg_fetch_object ($isNewQuery);
+$oldDB = ($isNewQueryRow->count == 0 ? true : false);
+//pg_query("SELECT * FROM spectrum_source LIMIT 0") or ($oldDB = true);
 
 /*
  * SPECTRUM MATCHES AND MATCHED PEPTIDES
@@ -149,6 +151,7 @@ pg_query("SELECT * FROM spectrum_source LIMIT 0") or ($oldDB = true);
 
 if ($oldDB == true) {
 	//old DB
+    /*
 	$query = "
 		SELECT
 			mp.match_id, mp.match_type, mp.peptide_id,
@@ -160,7 +163,8 @@ if ($oldDB == true) {
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id
-			WHERE ".$WHERE_spectrumMatch.") sm
+			WHERE ".$WHERE_spectrumMatch.")
+            sm
 		INNER JOIN
 			(SELECT mp.match_id, mp.match_type, mp.peptide_id,
 			mp.link_position
@@ -171,6 +175,34 @@ if ($oldDB == true) {
 			WHERE (".$WHERE_matchedPeptide.")
 			) r ON sm.id = r.spectrum_match_id
 		ORDER BY score DESC, sm.id, mp.match_type;";
+        */
+    
+     $query = "		
+             SELECT		
+                 mp.match_id, mp.match_type, mp.peptide_id,		
+                 mp.link_position + 1 AS link_position,		
+                 sm.score, sm.autovalidated, sm.validated, sm.rejected,		
+                 sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id,		
+                sp.scan_number, r.run_name		
+             FROM		
+                 (SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,		
+                 sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id		
+                 FROM spectrum_match sm INNER JOIN search s ON search_id = s.id		
+                 WHERE (".$WHERE_spectrumMatch.")		
+                 AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR		
+                 (sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')		
+                 OR (sm.validated LIKE '?'))		
+                 ) sm		
+             INNER JOIN		
+                 (SELECT mp.match_id, mp.match_type, mp.peptide_id,		
+                 mp.link_position		
+                 FROM matched_peptide mp WHERE link_position != -1) mp		
+                 ON sm.id = mp.match_id		
+             INNER JOIN spectrum sp ON sm.spectrum_id = sp.id		
+             INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized		
+                 WHERE (".$WHERE_matchedPeptide.")		
+                 ) r ON sm.id = r.spectrum_match_id		
+             ORDER BY score DESC, sm.id, mp.match_type;";
 }
 else {
 	//New DB
