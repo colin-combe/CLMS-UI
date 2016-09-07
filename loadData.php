@@ -151,7 +151,7 @@ $oldDB = ($isNewQueryRow->count == 0 ? true : false);
 
 if ($oldDB == true) {
 	//old DB
-    /*
+    
 	$query = "
 		SELECT
 			mp.match_id, mp.match_type, mp.peptide_id,
@@ -175,8 +175,8 @@ if ($oldDB == true) {
 			WHERE (".$WHERE_matchedPeptide.")
 			) r ON sm.id = r.spectrum_match_id
 		ORDER BY score DESC, sm.id, mp.match_type;";
-        */
-    
+        
+     /*
      $query = "		
              SELECT		
                  mp.match_id, mp.match_type, mp.peptide_id,		
@@ -203,6 +203,7 @@ if ($oldDB == true) {
                  WHERE (".$WHERE_matchedPeptide.")		
                  ) r ON sm.id = r.spectrum_match_id		
              ORDER BY score DESC, sm.id, mp.match_type;";
+             */
 }
 else {
 	//New DB

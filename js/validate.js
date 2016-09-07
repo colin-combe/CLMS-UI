@@ -2,7 +2,7 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
 
-    var url = "http://129.215.14.63/xiAnnotator/annotate/"
+    var url = "/xiAnnotator/annotate/"
         + match.searchId + "/" + (randId || "12345") + "/" + match.id 
         + "/?peptide=" + match.pepSeq1raw 
         + ((match.pepSeq2raw)? ("&peptide=" + match.pepSeq2raw) : "")
