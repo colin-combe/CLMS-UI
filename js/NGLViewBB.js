@@ -29,6 +29,7 @@
                 labelVisible: false,
                 selectedOnly: false,
                 showResidues: true,
+                pdbFileID: undefined,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -84,43 +85,45 @@
             //this.chartDiv.selectAll("*").remove();
             
            //create 3D network viewer
-            this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
-            this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
-                .then (function (structureComp) {
+            if (this.options.pdbFileID) {
+                this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
+                this.stage.loadFile( "rcsb://"+this.options.pdbFileID, { sele: ":A" } )
+                    .then (function (structureComp) {
 
-                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                    console.log ("stage", self.stage, "\nhas sequences", sequences);
-                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                    self.model.trigger ("3dsync", sequences);
+                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                        console.log ("stage", self.stage, "\nhas sequences", sequences);
+                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                        self.model.trigger ("3dsync", sequences);
 
-                    // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
-                    var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                    var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                    var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
+                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                        var filterCrossLinks = self.filterCrossLinks (crossLinks);
+                        var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
 
-                   self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                          self.model, self.stage, self.align, structureComp, crosslinkData, {
-                                 selectedColor: "lightgreen",
-                                 selectedLinksColor: "yellow",
-                                 sstrucColor: "wheat",
-                                 displayedDistanceColor: "tomato",
-                                displayedDistanceVisible: self.options.labelVisible,
-                          }
-                   );
+                       self.xlRepr = new CLMSUI.CrosslinkRepresentation (
+                              self.model, self.stage, self.align, structureComp, crosslinkData, {
+                                     selectedColor: "lightgreen",
+                                     selectedLinksColor: "yellow",
+                                     sstrucColor: "wheat",
+                                     displayedDistanceColor: "tomato",
+                                    displayedDistanceVisible: self.options.labelVisible,
+                              }
+                       );
 
-                    var dd = self.xlRepr.getDistances ();
-                    //console.log ("distances", [dd]);
-                    self.model.trigger ("distancesAvailable", [dd]);
+                        var dd = self.xlRepr.getDistances ();
+                        //console.log ("distances", [dd]);
+                        self.model.trigger ("distancesAvailable", [dd]);
 
-                    self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                    //self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
-                    //self.listenTo (self.model, "currentColourModelChanged", self.showFiltered);
-                    self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
-                    self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
-                    self.listenTo (self.model, "change:selection", self.showSelected);
-                    self.listenTo (self.model, "change:highlights", self.showHighlighted);
-                })
-            ;      
+                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                        //self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
+                        //self.listenTo (self.model, "currentColourModelChanged", self.showFiltered);
+                        self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
+                        self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
+                        self.listenTo (self.model, "change:selection", self.showSelected);
+                        self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                    })
+                ;  
+            }
         },
         
         rerenderColours: function () {

@@ -21,10 +21,10 @@ CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
 
 CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
-        this.set("labels", this.get("colScale").copy().range(["Self-Link", "Inter-Protein Link"]));
+        this.set("labels", this.get("colScale").copy().range(["Self-Link", "Homomultimer Link", "Inter-Protein Link"]));
     },
     getColour: function (crossLink) {
-        return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null);
+        return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null ? (CLMSUI.modelUtils.linkHasHomomultimerMatch (crossLink) ? 1 : 0) : 2);
     },
 });
 
@@ -100,7 +100,9 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
-        colScale: d3.scale.ordinal().domain([true,false]).range([CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()]),
+        colScale: d3.scale.ordinal().domain([0,1,2]).range([
+            CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.homodimerLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()
+        ]),
         title: "Default",
     });
     

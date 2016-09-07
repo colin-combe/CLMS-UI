@@ -23,7 +23,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             clinkr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke dynColour'/>",
             ambigr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous dynColour'/>",
             selflinkr: "<path d='m 3,28 v -10 a 15,15 0 0 1 30,0 v 10' class='defaultStroke selfLink dynColour'/>",
-            homom: "<path d='m 18,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer'/>",
+            homom: "<path d='m 18,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer dynColour'/>",
             selflinkinter: "<path d='m 3,28 l 14,-20 l 14,20' class='defaultStroke selfLink dynColour'/>",
             linkmodpep: "<path d='m 12,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour filled'/><path d='m 30,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour'/>",
             highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>"
@@ -83,11 +83,13 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var cols = {
-            intra: {isSelfLink: function () { return true;}}, 
-            inter: {isSelfLink: function () { return false;}}
+            intra: {isSelfLink: function () { return true;}, filteredMatches_pp: [],}, 
+            homom: {isSelfLink: function () { return true;}, filteredMatches_pp: [{match: {confirmedHomomultimer: true}}],}, 
+            inter: {isSelfLink: function () { return false;}, filteredMatches_pp: [],}
         };
         d3.keys(cols).forEach (function(key) {
             cols[key].colour = colScheme.getColour(cols[key]);
+            console.log ("key", key, cols[key]);
         }, colScheme);
         
         chartDiv.selectAll("table").selectAll("path,line")
@@ -96,7 +98,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             })
             .each (function() {
                 var d3Sel = d3.select(this);
-                var colType = d3Sel.classed("selfLink") ? "intra" : "inter";
+                var colType = d3Sel.classed("selfLink") ? (d3Sel.classed("homomultimer") ? "homom" : "intra") : "inter";
                 var colour = cols[colType].colour;
                 d3Sel.style("stroke", colour);
                 if (d3Sel.classed("filled")) {

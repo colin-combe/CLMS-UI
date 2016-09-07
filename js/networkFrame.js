@@ -22,12 +22,6 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
-// for NGL
-if (typeof NGL != "undefined") {
-    NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
-    var stage;
-}
-
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 var allDataLoaded = _.after (2, function() {
     console.log ("BOTH SYNCS DONE :-)");
@@ -116,8 +110,7 @@ CLMSUI.init.models = function (options) {
 //only inits stuff required by validation page
 CLMSUI.init.modelsEssential = function (options) {
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
-    CLMSUI.utils.displayError (function() { return !options.rawMatches
-        || !options.rawMatches.length; },
+    CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
         "No cross-links detected for this search.<br>Please return to the search history page."
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
@@ -154,7 +147,7 @@ CLMSUI.init.modelsEssential = function (options) {
         this.applyFilter();
     });
 
-}
+};
 
 CLMSUI.init.views = function () {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
@@ -187,7 +180,7 @@ CLMSUI.init.views = function () {
     checkBoxData.forEach (function (cbdata) {
         var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
         $("#viewDropdownPlaceholder").append(cbView.$el);
-    })
+    });
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
     new CLMSUI.DropDownMenuViewBB ({
@@ -201,22 +194,20 @@ CLMSUI.init.views = function () {
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");    // HSa hack
-    console.log ("HSA", HSA_Active);
+    console.log ("searches", searches);
+    var quickPDBMap = {"3113":"1AO6", "4290":"3NBS", "10003":"1AO6"};
+    CLMSUI.ThreeDAvailable = quickPDBMap [Array.from(searches.values())[0].id];    // quick 3d search to pdb lookup for now
+    console.log ("3DAvailable", CLMSUI.ThreeDAvailable);
 
-    if (HSA_Active){
+    if (CLMSUI.ThreeDAvailable){
         // Distance slider
-        var distSlider = new CLMSUI.ThreeColourSliderBB ({
+        new CLMSUI.ThreeColourSliderBB ({
             el: "#sliderDiv",            
             model: CLMSUI.linkColour.distanceColoursBB,
             rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
             domain: [0,35],
             extent: [15,25],
         });
-    }
-    else {
-        // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
-        //d3.select('#viewDropdownPlaceholder').style("display", "none");
     }
 
     new CLMSUI.DropDownMenuViewBB ({
@@ -243,7 +234,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
 
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var filterViewGroup = new CLMSUI.FilterViewBB ({
+    new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder",
         model: filterModel
     });
@@ -371,7 +362,7 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
-}
+};
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
 
@@ -382,7 +373,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-    var colourSelector = new CLMSUI.utils.ColourCollectionOptionViewBB ({
+    new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#colourSelect",
         model: CLMSUI.linkColour.Collection,
         storeSelectedAt: {model: CLMSUI.compositeModelInst, attr: "linkColourAssignment"},
@@ -402,22 +393,10 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     );
 
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
-    var tooltipView = new CLMSUI.TooltipViewBB ({
+    new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
-
-    /*
-    var distoViewer = new CLMSUI.DistogramBB ({
-        el: "#distoPanel",
-        model: CLMSUI.compositeModelInst,
-        displayEventName: "distoShow",
-        myOptions: {
-            chartTitle: "Cross-Link Distogram",
-            seriesName: "Actual"
-        }
-    });
-    */
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv",
@@ -426,10 +405,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
 
-    
-
     // Alignment View
-    var alignViewer = new CLMSUI.AlignCollectionViewBB ({
+    new CLMSUI.AlignCollectionViewBB ({
         el:"#alignPanel",
         collection: CLMSUI.compositeModelInst.get("alignColl"),
         displayEventName: "alignShow",
@@ -450,7 +427,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     // if 3d info about
-    if (HSA_Active) {
+    if (CLMSUI.ThreeDAvailable) {
         
         // Set up listener that waits for distance info to become available via NGLView event
         CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst, "distancesAvailable", function (distanceInfo) {
@@ -526,9 +503,11 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             el: "#nglPanel",
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
+            myOptions: {
+                pdbFileID: CLMSUI.ThreeDAvailable,
+            }
         });
     }
-
 
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
@@ -541,7 +520,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
     });
-
 };
 
 
@@ -559,11 +537,11 @@ function saveLayout () {
         if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             console.log(xmlhttp.responseText, true);
         }
-    }
+    };
     xmlhttp.send(params);
 }
 
 function changeAnnotations(){
     var annotationSelect = document.getElementById('annotationsSelect');
     crosslinkViewer.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
-};
+}
