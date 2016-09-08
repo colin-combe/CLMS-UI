@@ -482,10 +482,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var matrix;
         var prot = protsArr[0];
         
-        if (prot.size < 600) {
-            matrix = this.getAllDistances (prot);
+        if (prot) {
+            if (prot.size < 600) {
+                matrix = this.getAllDistances (prot);
+            } else {
+                matrix = this.getLinkDistancesOnly (prot, prot);
+            }
         } else {
-            matrix = this.getLinkDistancesOnly (prot, prot);
+            prot = {id: null};
         }
         
         //console.log ("lds", this.getLinkDistancesOnly (prot, prot));

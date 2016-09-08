@@ -195,8 +195,22 @@ CLMSUI.init.views = function () {
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
     console.log ("searches", searches);
-    var quickPDBMap = {"3113":"1AO6", "4290":"3NBS", "10003":"1AO6"};
-    CLMSUI.ThreeDAvailable = quickPDBMap [Array.from(searches.values())[0].id];    // quick 3d search to pdb lookup for now
+    var PDBMap = {
+        "1AO6": [3113, 10003],
+        "3NBS": [4290],
+        "3J7U": d3.range (2283, 2291),
+        "2CRK": d3.range (2307, 2315),
+        "1DPX": [4292],
+        "5D5R": [4288],
+    };
+    
+    var invPDBMap = {};
+    d3.entries(PDBMap).forEach (function (entry) {
+        entry.value.forEach (function (val) {
+            invPDBMap[val] = entry.key;
+        }) 
+    });
+    CLMSUI.ThreeDAvailable = invPDBMap [Array.from(searches.values())[0].id];    // quick 3d search to pdb lookup for now
     console.log ("3DAvailable", CLMSUI.ThreeDAvailable);
 
     if (CLMSUI.ThreeDAvailable){
