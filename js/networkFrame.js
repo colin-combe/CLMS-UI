@@ -169,8 +169,8 @@ CLMSUI.init.views = function () {
     var checkBoxData = [
         {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
@@ -196,7 +196,7 @@ CLMSUI.init.views = function () {
     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
     console.log ("searches", searches);
     var PDBMap = {
-        "1AO6": [3113, 10003],
+        "1AO6": [3113, 10003, 5045, 5070],
         "3NBS": [4290],
         "3J7U": d3.range (2283, 2291),
         "2CRK": d3.range (2307, 2315),

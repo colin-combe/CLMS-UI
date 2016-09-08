@@ -524,7 +524,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     getAllDistances: function (prot) {
         var atomIndices = this.getCAtomsAllResidues (prot);
-        //console.log ("ai", atomIndices);
+        //console.log ("residue atom indices", atomIndices);
 
         var ap1 = this.structureComp.structureView.getAtomProxy();
         var ap2 = this.structureComp.structureView.getAtomProxy();
@@ -533,18 +533,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var nindex = atomIndices[n];
             ap1.index = nindex;
             matrix[n] = [undefined];
+            var row = matrix[n];
             for (var m = 1; m < atomIndices.length; m++) {
-                var d;
-                var mindex = atomIndices[m];
                 if (m !== n) {
+                    var mindex = atomIndices[m];
                     ap2.index = mindex;
-                    if (mindex !== undefined && nindex !== undefined) {
-                        d = ap1.distanceTo(ap2);
-                    }
+                    row.push ((mindex === undefined || nindex === undefined) ? undefined : ap1.distanceTo(ap2));
                 } else {
-                    d = 0;
+                    row.push(0);
                 }
-                matrix[n][m] = d;
             }
         }
         
