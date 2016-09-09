@@ -119,7 +119,7 @@ function getLinksCSV(){
 			
 			var highestScore = null;
 			var searchesFound = new Array (searchIds.length);
-			var filteredMatchCount = filteredMatches.length;
+			var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
 			var linkAutovalidated = false;
 			var validationStats = []
 			for (matchAndPepPos of filteredMatchesAndPepPos) {

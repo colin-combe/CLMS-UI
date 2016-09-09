@@ -7,7 +7,6 @@ CLMSUI.fdr = function (crossLinks, options) {
     var defaultPeptideLength = 4;
     var peptideLength = options.peptideLength || defaultPeptideLength;
     
-    
     var defaultScoreCalcFunc = function (crossLink) {      // default is quadratic mean (rms)
         var filtered = crossLink.matches_pp
             .filter (function (match_pp) {
@@ -23,7 +22,6 @@ CLMSUI.fdr = function (crossLinks, options) {
         crossLink.meta.meanMatchScore = scoreCalcFunc (crossLink);
     });
     
-    
     var clinkArr = Array.from (crossLinks.values());
     var linkArrs = [[],[]];
     var arrLabels = ["Inter", "Intra"];
@@ -33,7 +31,7 @@ CLMSUI.fdr = function (crossLinks, options) {
     });
     linkArrs.forEach (function (linkArr) { 
         linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; }); 
-    });  // in ascending order (smallest first)
+    });  // in ascending order (lowest first)
 
     console.log ("linkArrs", linkArrs);
     
@@ -42,7 +40,7 @@ CLMSUI.fdr = function (crossLinks, options) {
     }
     
     var fdrResult = linkArrs.map (function (linkArr, index) {
-        var fdr = 1, t = [0,0,0], i = 0, runningFdr = [], fdrScoreCutoff = undefined;
+        var fdr = 1, t = [0,0,0], i = 0, cutoffIndex = 0, runningFdr = [], fdrScoreCutoff = undefined;
         
         if (linkArr.length && threshold !== undefined) {
             // first run, count tt, td, and dd
@@ -54,9 +52,9 @@ CLMSUI.fdr = function (crossLinks, options) {
 
             console.log ("totals tt td dd", t, linkArr);
             
+            
             // decrement the counters on second run
-            while (fdr > threshold && i < linkArr.length) {
-                var link = linkArr[i];
+            linkArr.forEach (function (link, i) {
                 fdr = (t[1] - t[2]) / (t[0] || 1);
                 runningFdr.push (fdr);
                 link.meta.fdr = fdr;
@@ -66,20 +64,23 @@ CLMSUI.fdr = function (crossLinks, options) {
                     t[decoyClass(link)]--;
                 }
                 i++;
-            }
+                if (fdr <= threshold && cutoffIndex === 0) {
+                    cutoffIndex = i;
+                }
+            });
 
-            i = Math.max (i-1, 0);
-            var lastLink = linkArr[i];
+            cutoffIndex = Math.max (cutoffIndex - 1, 0);
+            var lastLink = linkArr[cutoffIndex];
             fdrScoreCutoff = lastLink.meta.meanMatchScore;
 
             if (true) {
                 console.log ("post totals tt td dd", t);
                 console.log ("runningFdr", runningFdr);
-                console.log ("fdr of",threshold,"at index",i,"link",lastLink,"and fdr score", fdrScoreCutoff);
+                console.log ("fdr of",threshold,"met or lower at index",cutoffIndex,"link",lastLink,"and fdr score", fdrScoreCutoff);
             }
         }
 
-        return {label: arrLabels[index], index: i, fdr: fdrScoreCutoff, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
+        return {label: arrLabels[index], index: cutoffIndex, fdr: fdrScoreCutoff, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
     });
     
     return fdrResult;

@@ -246,11 +246,12 @@ CLMSUI.modelUtils = {
     
     getSequencesFromNGLModel: function (stage, CLMSModel) {
         var sequences = [];
-        var proteinIDIter = CLMSModel.get("interactors").entries();
+        var proteins = Array.from(CLMSModel.get("interactors").values());
+        proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
         
-        stage.eachComponent (function (comp) {   
-            var pidArr = proteinIDIter.next().value;
-            var pid = pidArr ? pidArr[0] : "Unknown"; // assuming proteins match 1-1 with stages, is a guess
+        stage.eachComponent (function (comp, index) {   
+            console.log ("pc", proteins, index);
+            var pid = proteins[index].id || "Unknown";  // assuming proteins match 1-1 with components, is a guess
             // but otherwise at mo have no way of knowing which stage belongs to which protein
             console.log ("pid", pid);
             

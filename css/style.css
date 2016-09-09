@@ -687,3 +687,15 @@ A.btn {
     display: flex;
     flex-direction: column
 }
+
+.overlayInfo {
+    position: absolute;
+}
+
+.outsideLink {
+    color: white;
+}
+
+.outsideLink:hover {
+    color: #9f9;
+}

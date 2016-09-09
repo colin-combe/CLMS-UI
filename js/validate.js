@@ -2,7 +2,8 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
 
-    var url = "/xiAnnotator/annotate/"
+    var url = (CLMSUI.oldDB ? "http://129.215.14.63" : "")    // begin with hardcoded ip for old database
+        + "/xiAnnotator/annotate/"
         + match.searchId + "/" + (randId || "12345") + "/" + match.id 
         + "/?peptide=" + match.pepSeq1raw 
         + ((match.pepSeq2raw)? ("&peptide=" + match.pepSeq2raw) : "")

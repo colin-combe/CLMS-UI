@@ -42,6 +42,8 @@ CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.models = function (options) {
 
+    CLMSUI.oldDB = options.oldDB || false;
+    
     // define alignment model and listeners first, so they're ready to pick up events from other models
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
     options.alignmentCollectionInst = alignmentCollectionInst;
@@ -193,25 +195,29 @@ CLMSUI.init.views = function () {
     });
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
-    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    console.log ("searches", searches);
-    var PDBMap = {
-        "1AO6": [3113, 10003, 5045, 5070],
-        "3NBS": [4290],
-        "3J7U": d3.range (2283, 2291),
-        "2CRK": d3.range (2307, 2315),
-        "1DPX": [4292],
-        "5D5R": [4288],
+    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
+    console.log ("interactors", interactors);
+    var protMap = {
+        "1AO6": ["P02768-A"],
+        "3NBS": ["P00004"],
+        "3J7U": ["P00432"],
+        "2CRK": ["P00563"],
+        "1DPX": ["P00698"],
+        "5D5R": ["P68082"],
     };
     
     var invPDBMap = {};
-    d3.entries(PDBMap).forEach (function (entry) {
-        entry.value.forEach (function (val) {
-            invPDBMap[val] = entry.key;
-        }) 
+    [protMap].forEach (function (map) {
+        d3.entries(map).forEach (function (entry) {
+            entry.value.forEach (function (val) {
+                invPDBMap[val] = entry.key;
+            }); 
+        });
     });
-    CLMSUI.ThreeDAvailable = invPDBMap [Array.from(searches.values())[0].id];    // quick 3d search to pdb lookup for now
-    console.log ("3DAvailable", CLMSUI.ThreeDAvailable);
+    var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
+    var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
+    CLMSUI.ThreeDAvailable = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
+    console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
 
     if (CLMSUI.ThreeDAvailable){
         // Distance slider

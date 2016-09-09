@@ -86,8 +86,12 @@
             
            //create 3D network viewer
             if (this.options.pdbFileID) {
-                this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
-                this.stage.loadFile( "rcsb://"+this.options.pdbFileID, { sele: ":A" } )
+                var PDBUrl = "http://www.rcsb.org/pdb/explore.do?structureId="+this.options.pdbFileID;
+                this.chartDiv.append("div").attr("class","overlayInfo")
+                    .html("PDB File: <A class='outsideLink' target='_blank' href='"+PDBUrl+"'>"+this.options.pdbFileID+"</A>")
+                ;
+                this.stage = new NGL.Stage ("ngl", {});
+                this.stage.loadFile ("rcsb://"+this.options.pdbFileID, {sele: ":A"})
                     .then (function (structureComp) {
 
                         var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
@@ -104,7 +108,7 @@
                               self.model, self.stage, self.align, structureComp, crosslinkData, {
                                      selectedColor: "lightgreen",
                                      selectedLinksColor: "yellow",
-                                     sstrucColor: "wheat",
+                                     sstrucColor: "gray",
                                      displayedDistanceColor: "tomato",
                                     displayedDistanceVisible: self.options.labelVisible,
                               }
@@ -183,14 +187,13 @@
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 this.showFiltered();
                 console.log ("re rendering NGL view");
-                //this.stage.handleResize();
             }
 
             return this;
         },
 
         relayout: function () {
-           this.stage.handleResize();
+            this.stage.handleResize();
             return this;
         },
 		
@@ -481,6 +484,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         var matrix;
         var prot = protsArr[0];
+        console.log ("prot", prot);
         
         if (prot) {
             if (prot.size < 600) {
@@ -616,7 +620,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.sstrucRepr = comp.addRepresentation ("cartoon", {
             color: this.sstrucColor,
-            name: "sstruc"
+            name: "sstruc",
+            //opacity: 0.4, //
         });
 
         this.resRepr = comp.addRepresentation ("spacefill", {
@@ -654,6 +659,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: 2.0,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
+            opacity: 0.9,
             name: "link",
         });
 
