@@ -93,7 +93,7 @@ function getMatchesCSV () {
 }
 
 function getLinksCSV(){
-	var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val"';
+	var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val","LinkFDR"';
 	
 	var searchIds = [];
 	var i = 0;
@@ -135,6 +135,7 @@ function getLinksCSV(){
 			csv += '","' + highestScore;
 			csv += 	'","' + linkAutovalidated;
 			csv += 	'","' + validationStats.toString();
+            csv += '","' + (residueLink.meta ? residueLink.meta.fdr : undefined);
 			
 			for (var s = 0; s < searchIds.length; s++){					
 				csv +=  '","';

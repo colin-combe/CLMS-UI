@@ -323,4 +323,21 @@ CLMSUI.modelUtils = {
         }
         return [];
     },
+    
+    getPDBIDsForProteins: function (interactorMap, success) {
+        var ids = Array.from(interactorMap.values())
+            .filter (function (prot) { return !prot.is_decoy; })
+            .map (function(prot) { return prot.accession; })
+        ;
+        
+        var xmlString = "<orgPdbQuery><queryType>org.pdb.query.simple.UpAccessionIdQuery</queryType>"
+            +"<description>PDB Query Using Uniprot IDs</description><accessionIdList>"
+            +ids.join(",")
+            +"</accessionIdList></orgPdbQuery>"
+        ;
+        
+        var encodedXmlString = encodeURIComponent (xmlString);
+        
+        $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, success);
+    }
 };

@@ -13,7 +13,10 @@
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{
+          return _.extend({},parentEvents, {
+            "click .pdbWindowButton": "launchExternalPDBWindow",
+            "click .selectPdbButton": "selectPDB",
+            "keyup .inputPDBCode": "usePDBCode",
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
             "click .distanceLabelCB": "toggleLabels",
@@ -44,9 +47,37 @@
                 .attr ("class", "verticalFlexContainer")
             ;
             
-            var toolbar = flexWrapperPanel.append("div");
+            var toolbar1 = flexWrapperPanel.append("div");
+            var toolbar2 = flexWrapperPanel.append("div");
             
-            toolbar.append("button")
+            var pushButtonData = [
+                {klass: "selectPdbButton", label: "Select Local PDB File"},
+                {klass: "pdbWindowButton", label: "Show Possible External PDBs"},
+            ];
+            
+            toolbar1.selectAll("button").data(pushButtonData)
+                .enter()
+                .append("button")
+                .attr("class", function(d) { return "btn btn-1 btn-1a "+d.klass; })
+                .text (function(d) { return d.label; })
+                .filter (function(d,i) { return i === 0; })
+                .style ("margin-bottom", "0.2em")
+            ;
+            
+            toolbar1.append("span")
+                .attr("class", "noBreak")
+                .text("4-character PDB Code")
+                .append("input")
+                    .attr("type", "text")
+                    .attr("class", "inputPDBCode")
+                    .attr ("maxlength", 4)
+                    .attr ("pattern", "[A-Z0-9]{4}")
+                    .attr ("size", 4)
+                    .attr ("title", "Four letter alphanumeric PDB code")
+                    .property ("required", true)
+            ;
+            
+            toolbar2.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
                 .style ("margin-bottom", "0.2em")   // to give a vertical gap to any wrapping row of buttons
@@ -58,7 +89,7 @@
                 {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues"},
             ];
             
-            toolbar.selectAll("label").data(toggleButtonData)
+            toolbar2.selectAll("label").data(toggleButtonData)
                 .enter()
                 .append ("label")
                 .attr ("class", "btn")
@@ -71,7 +102,7 @@
                         .property ("checked", function(d) { return d.initialState; })
             ;
 			
-            toolbar.append("button")
+            toolbar2.append("button")
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Re-Centre")
             ;
@@ -170,17 +201,29 @@
                 this.xlRepr.crosslinkData.setLinkList (linkList);
             }
         },
-
-        downloadImage: function () {
-            // https://github.com/arose/ngl/issues/33
-            this.stage.makeImage({
-                factor: 4,  // make it big so it can be used for piccy
-                antialias: true,
-                trim: true, // https://github.com/arose/ngl/issues/188
-                transparent: true
-            }).then( function( blob ){
-                NGL.download( blob, "screenshot.png" );
-            });
+        
+        launchExternalPDBWindow : function () {
+            CLMSUI.modelUtils.getPDBIDsForProteins (
+                this.model.get("clmsModel").get("interactors"),
+                function (data) {
+                    var ids = data.split("\n");
+                    var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
+                    window.open ("http://www.rcsb.org/pdb/results/results.do?qrid="+lastID, "_blank");
+                }
+            );    
+        },
+        
+        usePDBCode: function (evt) {
+            if (evt.keyCode === 13) {
+                var pdbCode = evt.target.value;
+                if (pdbCode && pdbCode.length === 4) {
+                    this.repopulate (pdbCode);
+                }
+            }
+        },
+        
+        repopulate: function (pdbCode) {
+            console.log ("repop 3d view and alignment with pdb ", pdbCode);
         },
 
         render: function () {
@@ -195,6 +238,18 @@
         relayout: function () {
             this.stage.handleResize();
             return this;
+        },
+        
+        downloadImage: function () {
+            // https://github.com/arose/ngl/issues/33
+            this.stage.makeImage({
+                factor: 4,  // make it big so it can be used for piccy
+                antialias: true,
+                trim: true, // https://github.com/arose/ngl/issues/188
+                transparent: true
+            }).then( function( blob ){
+                NGL.download( blob, "screenshot.png" );
+            });
         },
 		
         centerView: function () {
