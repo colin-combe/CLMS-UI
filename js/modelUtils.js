@@ -339,5 +339,22 @@ CLMSUI.modelUtils = {
         var encodedXmlString = encodeURIComponent (xmlString);
         
         $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, success);
-    }
+    },
+    
+    loadUserFile: function (fileObj, successFunc) {
+       if (window.File && window.FileReader && window.FileList && window.Blob) {
+           var reader = new FileReader();
+
+          // Closure to capture the file information.
+          reader.onload = (function(theFile) {
+            return function(e) {
+                console.log ("file", e.target.result);
+                successFunc (e.target.result);
+            };
+          })(fileObj);
+
+          // Read in the image file as a data URL.
+          reader.readAsText(fileObj);
+       }
+    },
 };

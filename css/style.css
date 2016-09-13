@@ -260,16 +260,6 @@ body, input, select, textarea {
     height: calc(100% - 40px);
 }
 
-#nglDiv {
-/*
-    float:right;
-    width:50%;
-*/
-/*
-    height:100%;
-*/
-}
-
 .histoLabel{
     color:black;
 /*  float:right;
@@ -680,22 +670,4 @@ A.btn {
     font-size: 0.75em;
     fill: #ddd;
     stroke: none;
-}
-
-.verticalFlexContainer {
-    height: 100%;
-    display: flex;
-    flex-direction: column
-}
-
-.overlayInfo {
-    position: absolute;
-}
-
-.outsideLink {
-    color: white;
-}
-
-.outsideLink:hover {
-    color: #9f9;
 }

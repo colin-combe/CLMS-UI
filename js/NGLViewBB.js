@@ -15,7 +15,7 @@
           }
           return _.extend({},parentEvents, {
             "click .pdbWindowButton": "launchExternalPDBWindow",
-            "click .selectPdbButton": "selectPDB",
+            "change .selectPdbButton": "selectPDBFile",
             "keyup .inputPDBCode": "usePDBCode",
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
@@ -47,11 +47,35 @@
                 .attr ("class", "verticalFlexContainer")
             ;
             
-            var toolbar1 = flexWrapperPanel.append("div");
-            var toolbar2 = flexWrapperPanel.append("div");
+            var toolbar1 = flexWrapperPanel.append("div").attr("class", "nglFileToolbar");
+            var toolbar2 = flexWrapperPanel.append("div").attr("class", "nglViewToolbar").style("display", "none");
+            
+            toolbar1.append("label")
+                .attr("class", "btn btn-1 btn-1a fakeButton")
+                .append("span")
+                    .attr("class", "noBreak")
+                    .text("Select Local PDB File")
+                    .append("input")
+                        .attr("type", "file")
+                        .attr("accept", ".txt,.cif")
+                        .attr("class", "selectPdbButton")
+            ;
+        
+            toolbar1.append("span")
+                .attr("class", "noBreak btn")
+                .text("or Enter 4-character PDB Code")
+                .append("input")
+                    .attr("type", "text")
+                    .attr("class", "inputPDBCode")
+                    .attr ("maxlength", 4)
+                    .attr ("pattern", "[A-Z0-9]{4}")
+                    .attr ("size", 4)
+                    .attr ("title", "Four letter alphanumeric PDB code")
+                    .property ("required", true)
+            ;
             
             var pushButtonData = [
-                {klass: "selectPdbButton", label: "Select Local PDB File"},
+                //{klass: "selectPdbButton", label: "Select Local PDB File"},
                 {klass: "pdbWindowButton", label: "Show Possible External PDBs"},
             ];
             
@@ -62,19 +86,6 @@
                 .text (function(d) { return d.label; })
                 .filter (function(d,i) { return i === 0; })
                 .style ("margin-bottom", "0.2em")
-            ;
-            
-            toolbar1.append("span")
-                .attr("class", "noBreak")
-                .text("4-character PDB Code")
-                .append("input")
-                    .attr("type", "text")
-                    .attr("class", "inputPDBCode")
-                    .attr ("maxlength", 4)
-                    .attr ("pattern", "[A-Z0-9]{4}")
-                    .attr ("size", 4)
-                    .attr ("title", "Four letter alphanumeric PDB code")
-                    .property ("required", true)
             ;
             
             toolbar2.append("button")
@@ -112,53 +123,155 @@
                 .attr ("flex-grow", 1)
                 .attr ("id", "ngl")
             ;
- 
-            //this.chartDiv.selectAll("*").remove();
             
-           //create 3D network viewer
+            this.chartDiv.append("div").attr("class","overlayInfo"); 
+            
+            // populate 3D network viewer if hard-coded pdb id present
             if (this.options.pdbFileID) {
-                var PDBUrl = "http://www.rcsb.org/pdb/explore.do?structureId="+this.options.pdbFileID;
-                this.chartDiv.append("div").attr("class","overlayInfo")
-                    .html("PDB File: <A class='outsideLink' target='_blank' href='"+PDBUrl+"'>"+this.options.pdbFileID+"</A>")
+                //this.repopulate ({pdbCode: this.options.pdbFileID});
+            }
+        },
+        
+        
+        launchExternalPDBWindow : function () {
+            // http://stackoverflow.com/questions/15818892/chrome-javascript-window-open-in-new-tab
+            // annoying workaround whereby we need to open a blank window here and set the location later
+            // otherwise chrome/pop-up blockers think it is some spammy popup rather than something the user wants.
+            // Basically chrome has this point in this function as being traceable back to a user click event but the
+            // callback from the ajax isn't.
+            var newtab = window.open ("", "_blank");
+            CLMSUI.modelUtils.getPDBIDsForProteins (
+                this.model.get("clmsModel").get("interactors"),
+                function (data) {
+                    var ids = data.split("\n");
+                    var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
+                    newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
+                    //window.open ("http://www.rcsb.org/pdb/results/results.do?qrid="+lastID, "_blank");
+                }
+            );    
+        },
+        
+        selectPDBFile: function (evt) {
+            var self = this;
+            CLMSUI.modelUtils.loadUserFile (evt.target.files[0], function (pdbFileContents) {
+                var blob = new Blob([pdbFileContents], {type : 'application/text'});
+                self.repopulate ({pdbFileContents: blob, ext: "cif"});
+            });    
+        },
+        
+        usePDBCode: function (evt) {
+            if (evt.keyCode === 13) {
+                var pdbCode = evt.target.value;
+                if (pdbCode && pdbCode.length === 4) {
+                    this.repopulate ({pdbCode: pdbCode});
+                }
+            }
+        },
+        
+        repopulate: function (pdbInfo) {
+            var firstTime = !(this.stage && this.xlRepr);
+            if (!firstTime) {
+                this.xlRepr.dispose();
+            } else {
+                d3.select(this.el).select(".nglViewToolbar").style("display", null);
+            }
+            if (pdbInfo.pdbCode) { // is a code string, not a local user file
+                var PDBUrl = "http://www.rcsb.org/pdb/explore.do?structureId="+pdbInfo.pdbCode;
+                this.chartDiv.select("div.overlayInfo")
+                    .html("PDB File: <A class='outsideLink' target='_blank' href='"+PDBUrl+"'>"+pdbInfo.pdbCode+"</A>")
                 ;
-                this.stage = new NGL.Stage ("ngl", {});
-                this.stage.loadFile ("rcsb://"+this.options.pdbFileID, {sele: ":A"})
-                    .then (function (structureComp) {
+            } else {
+                this.chartDiv.select("div.overlayInfo").html("");
+            }
+            console.log ("repop 3d view and alignment with pdb ", pdbInfo);
+            var self = this;
+            this.stage = new NGL.Stage ("ngl", {});
+            var params = {sele: "A"};
+            if (pdbInfo.ext) {
+                params.ext = pdbInfo.ext;
+            }
+            this.stage.loadFile (pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents, params)
+                .then (function (structureComp) {
+                    var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
+                    console.log ("stage", self.stage, "\nhas sequences", sequences);
+                    // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
+                    self.model.trigger ("3dsync", sequences);
 
-                        var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
-                        console.log ("stage", self.stage, "\nhas sequences", sequences);
-                        // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
-                        self.model.trigger ("3dsync", sequences);
+                    // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
+                    var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                    var filterCrossLinks = self.filterCrossLinks (crossLinks);
+                    var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
 
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
-                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                        var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                        var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
+                   self.xlRepr = new CLMSUI.CrosslinkRepresentation (
+                          self.model, self.stage, self.align, structureComp, crosslinkData, {
+                                 selectedColor: "lightgreen",
+                                 selectedLinksColor: "yellow",
+                                 sstrucColor: "gray",
+                                 displayedDistanceColor: "tomato",
+                                displayedDistanceVisible: self.options.labelVisible,
+                          }
+                   );
 
-                       self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                              self.model, self.stage, self.align, structureComp, crosslinkData, {
-                                     selectedColor: "lightgreen",
-                                     selectedLinksColor: "yellow",
-                                     sstrucColor: "gray",
-                                     displayedDistanceColor: "tomato",
-                                    displayedDistanceVisible: self.options.labelVisible,
-                              }
-                       );
+                    var dd = self.xlRepr.getDistances ();
+                    //console.log ("distances", [dd]);
+                    self.model.trigger ("distancesAvailable", [dd]);
 
-                        var dd = self.xlRepr.getDistances ();
-                        //console.log ("distances", [dd]);
-                        self.model.trigger ("distancesAvailable", [dd]);
-
+                    if (firstTime) {
                         self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                        //self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
-                        //self.listenTo (self.model, "currentColourModelChanged", self.showFiltered);
                         self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
                         self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
                         self.listenTo (self.model, "change:selection", self.showSelected);
                         self.listenTo (self.model, "change:highlights", self.showHighlighted);
-                    })
-                ;  
+                    }
+                })
+            ;  
+        },
+
+        render: function () {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                this.showFiltered();
+                console.log ("re rendering NGL view");
             }
+
+            return this;
+        },
+
+        relayout: function () {
+            if (this.stage) {
+                this.stage.handleResize();
+            }
+            return this;
+        },
+        
+        downloadImage: function () {
+            // https://github.com/arose/ngl/issues/33
+            this.stage.makeImage({
+                factor: 4,  // make it big so it can be used for piccy
+                antialias: true,
+                trim: true, // https://github.com/arose/ngl/issues/188
+                transparent: true
+            }).then( function( blob ){
+                NGL.download( blob, "screenshot.png" );
+            });
+        },
+		
+        centerView: function () {
+            this.stage.centerView();
+            return this;
+        },
+        
+        toggleLabels: function (event) {
+            var chk = event.target.checked;
+            this.xlRepr.displayedDistanceVisible = chk;
+            this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
+        },
+        
+        toggleResidues: function (event) {
+           this.xlRepr.resRepr.setVisibility (event.target.checked);
+        },
+        
+        toggleNonSelectedLinks: function (event) {
+            this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
         rerenderColours: function () {
@@ -194,81 +307,12 @@
         },
         
         showFiltered: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.stage) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
                 this.xlRepr.crosslinkData.setLinkList (linkList);
             }
-        },
-        
-        launchExternalPDBWindow : function () {
-            CLMSUI.modelUtils.getPDBIDsForProteins (
-                this.model.get("clmsModel").get("interactors"),
-                function (data) {
-                    var ids = data.split("\n");
-                    var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
-                    window.open ("http://www.rcsb.org/pdb/results/results.do?qrid="+lastID, "_blank");
-                }
-            );    
-        },
-        
-        usePDBCode: function (evt) {
-            if (evt.keyCode === 13) {
-                var pdbCode = evt.target.value;
-                if (pdbCode && pdbCode.length === 4) {
-                    this.repopulate (pdbCode);
-                }
-            }
-        },
-        
-        repopulate: function (pdbCode) {
-            console.log ("repop 3d view and alignment with pdb ", pdbCode);
-        },
-
-        render: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                this.showFiltered();
-                console.log ("re rendering NGL view");
-            }
-
-            return this;
-        },
-
-        relayout: function () {
-            this.stage.handleResize();
-            return this;
-        },
-        
-        downloadImage: function () {
-            // https://github.com/arose/ngl/issues/33
-            this.stage.makeImage({
-                factor: 4,  // make it big so it can be used for piccy
-                antialias: true,
-                trim: true, // https://github.com/arose/ngl/issues/188
-                transparent: true
-            }).then( function( blob ){
-                NGL.download( blob, "screenshot.png" );
-            });
-        },
-		
-        centerView: function () {
-            this.stage.centerView();
-            return this;
-        },
-        
-        toggleLabels: function (event) {
-            var chk = event.target.checked;
-            this.xlRepr.displayedDistanceVisible = chk;
-            this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
-        },
-        
-        toggleResidues: function (event) {
-           this.xlRepr.resRepr.setVisibility (event.target.checked);
-        },
-        
-        toggleNonSelectedLinks: function (event) {
-            this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
         // TODO, need to check if a) alignments are loaded and b) check for decoys (protein has no alignment)
@@ -982,5 +1026,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         ["sstrucRepr", "resRepr", "resEmphRepr", "linkRepr", "linkEmphRepr", "linkHighRepr"].forEach (function (rep) {
             this.stage.removeRepresentation (this[rep]);
         }, this);
+        
+        this.stage.dispose();
     }
 };
