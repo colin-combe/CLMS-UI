@@ -128,7 +128,7 @@
             
             // populate 3D network viewer if hard-coded pdb id present
             if (this.options.pdbFileID) {
-                //this.repopulate ({pdbCode: this.options.pdbFileID});
+                this.repopulate ({pdbCode: this.options.pdbFileID});
             }
         },
         
@@ -169,6 +169,7 @@
         },
         
         repopulate: function (pdbInfo) {
+            console.log ("this", this);
             var firstTime = !(this.stage && this.xlRepr);
             if (!firstTime) {
                 this.xlRepr.dispose();
@@ -190,7 +191,8 @@
             if (pdbInfo.ext) {
                 params.ext = pdbInfo.ext;
             }
-            this.stage.loadFile (pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents, params)
+            var uri = pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents;
+            this.stage.loadFile (uri, params)
                 .then (function (structureComp) {
                     var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
                     console.log ("stage", self.stage, "\nhas sequences", sequences);
@@ -237,9 +239,9 @@
         },
 
         relayout: function () {
-            if (this.stage) {
+            //if (this.stage) {
                 this.stage.handleResize();
-            }
+            //}
             return this;
         },
         
@@ -307,7 +309,7 @@
         },
         
         showFiltered: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.stage) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) /*&& this.stage*/) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
