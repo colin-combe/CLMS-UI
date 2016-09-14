@@ -119,7 +119,7 @@
             
             // populate 3D network viewer if hard-coded pdb id present
             if (this.options.pdbFileID) { 
-                //this.repopulate ({pdbCode: this.options.pdbFileID});
+                this.repopulate ({pdbCode: this.options.pdbFileID});
             }
         },
         
