@@ -297,7 +297,7 @@
         },
         
         showFiltered: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.stage) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
