@@ -122,6 +122,27 @@
     
     CLMSUI.BackboneModelTypes.AlignCollection = Backbone.Collection.extend ({
         model: CLMSUI.BackboneModelTypes.AlignModel,
+         
+        addSeq: function (modelId, seqId, seq) {
+            var model = this.get(modelId);
+            if (model) {
+                console.log ("entry", modelId, seqId, seq, model.seqIndex);
+                
+                var sInd = model.seqIndex[seqId];
+                if (sInd !== undefined) {   // if there's already a 3d entry replace it
+                    model.get("compSeqs")[sInd] = seq;
+                    model.set("compSeqs", model.get("compSeqs").slice(0));
+                    model.trigger("change", model); // change listener in alignment model is non-specific so not 'change:compSeqs'
+                } else {    // otherwise add it
+                    this.add ([{
+                        "id": modelId,
+                        "compIDs": this.mergeArrayAttr (modelId, "compIDs", [seqId]),
+                        "compSeqs": this.mergeArrayAttr (modelId, "compSeqs", [seq]),
+                    }], {merge: true});
+                }
+                console.log ("this align coll", this);
+            }
+        },
         
         // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
         mergeArrayAttr: function (modelId, attrName, appendThis) {

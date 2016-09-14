@@ -56,26 +56,21 @@
                     .attr("class", "noBreak")
                     .text("Select Local PDB File")
                     .append("input")
-                        .attr("type", "file")
-                        .attr("accept", ".txt,.cif,.pdb")
-                        .attr("class", "selectPdbButton")
+                        .attr({type: "file", accept: ".txt,.cif,.pdb", class: "selectPdbButton"})
             ;
         
             toolbar1.append("span")
                 .attr("class", "noBreak btn")
                 .text("or Enter 4-character PDB Code")
                 .append("input")
-                    .attr("type", "text")
-                    .attr("class", "inputPDBCode")
-                    .attr ("maxlength", 4)
-                    .attr ("pattern", "[A-Z0-9]{4}")
-                    .attr ("size", 4)
-                    .attr ("title", "Four letter alphanumeric PDB code")
+                    .attr({
+                        type: "text", class: "inputPDBCode", maxlength: 4,
+                        pattern: "[A-Z0-9]{4}", size: 4, title: "Four letter alphanumeric PDB code"
+                    })
                     .property ("required", true)
             ;
             
             var pushButtonData = [
-                //{klass: "selectPdbButton", label: "Select Local PDB File"},
                 {klass: "pdbWindowButton", label: "Show Possible External PDBs"},
             ];
             
@@ -84,14 +79,11 @@
                 .append("button")
                 .attr("class", function(d) { return "btn btn-1 btn-1a "+d.klass; })
                 .text (function(d) { return d.label; })
-                .filter (function(d,i) { return i === 0; })
-                .style ("margin-bottom", "0.2em")
             ;
             
             toolbar2.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
-                .style ("margin-bottom", "0.2em")   // to give a vertical gap to any wrapping row of buttons
             ;
 			
             var toggleButtonData = [
@@ -119,9 +111,7 @@
             ;
 		
             this.chartDiv = flexWrapperPanel.append("div")
-                .attr ("class", "panelInner")
-                .attr ("flex-grow", 1)
-                .attr ("id", "ngl")
+                .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
             ;
             
             this.chartDiv.append("div").attr("class","overlayInfo"); 
@@ -155,7 +145,6 @@
         selectPDBFile: function (evt) {
             var self = this;
             var fileObj = evt.target.files[0];
-            console.log ("fo", fileObj);
             CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
                 var blob = new Blob ([pdbFileContents], {type : 'application/text'});
                 var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
@@ -184,10 +173,9 @@
                 : pdbInfo.name
             );
             this.chartDiv.select("div.overlayInfo").html(overText);
-            //console.log ("repop 3d view and alignment with pdb ", pdbInfo);
             var self = this;
             
-            var params = {sele: ":A"};
+            var params = {sele: ":A"}; // {} - show all
             if (pdbInfo.ext) {
                 params.ext = pdbInfo.ext;
             }
@@ -325,7 +313,7 @@
             var alignPos = resIndex;
             
             if (alignModel) {
-                alignPos = from3D ? alignModel.mapToSearch ("3D_p0", resIndex) : alignModel.mapFromSearch ("3D_p0", resIndex);
+                alignPos = from3D ? alignModel.mapToSearch ("3D", resIndex) : alignModel.mapFromSearch ("3D", resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }

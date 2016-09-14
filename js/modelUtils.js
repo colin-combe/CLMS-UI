@@ -246,8 +246,7 @@ CLMSUI.modelUtils = {
     
     getSequencesFromNGLModel: function (stage, CLMSModel) {
         var sequences = [];
-        var proteins = Array.from(CLMSModel.get("interactors").values());
-        proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
+        var proteins = Array.from(CLMSModel.get("interactors").values()).filter (function (protein) { return !protein.is_decoy; });
         
         stage.eachComponent (function (comp, index) {   
             console.log ("pc", proteins, index);
@@ -268,7 +267,7 @@ CLMSUI.modelUtils = {
                         });
                     }
                 });
-                sequences[sequences.length] = {id: pid, name: "3D_p"+m.index, data: resList.join("")};
+                sequences[sequences.length] = {id: pid, name: "3D", data: resList.join("")};
             });
         });  
 

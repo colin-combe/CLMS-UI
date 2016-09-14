@@ -41,3 +41,7 @@ label.btn input[type=file] {
     margin-bottom: 0.15em;
     border-bottom: 1px solid rgba(0,0,0,0.5);
 }
+
+.nglToolbar button {
+    margin-bottom: 0.2em;
+}

@@ -435,12 +435,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         sequences.forEach (function (entry) {
-            console.log ("entry", entry);
-            this.add ([{
-                "id": entry.id,
-                "compIDs": this.mergeArrayAttr (entry.id, "compIDs", [entry.name]),
-                "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.data]),
-            }], {merge: true});
+            this.addSeq (entry.id, entry.name, entry.data);
         }, this);
 
         console.log ("3D sequences poked to collection", this);
@@ -451,9 +446,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         
         // Set up listener that waits for distance info to become available via NGLView event
         CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst, "distancesAvailable", function (distanceInfo) {
-            console.log ("distancesAvailable event triggered");
-            //this.set("distanceInfo", distanceInfo);
-            console.log ("di this", this);
+            console.log ("di this", this, distanceInfo);
             // if distance data present, append it to the correct interactor (protein) object
             distanceInfo.forEach (function (distanceData) {
                 var protein = this.get("interactors").get (distanceData.proteinID);

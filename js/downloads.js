@@ -76,8 +76,7 @@ function getMatchesCSV () {
 	var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 	var matchCount = matches.length;
 	var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-	for (var i = 0; i < matchCount; i++){
-		var match = matches[i];
+	for (var match of matches.values()){
 		var result = filterModel.filter(match);
 		if (result === true){
 			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1", CLMSUI.compositeModelInst.get("clmsModel"))
