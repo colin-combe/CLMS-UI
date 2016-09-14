@@ -13,7 +13,10 @@
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{
+          return _.extend({},parentEvents, {
+            "click .pdbWindowButton": "launchExternalPDBWindow",
+            "change .selectPdbButton": "selectPDBFile",
+            "keyup .inputPDBCode": "usePDBCode",
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
             "click .distanceLabelCB": "toggleLabels",
@@ -29,6 +32,7 @@
                 labelVisible: false,
                 selectedOnly: false,
                 showResidues: true,
+                pdbFileID: undefined,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -43,12 +47,43 @@
                 .attr ("class", "verticalFlexContainer")
             ;
             
-            var toolbar = flexWrapperPanel.append("div");
+            var toolbar1 = flexWrapperPanel.append("div").attr("class", "nglToolbar");
+            var toolbar2 = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar").style("display", "none");
             
-            toolbar.append("button")
+            toolbar1.append("label")
+                .attr("class", "btn btn-1 btn-1a fakeButton")
+                .append("span")
+                    .attr("class", "noBreak")
+                    .text("Select Local PDB File")
+                    .append("input")
+                        .attr({type: "file", accept: ".txt,.cif,.pdb", class: "selectPdbButton"})
+            ;
+        
+            toolbar1.append("span")
+                .attr("class", "noBreak btn")
+                .text("or Enter 4-character PDB Code")
+                .append("input")
+                    .attr({
+                        type: "text", class: "inputPDBCode", maxlength: 4,
+                        pattern: "[A-Z0-9]{4}", size: 4, title: "Four letter alphanumeric PDB code"
+                    })
+                    .property ("required", true)
+            ;
+            
+            var pushButtonData = [
+                {klass: "pdbWindowButton", label: "Show Possible External PDBs"},
+            ];
+            
+            toolbar1.selectAll("button").data(pushButtonData)
+                .enter()
+                .append("button")
+                .attr("class", function(d) { return "btn btn-1 btn-1a "+d.klass; })
+                .text (function(d) { return d.label; })
+            ;
+            
+            toolbar2.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
-                .style ("margin-bottom", "0.2em")   // to give a vertical gap to any wrapping row of buttons
             ;
 			
             var toggleButtonData = [
@@ -57,7 +92,7 @@
                 {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues"},
             ];
             
-            toolbar.selectAll("label").data(toggleButtonData)
+            toolbar2.selectAll("label").data(toggleButtonData)
                 .enter()
                 .append ("label")
                 .attr ("class", "btn")
@@ -70,24 +105,83 @@
                         .property ("checked", function(d) { return d.initialState; })
             ;
 			
-            toolbar.append("button")
+            toolbar2.append("button")
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Re-Centre")
             ;
 		
             this.chartDiv = flexWrapperPanel.append("div")
-                .attr ("class", "panelInner")
-                .attr ("flex-grow", 1)
-                .attr ("id", "ngl")
+                .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
             ;
- 
-            //this.chartDiv.selectAll("*").remove();
             
-           //create 3D network viewer
-            this.stage = new NGL.Stage( "ngl" );//this.chartDiv[0][0] );
-            this.stage.loadFile( "rcsb://1AO6", { sele: ":A" } )
+            this.chartDiv.append("div").attr("class","overlayInfo"); 
+            this.stage = new NGL.Stage ("ngl", {});
+            
+            // populate 3D network viewer if hard-coded pdb id present
+            if (this.options.pdbFileID) { 
+                //this.repopulate ({pdbCode: this.options.pdbFileID});
+            }
+        },
+        
+        
+        launchExternalPDBWindow : function () {
+            // http://stackoverflow.com/questions/15818892/chrome-javascript-window-open-in-new-tab
+            // annoying workaround whereby we need to open a blank window here and set the location later
+            // otherwise chrome/pop-up blockers think it is some spammy popup rather than something the user wants.
+            // Basically chrome has this point in this function as being traceable back to a user click event but the
+            // callback from the ajax isn't.
+            var newtab = window.open ("", "_blank");
+            CLMSUI.modelUtils.getPDBIDsForProteins (
+                this.model.get("clmsModel").get("interactors"),
+                function (data) {
+                    var ids = data.split("\n");
+                    var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
+                    newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
+                    //window.open ("http://www.rcsb.org/pdb/results/results.do?qrid="+lastID, "_blank");
+                }
+            );    
+        },
+        
+        selectPDBFile: function (evt) {
+            var self = this;
+            var fileObj = evt.target.files[0];
+            CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
+                var blob = new Blob ([pdbFileContents], {type : 'application/text'});
+                var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
+                self.repopulate ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name});
+            });    
+        },
+        
+        usePDBCode: function (evt) {
+            if (evt.keyCode === 13) {
+                var pdbCode = evt.target.value;
+                if (pdbCode && pdbCode.length === 4) {
+                    this.repopulate ({pdbCode: pdbCode});
+                }
+            }
+        },
+        
+        repopulate: function (pdbInfo) {
+            var firstTime = !this.xlRepr;
+            if (firstTime) {
+                d3.select(this.el).select(".nglDataToolbar").style("display", null);
+            } else {
+                this.xlRepr.dispose();
+            }
+            var overText = "PDB File: " + (pdbInfo.pdbCode ?
+                "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbInfo.pdbCode+"'>"+pdbInfo.pdbCode+"</A>"
+                : pdbInfo.name
+            );
+            this.chartDiv.select("div.overlayInfo").html(overText);
+            var self = this;
+            
+            var params = {sele: ":A"}; // {} - show all
+            if (pdbInfo.ext) {
+                params.ext = pdbInfo.ext;
+            }
+            var uri = pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents;
+            this.stage.loadFile (uri, params)
                 .then (function (structureComp) {
-
                     var sequences = CLMSUI.modelUtils.getSequencesFromNGLModel (self.stage, self.model.get("clmsModel"));
                     console.log ("stage", self.stage, "\nhas sequences", sequences);
                     // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
@@ -102,7 +196,7 @@
                           self.model, self.stage, self.align, structureComp, crosslinkData, {
                                  selectedColor: "lightgreen",
                                  selectedLinksColor: "yellow",
-                                 sstrucColor: "wheat",
+                                 sstrucColor: "gray",
                                  displayedDistanceColor: "tomato",
                                 displayedDistanceVisible: self.options.labelVisible,
                           }
@@ -112,15 +206,62 @@
                     //console.log ("distances", [dd]);
                     self.model.trigger ("distancesAvailable", [dd]);
 
-                    self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                    //self.listenTo (self.model, "change:linkColourAssignment", self.showFiltered);
-                    //self.listenTo (self.model, "currentColourModelChanged", self.showFiltered);
-                    self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
-                    self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
-                    self.listenTo (self.model, "change:selection", self.showSelected);
-                    self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                    if (firstTime) {
+                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                        self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
+                        self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
+                        self.listenTo (self.model, "change:selection", self.showSelected);
+                        self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                    }
                 })
-            ;      
+            ;  
+        },
+
+        render: function () {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+                this.showFiltered();
+                console.log ("re rendering NGL view");
+            }
+
+            return this;
+        },
+
+        relayout: function () {
+            if (this.stage) {
+                this.stage.handleResize();
+            }
+            return this;
+        },
+        
+        downloadImage: function () {
+            // https://github.com/arose/ngl/issues/33
+            this.stage.makeImage({
+                factor: 4,  // make it big so it can be used for piccy
+                antialias: true,
+                trim: true, // https://github.com/arose/ngl/issues/188
+                transparent: true
+            }).then( function( blob ){
+                NGL.download( blob, "screenshot.png" );
+            });
+        },
+		
+        centerView: function () {
+            this.stage.centerView();
+            return this;
+        },
+        
+        toggleLabels: function (event) {
+            var chk = event.target.checked;
+            this.xlRepr.displayedDistanceVisible = chk;
+            this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
+        },
+        
+        toggleResidues: function (event) {
+           this.xlRepr.resRepr.setVisibility (event.target.checked);
+        },
+        
+        toggleNonSelectedLinks: function (event) {
+            this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
         rerenderColours: function () {
@@ -156,58 +297,12 @@
         },
         
         showFiltered: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.stage) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
                 this.xlRepr.crosslinkData.setLinkList (linkList);
             }
-        },
-
-        downloadImage: function () {
-            // https://github.com/arose/ngl/issues/33
-            this.stage.makeImage({
-                factor: 4,  // make it big so it can be used for piccy
-                antialias: true,
-                trim: true, // https://github.com/arose/ngl/issues/188
-                transparent: true
-            }).then( function( blob ){
-                NGL.download( blob, "screenshot.png" );
-            });
-        },
-
-        render: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                this.showFiltered();
-                console.log ("re rendering NGL view");
-                //this.stage.handleResize();
-            }
-
-            return this;
-        },
-
-        relayout: function () {
-           this.stage.handleResize();
-            return this;
-        },
-		
-        centerView: function () {
-            this.stage.centerView();
-            return this;
-        },
-        
-        toggleLabels: function (event) {
-            var chk = event.target.checked;
-            this.xlRepr.displayedDistanceVisible = chk;
-            this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
-        },
-        
-        toggleResidues: function (event) {
-           this.xlRepr.resRepr.setVisibility (event.target.checked);
-        },
-        
-        toggleNonSelectedLinks: function (event) {
-            this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
         // TODO, need to check if a) alignments are loaded and b) check for decoys (protein has no alignment)
@@ -218,7 +313,7 @@
             var alignPos = resIndex;
             
             if (alignModel) {
-                alignPos = from3D ? alignModel.mapToSearch ("3D_p0", resIndex) : alignModel.mapFromSearch ("3D_p0", resIndex);
+                alignPos = from3D ? alignModel.mapToSearch ("3D", resIndex) : alignModel.mapFromSearch ("3D", resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }
@@ -247,8 +342,6 @@
         transformLinkList: function (linkList, chainname, structureId, residueStore) {
 
             chainname = chainname === undefined ? "A" : chainname;
-
-            //var nextLinkId = 0;
             var nextResidueId = 0;
 
             var residueDict = {};
@@ -478,11 +571,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         var matrix;
         var prot = protsArr[0];
+        console.log ("prot", prot);
         
-        if (prot.size < 600) {
-            matrix = this.getAllDistances (prot);
+        if (prot) {
+            if (prot.size < 600) {
+                matrix = this.getAllDistances (prot);
+            } else {
+                matrix = this.getLinkDistancesOnly (prot, prot);
+            }
         } else {
-            matrix = this.getLinkDistancesOnly (prot, prot);
+            prot = {id: null};
         }
         
         //console.log ("lds", this.getLinkDistancesOnly (prot, prot));
@@ -517,7 +615,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     getAllDistances: function (prot) {
         var atomIndices = this.getCAtomsAllResidues (prot);
-        //console.log ("ai", atomIndices);
+        //console.log ("residue atom indices", atomIndices);
 
         var ap1 = this.structureComp.structureView.getAtomProxy();
         var ap2 = this.structureComp.structureView.getAtomProxy();
@@ -526,18 +624,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var nindex = atomIndices[n];
             ap1.index = nindex;
             matrix[n] = [undefined];
+            var row = matrix[n];
             for (var m = 1; m < atomIndices.length; m++) {
-                var d;
-                var mindex = atomIndices[m];
                 if (m !== n) {
+                    var mindex = atomIndices[m];
                     ap2.index = mindex;
-                    if (mindex !== undefined && nindex !== undefined) {
-                        d = ap1.distanceTo(ap2);
-                    }
+                    row.push ((mindex === undefined || nindex === undefined) ? undefined : ap1.distanceTo(ap2));
                 } else {
-                    d = 0;
+                    row.push(0);
                 }
-                matrix[n][m] = d;
             }
         }
         
@@ -612,7 +707,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.sstrucRepr = comp.addRepresentation ("cartoon", {
             color: this.sstrucColor,
-            name: "sstruc"
+            name: "sstruc",
+            //opacity: 0.4, //
         });
 
         this.resRepr = comp.addRepresentation ("spacefill", {
@@ -650,6 +746,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: 2.0,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
+            opacity: 0.9,
             name: "link",
         });
 
@@ -914,8 +1011,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.stage.signals.hovered.remove (this._highlightPicking, this);
         this.crosslinkData.signals.linkListChanged.remove (this._handleDataChange, this);
 
-        ["sstrucRepr", "resRepr", "resEmphRepr", "linkRepr", "linkEmphRepr", "linkHighRepr"].forEach (function (rep) {
-            this.stage.removeRepresentation (this[rep]);
-        }, this);
+        this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
     }
 };

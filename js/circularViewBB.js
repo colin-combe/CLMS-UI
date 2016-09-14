@@ -165,7 +165,7 @@
                 .append("button")
                 .text(function(d) { return d.label; })
                 .attr("class", function(d) { return d.class; })
-                .classed("btn btn-1 btn-1a", true);
+                .classed("btn btn-1 btn-1a", true)
             ;
 
             var degToRad = Math.PI / 180;

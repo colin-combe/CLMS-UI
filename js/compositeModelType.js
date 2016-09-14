@@ -33,7 +33,7 @@
 								if (match.crossLinks.length === 1) {
 									crossLink.ambiguous = false;
 								}
-								if (match.crossLinks.hd === true) {
+								if (match.crossLinks.hd === true) { // what is .hd ??
 									crossLink.confirmedHomomultimer = true;
 								}                       
 							}

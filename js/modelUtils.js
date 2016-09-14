@@ -246,11 +246,11 @@ CLMSUI.modelUtils = {
     
     getSequencesFromNGLModel: function (stage, CLMSModel) {
         var sequences = [];
-        var proteinIDIter = CLMSModel.get("interactors").entries();
+        var proteins = Array.from(CLMSModel.get("interactors").values()).filter (function (protein) { return !protein.is_decoy; });
         
-        stage.eachComponent (function (comp) {   
-            var pidArr = proteinIDIter.next().value;
-            var pid = pidArr ? pidArr[0] : "Unknown"; // assuming proteins match 1-1 with stages, is a guess
+        stage.eachComponent (function (comp, index) {   
+            console.log ("pc", proteins, index);
+            var pid = proteins[index].id || "Unknown";  // assuming proteins match 1-1 with components, is a guess
             // but otherwise at mo have no way of knowing which stage belongs to which protein
             console.log ("pid", pid);
             
@@ -267,7 +267,7 @@ CLMSUI.modelUtils = {
                         });
                     }
                 });
-                sequences[sequences.length] = {id: pid, name: "3D_p"+m.index, data: resList.join("")};
+                sequences[sequences.length] = {id: pid, name: "3D", data: resList.join("")};
             });
         });  
 
@@ -321,5 +321,38 @@ CLMSUI.modelUtils = {
             return result;                    
         }
         return [];
+    },
+    
+    getPDBIDsForProteins: function (interactorMap, success) {
+        var ids = Array.from(interactorMap.values())
+            .filter (function (prot) { return !prot.is_decoy; })
+            .map (function(prot) { return prot.accession; })
+        ;
+        
+        var xmlString = "<orgPdbQuery><queryType>org.pdb.query.simple.UpAccessionIdQuery</queryType>"
+            +"<description>PDB Query Using Uniprot IDs</description><accessionIdList>"
+            +ids.join(",")
+            +"</accessionIdList></orgPdbQuery>"
+        ;
+        
+        var encodedXmlString = encodeURIComponent (xmlString);
+        
+        $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, success);
+    },
+    
+    loadUserFile: function (fileObj, successFunc) {
+       if (window.File && window.FileReader && window.FileList && window.Blob) {
+           var reader = new FileReader();
+
+          // Closure to capture the file information.
+          reader.onload = (function() {
+            return function(e) {
+                successFunc (e.target.result);
+            };
+          })(fileObj);
+
+          // Read in the image file as a data URL.
+          reader.readAsText(fileObj);
+       }
     },
 };

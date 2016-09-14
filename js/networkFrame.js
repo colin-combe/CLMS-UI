@@ -22,12 +22,6 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
-// for NGL
-if (typeof NGL != "undefined") {
-    NGL.mainScriptFilePath = "./vendor/ngl.embedded.min.js";
-    var stage;
-}
-
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 var allDataLoaded = _.after (2, function() {
     console.log ("BOTH SYNCS DONE :-)");
@@ -48,6 +42,8 @@ CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.models = function (options) {
 
+    CLMSUI.oldDB = options.oldDB || false;
+    
     // define alignment model and listeners first, so they're ready to pick up events from other models
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
     options.alignmentCollectionInst = alignmentCollectionInst;
@@ -116,8 +112,7 @@ CLMSUI.init.models = function (options) {
 //only inits stuff required by validation page
 CLMSUI.init.modelsEssential = function (options) {
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
-    CLMSUI.utils.displayError (function() { return !options.rawMatches
-        || !options.rawMatches.length; },
+    CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
         "No cross-links detected for this search.<br>Please return to the search history page."
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
@@ -154,7 +149,7 @@ CLMSUI.init.modelsEssential = function (options) {
         this.applyFilter();
     });
 
-}
+};
 
 CLMSUI.init.views = function () {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
@@ -176,8 +171,8 @@ CLMSUI.init.views = function () {
     var checkBoxData = [
         {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        //{id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
@@ -187,7 +182,7 @@ CLMSUI.init.views = function () {
     checkBoxData.forEach (function (cbdata) {
         var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
         $("#viewDropdownPlaceholder").append(cbView.$el);
-    })
+    });
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
     new CLMSUI.DropDownMenuViewBB ({
@@ -200,23 +195,39 @@ CLMSUI.init.views = function () {
     });
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
-    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-    HSA_Active = Array.from(searches.values())[0].filename.startsWith("HSA-Active");    // HSa hack
-    console.log ("HSA", HSA_Active);
+    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
+    console.log ("interactors", interactors);
+    var protMap = {
+        "1AO6": ["P02768-A"],
+        "3NBS": ["P00004"],
+        "3J7U": ["P00432"],
+        "2CRK": ["P00563"],
+        "1DPX": ["P00698"],
+        "5D5R": ["P68082"],
+    };
+    
+    var invPDBMap = {};
+    [protMap].forEach (function (map) {
+        d3.entries(map).forEach (function (entry) {
+            entry.value.forEach (function (val) {
+                invPDBMap[val] = entry.key;
+            }); 
+        });
+    });
+    var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
+    var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
+    CLMSUI.ThreeDAvailable = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
+    console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
 
-    if (HSA_Active){
+    if (CLMSUI.ThreeDAvailable){
         // Distance slider
-        var distSlider = new CLMSUI.ThreeColourSliderBB ({
+        new CLMSUI.ThreeColourSliderBB ({
             el: "#sliderDiv",            
             model: CLMSUI.linkColour.distanceColoursBB,
             rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
             domain: [0,35],
             extent: [15,25],
         });
-    }
-    else {
-        // if not #viewDropdownPlaceholder, then list individual ids in comma-separated list: #nglChkBxPlaceholder , #distoChkBxPlaceholder etc
-        //d3.select('#viewDropdownPlaceholder').style("display", "none");
     }
 
     new CLMSUI.DropDownMenuViewBB ({
@@ -243,7 +254,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
 
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var filterViewGroup = new CLMSUI.FilterViewBB ({
+    new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder",
         model: filterModel
     });
@@ -371,7 +382,7 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
-}
+};
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
 
@@ -382,7 +393,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-    var colourSelector = new CLMSUI.utils.ColourCollectionOptionViewBB ({
+    new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#colourSelect",
         model: CLMSUI.linkColour.Collection,
         storeSelectedAt: {model: CLMSUI.compositeModelInst, attr: "linkColourAssignment"},
@@ -402,22 +413,10 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     );
 
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
-    var tooltipView = new CLMSUI.TooltipViewBB ({
+    new CLMSUI.TooltipViewBB ({
         el: "#tooltip2",
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
-
-    /*
-    var distoViewer = new CLMSUI.DistogramBB ({
-        el: "#distoPanel",
-        model: CLMSUI.compositeModelInst,
-        displayEventName: "distoShow",
-        myOptions: {
-            chartTitle: "Cross-Link Distogram",
-            seriesName: "Actual"
-        }
-    });
-    */
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv",
@@ -426,10 +425,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
 
-    
-
     // Alignment View
-    var alignViewer = new CLMSUI.AlignCollectionViewBB ({
+    new CLMSUI.AlignCollectionViewBB ({
         el:"#alignPanel",
         collection: CLMSUI.compositeModelInst.get("alignColl"),
         displayEventName: "alignShow",
@@ -438,25 +435,18 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         sequences.forEach (function (entry) {
-            console.log ("entry", entry);
-            this.add ([{
-                "id": entry.id,
-                "compIDs": this.mergeArrayAttr (entry.id, "compIDs", [entry.name]),
-                "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.data]),
-            }], {merge: true});
+            this.addSeq (entry.id, entry.name, entry.data);
         }, this);
 
         console.log ("3D sequences poked to collection", this);
     });
 
     // if 3d info about
-    if (HSA_Active) {
+    if (CLMSUI.ThreeDAvailable) {
         
         // Set up listener that waits for distance info to become available via NGLView event
         CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst, "distancesAvailable", function (distanceInfo) {
-            console.log ("distancesAvailable event triggered");
-            //this.set("distanceInfo", distanceInfo);
-            console.log ("di this", this);
+            console.log ("di this", this, distanceInfo);
             // if distance data present, append it to the correct interactor (protein) object
             distanceInfo.forEach (function (distanceData) {
                 var protein = this.get("interactors").get (distanceData.proteinID);
@@ -526,9 +516,11 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             el: "#nglPanel",
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
+            myOptions: {
+                pdbFileID: CLMSUI.ThreeDAvailable,
+            }
         });
     }
-
 
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
@@ -541,7 +533,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
     });
-
 };
 
 
@@ -559,11 +550,11 @@ function saveLayout () {
         if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             console.log(xmlhttp.responseText, true);
         }
-    }
+    };
     xmlhttp.send(params);
 }
 
 function changeAnnotations(){
     var annotationSelect = document.getElementById('annotationsSelect');
     crosslinkViewer.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
-};
+}

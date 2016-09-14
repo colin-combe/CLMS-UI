@@ -55,8 +55,9 @@
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
-		<link rel="stylesheet" href="./css/filter.css">
-		<link rel="stylesheet" href="./css/networkPage.css">
+		      <link rel="stylesheet" href="./css/filter.css">
+        <link rel="stylesheet" href="./css/nglViewBB.css">
+		      <link rel="stylesheet" href="./css/networkPage.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -171,34 +172,45 @@
         
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
+            var success = function (text) {
+                spinner.stop(); // stop spinner on request returning 
+				var json = JSON.parse (text);
+                CLMSUI.init.models (json);
+
+				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+				document.title = Array.from(searches.keys()).join();
+        
+				CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
+				    { direction: "vertical", sizes: [60,40], minSize: [200,10] }
+				);
+
+				CLMSUI.init.views();
+
+				allDataLoaded ();
+            };
+        
+            var url = "./loadData.php" + window.location.search;
+        
+            /*
  			var xmlhttp = new XMLHttpRequest();
-			var url = "./loadData.php" + window.location.search;
-			var params =  window.location.search.substr(1);
+			//var params =  window.location.search.substr(1);
 			xmlhttp.open("POST", url, true);
 			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-					//console.log(xmlhttp.responseText);
-                    spinner.stop(); // stop spinner on ajax request returning
-                    
-					var json = JSON.parse(xmlhttp.responseText);
-                    
-					CLMSUI.init.models(json);
-
-					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-					document.title = Array.from(searches.keys()).join();
-        
-					CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
-									{ direction: "vertical", sizes: [60,40], minSize: [200,10] }
-							);
-
-					CLMSUI.init.views();
-
-					allDataLoaded ();
-
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					success (xmlhttp.responseText);
 				}
 			};
 			xmlhttp.send();
+            */
+        
+            d3.text (url, function (error, text) {
+                if (!error) {
+                    success (text);
+                }
+            });
+        
+            
 		//~ };
 
         //~ window.addEventListener("load", windowLoaded);

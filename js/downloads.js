@@ -76,8 +76,7 @@ function getMatchesCSV () {
 	var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 	var matchCount = matches.length;
 	var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-	for (var i = 0; i < matchCount; i++){
-		var match = matches[i];
+	for (var match of matches.values()){
 		var result = filterModel.filter(match);
 		if (result === true){
 			csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1", CLMSUI.compositeModelInst.get("clmsModel"))
@@ -93,7 +92,7 @@ function getMatchesCSV () {
 }
 
 function getLinksCSV(){
-	var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val"';
+	var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val","LinkFDR"';
 	
 	var searchIds = [];
 	var i = 0;
@@ -119,7 +118,7 @@ function getLinksCSV(){
 			
 			var highestScore = null;
 			var searchesFound = new Array (searchIds.length);
-			var filteredMatchCount = filteredMatches.length;
+			var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
 			var linkAutovalidated = false;
 			var validationStats = []
 			for (matchAndPepPos of filteredMatchesAndPepPos) {
@@ -135,6 +134,7 @@ function getLinksCSV(){
 			csv += '","' + highestScore;
 			csv += 	'","' + linkAutovalidated;
 			csv += 	'","' + validationStats.toString();
+            csv += '","' + (residueLink.meta ? residueLink.meta.fdr : undefined);
 			
 			for (var s = 0; s < searchIds.length; s++){					
 				csv +=  '","';

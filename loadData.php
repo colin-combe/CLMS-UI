@@ -364,7 +364,9 @@ if (sizeof($peptideIds) === 0) {
 			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 			if ($line) {echo ",\n";}
 		}
-	echo "\n]}\n";
+	echo "\n],";
+    echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
+    echo "}\n";
 	$endTime = microtime(true);
 	//~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
 
