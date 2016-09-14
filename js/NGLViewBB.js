@@ -47,8 +47,8 @@
                 .attr ("class", "verticalFlexContainer")
             ;
             
-            var toolbar1 = flexWrapperPanel.append("div").attr("class", "nglFileToolbar");
-            var toolbar2 = flexWrapperPanel.append("div").attr("class", "nglViewToolbar").style("display", "none");
+            var toolbar1 = flexWrapperPanel.append("div").attr("class", "nglToolbar");
+            var toolbar2 = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar").style("display", "none");
             
             toolbar1.append("label")
                 .attr("class", "btn btn-1 btn-1a fakeButton")
@@ -57,7 +57,7 @@
                     .text("Select Local PDB File")
                     .append("input")
                         .attr("type", "file")
-                        .attr("accept", ".txt,.cif")
+                        .attr("accept", ".txt,.cif,.pdb")
                         .attr("class", "selectPdbButton")
             ;
         
@@ -125,10 +125,11 @@
             ;
             
             this.chartDiv.append("div").attr("class","overlayInfo"); 
+            this.stage = new NGL.Stage ("ngl", {});
             
             // populate 3D network viewer if hard-coded pdb id present
-            if (this.options.pdbFileID) {
-                this.repopulate ({pdbCode: this.options.pdbFileID});
+            if (this.options.pdbFileID) { 
+                //this.repopulate ({pdbCode: this.options.pdbFileID});
             }
         },
         
@@ -153,9 +154,12 @@
         
         selectPDBFile: function (evt) {
             var self = this;
-            CLMSUI.modelUtils.loadUserFile (evt.target.files[0], function (pdbFileContents) {
-                var blob = new Blob([pdbFileContents], {type : 'application/text'});
-                self.repopulate ({pdbFileContents: blob, ext: "cif"});
+            var fileObj = evt.target.files[0];
+            console.log ("fo", fileObj);
+            CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
+                var blob = new Blob ([pdbFileContents], {type : 'application/text'});
+                var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
+                self.repopulate ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name});
             });    
         },
         
@@ -169,25 +173,21 @@
         },
         
         repopulate: function (pdbInfo) {
-            console.log ("this", this);
-            var firstTime = !(this.stage && this.xlRepr);
-            if (!firstTime) {
+            var firstTime = !this.xlRepr;
+            if (firstTime) {
+                d3.select(this.el).select(".nglDataToolbar").style("display", null);
+            } else {
                 this.xlRepr.dispose();
-            } else {
-                d3.select(this.el).select(".nglViewToolbar").style("display", null);
             }
-            if (pdbInfo.pdbCode) { // is a code string, not a local user file
-                var PDBUrl = "http://www.rcsb.org/pdb/explore.do?structureId="+pdbInfo.pdbCode;
-                this.chartDiv.select("div.overlayInfo")
-                    .html("PDB File: <A class='outsideLink' target='_blank' href='"+PDBUrl+"'>"+pdbInfo.pdbCode+"</A>")
-                ;
-            } else {
-                this.chartDiv.select("div.overlayInfo").html("");
-            }
-            console.log ("repop 3d view and alignment with pdb ", pdbInfo);
+            var overText = "PDB File: " + (pdbInfo.pdbCode ?
+                "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbInfo.pdbCode+"'>"+pdbInfo.pdbCode+"</A>"
+                : pdbInfo.name
+            );
+            this.chartDiv.select("div.overlayInfo").html(overText);
+            //console.log ("repop 3d view and alignment with pdb ", pdbInfo);
             var self = this;
-            this.stage = new NGL.Stage ("ngl", {});
-            var params = {sele: "A"};
+            
+            var params = {sele: ":A"};
             if (pdbInfo.ext) {
                 params.ext = pdbInfo.ext;
             }
@@ -239,9 +239,9 @@
         },
 
         relayout: function () {
-            //if (this.stage) {
+            if (this.stage) {
                 this.stage.handleResize();
-            //}
+            }
             return this;
         },
         
@@ -309,7 +309,7 @@
         },
         
         showFiltered: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) /*&& this.stage*/) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.stage) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure.residueStore);
@@ -354,8 +354,6 @@
         transformLinkList: function (linkList, chainname, structureId, residueStore) {
 
             chainname = chainname === undefined ? "A" : chainname;
-
-            //var nextLinkId = 0;
             var nextResidueId = 0;
 
             var residueDict = {};
@@ -1025,10 +1023,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.stage.signals.hovered.remove (this._highlightPicking, this);
         this.crosslinkData.signals.linkListChanged.remove (this._handleDataChange, this);
 
-        ["sstrucRepr", "resRepr", "resEmphRepr", "linkRepr", "linkEmphRepr", "linkHighRepr"].forEach (function (rep) {
-            this.stage.removeRepresentation (this[rep]);
-        }, this);
-        
-        this.stage.dispose();
+        this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
     }
 };

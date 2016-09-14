@@ -346,9 +346,8 @@ CLMSUI.modelUtils = {
            var reader = new FileReader();
 
           // Closure to capture the file information.
-          reader.onload = (function(theFile) {
+          reader.onload = (function() {
             return function(e) {
-                console.log ("file", e.target.result);
                 successFunc (e.target.result);
             };
           })(fileObj);
