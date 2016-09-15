@@ -186,6 +186,20 @@
                     console.log ("stage", self.stage, "\nhas sequences", sequences);
                     // hacky thing to alert anything else interested the sequences are available as we are inside an asynchronous callback
                     self.model.trigger ("3dsync", sequences);
+                
+                    var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
+                    console.log ("nglSequences", nglSequences2);
+                    var sequenceMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, 
+                        Array.from(self.model.get("clmsModel").get("interactors").values()), 
+                        function(sObj) { return sObj.data; }
+                    );
+                    console.log ("seq matches", sequenceMap);
+                    sequenceMap.forEach (function (pMatch) {
+                        pMatch.data = pMatch.seqObj.data;
+                        pMatch.name = "3D:"+pMatch.seqObj.chainname;
+                    });
+                    console.log ("fsmap", sequenceMap); 
+                    self.model.trigger ("3dsync", sequenceMap);
 
                     // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
                     var crossLinks = self.model.get("clmsModel").get("crossLinks");

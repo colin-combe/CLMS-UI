@@ -259,7 +259,7 @@ CLMSUI.modelUtils = {
                 console.log ("model", m);
 
                 m.eachChain (function(c) {
-                    console.log ("chain", c, c.residueCount, c.residueOffset);
+                    console.log ("chain", c, c.residueCount, c.residueOffset, c.chainName);
                     if (c.residueOffset === 0) {    // just use first chain for the moment. is a hack.
                         c.eachResidue (function (r) {
                             var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
@@ -267,11 +267,70 @@ CLMSUI.modelUtils = {
                         });
                     }
                 });
-                sequences[sequences.length] = {id: pid, name: "3D", data: resList.join("")};
+                sequences.push ({id: pid, name: "3D", data: resList.join("")});
             });
         });  
 
         return sequences;
+    },
+    
+    getSequencesFromNGLModelNew: function (stage) {
+        var sequences = [];
+        
+        stage.eachComponent (function (comp) {    
+            comp.structure.eachChain (function (c) {
+                console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
+                if (c.residueCount > 10) {    // short chains are ions/water molecules, ignore
+                    var resList = [];
+                    c.eachResidue (function (r) {
+                        resList.push (CLMSUI.modelUtils.amino3to1Map[r.resname] || "X");    
+                    });
+                    sequences.push ({chainname: c.chainname, chainIndex: c.index, residueOffset: c.residueOffset, data: resList.join("")});
+                }
+            });
+        });  
+
+        return sequences;
+    },
+    
+    matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
+        var proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
+        var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+        var matchMatrix = {};
+        proteins.forEach (function (prot) {
+            //console.log ("prot", prot);
+            var protAlignModel = alignCollection.get(prot.id);
+            if (protAlignModel) {
+                var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
+                var alignResults = protAlignModel.alignWithoutStoring (seqs);
+                console.log ("alignResults", alignResults);
+                var scores = alignResults.map (function (indRes) { return indRes.res[0]; })
+                matchMatrix[prot.id] = scores;
+            }   
+        });
+        console.log ("matchMatrix", matchMatrix);
+        return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
+    },
+    
+    matrixPairings: function (matrix, sequenceObjs) {
+        var keys = d3.keys(matrix);
+        var pairings = [];
+        for (var n = 0; n < sequenceObjs.length; n++) {
+            var max = {key: undefined, seqObj: undefined, score: 100};
+            keys.forEach (function (key) {
+                var score = matrix[key][n];
+                if (score > max.score) {
+                    max.score = score;
+                    max.key = key;
+                    max.seqObj = sequenceObjs[n];
+                }
+            });
+            if (max.key) {
+                pairings.push ({id: max.key, seqObj: max.seqObj});
+            }
+        }
+        
+        return pairings;
     },
     
     linkHasHomomultimerMatch: function (xlink) {

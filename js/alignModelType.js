@@ -38,24 +38,8 @@
         
         align: function () {
             console.log ("alignModel", this);
-            var matrix = this.get("scoreMatrix");
-            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
             
-            var scores = {
-                matrix: matrix,
-                match: this.get("matchScore"), 
-                mis: this.get("misScore"), 
-                gapOpen: this.get("gapOpenScore"), 
-                gapExt: this.get("gapExtendScore"),
-                gapAtStart: this.get("gapAtStartScore")
-            };
-            
-            var refSeq = this.get("refSeq");
-            var aligner = this.get("sequenceAligner");
-            var fullResults = this.get("compSeqs").map (function (cSeq) {
-                var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                return aligner.align (cSeq, refSeq, scores, this.get("local"), alignWindowSize);
-            }, this);
+            var fullResults = this.alignWithoutStoring (this.get("compSeqs"));
             
             var refResults = fullResults.map (function (res) {
                return {str: res.fmt[1], label: this.get("refID")}; 
@@ -88,6 +72,28 @@
             ;
             
             return this;
+        },
+        
+        alignWithoutStoring: function (compSeqArray) {
+            var matrix = this.get("scoreMatrix");
+            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+            
+            var scores = {
+                matrix: matrix,
+                match: this.get("matchScore"), 
+                mis: this.get("misScore"), 
+                gapOpen: this.get("gapOpenScore"), 
+                gapExt: this.get("gapExtendScore"),
+                gapAtStart: this.get("gapAtStartScore")
+            };
+            var refSeq = this.get("refSeq");
+            var aligner = this.get("sequenceAligner");
+            var fullResults = compSeqArray.map (function (cSeq) {
+                var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
+                return aligner.align (cSeq, refSeq, scores, this.get("local"), alignWindowSize);
+            }, this);
+            
+            return fullResults;
         },
         
         getCompSequence: function (seqName) {
