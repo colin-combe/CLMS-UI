@@ -194,17 +194,23 @@
                         function(sObj) { return sObj.data; }
                     );
                     console.log ("seq matches", sequenceMap);
+                    self.chainMap = {};
                     sequenceMap.forEach (function (pMatch) {
                         pMatch.data = pMatch.seqObj.data;
                         pMatch.name = "3D:"+pMatch.seqObj.chainname;
+                        self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
+                        self.chainMap[pMatch.id].push (pMatch.seqObj.chainname);
                     });
-                    console.log ("fsmap", sequenceMap); 
+                    console.log ("chainmap", this.chainMap); 
+
                     self.model.trigger ("3dsync", sequenceMap);
 
                     // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
                     var crossLinks = self.model.get("clmsModel").get("crossLinks");
                     var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                    var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore));
+                    var crosslinkData = new CLMSUI.CrosslinkData (
+                        self.makeLinkList (filterCrossLinks, structureComp.structure.residueStore)
+                    );
 
                    self.xlRepr = new CLMSUI.CrosslinkRepresentation (
                           self.model, self.stage, self.align, structureComp, crosslinkData, {
@@ -320,14 +326,15 @@
         },
         
         // TODO, need to check if a) alignments are loaded and b) check for decoys (protein has no alignment)
-        align: function (resIndex, proteinID, from3D) {
+        align: function (resIndex, proteinID, from3D, chainname) {
             var alignModel = this.model.get("alignColl").get (proteinID);
             //console.log ("am", proteinID, alignModel);
             //console.log ("ids", alignModel.get("compAlignments"));
             var alignPos = resIndex;
             
             if (alignModel) {
-                alignPos = from3D ? alignModel.mapToSearch ("3D", resIndex) : alignModel.mapFromSearch ("3D", resIndex);
+                var seqId = "3D" + (chainname ? ":"+chainname : "");
+                alignPos = from3D ? alignModel.mapToSearch (seqId, resIndex) : alignModel.mapFromSearch (seqId, resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }
@@ -340,26 +347,36 @@
         // then need to subtract 1, then --> which goes to PDB index with residueStore
         makeLinkList: function (linkModel, residueStore) {
             var linkList = linkModel.map (function (xlink) {
+                var fromChain = this.chainMap[xlink.fromProtein.id][0];
+                var toChain = this.chainMap[xlink.fromProtein.id][0];
+                // at the moment we're picking first matching chain for a protein, but we...
+                // 1. could in this function add in multiple cross-links if protein maps to multiple chains i.e. A and B
+                // so A-A, A-B, B-A, B-B are possibles
+                // 2. could exclude A-A and B-B if homomultimeric link
+                // 3. could work out distances of A-A, A-B, B-A, B-B and pick lowest non-zero distance
+                //console.log ("cc", fromChain, toChain);
                 return {
-                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id) - 1,  // residues are 0-indexed in NGL so -1
-                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id) - 1,    // residues are 0-indexed in NGL so -1
+                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, fromChain) - 1,  // residues are 0-indexed in NGL so -1
+                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, toChain) - 1,    // residues are 0-indexed in NGL so -1
                     id: xlink.id,
+                    fromChain: fromChain,
+                    toChain: toChain,
                 };
             }, this);
             
             linkList = linkList.filter (function (link) {
                 return link.fromResidue >= 0 && link.toResidue >= 0;
             });
-            return this.transformLinkList (linkList, "A", null, residueStore);	
+            return this.transformLinkList (linkList, null, residueStore);	
         },
         
-        transformLinkList: function (linkList, chainname, structureId, residueStore) {
+        // removed hard-coded chainname as parameter
+        transformLinkList: function (linkList, structureId, residueStore) {
 
-            chainname = chainname === undefined ? "A" : chainname;
             var nextResidueId = 0;
-
             var residueDict = {};
-            function getResidueId (resIndex) {
+            
+            function getResidueId (resIndex, chainname) {
                 // TODO add structureId to key
                 // TODO in NMR structures there are multiple models
                 var key = resIndex + ":" + chainname;
@@ -376,16 +393,16 @@
                     linkId: i,
                     residueA: {
                         resindex: rl.fromResidue,
-                        residueId: getResidueId (rl.fromResidue),
+                        residueId: getResidueId (rl.fromResidue, rl.fromChain),
                         resno: residueStore.resno [rl.fromResidue], // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                        chainname: chainname,
+                        chainname: rl.fromChain,
                         structureId: structureId
                     },
                     residueB: {
                         resindex: rl.toResidue,
-                        residueId: getResidueId (rl.toResidue),
+                        residueId: getResidueId (rl.toResidue, rl.toChain),
                         resno: residueStore.resno [rl.toResidue],   // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                        chainname: chainname,
+                        chainname: rl.toChain,
                         structureId: structureId
                     }
                 };
