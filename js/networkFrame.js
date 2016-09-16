@@ -90,9 +90,6 @@ CLMSUI.init.models = function (options) {
         });
     });
 
-    //~ var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
-        //~ distances: distances
-    //~ });
 
     var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
         scale: d3.scale.linear()
