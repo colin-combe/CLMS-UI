@@ -111,7 +111,7 @@ header('Content-type: text/html; charset=utf-8');
 
             <div class="container">
                 <h1 class="page-header">
-                <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
+                <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
                 <span class="headerLabel" style="font-weight:bold;">
                     <?php echo $_SESSION['session_name'] ?>  validating
                     <?php

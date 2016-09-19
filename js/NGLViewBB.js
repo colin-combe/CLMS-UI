@@ -784,7 +784,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.sstrucRepr = comp.addRepresentation ("cartoon", {
             color: this.sstrucColor,
             name: "sstruc",
-            //opacity: 0.4, //
+            //opacity: 0.4,
+            //side: "front",
         });
 
         this.resRepr = comp.addRepresentation ("spacefill", {
@@ -824,6 +825,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelVisible: this.displayedDistanceVisible,
             opacity: 0.9,
             name: "link",
+            side: "front",
         });
 
         this.linkEmphRepr = comp.addRepresentation ("distance", {
