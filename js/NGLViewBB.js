@@ -114,8 +114,8 @@
                 .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
             ;
             
-            this.chartDiv.append("div").attr("class","overlayInfo"); 
-            this.stage = new NGL.Stage ("ngl", {});
+            this.chartDiv.append("div").attr("class","overlayInfo").html("No PDB File Loaded"); 
+            this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100*/});
             
             // populate 3D network viewer if hard-coded pdb id present
             if (this.options.pdbFileID) { 
@@ -782,10 +782,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var resEmphSele = this._getSelectionFromResidue ([]);
 
         this.sstrucRepr = comp.addRepresentation ("cartoon", {
-            color: this.sstrucColor,
+            //color: this.sstrucColor,
+            colorScheme: "chainname",
+            colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
             name: "sstruc",
-            //opacity: 0.4,
-            //side: "front",
+            opacity: 0.67,
+            side: "front",
         });
 
         this.resRepr = comp.addRepresentation ("spacefill", {
@@ -823,7 +825,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: 2.0,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
-            opacity: 0.9,
+            opacity: 1,
             name: "link",
             side: "front",
         });
@@ -837,6 +839,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: 1.5,
             opacity: 0.6,
             name: "linkEmph",
+            side: "front",
         });
         
         this.linkHighRepr = comp.addRepresentation ("distance", {
@@ -896,6 +899,22 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (residues) {
                 pdtrans.residue = residues[0];
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
+                console.log ("pp", pickingData);
+                
+                var o1 = $("#main").offset();
+                var o2 = $("#nglPanel canvas").offset();
+                var offsetX = o2.left - o1.left;
+                var offsetY = o2.top - o1.top;
+                var canvasHeight = o2.height;
+                console.log ("oo", o1, o2, canvasHeight);
+                this.model.get("tooltipModel")
+                    .set("header", "Residue")
+                    .set("contents", [
+                        ["Res No", pdtrans.residue.resno],
+                    ])
+                    .set("location", {pageX: pickingData.mouse.x + offsetX, pageY: pickingData.mouse.y + (canvasHeight - offsetY)})
+                ;
+                this.model.get("tooltipModel").trigger ("change:location");
             }
         } else if (bond !== undefined) {
             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
