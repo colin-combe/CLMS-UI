@@ -16,7 +16,6 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
     events: {},
     initialize: function (options) {
 
-        this.rangeModel = options.rangeModel;   // a parallel, optional rangeModel I'm trying to sideline, still used by crosslinkviewer 23/08/16
         this.cx = this.el.clientWidth;
         this.cy = this.el.clientHeight;
 
@@ -120,10 +119,6 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         brushg.selectAll("rect")
             .attr("width", 50);
         
-        if (this.rangeModel) {
-            this.rangeModel.set ("active", true);
-        }
-        
         this.brushmove();
     },
     
@@ -149,9 +144,6 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         ;
         
         this.model.setDomain ([s[0], s[1]]);
-        if (this.rangeModel) {
-            this.rangeModel.set ("scale", scale);
-        }
         
         return this;     
 	},

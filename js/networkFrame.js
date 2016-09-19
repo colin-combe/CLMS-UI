@@ -90,12 +90,6 @@ CLMSUI.init.models = function (options) {
         });
     });
 
-
-    var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
-        scale: d3.scale.linear()
-    });
-    options.rangeModelInst = rangeModelInst;
-
     CLMSUI.init.modelsEssential(options);
 
     // Set up colour models, some (most) of which depend on data properties
@@ -126,7 +120,6 @@ CLMSUI.init.modelsEssential = function (options) {
 
     CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
         clmsModel: clmsModelInst,
-        rangeModel: options.rangeModelInst,
         filterModel: filterModelInst,
         tooltipModel: tooltipModelInst,
         alignColl: options.alignmentCollectionInst,
@@ -221,7 +214,6 @@ CLMSUI.init.views = function () {
         new CLMSUI.ThreeColourSliderBB ({
             el: "#sliderDiv",            
             model: CLMSUI.linkColour.distanceColoursBB,
-            rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
             domain: [0,35],
             extent: [15,25],
         });
