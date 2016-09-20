@@ -148,7 +148,6 @@
             });
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            //this.listenTo (this.model.get("rangeModel"), "change:scale", this.relayout); 
             this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
             this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
             

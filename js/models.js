@@ -218,14 +218,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         }
     }),
 
-
-    RangeModel: Backbone.Model.extend ({
-        defaults: {
-            active: false
-        },
-    }),
-
-        // I want MinigramBB to be model agnostic so I can re-use it in other places
+    // I want MinigramBB to be model agnostic so I can re-use it in other places
     MinigramModel: Backbone.Model.extend ({
         defaults: {
             domainStart: 0,

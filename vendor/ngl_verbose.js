@@ -50363,6 +50363,7 @@ var PickingControls = function( viewer, params ){
             "volume": pickedVolume,
             "instance": instance,
             "gid": pickingData.gid,
+            "mouse": {x: mouse.canvasPosition.x, y: mouse.canvasPosition.y},
         };
     }
 
