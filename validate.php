@@ -113,12 +113,12 @@ header('Content-type: text/html; charset=utf-8');
                 <h1 class="page-header">
                 <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
                 <span class="headerLabel" style="font-weight:bold;">
-                    <?php echo $_SESSION['session_name'] ?>  validating
+                    <?php echo $_SESSION['session_name'] ?>&nbsp;&nbsp;
                     <?php
-                        $dashPos = strpos($sid,'-');
-                        $randId = substr($sid, $dashPos + 1);
-                        $search_id = substr($sid, 0, ($dashPos));
-                        echo $search_id;
+                        //~ $dashPos = strpos($sid,'-');
+                        //~ $randId = substr($sid, $dashPos + 1);
+                        //~ $search_id = substr($sid, 0, ($dashPos));
+                        //~ echo $search_id;
                     ?>
 
                 </span>
@@ -177,9 +177,17 @@ header('Content-type: text/html; charset=utf-8');
 						CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
 					CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
 
-					window.onresize = function(event) {
+					var resize = function(event) {
 						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					};					
+						var alts = d3.select("#alternatives");
+						var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
+						alts.attr("style", "width:"+w+"px;"); //dont know why d3 style() aint working
+					};
+
+					window.onresize = resize;
+
+					resize();
+										
 				}
 			};
 			xmlhttp.send();
