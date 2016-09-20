@@ -77,7 +77,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
         
         mainDivSel.append ("label")
-                .text ("Min.seq.sep.")
+                .text ("Seq.sep.>")
                 .append ("input")
                     .attr ("id", "seqSepFilter")
                     .attr ("class", "filterSeqSep")
