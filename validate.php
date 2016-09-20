@@ -113,14 +113,7 @@ header('Content-type: text/html; charset=utf-8');
                 <h1 class="page-header">
                 <i class="fa fa-home" onclick="window.location = './history.php';" title="Return to search history"></i>
                 <span class="headerLabel" style="font-weight:bold;">
-                    <?php echo $_SESSION['session_name'] ?>&nbsp;&nbsp;
-                    <?php
-                        //~ $dashPos = strpos($sid,'-');
-                        //~ $randId = substr($sid, $dashPos + 1);
-                        //~ $search_id = substr($sid, 0, ($dashPos));
-                        //~ echo $search_id;
-                    ?>
-
+                    <?php echo $_SESSION['session_name'] ?>
                 </span>
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
