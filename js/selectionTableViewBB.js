@@ -117,7 +117,6 @@
                     .attr ("max", "999" )
                     //~ .attr ("class", "btn btn-1 btn-1a" )
                     .style ("display", "inline-block")
-                    .text ("<last")
                     .on ("change", function (d) {
                             self.setPage(this.value);
                     });
