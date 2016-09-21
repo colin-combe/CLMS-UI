@@ -26,38 +26,31 @@ CLMSUI.modelUtils = {
     
     flattenDistanceMatrix: function (distanceMatrix) {
         var distanceList = [].concat.apply([], distanceMatrix);
-        distanceList = distanceList.filter(function(d) { return d !== null && d !== undefined; });
-        return distanceList;
+        return distanceList.filter (function(d) { return d !== null && d !== undefined; });
     },
     
     getFlattenedDistances: function (interactorsArr) {
         console.log ("interactors", interactorsArr);
         var perProtDistances = interactorsArr.map (function (prot) {
-            return CLMSUI.modelUtils.flattenDistanceMatrix (prot.distances);    
+            var values = d3.values(prot.distances);
+            var protDists = values.map (function (value) {
+                return CLMSUI.modelUtils.flattenDistanceMatrix (value);    
+            });
+            protDists = [].concat.apply([], protDists);
+            return protDists;
         });
-        var allDistances =  [].concat.apply([], perProtDistances);
+        var allDistances = [].concat.apply([], perProtDistances);
         return allDistances;
-    },
-    
-    getCrossLinkDistances: function (crossLinks, distances) {
-        var distArr = [];
-        for (var crossLink of crossLinks) {
-            var toRes = crossLink.toResidue;
-            var fromRes = crossLink.fromResidue;
-            var highRes = Math.max(toRes, fromRes);
-            var lowRes = Math.min(toRes, fromRes);
-            var dist = distances[highRes] ? distances[highRes][lowRes] : null;
-            if (dist !== null) {
-                distArr.push(+dist); // + is to stop it being a string
-            }
-        }
-
-        return distArr;
     },
     
     getCrossLinkDistances2: function (crossLinks, interactorMap) {
         var distArr = [];
         for (var crossLink of crossLinks) {
+            var dist = CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
+            if (dist !== null && dist !== undefined) {
+                distArr.push(+dist); // + is to stop it being a string
+            }
+            /*
             var toRes = crossLink.toResidue;
             var fromRes = crossLink.fromResidue;
             var toProt = crossLink.toProtein;
@@ -70,7 +63,9 @@ CLMSUI.modelUtils = {
                     distArr.push(+dist); // + is to stop it being a string
                 }
             }
+            */
         }
+        console.log ("distArr", distArr);
 
         return distArr;
     },
@@ -244,34 +239,63 @@ CLMSUI.modelUtils = {
         "*": "*" ,
     },
     
-    getSequencesFromNGLModel: function (stage, CLMSModel) {
+    getSequencesFromNGLModelNew: function (stage) {
         var sequences = [];
-        var proteins = Array.from(CLMSModel.get("interactors").values()).filter (function (protein) { return !protein.is_decoy; });
         
-        stage.eachComponent (function (comp, index) {   
-            console.log ("pc", proteins, index);
-            var pid = proteins[index].id || "Unknown";  // assuming proteins match 1-1 with components, is a guess
-            // but otherwise at mo have no way of knowing which stage belongs to which protein
-            console.log ("pid", pid);
-            
-            comp.structure.eachModel (function(m) {
-                var resList = [];
-                console.log ("model", m);
-
-                m.eachChain (function(c) {
-                    console.log ("chain", c, c.residueCount, c.residueOffset);
-                    if (c.residueOffset === 0) {    // just use first chain for the moment. is a hack.
-                        c.eachResidue (function (r) {
-                            var oneLetter = CLMSUI.modelUtils.amino3to1Map[r.resname];
-                            resList.push (oneLetter || "X");    
-                        });
-                    }
-                });
-                sequences[sequences.length] = {id: pid, name: "3D", data: resList.join("")};
+        stage.eachComponent (function (comp) {    
+            comp.structure.eachChain (function (c) {
+                console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
+                if (c.residueCount > 10) {    // short chains are ions/water molecules, ignore
+                    var resList = [];
+                    c.eachResidue (function (r) {
+                        resList.push (CLMSUI.modelUtils.amino3to1Map[r.resname] || "X");    
+                    });
+                    sequences.push ({chainName: c.chainname, chainIndex: c.index, residueOffset: c.residueOffset, data: resList.join("")});
+                }
             });
         });  
 
         return sequences;
+    },
+    
+    matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
+        var proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
+        var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+        var matchMatrix = {};
+        proteins.forEach (function (prot) {
+            //console.log ("prot", prot);
+            var protAlignModel = alignCollection.get(prot.id);
+            if (protAlignModel) {
+                var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
+                var alignResults = protAlignModel.alignWithoutStoring (seqs);
+                console.log ("alignResults", alignResults);
+                var scores = alignResults.map (function (indRes) { return indRes.res[0]; })
+                matchMatrix[prot.id] = scores;
+            }   
+        });
+        console.log ("matchMatrix", matchMatrix);
+        return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
+    },
+    
+    matrixPairings: function (matrix, sequenceObjs) {
+        var keys = d3.keys(matrix);
+        var pairings = [];
+        for (var n = 0; n < sequenceObjs.length; n++) {
+            var max = {key: undefined, seqObj: undefined, score: 100};
+            keys.forEach (function (key) {
+                var score = matrix[key][n];
+                if (score > max.score) {
+                    max.score = score;
+                    max.key = key;
+                    max.seqObj = sequenceObjs[n];
+                }
+            });
+            if (max.key) {
+                pairings.push ({id: max.key, seqObj: max.seqObj});
+            }
+        }
+        
+        return pairings;
     },
     
     linkHasHomomultimerMatch: function (xlink) {

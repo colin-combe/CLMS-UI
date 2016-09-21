@@ -150,7 +150,10 @@
                 if (distances) {
                     var highRes = Math.max (xlink.toResidue, xlink.fromResidue);
                     var lowRes = Math.min (xlink.toResidue, xlink.fromResidue);
-                    var dist = distances[highRes] ? distances[highRes][lowRes] : null;
+                    var values = d3.values(distances);
+                    var dist = d3.min (values.map (function (value) {
+                        return value[highRes] ? value[highRes][lowRes] : null;
+                    }))
                     //console.log ("dist", dist);
                     return dist;
                 }
