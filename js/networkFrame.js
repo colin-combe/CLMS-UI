@@ -29,7 +29,7 @@ var allDataLoaded = _.after (2, function() {
     allDataAndWindowLoaded();
 });
 
-// function runs only when sequences and blosums have been loaded, and when window is loaded
+// function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
 var allDataAndWindowLoaded = _.after (2, function () {
     console.log ("DATA LOADED AND WINDOW LOADED");
     CLMSUI.init.viewsThatNeedAsyncData();
@@ -161,7 +161,7 @@ CLMSUI.init.views = function () {
     var checkBoxData = [
         {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
