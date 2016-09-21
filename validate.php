@@ -68,12 +68,12 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./vendor/underscore.js"></script>
         <script type="text/javascript" src="./vendor/zepto.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
+        <script type="text/javascript" src="./vendor/spin.js"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/util/xiNET_Storage.js"></script>
 
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
@@ -113,14 +113,7 @@ header('Content-type: text/html; charset=utf-8');
                 <h1 class="page-header">
                 <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
                 <span class="headerLabel" style="font-weight:bold;">
-                    <?php echo $_SESSION['session_name'] ?>  validating
-                    <?php
-                        $dashPos = strpos($sid,'-');
-                        $randId = substr($sid, $dashPos + 1);
-                        $search_id = substr($sid, 0, ($dashPos));
-                        echo $search_id;
-                    ?>
-
+                    <?php echo $_SESSION['session_name'] ?>
                 </span>
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
@@ -150,43 +143,49 @@ header('Content-type: text/html; charset=utf-8');
 				}
 			?>
 			
-			var xmlhttp = new XMLHttpRequest();
-			var url = "./loadData.php" + window.location.search;
-			var params =  window.location.search.substr(1);
-			xmlhttp.open("POST", url, true);
-			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-				if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-					//~ console.log(xmlhttp.responseText);
+            var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 					
-					var json = JSON.parse(xmlhttp.responseText);
-					
-					CLMSUI.init.modelsEssential(json);
+            var success = function (text) {
+                spinner.stop(); // stop spinner on request returning 
+				var json = JSON.parse (text);	
+				CLMSUI.init.modelsEssential(json);
 
-					var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-					document.title = Array.from(searches.keys()).join();
+				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+				document.title = Array.from(searches.keys()).join();
 					
-					CLMSUI.split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
-								sizes: [60,40], minSize: [200,10],
-								onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-						} });	
+				CLMSUI.split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
+						sizes: [60,40], minSize: [200,10],
+							onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+				} });	
 										
-					CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
+				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
 
-					var allCrossLinks = Array.from(
-						CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+				var allCrossLinks = Array.from(
+					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
 					CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
 
-					window.onresize = function(event) {
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					};					
-				}
+				var resize = function(event) {
+					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					var alts = d3.select("#alternatives");
+					var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
+					alts.attr("style", "width:"+w+"px;"); //dont know why d3 style() aint working
+				};
+
+				window.onresize = resize;
+
+				resize();
 			};
-			xmlhttp.send();
-        //~ };
 
-        //~ window.addEventListener("load", windowLoaded);
-
+			var url = "./loadData.php" + window.location.search;
+			
+         
+            d3.text (url, function (error, text) {
+                if (!error) {
+                    success (text);
+                }
+            });
+        
+           
         //]]>
         </script>
 

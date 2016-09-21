@@ -1,7 +1,26 @@
+#main .mainContent {
+	top:10px;
+}
+.container{
+	float:left;
+}
+.page-header{
+	margin:0px;
+	padding:5px;
+    position: absolute;
+	z-index: 2;
+}
 #toggles_decoys {
 	display: none;
 }
 
+#clearHighlights {
+	display: none;
+}
+
+#spectrumControls {
+	float:right;
+}
 #spectrumControlsTop {
 	background-color: #091D42;
 	display: inline-block;
@@ -26,16 +45,6 @@
 	padding: 0px 10px;
 }
 
-/*
-.heightFill {
-	width: 100%;
-}
-*/
-
-.sideOn {
-	display: none;
-}
-
 #colorSelector{
 	display: none;
 }
@@ -44,7 +53,5 @@
 }
 #alternatives {
     background: rgba(9, 29, 66, 0.9);
-/*
     height:150px;
-*/
 }

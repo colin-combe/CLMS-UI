@@ -9,7 +9,7 @@
 }
 
 .selectView > DIV.scrollHolder {
-    height: calc(100% - 30px);
+    height: calc(100% - 40px);
     overflow: auto;
 }
 

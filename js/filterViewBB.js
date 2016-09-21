@@ -44,8 +44,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
-
-        //mainDivSel.append("span").attr("class", "sideOn").text("Filters");      
         
         var toggleElems = mainDivSel.selectAll("div.toggles")
             .data(this.options.toggles, function(d) { return d.id; })

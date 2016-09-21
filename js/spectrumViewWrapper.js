@@ -223,7 +223,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
         var alts = d3.select("#alternatives");
         var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
-        //~ console.log("w="+w);
         alts.attr("style", "width:"+w+"px;"); //dont know why d3 style() aint working
         return this;
     },
