@@ -76,7 +76,7 @@
                 //~ "pepPos1": function () { return false; },
                 //~ "pepPos2": function () { return false; },
                 "autovalidated": function () { return CLMS.model.autoValidatedFound; },
-                "validated": function () { return CLMS.model.manualValidatedFound; },
+                "validated": function () { return true;} //CLMS.model.manualValidatedFound; },
             };
 
             this.filteredProps = tableDataPropOrder.filter(
