@@ -19,6 +19,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     initialize: function (viewOptions) {
         var defaultOptions = {
             toggles: [
+                {"label":"Decoy", "id":"decoys", special: true},
+                {"label":"Linear", "id":"linears", special: true},
+                {"label":"Ambig.", "id":"ambig", special: true},
+                {"label":"Self", "id":"selfLinks", special: true},
                 {"label":"A", "id":"A"},
                 {"label":"B", "id":"B"},
                 {"label":"C", "id":"C"},
@@ -27,18 +31,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Unval.", "id":"unval"}
             ],
             textFilters: [
-                {"label":"  Pep.:", "id":"pepSeq", "chars":7},
-                {"label":"Prot.:", "id":"protNames", "chars":7},
-                {"label":"Charge:", "id":"charge", "chars":1},
-                {"label":"Run:", "id":"runName","chars":5},
-                {"label":"Scan:", "id":"scanNumber", "chars":5}
+                {"label":"Peptide", "id":"pepSeq", "chars":7},
+                {"label":"Protein", "id":"protNames", "chars":7},
+                {"label":"Charge", "id":"charge", "chars":1},
+                {"label":"Run", "id":"runName","chars":5},
+                {"label":"Scan", "id":"scanNumber", "chars":5}
             ],
-            toggleSpecials: [
-                {"label":"Decoy", "id":"decoys"},
-                {"label":"Linear", "id":"linears"},
-                {"label":"Ambig.", "id":"ambig"},
-                {"label":"Self", "id":"selfLinks"}
-            ]
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -47,43 +45,40 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        //mainDivSel.append("span").attr("class", "sideOn").text("Filters");
-
-         mainDivSel.selectAll("label.toggles")
-            .data(this.options.toggleSpecials, function(d) { return d.id; })
-            .enter()
-            .append ("label")
-                .attr("class", "toggles")
-                .attr("id", function(d) { return "toggles_" + d.id; })
-                .text (function(d) { return d.label; })
-                .append ("input")
-                    .attr ("id", function(d) { return d.id; })
-                    .attr ("class", "filterSpecialToggle")
-                    .attr ("type", "checkbox")
-                    .property ("checked", function(d) { return self.model.get(d.id); })
-        ;
+        //mainDivSel.append("span").attr("class", "sideOn").text("Filters");      
         
-        
-        mainDivSel.selectAll("label")
+        var toggleElems = mainDivSel.selectAll("div.toggles")
             .data(this.options.toggles, function(d) { return d.id; })
             .enter()
+            .append ("div")
+            .attr ("class", "toggles")
+            .attr("id", function(d) { return "toggles_" + d.id; })
             .append ("label")
-                .text (function(d) { return d.label; })
-                .append ("input")
-                    .attr ("id", function(d) { return d.id; })
-                    .attr ("class", "filterTypeToggle")
-                    .attr ("type", "checkbox")
-                    .property ("checked", function(d) { return self.model.get(d.id); })
         ;
         
-        mainDivSel.append ("label")
-                .text ("Seq.sep.>")
-                .append ("input")
-                    .attr ("id", "seqSepFilter")
-                    .attr ("class", "filterSeqSep")
-                    .attr ("type", "number")
-                    .attr ("min", 0)
-                    .attr ("max", 999)
+        toggleElems.append ("span")
+            .text (function(d) { return d.label; })
+        ;
+        
+        toggleElems.append ("input")
+            .attr ("id", function(d) { return d.id; })
+            .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
+            .attr ("type", "checkbox")
+            .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+        
+        
+        var seqSepElem = mainDivSel.append ("div")
+            .attr("class", "numberFilters")
+            .append ("label")
+        ;
+        
+        seqSepElem.append("span")
+            .text ("Min.seq.sep.")
+        ;
+        
+        seqSepElem.append ("input")
+            .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 0, max: 999})
         ;
 
         var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
@@ -114,22 +109,25 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
         
-        mainDivSel.selectAll("label.textFilters")
+        var textFilters = mainDivSel.selectAll("div.textFilters")
             .data(this.options.textFilters, function(d) { return d.id; })
             .enter()
-            .append ("label")
+            .append("div")
             .attr("class", "textFilters")
-                .text (function(d) { return d.label; })
-                .append ("input")
-                    .attr ("id", function(d) { return d.id; })
-                    .attr ("class", "filterTypeText")
-                    .attr ("type", "textbox")
-                    .attr ("size", function(d) { return d.chars; })
-                    //~ .property ("checked", function(d) { return self.model.get(d.id); })
+            .append ("label")
         ;
-
-        // onclick="//xlv.showSelfLinks(document.getElementById('selfLinks').checked)"
-        // onclick="//xlv.showAmbig(document.getElementById('ambig').checked)"
+        
+        textFilters.append("span")
+            .text (function(d) { return d.label; })
+        ;
+        
+        textFilters.append ("input")
+            .attr ("id", function(d) { return d.id; })
+            .attr ("class", "filterTypeText")
+            .attr ("type", "textbox")
+            .attr ("size", function(d) { return d.chars; })
+            //~ .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
 
         sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : 'inline-block');
 

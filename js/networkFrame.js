@@ -29,7 +29,7 @@ var allDataLoaded = _.after (2, function() {
     allDataAndWindowLoaded();
 });
 
-// function runs only when sequences and blosums have been loaded, and when window is loaded
+// function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
 var allDataAndWindowLoaded = _.after (2, function () {
     console.log ("DATA LOADED AND WINDOW LOADED");
     CLMSUI.init.viewsThatNeedAsyncData();
@@ -90,15 +90,6 @@ CLMSUI.init.models = function (options) {
         });
     });
 
-    //~ var distancesInst = new CLMSUI.BackboneModelTypes.DistancesModel ({
-        //~ distances: distances
-    //~ });
-
-    var rangeModelInst = new CLMSUI.BackboneModelTypes.RangeModel ({
-        scale: d3.scale.linear()
-    });
-    options.rangeModelInst = rangeModelInst;
-
     CLMSUI.init.modelsEssential(options);
 
     // Set up colour models, some (most) of which depend on data properties
@@ -129,7 +120,6 @@ CLMSUI.init.modelsEssential = function (options) {
 
     CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
         clmsModel: clmsModelInst,
-        rangeModel: options.rangeModelInst,
         filterModel: filterModelInst,
         tooltipModel: tooltipModelInst,
         alignColl: options.alignmentCollectionInst,
@@ -171,7 +161,7 @@ CLMSUI.init.views = function () {
     var checkBoxData = [
         {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
@@ -224,7 +214,6 @@ CLMSUI.init.views = function () {
         new CLMSUI.ThreeColourSliderBB ({
             el: "#sliderDiv",            
             model: CLMSUI.linkColour.distanceColoursBB,
-            rangeModel: CLMSUI.compositeModelInst.get("rangeModel"),
             domain: [0,35],
             extent: [15,25],
         });
