@@ -44,8 +44,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
-
-        //mainDivSel.append("span").attr("class", "sideOn").text("Filters");      
         
         var toggleElems = mainDivSel.selectAll("div.toggles")
             .data(this.options.toggles, function(d) { return d.id; })
@@ -83,7 +81,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<P>Score:</P><P class='vmin cutoffLabel'>&gt;</P><div id='<%= eid %>'></div><P class='cutoffLabel vmax'>&lt;</P>");
+        var tpl = _.template ("<div><span>Score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
 
 
@@ -129,7 +127,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
 
-        sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : 'inline-block');
+        sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
 
         this.displayEventName = viewOptions.displayEventName;
 

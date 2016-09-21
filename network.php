@@ -191,18 +191,7 @@
         
             var url = "./loadData.php" + window.location.search;
         
-            /*
- 			var xmlhttp = new XMLHttpRequest();
-			//var params =  window.location.search.substr(1);
-			xmlhttp.open("POST", url, true);
-			xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-					success (xmlhttp.responseText);
-				}
-			};
-			xmlhttp.send();
-            */
+
         
             d3.text (url, function (error, text) {
                 if (!error) {
@@ -210,10 +199,7 @@
                 }
             });
         
-            
-		//~ };
-
-        //~ window.addEventListener("load", windowLoaded);
+           
     //]]>
     </script>
 

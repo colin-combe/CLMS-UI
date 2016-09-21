@@ -2,15 +2,16 @@ input.filterTypeText {
     margin-right: 5px;
 }
 
-div.textFilters, div.toggles, div.numberFilters {
+div.textFilters, div.toggles, div.numberFilters, div.scoreSlider > div {
     display: inline-block;
+    vertical-align: top;
 }
 
 div.toggles input[type=checkbox] {
     margin-left: 0;
 }
 
-.textFilters span:after, .numberFilters span:after, .toggles span:after {
+.textFilters span:after, .numberFilters span:after, .toggles span:after, .scoreSlider span:after {
     content: ' ';
     display: block;
 }

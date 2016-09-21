@@ -41,8 +41,6 @@ var allDataAndWindowLoaded = _.after (2, function () {
 CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.models = function (options) {
-
-    CLMSUI.oldDB = options.oldDB || false;
     
     // define alignment model and listeners first, so they're ready to pick up events from other models
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
@@ -102,6 +100,8 @@ CLMSUI.init.models = function (options) {
 
 //only inits stuff required by validation page
 CLMSUI.init.modelsEssential = function (options) {
+    CLMSUI.oldDB = options.oldDB || false;
+
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
         "No cross-links detected for this search.<br>Please return to the search history page."
