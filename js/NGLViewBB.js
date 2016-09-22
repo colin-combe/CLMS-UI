@@ -161,7 +161,30 @@
             }
         },
         
+        matchPDBChainsToUniprot: function (pdbCode, success) {
+            $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
+                function (data, status, xhr) {
+                    console.log ("uniprotpdb", arguments);
+                        
+                    if (status === "success") {
+                        var map = [];
+                        $(data).find("block").each (function(i,b) { 
+                            var segArr = $(this).find("segment[intObjectId]"); 
+                            for (var n = 0; n < segArr.length; n += 2) {
+                                var id1 = $(segArr[n]).attr("intObjectId");
+                                var id2 = $(segArr[n+1]).attr("intObjectId");
+                                var pdbis1 = id1.includes(".") || id1.charAt(0) !== 'P';
+                                map.push (pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1});
+                            }
+                        });
+                        console.log ("map", map);
+                    } 
+                }
+            ); 
+        },
+        
         repopulate: function (pdbInfo) {
+            pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name) + ":";
             var firstTime = !this.xlRepr;
             if (firstTime) {
                 d3.select(this.el).select(".nglDataToolbar").style("display", null);
@@ -184,7 +207,11 @@
             this.stage.loadFile (uri, params)
                 .then (function (structureComp) {
                     var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
+                
                     console.log ("nglSequences", nglSequences2);
+                    if (pdbInfo.pdbCode) {
+                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode);
+                    }
                     var sequenceMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, 
                         Array.from(self.model.get("clmsModel").get("interactors").values()), 
                         function(sObj) { return sObj.data; }
@@ -193,7 +220,7 @@
                     self.chainMap = {};
                     sequenceMap.forEach (function (pMatch) {
                         pMatch.data = pMatch.seqObj.data;
-                        pMatch.name = "3D:"+pMatch.seqObj.chainName;
+                        pMatch.name = pdbInfo.baseSeqId + pMatch.seqObj.chainName;
                         self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
                         self.chainMap[pMatch.id].push (pMatch.seqObj.chainIndex);
                     });
@@ -204,12 +231,15 @@
                     // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
                     var crossLinks = self.model.get("clmsModel").get("crossLinks");
                     var filterCrossLinks = self.filterCrossLinks (crossLinks);
+                    console.log ("pdb", pdbInfo);
                     var crosslinkData = new CLMSUI.CrosslinkData (
-                        self.makeLinkList (filterCrossLinks, structureComp.structure)
+                        self.makeLinkList (filterCrossLinks, structureComp.structure, pdbInfo.baseSeqId)
                     );
 
                    self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                          self.model, self.stage, self.align, self.chainMap, structureComp, crosslinkData, {
+                          self.model, self.stage, self.align, self.chainMap, structureComp, crosslinkData, 
+                            pdbInfo.baseSeqId,
+                            {
                                  selectedColor: "lightgreen",
                                  selectedLinksColor: "yellow",
                                  sstrucColor: "gray",
@@ -314,22 +344,21 @@
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
-                var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure);
+                var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure, this.xlRepr.pdbBaseSeqId);
                 this.xlRepr.crosslinkData.setLinkList (linkList);
             }
         },
         
         // TODO, need to check for decoys (protein has no alignment)
         // conversion here works to and from the resindex local to a chain, not for the overall resindex within a whole model
-        align: function (resIndex, proteinID, from3D, chainName) {
+        align: function (resIndex, proteinID, from3D, pdbChainSeqId) {
             var alignModel = this.model.get("alignColl").get (proteinID);
-            //console.log ("am", proteinID, alignModel);
+            //console.log ("am", proteinID, alignModel, pdbChainSeqId);
             //console.log ("ids", alignModel.get("compAlignments"));
             var alignPos = resIndex;
             
             if (alignModel) {
-                var seqId = "3D" + (chainName ? ":"+chainName : "");
-                alignPos = from3D ? alignModel.mapToSearch (seqId, resIndex) : alignModel.mapFromSearch (seqId, resIndex);
+                alignPos = from3D ? alignModel.mapToSearch (pdbChainSeqId, resIndex) : alignModel.mapFromSearch (pdbChainSeqId, resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }
@@ -340,7 +369,7 @@
         // residueStore maps the NGL-indexed resides to PDB-index
         // so we take our alignment index --> which goes to NGL-sequence index with align() --> 
         // then need to subtract 1, then --> which goes to PDB index with residueStore
-        makeLinkList: function (linkModel, structure) {
+        makeLinkList: function (linkModel, structure, pdbBaseSeqId) {
             var chainStore = structure.chainStore;
             
             var linkList = linkModel.map (function (xlink) {
@@ -355,8 +384,8 @@
                 // 3. could work out distances of A-A, A-B, B-A, B-B and pick lowest non-zero distance
                 //console.log ("cc", fromChain, toChain);
                 return {
-                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, fromChainName) - 1,  // residues are 0-indexed in NGL so -1
-                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, toChainName) - 1,    // residues are 0-indexed in NGL so -1
+                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1,  // residues are 0-indexed in NGL so -1
+                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1,    // residues are 0-indexed in NGL so -1
                     id: xlink.id,
                     fromChainIndex: fromChainIndex,
                     toChainIndex: toChainIndex,
@@ -529,7 +558,7 @@ CLMSUI.CrosslinkData.prototype = {
 };
 
 
-CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, chainMap, structureComp, crosslinkData, params) {
+CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, chainMap, structureComp, crosslinkData, pdbBaseSeqId, params) {
 
     var defaults = {
         sstrucColor: "wheat",
@@ -552,6 +581,7 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, chainMap
     this.chainMap = chainMap;
     this.structureComp = structureComp;
     this.crosslinkData = crosslinkData;
+    this.pdbBaseSeqId = pdbBaseSeqId;
     this.origIds = {};
     this.residueToAtomIndexMap = {};
     
@@ -709,11 +739,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         chainIndices.forEach (function (ci) {
             var chainName = chainStore.getChainname (ci);
+            var pdbChainSeqId = this.pdbBaseSeqId + chainName;
             var chainOffset = chainStore.residueOffset [ci];
             var atomIndices = chainCAtomIndices[chainName] || [undefined];  // we're building a 1-indexed array so first entry (0) is undefined
             
             for (var n = 1; n < prot.size; n++) {
-                var index = this.alignFunc (n, pid, false, chainName) - 1; // rp.resno is 0-indexed so take 1 off the alignment result
+                var index = this.alignFunc (n, pid, false, pdbChainSeqId) - 1; // rp.resno is 0-indexed so take 1 off the alignment result
                 if (index >= 0) {
                     var resno = resStore.resno[index + chainOffset];
                     if (resno !== undefined) {

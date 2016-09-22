@@ -258,6 +258,9 @@ CLMSUI.modelUtils = {
         return sequences;
     },
     
+    /* Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query 
+    the pdb web services or it's offline. 
+    */
     matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
         var proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
         var alignCollection = CLMSUI.compositeModelInst.get("alignColl");

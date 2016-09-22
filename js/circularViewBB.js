@@ -756,8 +756,8 @@
             var resMap = d3.map();
             links.forEach (function (link) {
                 var xlink = crossLinks.get (link.id);
-                resMap.set (xlink.fromProtein.id+"-"+xlink.fromResidue, {polar: link.coords[0], res: xlink.fromProtein.sequence.charAt (xlink.fromResidue - 1)});
-                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[2], res: xlink.toProtein.sequence.charAt (xlink.toResidue - 1)});
+                resMap.set (xlink.fromProtein.id+"-"+xlink.fromResidue, {polar: link.coords[0], res: CLMSUI.modelUtils.getResidueType (xlink.fromProtein, xlink.fromResidue)});
+                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[2], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
             });
             var degToRad = Math.PI / 180;
             
