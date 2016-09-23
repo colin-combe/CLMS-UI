@@ -129,17 +129,24 @@
         <!-- Main -->
         <div id="main">
 
-            <div class="container">
-				<h1 class="page-header">
+            <div class="page-header">
 					<i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-					<p class="btn">Layout:</p>
-					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
-					<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
-					<p id="expDropdownPlaceholder"></p>
+					<a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
+					<span id="colourSelect" class="btn btn-1 btn-1a"></span> <!-- placeholder for new colour scheme selector -->
 					<p id="viewDropdownPlaceholder"></p>
-					<a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
-					<span id="colourSelect" class="btn btn-1 btn-1a righty"></span> <!-- placeholder for new colour scheme selector -->
-				</h1>
+					<p id="expDropdownPlaceholder"></p>
+			</div>
+
+			<div class="xinetControls">
+				<form action="">
+					<label for="clickToggle">TOGGLE CIRCLE/BAR</label>
+					<input type="radio" name="clickMode" id="clickToggle" value="toggle" checked>
+					<label for="clickSelect">CLICK TO SELECT</label>
+					<input type="radio" name="clickMode" id="clickSelect" value="select">
+				</form>
+				<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save Layout</button>
+				<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset Layout</button>
+				<button class='btn btn-1 btn-1a downloadButton'onclick="downloadSVG();">Export Graphic</button>
 			</div>
 
             <div class="mainContent">

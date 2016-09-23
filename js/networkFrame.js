@@ -159,7 +159,7 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        {id: "nglChkBxPlaceholder", label: "NGL", eventName:"nglShow"},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
@@ -223,10 +223,10 @@ CLMSUI.init.views = function () {
         el: "#expDropdownPlaceholder",
         model: CLMSUI.clmsModelInst,
         myOptions: {
-            title: "Export",
+            title: "Data-Export",
             menu: [
                 {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount}, {name: "SVG", func: downloadSVG}
+                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
             ]
         }
     });
