@@ -213,54 +213,79 @@
                 
                     console.log ("nglSequences", nglSequences2);
                     if (pdbInfo.pdbCode) {
-                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode);
+                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode, function (pdbUniProtMap) {
+                            
+                            var interactors = Array.from(self.model.get("clmsModel").get("interactors").values());
+                            interactors = interactors.filter (function(i) { return !i.is_decoy; });
+                            
+                            pdbUniProtMap.forEach (function (mapping) {
+                                var chainName = mapping.pdb.slice(-1);
+                                var matchSeqs = nglSequences2.filter (function (seqObj) {
+                                    return seqObj.chainName === chainName;    
+                                });
+                                mapping.seqObj = matchSeqs[0]; 
+                                var matchingInteractors = interactors.filter (function(i) {
+                                    var minLength = Math.min (i.accession.length, mapping.uniprot.length);
+                                    return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
+                                });
+                                mapping.id = matchingInteractors[0].id;
+                            });
+                            
+                            sequenceMapsAvailable (pdbUniProtMap);
+                        });
                     }
-                    var sequenceMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, 
-                        Array.from(self.model.get("clmsModel").get("interactors").values()), 
-                        function(sObj) { return sObj.data; }
-                    );
-                    console.log ("seq matches", sequenceMap);
-                    self.chainMap = {};
-                    sequenceMap.forEach (function (pMatch) {
-                        pMatch.data = pMatch.seqObj.data;
-                        pMatch.name = pdbInfo.baseSeqId + pMatch.seqObj.chainName;
-                        self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
-                        self.chainMap[pMatch.id].push (pMatch.seqObj.chainIndex);
-                    });
-                    console.log ("chainmap", self.chainMap); 
-                    console.log ("stage", self.stage, "\nhas sequences", sequenceMap);
-                    self.model.trigger ("3dsync", sequenceMap);
+                    else {  // without access to pdb codes have to match comparing all proteins against all chains
+                        var sequenceMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, 
+                            Array.from(self.model.get("clmsModel").get("interactors").values()), 
+                            function(sObj) { return sObj.data; }
+                        );
+                        sequenceMapsAvailable (sequenceMap);
+                    }
+                
+                    function sequenceMapsAvailable (sequenceMap) {
+                        console.log ("seq matches", sequenceMap);
+                        self.chainMap = {};
+                        sequenceMap.forEach (function (pMatch) {
+                            pMatch.data = pMatch.seqObj.data;
+                            pMatch.name = pdbInfo.baseSeqId + pMatch.seqObj.chainName;
+                            self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
+                            self.chainMap[pMatch.id].push (pMatch.seqObj.chainIndex);
+                        });
+                        console.log ("chainmap", self.chainMap); 
+                        console.log ("stage", self.stage, "\nhas sequences", sequenceMap);
+                        self.model.trigger ("3dsync", sequenceMap);
 
-                    // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
-                    var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                    var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                    console.log ("pdb", pdbInfo);
-                    var crosslinkData = new CLMSUI.CrosslinkData (
-                        self.makeLinkList (filterCrossLinks, structureComp.structure, pdbInfo.baseSeqId)
-                    );
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
+                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                        var filterCrossLinks = self.filterCrossLinks (crossLinks);
+                        console.log ("pdb", pdbInfo);
+                        var crosslinkData = new CLMSUI.CrosslinkData (
+                            self.makeLinkList (filterCrossLinks, structureComp.structure, pdbInfo.baseSeqId)
+                        );
 
-                   self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                          self.model, self.stage, self.align, self.chainMap, structureComp, crosslinkData, 
-                            pdbInfo.baseSeqId,
-                            {
-                                 selectedColor: "lightgreen",
-                                 selectedLinksColor: "yellow",
-                                 sstrucColor: "gray",
-                                 displayedDistanceColor: "tomato",
-                                displayedDistanceVisible: self.options.labelVisible,
-                          }
-                   );
+                       self.xlRepr = new CLMSUI.CrosslinkRepresentation (
+                              self.model, self.align, self.chainMap, structureComp, crosslinkData, 
+                                pdbInfo.baseSeqId,
+                                {
+                                     selectedColor: "lightgreen",
+                                     selectedLinksColor: "yellow",
+                                     sstrucColor: "gray",
+                                     displayedDistanceColor: "tomato",
+                                    displayedDistanceVisible: self.options.labelVisible,
+                              }
+                       );
 
-                    var dd = self.xlRepr.getDistances ();
-                    //console.log ("distances", [dd]);
-                    self.model.trigger ("distancesAvailable", [dd]);
+                        var dd = self.xlRepr.getDistances ();
+                        //console.log ("distances", [dd]);
+                        self.model.trigger ("distancesAvailable", [dd]);
 
-                    if (firstTime) {
-                        self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                        self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
-                        self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
-                        self.listenTo (self.model, "change:selection", self.showSelected);
-                        self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                        if (firstTime) {
+                            self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
+                            self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
+                            self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
+                            self.listenTo (self.model, "change:selection", self.showSelected);
+                            self.listenTo (self.model, "change:highlights", self.showHighlighted);
+                        }
                     }
                 })
             ;  
@@ -561,7 +586,7 @@ CLMSUI.CrosslinkData.prototype = {
 };
 
 
-CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, chainMap, structureComp, crosslinkData, pdbBaseSeqId, params) {
+CLMSUI.CrosslinkRepresentation = function (CLMSmodel, alignFunc, chainMap, structureComp, crosslinkData, pdbBaseSeqId, params) {
 
     var defaults = {
         sstrucColor: "wheat",
@@ -579,7 +604,7 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, stage, alignFunc, chainMap
     this.setParameters (p, true);
 
     this.model = CLMSmodel;
-    this.stage = stage;
+    this.stage = structureComp.stage;
     this.alignFunc = alignFunc;
     this.chainMap = chainMap;
     this.structureComp = structureComp;
@@ -638,8 +663,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     
     getDistances: function () {
-        //console.log ("this dist", this.structureComp, this.stage);  
-        
         var prots = this.model.get("clmsModel").get("interactors").values();
         var protsArr = Array.from (prots);
         protsArr = protsArr.filter (function(p) { return !p.is_decoy; });
