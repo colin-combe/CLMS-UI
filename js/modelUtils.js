@@ -258,6 +258,9 @@ CLMSUI.modelUtils = {
         return sequences;
     },
     
+    /* Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query 
+    the pdb web services or it's offline. 
+    */
     matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
         var proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
         var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
@@ -329,7 +332,7 @@ CLMSUI.modelUtils = {
     },
     
     isReverseProtein: function (prot1, prot2) {
-        return (prot1.description === prot2.description && (prot1.is_decoy ^ prot2.is_decoy));
+        return (prot1.description === prot2.description || prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy);
     },
     
     isIntraLink: function (crossLink) {
