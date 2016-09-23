@@ -159,7 +159,7 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        {id: "nglChkBxPlaceholder", label: "3D", eventName:"nglShow"},
+        {id: "nglChkBxPlaceholder", label: "NGL", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},

@@ -84,3 +84,9 @@ svg.circularView {
     pointer-events: none;
     fill: #444;
 }
+
+.residueLetter {
+    text-anchor: middle;
+    font-size: 1em;
+     pointer-events: none;
+}
