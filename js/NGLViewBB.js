@@ -164,7 +164,7 @@
         matchPDBChainsToUniprot: function (pdbCode, success) {
             $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
                 function (data, status, xhr) {
-                    console.log ("uniprotpdb", arguments);
+                    //console.log ("uniprotpdb", arguments);
                         
                     if (status === "success") {
                         var map = [];
@@ -178,6 +178,9 @@
                             }
                         });
                         console.log ("map", map);
+                        if (success) {
+                            success (map);
+                        }
                     } 
                 }
             ); 
