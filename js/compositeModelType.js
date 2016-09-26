@@ -12,7 +12,6 @@
 					crossLink.filteredMatches_pp = [];
 					
 					if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
-						//console.log ("yo fdring");
 						var pass = filterModel.filterLink (crossLink);
 						if (pass) {
 							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
@@ -33,7 +32,7 @@
 								if (match.crossLinks.length === 1) {
 									crossLink.ambiguous = false;
 								}
-								if (match.crossLinks.hd === true) { // what is .hd ??
+								if (match.confirmedHomomultimer === true) {
 									crossLink.confirmedHomomultimer = true;
 								}                       
 							}

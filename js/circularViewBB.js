@@ -332,7 +332,7 @@
 
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
-                var homom = CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
+                var homom = xlink.confirmedHomomultimer; // TODO: need to deal with this changing
                 var intra = xlink.toProtein.id === xlink.fromProtein.id;
                 var out = intraOutside ? intra && !homom : homom;
                 var rad = out ? rad2 : rad1;
