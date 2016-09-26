@@ -235,10 +235,8 @@
             this.nodeTip = function (d) {
                 var interactor = self.model.get("clmsModel").get("interactors").get(d.id);
                 self.model.get("tooltipModel")
-                    .set("header", interactor.name.replace("_", " "))
-                    .set("contents", [
-                        ["ID", interactor.id], ["Accession", interactor.accession],["Size", interactor.size], ["Desc.", interactor.description]
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.interactor (interactor))
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.interactor (interactor))
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
@@ -246,25 +244,16 @@
             this.linkTip = function (d) {
                 var xlink = self.model.get("clmsModel").get("crossLinks").get(d.id);
                 self.model.get("tooltipModel")
-                    .set("header", "Linked Residue Pair")
-                    .set("contents", [
-                        ["From", xlink.fromResidue, xlink.fromProtein.name],
-                        ["To", xlink.toResidue, xlink.toProtein.name],
-                        ["Matches", xlink.filteredMatches_pp.length]
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (xlink))
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
 
             this.featureTip = function (d) {
                 self.model.get("tooltipModel")
-                    //.set("header", d.id.replace("_", " "))
-                    .set("header", "Feature")
-                    .set("contents", [
-                        ["Name", d.id],
-                        ["Start", d.fstart],
-                        ["End", d.fend]
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.feature())
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.feature (d))
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };

@@ -82,16 +82,18 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 
                 tabs.selectAll("span.hit")
                     .on ("click", function() {
-                        var idArray = self.getIDsFromDataAttr (d3.select(this), "data-linkids");
+                        var idArray = self.splitDataAttr (d3.select(this), "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         self.model.calcMatchingCrosslinks ("selection", crossLinks, true, d3.event.ctrlKey);
                     })
                     .on ("mouseover", function () {
                         //console.log ("model", self.model);
                         var d3sel = d3.select(this);
-                        var pos = d3sel.attr("data-pos");
-                        var idArray = self.getIDsFromDataAttr (d3sel, "data-linkids");
+                        var idArray = self.splitDataAttr (d3sel, "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
+                        var posData = self.splitDataAttr (d3sel, "data-pos", "_");
+                        var interactor = self.model.get("clmsModel").get("interactors").get(posData[0]);
+                        /*
                         var ttinfo = crossLinks.map (function (xlink) {
                             var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
                             if (fromId === pos) {
@@ -103,9 +105,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                             }
                         });
                         ttinfo.unshift (["Protein", "Pos", "Matches"]);
+                        */
                         self.model.get("tooltipModel")
-                            .set("header", crossLinks.length+" Linked Residue Pair"+(crossLinks.length > 1 ? "s" : ""))
-                            .set("contents", ttinfo)
+                            .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (interactor, +posData[1]))
+                            .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))
                             .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                         ;
                         self.model.calcMatchingCrosslinks ("highlights", crossLinks, true, false);
@@ -134,7 +137,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 d3.select(this.el).selectAll("span.hit")
                     .each (function() {
                         var d3sel = d3.select(this);
-                        var idArray = self.getIDsFromDataAttr (d3sel, "data-linkids");
+                        var idArray = self.splitDataAttr (d3sel, "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         d3sel.classed ("filteredOutResidue", crossLinks.length === 0);
                         var selYes = crossLinks.some (function (xlink) { return selidset.has(xlink.id); }); 
@@ -147,9 +150,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             return this;
         },
     
-        getIDsFromDataAttr: function (d3sel, dataAttrName) {
+        splitDataAttr: function (d3sel, dataAttrName, splitChar) {
             var ids = d3sel.attr(dataAttrName);
-            return ids ? ids.split(",") : [];
+            return ids ? ids.split(splitChar || ",") : [];
         },
     
         getCrossLinksFromIDs: function (linkIDs, filter) {

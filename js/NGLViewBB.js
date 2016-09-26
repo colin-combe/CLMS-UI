@@ -201,8 +201,7 @@
             this.chartDiv.select("div.overlayInfo").html(overText);
             var self = this;
             
-            //var params = {sele: ":A"};    // show just 'A' chain
-            var params = {};    // show all
+            var params = {};    // {sele: ":A"};    // show just 'A' chain
             if (pdbInfo.ext) {
                 params.ext = pdbInfo.ext;
             }
@@ -735,13 +734,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var matrix = [[]];
         var ap1 = this.structureComp.structureView.getAtomProxy();
         var ap2 = this.structureComp.structureView.getAtomProxy();
+        var cai2length = chainAtomIndex2.length;
         
         for (var n = 1; n < chainAtomIndex1.length; n++) {
             ap1.index = chainAtomIndex1[n];
             var ap1undef = (ap1.index === undefined);
             matrix[n] = [undefined];
             var row = matrix[n];
-            for (var m = 1; m < chainAtomIndex2.length; m++) {
+            for (var m = 1; m < cai2length; m++) {
                 if (m !== n) {
                     ap2.index = chainAtomIndex2[m];
                     row.push ((ap2.index === undefined || ap1undef) ? undefined : ap1.distanceTo(ap2));
@@ -950,11 +950,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return prot;
     },
     
-    getResidueType: function (residue) {
-        var rStore = this.structureComp.structure.residueStore;
-        var rMap = this.structureComp.structure.residueMap;
-        console.log ("r", rStore.residueTypeId[residue.resindex], rMap);
-        return rMap.get(rStore.residueTypeId[residue.resindex]);  // residueIndex because it's the local ngl index
+    getResidueProxy: function (residue) {
+        var rp = this.structureComp.structureView.getResidueProxy(); 
+        rp.index = residue.resindex;
+        return rp;
     },
 
     _highlightPicking: function (pickingData) {
@@ -966,20 +965,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     makeTooltipCoords: function (mouseCoord) {
-        //var o1 = $("#main").offset();
-        var o2 = $("#nglPanel canvas").offset();
-        var offsetX = o2.left;  // - o1.left;
-        var offsetY = o2.top;   // - o1.top;
-        var canvasHeight = o2.height;
-        return {pageX: mouseCoord.x + offsetX, pageY: offsetY + (canvasHeight - mouseCoord.y)}; // y is inverted in canvas
+        var coff = $("#nglPanel canvas").offset();
+        return {pageX: coff.left + mouseCoord.x, pageY: coff.top + (coff.height - mouseCoord.y)}; // y is inverted in canvas
+    },
+    
+    getOriginalCrossLinks: function (nglCrossLinks) {
+        var xlinks = this.model.get("clmsModel").get("crossLinks");
+        return nglCrossLinks.map (function (link) {
+            return xlinks.get (link.origId);
+        });
     },
     
     _handlePicking: function (pickingData, pickType, doEmpty) {
         var crosslinkData = this.crosslinkData;
         var atom = pickingData.atom;
         var bond = pickingData.bond;
-        
-        var xlinks = this.model.get("clmsModel").get("crossLinks");
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
 
         if (atom !== undefined && bond === undefined) {
@@ -987,19 +987,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (residues) {
                 pdtrans.residue = residues[0];
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
+                pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
+                console.log ("links", pdtrans.links);
                 
                 var proteinId = this.getProteinFromChainName (pdtrans.residue.chainName);
                 var protein = this.model.get("clmsModel").get("interactors").get(proteinId);
-                var residueData = this.getResidueType (pdtrans.residue);
                 this.model.get("tooltipModel")
-                    .set("header", "Residue Info")
-                    .set("contents", [
-                        ["Residue No.", pdtrans.residue.resno],
-                        ["Residue Type", residueData.resname],
-                        ["Chain", pdtrans.residue.chainName],
-                        ["Protein", protein.name],
-                        ["Link Count", pdtrans.links ? pdtrans.links.length : 0],
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, pdtrans.residue.resno, ":"+pdtrans.residue.chainName))
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, pdtrans.residue.resno))
                     .set("location", this.makeTooltipCoords (pickingData.mouse))
                 ;
                 this.model.get("tooltipModel").trigger ("change:location");
@@ -1041,29 +1036,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             
             // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
             if (residuesA && residuesB) {
-                pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);
-                
-                var plink = pdtrans.links[0];
-                var pxlink = xlinks.get (plink.origId);
+                pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
+                pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
                 
                 this.model.get("tooltipModel")
-                    .set("header", "Linked Residue Pair")
-                    .set("contents", [
-                        ["From", pxlink.fromResidue, pxlink.fromProtein.name],
-                        ["To", pxlink.toResidue, pxlink.toProtein.name],
-                        ["Matches", pxlink.filteredMatches_pp.length],
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0]))
                     .set("location", this.makeTooltipCoords (pickingData.mouse))
                 ;
                 this.model.get("tooltipModel").trigger ("change:location");
             }
         }
         
-        if (pdtrans.links) {
-            pdtrans.xlinks = pdtrans.links.map (function(link) {
-                return xlinks.get (link.origId);
-            }, this);
-        } else if (doEmpty) {
+        if (!pdtrans.links && doEmpty) {
             pdtrans.xlinks = [];
         }
         console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
@@ -1100,7 +1085,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     setDisplayedResidues: function (residues) {
         var availableResidues = this._getAvailableResidues (residues);
-
         this.resRepr.setSelection (
             this._getSelectionFromResidue (availableResidues)
         );

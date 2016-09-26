@@ -131,10 +131,66 @@ CLMSUI.modelUtils = {
         
     getResidueType: function (protein, resIndex, seqAlignFunc) {
         var seq = protein.sequence;
-        // eventually some sequence alignment stuff will be done
+        // Some sequence alignment stuff can be done if you pass in a func
         resIndex = seqAlignFunc ? seqAlignFunc (resIndex) : resIndex;
         // Is the sequence starting at 1, do the resIndex's start at 1?
         return seq[resIndex - 1];
+    },
+    
+    getDirectionalResidueType: function (xlink, getTo, seqAlignFunc) {
+        return CLMSUI.modelUtils.getResidueType (getTo ? xlink.toProtein : xlink.fromProtein, getTo ? xlink.toResidue : xlink.fromResidue, seqAlignFunc);   
+    },
+    
+    makeTooltipContents: {
+        link: function (xlink) {
+            return [
+                ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
+                ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
+                ["Matches", xlink.filteredMatches_pp.length],
+            ];
+        },
+        
+        interactor: function (interactor) {
+             return [["ID", interactor.id], ["Accession", interactor.accession], ["Size", interactor.size], ["Desc.", interactor.description]];
+        },
+        
+        multilinks: function (xlinks, interactorId, residueIndex) {
+            var ttinfo = xlinks.map (function (xlink) {
+                var startIsTo = (xlink.toProtein.id === interactorId && xlink.toResidue === residueIndex);
+                var threeLetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, !startIsTo)];
+                if (startIsTo) {
+                    return [xlink.fromResidue, threeLetterCode, xlink.fromProtein.name, xlink.filteredMatches_pp.length]; 
+                } else {
+                    return [xlink.toResidue, threeLetterCode, xlink.toProtein.name, xlink.filteredMatches_pp.length];
+                }
+            });
+            var sortFields = [3, 0]; // sort by matches, then res index
+            var sortDirs = [1, -1];
+            ttinfo.sort (function(a, b) { 
+                var diff = 0;
+                for (var s = 0; s < sortFields.length && diff === 0; s++) {
+                    var field = sortFields[s];
+                    diff = (b[field] - a[field]) * sortDirs[s]; 
+                }
+                return diff;
+            });
+            ttinfo.unshift (["Pos", "Residue", "Protein", "Matches"]);
+            return ttinfo;
+        },
+        
+        feature: function (feature) {
+             return [["Name", feature.id], ["Start", feature.fstart], ["End", feature.fend]];
+        },
+    },
+    
+    makeTooltipTitle: {
+        residue: function (interactor, residueIndex, residueExtraInfo) {
+            return residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " + 
+                CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getResidueType (interactor, residueIndex)] + " " + interactor.name;
+        },    
+        link: function () { return "Linked Residue Pair"; },   
+        interactor: function (interactor) { return interactor.name.replace("_", " "); }, 
+        feature: function () { return "Feature"; },
     },
      
     findResidueIDsInSquare : function (fromProtID, toProtID, crossLinkMap, sr1, er1, sr2, er2) {
@@ -383,3 +439,5 @@ CLMSUI.modelUtils = {
        }
     },
 };
+
+CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);
