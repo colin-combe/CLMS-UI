@@ -317,7 +317,7 @@ CLMSUI.modelUtils = {
     },
     
     isReverseProtein: function (prot1, prot2) {
-        return (prot1.description === prot2.description && (prot1.is_decoy ^ prot2.is_decoy));
+        return (prot1.description === prot2.description || prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy);
     },
     
     isIntraLink: function (crossLink) {
