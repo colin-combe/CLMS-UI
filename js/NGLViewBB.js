@@ -9,20 +9,21 @@
     CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         events: function() {
-          var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
-          if(_.isFunction(parentEvents)){
-              parentEvents = parentEvents();
-          }
-          return _.extend({},parentEvents, {
-            "click .pdbWindowButton": "launchExternalPDBWindow",
-            "change .selectPdbButton": "selectPDBFile",
-            "keyup .inputPDBCode": "usePDBCode",
-            "click .centreButton": "centerView",
-            "click .downloadButton": "downloadImage",
-            "click .distanceLabelCB": "toggleLabels",
-            "click .selectedOnlyCB": "toggleNonSelectedLinks",
-            "click .showResiduesCB": "toggleResidues",
-          });
+            var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
+            if (_.isFunction (parentEvents)) {
+                parentEvents = parentEvents();
+            }
+            return _.extend ({}, parentEvents, {
+                "click .pdbWindowButton": "launchExternalPDBWindow",
+                "change .selectPdbButton": "selectPDBFile",
+                "keyup .inputPDBCode": "usePDBCode",
+                "click .centreButton": "centerView",
+                "click .downloadButton": "downloadImage",
+                "click .distanceLabelCB": "toggleLabels",
+                "click .selectedOnlyCB": "toggleNonSelectedLinks",
+                "click .showResiduesCB": "toggleResidues",
+                "click .withinChain": "toggleLinkWithinSameChainOnly",
+            });
         },
 
         initialize: function (viewOptions) {
@@ -32,13 +33,12 @@
                 labelVisible: false,
                 selectedOnly: false,
                 showResidues: true,
+                linkWithinChainOnly: true,
                 pdbFileID: undefined,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
             this.displayEventName = viewOptions.displayEventName;
-
-            var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
@@ -90,6 +90,7 @@
                 {initialState: this.options.labelVisible, klass: "distanceLabelCB", text: "Distance Labels"},
                 {initialState: this.options.selectedOnly, klass: "selectedOnlyCB", text: "Selected Only"},
                 {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues"},
+                {initialState: this.options.linkWithinChainOnly, klass: "withinChain", text: "Links Within 1 Chain"},
             ];
             
             toolbar2.selectAll("label").data(toggleButtonData)
@@ -137,7 +138,6 @@
                     var ids = data.split("\n");
                     var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
                     newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
-                    //window.open ("http://www.rcsb.org/pdb/results/results.do?qrid="+lastID, "_blank");
                 }
             );    
         },
@@ -153,7 +153,7 @@
         },
         
         usePDBCode: function (evt) {
-            if (evt.keyCode === 13) {
+            if (evt.keyCode === 13) {   // when return key pressed
                 var pdbCode = evt.target.value;
                 if (pdbCode && pdbCode.length === 4) {
                     this.repopulate ({pdbCode: pdbCode});
@@ -161,11 +161,12 @@
             }
         },
         
-        matchPDBChainsToUniprot: function (pdbCode, success) {
+        // Nice web-servicey way of doing ngl chain to clms protein matching
+        // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
+        // Therefore, current default is to use sequence matching to detect similarities
+        matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
             $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
-                function (data, status, xhr) {
-                    //console.log ("uniprotpdb", arguments);
-                        
+                function (data, status, xhr) {                   
                     if (status === "success") {
                         var map = [];
                         $(data).find("block").each (function(i,b) { 
@@ -178,8 +179,22 @@
                             }
                         });
                         console.log ("map", map);
-                        if (success) {
-                            success (map);
+                        if (callback) {
+                            var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
+                            
+                            map.forEach (function (mapping) {
+                                var chainName = mapping.pdb.slice(-1);
+                                var matchSeqs = nglSequences.filter (function (seqObj) {
+                                    return seqObj.chainName === chainName;    
+                                });
+                                mapping.seqObj = matchSeqs[0]; 
+                                var matchingInteractors = interactors.filter (function(i) {
+                                    var minLength = Math.min (i.accession.length, mapping.uniprot.length);
+                                    return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
+                                });
+                                mapping.id = matchingInteractors[0].id;
+                            });
+                            callback (map);
                         }
                     } 
                 }
@@ -211,36 +226,21 @@
                     var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
                 
                     console.log ("nglSequences", nglSequences2);
+                    var interactorArr = Array.from (self.model.get("clmsModel").get("interactors").values());
+                    // If have a pdb code use a web service to glean matches between ngl protein chains and clms proteins
                     if (pdbInfo.pdbCode) {
-                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode, function (pdbUniProtMap) {
-                            
-                            var interactors = Array.from(self.model.get("clmsModel").get("interactors").values());
-                            interactors = interactors.filter (function(i) { return !i.is_decoy; });
-                            
-                            pdbUniProtMap.forEach (function (mapping) {
-                                var chainName = mapping.pdb.slice(-1);
-                                var matchSeqs = nglSequences2.filter (function (seqObj) {
-                                    return seqObj.chainName === chainName;    
-                                });
-                                mapping.seqObj = matchSeqs[0]; 
-                                var matchingInteractors = interactors.filter (function(i) {
-                                    var minLength = Math.min (i.accession.length, mapping.uniprot.length);
-                                    return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
-                                });
-                                mapping.id = matchingInteractors[0].id;
-                            });
-                            
+                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
                             sequenceMapsAvailable (pdbUniProtMap);
                         });
                     }
                     else {  // without access to pdb codes have to match comparing all proteins against all chains
-                        var sequenceMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, 
-                            Array.from(self.model.get("clmsModel").get("interactors").values()), 
+                        var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, interactorArr,
                             function(sObj) { return sObj.data; }
                         );
-                        sequenceMapsAvailable (sequenceMap);
+                        sequenceMapsAvailable (pdbUniProtMap);
                     }
                 
+                    // bit to continue onto after ngl protein chain to clms protein matching has been done
                     function sequenceMapsAvailable (sequenceMap) {
                         console.log ("seq matches", sequenceMap);
                         self.chainMap = {};
@@ -262,16 +262,15 @@
                             self.makeLinkList (filterCrossLinks, structureComp.structure, pdbInfo.baseSeqId)
                         );
 
-                       self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                              self.model, self.align, self.chainMap, structureComp, crosslinkData, 
-                                pdbInfo.baseSeqId,
-                                {
-                                     selectedColor: "lightgreen",
-                                     selectedLinksColor: "yellow",
-                                     sstrucColor: "gray",
-                                     displayedDistanceColor: "tomato",
-                                    displayedDistanceVisible: self.options.labelVisible,
-                              }
+                        self.xlRepr = new CLMSUI.CrosslinkRepresentation (
+                            self.model, self.align, self.chainMap, structureComp, crosslinkData, pdbInfo.baseSeqId,
+                            {
+                                selectedColor: "lightgreen",
+                                selectedLinksColor: "yellow",
+                                sstrucColor: "gray",
+                                displayedDistanceColor: "tomato",
+                                displayedDistanceVisible: self.options.labelVisible,
+                            }
                        );
 
                         var dd = self.xlRepr.getDistances ();
@@ -337,6 +336,11 @@
             this.xlRepr.linkRepr.setVisibility (!event.target.checked);
         },
         
+        toggleLinkWithinSameChainOnly: function (event) {
+            this.linkWithinChainOnly = event.target.checked;
+            this.showFiltered();
+        },
+        
         rerenderColours: function () {
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 // using update dodges setParameters not firing a redraw if param is the same
@@ -400,30 +404,43 @@
             var chainStore = structure.chainStore;
             
             var linkList = linkModel.map (function (xlink) {
-                var fromChainIndex = this.chainMap[xlink.fromProtein.id][0];
-                var toChainIndex = this.chainMap[xlink.fromProtein.id][0];
-                var fromChainName = chainStore.getChainname (fromChainIndex);
-                var toChainName = chainStore.getChainname (toChainIndex);
                 // at the moment we're picking first matching chain for a protein, but we...
                 // 1. could in this function add in multiple cross-links if protein maps to multiple chains i.e. A and B
                 // so A-A, A-B, B-A, B-B are possibles
                 // 2. could exclude A-A and B-B if homomultimeric link
                 // 3. could work out distances of A-A, A-B, B-A, B-B and pick lowest non-zero distance
-                //console.log ("cc", fromChain, toChain);
-                return {
-                    fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1,  // residues are 0-indexed in NGL so -1
-                    toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1,    // residues are 0-indexed in NGL so -1
-                    id: xlink.id,
-                    fromChainIndex: fromChainIndex,
-                    toChainIndex: toChainIndex,
-                    fromChainName: fromChainName,
-                    toChainName: toChainName,
-                };
+                var fromChainIndices = this.chainMap[xlink.fromProtein.id];
+                var toChainIndices = this.chainMap[xlink.toProtein.id];
+                var possLinks = [];
+                //fromChainIndices.forEach (function (fromChainIndex) {
+                var fromChainIndex = fromChainIndices[0];
+                    var fromChainName = chainStore.getChainname (fromChainIndex);
+                    //toChainIndices.forEach (function (toChainIndex) {
+                        var toChainIndex = toChainIndices[0];
+                        var toChainName = chainStore.getChainname (toChainIndex);
+                        possLinks.push ({
+                            fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1,  // residues are 0-indexed in NGL so -1
+                            toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1,    // residues are 0-indexed in NGL so -1
+                            id: xlink.id,
+                            fromChainIndex: fromChainIndex,
+                            toChainIndex: toChainIndex,
+                            fromChainName: fromChainName,
+                            toChainName: toChainName,
+                        });
+                    //}, this);
+                //}, this);
+                return possLinks;
             }, this);
             
-            linkList = linkList.filter (function (link) {
-                return link.fromResidue >= 0 && link.toResidue >= 0;
-            });
+            linkList = d3
+                .merge (linkList)
+                .filter (function (link) {
+                    return link.fromResidue >= 0 && link.toResidue >= 0;
+                })
+            ;
+            
+            console.log ("linklist", linkList);
+            
             return this.transformLinkList (linkList, structure);	
         },
         
@@ -948,12 +965,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             }
         });
         return prot;
-    },
-    
-    getResidueProxy: function (residue) {
-        var rp = this.structureComp.structureView.getResidueProxy(); 
-        rp.index = residue.resindex;
-        return rp;
     },
 
     _highlightPicking: function (pickingData) {
