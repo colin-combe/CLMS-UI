@@ -34,7 +34,7 @@
                 selectedOnly: false,
                 showResidues: true,
                 linkWithinChainOnly: true,
-                pdbFileID: undefined,
+                initialPdbCode: undefined,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -119,8 +119,8 @@
             this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100*/});
             
             // populate 3D network viewer if hard-coded pdb id present
-            if (this.options.pdbFileID) { 
-                this.repopulate ({pdbCode: this.options.pdbFileID});
+            if (this.options.initialPdbCode) { 
+                this.repopulate ({pdbCode: this.options.initialPdbCode});
             }
         },
         
@@ -391,6 +391,8 @@
             if (alignModel) {
                 alignPos = from3D ? alignModel.mapToSearch (pdbChainSeqId, resIndex) : alignModel.mapFromSearch (pdbChainSeqId, resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
+                // if alignPos == 0 then before seq
+                // if alignpos <== -seqlen then after seq
                 if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
             }
             
@@ -402,6 +404,7 @@
         // then need to subtract 1, then --> which goes to PDB index with residueStore
         makeLinkList: function (linkModel, structure, pdbBaseSeqId) {
             var chainStore = structure.chainStore;
+            console.log ("chainmap", this.chainMap);
             
             var linkList = linkModel.map (function (xlink) {
                 // at the moment we're picking first matching chain for a protein, but we...
@@ -412,23 +415,25 @@
                 var fromChainIndices = this.chainMap[xlink.fromProtein.id];
                 var toChainIndices = this.chainMap[xlink.toProtein.id];
                 var possLinks = [];
-                //fromChainIndices.forEach (function (fromChainIndex) {
-                var fromChainIndex = fromChainIndices[0];
-                    var fromChainName = chainStore.getChainname (fromChainIndex);
-                    //toChainIndices.forEach (function (toChainIndex) {
-                        var toChainIndex = toChainIndices[0];
-                        var toChainName = chainStore.getChainname (toChainIndex);
-                        possLinks.push ({
-                            fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1,  // residues are 0-indexed in NGL so -1
-                            toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1,    // residues are 0-indexed in NGL so -1
-                            id: xlink.id,
-                            fromChainIndex: fromChainIndex,
-                            toChainIndex: toChainIndex,
-                            fromChainName: fromChainName,
-                            toChainName: toChainName,
-                        });
+                if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
+                    //fromChainIndices.forEach (function (fromChainIndex) {
+                    var fromChainIndex = fromChainIndices[0];
+                        var fromChainName = chainStore.getChainname (fromChainIndex);
+                        //toChainIndices.forEach (function (toChainIndex) {
+                            var toChainIndex = toChainIndices[0];
+                            var toChainName = chainStore.getChainname (toChainIndex);
+                            possLinks.push ({
+                                fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1,  // residues are 0-indexed in NGL so -1
+                                toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1,    // residues are 0-indexed in NGL so -1
+                                id: xlink.id,
+                                fromChainIndex: fromChainIndex,
+                                toChainIndex: toChainIndex,
+                                fromChainName: fromChainName,
+                                toChainName: toChainName,
+                            });
+                        //}, this);
                     //}, this);
-                //}, this);
+                }
                 return possLinks;
             }, this);
             

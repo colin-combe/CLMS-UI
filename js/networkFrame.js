@@ -206,7 +206,9 @@ CLMSUI.init.views = function () {
     });
     var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
     var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
-    CLMSUI.ThreeDAvailable = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
+    CLMSUI.firstPdbCode = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
+    //CLMSUI.ThreeDAvailable = true;
+    CLMSUI.ThreeDAvailable = CLMSUI.firstPdbCode;
     console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
 
     if (CLMSUI.ThreeDAvailable){
@@ -506,7 +508,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             model: CLMSUI.compositeModelInst,
             displayEventName: "nglShow",
             myOptions: {
-                pdbFileID: CLMSUI.ThreeDAvailable,
+                initialPdbCode: CLMSUI.firstPdbCode,
             }
         });
     }
