@@ -318,7 +318,7 @@ CLMSUI.modelUtils = {
     the pdb web services or it's offline. 
     */
     matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
-        var proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
+        proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
         var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
         var matchMatrix = {};
         proteins.forEach (function (prot) {
@@ -328,7 +328,7 @@ CLMSUI.modelUtils = {
                 var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
                 var alignResults = protAlignModel.alignWithoutStoring (seqs);
                 console.log ("alignResults", alignResults);
-                var scores = alignResults.map (function (indRes) { return indRes.res[0]; })
+                var scores = alignResults.map (function (indRes) { return indRes.res[0]; });
                 matchMatrix[prot.id] = scores;
             }   
         });
@@ -340,10 +340,11 @@ CLMSUI.modelUtils = {
         var keys = d3.keys(matrix);
         var pairings = [];
         for (var n = 0; n < sequenceObjs.length; n++) {
-            var max = {key: undefined, seqObj: undefined, score: 100};
+            var max = {key: undefined, seqObj: undefined, score: 40};
             keys.forEach (function (key) {
                 var score = matrix[key][n];
-                if (score > max.score) {
+                console.log ("s", n, score, score / sequenceObjs[n].data.length);
+                if (score > max.score && (score / sequenceObjs[n].data.length) > 1) {
                     max.score = score;
                     max.key = key;
                     max.seqObj = sequenceObjs[n];

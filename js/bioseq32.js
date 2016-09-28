@@ -292,6 +292,7 @@
         var H = []; //makeIntArray (qlen+1, 32, is_local ? 0 : undefined); // [];
         var E = []; //makeIntArray (qlen+1, 32, is_local ? 0 : undefined); // [];
         var z = [], score, max = 0, end_i = -1, end_j = -1;
+        var badGapswg = (gapswg === undefined || isNaN(gapswg));
         if (is_local) {
             for (var j = 0; j <= qlen; ++j) H[j] = E[j] = 0;
         } else {
@@ -302,7 +303,6 @@
             }
         }
 
-        var badGapswg = (gapswg === undefined || isNaN(gapswg));
         // the DP loop
         for (var i = 0; i < t.length; ++i) {
             var h1 = 0, f = 0, m = 0, mj = -1;
@@ -311,7 +311,7 @@
             var end = Math.min (i + w + 1, qlen); // only loop through [beg,end) of the query sequence
             if (!is_local) {
                 // changed so don't have to penalise a start gap (set gapswg to 0) (hopefully)
-                h1 = beg > 0 ? NEG_INF : (badGapswg ? -gapoe - gape * i : gapswg); 
+                h1 = beg > 0 ? NEG_INF : (badGapswg ? -gapoe - gape * i : -gapswg); 
                 f = beg > 0 ? NEG_INF : -gapoe - gapoe - gape * i;
             }
             //zi = z[i] = makeIntArray (qlen, 32) ;//[];
@@ -364,7 +364,11 @@
             H[end] = h1, E[end] = is_local? 0 : NEG_INF;
             if (m > max) max = m, end_i = i, end_j = mj;
         }
-        if (is_local && max === 0) return null;
+        if (is_local && max === 0) {
+            var emptyCigar = [];
+            push_cigar (emptyCigar, 2, i+1);
+            return [-1000, 0, emptyCigar];
+        }
         score = is_local? max : H[qlen];
         
 
@@ -493,6 +497,7 @@
             var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
             var rst = bsa_align (isLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], windowSize, table);
         }
+        //console.log ("rst", rst);
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
         var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);

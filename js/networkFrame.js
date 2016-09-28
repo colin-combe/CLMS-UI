@@ -207,8 +207,8 @@ CLMSUI.init.views = function () {
     var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
     var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
     CLMSUI.firstPdbCode = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
-    //CLMSUI.ThreeDAvailable = true;
     CLMSUI.ThreeDAvailable = CLMSUI.firstPdbCode;
+    //CLMSUI.ThreeDAvailable = true;
     console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
 
     if (CLMSUI.ThreeDAvailable){
@@ -357,15 +357,9 @@ CLMSUI.init.viewsEssential = function (options) {
 					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
 					spectrumWrapper.alternativesModel.applyFilter();
                     spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
-                    if (altModel.get("matches").size == 1) {
-						d3.select("#alternatives").style("display", "none");
-						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					} else {
-						d3.select("#alternatives").style("display", "block");
-						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					}
+                    d3.select("#alternatives").style("display", altModel.get("matches").size === 1 ? "none" : "block");
+                    spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+				    CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
                 }
             });
         } else {

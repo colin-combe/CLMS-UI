@@ -246,7 +246,7 @@
                         self.chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
                             pMatch.data = pMatch.seqObj.data;
-                            pMatch.name = pdbInfo.baseSeqId + pMatch.seqObj.chainName;
+                            pMatch.name = pdbInfo.baseSeqId + pMatch.seqObj.chainName + ":" + pMatch.seqObj.chainIndex;
                             self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
                             self.chainMap[pMatch.id].push (pMatch.seqObj.chainIndex);
                         });
@@ -389,14 +389,19 @@
             var alignPos = resIndex;
             
             if (alignModel) {
+                var seqLength = alignModel.getCompSequence(pdbChainSeqId)[from3D ? "convertFromRef" : "convertToRef"].length;
                 alignPos = from3D ? alignModel.mapToSearch (pdbChainSeqId, resIndex) : alignModel.mapFromSearch (pdbChainSeqId, resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
                 // if alignPos == 0 then before seq
                 // if alignpos <== -seqlen then after seq
-                if (alignPos < 0) { alignPos = -alignPos; }   // <= 0 indicates no equal index match, do the - to find nearest index
+                console.log (pdbChainSeqId, "seqlen", seqLength);
+                if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
+                    alignPos = null;    // null can be added / subtracted to without NaNs, which undefined causes
+                }
+                if (alignPos < 0) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
             }
             
-            return alignPos;    //this will be 1-indexed
+            return alignPos;    //this will be 1-indexed or null
         },
         
         // residueStore maps the NGL-indexed resides to PDB-index
@@ -422,19 +427,21 @@
                         //toChainIndices.forEach (function (toChainIndex) {
                             var toChainIndex = toChainIndices[0];
                             var toChainName = chainStore.getChainname (toChainIndex);
-                            var fromResidue = this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1;  // residues are 0-indexed in NGL so -1
-                            var toResidue = this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1;    // residues are 0-indexed in NGL so -1
+                            var fromResidue = this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName + ":" + fromChainIndex) - 1;  // residues are 0-indexed in NGL so -1
+                            var toResidue = this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName + ":" + toChainIndex) - 1;    // residues are 0-indexed in NGL so -1
+                    
                             console.log ("fr", fromResidue, "tr", toResidue);
- 
-                            possLinks.push ({
-                                fromResidue: fromResidue,  // residues are 0-indexed in NGL so -1
-                                toResidue: toResidue,    // residues are 0-indexed in NGL so -1
-                                id: xlink.id,
-                                fromChainIndex: fromChainIndex,
-                                toChainIndex: toChainIndex,
-                                fromChainName: fromChainName,
-                                toChainName: toChainName,
-                            });
+                            if (fromResidue >= 0 && toResidue >= 0) {
+                                possLinks.push ({
+                                    fromResidue: fromResidue,
+                                    toResidue: toResidue,
+                                    id: xlink.id,
+                                    fromChainIndex: fromChainIndex,
+                                    toChainIndex: toChainIndex,
+                                    fromChainName: fromChainName,
+                                    toChainName: toChainName,
+                                });
+                            }
                         //}, this);
                     //}, this);
                 }
@@ -475,6 +482,7 @@
             var tLinkList = linkList.map (function(rl, i) {
                 var resFromChainOffset = structure.chainStore.residueOffset[rl.fromChainIndex];
                 var resToChainOffset = structure.chainStore.residueOffset[rl.toChainIndex];
+                console.log ("ci", structure.chainStore, structure.chainStore.residueOffset, residueStore.resno);
                 
                 return {
                     origId: rl.id,
@@ -499,6 +507,7 @@
             });
             
             // Now have a bunch of lists 
+            console.log ("tlinklist", tLinkList);
 
             return tLinkList;
         },
@@ -791,7 +800,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         chainIndices.forEach (function (ci) {
             var chainName = chainStore.getChainname (ci);
-            var pdbChainSeqId = this.pdbBaseSeqId + chainName;
+            var pdbChainSeqId = this.pdbBaseSeqId + chainName + ":" + ci;
             var chainOffset = chainStore.residueOffset [ci];
             var atomIndices = chainCAtomIndices[chainName] || [undefined];  // we're building a 1-indexed array so first entry (0) is undefined
             
@@ -1003,6 +1012,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
 
         if (atom !== undefined && bond === undefined) {
+            console.log ("picked atom", atom.resno, atom.chainname);
             var residues = crosslinkData.findResidues (atom.resno, atom.chainname);
             if (residues) {
                 pdtrans.residue = residues[0];
@@ -1048,12 +1058,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var ri2 = aStore.residueIndex[ai2];
             var r1 = resStore.resno[ri1];
             var r2 = resStore.resno[ri2];
-            
+
             // r1 and r2 are now correct and I can grab data through the existing crosslinkData interface
             // console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
             var residuesA = crosslinkData.findResidues (r1, bond.atom1.chainname);
             var residuesB = crosslinkData.findResidues (r2, bond.atom2.chainname);
-            
+            console.log ("res", ri1, ri2, r1, r2, residuesA, residuesB);
             // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
             if (residuesA && residuesB) {
                 pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
