@@ -422,9 +422,13 @@
                         //toChainIndices.forEach (function (toChainIndex) {
                             var toChainIndex = toChainIndices[0];
                             var toChainName = chainStore.getChainname (toChainIndex);
+                            var fromResidue = this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1;  // residues are 0-indexed in NGL so -1
+                            var toResidue = this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1;    // residues are 0-indexed in NGL so -1
+                            console.log ("fr", fromResidue, "tr", toResidue);
+ 
                             possLinks.push ({
-                                fromResidue: this.align (xlink.fromResidue, xlink.fromProtein.id, false, pdbBaseSeqId + fromChainName) - 1,  // residues are 0-indexed in NGL so -1
-                                toResidue: this.align (xlink.toResidue, xlink.toProtein.id, false, pdbBaseSeqId + toChainName) - 1,    // residues are 0-indexed in NGL so -1
+                                fromResidue: fromResidue,  // residues are 0-indexed in NGL so -1
+                                toResidue: toResidue,    // residues are 0-indexed in NGL so -1
                                 id: xlink.id,
                                 fromChainIndex: fromChainIndex,
                                 toChainIndex: toChainIndex,
