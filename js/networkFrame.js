@@ -420,7 +420,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         sequences.forEach (function (entry) {
-            this.addSeq (entry.id, entry.name, entry.data);
+            this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
         }, this);
 
         console.log ("3D sequences poked to collection", this);

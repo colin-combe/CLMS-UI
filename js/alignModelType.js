@@ -16,6 +16,7 @@
             "compSeqs": ["CAT"],
             "compIDs": ["Demo"],
             "local": false,
+            "semiLocal": false,
             "maxAlignWindow": 1000,
             "sequenceAligner": CLMSUI.GotohAligner,
         },
@@ -27,6 +28,7 @@
             // or we may just want to call align manually when things are known to be done
             this.listenTo (this, "change", function() { 
                 console.log ("something in align settings changed", this.changed); 
+                console.log ("this semi", this.get("semiLocal"));
                 if (!("refAlignments" in this.changed) && !("compAlignments" in this.changed)) {
                     console.log ("and it's not the final results so lets runs align again");
                     this.align();
@@ -90,7 +92,7 @@
             var aligner = this.get("sequenceAligner");
             var fullResults = compSeqArray.map (function (cSeq) {
                 var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                return aligner.align (cSeq, refSeq, scores, this.get("local"), alignWindowSize);
+                return aligner.align (cSeq, refSeq, scores, this.get("local"), this.get("semiLocal"), alignWindowSize);
             }, this);
             
             return fullResults;
@@ -129,7 +131,7 @@
     CLMSUI.BackboneModelTypes.AlignCollection = Backbone.Collection.extend ({
         model: CLMSUI.BackboneModelTypes.AlignModel,
          
-        addSeq: function (modelId, seqId, seq) {
+        addSeq: function (modelId, seqId, seq, otherSettingsObj) {
             var model = this.get(modelId);
             if (model) {
                 console.log ("entry", modelId, seqId, seq, model.seqIndex);
@@ -140,11 +142,13 @@
                     model.set("compSeqs", model.get("compSeqs").slice(0));
                     model.trigger("change", model); // change listener in alignment model is non-specific so not 'change:compSeqs'
                 } else {    // otherwise add it
-                    this.add ([{
+                    var modelParams = otherSettingsObj || {};
+                    $.extend (modelParams, {
                         "id": modelId,
                         "compIDs": this.mergeArrayAttr (modelId, "compIDs", [seqId]),
                         "compSeqs": this.mergeArrayAttr (modelId, "compSeqs", [seq]),
-                    }], {merge: true});
+                    });
+                    this.add ([modelParams], {merge: true});
                 }
                 console.log ("this align coll", this);
             }
