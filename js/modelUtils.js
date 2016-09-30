@@ -326,6 +326,7 @@ CLMSUI.modelUtils = {
             var protAlignModel = alignCollection.get(prot.id);
             if (protAlignModel) {
                 var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
+                protAlignModel.set("semiLocal", true);  // needs to be done as initialisation not called on model (figure out why later)
                 var alignResults = protAlignModel.alignWithoutStoring (seqs);
                 console.log ("alignResults", alignResults);
                 var scores = alignResults.map (function (indRes) { return indRes.res[0]; });
@@ -439,6 +440,10 @@ CLMSUI.modelUtils = {
           reader.readAsText(fileObj);
        }
     },
+    
+    make3DAlignID : function (baseID, chainName, chainIndex) {
+        return baseID + ":" + chainName + ":" + chainIndex;
+    }
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

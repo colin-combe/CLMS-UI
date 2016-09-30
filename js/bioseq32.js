@@ -198,19 +198,19 @@
      * @param a     match score, positive
      * @param b     mismatch score, negative
      *
-     * @return sqaure scoring matrix. The last row and column are zero, for
+     * @return square scoring matrix. The last row and column are zero, for
      * matching an ambiguous residue.
      */
     function bsa_gen_score_matrix(n, a, b)
     {
-        var m = [];
-        if (b > 0) b = -b; // mismatch score b should be non-positive
+        var m = [], mrow;
+        b = - Math.abs(b); // mismatch score b should be non-positive
         for (var i = 0; i < n - 1; ++i) {
-            m[i] = makeIntArray (n, 32);
+            mrow = m[i] = makeIntArray (n, 32);
             for (var j = 0; j < n - 1; ++j) {
-                m[i][j] = i == j? a : b;
+                mrow[j] = i === j? a : b;
             }
-            m[i][j] = 0;
+            mrow[j] = 0;
         }
         m[n-1] = makeIntArray (n, 32, 0);
         //for (var j = 0; j < n; ++j) m[n-1][j] = 0;
@@ -270,13 +270,12 @@
         var qlen = qp[0].length;
 
         // adjust band width
-        var orig_w = w;
+        //console.log ("orig w", w);
         var max_len = Math.max (qlen, t.length);
         w = w == null || w < 0? max_len : w;
         var len_diff = Math.abs (t.length - qlen); // MJG - think t.target was a mistake, replace with t.length
-        w = Math.max (w, len_diff); // mjg - dunno why this needs to be done, would just make w massive for small target and big query
-        
-        //console.log ("w", w, orig_w, qlen, t.length, len_diff);
+        w = Math.max (w, len_diff); // mjg - dunno why this needs to be done, would just make w massive for small target and big query  
+        //console.log ("w", w, qlen, t.length, len_diff);
 
         // set gap score
 		      var gapo, gape; // these are penalties which should be non-negative
@@ -359,7 +358,7 @@
                     f = h;
                 }  
                 zi[j - beg] = d;           // z[i,j] keeps h for the current cell and e/f for the next cell // MJG: j-beg -- crucial
-                if (j === end - 1) {
+                if (j === end - 1) {    // mjg. keep last scores in each row (forms last column of scores)
                     C[i] = h1;
                 }
             }
@@ -379,33 +378,36 @@
         }
         
         var cigar = [], tmp, which = 0, i, k, start_i = 0;
-        var trailIndelCount = 0, qlonger = (t.length < qlen);    // mjg
         if (is_local) {
-            i = end_i, k = end_j;
+            i = end_i; k = end_j;
             if (end_j != qlen - 1) // then add soft cliping
                 push_cigar(cigar, 4, qlen - 1 - end_j);
         } else if (is_semi_local) { // mjg
+            var qlonger = (t.length < qlen);
             var hmax = indexOfMax(H);
             var cmax = indexOfMax(C);
-            var trailIndelCount = qlonger ? H.length - hmax.index - 1 : C.length - cmax.index - 1;
             i = qlonger ? t.length - 1 : cmax.index;
             var roff = (Math.max (0, qlen - w) + (qlonger ? hmax.index : w));
-            //console.log ("r", roff, qlen, i, qlonger, w);
+            var trailIndelCount = qlonger ? H.length - roff - 1 : C.length - cmax.index - 1;
+            if (trailIndelCount > 0) {  // add the trailing info of the longer sequence to the cigar
+                push_cigar (cigar, qlonger ? 1 : 2, trailIndelCount);
+            }
+            //console.log ("r", roff, qlen, i, qlonger, w, trailIndelCount);
             k = (roff < qlen? roff : qlen) - 1;
         } else {
-            i = t.length - 1, k = (i + w + 1 < qlen? i + w + 1 : qlen) - 1; // (i,k) points to the last cell
+            i = t.length - 1;
+            var roff = i + w - 1;
+            k = (roff < qlen? roff : qlen) - 1; // (i,k) points to the last cell
         }
-        if (trailIndelCount > 0) {  // mjg
-            push_cigar (cigar, qlonger ? 1 : 2, trailIndelCount);
-        }
+        
         while (i >= 0 && k >= 0) {
             tmp = z[i][k - (i > w ? i - w : 0)];
             which = tmp >> (which << 1) & 3;
-            if (which == 0 && tmp>>6) break;
-            if (which == 0) which = tmp & 3;
-            if (which == 0)      { push_cigar(cigar, 0, 1); --i, --k; } // match
-            else if (which == 1) { push_cigar(cigar, 2, 1); --i; } // deletion
-            else                 { push_cigar(cigar, 1, 1), --k; } // insertion
+            if (which === 0 && tmp>>6) break;
+            if (which === 0) which = tmp & 3;
+            if (which === 0)      { push_cigar(cigar, 0, 1); --i; --k; } // match
+            else if (which === 1) { push_cigar(cigar, 2, 1); --i; } // deletion
+            else                 { push_cigar(cigar, 1, 1); --k; } // insertion
         }
         if (is_local) {
             if (k >= 0) push_cigar(cigar, 4, k + 1); // add soft clipping
@@ -415,12 +417,7 @@
             if (k >= 0) push_cigar(cigar, 1, k + 1);
         }
         cigar.reverse();
-        /*
-        var cl = cigar.length;
-        for (var i = 0; i < cl>>1; ++i) { // reverse CIGAR
-            tmp = cigar[i], cigar[i] = cigar[cl-1-i], cigar[cl-1-i] = tmp;
-        }
-        */
+
         return [score, start_i, cigar];
     }
 
@@ -522,7 +519,7 @@
             rst = [Number.MAX_VALUE, 0, [target.length << 4]];  // completely equal
         } else {
             var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
-            var rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
+            rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
         }
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);

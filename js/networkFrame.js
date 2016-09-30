@@ -209,7 +209,7 @@ CLMSUI.init.views = function () {
     CLMSUI.firstPdbCode = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
     CLMSUI.ThreeDAvailable = CLMSUI.firstPdbCode;
     //CLMSUI.ThreeDAvailable = true;
-    console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
+    //console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
 
     if (CLMSUI.ThreeDAvailable){
         // Distance slider

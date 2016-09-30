@@ -90,6 +90,7 @@
             };
             var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
+            console.log ("semi", this.get("semiLocal"));
             var fullResults = compSeqArray.map (function (cSeq) {
                 var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
                 return aligner.align (cSeq, refSeq, scores, this.get("local"), this.get("semiLocal"), alignWindowSize);
@@ -148,6 +149,7 @@
                         "compIDs": this.mergeArrayAttr (modelId, "compIDs", [seqId]),
                         "compSeqs": this.mergeArrayAttr (modelId, "compSeqs", [seq]),
                     });
+                    console.log ("mp", modelId, modelParams);
                     this.add ([modelParams], {merge: true});
                 }
                 console.log ("this align coll", this);
