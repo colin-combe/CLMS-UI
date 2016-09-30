@@ -28,7 +28,7 @@
 
 /* Btn */
 .btn {
-    height: 32px;
+    height: 25px;
     border: none;
     font-family: inherit;
     font-size: 0.8em;
@@ -171,6 +171,7 @@ body, input, select, textarea {
 }
 
 .page-header{
+	height:45px;
     background-color: #091D42;
     color: #fff;
 	float:left;

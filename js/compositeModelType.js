@@ -92,6 +92,7 @@
         
         // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
         // to fill in the model
+        // - i'm not sure this is a good name for this function - cc
         calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
             if (crossLinks) {   // if undefined nothing happens, to remove selection pass an empty array - []
                 if (add) {
