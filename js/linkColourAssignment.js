@@ -24,7 +24,7 @@ CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourM
         this.set("labels", this.get("colScale").copy().range(["Self-Link", "Homomultimer Link", "Inter-Protein Link"]));
     },
     getColour: function (crossLink) {
-        return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null ? (CLMSUI.modelUtils.linkHasHomomultimerMatch (crossLink) ? 1 : 0) : 2);
+        return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2);
     },
 });
 
@@ -33,7 +33,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
     initialize: function (attrs, options) {
         
         this.searchMap = options.searchMap;
-             //put d3.scale for group colour assignment in compositeModel
+        //put d3.scale for group colour assignment in compositeModel
         var groups = new Map();
         for (var search of this.searchMap) {
             var val = search[1];

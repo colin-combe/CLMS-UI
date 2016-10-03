@@ -14,6 +14,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             "A": true, "B": true, "C": true, "Q": true, "unval": true, 
             "AUTO": true,
             "linears": true,
+            "crosslinks": true,
             "decoys": false,
             "pepSeq": "",
             "protNames": "",
@@ -39,6 +40,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         filter: function (match) {
 			//linears? - if linear and linears not selected return false
             if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
+			//cross-links? - if xl and xls not selected return false
+            if (match.linkPos1 > 0 && this.get("crosslinks") == false) return false; 
 
 			//decoys? - if decoy and decoys not selected return false
             if (match.is_decoy && this.get("decoys")  == false) return false; 
