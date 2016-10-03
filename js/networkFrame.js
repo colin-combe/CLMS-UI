@@ -208,7 +208,7 @@ CLMSUI.init.views = function () {
     var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
     CLMSUI.firstPdbCode = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
     CLMSUI.ThreeDAvailable = CLMSUI.firstPdbCode;
-    //CLMSUI.ThreeDAvailable = true;
+    CLMSUI.ThreeDAvailable = true;
     //console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
 
     if (CLMSUI.ThreeDAvailable){
