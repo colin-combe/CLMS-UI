@@ -240,6 +240,7 @@
                 ;
             };
 
+			//TODO: could have more general use than just in circle view, more elsewhere, eliminate duplication 
             this.featureTip = function (d) {
                 self.model.get("tooltipModel")
                     //.set("header", d.id.replace("_", " "))
@@ -706,7 +707,8 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d,i) { return self.color(i); })
+                .style("fill", function(d,i) { return CLMSUI.domainColours(d.id); })
+                .style("fill-opacity", "0.5")
             ;
 
             return this;

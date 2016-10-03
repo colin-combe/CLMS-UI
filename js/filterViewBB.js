@@ -21,6 +21,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             toggles: [
                 {"label":"Decoy", "id":"decoys", special: true},
                 {"label":"Linear", "id":"linears", special: true},
+                {"label":"Cross-links", "id":"crosslinks", special: true},
                 {"label":"Ambig.", "id":"ambig", special: true},
                 {"label":"Self", "id":"selfLinks", special: true},
                 {"label":"A", "id":"A"},

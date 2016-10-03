@@ -132,7 +132,7 @@
             <div class="page-header">
                     <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
-                    <span id="colourSelect" class="btn btn-1 btn-1a"></span> <!-- placeholder for new colour scheme selector -->
+                    <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
             </div>

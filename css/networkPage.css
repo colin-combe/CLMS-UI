@@ -8,6 +8,9 @@
 #toggles_linears {
 	display: none;
 }
+#toggles_crosslinks {
+	display: none;
+}
 /*
 #colorSelector{
 	display: none;

@@ -320,7 +320,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         var self = this;
         d3.select(this.el)
             .append("span")
-            .text("Link Colours")
+            .text("Link Colours:")
         ;
 
         d3.select(this.el)
