@@ -259,6 +259,7 @@
                         var crossLinks = self.model.get("clmsModel").get("crossLinks");
                         var filterCrossLinks = self.filterCrossLinks (crossLinks);
                         console.log ("pdb", pdbInfo);
+                        
                         var crosslinkData = new CLMSUI.CrosslinkData (
                             self.makeLinkList (filterCrossLinks, structureComp.structure, pdbInfo.baseSeqId)
                         );
@@ -402,78 +403,20 @@
             return alignPos;    //this will be 1-indexed or null
         },
         
+        
         // residueStore maps the NGL-indexed resides to PDB-index
         // so we take our alignment index --> which goes to NGL-sequence index with align() --> 
         // then need to subtract 1, then --> which goes to PDB index with residueStore
         makeLinkList: function (linkModel, structure, pdbBaseSeqId) {
-            var chainProxy = structure.getChainProxy();
-            console.log ("chainmap", this.chainMap);
-            
-            var linkList = linkModel.map (function (xlink) {
-                // at the moment we're picking first matching chain for a protein, but we...
-                // 1. could in this function add in multiple cross-links if protein maps to multiple chains i.e. A and B
-                // so A-A, A-B, B-A, B-B are possibles
-                // 2. could exclude A-A and B-B if homomultimeric link
-                // 3. could work out distances of A-A, A-B, B-A, B-B and pick lowest non-zero distance
-                var fromChainIndices = this.chainMap[xlink.fromProtein.id];
-                var toChainIndices = this.chainMap[xlink.toProtein.id];
-                var possLinks = [];
-                if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
-                    fromChainIndices.forEach (function (fromChainIndex) {
-                    //var fromChainIndex = fromChainIndices[0];
-                        chainProxy.index = fromChainIndex;
-                        var fromChainName = chainProxy.chainname;
-                        var fromResidue = this.align (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, fromChainName, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
-                        var fromModelIndex = chainProxy.modelIndex;
-                        
-                        toChainIndices.forEach (function (toChainIndex) {
-                            //var toChainIndex = toChainIndices[0];
-                            chainProxy.index = toChainIndex;
-                            var toChainName = chainProxy.chainname;
-                            var toResidue = this.align (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, toChainName, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
-                            var toModelIndex = chainProxy.modelIndex;
-                            
-                            //console.log ("fr", fromResidue, "tr", toResidue);
-                            if (fromResidue >= 0 && toResidue >= 0) {
-                                possLinks.push ({
-                                    fromResidue: fromResidue,
-                                    toResidue: toResidue,
-                                    id: xlink.id,
-                                    fromChainIndex: fromChainIndex,
-                                    toChainIndex: toChainIndex,
-                                    fromChainName: fromChainName,
-                                    toChainName: toChainName,
-                                    fromModelIndex: fromModelIndex,
-                                    toModelIndex: toModelIndex,
-                                });
-                            }
-                        }, this);
-                    }, this);
-                }
-                return possLinks;
-            }, this);
-            
-            linkList = d3
-                .merge (linkList)
-                .filter (function (link) {
-                    return link.fromResidue >= 0 && link.toResidue >= 0;
-                })
-            ;
-            
-            console.log ("linklist", linkList);
-            
-            return this.transformLinkList (linkList, structure);	
-        },
-        
-        // removed hard-coded chainname as parameter
-        transformLinkList: function (linkList, structure) {
-
-            var structureId = null; // structure.id;
             var nextResidueId = 0;
+            var linkID = 0;
+            var structureId = null;
             var residueDict = {};
+            var linkList = [];
             var residueProxy1 = structure.getResidueProxy();
             var residueProxy2 = structure.getResidueProxy();
             var chainProxy = structure.getChainProxy();
+            console.log ("chainmap", this.chainMap);
             
             function getResidueId (resIndex, chainName, chainIndex) {
                 // TODO add structureId to key
@@ -485,45 +428,71 @@
                 }
                 return residueDict[key];
             }
-
-            //console.log ("ci", structure.chainStore, structure.chainStore.residueOffset, residueStore.resno);
+              
+            linkModel.forEach (function (xlink) {
+                // at the moment we're picking first matching chain for a protein, but we...
+                // 1. could in this function add in multiple cross-links if protein maps to multiple chains i.e. A and B
+                // so A-A, A-B, B-A, B-B are possibles
+                // 2. could exclude A-A and B-B if homomultimeric link
+                // 3. could work out distances of A-A, A-B, B-A, B-B and pick lowest non-zero distance
+                var fromChainIndices = this.chainMap[xlink.fromProtein.id];
+                var toChainIndices = this.chainMap[xlink.toProtein.id];
+                if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
+                    fromChainIndices.forEach (function (fromChainIndex) {
+                    //var fromChainIndex = fromChainIndices[0];
+                        chainProxy.index = fromChainIndex;
+                        var fromChainName = chainProxy.chainname;
+                        var fromResidue = this.align (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, fromChainName, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
+                        var fromModelIndex = chainProxy.modelIndex;
+                        var resFromChainOffset = chainProxy.residueOffset;
+                        residueProxy1.index = fromResidue + resFromChainOffset;
+                        
+                        toChainIndices.forEach (function (toChainIndex) {
+                            //var toChainIndex = toChainIndices[0];
+                            chainProxy.index = toChainIndex;
+                            var toChainName = chainProxy.chainname;
+                            var toResidue = this.align (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, toChainName, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
+                            
+                            //console.log ("fr", fromResidue, "tr", toResidue);
+                            if (fromResidue >= 0 && toResidue >= 0) {
+                                                        
+                                var toModelIndex = chainProxy.modelIndex;
+                                chainProxy.index = toChainIndex;
+                                var resToChainOffset = chainProxy.residueOffset;
+                                residueProxy2.index = toResidue + resToChainOffset;
+                                
+                                linkList.push ({
+                                    origId: xlink.id,
+                                    linkId: linkID,
+                                    residueA: {
+                                        resindex: fromResidue,
+                                        residueId: getResidueId (fromResidue, fromChainName, fromChainIndex),
+                                        resno: residueProxy1.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
+                                        chainName: fromChainName,
+                                        chainIndex: fromChainIndex,
+                                        modelIndex: fromModelIndex,
+                                        structureId: structureId
+                                    },
+                                    residueB: {
+                                        resindex: toResidue,
+                                        residueId: getResidueId (toResidue, toChainName, toChainIndex),
+                                        resno: residueProxy2.resno,   // ngl resindex to resno conversion, as Selection() works with resno not resindex
+                                        chainName: toChainName,
+                                        chainIndex: toChainIndex,
+                                        modelIndex: toModelIndex,
+                                        structureId: structureId
+                                    }
+                                });
+                                
+                                linkID++;
+                            }
+                        }, this);
+                    }, this);
+                }
+            }, this);
             
-            var tLinkList = linkList.map (function(rl, i) {
-                chainProxy.index = rl.fromChainIndex;
-                var resFromChainOffset = chainProxy.residueOffset;
-                chainProxy.index = rl.toChainIndex;
-                var resToChainOffset = chainProxy.residueOffset;
-                residueProxy1.index = rl.fromResidue + resFromChainOffset;
-                residueProxy2.index = rl.toResidue + resToChainOffset;
-                
-                return {
-                    origId: rl.id,
-                    linkId: i,
-                    residueA: {
-                        resindex: rl.fromResidue,
-                        residueId: getResidueId (rl.fromResidue, rl.fromChainName, rl.fromChainIndex),
-                        resno: residueProxy1.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                        chainName: rl.fromChainName,
-                        chainIndex: rl.fromChainIndex,
-                        modelIndex: rl.fromModelIndex,
-                        structureId: structureId
-                    },
-                    residueB: {
-                        resindex: rl.toResidue,
-                        residueId: getResidueId (rl.toResidue, rl.toChainName, rl.toChainIndex),
-                        resno: residueProxy2.resno,   // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                        chainName: rl.toChainName,
-                        chainIndex: rl.toChainIndex,
-                        modelIndex: rl.toModelIndex,
-                        structureId: structureId
-                    }
-                };
-            });
-            
-            // Now have a bunch of lists 
-            console.log ("tlinklist", tLinkList);
-
-            return tLinkList;
+            console.log ("linklist", linkList);        
+            return linkList;
         },
     });
 
@@ -1070,7 +1039,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
 
         if (atom !== undefined && bond === undefined) {
-            console.log ("picked atom", atom, atom.resno, atom.chainname);
+            console.log ("picked atom", atom, atom.resno, atom.chainname, atom.chainIndex);
             var residues = crosslinkData.findResidues (atom.resno, atom.chainname, atom.chainIndex);
             if (residues) {
                 pdtrans.residue = residues[0];
@@ -1119,18 +1088,24 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var ai1 = altBondStore.atomIndex1 [bond.index];
             var ai2 = altBondStore.atomIndex2 [bond.index];
             //console.log ("bondStores", pickingData.gid, bond.bondStore, curLinkBondStore, selLinkBondStore, this.linkRepr, this.linkEmphRepr);
-            var resStore = bond.structure.residueStore;
-            var aStore = bond.structure.atomStore;
-            var ri1 = aStore.residueIndex[ai1];
-            var ri2 = aStore.residueIndex[ai2];
-            var r1 = resStore.resno[ri1];
-            var r2 = resStore.resno[ri2];
+           
+            var bstructure = bond.structure;
+            var ap1 = bstructure.getAtomProxy (ai1);
+            var ap2 = bstructure.getAtomProxy (ai2);
+            var rp1 = bstructure.getResidueProxy (ap1.residueIndex);
+            var rp2 = bstructure.getResidueProxy (ap2.residueIndex);
+            var c1 = rp1.chainIndex;
+            var c2 = rp2.chainIndex;
+            var cp1 = bstructure.getChainProxy (c1);
+            var cp2 = bstructure.getChainProxy (c2);
 
             // r1 and r2 are now correct and I can grab data through the existing crosslinkData interface
             // console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
-            var residuesA = crosslinkData.findResidues (r1, bond.atom1.chainname, bond.atom1.chainIndex);
-            var residuesB = crosslinkData.findResidues (r2, bond.atom2.chainname, bond.atom2.chainIndex);
-            console.log ("res", ri1, ri2, r1, r2, residuesA, residuesB);
+           // var residuesA = crosslinkData.findResidues (r1, bond.atom1.chainname, bond.atom1.chainIndex);
+            //var residuesB = crosslinkData.findResidues (r2, bond.atom2.chainname, bond.atom2.chainIndex);
+            var residuesA = crosslinkData.findResidues (rp1.resno, cp1.chainname, c1);
+            var residuesB = crosslinkData.findResidues (rp2.resno, cp2.chainname, c2);
+            console.log ("res", ap1.residueIndex, ap2.residueIndex, c1, c2, cp1.chainname, cp2.chainname, residuesA, residuesB);
             // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
             if (residuesA && residuesB) {
                 pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
