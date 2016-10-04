@@ -965,7 +965,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 customText[atomProxy.index] = pname + ":" + atomProxy.chainname + "(" +atomProxy.chainIndex+ ")";
             }
         }, selectionObject);
-        console.log ("customText", customText);
         
         
         this.labelRepr = comp.addRepresentation ("label", {
@@ -1072,14 +1071,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             // this line worked with one distance rep, but not with two or more
             // var altBondStore = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
             
-            var curLinkBondStore = this.linkRepr.repr.dataList.length ? 
-                this.linkRepr.repr.dataList[0].bondStore : {count : 0}; // distance rep bondstore
-            var selLinkBondStore = this.linkEmphRepr.repr.dataList.length ? 
-                this.linkEmphRepr.repr.dataList[0].bondStore : {count: 0};    // selected rep bondstore
-            var highLinkBondStore = this.linkHighRepr.repr.dataList.length ? 
-                this.linkHighRepr.repr.dataList[0].bondStore : {count: 0};    // selected rep bondstore
-            //console.log ("pp", pickingData.gid, bond.structure.atomCount, selLinkBondStore, highLinkBondStore);
-            var gid = pickingData.gid - bond.structure.atomCount;
+            function getBondStore (aLinkRepr) {
+                return aLinkRepr.repr.dataList.length ? aLinkRepr.repr.dataList[0].bondStore : {count : 0};
+            }
+            
+            var curLinkBondStore = getBondStore (this.linkRepr);    // distance rep bondstore
+            var selLinkBondStore = getBondStore (this.linkEmphRepr);    // selected rep bondstore
+            var highLinkBondStore = getBondStore (this.linkHighRepr);    // selected rep bondstore
+            var bstructure = bond.structure;
+            //console.log ("pp", pickingData.gid, bstructure.atomCount, selLinkBondStore, highLinkBondStore);
+            var gid = pickingData.gid - bstructure.atomCount;
             // gids seemed to be assigned to bonds in reverse order by representation
             var altBondStore = (gid > highLinkBondStore.count + selLinkBondStore.count) ?
                 curLinkBondStore : (gid > highLinkBondStore.count ? selLinkBondStore : highLinkBondStore)
@@ -1089,7 +1090,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var ai2 = altBondStore.atomIndex2 [bond.index];
             //console.log ("bondStores", pickingData.gid, bond.bondStore, curLinkBondStore, selLinkBondStore, this.linkRepr, this.linkEmphRepr);
            
-            var bstructure = bond.structure;
             var ap1 = bstructure.getAtomProxy (ai1);
             var ap2 = bstructure.getAtomProxy (ai2);
             var rp1 = bstructure.getResidueProxy (ap1.residueIndex);
