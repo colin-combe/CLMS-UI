@@ -434,13 +434,16 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         // Set up listener that waits for distance info to become available via NGLView event
         CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst, "distancesAvailable", function (distanceInfo) {
             console.log ("di this", this, distanceInfo);
+            this.set("distanceObj", distanceInfo);
             // if distance data present, append it to the correct interactor (protein) object
+            /*
             distanceInfo.forEach (function (distanceData) {
                 var protein = this.get("interactors").get (distanceData.proteinID);
                 if (protein) {
                     protein.distances = distanceData.distances;
                 }
             }, this);
+            */
             
             new CLMSUI.DistogramBB ({
                 el: "#distoPanel",
