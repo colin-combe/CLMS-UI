@@ -46,6 +46,7 @@ CLMSUI.modelUtils = {
     getCrossLinkDistances2: function (crossLinks, interactorMap) {
         var distArr = [];
         for (var crossLink of crossLinks) {
+            //var dist = CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
             var dist = CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
             if (dist !== null && dist !== undefined) {
                 distArr.push(+dist); // + is to stop it being a string
@@ -68,8 +69,7 @@ CLMSUI.modelUtils = {
         console.log ("distArr", distArr);
 
         return distArr;
-    },
-    
+    },   
 
     flattenMatchesOld: function (matchesArr) {
         return matchesArr.map (function(m) { return m.score; });    
