@@ -145,6 +145,8 @@
         },
         
         getSingleCrosslinkDistance: function (xlink) {
+            //var distancesObj = this.get("clmsModel").get("distancesObj");
+            
             if (xlink.toProtein === xlink.fromProtein) {
                 var distances = xlink.toProtein.distances;
                 if (distances) {
