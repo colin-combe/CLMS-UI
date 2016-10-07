@@ -607,6 +607,10 @@ CLMSUI.DistancesObj.prototype = {
             .key (function(d) { return d.origId; })
             .sortValues (function (a, b) {
                 var d = a.distance - b.distance;
+                // if link distances are v. similar try and pick ones from the same chain(s) (the lowest numbered one)
+                if (Math.abs(d) < 0.01) {
+                    d = (a.residueA.chainIndex + a.residueB.chainIndex) - (b.residueA.chainIndex + b.residueB.chainIndex);
+                }
                 return (d < 0 ? -1 : (d > 0 ? 1 : 0));
             })
             .entries (links)
