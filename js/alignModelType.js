@@ -167,5 +167,28 @@
             }
             return appendThis;
         },
+        
+        // Moved here from NGLViewBB.js, convenience function to convert an index in a given align sequence in a given align model to the search sequence
+        // (or vice versa)
+        // TODO, need to check for decoys (protein has no alignment)
+        // conversion here works to and from the resindex local to a chain
+        getAlignedIndex: function (resIndex, proteinID, toSearchSeq, sequenceID) {
+            var alignModel = this.get (proteinID);
+            var alignPos = resIndex;
+            
+            if (alignModel) {
+                var seqLength = alignModel.getCompSequence(sequenceID)[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
+                alignPos = toSearchSeq ? alignModel.mapToSearch (sequenceID, resIndex) : alignModel.mapFromSearch (sequenceID, resIndex);
+                //console.log (resIndex, "->", alignPos, alignModel);
+                // if alignPos == 0 then before seq, if alignpos <== -seqlen then after seq
+                //console.log (pdbChainSeqId, "seqlen", seqLength);
+                if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
+                    alignPos = null;    // null can be added / subtracted to without NaNs, which undefined causes
+                }
+                if (alignPos < 0) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
+            }
+            
+            return alignPos;    //this will be 1-indexed or null
+        },
     });
     

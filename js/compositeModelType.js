@@ -144,23 +144,10 @@
             console.log ("map", this.get("selectedProtein"));
         },
         
-        getSingleCrosslinkDistance: function (xlink) {
-            //var distancesObj = this.get("clmsModel").get("distancesObj");
-            
-            if (xlink.toProtein === xlink.fromProtein) {
-                var distances = xlink.toProtein.distances;
-                if (distances) {
-                    var highRes = Math.max (xlink.toResidue, xlink.fromResidue);
-                    var lowRes = Math.min (xlink.toResidue, xlink.fromResidue);
-                    var values = d3.values(distances);
-                    var dist = d3.min (values.map (function (value) {
-                        return value[highRes] ? value[highRes][lowRes] : null;
-                    }))
-                    //console.log ("dist", dist);
-                    return dist;
-                }
-            }
-            return null;
+        getSingleCrosslinkDistance: function (xlink, distancesObj, alignCollection) {
+            // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
+            distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
+            alignCollection = alignCollection || this.get("clmsModel").get("alignColl");   
+            return distancesObj.getXLinkDistance (xlink, alignCollection, false);
         }
-    
     });

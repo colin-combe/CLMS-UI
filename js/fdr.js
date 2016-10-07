@@ -51,7 +51,7 @@ CLMSUI.fdr = function (crossLinks, options) {
             });
 
             console.log ("totals tt td dd", t, linkArr);
-            
+            var nonzero = d3.sum(t) > 0;
             
             // decrement the counters on second run
             linkArr.forEach (function (link, i) {
@@ -71,7 +71,7 @@ CLMSUI.fdr = function (crossLinks, options) {
 
             cutoffIndex = Math.max (cutoffIndex - 1, 0);
             var lastLink = linkArr[cutoffIndex];
-            fdrScoreCutoff = lastLink.meta.meanMatchScore;
+            fdrScoreCutoff = nonzero ? lastLink.meta.meanMatchScore : 0.001;
 
             if (true) {
                 console.log ("post totals tt td dd", t);

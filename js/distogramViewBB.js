@@ -164,11 +164,11 @@
                 //~ var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
                 //~ var pp1 = allProtProtLinks.next().value;
                 var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-                var interactorMap = this.model.get("clmsModel").get("interactors");
+                //var interactorMap = this.model.get("clmsModel").get("interactors");
                 var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
                 //console.log ("fcl", filteredCrossLinks);
                 
-                var distArr = CLMSUI.modelUtils.getCrossLinkDistances2 (filteredCrossLinks.values(), interactorMap);
+                var distArr = CLMSUI.modelUtils.getCrossLinkDistances2 (filteredCrossLinks.values());
                 //console.log ("distArr", distArr);
 
                 var series = [distArr, []];

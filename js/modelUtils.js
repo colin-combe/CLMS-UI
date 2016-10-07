@@ -43,28 +43,15 @@ CLMSUI.modelUtils = {
         return allDistances;
     },
     
-    getCrossLinkDistances2: function (crossLinks, interactorMap) {
+    getCrossLinkDistances2: function (crossLinks) {
         var distArr = [];
+        var distModel = CLMSUI.compositeModelInst.get ("distancesObj");
+        var alignCollection = CLMSUI.compositeModelInst.get ("alignColl");
         for (var crossLink of crossLinks) {
-            //var dist = CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
-            var dist = CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
-            if (dist !== null && dist !== undefined) {
+            var dist = CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink, distModel, alignCollection);
+            if (dist != null) {
                 distArr.push(+dist); // + is to stop it being a string
             }
-            /*
-            var toRes = crossLink.toResidue;
-            var fromRes = crossLink.fromResidue;
-            var toProt = crossLink.toProtein;
-            var distances = toProt.distances;
-            if (distances) {
-                var highRes = Math.max(toRes, fromRes);
-                var lowRes = Math.min(toRes, fromRes);
-                var dist = distances[highRes] ? distances[highRes][lowRes] : null;
-                if (dist !== null && dist !== undefined) {
-                    distArr.push(+dist); // + is to stop it being a string
-                }
-            }
-            */
         }
         console.log ("distArr", distArr);
 

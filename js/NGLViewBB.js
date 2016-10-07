@@ -263,7 +263,7 @@
                         var crosslinkData = new CLMSUI.CrosslinkData (self.makeLinkList (filterCrossLinks, structureComp.structure, pdbInfo.baseSeqId));
 
                         self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                            self.model, self.align, self.chainMap, structureComp, crosslinkData, pdbInfo.baseSeqId,
+                            self.model, self.chainMap, structureComp, crosslinkData, pdbInfo.baseSeqId,
                             {
                                 selectedColor: "lightgreen",
                                 selectedLinksColor: "yellow",
@@ -274,7 +274,7 @@
                        );
 
                         var dd = self.xlRepr.getDistances ();
-                        var distancesObj = new CLMSUI.DistancesObj (dd, self.chainMap, self.align, pdbInfo.baseSeqId, self.model);
+                        var distancesObj = new CLMSUI.DistancesObj (dd, self.chainMap, pdbInfo.baseSeqId);
                         console.log ("distances", distancesObj);
                         self.model.trigger ("distancesAvailable", distancesObj);
 
@@ -378,7 +378,7 @@
                 var filteredCrossLinks = this.filterCrossLinks (crossLinks);
                 var linkList = this.makeLinkList (filteredCrossLinks, this.xlRepr.structureComp.structure, this.xlRepr.pdbBaseSeqId);
                 if (this.options.shortestLinksOnly) {
-                    linkList = this.model.get("clmsModel").get("distanceObj").getShortestLinks (linkList);
+                    linkList = this.model.get("clmsModel").get("distancesObj").getShortestLinks (linkList);
                 }
                 this.setLinkList (linkList);
             }
@@ -388,30 +388,8 @@
             this.xlRepr.crosslinkData.setLinkList (newLinkList);
         },
         
-        // TODO, need to check for decoys (protein has no alignment)
-        // conversion here works to and from the resindex local to a chain
-        align: function (resIndex, proteinID, from3D, sequenceID) {
-            var alignModel = this.model.get("alignColl").get (proteinID);
-            var alignPos = resIndex;
-            
-            if (alignModel) {
-                var seqLength = alignModel.getCompSequence(sequenceID)[from3D ? "convertFromRef" : "convertToRef"].length;
-                alignPos = from3D ? alignModel.mapToSearch (sequenceID, resIndex) : alignModel.mapFromSearch (sequenceID, resIndex);
-                //console.log (resIndex, "->", alignPos, alignModel);
-                // if alignPos == 0 then before seq, if alignpos <== -seqlen then after seq
-                //console.log (pdbChainSeqId, "seqlen", seqLength);
-                if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
-                    alignPos = null;    // null can be added / subtracted to without NaNs, which undefined causes
-                }
-                if (alignPos < 0) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
-            }
-            
-            return alignPos;    //this will be 1-indexed or null
-        },
-        
-        
         // residueStore maps the NGL-indexed resides to PDB-index
-        // so we take our alignment index --> which goes to NGL-sequence index with align() --> 
+        // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
         // then need to subtract 1, then --> which goes to PDB index with residueStore
         makeLinkList: function (linkModel, structure, pdbBaseSeqId) {
             var nextResidueId = 0;
@@ -420,7 +398,8 @@
             var linkList = [];
             var residueProxy1 = structure.getResidueProxy();
             var residueProxy2 = structure.getResidueProxy();
-            var chainProxy = structure.getChainProxy();
+            var chainProxy = structure.getChainProxy();      
+            var alignColl = this.model.get("alignColl");
             console.log ("chainmap", this.chainMap);
             
             function getResidueId (resIndex, chainIndex) {
@@ -441,14 +420,14 @@
                 if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
                     fromChainIndices.forEach (function (fromChainIndex) {
                         chainProxy.index = fromChainIndex;
-                        var fromResidue = this.align (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
+                        var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
                         
                         if (fromResidue >= 0) {
                             residueProxy1.index = fromResidue + chainProxy.residueOffset;
 
                             toChainIndices.forEach (function (toChainIndex) {
                                 chainProxy.index = toChainIndex;
-                                var toResidue = this.align (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
+                                var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
 
                                 //console.log ("fr", fromResidue, "tr", toResidue);
                                 if (toResidue >= 0) {                   
@@ -586,100 +565,8 @@ CLMSUI.CrosslinkData.prototype = {
     },
 };
 
-CLMSUI.DistancesObj = function (matrices, chainMap, alignFunc, pdbBaseSeqId, model) {
-    this.model = model;
-    this.matrices = matrices;
-    this.chainMap = chainMap;
-    this.pdbBaseSeqId = pdbBaseSeqId;
-    this.alignFunc = alignFunc;
-};
 
-CLMSUI.DistancesObj.prototype = {
-    
-    constructor: CLMSUI.DistancesObj,
-    
-    getShortestLinks: function (links) {
-        links.forEach (function (link) {
-            link.distance = this.getLinkDistanceChainCoords (this.matrices, link.residueA.chainIndex, link.residueB.chainIndex, link.residueA.resindex, link.residueB.resindex);
-        }, this);
-        
-        var nestedLinks = d3.nest()
-            .key (function(d) { return d.origId; })
-            .sortValues (function (a, b) {
-                var d = a.distance - b.distance;
-                // if link distances are v. similar try and pick ones from the same chain(s) (the lowest numbered one)
-                if (Math.abs(d) < 0.01) {
-                    d = (a.residueA.chainIndex + a.residueB.chainIndex) - (b.residueA.chainIndex + b.residueB.chainIndex);
-                }
-                return (d < 0 ? -1 : (d > 0 ? 1 : 0));
-            })
-            .entries (links)
-        ;
-        
-        var shortestLinks = nestedLinks.map (function (group) {
-            return group.values[0];
-        });
-        
-        console.log ("nestedLinks", links, nestedLinks, shortestLinks);
-        
-        return shortestLinks;
-    },
-    
-    
-    getXLinkDistance: function (xlink, average) {
-        console.log ("getLinkDistance", arguments);
-        var chainMap = this.chainMap;
-        var matrices = this.matrices;
-        
-        var pid1 = xlink.fromProtein.id;
-        var pid2 = xlink.toProtein.id;
-        var chains1 = chainMap[pid1];
-        var chains2 = chainMap[pid2];
-        var minDist;
-        var totalDist = 0;
-        var distCount = 0;
-        for (var n = 0; n < chains1.length; n++) {
-            var ind1 = chains1[n].index;
-            var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains1[n].name, ind1);
-            var resIndex1 = this.alignFunc (xlink.fromResidue, pid1, false, alignId1) - 1; 
-            for (var m = 0; m < chains2.length; m++) {
-                var ind2 = chains2[m].index;
-                var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains2[m].name, ind2);
-                var resIndex2 = this.alignFunc (xlink.toResidue, pid2, false, alignId2) - 1; 
-                // align from 3d to search index. resindex is 0-indexed so +1 before querying
-                console.log ("alignid", alignId1, alignId2, pid1, pid2);
-                if (resIndex1 >= 0 && resIndex2 >= 0) {
-                    var dist = this.getLinkDistanceChainCoords (matrices, ind1, ind2, resIndex1, resIndex2);
-                    if (dist !== undefined) {
-                        if (minDist === undefined || dist < minDist) {
-                            minDist = dist;
-                        }
-                        totalDist += dist;
-                        distCount++;
-                    }
-                }
-            }
-        }
-        
-        return average ? (distCount ? totalDist / distCount : undefined) : minDist;
-    },
-    
-    getLinkDistanceChainCoords: function (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2) {
-        var dist;
-        var matrix = matrices [chainIndex1+"-"+chainIndex2];
-        var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
-        console.log ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
-        if (matrix[minIndex]) {
-            var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
-            dist = matrix[minIndex][maxIndex];
-        }
-        console.log ("dist", dist);
-        return dist;
-    },
-};
-
-
-CLMSUI.CrosslinkRepresentation = function (CLMSmodel, alignFunc, chainMap, structureComp, crosslinkData, pdbBaseSeqId, params) {
+CLMSUI.CrosslinkRepresentation = function (CLMSmodel, chainMap, structureComp, crosslinkData, pdbBaseSeqId, params) {
 
     var defaults = {
         sstrucColor: "wheat",
@@ -698,7 +585,6 @@ CLMSUI.CrosslinkRepresentation = function (CLMSmodel, alignFunc, chainMap, struc
 
     this.model = CLMSmodel;
     this.stage = structureComp.stage;
-    this.alignFunc = alignFunc;
     this.chainMap = chainMap;
     this.structureComp = structureComp;
     this.crosslinkData = crosslinkData;
@@ -1111,7 +997,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 var alignId = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, atom.chainname, atom.chainIndex);
                 // align from 3d to search index. resindex is 0-indexed so +1 before querying
                 console.log ("alignid", alignId, proteinId);
-                var srindex = this.alignFunc (pdtrans.residue.resindex + 1, proteinId, true, alignId); 
+                var srindex = this.model.get("alignColl").getAlignedIndex (pdtrans.residue.resindex + 1, proteinId, true, alignId); 
                 
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
                 pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
@@ -1173,9 +1059,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
                 pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
                 
-                var distModel = this.model.get("clmsModel").get("distanceObj");
-                var ld1 = distModel.getXLinkDistance (pdtrans.xlinks[0], true);
-                var ld2 = distModel.getXLinkDistance (pdtrans.xlinks[0], false);
+                var distModel = this.model.get("clmsModel").get("distancesObj");
+                var ld1 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), true);
+                var ld2 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), false);
                 console.log ("link distances", ld1, ld2);
                 this.model.get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
