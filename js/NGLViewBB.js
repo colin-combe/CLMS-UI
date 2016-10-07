@@ -389,14 +389,14 @@
         },
         
         // TODO, need to check for decoys (protein has no alignment)
-        // conversion here works to and from the resindex local to a chain, not for the overall resindex within a whole model
-        align: function (resIndex, proteinID, from3D, pdbChainSeqId) {
+        // conversion here works to and from the resindex local to a chain
+        align: function (resIndex, proteinID, from3D, sequenceID) {
             var alignModel = this.model.get("alignColl").get (proteinID);
             var alignPos = resIndex;
             
             if (alignModel) {
-                var seqLength = alignModel.getCompSequence(pdbChainSeqId)[from3D ? "convertFromRef" : "convertToRef"].length;
-                alignPos = from3D ? alignModel.mapToSearch (pdbChainSeqId, resIndex) : alignModel.mapFromSearch (pdbChainSeqId, resIndex);
+                var seqLength = alignModel.getCompSequence(sequenceID)[from3D ? "convertFromRef" : "convertToRef"].length;
+                alignPos = from3D ? alignModel.mapToSearch (sequenceID, resIndex) : alignModel.mapFromSearch (sequenceID, resIndex);
                 //console.log (resIndex, "->", alignPos, alignModel);
                 // if alignPos == 0 then before seq, if alignpos <== -seqlen then after seq
                 //console.log (pdbChainSeqId, "seqlen", seqLength);
