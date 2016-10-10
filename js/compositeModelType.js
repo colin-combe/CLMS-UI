@@ -7,11 +7,20 @@
         applyFilter: function () {
 			var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
+
+			//if its FDR based filtering, set all matches fdrPass att to false
+			if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
+				var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
+				for (match of matches.values()){
+					match.fdrPass = false;
+				}
+			}
+
             for (var crossLink of crossLinks) {
                 if (filterModel) {
 					crossLink.filteredMatches_pp = [];
 					
-					if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
+					if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
 						var pass = filterModel.filterLink (crossLink);
 						if (pass) {
 							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
@@ -19,7 +28,10 @@
 								!crossLink.filteredMatches_pp.some (function (matchAndPepPos) {
 									return matchAndPepPos.match.crossLinks.length === 1;
 								})
-							;    
+							;
+							for (filteredMatch_pp of crossLink.filteredMatches_pp) {
+								filteredMatch_pp.match.fdrPass = true;
+							}    
 						}
 					} else {
 						crossLink.ambiguous = true;

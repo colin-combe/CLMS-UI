@@ -69,7 +69,12 @@ function getMatchesCSV () {
     var matchCount = matches.length;
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
     for (var match of matches.values()){
-        var result = filterModel.filter(match);
+        var result;
+        if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
+			result = match.fdrPass;
+		} else {
+			result = filterModel.filter(match);
+		}
         if (result === true){
             csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1", CLMSUI.compositeModelInst.get("clmsModel"))
                 + '","' + CLMSUI.utils.arrayConcat(match, "pepPos1") + '","'
