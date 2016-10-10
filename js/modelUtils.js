@@ -346,12 +346,6 @@ CLMSUI.modelUtils = {
         return pairings;
     },
     
-    linkHasHomomultimerMatch: function (xlink) {
-        return xlink.filteredMatches_pp.some (function (matchAndPepPos) {
-            return matchAndPepPos.match.confirmedHomomultimer;    
-        });
-    },
-    
     aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
             return xlink.filteredMatches_pp;
@@ -360,16 +354,7 @@ CLMSUI.modelUtils = {
     },
     
     getRandomSearchId : function (clmsModel, match) {
-        // pitfall: maps store integer keys as strings, so toString here
-        
-        // (actually maps store integer keys as integers, 
-        // these keys got converted to strings when they were previously propertyNames in an Object,
-        // anyway, I added the toString() conversion for searchId to SpectrumMatch (ln.26)
-        // so we don't have to bother about this anymore.
-        // this is more commentary than this minor issue merits,
-        // can delete when read... - col)
-                
-        var searchId = match.searchId;//.toString(); //see, I took it out
+        var searchId = match.searchId;
         var searchMap = clmsModel.get("searches");
         var searchData = searchMap.get(searchId);
         var randId = searchData.randId;    
@@ -377,7 +362,7 @@ CLMSUI.modelUtils = {
     },
     
     isReverseProtein: function (prot1, prot2) {
-        return (prot1.description === prot2.description || prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy);
+        return ((prot1.name === "REV_"+prot2.name || "REV_"+prot1.name === prot2.name) && (prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy));
     },
     
     isIntraLink: function (crossLink) {

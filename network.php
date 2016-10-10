@@ -77,7 +77,7 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
-    
+
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
@@ -130,18 +130,13 @@
         <!-- Main -->
         <div id="main">
 
-            <div class="container">
-				<h1 class="page-header">
-					<i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-					<p class="btn">Layout:</p>
-					<button class="btn btn-1 btn-1a" id="save" onclick="saveLayout();">Save</button>
-					<button class="btn btn-1 btn-1a" onclick="crosslinkViewer.reset();">Reset</button>
-					<p id="expDropdownPlaceholder"></p>
-					<p id="viewDropdownPlaceholder"></p>
-					<a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a righty">Help</a>
-					<span id="colourSelect" class="btn btn-1 btn-1a righty"></span> <!-- placeholder for new colour scheme selector -->
-				</h1>
-			</div>
+            <div class="page-header">
+                    <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
+                    <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
+                    <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
+                    <p id="viewDropdownPlaceholder"></p>
+                    <p id="expDropdownPlaceholder"></p>
+            </div>
 
             <div class="mainContent">
                 <div id="topDiv">
@@ -152,7 +147,7 @@
             </div>
 
             <div class="controls">
-				<span id="filterPlaceholder"></span>
+                <span id="filterPlaceholder"></span>
             </div>
         </div><!-- MAIN -->
 
@@ -170,37 +165,37 @@
                 //~ include '../annotations.php';
             //~ }
         ?>
-        
+
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
             var success = function (text) {
-                spinner.stop(); // stop spinner on request returning 
-				var json = JSON.parse (text);
+                spinner.stop(); // stop spinner on request returning
+                var json = JSON.parse (text);
                 CLMSUI.init.models (json);
 
-				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-				document.title = Array.from(searches.keys()).join();
-        
-				CLMSUI.split = Split (["#topDiv", "#bottomDiv"], 
-				    { direction: "vertical", sizes: [60,40], minSize: [200,10] }
-				);
+                var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+                document.title = Array.from(searches.keys()).join();
 
-				CLMSUI.init.views();
+                CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
+                    { direction: "vertical", sizes: [60,40], minSize: [200,10] }
+                );
 
-				allDataLoaded ();
+                CLMSUI.init.views();
+
+                allDataLoaded ();
             };
-        
-            var url = "./loadData.php" + window.location.search;
-        
 
-        
+            var url = "./loadData.php" + window.location.search;
+
+
+
             d3.text (url, function (error, text) {
                 if (!error) {
                     success (text);
                 }
             });
-        
-           
+
+
     //]]>
     </script>
 

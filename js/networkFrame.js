@@ -95,7 +95,7 @@ CLMSUI.init.models = function (options) {
 
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch();
-    
+
     CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Accent[8].slice().reverse());
 };
 
@@ -161,7 +161,7 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        {id: "nglChkBxPlaceholder", label: "NGL", eventName:"nglShow"},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
@@ -227,10 +227,10 @@ CLMSUI.init.views = function () {
         el: "#expDropdownPlaceholder",
         model: CLMSUI.clmsModelInst,
         myOptions: {
-            title: "Export",
+            title: "Data-Export",
             menu: [
                 {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount}, {name: "SVG", func: downloadSVG}
+                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
             ]
         }
     });
@@ -524,25 +524,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 };
-
-
-function saveLayout () {
-    var layout = crosslinkViewer.getLayout();
-    var xmlhttp = new XMLHttpRequest();
-    var url = "./php/saveLayout.php";
-    var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
-    console.log(sid);
-    var params =  "sid=" + sid + "&layout="+encodeURIComponent(layout.replace(/[\t\r\n']+/g,""));
-    xmlhttp.open("POST", url, true);
-    //Send the proper header information along with the request
-    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-        if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            console.log(xmlhttp.responseText, true);
-        }
-    };
-    xmlhttp.send(params);
-}
 
 function changeAnnotations(){
     var annotationSelect = document.getElementById('annotationsSelect');

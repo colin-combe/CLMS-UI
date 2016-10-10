@@ -41,11 +41,12 @@
             mainDivSel.append("div").style("height", "40px")
                 .append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Export SVG");
+                .text("Export Graphic");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner distoDiv")
                 .attr("id", "currentSampleDistogram")
+                .style("position", "relative")
                 .style("height", "calc( 100% - 40px )")
             ;
             //CLMSUI.utils.addFourCorners(mainDivSel);

@@ -175,35 +175,6 @@ if ($oldDB == true) {
 			WHERE (".$WHERE_matchedPeptide.")
 			) r ON sm.id = r.spectrum_match_id
 		ORDER BY score DESC, sm.id, mp.match_type;";
-        
-     /*
-     $query = "		
-             SELECT		
-                 mp.match_id, mp.match_type, mp.peptide_id,		
-                 mp.link_position + 1 AS link_position,		
-                 sm.score, sm.autovalidated, sm.validated, sm.rejected,		
-                 sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id,		
-                sp.scan_number, r.run_name		
-             FROM		
-                 (SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,		
-                 sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id		
-                 FROM spectrum_match sm INNER JOIN search s ON search_id = s.id		
-                 WHERE (".$WHERE_spectrumMatch.")		
-                 AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR		
-                 (sm.validated LIKE 'A') OR (sm.validated LIKE 'B') OR (sm.validated LIKE 'C')		
-                 OR (sm.validated LIKE '?'))		
-                 ) sm		
-             INNER JOIN		
-                 (SELECT mp.match_id, mp.match_type, mp.peptide_id,		
-                 mp.link_position		
-                 FROM matched_peptide mp WHERE link_position != -1) mp		
-                 ON sm.id = mp.match_id		
-             INNER JOIN spectrum sp ON sm.spectrum_id = sp.id		
-             INNER JOIN (SELECT run_name, spectrum_match_id from  v_export_materialized		
-                 WHERE (".$WHERE_matchedPeptide.")		
-                 ) r ON sm.id = r.spectrum_match_id		
-             ORDER BY score DESC, sm.id, mp.match_type;";
-             */
 }
 else {
 	//New DB

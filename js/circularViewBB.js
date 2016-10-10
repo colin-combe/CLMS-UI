@@ -98,8 +98,7 @@
           }
           return _.extend({},parentEvents,{
               "click .niceButton": "reOrder",
-              "click .flipIntraButton": "flipIntra",
-              "click .showResLabelsButton": "showResLabelsIfRoom",
+              "click .flipIntraButton": "flipIntra"
           });
         },
 
@@ -141,7 +140,6 @@
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,
-                showResLabels: true,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -161,30 +159,16 @@
                 )
             ;
             var buttonData = [
-                {label:"Export SVG", class:"downloadButton", type: "button"},
-                {label:"AutoLayout", class :"niceButton", type: "button"},
-                {label:"Flip Self Links", class:"flipIntraButton", type: "button"},
-                {label:"Show Residue Labels If Few", class:"showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
+                {label:"Export Graphic", class:"downloadButton"},
+                {label:"AutoLayout", class :"niceButton"},
+                {label:"Flip Self Links", class:"flipIntraButton"},
             ];
-            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
+            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData)
                 .enter()
                 .append("button")
                 .text(function(d) { return d.label; })
                 .attr("class", function(d) { return d.class; })
                 .classed("btn btn-1 btn-1a", true)
-            ;      
-            mainDivSel.select("div.buttonPanel").selectAll("label").data(buttonData.filter(function(bd) { return bd.type === "checkbox"; }))
-                .enter()
-                .append ("label")
-                .attr ("class", "btn")
-                    .append ("span")
-                    .attr("class", "noBreak")
-                    .text(function(d) { return d.label; })
-                    .attr ("title", function(d) { return d.title; })
-                    .append("input")
-                        .attr("type", "checkbox")
-                        .attr("class", function(d) { return d.class; })
-                        .property ("checked", function(d) { return d.optionValue; })
             ;
 
             var degToRad = Math.PI / 180;
@@ -221,7 +205,7 @@
                 .angle(function(d) { return d.ang * degToRad; })
             ;
 
-            var arcs = ["arc", "textArc", "featureArc", "resLabelArc"];
+            var arcs = ["arc", "textArc", "featureArc"];
             arcs.forEach (function(arc) {
                 this[arc] = d3.svg.arc()
                     .innerRadius(90)
@@ -253,6 +237,7 @@
                 ;
             };
 
+			//TODO: could have more general use than just in circle view, more elsewhere, eliminate duplication 
             this.featureTip = function (d) {
                 self.model.get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.feature())
@@ -290,11 +275,6 @@
             this.options.intraOutside = !this.options.intraOutside;
             this.render();
             //this.render ({changed : d3.set(["links"]), });
-        },
-        
-        showResLabelsIfRoom: function () {
-            this.options.showResLabels = !this.options.showResLabels;
-            this.render();
         },
 
         idFunc: function (d) { return d.id; },
@@ -345,7 +325,7 @@
 
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
-                var homom = CLMSUI.modelUtils.linkHasHomomultimerMatch (xlink);
+                var homom = xlink.confirmedHomomultimer; // TODO: need to deal with this changing
                 var intra = xlink.toProtein.id === xlink.fromProtein.id;
                 var out = intraOutside ? intra && !homom : homom;
                 var rad = out ? rad2 : rad1;
@@ -433,18 +413,12 @@
                 this.radius = this.getMaxRadius (svg);
                 var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if lots of links on outside
                 var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
-                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth * 0.7)) / 100);
+                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
                 var textRadius = (tickRadius + innerNodeRadius) / 2;
 
-                var arcRadii = [
-                    {arc: "arc", inner: innerNodeRadius, outer: tickRadius},
-                    {arc: "featureArc", inner: innerFeatureRadius, outer: tickRadius},
-                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc
-                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},
-                ];
-                arcRadii.forEach (function (arcData) {
-                    this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);
-                }, this);
+                this.arc.innerRadius(innerNodeRadius).outerRadius(tickRadius);
+                this.featureArc.innerRadius(innerFeatureRadius).outerRadius(tickRadius);
+                this.textArc.innerRadius(textRadius).outerRadius(textRadius); // both radii same for textArc
 
                 var nodes = layout.nodes;
                 var links = layout.links;
@@ -475,9 +449,6 @@
                 if (!changed) {
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
-                }
-                if (!changed || changed.has("links")) {
-                    this.drawResidueLetters (gRot, linkCoords);
                 }
             }
 
@@ -737,7 +708,8 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d,i) { return self.color(i); })
+                .style("fill", function(d,i) { return CLMSUI.domainColours(d.id); })
+                .style("fill-opacity", "0.5")
             ;
 
             return this;
@@ -793,7 +765,6 @@
 
             return this;
         },
-        
 
         relayout: function () {
             this.render();

@@ -109,16 +109,14 @@ header('Content-type: text/html; charset=utf-8');
         <!-- Main -->
         <div id="main">
 
-            <div class="container">
-                <h1 class="page-header">
+            <div class="page-header">
                 <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-                <span class="headerLabel" style="font-weight:bold;">
+                <span class="headerLabel">
                     <?php echo $_SESSION['session_name'] ?>
                 </span>
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
-            </h1>
-			</div> <!-- CONTAINER -->
+            </div> <!-- page-header -->
 			
             <div class="mainContent">
                 <div id="topDiv">

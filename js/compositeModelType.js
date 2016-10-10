@@ -12,7 +12,6 @@
 					crossLink.filteredMatches_pp = [];
 					
 					if (filterModel.get("intraFDRCut") >= 0 || filterModel.get("interFDRCut") >= 0) {
-						//console.log ("yo fdring");
 						var pass = filterModel.filterLink (crossLink);
 						if (pass) {
 							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
@@ -33,7 +32,7 @@
 								if (match.crossLinks.length === 1) {
 									crossLink.ambiguous = false;
 								}
-								if (match.crossLinks.hd === true) { // what is .hd ??
+								if (match.confirmedHomomultimer === true) {
 									crossLink.confirmedHomomultimer = true;
 								}                       
 							}
@@ -93,6 +92,7 @@
         
         // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
         // to fill in the model
+        // - i'm not sure this is a good name for this function - cc
         calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
             if (crossLinks) {   // if undefined nothing happens, to remove selection pass an empty array - []
                 if (add) {

@@ -1,14 +1,5 @@
 #main .mainContent {
-	top:10px;
-}
-.container{
-	float:left;
-}
-.page-header{
-	margin:0px;
-	padding:5px;
-    position: absolute;
-	z-index: 2;
+	top:5px;
 }
 #toggles_decoys {
 	display: none;
