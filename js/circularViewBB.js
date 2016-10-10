@@ -98,7 +98,8 @@
           }
           return _.extend({},parentEvents,{
               "click .niceButton": "reOrder",
-              "click .flipIntraButton": "flipIntra"
+              "click .flipIntraButton": "flipIntra",
+              "click .showResLabelsButton": "showResLabelsIfRoom",
           });
         },
 
@@ -140,6 +141,7 @@
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,
+                showResLabels: true,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -159,16 +161,30 @@
                 )
             ;
             var buttonData = [
-                {label:"Export Graphic", class:"downloadButton"},
-                {label:"AutoLayout", class :"niceButton"},
-                {label:"Flip Self Links", class:"flipIntraButton"},
+                {label:"Export SVG", class:"downloadButton", type: "button"},
+                {label:"AutoLayout", class :"niceButton", type: "button"},
+                {label:"Flip Self Links", class:"flipIntraButton", type: "button"},
+                {label:"Show Residue Labels If Few", class:"showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
             ];
-            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData)
+            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
                 .enter()
                 .append("button")
                 .text(function(d) { return d.label; })
                 .attr("class", function(d) { return d.class; })
                 .classed("btn btn-1 btn-1a", true)
+            ;
+            mainDivSel.select("div.buttonPanel").selectAll("label").data(buttonData.filter(function(bd) { return bd.type === "checkbox"; }))		
+                .enter()		
+                .append ("label")		
+                .attr ("class", "btn")		
+                    .append ("span")		
+                    .attr("class", "noBreak")		
+                    .text(function(d) { return d.label; })		
+                    .attr ("title", function(d) { return d.title; })		
+                    .append("input")		
+                        .attr("type", "checkbox")		
+                        .attr("class", function(d) { return d.class; })		
+                        .property ("checked", function(d) { return d.optionValue; })		
             ;
 
             var degToRad = Math.PI / 180;
@@ -205,7 +221,7 @@
                 .angle(function(d) { return d.ang * degToRad; })
             ;
 
-            var arcs = ["arc", "textArc", "featureArc"];
+            var arcs = ["arc", "textArc", "featureArc", "resLabelArc"];
             arcs.forEach (function(arc) {
                 this[arc] = d3.svg.arc()
                     .innerRadius(90)
@@ -275,6 +291,11 @@
             this.options.intraOutside = !this.options.intraOutside;
             this.render();
             //this.render ({changed : d3.set(["links"]), });
+        },
+        
+        showResLabelsIfRoom: function () {		
+            this.options.showResLabels = !this.options.showResLabels;		
+            this.render();		
         },
 
         idFunc: function (d) { return d.id; },
@@ -416,9 +437,15 @@
                 var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
                 var textRadius = (tickRadius + innerNodeRadius) / 2;
 
-                this.arc.innerRadius(innerNodeRadius).outerRadius(tickRadius);
-                this.featureArc.innerRadius(innerFeatureRadius).outerRadius(tickRadius);
-                this.textArc.innerRadius(textRadius).outerRadius(textRadius); // both radii same for textArc
+                var arcRadii = [
+                    {arc: "arc", inner: innerNodeRadius, outer: tickRadius},
+                    {arc: "featureArc", inner: innerFeatureRadius, outer: tickRadius}, // both radii same for textArc
+                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc		
+                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},		
+                 ];		
+                 arcRadii.forEach (function (arcData) {		
+                     this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);		
+                 }, this);
 
                 var nodes = layout.nodes;
                 var links = layout.links;
@@ -449,6 +476,9 @@
                 if (!changed) {
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
+                }
+                if (!changed || changed.has("links")) {		
+                    this.drawResidueLetters (gRot, linkCoords);		
                 }
             }
 
