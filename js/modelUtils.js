@@ -43,6 +43,20 @@ CLMSUI.modelUtils = {
         return allDistances;
     },
     
+    // WORK ON THIS TOMORROW
+    getFlattenedDistances2: function (distancesObj) {
+        var perProtDistances = distancesObj.matrices.map (function (matrix) {
+            var values = d3.values(prot.distances);
+            var protDists = values.map (function (value) {
+                return CLMSUI.modelUtils.flattenDistanceMatrix (value);    
+            });
+            protDists = [].concat.apply([], protDists);
+            return protDists;
+        });
+        var allDistances = [].concat.apply([], perProtDistances);
+        return allDistances;
+    },
+    
     getCrossLinkDistances2: function (crossLinks) {
         var distArr = [];
         var distModel = CLMSUI.compositeModelInst.get ("distancesObj");

@@ -54,20 +54,23 @@ CLMSUI.DistancesObj.prototype = {
                 var ind1 = chains1[n].index;
                 var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains1[n].name, ind1);
                 var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1) - 1; 
-                for (var m = 0; m < chains2.length; m++) {
-                    var ind2 = chains2[m].index;
-                    var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains2[m].name, ind2);
-                    var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2) - 1; 
-                    // align from 3d to search index. resindex is 0-indexed so +1 before querying
-                    console.log ("alignid", alignId1, alignId2, pid1, pid2);
-                    if (resIndex1 >= 0 && resIndex2 >= 0) {
-                        var dist = this.getLinkDistanceChainCoords (matrices, ind1, ind2, resIndex1, resIndex2);
-                        if (dist !== undefined) {
-                            if (minDist === undefined || dist < minDist) {
-                                minDist = dist;
+                if (resIndex1 >= 0) {
+                    for (var m = 0; m < chains2.length; m++) {
+                        var ind2 = chains2[m].index;
+                        var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains2[m].name, ind2);
+                        var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2) - 1; 
+                        // align from 3d to search index. resindex is 0-indexed so +1 before querying
+                        //console.log ("alignid", alignId1, alignId2, pid1, pid2);
+                        if (resIndex1 >= 0 && resIndex2 >= 0) {
+                            var dist = this.getLinkDistanceChainCoords (matrices, ind1, ind2, resIndex1, resIndex2);
+                            if (dist !== undefined) {
+                                if (average) {
+                                    totalDist += dist;
+                                    distCount++;
+                                } else if (dist < minDist || minDist === undefined) {
+                                    minDist = dist;
+                                }
                             }
-                            totalDist += dist;
-                            distCount++;
                         }
                     }
                 }
@@ -81,12 +84,12 @@ CLMSUI.DistancesObj.prototype = {
         var dist;
         var matrix = matrices [chainIndex1+"-"+chainIndex2];
         var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
-        console.log ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
+        //console.log ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
         if (matrix[minIndex]) {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
             dist = matrix[minIndex][maxIndex];
         }
-        console.log ("dist", dist);
+        //console.log ("dist", dist);
         return dist;
     },
 };

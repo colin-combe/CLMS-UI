@@ -713,7 +713,7 @@
                 var diff = (b.end - b.start) - (a.end - a.start);
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
             });
-            //console.log ("features", features);
+            console.log ("features", features);
             var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
 
             featureJoin.exit().remove();
@@ -738,7 +738,7 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d,i) { return CLMSUI.domainColours(d.id); })
+                .style("fill", function(d,i) { return CLMSUI.domainColours(d.name); })
                 .style("fill-opacity", "0.5")
             ;
 
