@@ -192,7 +192,7 @@
                                     var minLength = Math.min (i.accession.length, mapping.uniprot.length);
                                     return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
                                 });
-                                mapping.id = matchingInteractors[0].id;
+                                mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                             });
                             callback (map);
                         }
@@ -904,7 +904,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         comp.structure.eachAtom (function (atomProxy) {
             var pid = self.getProteinFromChainIndex (atomProxy.chainIndex);
             if (pid) {
-                var pname = self.model.get("clmsModel").get("interactors").get(pid).name;
+                var protein = self.model.get("clmsModel").get("interactors").get(pid);
+                var pname = protein ? protein.name : "none";
                 customText[atomProxy.index] = pname + ":" + atomProxy.chainname + "(" +atomProxy.chainIndex+ ")";
             }
         }, selectionObject);

@@ -166,7 +166,7 @@ CLMSUI.modelUtils = {
         },
         
         feature: function (feature) {
-             return [["Name", feature.id], ["Start", feature.fstart], ["End", feature.fend]];
+             return [["Name", feature.name], ["Type", feature.category], ["Start", feature.fstart], ["End", feature.fend]];
         },
     },
     
@@ -382,6 +382,21 @@ CLMSUI.modelUtils = {
     
     isIntraLink: function (crossLink) {
          return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
+    },
+    
+    getAlignmentsAsFeatures: function (protID, alignCollection, includeCanonical) {
+        var alignModel = alignCollection.get(protID);
+        if (alignModel) {
+            return alignModel.get("compAlignments")
+                .map (function (alignment, i) {
+                    return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", alignmentID: alignModel.get("compIDs")[i] };
+                })
+                .filter(function (alignFeature) {
+                    return includeCanonical || alignFeature.name !== "Canonical";     
+                })
+            ;
+        }
+        return [];
     },
     
     intersectObjectArrays: function (a, b, compFunc) {

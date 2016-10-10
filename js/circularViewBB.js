@@ -60,7 +60,9 @@
                 var tofrom = _options.featureParse (feature, nodeID);
                 //console.log ("nc", nodeCoord, tofrom.fromPos, tofrom.toPos, feature);
                 featureCoords.push ({
-                    id: feature.name,
+                    id: feature.id || feature.notes || feature.name,
+                    category: feature.category,
+                    name: feature.name,
                     nodeID: nodeID,
                     fstart: tofrom.fromPos + 1,
                     fend: tofrom.toPos,
@@ -110,7 +112,7 @@
                 tickWidth: 23,
                 tickLabelCycle: 5,  // show label every nth tick
                 gap: 5,
-                uniprotFeatureFilterSet: d3.set(["DOMAIN"]),
+                uniprotFeatureFilterSet: d3.set(["DOMAIN", "Alignment"]),
                 linkParse: function (link) {
                     // turn toPos and fromPos to zero-based index
                     return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
@@ -122,8 +124,9 @@
                     var convEnd = feature.end;
                     var alignModel = self.model.get("alignColl").get(nodeid);
                     if (alignModel) {
-                        convStart = alignModel.mapToSearch ("Canonical", feature.start);
-                        convEnd = alignModel.mapToSearch ("Canonical", feature.end);
+                        var alignmentID = feature.alignmentID || "Canonical";
+                        convStart = alignModel.mapToSearch (alignmentID, feature.start);
+                        convEnd = alignModel.mapToSearch (alignmentID, feature.end);
                         if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
                         if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                     }
@@ -377,8 +380,11 @@
             return filteredCrossLinks;
         },
 
-        filterFeatures: function (features) {
-            return features ? features.filter (function (f) { return this.options.uniprotFeatureFilterSet.has (f.category); }, this) : [];
+        filterFeatures: function (featureArrays) {
+            var features = d3.merge (featureArrays);
+            return features ? features.filter (function (f) { 
+                return !f.category || this.options.uniprotFeatureFilterSet.has (f.category);
+            }, this) : [];
         },
 
         render: function (options) {
@@ -414,8 +420,9 @@
                 });
 
                 // After rearrange interactors, because filtered features depends on the interactor order
+                var alignColl = this.model.get("alignColl");
                 var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures (inter.uniprotFeatures);
+                    return this.filterFeatures ([inter.uniprotFeatures, CLMSUI.modelUtils.getAlignmentsAsFeatures (inter.id, alignColl)]);
                 }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
 
@@ -701,6 +708,11 @@
 
         drawFeatures : function (g, features) {
             var self = this;
+            features.sort (function (a,b){
+                var diff = (b.end - b.start) - (a.end - a.start);
+                return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
+            });
+            //console.log ("features", features);
             var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
 
             featureJoin.exit().remove();
@@ -735,8 +747,7 @@
         drawResidueLetters : function (g, links) {
             
             var circumference = this.resLabelArc.innerRadius()() * 2 * Math.PI;
-            console.log ("ff", this.resLabelArc, this.resLabelArc.innerRadius(),  this.resLabelArc.innerRadius()());
-            console.log ("circum", circumference);
+            //console.log ("ff", this.resLabelArc, this.resLabelArc.innerRadius(), this.resLabelArc.innerRadius()(), circumference);
             if (circumference / links.length < 30 || !this.options.showResLabels) {    // arbitrary cutoff decided by me (mjg)
                 links = [];
             }
