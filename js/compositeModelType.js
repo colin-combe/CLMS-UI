@@ -148,7 +148,7 @@
             // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
             distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
             alignCollection = alignCollection || this.get("alignColl");   
-            return distancesObj.getXLinkDistance (xlink, alignCollection, false);
+            return distancesObj ? distancesObj.getXLinkDistance (xlink, alignCollection, false) : undefined;
         },
         
         getCrossLinkDistances2: function (crossLinks) {

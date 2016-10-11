@@ -146,12 +146,19 @@
                     text: this.options.chartTitle
                 }
             });
+            
+            function distancesAvailable () {
+                this.recalcRandomBinning();
+                this.render();
+            }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
             this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
-            this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
+            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable);
             
-            this.recalcRandomBinning();
+            if (this.model.get("clmsModel").get("distancesObj")) {
+                distancesAvailable();
+            }
             
             return this;
         },
@@ -240,9 +247,6 @@
         },
 
         recalcRandomBinning: function () {
-            //console.log ("precalcing random bins for distogram view");
-            //var randArr = this.model.get("distancesModel").flattenedDistances();
-            console.log ("dgram model", this.model);
             var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
@@ -259,9 +263,7 @@
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
             d3.select(this.el).select(".c3").style("max-height", "none");   
-
             this.chart.resize();
-
             return this;
         },
 
@@ -269,10 +271,7 @@
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
         remove: function () {
             CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
-        
             // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
             this.chart = this.chart.destroy();
         }
-
     });
-

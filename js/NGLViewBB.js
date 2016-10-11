@@ -276,7 +276,7 @@
                         var dd = self.xlRepr.getDistances ();
                         var distancesObj = new CLMSUI.DistancesObj (dd, self.chainMap, pdbInfo.baseSeqId);
                         console.log ("distances", distancesObj);
-                        self.model.trigger ("distancesAvailable", distancesObj);
+                        self.model.get("clmsModel").set("distancesObj", distancesObj);
 
                         if (firstTime) {
                             self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
@@ -1061,9 +1061,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
                 pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
                 
-                var distModel = this.model.get("clmsModel").get("distancesObj");
-                var ld1 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), true);
-                var ld2 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), false);
+                //var distModel = this.model.get("clmsModel").get("distancesObj");
+                //var ld1 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), true);
+                //var ld2 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), false);
                 console.log ("link distances", ld1, ld2);
                 this.model.get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
