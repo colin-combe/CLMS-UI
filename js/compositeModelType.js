@@ -149,5 +149,20 @@
             distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
             alignCollection = alignCollection || this.get("alignColl");   
             return distancesObj.getXLinkDistance (xlink, alignCollection, false);
-        }
+        },
+        
+        getCrossLinkDistances2: function (crossLinks) {
+            var distArr = [];
+            var distModel = this.get("clmsModel").get("distancesObj");
+            var alignCollection = this.get ("alignColl");
+            for (var crossLink of crossLinks) {
+                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, alignCollection);
+                if (dist != null) {
+                    distArr.push(+dist); // + is to stop it being a string
+                }
+            }
+            console.log ("distArr", distArr);
+
+            return distArr;
+        }, 
     });

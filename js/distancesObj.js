@@ -92,4 +92,35 @@ CLMSUI.DistancesObj.prototype = {
         //console.log ("dist", dist);
         return dist;
     },
+    
+    flattenDistanceMatrix: function (distanceMatrix) {
+        var distanceList = d3.values(distanceMatrix).map (function (row) {
+            return d3.values(row).filter (function(d) { return d && (d.length !== 0); });   // filter out nulls, undefineds, zeroes and empty arrays
+        });
+        return [].concat.apply([], distanceList);
+    },
+    
+    getFlattenedDistancesOld: function (interactorsArr) {
+        console.log ("interactors", interactorsArr);
+        var perProtDistances = interactorsArr.map (function (prot) {
+            var values = d3.values(prot.distances);
+            var protDists = values.map (function (value) {
+                return CLMSUI.modelUtils.flattenDistanceMatrix (value);    
+            });
+            protDists = [].concat.apply([], protDists);
+            return protDists;
+        });
+        var allDistances = [].concat.apply([], perProtDistances);
+        return allDistances;
+    },
+    
+    // WORK ON THIS TOMORROW
+    getFlattenedDistances: function () {
+        var matrixArr = d3.values (this.matrices);
+        var perMatrixDistances = matrixArr.map (function (matrix) {
+            return this.flattenDistanceMatrix (matrix);    
+        }, this);
+        console.log ("ad", perMatrixDistances);
+        return [].concat.apply([], perMatrixDistances);
+    },
 };

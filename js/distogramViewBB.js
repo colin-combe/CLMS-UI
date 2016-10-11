@@ -169,11 +169,11 @@
                 var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
                 //console.log ("fcl", filteredCrossLinks);
                 
-                var distArr = CLMSUI.modelUtils.getCrossLinkDistances2 (filteredCrossLinks.values());
+                var distArr = this.model.getCrossLinkDistances2 (filteredCrossLinks.values());
                 //console.log ("distArr", distArr);
 
                 var series = [distArr, []];
-                var seriesLengths = [/*crossLinkMap.size*/ filteredCrossLinks.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                var seriesLengths = [distArr.length, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
                 //console.log ("seriesLengths", seriesLengths);
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
 
@@ -242,7 +242,8 @@
         recalcRandomBinning: function () {
             //console.log ("precalcing random bins for distogram view");
             //var randArr = this.model.get("distancesModel").flattenedDistances();
-            var randArr = CLMSUI.modelUtils.getFlattenedDistances (Array.from (this.model.get("clmsModel").get("interactors").values()));
+            console.log ("dgram model", this.model);
+            var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()

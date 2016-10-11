@@ -682,8 +682,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     getLinkDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
         links = links.filter (function (link) {
-            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2) ||
-                (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1);
+            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2) /*||
+                (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1)*/;
+            // The second condition produced erroneous links i.e. link chain3,49 to chain 2,56 also passed chain3,56 to chain2,49
         });
            
         var matrix = [];
@@ -695,9 +696,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var idB = link.residueB.resindex;   // " " link.residueB.resno;
             ap1.index = chainAtomIndices1[idA];
             ap2.index = chainAtomIndices2[idB];
-            console.log ("link", link, chainIndex1, chainIndex2, idA, idB, link.residueA.resindex, link.residueB.resindex, chainAtomIndices1[idA], chainAtomIndices1[idB]);
             if (ap1.index !== undefined && ap2.index !== undefined) {
                 var d = ap1.distanceTo (ap2);
+                //console.log ("link", link, chainIndex1, chainIndex2, idA, idB, ap1.index, ap2.index, d);
                 matrix[idA] = matrix[idA] || [];
                 matrix[idA][idB] = matrix[idA][idB] || [];
                 matrix[idA][idB] = d;

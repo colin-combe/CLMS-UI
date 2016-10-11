@@ -5,7 +5,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 {
     DistancesModel: Backbone.Model.extend({
         flattenedDistances: function () {
-            return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
+            //return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
         }
     }),
 
