@@ -689,8 +689,14 @@
                     return pathd;
                 })
             ;
+            
+            // add labels to layer, to ensure they 'float' above feature elements added directly to g
+            var nodeLabelLayer = g.select("g.nodeLabelLayer");
+            if (nodeLabelLayer.empty()) {
+                nodeLabelLayer = g.append("g").attr("class", "nodeLabelLayer");
+            }
 
-            var textJoin = g.selectAll("text.circularNodeLabel")
+            var textJoin = nodeLabelLayer.selectAll("text.circularNodeLabel")
                 .data (tNodes, self.idFunc)
             ;
             textJoin.exit().remove();
@@ -714,7 +720,13 @@
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
             });
             console.log ("features", features);
-            var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
+            
+            var featureLayer = g.select("g.featureLayer");
+            if (featureLayer.empty()) {
+                featureLayer = g.append("g").attr("class", "featureLayer");
+            }
+            
+            var featureJoin = featureLayer.selectAll(".circleFeature").data(features, self.idFunc);
 
             featureJoin.exit().remove();
 
