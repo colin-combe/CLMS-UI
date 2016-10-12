@@ -315,9 +315,10 @@ CLMSUI.modelUtils = {
     getAlignmentsAsFeatures: function (protID, alignCollection, includeCanonical) {
         var alignModel = alignCollection.get(protID);
         if (alignModel) {
-            return alignModel.get("compAlignments")
-                .map (function (alignment, i) {
-                    return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", alignmentID: alignModel.get("compIDs")[i] };
+            return alignModel.get("seqCollection").models
+                .map (function (seqModel) {
+                    var alignment = seqModel.get("compAlignment");
+                    return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", alignmentID: seqModel.get("compID") };
                 })
                 .filter(function (alignFeature) {
                     return includeCanonical || alignFeature.name !== "Canonical";     

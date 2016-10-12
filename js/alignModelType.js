@@ -2,6 +2,69 @@
     var CLMSUI = CLMSUI || {};
     CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
+    CLMSUI.BackboneModelTypes.SeqModel = Backbone.Model.extend ({
+        defaults: {
+            semiLocal: false,
+        },
+        
+        intialize: function () {
+            this.listenTo (this, "change", function() { 
+                console.log ("sm. something in align settings changed", this.changed); 
+                if (!("refAlignment" in this.changed) && !("compAlignment" in this.changed)) {
+                    console.log ("sm. and it's not the final results so lets runs align again");
+                    this.align();
+                }
+            });
+            
+            return this;
+        },
+        
+        align: function () {
+            var fullResults = this.get("holderModel").alignWithoutStoring (
+                [this.get("compSeq")], {local: this.get("local"), semiLocal: this.get("semiLocal")}
+            );
+            
+            var refResults = fullResults.map (function (res) {
+               return {str: res.fmt[1], label: this.get("holderModel").get("refID")}; 
+            }, this);
+            
+            var compResults = fullResults.map (function (res) {
+                return {
+                       str: res.fmt[0], 
+                       refStr: res.fmt[1], 
+                       convertToRef: res.indx.qToTarget, 
+                       convertFromRef: res.indx.tToQuery, 
+                       cigar: res.res[2], 
+                       score: res.res[0], 
+                       label: this.get("compID"),
+                   }; 
+                }, 
+                this
+            );
+            
+            console.log ("align results", refResults, compResults);
+            
+            this
+                .set ("refAlignment", refResults[0])
+                .set ("compAlignment", compResults[0])
+            ;
+            
+            return this;
+        },
+    });
+
+    CLMSUI.BackboneModelTypes.SeqCollection = Backbone.Collection.extend ({
+        model: CLMSUI.BackboneModelTypes.SeqModel,
+        
+        initialize: function () {
+            this.listenTo (this, "add", function (addedModel) { 
+                console.log ("add seqcoll arguments", arguments);
+                addedModel.align();
+            });
+            return this;
+        }
+    });
+
     CLMSUI.BackboneModelTypes.AlignModel = Backbone.Model.extend ({
         // return defaults as result of a function means arrays aren't shared between model instances
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
@@ -16,12 +79,13 @@
                 "gapAtStartScore": 0,   // fixed penalty for starting with a gap (semi-global alignment)
                 "refSeq": "CHATTER",
                 "refID": "Example",
-                "compSeqs": [],
-                "compIDs": [],
-                "local": [],
-                "semiLocal": [],
+                //"compSeqs": [],
+                //"compIDs": [],
+                //"local": [],
+                //"semiLocal": [],
                 "maxAlignWindow": 1000,
                 "sequenceAligner": CLMSUI.GotohAligner,
+                "seqCollection": new CLMSUI.BackboneModelTypes.SeqCollection (),
             };
         },
         
@@ -31,18 +95,25 @@
             this.seqIndex = {};
             // do more with these change listeners if we want to automatically run align function on various parameters changing;
             // or we may just want to call align manually when things are known to be done
+            
+            
             this.listenTo (this, "change", function() { 
                 console.log ("something in align settings changed", this.changed); 
                 console.log ("this semi", this.get("semiLocal"));
                 if (!("refAlignments" in this.changed) && !("compAlignments" in this.changed)) {
                     console.log ("and it's not the final results so lets runs align again");
-                    this.align();
+                    this.get("seqCollection").forEach (function(model) {
+                        console.log ("seqModel", model);
+                        model.align();
+                    });
+                    //this.align();
                 }
             });
             
             return this;
         },
         
+        /*
         align: function () {
             console.log ("alignModel", this);
             
@@ -80,6 +151,7 @@
             
             return this;
         },
+        */
         
         alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
             var matrix = this.get("scoreMatrix");
@@ -95,20 +167,25 @@
             };
             var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
-            console.log ("semi", this.get("semiLocal"));
-            var fullResults = compSeqArray.map (function (cSeq, i) {
+            console.log ("csa", compSeqArray);
+            var fullResults = compSeqArray.map (function (cSeq) {
                 var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                var localAlign = (tempSemiLocal && tempSemiLocal.local) || this.get("local")[i];
-                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal) || this.get("semiLocal")[i];
-                return aligner.align (cSeq, refSeq, scores, localAlign, semiLocalAlign, alignWindowSize);
+                var localAlign = (tempSemiLocal && tempSemiLocal.local);// || this.get("local")[i];
+                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);// || this.get("semiLocal")[i];
+                return aligner.align (cSeq, refSeq, scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
             }, this);
+            
+            console.log ("fr", fullResults);
             
             return fullResults;
         },
         
         getCompSequence: function (seqName) {
-            var sInd = this.seqIndex[seqName];
-            return sInd !== undefined ? this.get("compAlignments")[sInd] : undefined;
+            var seqModel = this.get("seqCollection").get(seqName);
+            console.log ("seqModel", seqModel);
+            //var sInd = this.seqIndex[seqName];
+            //return sInd !== undefined ? this.get("compAlignments")[sInd] : undefined;
+            return seqModel !== undefined ? seqModel.get("compAlignment") : undefined;
         },
         
         // These following routines assume that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
@@ -144,6 +221,7 @@
             if (model) {
                 console.log ("entry", modelId, seqId, seq, model.seqIndex);
                 
+                /*
                 var sInd = model.seqIndex[seqId];
                 if (sInd !== undefined) {   // if there's already a 3d entry replace it
                     model.get("compSeqs")[sInd] = seq;
@@ -153,21 +231,26 @@
                     var modelParams = otherSettingsObj || {};
                     $.extend (modelParams, {
                         "id": modelId,
-                        "compIDs": this.mergeArrayAttr (modelId, "compIDs", [seqId]),
-                        "compSeqs": this.mergeArrayAttr (modelId, "compSeqs", [seq]),
-                        "semiLocal": this.mergeArrayAttr (modelId, "semiLocal", [!!otherSettingsObj.semiLocal]),
-                        "local": this.mergeArrayAttr (modelId, "local", [!!otherSettingsObj.local]),
+                        "compIDs": this.mergeArrayAttr (model, "compIDs", [seqId]),
+                        "compSeqs": this.mergeArrayAttr (model, "compSeqs", [seq]),
+                        "semiLocal": this.mergeArrayAttr (model, "semiLocal", [!!otherSettingsObj.semiLocal]),
+                        "local": this.mergeArrayAttr (model, "local", [!!otherSettingsObj.local]),
                     });
                     console.log ("mp", modelId, modelParams);
                     this.add ([modelParams], {merge: true});
-                }
+                    */
+                    console.log ("modseq", seqId, seq, otherSettingsObj);
+                    model.get("seqCollection").add (
+                        [{id: seqId, compID: seqId, compSeq: seq, semiLocal: !!otherSettingsObj.semiLocal, local: !!otherSettingsObj.lLocal,
+                        holderModel: model}]
+                    );
+                //}
                 console.log ("this align coll", this);
             }
         },
         
         // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
-        mergeArrayAttr: function (modelId, attrName, appendThis) {
-            var model = this.get(modelId);
+        mergeArrayAttr: function (model, attrName, appendThis) {
             if (model) {
                 var attr = model.get(attrName);
                 if (attr && $.type(attr) === "array") {

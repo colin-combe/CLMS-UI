@@ -147,7 +147,8 @@
                     diffLabel:"Show differences only",
             }));       
             
-            this.listenTo (this.model, "change:compAlignments", this.render);
+            //this.listenTo (this.model, "change:compAlignments", this.render);
+            this.listenTo (this.model.get("seqCollection"), "change", this.render);
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");
             console.log ("view", this);
@@ -184,10 +185,16 @@
             
             var showDiff = d3.select(this.el).select("input.diff").property("checked");
             
-            var refs = this.model.get("refAlignments");
-            var comps = this.model.get("compAlignments");
             
-            console.log ("allSeqs", allSeqs);
+            var refs = this.model.get("seqCollection").models.map (function (seqModel) {
+                return seqModel.get("refAlignment");
+            });
+            var comps = this.model.get("seqCollection").models.map (function (seqModel) {
+                return seqModel.get("compAlignment");
+            });
+            //var comps = this.model.get("compAlignments");
+            
+            console.log ("allSeqs", allSeqs, refs, comps);
             
             place.selectAll("tr").remove();
             

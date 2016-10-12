@@ -287,8 +287,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         model: CLMSUI.BackboneModelTypes.TestModel,
 
         // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
-        mergeArrayAttr: function (modelId, attrName, appendThis) {
-            var model = this.get(modelId);
+        mergeArrayAttr: function (model, attrName, appendThis) {
             if (model) {
                 var attr = model.get(attrName);
                 if (attr && $.type(attr) === "array") {
