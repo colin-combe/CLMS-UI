@@ -3,27 +3,32 @@
     CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
     CLMSUI.BackboneModelTypes.AlignModel = Backbone.Model.extend ({
-        defaults: {
-            "displayLabel": "A Protein",    // label to display in collection view for this model
-            "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
-            "matchScore": 6,    // match and mis should be superceded by the score matrix if present
-            "misScore": -6,
-            "gapOpenScore" : 10,
-            "gapExtendScore" : 1,
-            "gapAtStartScore": 0,   // fixed penalty for starting with a gap (semi-global alignment)
-            "refSeq": "CHATTER",
-            "refID": "Canonical",
-            "compSeqs": ["CAT"],
-            "compIDs": ["Demo"],
-            "local": false,
-            "semiLocal": false,
-            "maxAlignWindow": 1000,
-            "sequenceAligner": CLMSUI.GotohAligner,
+        // return defaults as result of a function means arrays aren't shared between model instances
+        // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
+        defaults: function() {
+            return {
+                "displayLabel": "A Protein",    // label to display in collection view for this model
+                "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
+                "matchScore": 6,    // match and mis should be superceded by the score matrix if present
+                "misScore": -6,
+                "gapOpenScore" : 10,
+                "gapExtendScore" : 1,
+                "gapAtStartScore": 0,   // fixed penalty for starting with a gap (semi-global alignment)
+                "refSeq": "CHATTER",
+                "refID": "Example",
+                "compSeqs": [],
+                "compIDs": [],
+                "local": [],
+                "semiLocal": [],
+                "maxAlignWindow": 1000,
+                "sequenceAligner": CLMSUI.GotohAligner,
+            };
         },
         
         initialize: function () {
             //this.set("compIDs", ["Demo"]);
             
+            this.seqIndex = {};
             // do more with these change listeners if we want to automatically run align function on various parameters changing;
             // or we may just want to call align manually when things are known to be done
             this.listenTo (this, "change", function() { 
@@ -76,7 +81,7 @@
             return this;
         },
         
-        alignWithoutStoring: function (compSeqArray) {
+        alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
             var matrix = this.get("scoreMatrix");
             if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
             
@@ -91,9 +96,11 @@
             var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
             console.log ("semi", this.get("semiLocal"));
-            var fullResults = compSeqArray.map (function (cSeq) {
+            var fullResults = compSeqArray.map (function (cSeq, i) {
                 var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                return aligner.align (cSeq, refSeq, scores, this.get("local"), this.get("semiLocal"), alignWindowSize);
+                var localAlign = (tempSemiLocal && tempSemiLocal.local) || this.get("local")[i];
+                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal) || this.get("semiLocal")[i];
+                return aligner.align (cSeq, refSeq, scores, localAlign, semiLocalAlign, alignWindowSize);
             }, this);
             
             return fullResults;
@@ -148,6 +155,8 @@
                         "id": modelId,
                         "compIDs": this.mergeArrayAttr (modelId, "compIDs", [seqId]),
                         "compSeqs": this.mergeArrayAttr (modelId, "compSeqs", [seq]),
+                        "semiLocal": this.mergeArrayAttr (modelId, "semiLocal", [!!otherSettingsObj.semiLocal]),
+                        "local": this.mergeArrayAttr (modelId, "local", [!!otherSettingsObj.local]),
                     });
                     console.log ("mp", modelId, modelParams);
                     this.add ([modelParams], {merge: true});

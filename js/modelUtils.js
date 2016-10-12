@@ -256,8 +256,8 @@ CLMSUI.modelUtils = {
             var protAlignModel = alignCollection.get(prot.id);
             if (protAlignModel) {
                 var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
-                protAlignModel.set("semiLocal", true);  // needs to be done as initialisation not called on model (figure out why later)
-                var alignResults = protAlignModel.alignWithoutStoring (seqs);
+                //protAlignModel.set("semiLocal", true);  // needs to be done as initialisation not called on model (figure out why later)
+                var alignResults = protAlignModel.alignWithoutStoring (seqs, {semiLocal: true});
                 console.log ("alignResults", alignResults);
                 var scores = alignResults.map (function (indRes) { return indRes.res[0]; });
                 matchMatrix[prot.id] = scores;

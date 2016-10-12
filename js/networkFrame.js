@@ -49,16 +49,16 @@ CLMSUI.init.models = function (options) {
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
 
         clmsModel.get("interactors").forEach (function (entry) {
-            console.log ("entry", entry);
+            //console.log ("entry", entry);
             if (!entry.is_decoy) {
                 this.add ([{
                     "id": entry.id,
                     "displayLabel": entry.name.replace("_", " "),
                     "refID": "Search",
                     "refSeq": entry.sequence,
-                    "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
-                    "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
                 }]);
+                this.addSeq (entry.id, "Canonical", entry.canonicalSeq, {});
+                console.log ("alignColl", this);
             }
         }, this);
 
