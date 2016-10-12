@@ -1,5 +1,3 @@
-
-
     var CLMSUI = CLMSUI || {};
     
     CLMSUI.AlignSettingsViewBB = Backbone.View.extend ({
@@ -39,11 +37,11 @@
                     ;
                 }
             });
-            
-            
-            this.listenTo (this.model, "change:compAlignments", this.render);
-            
-            this.render();
+                 
+            this
+                .listenTo (this.model, "change:compAlignments", this.render)
+                .render()
+            ;
             
             return this;
         },
@@ -89,13 +87,16 @@
             var tpl = _.template ("<LABEL><%= label %></LABEL><SELECT name='<%= name %>'></SELECT>");
             topElem.html (tpl ({label: viewOptions.label || "Label", name: viewOptions.name || "Name"})); 
             
-            this.listenTo (this.collection, "sync", function () { 
-                console.log ("Collection fetched and synced for view", this);
-                this.render();
-            });
-            // If collection has fetched quickly then the sync event maybe fired before we registered the listener
-            // above, thus we add an immediate this.render() afterwards as a safety net
-            this.render();
+            this
+                .listenTo (this.collection, "sync", function () { 
+                    console.log ("Collection fetched and synced for view", this);
+                    this.render();
+                })
+                // If collection has fetched quickly then the sync event maybe fired before we registered the listener
+                // above, thus we add an immediate this.render() afterwards as a safety net
+                .render()
+            ;
+            return this;
         },
         
         render: function () {
@@ -114,7 +115,7 @@
                 .text (function(d) { return d.get("key"); })
             ;
             
-            options.property ("selected", function(d) { return d.cid == self.lastSelected; })
+            options.property ("selected", function(d) { return d.cid == self.lastSelected; });
             
             options.exit().remove();
 

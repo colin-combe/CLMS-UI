@@ -272,8 +272,17 @@
             this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
+            var alignCall = 0;
             this.listenTo (this.model.get("alignColl"), "change:compAlignments", function (alignModel, alignColl) {
-                console.log ("CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
+                alignCall++;
+                console.log (alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
+                /*
+                try {
+                    throw new Error();
+                } catch (e) {
+                    console.error (e);
+                }
+                */
                 this.render ({changed : d3.set(["features"]), });
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });

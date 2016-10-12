@@ -40,6 +40,7 @@
             
             var firstModel = this.collection.models[0];
             this.setFocusModel (firstModel);
+            return this;
         },
         
         hollowElement: function (view) {
@@ -72,6 +73,8 @@
                 .text (function(d) { return d.get("displayLabel"); })
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
             ;
+            
+            return this;
         },
         
         radioClicked: function (evt) {
@@ -113,15 +116,16 @@
                 
                 console.log ("new modelView", this.modelView);
 
-                this.alignViewBlosumSelector.setSelected (model.get("scoreMatrix"));
-                // and then make it track it thereafter
-                this.alignViewBlosumSelector.listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) {
-                    this.setSelected (scoreMatrix);
-                });
+                this.alignViewBlosumSelector
+                    .setSelected (model.get("scoreMatrix"))
+                    .listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) { // and then make it track it thereafter
+                        this.setSelected (scoreMatrix);
+                    })
+                ;
                 
                 this.modelView.render();
-                //
             }
+            return this;
         },
     });
     
@@ -300,6 +304,7 @@
             if (this.tooltipModel) {
                  this.tooltipModel.set ("contents", null);
             }
+            return this;
         },
         
         invokeTooltip: function (d, elem) {
@@ -328,5 +333,6 @@
                 ]).set("location", d3.event);
                 this.tooltipModel.trigger ("change:location");
             }
+            return this;
         },
     });
