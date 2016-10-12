@@ -44,6 +44,7 @@
 				}
             }
             this.trigger ("filteringDone");
+            return this;
         },
 
         getFilteredCrossLinks: function (crossLinks) {
