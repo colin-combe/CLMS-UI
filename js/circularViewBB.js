@@ -253,7 +253,6 @@
                 ;
             };
 
-			//TODO: could have more general use than just in circle view, more elsewhere, eliminate duplication 
             this.featureTip = function (d) {
                 self.model.get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.feature())
@@ -268,26 +267,19 @@
             //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("interactors").values()))
             //    .map(function(p) { return p.id; });
 
+            var alignCall = 0;
+            var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
             // listen to custom filteringDone event from model
-            this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });
+            this.listenTo (this.model, "filteringDone", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
-            var alignCall = 0;
-            this.listenTo (this.model.get("alignColl"), "change:compAlignments", function (alignModel, alignColl) {
-                alignCall++;
-                console.log (alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
-                
-                try {
-                    throw new Error();
-                } catch (e) {
-                    console.error (e);
-                }
-                
-                this.render ({changed : d3.set(["features"]), });
+            this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
+                console.log (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
+                renderPartial (["features"]);
             });
-            this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
-            this.listenTo (this.model, "currentColourModelChanged", function () { this.render ({changed : d3.set(["links"]), }); });
-            this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
+            this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
+            this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
+            this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             return this;
         },
 
@@ -299,7 +291,6 @@
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
             this.render();
-            //this.render ({changed : d3.set(["links"]), });
         },
         
         showResLabelsIfRoom: function () {		

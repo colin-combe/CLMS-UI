@@ -411,6 +411,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         sequences.forEach (function (entry) {
             this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
         }, this);
+        // this triggers an event to say loads has changed in the alignment collection
+        // more efficient to listen to that then redraw/recalc for every seq addition
+        this.bulkAlignChangeFinished ();
 
         console.log ("3D sequences poked to collection", this);
     });
