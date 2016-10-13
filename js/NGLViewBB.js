@@ -388,6 +388,12 @@
             this.xlRepr.crosslinkData.setLinkList (newLinkList);
         },
         
+        rejectHomomultimeric: function (xlink, c1, c2) {
+            var res = xlink.confirmedHomomultimer;
+            console.log (c1, c2, res, (c1 !== c2 || !res));
+            return res;
+        },
+        
         // residueStore maps the NGL-indexed resides to PDB-index
         // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
         // then need to subtract 1, then --> which goes to PDB index with residueStore
@@ -430,7 +436,7 @@
                                 var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
 
                                 //console.log ("fr", fromResidue, "tr", toResidue);
-                                if (toResidue >= 0) {                   
+                                if (toResidue >= 0 /* && !this.rejectHomomultimeric(xlink, toChainIndex, fromChainIndex)*/) {                   
                                     residueProxy2.index = toResidue + chainProxy.residueOffset;
 
                                     linkList.push ({
@@ -680,12 +686,18 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return matrixMap;
     },
     
+    rejectHomomultimeric: function (xlinkID, c1, c2) {
+        var res = this.model.get("clmsModel").get("crossLinks").get(xlinkID).confirmedHomomultimer;
+        console.log (c1, c2, res, (c1 !== c2 || !res));
+        return res;
+    },
+    
     getLinkDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
         links = links.filter (function (link) {
-            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2) /*||
+            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && this.rejectHomomultimeric (link.origId, chainIndex1, chainIndex2) ) /*||
                 (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1)*/;
-            // The second condition produced erroneous links i.e. link chain3,49 to chain 2,56 also passed chain3,56 to chain2,49
-        });
+            // The reverse match condition produced erroneous links i.e. link chain3,49 to chain 2,56 also passed chain3,56 to chain2,49
+        }, this);
            
         var matrix = [];
         var ap1 = this.structureComp.structure.getAtomProxy();
@@ -1064,7 +1076,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 //var distModel = this.model.get("clmsModel").get("distancesObj");
                 //var ld1 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), true);
                 //var ld2 = distModel.getXLinkDistance (pdtrans.xlinks[0], this.model.get("alignColl"), false);
-                console.log ("link distances", ld1, ld2);
+                //console.log ("link distances", ld1, ld2);
                 this.model.get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0]))
