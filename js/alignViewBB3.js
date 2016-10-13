@@ -148,10 +148,11 @@
             }));       
             
             //this.listenTo (this.model, "change:compAlignments", this.render);
-            this.listenTo (this.model.get("seqCollection"), "change:compAlignment", this.render);
+            this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
+                this.render ({affectedModel: affectedModel});
+            });
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");
-            console.log ("view", this);
             
             return this;
         },
@@ -177,24 +178,25 @@
             return segs.join("");
         },
 
-        render: function () {
-            
-            console.log ("rerendering alignment");
+        render: function (obj) {
+            var affectedModel = obj ? obj.affectedModel : undefined;
+            console.log ("rerendering alignment for", affectedModel);
             var place = d3.select(this.el).select("tbody");
             var self = this;
             
             var showDiff = d3.select(this.el).select("input.diff").property("checked");
             
-            var seqModels = this.model.get("seqCollection").models;
+            // I suppose I could do a view per model rather than this, but it fits the d3 way of doing things
+            var seqModels = this.model.get("seqCollection").models.filter (function (m) {
+                return !affectedModel || (affectedModel.id === m.id);
+            });
             var refs = seqModels.map (function (seqModel) {
                 return seqModel.get("refAlignment");
             });
             var comps = seqModels.map (function (seqModel) {
                 return seqModel.get("compAlignment");
             });
-            console.log ("allSeqs", allSeqs, refs, comps);
-            
-            place.selectAll("tr").remove();
+            //console.log ("refs, comps", refs, comps);
             
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
@@ -276,30 +278,43 @@
             
             var allSeqs = [];
             var wrap = 2;
-             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
+            refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
 
             
-            var seqRows = place.selectAll("tr")
-                .data(allSeqs)
+            var rowBind = place.selectAll("tr")
+                .data(allSeqs, function (d, i) { return d.label + (i % wrap); })
+            ;
+            
+            //rowBind.exit().remove();  // removes other rows if only 1 affectedmodel passed in. Don't want that.
+            
+            var newRows = rowBind
                 .enter()
                 .append ("tr")
-                .attr ("id", function(d,i) { return "seqComp"+d.label+(i % wrap); })
+                .attr ("id", function(d, i) { return "seqComp"+d.label+(i % wrap); })
             ;
             
-            seqRows.append("th")
+            newRows.append("th")
                 .attr("class", "seqLabel")
-                .html (function(d,i) { var v = i % wrap; return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); })
+                .html (function (d, i) { 
+                    var v = i % wrap; 
+                    return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); 
+                })
             ;
             
-            seqRows.append("td")
+            newRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
-                    //.html (function(d) { return d.decoratedStr || d.str; })
-                    .html (function(d,i) { var v = i % wrap; return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); })
                     // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
                     .on ("mousemove", function(d) {
                         self.invokeTooltip (d, this);
                     })
+            ;
+            
+            rowBind.select ("td > span")
+                .html (function(d,i) {
+                    var v = i % wrap; 
+                    return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
+                })
             ;
             
             return this;

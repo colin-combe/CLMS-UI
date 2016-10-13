@@ -60,6 +60,9 @@
             var control = d3.select(evt.target);
             var controlDatum = control.datum();
             this.model.set (controlDatum.prop, controlDatum.type === "number" ? +control.property("value") : control.property("value"));
+            // previous set will cause all sequences in this model to recalc
+            // this line inform views that wish to know of such events at a bulk level, rather than individually
+            this.model.collection.bulkAlignChangeFinished();
         },
         
         inputKeyed: function (evt) {
@@ -74,6 +77,9 @@
             var controlDatum = control.datum();
             var selectedOption = control.selectAll("option").filter(function(d,i) { return i == control.property("selectedIndex"); });
             this.model.set (controlDatum.prop, selectedOption.datum().value);   // actual matrix dataset is stored in d3 data, not in html option attributes
+            // previous set will cause all sequences in this model to recalc
+            // this line inform views that wish to know of such events at a bulk level, rather than individually
+            this.model.collection.bulkAlignChangeFinished();
         }
     });
     

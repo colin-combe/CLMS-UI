@@ -282,19 +282,4 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             return values;
         }
     }),
-
-    TestCollection: Backbone.Collection.extend ({
-        model: CLMSUI.BackboneModelTypes.TestModel,
-
-        // use this to grab merger of new and existing arrays for a model attribute before adding/merging the collection's models themselves
-        mergeArrayAttr: function (model, attrName, appendThis) {
-            if (model) {
-                var attr = model.get(attrName);
-                if (attr && $.type(attr) === "array") {
-                    appendThis.unshift.apply (appendThis, attr);
-                }
-            }
-            return appendThis;
-        },
-    }),
 });

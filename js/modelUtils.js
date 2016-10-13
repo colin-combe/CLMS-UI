@@ -11,18 +11,6 @@ CLMSUI.modelUtils = {
             arrs[m.is_decoy? 1 : 0].push (m.score);
         });
         return arrs;
-        /*
-        return matchesArr
-            .filter (function (m) { 
-                //return m.crossLinks[0].some (function(c) {
-                    var pLink = m.crossLinks[0].proteinLink;
-                    return pLink.toProtein.isDecoy() && pLink.fromProtein.isDecoy();
-                //});
-                
-            })
-            .map (function(m) { return m.score; })
-        ;    
-        */
     },
     
     // lots of scores, what's the extent (min and max values)?
@@ -310,22 +298,6 @@ CLMSUI.modelUtils = {
     
     isIntraLink: function (crossLink) {
          return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
-    },
-    
-    getAlignmentsAsFeatures: function (protID, alignCollection, includeCanonical) {
-        var alignModel = alignCollection.get(protID);
-        if (alignModel) {
-            return alignModel.get("seqCollection").models
-                .map (function (seqModel) {
-                    var alignment = seqModel.get("compAlignment");
-                    return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", alignmentID: seqModel.get("compID") };
-                })
-                .filter(function (alignFeature) {
-                    return includeCanonical || alignFeature.name !== "Canonical";     
-                })
-            ;
-        }
-        return [];
     },
     
     intersectObjectArrays: function (a, b, compFunc) {

@@ -10,7 +10,7 @@
             this.listenTo (this, "change", function() { 
                 console.log ("sm. something in align settings changed", this.changed); 
                 if (!("refAlignment" in this.changed) && !("compAlignment" in this.changed)) {
-                    console.log ("sm. and it's not the final results so lets runs align again");
+                    console.log ("sm. and it's not the final results so lets runs align");
                     this.align();
                 }
             });
@@ -89,7 +89,7 @@
             });
             
             this.listenTo (this.get("seqCollection"), "change:compAlignment", function (seqModel) {
-                console.log ("collection catching one of its model's compAlignment changing", arguments, this);
+                console.log ("collection catching one of its model's compAlignment changing", arguments);
                 this.collection.trigger ("oneCompAlignmentChanged", seqModel);
             })
             
@@ -110,7 +110,7 @@
             };
             var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
-            console.log ("csa", compSeqArray);
+
             var fullResults = compSeqArray.map (function (cSeq) {
                 var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
                 var localAlign = (tempSemiLocal && tempSemiLocal.local);// || this.get("local")[i];
@@ -118,14 +118,13 @@
                 return aligner.align (cSeq, refSeq, scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
             }, this);
             
-            console.log ("fr", fullResults);
+            //console.log ("fr", fullResults);
             
             return fullResults;
         },
         
         getCompSequence: function (seqName) {
             var seqModel = this.get("seqCollection").get(seqName);
-            //console.log ("seqModel", seqModel);
             return seqModel !== undefined ? seqModel.get("compAlignment") : undefined;
         },
         
@@ -160,11 +159,10 @@
         addSeq: function (modelId, seqId, seq, otherSettingsObj) {
             var model = this.get (modelId);
             if (model) {
-                console.log ("entry", modelId, seqId, seq, otherSettingsObj);
+                //console.log ("entry", modelId, seqId, seq, otherSettingsObj);
                 model.get("seqCollection").add (
                     [{id: seqId, compID: seqId, compSeq: seq, semiLocal: !!otherSettingsObj.semiLocal, local: !!otherSettingsObj.lLocal, holderModel: model}]
                 );
-                console.log ("this align coll", this);
             }
             return this;
         },
@@ -194,6 +192,22 @@
             }
             
             return alignPos;    //this will be 1-indexed or null
+        },
+        
+        getAlignmentsAsFeatures: function (protID, includeCanonical) {
+            var model = this.get(protID);
+            if (model) {
+                return model.get("seqCollection").models
+                    .map (function (seqModel) {
+                        var alignment = seqModel.get("compAlignment");
+                        return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", alignmentID: seqModel.get("compID") };
+                    })
+                    .filter(function (alignFeature) {
+                        return includeCanonical || alignFeature.name !== "Canonical";     
+                    })
+                ;
+            }
+            return [];
         },
     });
     
