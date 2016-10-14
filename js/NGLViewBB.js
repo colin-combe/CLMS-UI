@@ -388,10 +388,6 @@
             this.xlRepr.crosslinkData.setLinkList (newLinkList);
         },
         
-        notHomomultimeric: function (xlink, c1, c2) {
-            return c1 !== c2 || !xlink.confirmedHomomultimer;
-        },
-        
         // residueStore maps the NGL-indexed resides to PDB-index
         // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
         // then need to subtract 1, then --> which goes to PDB index with residueStore
@@ -434,7 +430,7 @@
                                 var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
 
                                 //console.log ("fr", fromResidue, "tr", toResidue);
-                                if (toResidue >= 0 && this.notHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
+                                if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
                                     residueProxy2.index = toResidue + chainProxy.residueOffset;
 
                                     linkList.push ({
@@ -653,19 +649,23 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     getDistances: function () {
         var resCount = 0;
         var viableChainIndices = [];
+        var self = this;
         this.structureComp.structure.eachChain (function (cp) {
-            if (cp.residueCount > 20) {
+            // Don't include chains which are tiny or ones we can't match to a protein
+            if (cp.residueCount > 20 && self.getProteinFromChainIndex (cp.index)) {
                 resCount += cp.residueCount;
                 viableChainIndices.push (cp.index);
             }
         });
         
-        return this.getChainDistances (viableChainIndices, resCount > 800);
+        console.log ("RESCOUNT", resCount, viableChainIndices);
+        
+        return this.getChainDistances (viableChainIndices, resCount > 1500);
     },
     
     getChainDistances: function (chainIndices, linksOnly) {
         var chainCAtomIndices = this.getCAtomsAllResidues (chainIndices);
-        //console.log ("residue atom indices", atomIndices);
+        console.log ("residue atom indices", chainCAtomIndices);
         var keys = d3.keys (chainCAtomIndices);
         
         var matrixMap = {};
@@ -685,8 +685,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     notHomomultimeric: function (xlinkID, c1, c2) {
-        var homom = this.model.get("clmsModel").get("crossLinks").get(xlinkID).confirmedHomomultimer;
-        return c1 !== c2 || !homom;
+        var xlink = this.model.get("clmsModel").get("crossLinks").get(xlinkID);
+        return CLMSUI.modelUtils.not3DHomomultimeric (xlink, c1, c2);
     },
     
     getLinkDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
@@ -752,7 +752,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 chainProxy.index = ci;
                 var atomIndices = chainCAtomIndices[ci] = [];
                 chainProxy.eachResidue (function (rp) {
-                    atomIndices.push (self._getAtomIndexFromResidue (rp.resno, chainProxy, sele));
+                    var ai = self._getAtomIndexFromResidue (rp.resno, chainProxy, sele);
+                    atomIndices.push (ai);
                 });
             }, this);
         }
@@ -776,8 +777,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 var modelIndex = cproxy.modelIndex;
                 var resi = resno + (chainName ? ":" + chainName : "") + (modelIndex !== undefined ? "/"+modelIndex : "");
                 sele.setString (resi  + " AND .CA");
-                var a = this.structureComp.structure.getAtomIndices (sele);
-                aIndex = a[0];
+                var ai = this.structureComp.structure.getAtomIndices (sele);
+                aIndex = ai[0];
+                if (aIndex === undefined) {
+                    console.log ("undefined sele", sele.string, aIndex);
+                }
                 this.residueToAtomIndexMap[key] = aIndex;
             }
         }

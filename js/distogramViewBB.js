@@ -166,17 +166,9 @@
         render: function () {
             
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-
                 console.log ("re rendering distogram");
 
-                //~ var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-                //~ var pp1 = allProtProtLinks.next().value;
-                var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-                //var interactorMap = this.model.get("clmsModel").get("interactors");
-                var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
-                //console.log ("fcl", filteredCrossLinks);
-                
-                var distArr = this.model.getCrossLinkDistances2 (filteredCrossLinks.values());
+                var distArr = this.getRelevantCrossLinkDistances();
                 //console.log ("distArr", distArr);
 
                 var series = [distArr, []];
@@ -187,7 +179,7 @@
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
                 var maxY = d3.max(countArrays, function(array) {
-                    return d3.max(array);
+                    return d3.max(array.slice (0, -1));  // ignore last element in array as it's dumping ground for everything over last value 
                 });
                 //console.log ("maxY", maxY);
                 
@@ -218,6 +210,14 @@
             return this;
         },
         
+        getRelevantCrossLinkDistances: function () {
+            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
+            //var interactorMap = this.model.get("clmsModel").get("interactors");
+            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
+            //console.log ("fcl", filteredCrossLinks);          
+            return this.model.getCrossLinkDistances2 (filteredCrossLinks.values());    
+        },
+        
         aggregate: function (series, seriesLengths, precalcedDistributions) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
@@ -236,6 +236,7 @@
                     ? precalcedDistributions[aseriesName]
                     : d3.layout.histogram().bins(thresholds)(aseries)
                 ;
+                console.log (aseriesName, "binnedData", binnedData);
 
                 var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
                 return binnedData.map (function (nestedArr) {
@@ -247,7 +248,9 @@
         },
 
         recalcRandomBinning: function () {
-            var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
+            var distArr = this.getRelevantCrossLinkDistances();
+            //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
+            var randArr = this.model.get("clmsModel").get("distancesObj").pickRandomDistances (Math.min ((distArr.length * 100) || 10000, 100000));
             //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()

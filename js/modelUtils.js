@@ -300,6 +300,10 @@ CLMSUI.modelUtils = {
          return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
     },
     
+    not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
+        return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
+    },
+    
     intersectObjectArrays: function (a, b, compFunc) {
         if (a && b && a.length && b.length && compFunc) {
             var map = d3.map (a, compFunc);

@@ -8,13 +8,13 @@ CLMSUI.utils = {
     },
 
     arrayConcat: function (d, field) {
-                return d[field].join(", ");
+        return d[field].join(", ");
     },
 
     getSVG: function (d3SvgSelection) {
         console.log ("domElem", d3SvgSelection.node());
         var a = d3SvgSelection.node().outerHTML;
-        a=a.replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" ');
+        a = a.replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" ');
         return'<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'+a;
     },
 
@@ -51,7 +51,7 @@ CLMSUI.utils = {
 
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
-        var height = zeptoElem.height()>0;
+        var height = zeptoElem.height() > 0;
         var visibility = zeptoElem.css('visibility') != 'hidden';
         var display = zeptoElem.css('display') != 'none';
         return (display && visibility && height);
@@ -64,7 +64,7 @@ CLMSUI.utils = {
         //return (evt.layerX || evt.offsetX) - evt.target.offsetLeft;
     },
 
-    crossBrowserElementY : function (evt) {
+    crossBrowserElementY : function (evt, optElem) {
         return evt.clientY - $(optElem || evt.target).offset().top;
     },
 
@@ -76,7 +76,6 @@ CLMSUI.utils = {
         },
 
         initialize: function (viewOptions) {
-            var self = this;
             var defaultOptions = {
                 labelFirst: true
             };
@@ -139,7 +138,7 @@ CLMSUI.utils = {
     displayError: function (condition, message) {
         if (condition()) {
             var box = d3.select("#clmsErrorBox");
-            if (box.size() == 0) {
+            if (box.size() === 0) {
                 box = d3.select("body").append("div").attr("id", "clmsErrorBox");
             }
 

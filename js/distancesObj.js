@@ -61,7 +61,7 @@ CLMSUI.DistancesObj.prototype = {
                         var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2) - 1; 
                         // align from 3d to search index. resindex is 0-indexed so +1 before querying
                         //console.log ("alignid", alignId1, alignId2, pid1, pid2);
-                        if (resIndex1 >= 0 && resIndex2 >= 0) {
+                        if (resIndex1 >= 0 && resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, ind1, ind2)) {
                             var dist = this.getLinkDistanceChainCoords (matrices, ind1, ind2, resIndex1, resIndex2);
                             if (dist !== undefined) {
                                 if (average) {
@@ -100,21 +100,6 @@ CLMSUI.DistancesObj.prototype = {
         return [].concat.apply([], distanceList);
     },
     
-    getFlattenedDistancesOld: function (interactorsArr) {
-        console.log ("interactors", interactorsArr);
-        var perProtDistances = interactorsArr.map (function (prot) {
-            var values = d3.values(prot.distances);
-            var protDists = values.map (function (value) {
-                return CLMSUI.modelUtils.flattenDistanceMatrix (value);    
-            });
-            protDists = [].concat.apply([], protDists);
-            return protDists;
-        });
-        var allDistances = [].concat.apply([], perProtDistances);
-        return allDistances;
-    },
-    
-    // WORK ON THIS TOMORROW
     getFlattenedDistances: function () {
         var matrixArr = d3.values (this.matrices);
         var perMatrixDistances = matrixArr.map (function (matrix) {
@@ -122,5 +107,36 @@ CLMSUI.DistancesObj.prototype = {
         }, this);
         console.log ("ad", perMatrixDistances);
         return [].concat.apply([], perMatrixDistances);
+    },
+    
+    getMatCellFromIndex: function (cellIndex, matLengths, matEntries) {
+        var matrixIndex = d3.bisectRight (matLengths, cellIndex);
+        var matrix = matEntries[matrixIndex].value;
+        var orig = cellIndex;
+        cellIndex -= matrixIndex ? matLengths[matrixIndex - 1] : 0;
+        var row = Math.floor (cellIndex / matrix[0].length);
+        var col = cellIndex - (row * matrix[0].length);
+        var val = matrix[row][col];
+        if (val === undefined) {
+            console.log ("matrix", matEntries[matrixIndex].key, orig, cellIndex, matrixIndex, row, col, val);
+        }
+        return val;
+    },
+    
+    pickRandomDistances: function (size) {
+        var randDists = [];
+        var tot = 0;
+        var matVals = d3.values (this.matrices);
+        var matlengths = matVals.map (function (matrix) {
+            tot += matrix.length * matrix[0].length;
+            return tot;
+        });
+        var matEntries = d3.entries (this.matrices);
+        console.log ("matlengths", matlengths, tot);
+        for (var n = 0; n < size; n++) {
+            var offset = Math.floor (Math.random () * tot);
+            randDists.push (this.getMatCellFromIndex (offset, matlengths, matEntries));
+        }
+        return randDists;
     },
 };

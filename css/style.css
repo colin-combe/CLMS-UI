@@ -182,7 +182,8 @@ body, input, select, textarea {
     margin: 5px;
 	padding:5px;
     position: absolute;
-	z-index: 2;
+    /* increased z-index to 50 so it's children (i.e. drop-down menus) overlay floating windows */
+	z-index: 50;
 }
 
 .headerLabel{
