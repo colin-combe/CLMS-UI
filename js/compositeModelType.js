@@ -145,19 +145,19 @@
             console.log ("map", this.get("selectedProtein"));
         },
         
-        getSingleCrosslinkDistance: function (xlink, distancesObj, alignCollection) {
+        getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection) {
             // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
             distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
-            alignCollection = alignCollection || this.get("alignColl");   
-            return distancesObj ? distancesObj.getXLinkDistance (xlink, alignCollection, false) : undefined;
+            protAlignCollection = protAlignCollection || this.get("alignColl");   
+            return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, false) : undefined;
         },
         
         getCrossLinkDistances2: function (crossLinks) {
             var distArr = [];
             var distModel = this.get("clmsModel").get("distancesObj");
-            var alignCollection = this.get ("alignColl");
+            var protAlignCollection = this.get ("alignColl");
             for (var crossLink of crossLinks) {
-                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, alignCollection);
+                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, protAlignCollection);
                 if (dist != null) {
                     distArr.push(+dist); // + is to stop it being a string
                 }

@@ -43,7 +43,7 @@ CLMSUI.init = CLMSUI.init || {};
 CLMSUI.init.models = function (options) {
     
     // define alignment model and listeners first, so they're ready to pick up events from other models
-    var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
+    var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection ();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
@@ -82,8 +82,8 @@ CLMSUI.init.models = function (options) {
     alignmentCollectionInst.listenTo (CLMSUI.blosumCollInst, "modelSelected", function (blosumModel) {
         // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
         // (done internally within alignmentModelInst)
-        this.models.forEach (function (alignModel) {
-            alignModel.set ("scoreMatrix", blosumModel);
+        this.models.forEach (function (protAlignModel) {
+            protAlignModel.set ("scoreMatrix", blosumModel);
         });
     });
 

@@ -122,11 +122,11 @@
                     // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
                     var convStart = feature.start;
                     var convEnd = feature.end;
-                    var alignModel = self.model.get("alignColl").get(nodeid);
-                    if (alignModel) {
+                    var protAlignModel = self.model.get("alignColl").get(nodeid);
+                    if (protAlignModel) {
                         var alignmentID = feature.alignmentID || "Canonical";
-                        convStart = alignModel.mapToSearch (alignmentID, feature.start);
-                        convEnd = alignModel.mapToSearch (alignmentID, feature.end);
+                        convStart = protAlignModel.mapToSearch (alignmentID, feature.start);
+                        convEnd = protAlignModel.mapToSearch (alignmentID, feature.end);
                         if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
                         if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                     }
@@ -137,7 +137,7 @@
                     //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
                     // e.g. a feature that starts/stops at some point has length of 1, not 0
 
-                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, alignModel);
+                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, protAlignModel);
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,

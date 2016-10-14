@@ -3,6 +3,7 @@
 
     CLMSUI.BackboneModelTypes.SeqModel = Backbone.Model.extend ({
         defaults: {
+            local: false,
             semiLocal: false,
         },
         
@@ -35,8 +36,7 @@
                label: this.get("compID"),
             }; 
             
-            console.log ("align results", refResult, compResult);
-            
+            //console.log ("align results", refResult, compResult);    
             this
                 .set ("refAlignment", refResult)
                 .set ("compAlignment", compResult)
@@ -60,7 +60,7 @@
         }
     });
 
-    CLMSUI.BackboneModelTypes.AlignModel = Backbone.Model.extend ({
+    CLMSUI.BackboneModelTypes.ProtAlignModel = Backbone.Model.extend ({
         // return defaults as result of a function means arrays aren't shared between model instances
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
         defaults: function() {
@@ -153,8 +153,8 @@
     });
     
     
-    CLMSUI.BackboneModelTypes.AlignCollection = Backbone.Collection.extend ({
-        model: CLMSUI.BackboneModelTypes.AlignModel,
+    CLMSUI.BackboneModelTypes.ProtAlignCollection = Backbone.Collection.extend ({
+        model: CLMSUI.BackboneModelTypes.ProtAlignModel,
          
         addSeq: function (modelId, seqId, seq, otherSettingsObj) {
             var model = this.get (modelId);
@@ -176,13 +176,13 @@
         // TODO, need to check for decoys (protein has no alignment)
         // conversion here works to and from the resindex local to a chain
         getAlignedIndex: function (resIndex, proteinID, toSearchSeq, sequenceID) {
-            var alignModel = this.get (proteinID);
+            var protAlignModel = this.get (proteinID);
             var alignPos = resIndex;
             
-            if (alignModel) {
-                var seqLength = alignModel.getCompSequence(sequenceID)[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
-                alignPos = toSearchSeq ? alignModel.mapToSearch (sequenceID, resIndex) : alignModel.mapFromSearch (sequenceID, resIndex);
-                //console.log (resIndex, "->", alignPos, alignModel);
+            if (protAlignModel) {
+                var seqLength = protAlignModel.getCompSequence(sequenceID)[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
+                alignPos = toSearchSeq ? protAlignModel.mapToSearch (sequenceID, resIndex) : protAlignModel.mapFromSearch (sequenceID, resIndex);
+                //console.log (resIndex, "->", alignPos, protAlignModel);
                 // if alignPos == 0 then before seq, if alignpos <== -seqlen then after seq
                 //console.log (pdbChainSeqId, "seqlen", seqLength);
                 if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target

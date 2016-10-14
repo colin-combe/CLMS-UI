@@ -237,11 +237,11 @@ CLMSUI.modelUtils = {
     */
     matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
         proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
-        var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+        var protAlignCollection = CLMSUI.compositeModelInst.get("alignColl");
         var matchMatrix = {};
         proteins.forEach (function (prot) {
             //console.log ("prot", prot);
-            var protAlignModel = alignCollection.get(prot.id);
+            var protAlignModel = protAlignCollection.get(prot.id);
             if (protAlignModel) {
                 var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
                 //protAlignModel.set("semiLocal", true);  // needs to be done as initialisation not called on model (figure out why later)
@@ -262,7 +262,7 @@ CLMSUI.modelUtils = {
             var max = {key: undefined, seqObj: undefined, score: 40};
             keys.forEach (function (key) {
                 var score = matrix[key][n];
-                console.log ("s", n, score, score / sequenceObjs[n].data.length);
+                //console.log ("s", n, score, score / sequenceObjs[n].data.length);
                 if (score > max.score && (score / sequenceObjs[n].data.length) > 1) {
                     max.score = score;
                     max.key = key;

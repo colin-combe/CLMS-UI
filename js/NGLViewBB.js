@@ -388,10 +388,8 @@
             this.xlRepr.crosslinkData.setLinkList (newLinkList);
         },
         
-        rejectHomomultimeric: function (xlink, c1, c2) {
-            var res = xlink.confirmedHomomultimer;
-            console.log (c1, c2, res, (c1 !== c2 || !res));
-            return res;
+        notHomomultimeric: function (xlink, c1, c2) {
+            return c1 !== c2 || !xlink.confirmedHomomultimer;
         },
         
         // residueStore maps the NGL-indexed resides to PDB-index
@@ -436,7 +434,7 @@
                                 var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
 
                                 //console.log ("fr", fromResidue, "tr", toResidue);
-                                if (toResidue >= 0 /* && !this.rejectHomomultimeric(xlink, toChainIndex, fromChainIndex)*/) {                   
+                                if (toResidue >= 0 && this.notHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
                                     residueProxy2.index = toResidue + chainProxy.residueOffset;
 
                                     linkList.push ({
@@ -686,15 +684,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return matrixMap;
     },
     
-    rejectHomomultimeric: function (xlinkID, c1, c2) {
-        var res = this.model.get("clmsModel").get("crossLinks").get(xlinkID).confirmedHomomultimer;
-        console.log (c1, c2, res, (c1 !== c2 || !res));
-        return res;
+    notHomomultimeric: function (xlinkID, c1, c2) {
+        var homom = this.model.get("clmsModel").get("crossLinks").get(xlinkID).confirmedHomomultimer;
+        return c1 !== c2 || !homom;
     },
     
     getLinkDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
         links = links.filter (function (link) {
-            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && this.rejectHomomultimeric (link.origId, chainIndex1, chainIndex2) ) /*||
+            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && this.notHomomultimeric (link.origId, chainIndex1, chainIndex2) ) /*||
                 (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1)*/;
             // The reverse match condition produced erroneous links i.e. link chain3,49 to chain 2,56 also passed chain3,56 to chain2,49
         }, this);

@@ -31,6 +31,8 @@ DIV.tableWrapper TABLE TH:first-child {
 
 DIV.tableWrapper TABLE TBODY TH:first-child {
      position: fixed;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 DIV.tableWrapper TABLE TBODY TD {

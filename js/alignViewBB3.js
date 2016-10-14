@@ -1,5 +1,3 @@
-
-
     var CLMSUI = CLMSUI || {};
     
     CLMSUI.AlignCollectionViewBB = CLMSUI.utils.BaseFrameView.extend ({
@@ -103,7 +101,7 @@
                 console.log ("model", model);
                 var modelViewID = d3.select(this.el).attr("id") + "IndView"; 
                 
-                this.modelView = new CLMSUI.AlignViewBB3 ({
+                this.modelView = new CLMSUI.ProtAlignViewBB ({
                     el: "#"+modelViewID, 
                     model: model,
                     tooltipModel: this.tooltipModel,
@@ -118,7 +116,7 @@
 
                 this.alignViewBlosumSelector
                     .setSelected (model.get("scoreMatrix"))
-                    .listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) { // and then make it track it thereafter
+                    .listenTo (model, "change:scoreMatrix", function (protAlignModel, scoreMatrix) { // and then make it track it thereafter
                         this.setSelected (scoreMatrix);
                     })
                 ;
@@ -129,10 +127,11 @@
         },
     });
     
-    CLMSUI.AlignViewBB3 = Backbone.View.extend ({
+    CLMSUI.ProtAlignViewBB = Backbone.View.extend ({
         events: {
             "mouseleave td.seq>span" : "clearTooltip",
             "change input.diff" : "render",
+            "mouseleave th": "clearTooltip",
         },
 
         initialize: function (viewOptions) {      
@@ -280,6 +279,10 @@
             var wrap = 2;
             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
 
+            var nformat = d3.format(",d");
+            var scoreFormat = function (val) {
+                return val === Number.MAX_VALUE ? "Exact" : nformat (val);
+            };
             
             var rowBind = place.selectAll("tr")
                 .data(allSeqs, function (d, i) { return d.label + (i % wrap); })
@@ -298,6 +301,14 @@
                 .html (function (d, i) { 
                     var v = i % wrap; 
                     return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); 
+                })
+                .on ("mouseenter", function(d) {
+                    self.tooltipModel
+                        .set ("header", d.label+" Sequence")
+                        .set("contents", [["Search Length", nformat(d.convertFromRef.length)], [d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],])
+                        .set("location", d3.event)
+                    ;
+                    self.tooltipModel.trigger ("change:location");
                 })
             ;
             
@@ -320,9 +331,9 @@
             return this;
         },
         
-        clearTooltip: function (evt) {
+        clearTooltip: function () {
             if (this.tooltipModel) {
-                 this.tooltipModel.set ("contents", null);
+                this.tooltipModel.set ("contents", null);
             }
             return this;
         },
@@ -344,12 +355,12 @@
                 //console.log (d.convertToRef, d.convertFromRef);
                 */
                 
-                var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
+                //var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
 
                 this.tooltipModel.set("header", d.label).set("contents", [
                     ["Align Index", charIndex + 1],
-                    ["Value", str[charIndex]],
-                    ["Ref Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
+                    ["Search Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
+                    ["Seq Value", str[charIndex]],
                 ]).set("location", d3.event);
                 this.tooltipModel.trigger ("change:location");
             }
