@@ -3,11 +3,6 @@
     overflow: hidden;
 }
 
-.selectView {
-    height: calc(100%);
-    overflow: hidden;
-}
-
 .selectView > DIV.scrollHolder {
     height: calc(100% - 45px);
     overflow: auto;
@@ -80,7 +75,7 @@
     background: #afa;
 }
 
-.crossLinkTotal{
+.crossLinkTotal {
     display: inline-block;
 	color:white;
 }

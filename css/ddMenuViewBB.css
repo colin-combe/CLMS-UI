@@ -25,3 +25,10 @@
     color: #091D42;
     background: #fff;
 }
+
+.dropdown DIV HR {
+    border: none;
+    border-top: 1px dotted white;
+    margin: 0;
+    padding: 0;
+}

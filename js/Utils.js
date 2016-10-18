@@ -115,10 +115,6 @@ CLMSUI.utils = {
         }
     }),
 
-    addCheckboxBackboneView : function (options) {
-        return new CLMSUI.utils.checkBoxView ({myOptions: options});
-    },
-
     dpNumber: function (num, decimalPlaces, roundFunc) {
         var powerOfTen = Math.pow (10, decimalPlaces);
         return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
@@ -400,7 +396,8 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .enter()
                     .append("p")
                     .text(function(d) {
-                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+d.fdr : ">"+d.fdr+" (Rate not met)");
+                        var saneSigFigs = d3.format(".2f")(d.fdr);  // don't have more than 2 decimal places
+                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+saneSigFigs : ">"+saneSigFigs+" (Rate not met)");
                     })
             ;
             chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);

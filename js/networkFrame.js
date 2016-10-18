@@ -160,18 +160,18 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes
     var checkBoxData = [
-        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
-        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
+        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
+        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
         {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false}});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     });
 
@@ -182,7 +182,7 @@ CLMSUI.init.views = function () {
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
             title: "View",
-            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id }; })
+            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
         }
     })
         // hide/disable view choices that depend on certain data being present until that data arrives

@@ -40,6 +40,12 @@
                 }
             });
             
+            
+            choices
+                .filter(function(d) { return d.sectionEnd; })
+                .insert ("hr")
+            ;
+            
             return this;
         },
         
