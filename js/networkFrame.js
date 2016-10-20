@@ -145,7 +145,7 @@ CLMSUI.init.modelsEssential = function (options) {
 CLMSUI.init.views = function () {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel", "pdbPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -164,6 +164,7 @@ CLMSUI.init.views = function () {
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
+        {id: "pdbChkBxPlaceholder", label: "PDB Select", eventName:"pdbShow"},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
@@ -176,7 +177,7 @@ CLMSUI.init.views = function () {
     });
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
-    var maybeViews = ["#matrixChkBxPlaceholder", "#distoChkBxPlaceholder"];
+    var maybeViews = ["#nglChkBxPlaceholder", "#matrixChkBxPlaceholder", "#distoChkBxPlaceholder"];
     new CLMSUI.DropDownMenuViewBB ({
         el: "#viewDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
@@ -473,6 +474,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#nglPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "nglShow",
+        myOptions: {
+            initialPdbCode: CLMSUI.firstPdbCode,
+        }
+    });
+    
+    new CLMSUI.PDBFileChooserBB ({
+        el: "#pdbPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "pdbShow",
         myOptions: {
             initialPdbCode: CLMSUI.firstPdbCode,
         }

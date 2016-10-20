@@ -14,9 +14,6 @@
                 parentEvents = parentEvents();
             }
             return _.extend ({}, parentEvents, {
-                "click .pdbWindowButton": "launchExternalPDBWindow",
-                "change .selectPdbButton": "selectPDBFile",
-                "keyup .inputPDBCode": "usePDBCode",
                 "click .centreButton": "centerView",
                 "click .downloadButton": "downloadImage",
                 "click .distanceLabelCB": "toggleLabels",
@@ -34,7 +31,6 @@
                 selectedOnly: false,
                 showResidues: true,
                 shortestLinksOnly: true,
-                initialPdbCode: undefined,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -47,41 +43,9 @@
                 .attr ("class", "verticalFlexContainer")
             ;
             
-            var toolbar1 = flexWrapperPanel.append("div").attr("class", "nglToolbar");
-            var toolbar2 = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar").style("display", "none");
+            var toolbar = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar");
             
-            toolbar1.append("label")
-                .attr("class", "btn btn-1 btn-1a fakeButton")
-                .append("span")
-                    .attr("class", "noBreak")
-                    .text("Select Local PDB File")
-                    .append("input")
-                        .attr({type: "file", accept: ".txt,.cif,.pdb", class: "selectPdbButton"})
-            ;
-        
-            toolbar1.append("span")
-                .attr("class", "noBreak btn")
-                .text("or Enter 4-character PDB Code")
-                .append("input")
-                    .attr({
-                        type: "text", class: "inputPDBCode", maxlength: 4,
-                        pattern: "[A-Z0-9]{4}", size: 4, title: "Four letter alphanumeric PDB code"
-                    })
-                    .property ("required", true)
-            ;
-            
-            var pushButtonData = [
-                {klass: "pdbWindowButton", label: "Show Possible External PDBs"},
-            ];
-            
-            toolbar1.selectAll("button").data(pushButtonData)
-                .enter()
-                .append("button")
-                .attr("class", function(d) { return "btn btn-1 btn-1a "+d.klass; })
-                .text (function(d) { return d.label; })
-            ;
-            
-            toolbar2.append("button")
+            toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
             ;
@@ -93,7 +57,7 @@
                 {initialState: this.options.shortestLinksOnly, klass: "shortestLinkCB", text: "Shortest Link Option Only"},
             ];
             
-            toolbar2.selectAll("label").data(toggleButtonData)
+            toolbar.selectAll("label").data(toggleButtonData)
                 .enter()
                 .append ("label")
                 .attr ("class", "btn")
@@ -106,7 +70,7 @@
                         .property ("checked", function(d) { return d.initialState; })
             ;
 			
-            toolbar2.append("button")
+            toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Re-Centre")
             ;
@@ -116,178 +80,42 @@
             ;
             
             this.chartDiv.append("div").attr("class","overlayInfo").html("No PDB File Loaded"); 
-            this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100*/});
             
-            // populate 3D network viewer if hard-coded pdb id present
-            if (this.options.initialPdbCode) { 
-                this.repopulate ({pdbCode: this.options.initialPdbCode});
-            }
+            console.log ("slef", this.model);
+            this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
+            this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
+            this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally (distance model)
+            this.listenTo (this.model, "change:selection", this.showSelected);
+            this.listenTo (this.model, "change:highlights", this.showHighlighted);
+            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.repopulate)
         },
         
-        
-        launchExternalPDBWindow : function () {
-            // http://stackoverflow.com/questions/15818892/chrome-javascript-window-open-in-new-tab
-            // annoying workaround whereby we need to open a blank window here and set the location later
-            // otherwise chrome/pop-up blockers think it is some spammy popup rather than something the user wants.
-            // Basically chrome has this point in this function as being traceable back to a user click event but the
-            // callback from the ajax isn't.
-            var newtab = window.open ("", "_blank");
-            CLMSUI.modelUtils.getPDBIDsForProteins (
-                this.model.get("clmsModel").get("interactors"),
-                function (data) {
-                    var ids = data.split("\n");
-                    var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
-                    newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
-                }
-            );    
-        },
-        
-        selectPDBFile: function (evt) {
-            var self = this;
-            var fileObj = evt.target.files[0];
-            CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
-                var blob = new Blob ([pdbFileContents], {type : 'application/text'});
-                var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
-                self.repopulate ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name});
-            });    
-        },
-        
-        usePDBCode: function (evt) {
-            if (evt.keyCode === 13) {   // when return key pressed
-                var pdbCode = evt.target.value;
-                if (pdbCode && pdbCode.length === 4) {
-                    this.repopulate ({pdbCode: pdbCode});
-                }
-            }
-        },
-        
-        // Nice web-servicey way of doing ngl chain to clms protein matching
-        // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
-        // Therefore, current default is to use sequence matching to detect similarities
-        matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
-            $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
-                function (data, status, xhr) {                   
-                    if (status === "success") {
-                        var map = [];
-                        $(data).find("block").each (function(i,b) { 
-                            var segArr = $(this).find("segment[intObjectId]"); 
-                            for (var n = 0; n < segArr.length; n += 2) {
-                                var id1 = $(segArr[n]).attr("intObjectId");
-                                var id2 = $(segArr[n+1]).attr("intObjectId");
-                                var pdbis1 = _.includes(id1, ".") || id1.charAt(0) !== 'P';
-                                map.push (pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1});
-                            }
-                        });
-                        console.log ("map", map);
-                        if (callback) {
-                            var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
-                            
-                            map.forEach (function (mapping) {
-                                var chainName = mapping.pdb.slice(-1);
-                                var matchSeqs = nglSequences.filter (function (seqObj) {
-                                    return seqObj.chainName === chainName;    
-                                });
-                                mapping.seqObj = matchSeqs[0]; 
-                                var matchingInteractors = interactors.filter (function(i) {
-                                    var minLength = Math.min (i.accession.length, mapping.uniprot.length);
-                                    return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
-                                });
-                                mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
-                            });
-                            callback (map);
-                        }
-                    } 
-                }
-            ); 
-        },
-        
-        repopulate: function (pdbInfo) {
-            pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
+        repopulate: function () {
+            console.log ("REPOPULATE");
+            //pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
             var firstTime = !this.xlRepr;
-            if (firstTime) {
-                d3.select(this.el).select(".nglDataToolbar").style("display", null);
-            } else {
+            if (!firstTime) {
                 this.xlRepr.dispose();
             }
+            /*
             var overText = "PDB File: " + (pdbInfo.pdbCode ?
                 "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbInfo.pdbCode+"'>"+pdbInfo.pdbCode+"</A>"
                 : pdbInfo.name
-            );
+            );      
             this.chartDiv.select("div.overlayInfo").html(overText);
-            var self = this;
+            */
+            //var self = this;
             
-            var params = {};    // {sele: ":A"};    // show just 'A' chain
-            if (pdbInfo.ext) {
-                params.ext = pdbInfo.ext;
-            }
-            var uri = pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents;
-            this.stage.loadFile (uri, params)
-                .then (function (structureComp) {
-                    var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
-                    console.log ("nglSequences", nglSequences2);
-                
-                    var interactorArr = Array.from (self.model.get("clmsModel").get("interactors").values());
-                    // If have a pdb code use a web service to glean matches between ngl protein chains and clms proteins
-                    if (pdbInfo.pdbCode) {
-                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-                            sequenceMapsAvailable (pdbUniProtMap);
-                        });
-                    }
-                    else {  // without access to pdb codes have to match comparing all proteins against all chains
-                        var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, interactorArr,
-                            function(sObj) { return sObj.data; }
-                        );
-                        sequenceMapsAvailable (pdbUniProtMap);
-                    }
-                
-                    // bit to continue onto after ngl protein chain to clms protein matching has been done
-                    function sequenceMapsAvailable (sequenceMap) {
-                        console.log ("seq matches", sequenceMap);
-                        self.chainMap = {};
-                        sequenceMap.forEach (function (pMatch) {
-                            pMatch.data = pMatch.seqObj.data;
-                            pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
-                            self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
-                            self.chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
-                            pMatch.otherAlignSettings = {semiLocal: true};
-                        });
-                        console.log ("chainmap", self.chainMap); 
-                        console.log ("stage", self.stage, "\nhas sequences", sequenceMap);
-                        self.model.trigger ("3dsync", sequenceMap);
-
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
-                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                        var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                        console.log ("pdb", pdbInfo);
-                        
-                        var crosslinkData = new CLMSUI.CrosslinkData (filterCrossLinks, structureComp, self.chainMap, pdbInfo.baseSeqId, self.model);
-
-                        self.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                            self.chainMap, structureComp, crosslinkData, pdbInfo.baseSeqId,
-                            {
-                                selectedColor: "lightgreen",
-                                selectedLinksColor: "yellow",
-                                sstrucColor: "gray",
-                                displayedDistanceColor: "tomato",
-                                displayedDistanceVisible: self.options.labelVisible,
-                            }
-                       );
-
-                        var dd = crosslinkData.getDistances ();
-                        var distancesObj = new CLMSUI.DistancesObj (dd, self.chainMap, pdbInfo.baseSeqId);
-                        console.log ("distances", distancesObj);
-                        self.model.get("clmsModel").set("distancesObj", distancesObj);
-
-                        if (firstTime) {
-                            self.listenTo (self.model.get("filterModel"), "change", self.showFiltered);    // any property changing in the filter model means rerendering this view
-                            self.listenTo (self.model, "change:linkColourAssignment", self.rerenderColours);   // if colour model used is swapped for new one
-                            self.listenTo (self.model, "currentColourModelChanged", self.rerenderColours); // if current colour model used changes internally (distance model)
-                            self.listenTo (self.model, "change:selection", self.showSelected);
-                            self.listenTo (self.model, "change:highlights", self.showHighlighted);
-                        }
-                    }
-                })
-            ;  
+            this.xlRepr = new CLMSUI.CrosslinkRepresentation (
+                this.model.get("stageModel"),
+                {
+                    selectedColor: "lightgreen",
+                    selectedLinksColor: "yellow",
+                    sstrucColor: "gray",
+                    displayedDistanceColor: "tomato",
+                    displayedDistanceVisible: this.options.labelVisible,
+                }
+            );
         },
 
         render: function () {
@@ -300,41 +128,54 @@
         },
 
         relayout: function () {
-            if (this.stage) {
-                this.stage.handleResize();
+            if (this.model.get("stageModel")) {
+                var stage = this.model.get("stageModel").get("structureComp").stage;
+                if (stage) {
+                    stage.handleResize();
+                }
             }
             return this;
         },
         
         downloadImage: function () {
             // https://github.com/arose/ngl/issues/33
-            this.stage.makeImage({
-                factor: 4,  // make it big so it can be used for piccy
-                antialias: true,
-                trim: true, // https://github.com/arose/ngl/issues/188
-                transparent: true
-            }).then( function( blob ){
-                NGL.download( blob, "screenshot.png" );
-            });
+            if (this.model.get("stageModel")) {
+                this.model.get("stageModel").get("structureComp").stage.makeImage({
+                    factor: 4,  // make it big so it can be used for piccy
+                    antialias: true,
+                    trim: true, // https://github.com/arose/ngl/issues/188
+                    transparent: true
+                }).then( function( blob ){
+                    NGL.download( blob, "screenshot.png" );
+                });
+            }
         },
 		
         centerView: function () {
-            this.stage.centerView();
+            if (this.model.get("stageModel")) {
+                this.model.get("stageModel").get("structureComp").stage.centerView();
+            }
             return this;
         },
         
         toggleLabels: function (event) {
-            var chk = event.target.checked;
-            this.xlRepr.displayedDistanceVisible = chk;
-            this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
+            if (this.xlRepr) {
+                var chk = event.target.checked;
+                this.xlRepr.displayedDistanceVisible = chk;
+                this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
+            }
         },
         
         toggleResidues: function (event) {
-           this.xlRepr.resRepr.setVisibility (event.target.checked);
+            if (this.xlRepr) {
+                this.xlRepr.resRepr.setVisibility (event.target.checked);
+            }
         },
         
         toggleNonSelectedLinks: function (event) {
-            this.xlRepr.linkRepr.setVisibility (!event.target.checked);
+            if (this.xlRepr) {
+                this.xlRepr.linkRepr.setVisibility (!event.target.checked);
+            }
         },
         
         toggleShortestLinksOnly: function (event) {
@@ -343,7 +184,7 @@
         },
         
         rerenderColours: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 // using update dodges setParameters not firing a redraw if param is the same
                 this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
                 this.xlRepr.linkRepr.viewer.requestRender();
@@ -351,13 +192,13 @@
         },
         
         showHighlighted: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
             }
         },
         
         showSelected: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
             }
         },
@@ -389,347 +230,8 @@
     });
 
 
-CLMSUI.CrosslinkData = function (linkModel, structureComp, chainMap, pdbBaseSeqID, masterModel) {
-    this.signals = {
-        linkListChanged: new NGL.Signal()
-    };
-    this.pdbBaseSeqID = pdbBaseSeqID;
-    this.structureComp = structureComp;
-    this.masterModel = masterModel;
-    this.chainMap = chainMap;
-    this.setLinkList (linkModel);
-    this.residueToAtomIndexMap = {};
-};
 
-CLMSUI.CrosslinkData.prototype = {
-    
-    getModel : function () {
-        return this.masterModel;
-    },
-    
-    // residueStore maps the NGL-indexed resides to PDB-index
-    // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
-    // then need to subtract 1, then --> which goes to PDB index with residueStore
-    makeLinkList: function (linkModel, structure, pdbBaseSeqId) {
-        var nextResidueId = 0;
-        var structureId = null;
-        var residueDict = {};
-        var linkList = [];
-        var residueProxy1 = structure.getResidueProxy();
-        var residueProxy2 = structure.getResidueProxy();
-        var chainProxy = structure.getChainProxy();      
-        var alignColl = this.getModel().get("alignColl");
-        console.log ("chainmap", this.chainMap);
-
-        function getResidueId (resIndex, chainIndex) {
-            // TODO add structureId to key
-            // TODO in NMR structures there are multiple models // mjg - chainIndex is unique across models
-            var key = resIndex + ":" + chainIndex;
-            if (residueDict[key] === undefined) {
-                residueDict[key] = nextResidueId;
-                nextResidueId++;
-            }
-            return residueDict[key];
-        }
-
-        linkModel.forEach (function (xlink) {
-            // loop through fromChainIndices / toChainIndices to pick out all possible links between two residues in different chains
-            var fromChainIndices = _.pluck (this.chainMap[xlink.fromProtein.id], "index");
-            var toChainIndices = _.pluck (this.chainMap[xlink.toProtein.id], "index");
-            if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
-                fromChainIndices.forEach (function (fromChainIndex) {
-                    chainProxy.index = fromChainIndex;
-                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
-
-                    if (fromResidue >= 0) {
-                        residueProxy1.index = fromResidue + chainProxy.residueOffset;
-
-                        toChainIndices.forEach (function (toChainIndex) {
-                            chainProxy.index = toChainIndex;
-                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
-
-                            //console.log ("fr", fromResidue, "tr", toResidue);
-                            if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
-                                residueProxy2.index = toResidue + chainProxy.residueOffset;
-
-                                linkList.push ({
-                                    origId: xlink.id,
-                                    linkId: linkList.length,
-                                    residueA: {
-                                        resindex: fromResidue,
-                                        residueId: getResidueId (fromResidue, fromChainIndex),
-                                        resno: residueProxy1.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                                        chainIndex: fromChainIndex,
-                                        structureId: structureId
-                                    },
-                                    residueB: {
-                                        resindex: toResidue,
-                                        residueId: getResidueId (toResidue, toChainIndex),
-                                        resno: residueProxy2.resno,   // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                                        chainIndex: toChainIndex,
-                                        structureId: structureId
-                                    }
-                                });
-                            }
-                        }, this);
-                    }
-                }, this);
-            }
-        }, this);
-
-        console.log ("linklist", linkList);        
-        return linkList;
-    },
-    
-    setLinkList: function (crossLinkMap, filterFunc) {
-        var linkList = this.makeLinkList (crossLinkMap, this.structureComp.structure, this.pdbBaseSeqID);
-        linkList = filterFunc ? filterFunc (linkList) : linkList;
-        this.setLinkListWrapped (linkList);
-    },
-
-    setLinkListWrapped: function (linkList) {
-
-        var residueIdToLinkIds = {};
-        var linkIdMap = {};
-        var residueIdMap = {};
-        var residueList = [];
-
-        function insertResidue (residue, link) {
-            var list = residueIdToLinkIds[residue.residueId];
-            if (list === undefined) {
-                residueIdToLinkIds[residue.residueId] = [link.linkId];
-            } else if (! _.includes (list, link.linkId)) {
-                list.push (link.linkId);
-            }
-            residueIdMap[residue.residueId] = residue;
-        }
-
-        linkList.forEach (function(rl) {
-            linkIdMap[rl.linkId] = rl;
-            insertResidue (rl.residueA, rl);
-            insertResidue (rl.residueB, rl);
-        });
-
-        for (var residueId in residueIdMap){
-            residueList.push (residueIdMap [residueId]);
-        }
-
-        this._residueIdToLinkIds = residueIdToLinkIds;
-        this._linkIdMap = linkIdMap;
-        this._residueIdMap = residueIdMap;
-        this._linkList = linkList;
-        this._residueList = residueList;
-        console.log ("setLinkList", residueIdMap, residueList, residueIdToLinkIds, linkIdMap);
-
-        this.signals.linkListChanged.dispatch();
-    },
-    
-    getResidueIdsFromLinkId: function (linkId) {
-        var link = this._linkList(linkId);
-        return link ? [link.residueA.residueId, link.residueB.residueId] : undefined;
-    },
-
-    getLinks: function (residue) {
-        if (residue === undefined) {
-            return this._linkList;
-        } else {
-            var linkIds = this._residueIdToLinkIds[residue.residueId];
-            return linkIds ? linkIds.map (function(l) {
-                return this._linkIdMap[l];
-            }, this) : [];
-        }
-    },
-
-    getResidues: function (link) {
-        if (link === undefined) {
-            return this._residueList;
-        } else if (Array.isArray (link)) {
-            var residues = [];
-            link.forEach (function(l) {
-                residues.push (l.residueA, l.residueB);
-            });
-            return residues;
-        } else {
-            return [link.residueA, link.residueB];
-        }
-    },
-
-    getSharedLinks: function (residueA, residueB) {
-        var aLinks = this.getLinks (residueA);
-        var bLinks = this.getLinks (residueB);
-        var sharedLinks = CLMSUI.modelUtils.intersectObjectArrays (aLinks, bLinks, function(l) { return l.linkId; });
-        return sharedLinks.length ? sharedLinks : false;
-    },
-
-    findResidues: function (resno, chainIndex) {
-        var residues = this.getResidues().filter (function (r) {
-            return r.resno === resno && r.chainIndex === chainIndex;
-        });
-        console.log ("find r", resno, chainIndex, residues);
-        return residues.length ? residues : false;
-    },
-
-    hasResidue: function (residue) {
-        return this._residueIdMap[residue.residueId] === undefined ? false : true;
-    },
-
-    hasLink: function (link) {
-        return this._linkIdMap[link.linkId] === undefined ? false : true;
-    },
-    
-       getDistances: function () {
-        var resCount = 0;
-        var viableChainIndices = [];
-        var self = this;
-        this.structureComp.structure.eachChain (function (cp) {
-            // Don't include chains which are tiny or ones we can't match to a protein
-            if (cp.residueCount > 20 && self.getProteinFromChainIndex (cp.index)) {
-                resCount += cp.residueCount;
-                viableChainIndices.push (cp.index);
-            }
-        });
-        
-        console.log ("RESCOUNT", resCount, viableChainIndices);
-        
-        return this.getChainDistances (viableChainIndices, resCount > 1500);
-    },
-    
-    getChainDistances: function (chainIndices, linksOnly) {
-        var chainCAtomIndices = this.getCAtomsAllResidues (chainIndices);
-        console.log ("residue atom indices", chainCAtomIndices);
-        var keys = d3.keys (chainCAtomIndices);
-        
-        var matrixMap = {};
-        var links = this.getLinks();
-        
-        keys.forEach (function (chain1) {
-            for (var m = 0; m < keys.length; m++) {
-                var chain2 = keys[m];
-                matrixMap[chain1+"-"+chain2] = linksOnly
-                    ? this.getLinkDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], +chain1, +chain2, links)
-                    : this.getAllDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], chain1, chain2)
-                ;
-            }
-        }, this);
-        
-        return matrixMap;
-    },
-    
-    notHomomultimeric: function (xlinkID, c1, c2) {
-        var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
-        return CLMSUI.modelUtils.not3DHomomultimeric (xlink, c1, c2);
-    },
-    
-    getLinkDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
-        links = links.filter (function (link) {
-            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && this.notHomomultimeric (link.origId, chainIndex1, chainIndex2) ) /*||
-                (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1)*/;
-            // The reverse match condition produced erroneous links i.e. link chain3,49 to chain 2,56 also passed chain3,56 to chain2,49
-        }, this);
-           
-        var matrix = [];
-        var ap1 = this.structureComp.structure.getAtomProxy();
-        var ap2 = this.structureComp.structure.getAtomProxy();
-        
-        links.forEach (function (link) {
-            var idA = link.residueA.resindex;   // was previously link.residueA.resno;
-            var idB = link.residueB.resindex;   // " " link.residueB.resno;
-            ap1.index = chainAtomIndices1[idA];
-            ap2.index = chainAtomIndices2[idB];
-            if (ap1.index !== undefined && ap2.index !== undefined) {
-                var d = ap1.distanceTo (ap2);
-                //console.log ("link", link, chainIndex1, chainIndex2, idA, idB, ap1.index, ap2.index, d);
-                matrix[idA] = matrix[idA] || [];
-                matrix[idA][idB] = matrix[idA][idB] || [];
-                matrix[idA][idB] = d;
-            }
-        });
-        
-        return matrix;
-    },
-    
-    getAllDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2) {
-        var matrix = [];
-        var ap1 = this.structureComp.structure.getAtomProxy();
-        var ap2 = this.structureComp.structure.getAtomProxy();
-        var cai2length = chainAtomIndices2.length;
-        var diffChains = (chainIndex1 !== chainIndex2);
-        
-        for (var n = 0; n < chainAtomIndices1.length; n++) {
-            ap1.index = chainAtomIndices1[n];
-            var ap1undef = (ap1.index === undefined);
-            var row = matrix[n] = [];
-            for (var m = 0; m < cai2length; m++) {
-                if (m !== n || diffChains) {
-                    ap2.index = chainAtomIndices2[m];
-                    row.push ((ap2.index === undefined || ap1undef) ? undefined : ap1.distanceTo(ap2));
-                } else {
-                    row.push(0);
-                }
-            }
-        }
-        
-        return matrix;
-    },
-    
-    getCAtomsAllResidues : function (chainIndices) {
-        var chainProxy = this.structureComp.structure.getChainProxy();
-        var sele = new NGL.Selection();
-        var chainCAtomIndices = {};
-        var self = this;
-        
-        if (chainIndices) {
-            chainIndices.forEach (function (ci) {
-                chainProxy.index = ci;
-                var atomIndices = chainCAtomIndices[ci] = [];
-                chainProxy.eachResidue (function (rp) {
-                    var ai = self._getAtomIndexFromResidue (rp.resno, chainProxy, sele);
-                    atomIndices.push (ai);
-                });
-            }, this);
-        }
-        
-        console.log ("cac", chainCAtomIndices);
-      
-        return chainCAtomIndices;
-    },
-    
-    // used to generate a cache to speed up distance selections / calculations
-    _getAtomIndexFromResidue: function (resno, cproxy, sele) {
-        var aIndex;
-        
-        if (resno !== undefined) {
-            var chainIndex = cproxy.index;
-            var key = resno + (chainIndex !== undefined ? ":" + chainIndex : "");
-            aIndex = this.residueToAtomIndexMap [key];
-            
-            if (aIndex === undefined) {
-                var chainName = cproxy.chainname;
-                var modelIndex = cproxy.modelIndex;
-                var resi = resno + (chainName ? ":" + chainName : "") + (modelIndex !== undefined ? "/"+modelIndex : "");
-                sele.setString (resi  + " AND .CA");
-                var ai = this.structureComp.structure.getAtomIndices (sele);
-                aIndex = ai[0];
-                if (aIndex === undefined) {
-                    console.log ("undefined sele", sele.string, aIndex);
-                }
-                this.residueToAtomIndexMap[key] = aIndex;
-            }
-        }
-        return aIndex;
-    },
-    
-    getProteinFromChainIndex: function (chainIndex) {
-        var entries = d3.entries(this.chainMap);
-        var matchProts = entries.filter (function (entry) {
-            return _.includes (_.pluck (entry.value, "index"), chainIndex);
-        });
-        return matchProts && matchProts.length ? matchProts[0].key : null;
-    },
-};
-
-
-CLMSUI.CrosslinkRepresentation = function (chainMap, structureComp, crosslinkData, pdbBaseSeqId, params) {
+CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
 
     var defaults = {
         sstrucColor: "wheat",
@@ -746,11 +248,11 @@ CLMSUI.CrosslinkRepresentation = function (chainMap, structureComp, crosslinkDat
     var p = _.extend({}, defaults, params);
     this.setParameters (p, true);
 
-    this.stage = structureComp.stage;
-    this.chainMap = chainMap;
-    this.structureComp = structureComp;
-    this.crosslinkData = crosslinkData;
-    this.pdbBaseSeqId = pdbBaseSeqId;
+    this.stage = nglModelWrapper.get("structureComp").stage;
+    this.chainMap = nglModelWrapper.get("chainMap");
+    this.structureComp = nglModelWrapper.get("structureComp");
+    this.crosslinkData = nglModelWrapper;
+    this.pdbBaseSeqId = nglModelWrapper.get("pdbBaseSeqId");
     this.origIds = {};
     
     this.colorOptions = {};

@@ -486,7 +486,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #fdrPanel {
+#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #fdrPanel, #pdbPanel {
     display:none;
     top:80px;
 }
@@ -514,6 +514,11 @@ tbody tr:hover td, tbody tr:hover td  {
     left: 40px;
     width:700px;
     height:400px;
+}
+#pdbPanel {
+    left: 40px;
+    /*width: 500px;
+    height: 100px;*/
 }
 #distoPanel{
     left: 40px;
@@ -608,7 +613,7 @@ span.noBreak {
 }
 
 /* and then put spaces after labels to give a known place for content to break */
-label.horizontalFlow::after, #nglPanel label.btn::before {
+label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before {
     content: " ";
 }
 

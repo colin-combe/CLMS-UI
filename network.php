@@ -100,6 +100,8 @@
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
+        <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
+        <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
