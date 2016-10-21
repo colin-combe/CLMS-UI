@@ -81,30 +81,42 @@
             
             this.chartDiv.append("div").attr("class","overlayInfo").html("No PDB File Loaded"); 
             
-            console.log ("slef", this.model);
             this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
             this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
             this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally (distance model)
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
-            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.repopulate)
+            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.repopulate);
+            
+            this.listenTo (this.model, "change:stageModel", function (model, newStageModel) {
+                // swap out stage models and listeners
+                var prevStageModel = model.previous("stageModel");
+                console.log ("STAGE MODEL CHANGED", arguments, this, prevStageModel);
+                if (prevStageModel) {
+                    this.stopListening (prevStageModel);
+                }
+                this.listenTo (newStageModel, "change:linkList", function (stageModel, newLinkList) {
+                    if (this.xlRepr) {
+                        // if linklist is null then this is a new view rep so setup
+                        if (!stageModel.previous("linkList")) {
+                             this.xlRepr.setup (stageModel);
+                        }
+                        //if (newLinkList) {
+                            this.xlRepr._handleDataChange();
+                        //}
+                    }
+                }); 
+            });
+             
         },
         
         repopulate: function () {
-            console.log ("REPOPULATE");
-            //pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
-            var firstTime = !this.xlRepr;
-            if (!firstTime) {
-                this.xlRepr.dispose();
-            }
-            /*
-            var overText = "PDB File: " + (pdbInfo.pdbCode ?
-                "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbInfo.pdbCode+"'>"+pdbInfo.pdbCode+"</A>"
-                : pdbInfo.name
+            console.log ("REPOPULATE", this.model, this.model.get("stageModel"));
+            var pdbID = this.model.get("stageModel").get("pdbBaseSeqID");
+            var overText = "PDB File: " + (pdbID.length === 4 ?
+                "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID
             );      
             this.chartDiv.select("div.overlayInfo").html(overText);
-            */
-            //var self = this;
             
             this.xlRepr = new CLMSUI.CrosslinkRepresentation (
                 this.model.get("stageModel"),
@@ -123,7 +135,6 @@
                 this.showFiltered();
                 console.log ("re rendering NGL view");
             }
-
             return this;
         },
 
@@ -248,29 +259,31 @@ CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
     var p = _.extend({}, defaults, params);
     this.setParameters (p, true);
 
-    this.stage = nglModelWrapper.get("structureComp").stage;
-    this.chainMap = nglModelWrapper.get("chainMap");
-    this.structureComp = nglModelWrapper.get("structureComp");
-    this.crosslinkData = nglModelWrapper;
-    this.pdbBaseSeqId = nglModelWrapper.get("pdbBaseSeqId");
-    this.origIds = {};
-    
-    this.colorOptions = {};
-    this._initColorSchemes();
-    this._initStructureRepr();
-    this._initLinkRepr();
-    this._initLabelRepr();
-
-    console.log ("stage", this.stage);
+    this.setup (nglModelWrapper);
 
     this.stage.signals.clicked.add (this._selectionPicking, this);
     this.stage.signals.hovered.add (this._highlightPicking, this);
-    this.crosslinkData.signals.linkListChanged.add (this._handleDataChange, this);
 };
 
 CLMSUI.CrosslinkRepresentation.prototype = {
 
     constructor: CLMSUI.CrosslinkRepresentation,
+    
+    // just a way of accessing the main modelly bits more succintly
+    setup: function (nglModelWrapper) {
+        this.stage = nglModelWrapper.get("structureComp").stage;
+        this.chainMap = nglModelWrapper.get("chainMap");
+        this.structureComp = nglModelWrapper.get("structureComp");
+        this.crosslinkData = nglModelWrapper;
+        this.pdbBaseSeqId = nglModelWrapper.get("pdbBaseSeqId");
+        this.origIds = {};
+        
+        this.colorOptions = {};
+        this._initColorSchemes();
+        this._initStructureRepr();
+        this._initLinkRepr();
+        this._initLabelRepr();
+    },
 
     _getAtomPairsFromLinks: function (linkList) {
 
@@ -353,6 +366,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         var comp = this.structureComp;
 
+        console.log ("INIT STRUC", this, this.crosslinkData, this.crosslinkData.getResidues(), comp.structure.chainStore);
         var resSele = this._getSelectionFromResidue (this.crosslinkData.getResidues());
         var resEmphSele = this._getSelectionFromResidue ([]);
 
@@ -743,8 +757,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     dispose: function(){
         this.stage.signals.clicked.remove (this._selectionPicking, this);
         this.stage.signals.hovered.remove (this._highlightPicking, this);
-        this.crosslinkData.signals.linkListChanged.remove (this._handleDataChange, this);
 
-        this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
+        // this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
     }
 };

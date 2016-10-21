@@ -12,9 +12,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     initialize: function () {
         this.residueToAtomIndexMap = {};
-        this.signals = {
-            linkListChanged: new NGL.Signal()
-        };
     },
 
     getModel: function () {
@@ -35,7 +32,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var residueProxy2 = structure.getResidueProxy();
         var chainProxy = structure.getChainProxy();      
         var alignColl = this.getModel().get("alignColl");
-        console.log ("chainmap", this.get("chainMap"));
 
         function getResidueId (resIndex, chainIndex) {
             // TODO add structureId to key
@@ -49,6 +45,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }
 
         var chainMap = this.get("chainMap");
+
         linkModel.forEach (function (xlink) {
             // loop through fromChainIndices / toChainIndices to pick out all possible links between two residues in different chains
             var fromChainIndices = _.pluck (chainMap[xlink.fromProtein.id], "index");
@@ -138,7 +135,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         console.log ("setLinkList", residueIdMap, residueList, residueIdToLinkIds, linkIdMap);
 
         this.set ("linkList", linkList);
-        this.signals.linkListChanged.dispatch();
     },
     
     getResidueIdsFromLinkId: function (linkId) {

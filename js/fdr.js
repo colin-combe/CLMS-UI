@@ -66,6 +66,7 @@ CLMSUI.fdr = function (crossLinks, options) {
                 i++;
                 if (fdr <= threshold && cutoffIndex === 0) {
                     cutoffIndex = i;
+                    console.log ("cutoff totals tt td dd", t, link);
                 }
             });
 
@@ -74,7 +75,7 @@ CLMSUI.fdr = function (crossLinks, options) {
             fdrScoreCutoff = nonzero ? lastLink.meta.meanMatchScore : 0.001;
 
             if (true) {
-                console.log ("post totals tt td dd", t);
+                console.log ("post totals tt td dd (should be zero)", t);
                 console.log ("runningFdr", runningFdr);
                 console.log ("fdr of",threshold,"met or lower at index",cutoffIndex,"link",lastLink,"and fdr score", fdrScoreCutoff);
             }

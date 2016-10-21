@@ -132,7 +132,7 @@
                                 map.push (pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1});
                             }
                         });
-                        console.log ("map", map);
+                        console.log ("map", map, nglSequences);
                         if (callback) {
                             var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
                             
@@ -156,6 +156,8 @@
         },
         
         repopulate: function (pdbInfo) {
+            this.stage.removeAllComponents();   // necessary to remove old stuff so old sequences don't pop up in sequence finding
+            
             pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
             var self = this;
             
@@ -167,8 +169,6 @@
             this.stage.loadFile (uri, params)
                 .then (function (structureComp) {
                     var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
-                    console.log ("nglSequences", nglSequences2);
-                
                     var interactorArr = Array.from (self.model.get("clmsModel").get("interactors").values());
                     // If have a pdb code use a web service to glean matches between ngl protein chains and clms proteins
                     if (pdbInfo.pdbCode) {
@@ -185,7 +185,6 @@
                 
                     // bit to continue onto after ngl protein chain to clms protein matching has been done
                     function sequenceMapsAvailable (sequenceMap) {
-                        console.log ("seq matches", sequenceMap);
                         self.chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
                             pMatch.data = pMatch.seqObj.data;
@@ -194,26 +193,28 @@
                             self.chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
                             pMatch.otherAlignSettings = {semiLocal: true};
                         });
-                        console.log ("chainmap", self.chainMap); 
-                        console.log ("stage", self.stage, "\nhas sequences", sequenceMap);
+                        console.log ("chainmap", self.chainMap, "stage", self.stage, "\nhas sequences", sequenceMap);
                         self.model.trigger ("3dsync", sequenceMap);
 
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
-                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                        var filterCrossLinks = self.filterCrossLinks (crossLinks);
-                        console.log ("pdb", pdbInfo);
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
                         
+                        // Make a new model and set of data ready for the ngl viewer
                         var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
                         crosslinkData.set({
                             structureComp: structureComp, 
                             chainMap: self.chainMap, 
                             pdbBaseSeqID: pdbInfo.baseSeqId, 
                             masterModel: self.model,
-                        })
-                        .setLinkList (filterCrossLinks);
+                        });
+                        self.model.set ("stageModel", crosslinkData);
                         
-                        self.model.set("stageModel", crosslinkData);
-
+                        // important that the new model is set first ^^^ before we setLinkList() on the model
+                        // otherwise the listener in the 3d viewer is still pointing to the old model when the
+                        // changed:linklist event is received. (i.e. it broke the other way round)
+                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
+                        var filteredCrossLinks = self.filterCrossLinks (crossLinks); 
+                        crosslinkData.setLinkList (filteredCrossLinks);
+                        
                         var dd = crosslinkData.getDistances ();
                         var distancesObj = new CLMSUI.DistancesObj (dd, self.chainMap, pdbInfo.baseSeqId);
                         console.log ("distances", distancesObj);
