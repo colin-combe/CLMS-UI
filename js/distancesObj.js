@@ -123,20 +123,25 @@ CLMSUI.DistancesObj.prototype = {
         return val;
     },
     
-    pickRandomDistances: function (size) {
+    getRandomDistances: function (size) {
         var randDists = [];
         var tot = 0;
         var matVals = d3.values (this.matrices);
-        var matlengths = matVals.map (function (matrix) {
+        var matLengths = matVals.map (function (matrix) {
             tot += matrix.length * matrix[0].length;
             return tot;
         });
-        var matEntries = d3.entries (this.matrices);
-        console.log ("matlengths", matlengths, tot);
-        for (var n = 0; n < size; n++) {
-            var offset = Math.floor (Math.random () * tot);
-            randDists.push (this.getMatCellFromIndex (offset, matlengths, matEntries));
+        
+        if (tot > size) { // use all distances as random
+            randDists = this.getFlattenedDistances ();
+        } else {    // pick random distances randomly
+            var matEntries = d3.entries (this.matrices);
+            for (var n = 0; n < size; n++) {
+                var offset = Math.floor (Math.random () * tot);
+                randDists.push (this.getMatCellFromIndex (offset, matLengths, matEntries));
+            }
         }
+        
         return randDists;
     },
 };

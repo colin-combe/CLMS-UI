@@ -275,7 +275,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.chainMap = nglModelWrapper.get("chainMap");
         this.structureComp = nglModelWrapper.get("structureComp");
         this.crosslinkData = nglModelWrapper;
-        this.pdbBaseSeqId = nglModelWrapper.get("pdbBaseSeqId");
+        this.pdbBaseSeqId = nglModelWrapper.get("pdbBaseSeqID");
         this.origIds = {};
         
         this.colorOptions = {};

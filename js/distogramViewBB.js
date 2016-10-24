@@ -250,7 +250,7 @@
         recalcRandomBinning: function () {
             var distArr = this.getRelevantCrossLinkDistances();
             //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
-            var randArr = this.model.get("clmsModel").get("distancesObj").pickRandomDistances (Math.min ((distArr.length * 100) || 10000, 100000));
+            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((distArr.length * 100) || 10000, 100000));
             //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
