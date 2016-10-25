@@ -93,17 +93,21 @@
                 var prevStageModel = model.previous("stageModel");
                 console.log ("STAGE MODEL CHANGED", arguments, this, prevStageModel);
                 if (prevStageModel) {
-                    this.stopListening (prevStageModel);
+                    this.stopListening (prevStageModel);    // remove old stagemodel linklist change listener
                 }
+                // set xlRepr to null on stage model change as it's now an overview of old data
+                // (it gets reset to a correct new value in repopulate() when distancesObj changes - eventlistener above)
+                // Plus keeping a value there would mean the listener below using it when a new linklist
+                // was generated for the first time (causing error)
+                //
+                // Sequence from pdbfilechooser.js is 
+                // 1. New stage model made 2. Stage model change event fired here - xlRepr set to null
+                // 3. New linklist data generated 4. linklist change event fired here (but no-op as xlRepr === null)
+                // 5. New distanceObj generated (making new xlRepr) 6. distanceObj change event fired here making new xlRepr
+                this.xlRepr = null; 
                 this.listenTo (newStageModel, "change:linkList", function (stageModel, newLinkList) {
                     if (this.xlRepr) {
-                        // if linklist is null then this is a new view rep so setup
-                        if (!stageModel.previous("linkList")) {
-                             this.xlRepr.setup (stageModel);
-                        }
-                        //if (newLinkList) {
-                            this.xlRepr._handleDataChange();
-                        //}
+                        this.xlRepr._handleDataChange();
                     }
                 }); 
             });
