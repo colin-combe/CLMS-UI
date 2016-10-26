@@ -164,10 +164,9 @@ CLMSUI.init.views = function () {
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
-        //{id: "pdbChkBxPlaceholder", label: "PDB Select", eventName:"pdbShow"},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
-        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
         {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];

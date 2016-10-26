@@ -750,8 +750,7 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d,i) { return CLMSUI.domainColours(d.name); })
-                .style("fill-opacity", "0.5")
+                .style("fill", function(d) { return CLMSUI.domainColours(d.name); })
             ;
 
             return this;

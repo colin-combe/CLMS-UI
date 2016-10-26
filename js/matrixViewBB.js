@@ -4,12 +4,11 @@
 //		Rappsilber Laboratory, 2015
 //
 //		graph/Matrix.js
-
-
     
     var CLMSUI = CLMSUI || {};
 
-    CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend ({
+    CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend ({   
+        
     events: function() {
       var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
       if(_.isFunction(parentEvents)){
@@ -29,7 +28,8 @@
             xlabel: "Residue Index 1",
             ylabel: "Residue Index 2",
             chartTitle: "Cross-Link Matrix",
-            background: "white"
+            background: "white",
+            distMatrix: null,
         };
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -49,13 +49,25 @@
         //avoids prob with 'save - web page complete'
         var elem = d3.select(this.el); 
         
+        this.controlDiv = elem.append("div")
+            .style("position", "relative")
+        ;
+        
+        this.controlDiv
+            .append("select")
+            .attr("id", "chainSelect")
+            .on ("change", function () {
+                var value = $('#chainSelect').val();
+                console.log ("value", value);
+                self.matrixChosen (value);
+                self.render();
+            })
+        ;
         
         var chartDiv = elem.append("div")
             .attr("class", "panelInner")
             .style("position", "relative")
         ;      
-        chartDiv.selectAll("*").remove();
-
         
         var viewDiv = chartDiv.append("div")
             .attr("class", "viewDiv")
@@ -121,16 +133,11 @@
                 .text(function(d) { return d.text; })
                 .attr("dy", function(d) { return d.dy; })
         ;
-
-        
-        // colours
-        //this.resLinkColours = ["black", "blue", "red"];
-        //this.resLinkColours = ["green", "orange", "black"];
         
         this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
         //this.listenTo (this.model.get("filterModel"), "change", this.render);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); 
-        this.listenTo (this.model.get("distancesModel"), "change:distances", this.distancesChanged); 
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); 
         
         //this.distancesChanged ();
     },
@@ -139,33 +146,54 @@
         this.resize();
         return this;
     },
-    
+        
     distancesChanged: function () {
-        var proteins = this.getProteins();
-        var distances = proteins[0].distances;
-        //var distances = this.model.get("distancesModel").get("distances");
-        var seqLength = distances.length - 1;
-        this.x.domain([1, seqLength]);
-		this.y.domain([seqLength, 1]);    
+        var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        console.log ("IN MATRIX DISTANCES CHANGED", distancesObj, this.model.get("clmsModel"));
+        var matrixTitles = d3.keys(distancesObj.matrices);
+        
+        var matrixOptions = d3.select(this.el).select("#chainSelect")
+            .selectAll("option")
+            .data(matrixTitles)
+        ;
+        matrixOptions.exit().remove();
+        matrixOptions
+            .enter()
+            .append("option")
+                .text (function(d) { return d; })
+        ;
+        
+        this.matrixChosen (matrixTitles[0]);
+    },
+        
+    matrixChosen: function (key) {
+        var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        this.options.distMatrix = distancesObj.matrices[key];
+        
+        var seqLengthA = this.options.distMatrix.length - 1;
+        var seqLengthB = this.options.distMatrix[0].length - 1;
+        this.x.domain([1, seqLengthA]);
+		this.y.domain([seqLengthB, 1]);   
+        
         this.vis.select(".y")
 			.call(this.yAxis)
         ;
-
 		this.vis.select(".x")
 			.call(this.xAxis)
         ;
-    },
+    }, 
         
+    
     invokeTooltip: function (evt) {
         var sd = this.getSizeData();
         var x = evt.offsetX + 1;
-        var y = sd.seqLength - evt.offsetY;
+        var y = sd.seqLengthB - evt.offsetY;
         var a = Math.max (x,y);
         var b = Math.min (x,y);
         var self = this;
         
         var proteins = this.getProteins();
-        var distances = proteins[0].distances;
+        var distances = this.options.distMatrix;
         //var distances = this.model.get("distancesModel").get("distances");
         var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
         var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
@@ -225,15 +253,15 @@
     
     render: function () {
 
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.distMatrix) {
             console.log ("re-rendering matrix view");
             this.resize();
 
             var self = this;
-             var proteins = this.getProteins();
-            var distances = proteins[0].distances;
+            var distances = this.options.distMatrix;
             //var distances = this.model.get("distancesModel").get("distances");
-            var seqLength = distances.length - 1;
+            var seqLengthA = distances.length - 1;
+            var seqLengthB = distances[0].length - 1;
             //var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
             var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
@@ -244,8 +272,8 @@
             // make underlying canvas big enough to hold 1 pixel per residue pair
             // it gets rescaled in the resize function to fit a particular size on the screen
             this.canvas
-                .attr("width",  seqLength)
-                .attr("height", seqLength)
+                .attr("width",  seqLengthA)
+                .attr("height", seqLengthB)
             ;
 
             var canvasNode = this.canvas.node();
@@ -254,8 +282,8 @@
             ctx.fillRect(0, 0, canvasNode.width, canvasNode.height);
             //ctx.fillRect(0, 0, canvasNode.width, canvasNode.height);
 
-            var xStep = 1;//minDim / seqLength;
-            var yStep = 1;//minDim / seqLength;
+            var xStep = 1;//minDim / seqLengthA;
+            var yStep = 1;//minDim / seqLengthB;
 
 
             var rangeDomain = this.colourScaleModel.get("colScale").domain();
@@ -346,7 +374,7 @@
                             if (distance < max) {
                                 var col = colourArray [distance > min ? 1 : 0];
                                 //var col = distance > min ? colourArray [1] : colourArray[0];
-                                this.drawPixel (cd, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                                this.drawPixel (cd, ixStep + ((seqLengthB - j) * pw), col.r, col.g, col.b, 255);
                                 //drawPixel32 (data, ixStep + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                             }
                         }
@@ -398,7 +426,7 @@
                     } else {
                         ctx.fillStyle = self.resLinkColours[3];
                     }
-                    ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLength - crossLink.toResidue) * yStep , xStep, yStep);
+                    ctx.fillRect((crossLink.fromResidue - 1) * xStep, (seqLengthA - crossLink.toResidue) * yStep , xStep, yStep);
                     
 
                     var toDistArr = distances[crossLink.toResidue];
@@ -419,7 +447,7 @@
                     } else {
                         ctx.fillStyle = self.resLinkColours[3];
                     }
-                    ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
+                    ctx.fillRect((crossLink.toResidue - 1) * xStep, (seqLengthB - crossLink.fromResidue) * yStep , xStep, yStep);
                     //ctx.strokeRect((crossLink.toResidue - 1) * xStep, (seqLength - crossLink.fromResidue) * yStep , xStep, yStep);
                 }
             }
@@ -437,17 +465,16 @@
         var jqElem = $(this.svg.node());
         var cx = jqElem.width(); //this.svg.node().clientWidth;
 		var cy = jqElem.height(); //this.svg.node().clientHeight;
-        //console.log ("Svg width", this.svg.attr("width"), this.svg.style("width"), this.svg.node().clientWidth, $(this.svg.node()).width());
         var width = Math.max (0, cx - this.margin.left - this.margin.right);
 		var height = Math.max (0, cy - this.margin.top  - this.margin.bottom);
 		//its going to be square and fit in containing div
 		var minDim = Math.min (width, height);
         
-        var proteins = this.getProteins();
-        var distances = proteins[0].distances;
+        var distances = this.options.distMatrix;
         //var distances = this.model.get("distancesModel").get("distances");
-        var seqLength = distances.length - 1;
-        return {cx: cx, cy: cy, width: width, height: height, minDim: minDim, seqLength: seqLength};
+        var seqLengthA = distances ? distances.length - 1 : 0;
+        var seqLengthB = distances ? distances[0].length - 1 : 0;
+        return {cx: cx, cy: cy, width: width, height: height, minDim: minDim, seqLengthA: seqLengthA, seqLengthB: seqLengthB};
     },
     
     // called when things need repositioned, but not re-rendered from data
@@ -468,13 +495,13 @@
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
         this.x
-            .domain([1, sizeData.seqLength])
+            .domain([1, sizeData.seqLengthA])
             .range([0, minDim])
         ;
 
 		// y-scale (inverted domain)
 		this.y
-			.domain([sizeData.seqLength, 1])
+			.domain([sizeData.seqLengthB, 1])
 			.range([0, minDim])
         ;
         
@@ -525,7 +552,7 @@
         var sizeData = this.getSizeData();
         
         // rescale and position canvas according to pan/zoom settings and available space
-        var baseScale = sizeData.minDim / sizeData.seqLength;
+        var baseScale = sizeData.minDim / sizeData.seqLengthA;
         var scale = baseScale * this.zoomStatus.scale();
         var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.zoomStatus.translate()[0]+"px,"+ this.zoomStatus.translate()[1]+"px)";

@@ -45,13 +45,8 @@
 
             var chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner distoDiv")
-                .attr("id", "currentSampleDistogram")
-                .style("position", "relative")
-                .style("height", "calc( 100% - 40px )")
+                .attr ("id", mainDivSel.attr("id")+"c3Chart")
             ;
-            //CLMSUI.utils.addFourCorners(mainDivSel);
-
-            chartDiv.selectAll("*").remove();
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
