@@ -67,6 +67,34 @@ CLMSUI.utils = {
     crossBrowserElementY : function (evt, optElem) {
         return evt.clientY - $(optElem || evt.target).offset().top;
     },
+    
+    buttonView: Backbone.View.extend ({
+        tagName: "span",
+        className: "buttonPlaceholder",
+        events: {
+            "click button": "buttonClicked"
+        },
+
+        initialize: function (viewOptions) {
+            var defaultOptions = {};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+
+            // this.el is the dom element this should be getting added to, replaces targetDiv
+            var sel = d3.select(this.el);
+            if (!sel.attr("id")) {
+                sel.attr("id", this.options.id);
+            }
+
+            sel.append("button")
+                .attr("class", "btn")
+                .text (this.options.label)
+            ;
+        },
+
+        buttonClicked: function () {
+            CLMSUI.vent.trigger (this.options.eventName, true);
+        }
+    }),
 
     checkBoxView: Backbone.View.extend ({
         tagName: "span",
@@ -86,22 +114,16 @@ CLMSUI.utils = {
             if (!sel.attr("id")) {
                 sel.attr("id", this.options.id);
             }
-            var myid = "#" + sel.attr("id");
 
             var labs = sel.append("label")
                 .attr("class", "btn")
-                .style("padding-left", "0px")
             ;
-            if (this.options.labelFirst) {
-                labs.append("span").text(this.options.label);
-            }
             labs.append ("input")
-                .attr ("id", myid+"ChkBx")
+                .attr ("id", "#"+sel.attr("id")+"ChkBx")
                 .attr("type", "checkbox")
             ;
-            if (!this.options.labelFirst) {
-                labs.append("span").text(this.options.label);
-            }
+            var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
+            labelText.text (this.options.label);
 
             this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
         },

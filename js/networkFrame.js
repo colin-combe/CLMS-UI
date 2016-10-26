@@ -158,13 +158,13 @@ CLMSUI.init.views = function () {
 
     CLMSUI.init.viewsEssential({"specWrapperDiv":"#spectrumPanelWrapper"});
 
-    // Generate checkboxes
+    // Generate checkboxes for view dropdown
     var checkBoxData = [
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
-        {id: "pdbChkBxPlaceholder", label: "PDB Select", eventName:"pdbShow"},
+        //{id: "pdbChkBxPlaceholder", label: "PDB Select", eventName:"pdbShow"},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
         //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
@@ -192,7 +192,38 @@ CLMSUI.init.views = function () {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
+    
+    // Generate buttons for load dropdown
+    var buttonData = [
+        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
+    ];
+    buttonData.forEach (function (bdata) {
+        var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
+        $("#loadDropdownPlaceholder").append(bView.$el);
+    });
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#loadDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Load",
+            menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
+        }
+    });
+    
+    // Generate data export drop down
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#expDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Data-Export",
+            menu: [
+                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
+                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
+            ]
+        }
+    });
 
+    
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
     CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
@@ -208,18 +239,6 @@ CLMSUI.init.views = function () {
             this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
         })
     ;
-
-    new CLMSUI.DropDownMenuViewBB ({
-        el: "#expDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
-        myOptions: {
-            title: "Data-Export",
-            menu: [
-                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
-            ]
-        }
-    });
 
     new CLMSUI.CircularViewBB ({
         el: "#circularPanel",

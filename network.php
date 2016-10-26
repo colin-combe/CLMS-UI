@@ -137,6 +137,7 @@
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
                     <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
                     <p id="viewDropdownPlaceholder"></p>
+                    <p id="loadDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
             </div>
 
