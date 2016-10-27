@@ -279,7 +279,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.chainMap = nglModelWrapper.get("chainMap");
         this.structureComp = nglModelWrapper.get("structureComp");
         this.crosslinkData = nglModelWrapper;
-        this.pdbBaseSeqId = nglModelWrapper.get("pdbBaseSeqID");
+        this.pdbBaseSeqID = nglModelWrapper.get("pdbBaseSeqID");
         this.origIds = {};
         
         this.colorOptions = {};
@@ -455,7 +455,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var customText = {};
         var self = this;
         comp.structure.eachAtom (function (atomProxy) {
-            var pid = self.crosslinkData.getProteinFromChainIndex (atomProxy.chainIndex);
+            var pid = CLMSUI.modelUtils.getProteinFromChainIndex (self.crosslinkData.get("chainMap"), atomProxy.chainIndex);
             if (pid) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("interactors").get(pid);
                 var pname = protein ? protein.name : "none";
@@ -539,8 +539,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 
                 // this is to find the index of the residue in searchindex (crosslink) terms
                 // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
-                var proteinId = this.crosslinkData.getProteinFromChainIndex (pdtrans.residue.chainIndex);
-                var alignId = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, atom.chainname, atom.chainIndex);
+                var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex (this.crosslinkData.get("chainMap"), pdtrans.residue.chainIndex);
+                var alignId = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
                 // align from 3d to search index. resindex is 0-indexed so +1 before querying
                 console.log ("alignid", alignId, proteinId);
                 var srindex = this.crosslinkData.getModel().get("alignColl").getAlignedIndex (pdtrans.residue.resindex + 1, proteinId, true, alignId); 

@@ -1,9 +1,9 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqId) {
+CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID) {
     this.matrices = matrices;
     this.chainMap = chainMap;
-    this.pdbBaseSeqId = pdbBaseSeqId;
+    this.pdbBaseSeqID = pdbBaseSeqID;
 };
 
 CLMSUI.DistancesObj.prototype = {
@@ -52,12 +52,12 @@ CLMSUI.DistancesObj.prototype = {
         if (chains1 && chains2) {
             for (var n = 0; n < chains1.length; n++) {
                 var ind1 = chains1[n].index;
-                var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains1[n].name, ind1);
+                var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chains1[n].name, ind1);
                 var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1) - 1; 
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var ind2 = chains2[m].index;
-                        var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqId, chains2[m].name, ind2);
+                        var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chains2[m].name, ind2);
                         var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2) - 1; 
                         // align from 3d to search index. resindex is 0-indexed so +1 before querying
                         //console.log ("alignid", alignId1, alignId2, pid1, pid2);

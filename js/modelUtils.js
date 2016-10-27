@@ -374,6 +374,24 @@ CLMSUI.modelUtils = {
         var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
         return invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
     },
+         
+    getProteinFromChainIndex: function (chainMap, chainIndex) {
+        var entries = d3.entries (chainMap);
+        var matchProts = entries.filter (function (entry) {
+            return _.includes (_.pluck (entry.value, "index"), chainIndex);
+        });
+        return matchProts && matchProts.length ? matchProts[0].key : null;
+    },
+    
+    // this avoids going via the ngl functions using data in a chainMap
+    getChainNameFromChainIndex: function (chainMap, chainIndex) {
+        var chainsPerProt = d3.values (chainMap);
+        var allChains = d3.merge (chainsPerProt);
+        var matchChains = allChains.filter (function (entry) {
+            return entry.index === chainIndex;
+        });
+        return matchChains[0].name;
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

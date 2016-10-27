@@ -23,7 +23,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     // then need to subtract 1, then --> which goes to PDB index with residueStore
     makeLinkList: function (linkModel) {
         var structure = this.get("structureComp").structure;
-        var pdbBaseSeqId = this.get("pdbBaseSeqID");
+        var pdbBaseSeqID = this.get("pdbBaseSeqID");
         var nextResidueId = 0;
         var structureId = null;
         var residueDict = {};
@@ -53,14 +53,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
                 fromChainIndices.forEach (function (fromChainIndex) {
                     chainProxy.index = fromChainIndex;
-                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
+                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
 
                     if (fromResidue >= 0) {
                         residueProxy1.index = fromResidue + chainProxy.residueOffset;
 
                         toChainIndices.forEach (function (toChainIndex) {
                             chainProxy.index = toChainIndex;
-                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqId, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
+                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
 
                             //console.log ("fr", fromResidue, "tr", toResidue);
                             if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
@@ -196,7 +196,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var self = this;
         this.get("structureComp").structure.eachChain (function (cp) {
             // Don't include chains which are tiny or ones we can't match to a protein
-            if (cp.residueCount > 20 && self.getProteinFromChainIndex (cp.index)) {
+            if (cp.residueCount > 20 && CLMSUI.modelUtils.getProteinFromChainIndex (self.get("chainMap"), cp.index)) {
                 resCount += cp.residueCount;
                 viableChainIndices.push (cp.index);
             }
@@ -330,13 +330,5 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             }
         }
         return aIndex;
-    },
-    
-    getProteinFromChainIndex: function (chainIndex) {
-        var entries = d3.entries(this.get("chainMap"));
-        var matchProts = entries.filter (function (entry) {
-            return _.includes (_.pluck (entry.value, "index"), chainIndex);
-        });
-        return matchProts && matchProts.length ? matchProts[0].key : null;
     },
 });
