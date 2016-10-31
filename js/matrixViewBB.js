@@ -64,9 +64,11 @@
                 .append("select")
                     .attr("id", "chainSelect")
                     .on ("change", function () {
-                        var value = $('#chainSelect').val();
-                        self.matrixChosen (value);
-                        self.render();
+                        self
+                            .matrixChosen ($('#chainSelect').val())
+                            .render()
+                            .panZoom()
+                        ;
                     })
         ;
         
@@ -205,6 +207,8 @@
         this.axisFormatY = this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this);
         this.xAxis.tickFormat (this.axisFormatX);
         this.yAxis.tickFormat (this.axisFormatY);
+        
+        return this;
     }, 
                
     curriedAlignedIndexAxisFormat: function (proteinID, alignID, thisView) {
@@ -296,21 +300,20 @@
         var minDim = sizeData.minDim;
         var width = sizeData.width;
         var height = sizeData.height;
-        // bounded zoom behavior from https://gist.github.com/shawnbot/6518285
+        // bounded zoom behavior adapted from https://gist.github.com/shawnbot/6518285
         // (d3 events translate and scale values are just copied from zoomStatus)
-        var tx = Math.min(0, Math.max(d3.event.translate[0], minDim - (minDim * d3.event.scale)));
-        var ty = Math.min(0, Math.max(d3.event.translate[1], minDim - (minDim * d3.event.scale)));
-        //var tx = Math.min(0, Math.max(d3.event.translate[0], width - (width * d3.event.scale)));
-        //var ty = Math.min(0, Math.max(d3.event.translate[1], height - (height * d3.event.scale)));
+        var seqLenABRatio = sizeData.lengthA / sizeData.lengthB;
+        var widthLim = (seqLenABRatio > 1.0) ? minDim : minDim * seqLenABRatio;
+        var heightLim = (seqLenABRatio < 1.0) ? minDim : minDim * (1.0 / seqLenABRatio);
+        var tx = Math.min (0, Math.max (d3.event.translate[0], widthLim - (widthLim * d3.event.scale)));
+        var ty = Math.min (0, Math.max (d3.event.translate[1], heightLim - (heightLim * d3.event.scale)));
         self.zoomStatus.translate ([tx, ty]);
-        
         self.panZoom();
     },
         
     // That's how you define the value of a pixel //
     // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
     // moved from out of render() as firefox in strict mode objected
-        
     drawPixel: function (cd, pixi, r, g, b, a) {
         var index = pixi * 4;
         cd[index] = r;
@@ -328,7 +331,7 @@
             console.log ("re-rendering matrix view");
             this.resize();
 
-            // make underlying canvas big enough to hold 1 pixel per residue pair
+            // make underlying canvas big enough to hold 1 pixel per possible residue pair
             // it gets rescaled in the resize function to fit a particular size on the screen
             var seqLengths = this.getSeqLengthData();
             this.canvas
@@ -336,9 +339,12 @@
                 .attr("height", seqLengths.lengthB)
             ;
             
-            this.renderBackgroundMap ();
-            this.renderCrossLinks ();
+            this
+                .renderBackgroundMap ()
+                .renderCrossLinks ()
+            ;
         }
+        return this;
     },
         
     renderBackgroundMap: function () {
@@ -386,13 +392,13 @@
                 }
             }
 
-            //cd.set (buf8);
             ctx.putImageData(canvasData, 0, 0);
         //}
 
         var end = performance.now();
         CLMSUI.times.push (Math.round (end - start));
         //console.log ("CLMSUI.times", CLMSUI.times);
+        return this;
     },
         
     renderCrossLinks: function () {
@@ -478,6 +484,7 @@
         }
         
         //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
+        return this;
     },
         
     getSizeData: function () {
@@ -561,13 +568,18 @@
         // separately from the scaling due to the resizing
         
         // pan/zoom canvas
-        this.panZoom ();
+        this.panZoom ();   
         
+        return this;
+    },
+        
+    // Used to do this just on resize, but rectangular areas mean labels often need re-centred on panning
+    repositionLabels: function (sizeData) {
         // reposition labels
         var labelCoords = [
-            {x: sizeData.width / 2, y: sizeData.height + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.height / 2, rot: -90},
-            {x: sizeData.width / 2, y: 0, rot: 0}
+            {x: sizeData.right / 2, y: sizeData.bottom + this.margin.bottom, rot: 0}, 
+            {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
+            {x: sizeData.right / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
             .data (labelCoords)
@@ -575,6 +587,11 @@
                 return "translate("+d.x+" "+d.y+") rotate("+d.rot+")";
             })
         ;
+        return this;
+    },
+        
+    setAxisRange: function (scale) {
+        
     },
     
     // called when panning and zooming performed
@@ -597,15 +614,42 @@
            .style("transform", transformString)
         ;
         
+        // If bottom edge of canvas is higher up than bottom of viewport put the x axis benath it
+        var cvs = $(this.canvas.node());
+        var viewport = cvs.parent();
+        var bottom = Math.min (
+            cvs.position().top + ($.zepto ? cvs.height() : cvs.outerHeight(true)), 
+            $.zepto ? viewport.height() : viewport.outerHeight(true)
+        );
+        var right = Math.min (
+            cvs.position().left + ($.zepto ? cvs.width() : cvs.outerWidth(true)), 
+            $.zepto ? viewport.width() : viewport.outerWidth(true)
+        );
+        
+        
         // redraw axes
         this.vis.select(".y")
             .call(self.yAxis)
         ;
-        
+        /*
+        var xext = this.x.range()[1];
+        this.x.range([0, right]);
+        var domExpand = right / xext;
+        var curd = this.x.domain();
+        this.x.domain([curd[0], curd[1] + ((curd[1] - curd[0]) * domExpand)]);
+        */
         this.vis.select(".x")
-            .attr("transform", "translate(0," + (sizeData.lengthB * baseScale)+ ")")
+            .attr("transform", "translate(0," + bottom + ")")
+            //.attr("transform", "translate(0," + (sizeData.lengthB * baseScale)+ ")")
             .call(self.xAxis)
         ;
+        
+        sizeData.bottom = bottom;
+        sizeData.right = right;
+        
+        this.repositionLabels (sizeData);
+        
+        return this;
     },
 });
     
