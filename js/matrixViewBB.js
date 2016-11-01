@@ -237,8 +237,9 @@
         var proteinID = this.getProteinID (chainID);
         var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID);
         var proteinName = this.model.get("clmsModel").get("interactors").get(proteinID).name;
+        var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
         proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
-        return proteinName+" Chain:"+chainName+"("+chainID+")";
+        return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" Chain:"+chainName;
     },
         
     getProteinID: function (chainID) {
@@ -252,6 +253,12 @@
             var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, pid.chainID);
             return CLMSUI.modelUtils.make3DAlignID (distancesObj.pdbBaseSeqID, chainName, pid.chainID);
         }, this);
+    },
+        
+    getChainResidueIndexRange: function (proteinID) {
+        var alignIDs = this.getAlignIDs ([proteinID]);
+        var alignColl = this.model.get("alignColl");
+        return alignColl.getAlignmentSearchRange (proteinID.proteinID, alignIDs[0]);
     },
         
         

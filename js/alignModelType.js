@@ -209,5 +209,13 @@
             }
             return [];
         },
+        
+        getAlignmentSearchRange: function (proteinID, sequenceID) {
+            var protAlignModel = this.get (proteinID);
+            var arr = protAlignModel.getCompSequence(sequenceID).convertToRef;
+            var first = _.find (arr, function(item) { return item > 0; });
+            var last = _.findLastIndex (arr, function (item) { return item > 0; });
+            return [first, (last > 0 ? arr[last] : undefined)];
+        },
     });
     
