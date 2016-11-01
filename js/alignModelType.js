@@ -175,7 +175,8 @@
         // (or vice versa)
         // TODO, need to check for decoys (protein has no alignment)
         // conversion here works to and from the resindex local to a chain
-        getAlignedIndex: function (resIndex, proteinID, toSearchSeq, sequenceID) {
+        // IMPORTANT: The following routine assumes that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
+        getAlignedIndex: function (resIndex, proteinID, toSearchSeq, sequenceID, keepNegativeValue) {
             var protAlignModel = this.get (proteinID);
             var alignPos = resIndex;
             
@@ -188,7 +189,7 @@
                 if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
                     alignPos = null;    // null can be added / subtracted to without NaNs, which undefined causes
                 }
-                if (alignPos < 0) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
+                if (alignPos < 0 && !keepNegativeValue) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
             }
             
             return alignPos;    //this will be 1-indexed or null
@@ -215,7 +216,7 @@
             var arr = protAlignModel.getCompSequence(sequenceID).convertToRef;
             var first = _.find (arr, function(item) { return item > 0; });
             var last = _.findLastIndex (arr, function (item) { return item > 0; });
-            return [first, (last > 0 ? arr[last] : undefined)];
+            return [first + 1, (last > 0 ? arr[last] + 1 : undefined)];
         },
     });
     

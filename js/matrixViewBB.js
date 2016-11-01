@@ -217,9 +217,12 @@
             if (Math.floor(chainIndex) !== chainIndex) {    // don't do for non-integer values, return empty tick label instead
                 return "";
             }
-            var searchIndex = alignColl.getAlignedIndex (chainIndex + 1, proteinID, true, alignID);
+            var searchIndex = alignColl.getAlignedIndex (chainIndex + 1, proteinID, true, alignID, true);
             if (isNaN (searchIndex)) {
                 return "<>";
+            }
+            if (searchIndex < 0) {
+                return "><";
             }
             return d3.format(",.0f")(searchIndex);
         };
@@ -257,8 +260,7 @@
         
     getChainResidueIndexRange: function (proteinID) {
         var alignIDs = this.getAlignIDs ([proteinID]);
-        var alignColl = this.model.get("alignColl");
-        return alignColl.getAlignmentSearchRange (proteinID.proteinID, alignIDs[0]);
+        return this.model.get("alignColl").getAlignmentSearchRange (proteinID.proteinID, alignIDs[0]);
     },
         
         
@@ -458,10 +460,13 @@
                 
                 // show only those that map to the current matrix - i.e. combination of two chains
                 if (fromResIndex !== null && toResIndex !== null) {
+                    // 0-index these indices
+                    fromResIndex--;
+                    toResIndex--;
                     console.log ("LINK", fromResIndex, toResIndex, crossLink);
 
-                    var fromDistArr = distances[fromResIndex - 1];
-                    var dist = fromDistArr ? fromDistArr[toResIndex - 1] : undefined;
+                    var fromDistArr = distances[fromResIndex];
+                    var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
                     //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
 
                     if (dist) {
@@ -480,11 +485,11 @@
                     } else {
                         ctx.fillStyle = self.resLinkColours[3];
                     }
-                    ctx.fillRect((fromResIndex - 1) * xStep, (seqLengthB - toResIndex) * yStep , xStep, yStep);
+                    ctx.fillRect (fromResIndex * xStep, (seqLengthB - (toResIndex + 1)) * yStep , xStep, yStep);
 
                     // if same chunk of protein on both axes then show reverse link as well
                     if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
-                        ctx.fillRect((toResIndex - 1) * xStep, (seqLengthB - fromResIndex) * yStep , xStep, yStep);
+                        ctx.fillRect (toResIndex * xStep, (seqLengthB - (fromResIndex + 1)) * yStep , xStep, yStep);
                     }
                 }
             }
