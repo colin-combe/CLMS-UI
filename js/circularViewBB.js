@@ -382,7 +382,7 @@
         },
 
         filterFeatures: function (featureArrays) {
-            var features = d3.merge (featureArrays);
+            var features = d3.merge (featureArrays.filter (function(arr) { return arr !== undefined; }));
             return features ? features.filter (function (f) { 
                 return !f.category || this.options.uniprotFeatureFilterSet.has (f.category);
             }, this) : [];
