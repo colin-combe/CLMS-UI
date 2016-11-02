@@ -203,23 +203,24 @@
         ;
         
         var alignIDs = this.getAlignIDs (protIDs);
-        this.axisFormatX = this.curriedAlignedIndexAxisFormat (protIDs[0].proteinID, alignIDs[0], this);
-        this.axisFormatY = this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this);
+        this.axisFormatX = this.curriedAlignedIndexAxisFormat (protIDs[0].proteinID, alignIDs[0], this, 0);
+        this.axisFormatY = this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this, 0);
         this.xAxis.tickFormat (this.axisFormatX);
         this.yAxis.tickFormat (this.axisFormatY);
         
         return this;
     }, 
                
-    curriedAlignedIndexAxisFormat: function (proteinID, alignID, thisView) {
+    curriedAlignedIndexAxisFormat: function (proteinID, alignID, thisView, offset) {
         return function (chainIndex) {
+            chainIndex += offset;
             var alignColl = thisView.model.get("alignColl");
             if (Math.floor(chainIndex) !== chainIndex) {    // don't do for non-integer values, return empty tick label instead
                 return "";
             }
             var searchIndex = alignColl.getAlignedIndex (chainIndex + 1, proteinID, true, alignID, true);
             if (isNaN (searchIndex)) {
-                return "<>";
+                return "";
             }
             if (searchIndex < 0) {
                 return "><";
@@ -265,43 +266,41 @@
         
         
     invokeTooltip: function (evt) {
-        if (false) {
-            var sd = this.getSizeData();
-            var x = evt.offsetX + 1;
-            var y = (sd.lengthB - 1) - evt.offsetY;
-            var a = Math.max (x,y);
-            var b = Math.min (x,y);
-            var self = this;
+        var sd = this.getSizeData();
+        var x = evt.offsetX + 1;
+        var y = (sd.lengthB - 1) - evt.offsetY;
 
-            var proteinIDs = this.getCurrentProteinIDs();
-            var distances = this.options.distMatrix;
-            //var distances = this.model.get("distancesModel").get("distances");
-            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
+        var distances = this.options.distMatrix;
+        var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+        var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
 
-            //var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSquare (residueLinks, b-5, b+5, a-5, a+5);
-            var neighbourhood = CLMSUI.modelUtils.findResidueIDsInSpiral (proteins[0].id, proteins[0].id, filteredCrossLinks, b, a, 2);
-            neighbourhood = neighbourhood.filter (function (crossLink) {
-                var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
-                return (self.filterVal === undefined || est >= self.filterVal);
-            });
-            var rdata = neighbourhood.map (function (crossLink) {
-                var x = crossLink.fromResidue;
-                var y = crossLink.toResidue;
-                var dist = (x > y) ? (distances[x] != null ? distances[x][y] : null) : (distances[y] != null ? distances[y][x] : null);
-                return [x, y, dist];
-            });
-            if (neighbourhood.length > 0) {
-                rdata.sort (function(a,b) { return b[2] - a[2]; });
-                rdata.forEach (function(r) { r[2] = r[2] ? r[2].toFixed(3) : r[2]; });
-                rdata.splice (0, 0, ["From", "To", "Distance"]);
-            } else {
-                rdata = null;
-            }
+        var proteinIDs = this.getCurrentProteinIDs();
+        var alignIDs = this.getAlignIDs (proteinIDs);
+        var alignColl = this.model.get("alignColl");
+        var convFunc = function (x, y) {
+            var fromResIndex = alignColl.getAlignedIndex (x, proteinIDs[0].proteinID, true, alignIDs[0]);
+            var toResIndex = alignColl.getAlignedIndex (y, proteinIDs[1].proteinID, true, alignIDs[1]);
+            return {convX: fromResIndex, convY: toResIndex, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
+        };
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinks, x, y, 2);
+        neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkDatum) {
+            var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkDatum.crossLink);
+            return (this.filterVal === undefined || est >= this.filterVal);
+        }, this);
+        var rdata = neighbourhoodLinks.map (function (crossLinkDatum) {
+            return {crossLink: crossLinkDatum.crossLink, distance: distances[crossLinkDatum.x][crossLinkDatum.y]};
+        });
+        rdata.sort (function (a, b) { return b.distance - a.distance; });
+        rdata.forEach (function(r) { r.distance = r.distance ? r.distance.toFixed(3) : r.distance; });
+        neighbourhoodLinks = rdata.map (function (datum) { return datum.crossLink; });
+        var linkDistances = rdata.map (function (datum) { return datum.distance; });
 
-            this.model.get("tooltipModel").set("header", "Cross Links").set("contents", rdata).set("location", evt);
-            this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
-        }
+        this.model.get("tooltipModel")
+            .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (rdata.length - 1))
+            .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (neighbourhoodLinks, {"Distance": linkDistances}))
+            .set("location", evt)
+        ;
+        this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
     },
     
     zoomHandler: function (self) {
@@ -557,9 +556,12 @@
 			 .range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
         ;
         
-        var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks and labels
-        this.xAxis.ticks (approxTicks);
-        this.yAxis.ticks (approxTicks);
+        var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
+        var tvalues = d3.range (1, sizeData.lengthA - 1).map (function (d) { return d + 0.5; });
+        console.log ("TVALUES", tvalues);
+        //this.xAxis.tickValues(tvalues).outerTickSize(0);
+        this.xAxis.ticks(approxTicks).outerTickSize(0);
+        this.yAxis.ticks (approxTicks).outerTickSize(0);
         
         // then store the current pan/zoom values
         var curt = this.zoomStatus.translate();
@@ -642,6 +644,7 @@
         // redraw axes
         this.vis.select(".y")
             .call(self.yAxis)
+            .selectAll("g.tick")
         ;
         /*
         var xext = this.x.range()[1];
@@ -652,7 +655,6 @@
         */
         this.vis.select(".x")
             .attr("transform", "translate(0," + bottom + ")")
-            //.attr("transform", "translate(0," + (sizeData.lengthB * baseScale)+ ")")
             .call(self.xAxis)
         ;
         

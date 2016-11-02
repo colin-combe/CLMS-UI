@@ -410,14 +410,17 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var xlPair = this._getAtomPairsFromLinks (links);
         var xlPairEmph = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "selection"));
         var xlPairHigh = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "highlights"));
-
+        var baseLinkScale = 3;
+        var labelSize = 2.0;
+        
         this.linkRepr = comp.addRepresentation ("distance", {
             atomPair: xlPair,
             //colorValue: this.displayedLinksColor,
             colorScheme: this.colorOptions.linkColourScheme,
-            labelSize: 2.0,
+            labelSize: labelSize,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
+            scale: baseLinkScale,
             opacity: 1,
             name: "link",
             side: "front",
@@ -426,10 +429,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkEmphRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairEmph,
             colorValue: this.selectedLinksColor,
-            labelSize: 2.0,
+            labelSize: labelSize,
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
-            scale: 1.5,
+            scale: baseLinkScale * 1.5,
             opacity: 0.6,
             name: "linkEmph",
             side: "front",
@@ -438,10 +441,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkHighRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairHigh,
             colorValue: this.highlightedLinksColor,
-            labelSize: 2.0,
+            labelSize: labelSize,
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
-            scale: 1.8,
+            scale: baseLinkScale * 1.8,
             opacity: 0.4,
             name: "linkHigh",
         });

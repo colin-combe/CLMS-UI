@@ -99,67 +99,66 @@ CLMSUI.modelUtils = {
         feature: function (feature) {
              return [["Name", feature.name], ["Type", feature.category], ["Start", feature.fstart], ["End", feature.fend]];
         },
+        
+        linkList: function (linkList, extras) {
+            var extraEntries = d3.entries (extras);
+            var details = linkList.map (function (crossLink, i) {
+                var from3LetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false)];
+                var to3LetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true)];
+                var row = [
+                    crossLink.fromResidue+" "+from3LetterCode+" "+crossLink.fromProtein.name, 
+                    crossLink.toResidue+" "+to3LetterCode+" "+crossLink.toProtein.name
+                ];
+                extraEntries.forEach (function (entry) {
+                    row.push (entry.value[i]);
+                });
+                return row;
+            });
+            if (details.length) {
+                var header = ["From", "To"];
+                extraEntries.forEach (function (entry) {
+                    header.push (entry.key);
+                });
+                details.unshift (header);
+            } else {
+                details = null;
+            }
+            return details;   
+        },
     },
     
-    makeTooltipTitle: {
+    makeTooltipTitle: { 
+        link: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },   
+        interactor: function (interactor) { return interactor.name.replace("_", " "); }, 
         residue: function (interactor, residueIndex, residueExtraInfo) {
             return residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " + 
                 CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getResidueType (interactor, residueIndex)] + " " + interactor.name;
-        },    
-        link: function () { return "Linked Residue Pair"; },   
-        interactor: function (interactor) { return interactor.name.replace("_", " "); }, 
+        },   
         feature: function () { return "Feature"; },
+        linkList: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },   
     },
      
-    findResidueIDsInSquare : function (fromProtID, toProtID, crossLinkMap, sr1, er1, sr2, er2) {
+    findResiduesInSquare : function (convFunc, crossLinkMap, cx, cy, side) {
         var a = [];
-        for (var n = sr1; n <= er1; n++) {
-            for (var m = sr2; m <= er2; m++) {
-                var k = fromProtID+"_"+n+"-"+toProtID+"_"+m;
-                var crossLink = crossLinkMap.get(k);
-                if (crossLink) {
-                    a.push (crossLink);
-                }
-            }
-        }
-        return a;
-    },
-    
-    findResidueIDsInSpiral : function (fromProtID, toProtID, crossLinkMap, cx, cy, side) {
-        var a = [];
-        var x = cx;
-        var y = cy;
-        var moves = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-        var b = 1;
-        for (var n = 0; n < side; n++) {
-    
-            for (var m = 0; m < moves.length; m++) {
-                for (var l = 0; l < b; l++) {
-                    var k = fromProtID+"_"+x+"-"+toProtID+"_"+y;
-                    var crossLink = crossLinkMap.get(k);
-                    if (crossLink) {
-                        a.push (crossLink);
+        for (var n = cx - side; n <= cx + side; n++) {
+            var convn = convFunc (n, 0).convX;
+            if (!isNaN(convn) && convn > 0) {
+                for (var m = cy - side; m <= cy + side; m++) {
+                    var conv = convFunc (n, m);
+                    var convm = conv.convY;
+                    if (!isNaN(convm) && convm > 0) {
+                        var k = conv.proteinX+"_"+convn+"-"+conv.proteinY+"_"+convm;
+                        var crossLink = crossLinkMap.get(k);
+                        if (!crossLink && (conv.proteinX === conv.proteinY)) {
+                            k = conv.proteinY+"_"+convm+"-"+conv.proteinX+"_"+convn;
+                            crossLink = crossLinkMap.get(k);
+                        }
+                        if (crossLink) {
+                            a.push ({crossLink: crossLink, x: n, y: m});
+                        }
                     }
-                    //console.log ("["+x+", "+y+"]");    
-                    x += moves[m][0];
-                    y += moves[m][1];
-                }
-                if (m == 1) {
-                    b++;
                 }
             }
-            b++;
-        }
-        // tidy up last leg of spiral
-        for (var n = 0; n < b; n++) {
-            var k = fromProtID+"_"+x+"-"+toProtID+"_"+y;
-            var crossLink = crossLinkMap.get(k);
-            if (crossLink) {
-                a.push (crossLink);
-            }
-            //console.log ("["+x+", "+y+"]");    
-            x += moves[0][0];
-            y += moves[0][1];
         }
         return a;
     },
