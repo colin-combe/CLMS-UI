@@ -484,11 +484,11 @@
                     } else {
                         ctx.fillStyle = self.resLinkColours[3];
                     }
-                    ctx.fillRect (fromResIndex * xStep, (seqLengthB - (toResIndex + 1)) * yStep , xStep, yStep);
+                    ctx.fillRect (fromResIndex * xStep, (seqLengthB - toResIndex) * yStep , xStep, yStep);
 
                     // if same chunk of protein on both axes then show reverse link as well
                     if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
-                        ctx.fillRect (toResIndex * xStep, (seqLengthB - (fromResIndex + 1)) * yStep , xStep, yStep);
+                        ctx.fillRect (toResIndex * xStep, (seqLengthB - fromResIndex) * yStep , xStep, yStep);
                     }
                 }
             }
@@ -557,8 +557,8 @@
         ;
         
         var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
-        var tvalues = d3.range (1, sizeData.lengthA - 1).map (function (d) { return d + 0.5; });
-        console.log ("TVALUES", tvalues);
+        //var tvalues = d3.range (1, sizeData.lengthA - 1).map (function (d) { return d + 0.5; });
+        //console.log ("TVALUES", tvalues);
         //this.xAxis.tickValues(tvalues).outerTickSize(0);
         this.xAxis.ticks(approxTicks).outerTickSize(0);
         this.yAxis.ticks (approxTicks).outerTickSize(0);
