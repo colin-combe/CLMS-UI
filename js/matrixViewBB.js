@@ -462,7 +462,7 @@
                     // 0-index these indices
                     fromResIndex--;
                     toResIndex--;
-                    console.log ("LINK", fromResIndex, toResIndex, crossLink);
+                    //console.log ("LINK", fromResIndex, toResIndex, crossLink);
 
                     var fromDistArr = distances[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
