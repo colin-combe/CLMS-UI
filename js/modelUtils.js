@@ -102,20 +102,20 @@ CLMSUI.modelUtils = {
         
         linkList: function (linkList, extras) {
             var extraEntries = d3.entries (extras);
+            var fromProtein, toProtein;
             var details = linkList.map (function (crossLink, i) {
                 var from3LetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false)];
                 var to3LetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true)];
-                var row = [
-                    crossLink.fromResidue+" "+from3LetterCode+" "+crossLink.fromProtein.name, 
-                    crossLink.toResidue+" "+to3LetterCode+" "+crossLink.toProtein.name
-                ];
+                fromProtein = crossLink.fromProtein.name;
+                toProtein = crossLink.toProtein.name;
+                var row = [crossLink.fromResidue+" "+from3LetterCode, crossLink.toResidue+" "+to3LetterCode];
                 extraEntries.forEach (function (entry) {
                     row.push (entry.value[i]);
                 });
                 return row;
             });
             if (details.length) {
-                var header = ["From", "To"];
+                var header = [fromProtein.replace("_", " "), toProtein.replace("_", " ")];
                 extraEntries.forEach (function (entry) {
                     header.push (entry.key);
                 });

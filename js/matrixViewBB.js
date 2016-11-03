@@ -15,7 +15,8 @@
           parentEvents = parentEvents();
       }
       return _.extend({},parentEvents,{
-        "mousemove canvas": "invokeTooltip"
+        "mousemove canvas": "invokeTooltip",
+        "contextmenu canvas": "selectNeighbourhood",
       });
     },
 
@@ -146,6 +147,7 @@
         
         this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); 
+        this.listenTo (this.model, "change:selection", this.renderCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); 
     },
         
@@ -162,7 +164,7 @@
         
         var matrixOptions = d3.select(this.el).select("#chainSelect")
             .selectAll("option")
-            .data(matrixTitles)
+            .data(matrixTitles, function(d) { return d; })
         ;
         matrixOptions.exit().remove();
         matrixOptions
@@ -265,15 +267,9 @@
     },
         
         
-    invokeTooltip: function (evt) {
-        var sd = this.getSizeData();
-        var x = evt.offsetX + 1;
-        var y = (sd.lengthB - 1) - evt.offsetY;
-
-        var distances = this.options.distMatrix;
+    grabNeighbourhoodLinks: function (x, y) {
         var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
         var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
-
         var proteinIDs = this.getCurrentProteinIDs();
         var alignIDs = this.getAlignIDs (proteinIDs);
         var alignColl = this.model.get("alignColl");
@@ -287,6 +283,29 @@
             var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkDatum.crossLink);
             return (this.filterVal === undefined || est >= this.filterVal);
         }, this);
+        return neighbourhoodLinks;
+    },
+        
+    selectNeighbourhood: function (evt) {
+        evt.preventDefault();
+        var sd = this.getSizeData();
+        var x = evt.offsetX + 1;
+        var y = (sd.lengthB - 1) - evt.offsetY;
+
+        var neighbourhoodLinks = this.grabNeighbourhoodLinks (x, y);
+        
+        var justLinks = neighbourhoodLinks.map (function (linkWrapper) { return linkWrapper.crossLink; });
+        this.model.set("selection", justLinks);
+    },
+        
+    invokeTooltip: function (evt) {
+        var sd = this.getSizeData();
+        var x = evt.offsetX + 1;
+        var y = (sd.lengthB - 1) - evt.offsetY;
+
+        var distances = this.options.distMatrix;
+        var neighbourhoodLinks = this.grabNeighbourhoodLinks (x, y);
+
         var rdata = neighbourhoodLinks.map (function (crossLinkDatum) {
             return {crossLink: crossLinkDatum.crossLink, distance: distances[crossLinkDatum.x][crossLinkDatum.y]};
         });
@@ -429,6 +448,7 @@
             return col.rgb();
         });
         this.resLinkColours.push (d3.rgb("#000"));
+        var selectedColour = d3.rgb("#ff0");
 
         var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 
@@ -447,6 +467,8 @@
         var filteredCrossLinks2 = Array.from(filteredCrossLinks).filter (function (xlink) {
             return (xlink.toProtein.id === proteinIDs[0].proteinID && xlink.fromProtein.id === proteinIDs[1].proteinID) || (xlink.toProtein.id === proteinIDs[1].proteinID && xlink.fromProtein.id === proteinIDs[0].proteinID);    
         });
+        
+        var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
 
         for (var crossLink of filteredCrossLinks2) {
             var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
@@ -467,8 +489,10 @@
                     var fromDistArr = distances[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
                     //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
-
-                    if (dist) {
+                    if (selectedCrossLinkIDs.has (crossLink.id)) {
+                        ctx.fillStyle = selectedColour;
+                    }
+                    else if (dist) {
                         if (dist < min) {
                             ctx.fillStyle = self.resLinkColours[0];
                             sasIn++;
