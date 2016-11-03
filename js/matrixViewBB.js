@@ -293,8 +293,8 @@
         var y = (sd.lengthB - 1) - evt.offsetY;
 
         var neighbourhoodLinks = this.grabNeighbourhoodLinks (x, y);
-        
         var justLinks = neighbourhoodLinks.map (function (linkWrapper) { return linkWrapper.crossLink; });
+        
         this.model.set("selection", justLinks);
     },
         
@@ -303,16 +303,16 @@
         var x = evt.offsetX + 1;
         var y = (sd.lengthB - 1) - evt.offsetY;
 
-        var distances = this.options.distMatrix;
         var neighbourhoodLinks = this.grabNeighbourhoodLinks (x, y);
 
-        var rdata = neighbourhoodLinks.map (function (crossLinkDatum) {
-            return {crossLink: crossLinkDatum.crossLink, distance: distances[crossLinkDatum.x][crossLinkDatum.y]};
+        var distances = this.options.distMatrix;
+        var rdata = neighbourhoodLinks.map (function (linkWrapper) {
+            return {crossLink: linkWrapper.crossLink, distance: distances[linkWrapper.x][linkWrapper.y]};
         });
         rdata.sort (function (a, b) { return b.distance - a.distance; });
         rdata.forEach (function(r) { r.distance = r.distance ? r.distance.toFixed(3) : r.distance; });
-        neighbourhoodLinks = rdata.map (function (datum) { return datum.crossLink; });
-        var linkDistances = rdata.map (function (datum) { return datum.distance; });
+        neighbourhoodLinks = rdata.map (function (linkWrapper) { return linkWrapper.crossLink; });
+        var linkDistances = rdata.map (function (linkWrapper) { return linkWrapper.distance; });
 
         this.model.get("tooltipModel")
             .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (rdata.length - 1))
@@ -488,7 +488,7 @@
 
                     var fromDistArr = distances[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
-                    //console.log ("dist", dist, fromDistArr, crossLink.toResidue, crossLink);
+                    //console.log ("dist", dist, fromDistArr, crossLink.fromResidue, crossLink.toResidue, crossLink);
                     if (selectedCrossLinkIDs.has (crossLink.id)) {
                         ctx.fillStyle = selectedColour;
                     }
