@@ -15,7 +15,7 @@
           parentEvents = parentEvents();
       }
       return _.extend({},parentEvents,{
-        "mousemove canvas": "invokeTooltip",
+        "mousemove canvas": "brushNeighbourhood",
         "contextmenu canvas": "selectNeighbourhood",
       });
     },
@@ -144,10 +144,11 @@
                 .text(function(d) { return d.text; })
                 .attr("dy", function(d) { return d.dy; })
         ;
-        
+         
+        this.listenTo (this.model, "change:selection", this.renderCrossLinks);
+        this.listenTo (this.model, "change:highlights", this.renderCrossLinks);
         this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); 
-        this.listenTo (this.model, "change:selection", this.renderCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); 
     },
         
@@ -267,20 +268,27 @@
     },
         
         
+    convertEvtToXY: function (evt) {
+        var sd = this.getSizeData();
+        var x = evt.offsetX + 1;
+        var y = (sd.lengthB - 1) - evt.offsetY;
+        return [x,y];
+    },
+        
     grabNeighbourhoodLinks: function (x, y) {
         var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
         var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
         var proteinIDs = this.getCurrentProteinIDs();
         var alignIDs = this.getAlignIDs (proteinIDs);
         var alignColl = this.model.get("alignColl");
-        var convFunc = function (x, y) {
-            var fromResIndex = alignColl.getAlignedIndex (x, proteinIDs[0].proteinID, true, alignIDs[0]);
-            var toResIndex = alignColl.getAlignedIndex (y, proteinIDs[1].proteinID, true, alignIDs[1]);
+        var convFunc = function (x, y) {    // x and y are 0-indexed
+            var fromResIndex = alignColl.getAlignedIndex (x + 1, proteinIDs[0].proteinID, true, alignIDs[0]);
+            var toResIndex = alignColl.getAlignedIndex (y + 1, proteinIDs[1].proteinID, true, alignIDs[1]);
             return {convX: fromResIndex, convY: toResIndex, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
         };
         var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinks, x, y, 2);
-        neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkDatum) {
-            var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkDatum.crossLink);
+        neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkWrapper) {
+            var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkWrapper.crossLink);
             return (this.filterVal === undefined || est >= this.filterVal);
         }, this);
         return neighbourhoodLinks;
@@ -288,39 +296,42 @@
         
     selectNeighbourhood: function (evt) {
         evt.preventDefault();
-        var sd = this.getSizeData();
-        var x = evt.offsetX + 1;
-        var y = (sd.lengthB - 1) - evt.offsetY;
-
-        var neighbourhoodLinks = this.grabNeighbourhoodLinks (x, y);
-        var justLinks = neighbourhoodLinks.map (function (linkWrapper) { return linkWrapper.crossLink; });
-        
-        this.model.set("selection", justLinks);
+        var xy = this.convertEvtToXY (evt);
+        var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
+        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });   
+        this.model.set ("selection", crossLinks);
     },
         
-    invokeTooltip: function (evt) {
-        var sd = this.getSizeData();
-        var x = evt.offsetX + 1;
-        var y = (sd.lengthB - 1) - evt.offsetY;
-
-        var neighbourhoodLinks = this.grabNeighbourhoodLinks (x, y);
-
+    // Brush neighbourhood and invoke tooltip
+    brushNeighbourhood: function (evt) {
+        var xy = this.convertEvtToXY (evt);
+        var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
+        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
+        
+        // invoke tooltip before setting highlights model change for quicker tooltip response
+        this.invokeTooltip (evt, linkWrappers);
+        
+        this.model.set ("highlights", crossLinks);
+    },
+        
+    invokeTooltip : function (evt, linkWrappers) {
         var distances = this.options.distMatrix;
-        var rdata = neighbourhoodLinks.map (function (linkWrapper) {
-            return {crossLink: linkWrapper.crossLink, distance: distances[linkWrapper.x][linkWrapper.y]};
+        linkWrappers.forEach (function (linkWrapper) {
+            linkWrapper.distance = distances[linkWrapper.x][linkWrapper.y];
+            linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
         });
-        rdata.sort (function (a, b) { return b.distance - a.distance; });
-        rdata.forEach (function(r) { r.distance = r.distance ? r.distance.toFixed(3) : r.distance; });
-        neighbourhoodLinks = rdata.map (function (linkWrapper) { return linkWrapper.crossLink; });
-        var linkDistances = rdata.map (function (linkWrapper) { return linkWrapper.distance; });
-
+        linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
+        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
+        var linkDistances = linkWrappers.map (function (linkWrapper) { return linkWrapper.distanceFixed; });
+        
         this.model.get("tooltipModel")
-            .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (rdata.length - 1))
-            .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (neighbourhoodLinks, {"Distance": linkDistances}))
+            .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (crossLinks.length - 1))
+            .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance": linkDistances}))
             .set("location", evt)
         ;
-        this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
+        this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change   
     },
+        
     
     zoomHandler: function (self) {
         var sizeData = this.getSizeData();
@@ -355,7 +366,6 @@
     
     render: function () {
         if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.distMatrix) {
-            console.log ("re-rendering matrix view");
             this.resize();
 
             // make underlying canvas big enough to hold 1 pixel per possible residue pair
@@ -385,10 +395,11 @@
         var max = rangeDomain[1];
         var rangeColours = this.colourScaleModel.get("colScale").range();
         var cols = rangeColours;//.slice (1,3);
-        var colourArray = cols.map (function(col) {
+        // have slightly different saturation/luminance for each colour so shows up in black & white
+        var colourArray = cols.map (function(col, i) {
             col = d3.hsl(col);
-            col.s = 0.4;
-            col.l = 0.85;
+            col.s = 0.4 - (0.1 * i);
+            col.l = 0.85 - (0.1 * i);
             return col.rgb();
         });
         
@@ -441,14 +452,15 @@
         var min = rangeDomain[0];
         var max = rangeDomain[1];
         var rangeColours = this.colourScaleModel.get("colScale").range();
-        this.resLinkColours = rangeColours.map (function(col) {
+        this.resLinkColours = rangeColours.map (function (col, i) {
             col = d3.hsl(col);
-            col.s = 1;
-            col.l = 0.3;
+            col.s = 1 - (i * 0.1);
+            col.l = 0.4 - (i * 0.1);
             return col.rgb();
         });
-        this.resLinkColours.push (d3.rgb("#000"));
-        var selectedColour = d3.rgb("#ff0");
+        this.resLinkColours.push ("#000");
+        var selectedColour = "#ff0";
+        var highlightedColour = "#f80";
 
         var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 
@@ -469,6 +481,7 @@
         });
         
         var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
+        var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
 
         for (var crossLink of filteredCrossLinks2) {
             var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
@@ -484,12 +497,14 @@
                     // 0-index these indices
                     fromResIndex--;
                     toResIndex--;
-                    //console.log ("LINK", fromResIndex, toResIndex, crossLink);
 
                     var fromDistArr = distances[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
                     //console.log ("dist", dist, fromDistArr, crossLink.fromResidue, crossLink.toResidue, crossLink);
-                    if (selectedCrossLinkIDs.has (crossLink.id)) {
+                    if (highlightedCrossLinkIDs.has (crossLink.id)) {
+                        ctx.fillStyle = highlightedColour;
+                    }
+                    else if (selectedCrossLinkIDs.has (crossLink.id)) {
                         ctx.fillStyle = selectedColour;
                     }
                     else if (dist) {
@@ -559,7 +574,7 @@
         var minRatio = Math.min (widthRatio, heightRatio);
         var maxRatio = Math.max (widthRatio, heightRatio);
         var diffRatio = widthRatio / heightRatio;
-        console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, maxRatio, diffRatio);
+        //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, maxRatio, diffRatio);
         d3.select(this.el).select(".viewport")
             .style("width",  minDim+"px")
             .style("height", minDim+"px")
