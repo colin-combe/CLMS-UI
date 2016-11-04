@@ -16,7 +16,8 @@
       }
       return _.extend({},parentEvents,{
         "mousemove canvas": "brushNeighbourhood",
-        "contextmenu canvas": "selectNeighbourhood",
+        "mousedown canvas": "setStartPoint",
+        "click canvas": "selectNeighbourhood",
       });
     },
 
@@ -267,6 +268,9 @@
         return this.model.get("alignColl").getAlignmentSearchRange (proteinID.proteinID, alignIDs[0]);
     },
         
+    setStartPoint: function (evt) {
+        this.startPoint = {x: evt.clientX, y: evt.clientY};
+    },
         
     convertEvtToXY: function (evt) {
         var sd = this.getSizeData();
@@ -295,11 +299,16 @@
     },
         
     selectNeighbourhood: function (evt) {
-        evt.preventDefault();
-        var xy = this.convertEvtToXY (evt);
-        var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
-        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });   
-        this.model.set ("selection", crossLinks);
+        // To stop this being run after a drag, make sure click co-ords are with sqrt(X) pixels of original mousedown co-ords
+        this.startPoint = this.startPoint || {x: -10, y: -10};
+        var mouseMovement = Math.pow ((evt.clientX - this.startPoint.x), 2) + Math.pow ((evt.clientY - this.startPoint.y), 2);
+        this.startPoint = {x: -10, y: -10};
+        if (mouseMovement <= 0) {   // Zero tolerance
+            var xy = this.convertEvtToXY (evt);
+            var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
+            var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });   
+            this.model.set ("selection", crossLinks);
+        }
     },
         
     // Brush neighbourhood and invoke tooltip
@@ -500,7 +509,6 @@
 
                     var fromDistArr = distances[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
-                    //console.log ("dist", dist, fromDistArr, crossLink.fromResidue, crossLink.toResidue, crossLink);
                     if (highlightedCrossLinkIDs.has (crossLink.id)) {
                         ctx.fillStyle = highlightedColour;
                     }
