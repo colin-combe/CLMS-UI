@@ -166,6 +166,23 @@ CLMSUI.utils = {
             ;
         }
     },
+    
+    // https://davidwalsh.name/convert-canvas-image (& first comment)
+    convertCanvasToImageOld: function (canvas, callback) {
+        var image = new Image();
+        image.onload = function () {
+            callback (image);
+        };
+        image.src = canvas.toDataURL ("image/png");
+    },
+    
+    convertCanvasToImage: function (canvas, image, callback) {
+        image
+            .on("load", callback (image))
+            .attr("src", canvas.toDataURL ("image/png"))
+        ;
+        console.log ("image", image);
+    },
 
     RadioButtonFilterViewBB: Backbone.View.extend ({
         tagName: "div",
@@ -273,8 +290,9 @@ CLMSUI.utils = {
             var svgSel = d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
+            console.log ("svgStrings", svgStrings);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
-            //console.log ("xml", svgXML);
+            console.log ("xml", svgXML);
             download (svgXML, 'application/svg', "view.svg");
         },
 

@@ -18,6 +18,7 @@
         "mousemove canvas": "brushNeighbourhood",
         "mousedown canvas": "setStartPoint",
         "click canvas": "selectNeighbourhood",
+        "click .downloadButton2": "downloadSVG2",
       });
     },
 
@@ -33,6 +34,8 @@
             background: "white",
             distMatrix: null,
             distMatrixKey: null,
+            selectedColour: "#ff0",
+            highlightedColour: "#8f0",
         };
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -72,6 +75,11 @@
                             .panZoom()
                         ;
                     })
+        ;
+        
+        this.controlDiv.append("button")
+            .attr ("class", "downloadButton2 btn btn-1 btn-1a")
+            .text ("Export Graphic")
         ;
         
         var chartDiv = flexWrapperPanel.append("div")
@@ -468,8 +476,6 @@
             return col.rgb();
         });
         this.resLinkColours.push ("#000");
-        var selectedColour = "#ff0";
-        var highlightedColour = "#f80";
 
         var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 
@@ -510,10 +516,10 @@
                     var fromDistArr = distances[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
                     if (highlightedCrossLinkIDs.has (crossLink.id)) {
-                        ctx.fillStyle = highlightedColour;
+                        ctx.fillStyle = self.options.highlightedColour;
                     }
                     else if (selectedCrossLinkIDs.has (crossLink.id)) {
-                        ctx.fillStyle = selectedColour;
+                        ctx.fillStyle = self.options.selectedColour;
                     }
                     else if (dist) {
                         if (dist < min) {
@@ -711,6 +717,39 @@
         this.repositionLabels (sizeData);
         
         return this;
+    },
+        
+    downloadSVG2: function () {
+        //var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
+        var svgSel = d3.select(this.el).selectAll("svg");
+        var svgArr = [svgSel.node()];
+        var svgStrings = CLMSUI.svgUtils.capture (svgArr);
+        console.log ("svgStrings", svgStrings);
+        var primarySVG = svgStrings[0];
+        var img = d3.select (primarySVG)
+            .select("svg>g")
+            .append ("svg:image")
+        ;
+        this.convertCanvasToImage (this.canvas, img, function () {
+            console.log ("img", img);
+            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), primarySVG);
+            console.log ("xml", svgXML);
+            download (svgXML, 'application/svg', "view.svg");
+        });
+    },
+        
+    convertCanvasToImage: function (canvas, image, callback) {
+        console.log ("image", image, canvas);
+        image
+            .attr ("width", canvas.attr("width"))
+            .attr ("height", canvas.attr("height"))
+            .attr ("transform", canvas.style("transform"))
+            .attr ("xlink:href", function () {
+                return canvas.node().toDataURL ("image/png");
+            })
+            //.attr ("xlink:href", "http://www.spayaware.ie/images/cat.png")
+        ;
+        callback (image);
     },
 });
     

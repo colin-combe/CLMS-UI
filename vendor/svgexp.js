@@ -14,7 +14,12 @@ CLMSUI.svgUtils = {
         var allIFrames = [].slice.apply (document.getElementsByTagName('iframe'));
         var docs = [document];
         allIFrames.forEach (function (iframe) {
-            docs.push (iframe.contentDocument || iframe.contentWindow.document);
+            try {
+                docs.push (iframe.contentDocument || iframe.contentWindow.document);
+            }
+            catch (e) {
+                console.log ("Protected cross-domain IFrame", iframe);
+            }
         });
 
         var allSvgs = [];
