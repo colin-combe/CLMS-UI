@@ -719,37 +719,52 @@
         return this;
     },
         
+    /**
+    Need to change the canvas element to an image and shove it in the detached svg element we download
+    Also needs a g element and a clipPath to act as a viewport
+    And shove in an extra css rule after the style element's already been generated
+    */
     downloadSVG2: function () {
-        //var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
         var svgSel = d3.select(this.el).selectAll("svg");
+        var viewPort = d3.select(this.el).select(".viewport");
         var svgArr = [svgSel.node()];
         var svgStrings = CLMSUI.svgUtils.capture (svgArr);
-        console.log ("svgStrings", svgStrings);
-        var primarySVG = svgStrings[0];
-        var img = d3.select (primarySVG)
-            .select("svg>g")
-            .append ("svg:image")
+        var detachedSVG = svgStrings[0];
+        var detachedSVGD3 = d3.select (detachedSVG);
+        
+        // Add in a defs element to the nested svg. Important that it's the first child.
+        var defs = detachedSVGD3.select("svg>defs");
+        if (defs.empty()) {
+            defs = detachedSVGD3.select("svg").insert("defs", ":first-child");
+        }
+        // Add a rectangular clip to the defs that matches the viewport restriction (top/left not needed)
+        defs.append("clipPath")
+            .attr("id", "matrixClip")
+            .append("rect")
+                .attr ("x", 0)
+                .attr ("y", 0)
+                .attr ("width", Number.parseInt (viewPort.style("width")))
+                .attr ("height", Number.parseInt (viewPort.style("height")))
         ;
-        this.convertCanvasToImage (this.canvas, img, function () {
-            console.log ("img", img);
-            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), primarySVG);
-            console.log ("xml", svgXML);
+                   
+        // Add an image element to the nested svg, nested itself within a g element that references the above clippath ^^^
+        var img = detachedSVGD3
+            .select("svg>g")
+            .append ("g")
+                .attr("clip-path", "url(#matrixClip)")
+                .append ("svg:image")
+        ;
+        
+        // Add a rule to stop the image being 'smoothed' (i.e. blurred)
+        var extraRule = "#matrixPanel image {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
+        var style = detachedSVGD3.select("style");
+        style.text (style.text() + "\n" + extraRule);
+        
+        // Now convert the canvas and its data to the image element we just added and download the whole svg when done
+        CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
+            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
             download (svgXML, 'application/svg', "view.svg");
         });
-    },
-        
-    convertCanvasToImage: function (canvas, image, callback) {
-        console.log ("image", image, canvas);
-        image
-            .attr ("width", canvas.attr("width"))
-            .attr ("height", canvas.attr("height"))
-            .attr ("transform", canvas.style("transform"))
-            .attr ("xlink:href", function () {
-                return canvas.node().toDataURL ("image/png");
-            })
-            //.attr ("xlink:href", "http://www.spayaware.ie/images/cat.png")
-        ;
-        callback (image);
     },
 });
     

@@ -17,7 +17,6 @@
 }
 
 #matrixPanel canvas {
-    /*image-rendering: pixelated;*/
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
     image-rendering: pixelated;                 /* Opera 'n' Chrome */
@@ -26,6 +25,13 @@
 	-o-transform-origin: 0 0;
 	-webkit-transform-origin: 0 0;
 	transform-origin: 0 0;
+}
+
+/* For svg output */
+#matrixPanel image {
+    image-rendering: -moz-crisp-edges;          /* Firefox */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE */
+    image-rendering: pixelated;                 /* Opera 'n' Chrome */
 }
 
 #matrixPanel .viewDiv {
@@ -44,3 +50,4 @@
 .matrixHeader {
     text-transform: uppercase;
 }
+

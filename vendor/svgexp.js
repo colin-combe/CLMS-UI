@@ -38,14 +38,30 @@ CLMSUI.svgUtils = {
         CLMSUI.svgUtils.pruneInvisibleSubtrees (cloneSVG, svgElem);
 
         // find all styles inherited/referenced at or below this node
-        var styles = CLMSUI.svgUtils.usedStyles (svgElem, true);
+        var styles = CLMSUI.svgUtils.usedStyles (svgElem, true, true);
 
         // collect relevant info on parent chain of svg node
         var predecessorInfo = CLMSUI.svgUtils.parentChain (svgElem, styles);
+        
+        var addDummy = function (dummySVGElem, cloneSVG, origSVG, transferAttr) {
+            dummySVGElem.appendChild (cloneSVG);
+            Object.keys(transferAttr).forEach (function (attr) {
+                var val = cloneSVG.getAttribute (attr) || cloneSVG.style [attr] || CLMSUI.svgUtils.getComputedStyleCssText (origSVG, attr);
+                if (val != null) {
+                    dummySVGElem.setAttribute (attr, val);
+                    var attrVal = transferAttr[attr];
+                    if (attrVal.replace) {
+                        cloneSVG.setAttribute (attr, attrVal.replace);
+                    } else if (attrVal.delete) {
+                        cloneSVG.removeAttribute (attr);
+                    }
+                }
+            });
+        };
 
         // make a chain of dummy svg nodes to include classes / ids of parent chain of our original svg
         // this means any styles referenced within the svg that depend on the presence of these classes/ids are fired
-        var transferAttr = ["width", "height", "xmlns"];
+        var transferAttr = {width: {replace: "100%"}, height: {replace: "100%"}, xmlns: {delete: true}};
         var parentAdded = false;
         for (var p = 0; p < predecessorInfo.length; p++) {
             var pinf = predecessorInfo [p];
@@ -59,11 +75,7 @@ CLMSUI.svgUtils = {
             });
             // If the dummy svg has no relevant id, classes or computed style then ignore it, otherwise make it the new root
             if (!empty) {
-                dummySVGElem.appendChild (cloneSVG);
-                transferAttr.forEach (function (attr) {
-                    dummySVGElem.setAttribute (attr, cloneSVG.getAttribute (attr));
-                    cloneSVG.removeAttribute (attr);
-                });
+                addDummy (dummySVGElem, cloneSVG, svgElem, transferAttr);
                 cloneSVG = dummySVGElem;
                 parentAdded = true;
             }
@@ -71,16 +83,8 @@ CLMSUI.svgUtils = {
 
         // if no dummy parent added in previous section, but our svg isn't root then add one as placeholder
         if (svgElem.parentNode != null && !parentAdded) {
-            //var dummySVGElem = ownerDoc.createElement ("svg");
             var dummySVGElem = ownerDoc.createElementNS ("http://www.w3.org/2000/svg", "svg");
-            dummySVGElem.appendChild (cloneSVG);
-            transferAttr.forEach (function (attr) {
-                var val = cloneSVG.getAttribute (attr);
-                if (val !== null) { 
-                    dummySVGElem.setAttribute (attr, cloneSVG.getAttribute (attr));
-                    cloneSVG.removeAttribute (attr);
-                }
-            });
+            addDummy (dummySVGElem, cloneSVG, svgElem, transferAttr);
             cloneSVG = dummySVGElem;
             parentAdded = true;
         }
@@ -106,15 +110,18 @@ CLMSUI.svgUtils = {
     
     // Because firefox returns cssText as empty
     // https://bugzilla.mozilla.org/show_bug.cgi?id=137687
-    getComputedStyleCssText: function (element) {
+    getComputedStyleCssText: function (element, field) {
         var style = window.getComputedStyle(element);
+        if (field) {
+            return style[field];
+        }
 
         if (style.cssText != "") {
             return style.cssText;
         }
 
         var cssText = "";
-            for (var i = 0; i < style.length; i++) {
+        for (var i = 0; i < style.length; i++) {
             cssText += style[i] + ": " + style.getPropertyValue(style[i]) + "; ";
         }
 
@@ -199,7 +206,7 @@ CLMSUI.svgUtils = {
     },
 
     // code adapted from user adardesign's answer in http://stackoverflow.com/questions/13204785/is-it-possible-to-read-the-styles-of-css-classes-not-being-used-in-the-dom-using
-    usedStyles: function (elem, subtree) {
+    usedStyles: function (elem, subtree, both) {
         var needed = [], rule;
         var ownerDoc = elem.ownerDocument || document;
         var CSSSheets = ownerDoc.styleSheets;
@@ -209,17 +216,22 @@ CLMSUI.svgUtils = {
                 continue;
             for(var i=0; i < CSSSheets[j].cssRules.length; i++){
                 rule = CSSSheets[j].cssRules[i];
-                var bool = false;
+                var match = false;
                 // Issue reported, css rule '[ng:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide:not(.ng-hide-animate)' gives error
                 // It's the [ng:cloak] bit that does the damage
                 // Fix found from https://github.com/exupero/saveSvgAsPng/issues/11 - but the css rule isn't applied
                 try {
-                    bool = ( subtree ? elem.querySelectorAll(rule.selectorText).length > 0 : elem.matches(rule.selectorText));
+                    if (subtree) {
+                        match = elem.querySelectorAll(rule.selectorText).length > 0;
+                    }
+                    if (!subtree || both) {
+                        match |= elem.matches(rule.selectorText);
+                    }
                 }
                 catch (err) {
                     console.warn ("CSS selector error: "+rule.selectorText+". Often angular issue.", err);
                 }
-                if (bool) { needed.push (rule.cssText); }
+                if (match) { needed.push (rule.cssText); }
             }
         }
 

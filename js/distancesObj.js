@@ -93,17 +93,21 @@ CLMSUI.DistancesObj.prototype = {
         return dist;
     },
     
-    flattenDistanceMatrix: function (distanceMatrix) {
-        var distanceList = d3.values(distanceMatrix).map (function (row) {
+    flattenDistanceMatrix: function (distanceMatrixEntry) {
+        var isSymmetric = this.isSymmetricMatrix (distanceMatrixEntry); // don't want to count distances in symmetric matrices twice
+        var distanceList = d3.values(distanceMatrixEntry.value).map (function (row, i) {
+            if (row && isSymmetric) {
+                row = row.slice (0, Math.max (0, i)); // For future remembering if I change things: beware negative i, as negative value starts slice from end of array
+            }
             return d3.values(row).filter (function(d) { return d && (d.length !== 0); });   // filter out nulls, undefineds, zeroes and empty arrays
         });
         return [].concat.apply([], distanceList);
     },
     
     getFlattenedDistances: function () {
-        var matrixArr = d3.values (this.matrices);
-        var perMatrixDistances = matrixArr.map (function (matrix) {
-            return this.flattenDistanceMatrix (matrix);    
+        var matrixEntries = d3.entries (this.matrices);
+        var perMatrixDistances = matrixEntries.map (function (matrixEntry) {
+            return this.flattenDistanceMatrix (matrixEntry);    
         }, this);
         console.log ("ad", perMatrixDistances);
         return [].concat.apply([], perMatrixDistances);
@@ -112,10 +116,20 @@ CLMSUI.DistancesObj.prototype = {
     getMatCellFromIndex: function (cellIndex, matLengths, matEntries) {
         var matrixIndex = d3.bisectRight (matLengths, cellIndex);
         var matrix = matEntries[matrixIndex].value;
+        var isSymmetric = false; // this.isSymmetricMatrix (matEntries[matrixIndex].key); // fix tomorrow (see below)
+        
+        var row, col;
         var orig = cellIndex;
         cellIndex -= matrixIndex ? matLengths[matrixIndex - 1] : 0;
-        var row = Math.floor (cellIndex / matrix[0].length);
-        var col = cellIndex - (row * matrix[0].length);
+        if (isSymmetric) {
+            // fix tomorrow. need to work out triangular version
+            row = Math.floor(-0.5 + Math.sqrt(0.25 + 2 * cellIndex));
+            var triangularNumber = row * (row + 1) / 2;
+            col = cellIndex - triangularNumber;
+        } else {
+            row = Math.floor (cellIndex / matrix[0].length);
+            col = cellIndex - (row * matrix[0].length);  
+        }
         var val = matrix[row][col];
         if (val === undefined) {
             console.log ("matrix", matEntries[matrixIndex].key, orig, cellIndex, matrixIndex, row, col, val);
@@ -123,22 +137,29 @@ CLMSUI.DistancesObj.prototype = {
         return val;
     },
     
+    isSymmetricMatrix : function (matrixEntry) {
+        var keyParts = matrixEntry.key.split("-");
+        //console.log ("IS SYMMETRIC", keyParts[0] == keyParts[1]);
+        return keyParts ? (keyParts[0] == keyParts[1]) : false;
+    },
+    
     getRandomDistances: function (size) {
         var randDists = [];
         var tot = 0;
-        var matVals = d3.values (this.matrices);
-        var matLengths = matVals.map (function (matrix) {
-            tot += matrix.length * matrix[0].length;
+        var matrixEntries = d3.entries (this.matrices);
+        var matLengths = matrixEntries.map (function (matrixEntry) {
+            var isSymmetric = this.isSymmetricMatrix (matrixEntry);
+            tot += matrixEntry.value.length * (isSymmetric ? (matrixEntry.value[0].length - 1) / 2 : matrixEntry.value[0].length);
             return tot;
-        });
+        }, this);
+        console.log ("matLengths", matLengths);
         
-        if (tot > size) { // use all distances as random
+        if (tot > size) {   // use all distances as random background
             randDists = this.getFlattenedDistances ();
         } else {    // pick random distances randomly
-            var matEntries = d3.entries (this.matrices);
             for (var n = 0; n < size; n++) {
                 var offset = Math.floor (Math.random () * tot);
-                randDists.push (this.getMatCellFromIndex (offset, matLengths, matEntries));
+                randDists.push (this.getMatCellFromIndex (offset, matLengths, matrixEntries));
             }
         }
         

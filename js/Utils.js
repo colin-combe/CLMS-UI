@@ -166,22 +166,18 @@ CLMSUI.utils = {
             ;
         }
     },
-    
-    // https://davidwalsh.name/convert-canvas-image (& first comment)
-    convertCanvasToImageOld: function (canvas, callback) {
-        var image = new Image();
-        image.onload = function () {
-            callback (image);
-        };
-        image.src = canvas.toDataURL ("image/png");
-    },
-    
+        
     convertCanvasToImage: function (canvas, image, callback) {
         image
-            .on("load", callback (image))
-            .attr("src", canvas.toDataURL ("image/png"))
+            .attr ("width", canvas.attr("width"))
+            .attr ("height", canvas.attr("height"))
+            .attr ("transform", canvas.style("transform"))
+            .attr ("xlink:href", function () {
+                return canvas.node().toDataURL ("image/png");
+            })
+            //.attr ("xlink:href", "http://www.spayaware.ie/images/cat.png")
         ;
-        console.log ("image", image);
+        callback (image);
     },
 
     RadioButtonFilterViewBB: Backbone.View.extend ({
@@ -286,11 +282,9 @@ CLMSUI.utils = {
         },
 
         downloadSVG: function () {
-            //var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
             var svgSel = d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
-            console.log ("svgStrings", svgStrings);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
             console.log ("xml", svgXML);
             download (svgXML, 'application/svg', "view.svg");
