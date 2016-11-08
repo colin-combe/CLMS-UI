@@ -1,12 +1,9 @@
-.viewport {
-    overflow: hidden;
-    position: absolute;
-}
-
 #matrixPanel {
-	left: 80px;
-	width:600px;
-	height:350px;
+    display: none;
+    left: 6em;
+    top: 6em;
+    width:500px;
+    height:500px;
 }
 #matrixPanel svg {
     height: 100%;
@@ -37,11 +34,11 @@
 #matrixPanel .viewDiv {
     width: auto;
     height: 100%;
-    margin-right: 200px;    /* should match width of button column below */
+    /*margin-right: 15em;*/    /* should match width of button column below */
 }
 
 #matrixPanel .buttonColumn {
-    width: 200px;
+    width: 15em;
     float: right;
     padding-left: 0.5em;
     border-left: 1px solid grey;
@@ -49,5 +46,10 @@
 
 .matrixHeader {
     text-transform: uppercase;
+}
+
+.viewport {
+    overflow: hidden;
+    position: absolute;
 }
 
