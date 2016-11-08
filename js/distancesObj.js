@@ -116,16 +116,16 @@ CLMSUI.DistancesObj.prototype = {
     getMatCellFromIndex: function (cellIndex, matLengths, matEntries) {
         var matrixIndex = d3.bisectRight (matLengths, cellIndex);
         var matrix = matEntries[matrixIndex].value;
-        var isSymmetric = false; // this.isSymmetricMatrix (matEntries[matrixIndex].key); // fix tomorrow (see below)
+        var isSymmetric = this.isSymmetricMatrix (matEntries[matrixIndex]);
         
         var row, col;
         var orig = cellIndex;
         cellIndex -= matrixIndex ? matLengths[matrixIndex - 1] : 0;
         if (isSymmetric) {
-            // fix tomorrow. need to work out triangular version
             row = Math.floor(-0.5 + Math.sqrt(0.25 + 2 * cellIndex));
             var triangularNumber = row * (row + 1) / 2;
             col = cellIndex - triangularNumber;
+            row++;  // [0,0] is not used (first residue distance to itself), first usable distance is [1,0] in symmetrix matrix
         } else {
             row = Math.floor (cellIndex / matrix[0].length);
             col = cellIndex - (row * matrix[0].length);  
@@ -154,7 +154,7 @@ CLMSUI.DistancesObj.prototype = {
         }, this);
         console.log ("matLengths", matLengths);
         
-        if (tot > size) {   // use all distances as random background
+        if (size > tot) {   // use all distances as random background
             randDists = this.getFlattenedDistances ();
         } else {    // pick random distances randomly
             for (var n = 0; n < size; n++) {
@@ -163,6 +163,7 @@ CLMSUI.DistancesObj.prototype = {
             }
         }
         
+        console.log ("RANDOM", randDists);
         return randDists;
     },
 };

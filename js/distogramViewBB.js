@@ -25,7 +25,7 @@
                 seriesNames: ["Cross Links", "Random"],
                 scaleOthersTo: "Cross Links",
                 chartTitle: "Distogram",
-                maxX: 80
+                maxX: 90
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
             this.colourScaleModel = viewOptions.colourScaleModel;
@@ -168,13 +168,14 @@
 
                 var series = [distArr, []];
                 var seriesLengths = [distArr.length, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                var removeCatchAllCategory = true;
                 //console.log ("seriesLengths", seriesLengths);
-                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
+                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
                 var maxY = d3.max(countArrays, function(array) {
-                    return d3.max(array.slice (0, -1));  // ignore last element in array as it's dumping ground for everything over last value 
+                    return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array as it's dumping ground for everything over last value 
                 });
                 //console.log ("maxY", maxY);
                 
@@ -213,7 +214,7 @@
             return this.model.getCrossLinkDistances2 (filteredCrossLinks.values());    
         },
         
-        aggregate: function (series, seriesLengths, precalcedDistributions) {
+        aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
@@ -238,6 +239,12 @@
                     return nestedArr.y * scale;
                 });
             }, this);
+            
+            if (removeLastEntry) {  // optionally remove the dumping ground entries for values bigger than max cutoff
+                countArrays.forEach (function (array) {
+                    array.pop();
+                });
+            }
 
             return countArrays;
         },
