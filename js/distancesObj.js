@@ -82,20 +82,21 @@ CLMSUI.DistancesObj.prototype = {
     
     getLinkDistanceChainCoords: function (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2) {
         var dist;
-        var matrix = matrices [chainIndex1+"-"+chainIndex2];
+        var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
         var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
         //console.log ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
-        if (matrix[minIndex]) {
+        if (distanceMatrix[minIndex]) {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
-            dist = matrix[minIndex][maxIndex];
+            dist = distanceMatrix[minIndex][maxIndex];
         }
         //console.log ("dist", dist);
         return dist;
     },
     
-    flattenDistanceMatrix: function (distanceMatrixEntry) {
-        var isSymmetric = this.isSymmetricMatrix (distanceMatrixEntry); // don't want to count distances in symmetric matrices twice
-        var distanceList = d3.values(distanceMatrixEntry.value).map (function (row, i) {
+    flattenDistanceMatrix: function (matrixEntry) {
+        var isSymmetric = this.isSymmetricMatrix (matrixEntry); // don't want to count distances in symmetric matrices twice
+        var distanceMatrix = matrixEntry.value.distanceMatrix;
+        var distanceList = d3.values(distanceMatrix).map (function (row, i) {
             if (row && isSymmetric) {
                 row = row.slice (0, Math.max (0, i)); // For future remembering if I change things: beware negative i, as negative value starts slice from end of array
             }
@@ -115,8 +116,9 @@ CLMSUI.DistancesObj.prototype = {
     
     getMatCellFromIndex: function (cellIndex, matLengths, matEntries) {
         var matrixIndex = d3.bisectRight (matLengths, cellIndex);
-        var matrix = matEntries[matrixIndex].value;
-        var isSymmetric = this.isSymmetricMatrix (matEntries[matrixIndex]);
+        var matrixEntry = matEntries[matrixIndex];
+        var distanceMatrix = matrixEntry.value.distanceMatrix;
+        var isSymmetric = this.isSymmetricMatrix (matrixEntry);
         
         var row, col;
         var orig = cellIndex;
@@ -127,20 +129,18 @@ CLMSUI.DistancesObj.prototype = {
             col = cellIndex - triangularNumber;
             row++;  // [0,0] is not used (first residue distance to itself), first usable distance is [1,0] in symmetrix matrix
         } else {
-            row = Math.floor (cellIndex / matrix[0].length);
-            col = cellIndex - (row * matrix[0].length);  
+            row = Math.floor (cellIndex / distanceMatrix[0].length);
+            col = cellIndex - (row * distanceMatrix[0].length);  
         }
-        var val = matrix[row][col];
+        var val = distanceMatrix[row][col];
         if (val === undefined) {
-            console.log ("matrix", matEntries[matrixIndex].key, orig, cellIndex, matrixIndex, row, col, val);
+            console.log ("matrix", matrixEntry.key, orig, cellIndex, matrixIndex, row, col, val);
         }
         return val;
     },
     
     isSymmetricMatrix : function (matrixEntry) {
-        var keyParts = matrixEntry.key.split("-");
-        //console.log ("IS SYMMETRIC", keyParts[0] == keyParts[1]);
-        return keyParts ? (keyParts[0] == keyParts[1]) : false;
+        return matrixEntry.value.isSymmetric;
     },
     
     getRandomDistances: function (size) {
@@ -149,7 +149,8 @@ CLMSUI.DistancesObj.prototype = {
         var matrixEntries = d3.entries (this.matrices);
         var matLengths = matrixEntries.map (function (matrixEntry) {
             var isSymmetric = this.isSymmetricMatrix (matrixEntry);
-            tot += matrixEntry.value.length * (isSymmetric ? (matrixEntry.value[0].length - 1) / 2 : matrixEntry.value[0].length);
+            var distanceMatrix = matrixEntry.value.distanceMatrix;
+            tot += distanceMatrix.length * (isSymmetric ? (distanceMatrix[0].length - 1) / 2 : distanceMatrix[0].length);
             return tot;
         }, this);
         console.log ("matLengths", matLengths);

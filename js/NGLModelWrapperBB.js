@@ -102,7 +102,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     },
 
     setLinkListWrapped: function (linkList) {
-
         var residueIdToLinkIds = {};
         var linkIdMap = {};
         var residueIdMap = {};
@@ -218,10 +217,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         keys.forEach (function (chain1) {
             for (var m = 0; m < keys.length; m++) {
                 var chain2 = keys[m];
-                matrixMap[chain1+"-"+chain2] = linksOnly
-                    ? this.getLinkDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], +chain1, +chain2, links)
-                    : this.getAllDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], chain1, chain2)
-                ;
+                matrixMap[chain1+"-"+chain2] = {
+                    chain1: chain1,
+                    chain2: chain2,
+                    isSymmetric: chain1 === chain2,
+                    distanceMatrix: linksOnly
+                        ? this.getLinkDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], +chain1, +chain2, links)
+                        : this.getAllDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], chain1, chain2)
+                };
             }
         }, this);
         

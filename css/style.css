@@ -287,10 +287,10 @@ body, input, select, textarea {
 }
 
 #sliderDiv{
-    height:60%;
+    height:70%;
     position:absolute;
-    top:76px;
-    right:0px;
+    top:15%;
+    right:0%;
 /*
     overflow:hidden;
 */

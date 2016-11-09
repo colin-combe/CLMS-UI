@@ -32,8 +32,7 @@
             ylabel: "Residue Index 2",
             chartTitle: "Cross-Link Matrix",
             background: "white",
-            distMatrix: null,
-            distMatrixKey: null,
+            matrixObj: null,
             selectedColour: "#ff0",
             highlightedColour: "#8f0",
         };
@@ -65,14 +64,13 @@
             .attr("class", "btn")
             .append ("span")
                 .attr("class", "noBreak")
-                .text("Select Matrix Regions")
+                .text("Select Chain Pairing")
                 .append("select")
                     .attr("id", "chainSelect")
                     .on ("change", function () {
                         self
                             .matrixChosen ($('#chainSelect').val())
                             .render()
-                            .panZoom()
                         ;
                     })
         ;
@@ -167,33 +165,38 @@
     },
         
     distancesChanged: function () {
-        var self = this;
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         console.log ("IN MATRIX DISTANCES CHANGED", distancesObj, this.model.get("clmsModel"));
-        var matrixTitles = d3.keys(distancesObj.matrices);
+        var matrixOptionData = d3.entries(distancesObj.matrices).map (function (matrixEntry) {
+            return {
+                key: matrixEntry.key, 
+                text: [matrixEntry.value.chain1, matrixEntry.value.chain2].map (function(cid) { return this.getLabelText(+cid); }, this).join(" - "),
+            };
+        }, this);
         
         var matrixOptions = d3.select(this.el).select("#chainSelect")
             .selectAll("option")
-            .data(matrixTitles, function(d) { return d; })
+            .data (matrixOptionData, function(d) { return distancesObj.pdbBaseSeqID + d.key; })
         ;
         matrixOptions.exit().remove();
         matrixOptions
             .enter()
             .append("option")
-                .property ("value", function(d) { return d;})
-                .text (function(d) { 
-                    var ids = d.split("-");
-                    return ids.map (function(id) { return self.getLabelText(+id); }).join(" - "); 
-                })
+        ;
+        matrixOptions
+            .property ("value", function(d) { return d.key;})
+            .text (function(d) { return d.text; })
         ;
         
-        this.matrixChosen (matrixTitles[0]);
+        this
+            .matrixChosen(matrixOptionData[0].key)
+            .render()
+        ;
     },
         
     matrixChosen: function (key) {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        this.options.distMatrix = distancesObj.matrices[key];
-        this.options.distMatrixKey = key;
+        this.options.matrixObj = distancesObj.matrices[key];
         
         var seqLengths = this.getSeqLengthData();
         this.x.domain([0, seqLengths.lengthA]);
@@ -201,24 +204,14 @@
         
         console.log ("SEQ LEN", seqLengths);
         
-        this.vis.select(".y")
-			 .call(this.yAxis)
-        ;
-        this.vis.select(".x")
-			 .call(this.xAxis)
-        ;
-        
-        // Update x/y labels
-        var protIDs = this.getCurrentProteinIDs();
+        // Update x/y labels and axes tick formats
+        var protIDs = this.getCurrentProteinIDs(); 
+        var alignIDs = this.getAlignIDs (protIDs);
+        this.xAxis.tickFormat (this.curriedAlignedIndexAxisFormat (protIDs[0].proteinID, alignIDs[0], this, 0));
+        this.yAxis.tickFormat (this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this, 0));
         this.vis.selectAll("g.label text").data(protIDs)
             .text (function(d) { return d.labelText; })
         ;
-        
-        var alignIDs = this.getAlignIDs (protIDs);
-        this.axisFormatX = this.curriedAlignedIndexAxisFormat (protIDs[0].proteinID, alignIDs[0], this, 0);
-        this.axisFormatY = this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this, 0);
-        this.xAxis.tickFormat (this.axisFormatX);
-        this.yAxis.tickFormat (this.axisFormatY);
         
         return this;
     }, 
@@ -242,7 +235,7 @@
     },
         
     getCurrentProteinIDs : function () {
-        var chainIDs = this.options.distMatrixKey.split("-");
+        var chainIDs = [this.options.matrixObj.chain1, this.options.matrixObj.chain2];
         return chainIDs.map (function (ci) { 
             return {chainID: +ci, proteinID: this.getProteinID (+ci), labelText: this.getLabelText (+ci)};
         }, this);
@@ -332,9 +325,9 @@
     },
         
     invokeTooltip : function (evt, linkWrappers) {
-        var distances = this.options.distMatrix;
+        var distanceMatrix = this.options.matrixObj.distanceMatrix;
         linkWrappers.forEach (function (linkWrapper) {
-            linkWrapper.distance = distances[linkWrapper.x][linkWrapper.y];
+            linkWrapper.distance = distanceMatrix[linkWrapper.x][linkWrapper.y];
             linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
         });
         linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
@@ -382,8 +375,8 @@
     },
     
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.distMatrix) {
-            this.resize();
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.matrixObj) {
+            console.log ("MATRIX RENDER");
 
             // make underlying canvas big enough to hold 1 pixel per possible residue pair
             // it gets rescaled in the resize function to fit a particular size on the screen
@@ -392,8 +385,8 @@
                 .attr("width",  seqLengths.lengthA)
                 .attr("height", seqLengths.lengthB)
             ;
-            
             this
+                .resize()
                 .renderBackgroundMap ()
                 .renderCrossLinks ()
             ;
@@ -420,7 +413,7 @@
             return col.rgb();
         });
         
-        var distances = this.options.distMatrix;
+        var distanceMatrix = this.options.matrixObj.distanceMatrix;
         var seqLengths = this.getSeqLengthData();
         var seqLengthB = seqLengths.lengthB - 1;
         
@@ -432,8 +425,8 @@
             var canvasData = ctx.getImageData (0, 0, pw, this.canvas.attr("height"));
             var cd = canvasData.data;
 
-            for (var i = 0; i < distances.length; i++){
-                var row = distances[i];
+            for (var i = 0; i < distanceMatrix.length; i++){
+                var row = distanceMatrix[i];
                 if (row) {
                     for (var j = 0, len = row.length; j < len; j++){   // was seqLength     
                         var distance = row[j];
@@ -479,7 +472,7 @@
 
         var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 
-        var distances = this.options.distMatrix;
+        var distanceMatrix = this.options.matrixObj.distanceMatrix;
         var seqLengths = this.getSeqLengthData();
         var seqLengthB = seqLengths.lengthB - 1;
         var xStep = 1;//minDim / seqLengthA;
@@ -513,7 +506,7 @@
                     fromResIndex--;
                     toResIndex--;
 
-                    var fromDistArr = distances[fromResIndex];
+                    var fromDistArr = distanceMatrix[fromResIndex];
                     var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
                     if (highlightedCrossLinkIDs.has (crossLink.id)) {
                         ctx.fillStyle = self.options.highlightedColour;
@@ -567,9 +560,9 @@
     },
         
     getSeqLengthData: function () {
-        var distances = this.options.distMatrix;
-        var seqLengthA = distances ? distances.length : 0;
-        var seqLengthB = distances ? distances[0].length : 0;
+        var distanceMatrix = this.options.matrixObj.distanceMatrix;
+        var seqLengthA = distanceMatrix ? distanceMatrix.length : 0;
+        var seqLengthB = distanceMatrix ? distanceMatrix[0].length : 0;
         return {lengthA: seqLengthA, lengthB: seqLengthB};
     },
     
@@ -713,7 +706,6 @@
         
         sizeData.bottom = bottom;
         sizeData.right = right;
-        
         this.repositionLabels (sizeData);
         
         return this;
