@@ -34,7 +34,7 @@
             background: "white",
             matrixObj: null,
             selectedColour: "#ff0",
-            highlightedColour: "#8f0",
+            highlightedColour: "#f80",
         };
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
