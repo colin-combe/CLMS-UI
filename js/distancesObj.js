@@ -32,7 +32,7 @@ CLMSUI.DistancesObj.prototype = {
             return group.values[0];
         });
         
-        console.log ("nestedLinks", links, nestedLinks, shortestLinks);
+        //console.log ("nestedLinks", links, nestedLinks, shortestLinks);
         
         return shortestLinks;
     },

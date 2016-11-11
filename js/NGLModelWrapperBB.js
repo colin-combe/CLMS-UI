@@ -12,10 +12,46 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     initialize: function () {
         this.residueToAtomIndexMap = {};
+       
+        // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
+        // possibly changes links and distances in 3d model
+        this.listenToOnce (this, "change:masterModel", function () {    // only do this once (should only happen once anyways but better safe than sorry)
+            this.listenTo (this.getModel().get("alignColl"), "bulkAlignChange", function () {
+                console.log ("SET UP LINKS");
+                this.setupLinks (this.getModel().get("clmsModel"));
+            });
+        });
     },
 
     getModel: function () {
         return this.get("masterModel");
+    },
+    
+    setupLinks: function (clmsModel) {
+        var crossLinks = clmsModel.get("crossLinks");
+        var filteredCrossLinks = this.filterCrossLinks (crossLinks); 
+        this.setLinkList (filteredCrossLinks);
+        this.makeDistances (clmsModel);      
+    },
+               
+    filterCrossLinks: function (crossLinks) {
+        var filteredCrossLinks = [];
+        crossLinks.forEach (function (value) {
+            if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
+                filteredCrossLinks.push (value);
+            }
+        });
+        return filteredCrossLinks;
+    },
+    
+    makeDistances: function (clmsModel) {
+        console.log ("MAKE DISTANCES");
+        var dd = this.getDistances ();
+        var distancesObj = new CLMSUI.DistancesObj (dd, this.get("chainMap"), this.get("pdbBaseSeqID"));
+        //console.log ("distances", distancesObj);
+        // OK UP TO JHRE, BUT DISTANCES OBJ CHANGE NOT GETTING PICKED UP BY OTHER VIEWS - FIX MONDAY
+        clmsModel.set("distancesObj", distancesObj);
+        return distancesObj;
     },
     
     // residueStore maps the NGL-indexed resides to PDB-index
@@ -91,14 +127,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             }
         }, this);
 
-        console.log ("linklist", linkList);        
+        //console.log ("linklist", linkList);        
         return linkList;
     },
     
     setLinkList: function (crossLinkMap, filterFunc) {
         var linkList = this.makeLinkList (crossLinkMap);
-        linkList = filterFunc ? filterFunc (linkList) : linkList;
+        if (filterFunc) { linkList = filterFunc (linkList); }
         this.setLinkListWrapped (linkList);
+        return this;
     },
 
     setLinkListWrapped: function (linkList) {
@@ -131,7 +168,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         this._linkIdMap = linkIdMap;
         this._residueIdMap = residueIdMap;
         this._residueList = residueList;
-        console.log ("setLinkList", residueIdMap, residueList, residueIdToLinkIds, linkIdMap);
+        //console.log ("setLinkList", residueIdMap, residueList, residueIdToLinkIds, linkIdMap);
 
         this.set ("linkList", linkList);
     },

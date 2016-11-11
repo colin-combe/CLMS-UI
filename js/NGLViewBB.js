@@ -86,7 +86,6 @@
             this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally (distance model)
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
-            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.repopulate);
             
             this.listenTo (this.model, "change:stageModel", function (model, newStageModel) {
                 // swap out stage models and listeners
@@ -94,6 +93,7 @@
                 console.log ("STAGE MODEL CHANGED", arguments, this, prevStageModel);
                 if (prevStageModel) {
                     this.stopListening (prevStageModel);    // remove old stagemodel linklist change listener
+                    prevStageModel.stopListening();
                 }
                 // set xlRepr to null on stage model change as it's now an overview of old data
                 // (it gets reset to a correct new value in repopulate() when distancesObj changes - eventlistener above)
@@ -110,6 +110,11 @@
                         this.xlRepr._handleDataChange();
                     }
                 }); 
+                // First time distancesObj fires we should setup the display for a new data set
+                this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
+                    console.log ("THIS", this);
+                    this.repopulate();
+                });
             });
              
         },

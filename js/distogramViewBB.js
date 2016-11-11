@@ -143,6 +143,7 @@
             });
             
             function distancesAvailable () {
+                console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
                 this.recalcRandomBinning();
                 this.render();
             }

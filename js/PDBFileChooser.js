@@ -207,18 +207,10 @@
                             masterModel: self.model,
                         });
                         self.model.set ("stageModel", crosslinkData);
-                        
-                        // important that the new model is set first ^^^ before we setLinkList() on the model
+                        // important that the new model is set first ^^^ before we setupLinks() on the model
                         // otherwise the listener in the 3d viewer is still pointing to the old model when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
-                        var crossLinks = self.model.get("clmsModel").get("crossLinks");
-                        var filteredCrossLinks = self.filterCrossLinks (crossLinks); 
-                        crosslinkData.setLinkList (filteredCrossLinks);
-                        
-                        var dd = crosslinkData.getDistances ();
-                        var distancesObj = new CLMSUI.DistancesObj (dd, self.chainMap, pdbInfo.baseSeqId);
-                        console.log ("distances", distancesObj);
-                        self.model.get("clmsModel").set("distancesObj", distancesObj);
+                        crosslinkData.setupLinks (self.model.get("clmsModel"));
                     }
                 })
             ;  
@@ -230,15 +222,5 @@
 
         relayout: function () {
             return this;
-        },
-        
-        filterCrossLinks: function (crossLinks) {
-            var filteredCrossLinks = [];
-            crossLinks.forEach (function (value) {
-                if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
-                    filteredCrossLinks.push (value);
-                }
-            });
-            return filteredCrossLinks;
         },
     });
