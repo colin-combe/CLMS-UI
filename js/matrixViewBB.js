@@ -156,7 +156,8 @@
         this.listenTo (this.model, "change:highlights", this.renderCrossLinks);
         this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); 
-        this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); 
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
+        this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
     },
         
     relayout: function () {
@@ -453,88 +454,91 @@
         
         var self = this;
         
-        var canvasNode = this.canvas.node();
-        var ctx = canvasNode.getContext("2d");
-        ctx.strokeStyle = "#000";
-        ctx.lineWidth = 0.5;
+        if (this.options.matrixObj) {
         
-        var rangeDomain = this.colourScaleModel.get("colScale").domain();
-        var min = rangeDomain[0];
-        var max = rangeDomain[1];
-        var rangeColours = this.colourScaleModel.get("colScale").range();
-        this.resLinkColours = rangeColours.map (function (col, i) {
-            col = d3.hsl(col);
-            col.s = 1 - (i * 0.1);
-            col.l = 0.4 - (i * 0.1);
-            return col.rgb();
-        });
-        this.resLinkColours.push ("#000");
+            var canvasNode = this.canvas.node();
+            var ctx = canvasNode.getContext("2d");
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 0.5;
 
-        var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
+            var rangeDomain = this.colourScaleModel.get("colScale").domain();
+            var min = rangeDomain[0];
+            var max = rangeDomain[1];
+            var rangeColours = this.colourScaleModel.get("colScale").range();
+            this.resLinkColours = rangeColours.map (function (col, i) {
+                col = d3.hsl(col);
+                col.s = 1 - (i * 0.1);
+                col.l = 0.4 - (i * 0.1);
+                return col.rgb();
+            });
+            this.resLinkColours.push ("#000");
 
-        var distanceMatrix = this.options.matrixObj.distanceMatrix;
-        var seqLengths = this.getSeqLengthData();
-        var seqLengthB = seqLengths.lengthB - 1;
-        var xStep = 1;//minDim / seqLengthA;
-        var yStep = 1;//minDim / seqLengthB;
-        
-        var proteinIDs = this.getCurrentProteinIDs();
-        var alignIDs = this.getAlignIDs (proteinIDs);
-        var alignColl = this.model.get("alignColl");
-        // only consider crosslinks between the two proteins (often the same one) represented by the two axes
-        var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
-        var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
-        var filteredCrossLinks2 = Array.from(filteredCrossLinks).filter (function (xlink) {
-            return (xlink.toProtein.id === proteinIDs[0].proteinID && xlink.fromProtein.id === proteinIDs[1].proteinID) || (xlink.toProtein.id === proteinIDs[1].proteinID && xlink.fromProtein.id === proteinIDs[0].proteinID);    
-        });
-        
-        var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
-        var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
+            var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
 
-        for (var crossLink of filteredCrossLinks2) {
-            var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
-            if (self.filterVal === undefined || est >= self.filterVal) {
-                var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
-                var toDir = 1 - fromDir;
-                // get index of residues within current matrix (chain v chain)
-                var fromResIndex = alignColl.getAlignedIndex (crossLink.fromResidue, proteinIDs[fromDir].proteinID, false, alignIDs[fromDir]);
-                var toResIndex = alignColl.getAlignedIndex (crossLink.toResidue, proteinIDs[toDir].proteinID, false, alignIDs[toDir]);
-                
-                // show only those that map to the current matrix - i.e. combination of two chains
-                if (fromResIndex !== null && toResIndex !== null) {
-                    // 0-index these indices
-                    fromResIndex--;
-                    toResIndex--;
+            var distanceMatrix = this.options.matrixObj.distanceMatrix;
+            var seqLengths = this.getSeqLengthData();
+            var seqLengthB = seqLengths.lengthB - 1;
+            var xStep = 1;//minDim / seqLengthA;
+            var yStep = 1;//minDim / seqLengthB;
 
-                    var fromDistArr = distanceMatrix[fromResIndex];
-                    var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
-                    if (highlightedCrossLinkIDs.has (crossLink.id)) {
-                        ctx.fillStyle = self.options.highlightedColour;
-                    }
-                    else if (selectedCrossLinkIDs.has (crossLink.id)) {
-                        ctx.fillStyle = self.options.selectedColour;
-                    }
-                    else if (dist) {
-                        if (dist < min) {
-                            ctx.fillStyle = self.resLinkColours[0];
-                            sasIn++;
+            var proteinIDs = this.getCurrentProteinIDs();
+            var alignIDs = this.getAlignIDs (proteinIDs);
+            var alignColl = this.model.get("alignColl");
+            // only consider crosslinks between the two proteins (often the same one) represented by the two axes
+            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
+            var filteredCrossLinks2 = Array.from(filteredCrossLinks).filter (function (xlink) {
+                return (xlink.toProtein.id === proteinIDs[0].proteinID && xlink.fromProtein.id === proteinIDs[1].proteinID) || (xlink.toProtein.id === proteinIDs[1].proteinID && xlink.fromProtein.id === proteinIDs[0].proteinID);    
+            });
+
+            var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
+            var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
+
+            for (var crossLink of filteredCrossLinks2) {
+                var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
+                if (self.filterVal === undefined || est >= self.filterVal) {
+                    var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
+                    var toDir = 1 - fromDir;
+                    // get index of residues within current matrix (chain v chain)
+                    var fromResIndex = alignColl.getAlignedIndex (crossLink.fromResidue, proteinIDs[fromDir].proteinID, false, alignIDs[fromDir]);
+                    var toResIndex = alignColl.getAlignedIndex (crossLink.toResidue, proteinIDs[toDir].proteinID, false, alignIDs[toDir]);
+
+                    // show only those that map to the current matrix - i.e. combination of two chains
+                    if (fromResIndex !== null && toResIndex !== null) {
+                        // 0-index these indices
+                        fromResIndex--;
+                        toResIndex--;
+
+                        var fromDistArr = distanceMatrix[fromResIndex];
+                        var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
+                        if (highlightedCrossLinkIDs.has (crossLink.id)) {
+                            ctx.fillStyle = self.options.highlightedColour;
                         }
-                        else if (dist < max) {
-                            ctx.fillStyle = self.resLinkColours[1];
-                            sasMid++;
+                        else if (selectedCrossLinkIDs.has (crossLink.id)) {
+                            ctx.fillStyle = self.options.selectedColour;
                         }
-                        else {
-                            ctx.fillStyle = self.resLinkColours[2];
-                            sasOut++;
+                        else if (dist) {
+                            if (dist < min) {
+                                ctx.fillStyle = self.resLinkColours[0];
+                                sasIn++;
+                            }
+                            else if (dist < max) {
+                                ctx.fillStyle = self.resLinkColours[1];
+                                sasMid++;
+                            }
+                            else {
+                                ctx.fillStyle = self.resLinkColours[2];
+                                sasOut++;
+                            }
+                        } else {
+                            ctx.fillStyle = self.resLinkColours[3];
                         }
-                    } else {
-                        ctx.fillStyle = self.resLinkColours[3];
-                    }
-                    ctx.fillRect (fromResIndex * xStep, (seqLengthB - toResIndex) * yStep , xStep, yStep);
+                        ctx.fillRect (fromResIndex * xStep, (seqLengthB - toResIndex) * yStep , xStep, yStep);
 
-                    // if same chunk of protein on both axes then show reverse link as well
-                    if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
-                        ctx.fillRect (toResIndex * xStep, (seqLengthB - fromResIndex) * yStep , xStep, yStep);
+                        // if same chunk of protein on both axes then show reverse link as well
+                        if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
+                            ctx.fillRect (toResIndex * xStep, (seqLengthB - fromResIndex) * yStep , xStep, yStep);
+                        }
                     }
                 }
             }
@@ -568,6 +572,8 @@
     
     // called when things need repositioned, but not re-rendered from data
     resize: function () {
+        
+        console.log ("matrix resize")
         var sizeData = this.getSizeData(); 
         var minDim = sizeData.minDim;
         var deltaz = this.last ? (minDim / this.last) : 1;
@@ -692,13 +698,7 @@
             .call(self.yAxis)
             .selectAll("g.tick")
         ;
-        /*
-        var xext = this.x.range()[1];
-        this.x.range([0, right]);
-        var domExpand = right / xext;
-        var curd = this.x.domain();
-        this.x.domain([curd[0], curd[1] + ((curd[1] - curd[0]) * domExpand)]);
-        */
+        
         this.vis.select(".x")
             .attr("transform", "translate(0," + bottom + ")")
             .call(self.xAxis)

@@ -150,7 +150,8 @@
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
             this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
-            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable);
+            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
+            this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
             if (this.model.get("clmsModel").get("distancesObj")) {
                 distancesAvailable();

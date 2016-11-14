@@ -200,6 +200,7 @@
         
         toggleShortestLinksOnly: function (event) {
             this.options.shortestLinksOnly = event.target.checked;
+            //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
             this.showFiltered();
         },
         
@@ -223,28 +224,20 @@
             }
         },
         
-        filterCrossLinks: function (crossLinks) {
-            var filteredCrossLinks = [];
-            crossLinks.forEach (function (value) {
-                if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
-                    filteredCrossLinks.push (value);
-                }
-            });
-            return filteredCrossLinks;
-        },
-        
         showFiltered: function () {
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
-                var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+                var stageModel = this.model.get("stageModel");
+                var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 var self = this;
                 var filterFunc = function (linkList) {
                     if (self.options.shortestLinksOnly) {
                         return self.model.get("clmsModel").get("distancesObj").getShortestLinks (linkList);
                     }
                     return linkList;
-                }
-                this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
+                };
+                //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
+                stageModel.setLinkList (filteredCrossLinks, filterFunc);
             }
         },
     });

@@ -194,10 +194,13 @@
                             pMatch.otherAlignSettings = {semiLocal: true};
                         });
                         console.log ("chainmap", self.chainMap, "stage", self.stage, "\nhas sequences", sequenceMap);
-                        self.model.trigger ("3dsync", sequenceMap);
-
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
                         
+                        if (self.model.get("stageModel")) {
+                             self.model.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
+                        }
+                        self.model.trigger ("3dsync", sequenceMap);
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
+                    
                         // Make a new model and set of data ready for the ngl viewer
                         var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
                         crosslinkData.set({
@@ -210,7 +213,7 @@
                         // important that the new model is set first ^^^ before we setupLinks() on the model
                         // otherwise the listener in the 3d viewer is still pointing to the old model when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
-                        crosslinkData.setupLinks (self.model.get("clmsModel"));
+                        crosslinkData.setupLinks (self.model.get("clmsModel"));                   
                     }
                 })
             ;  

@@ -8,6 +8,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         chainMap: null,
         pdbBaseSeqID: null,
         linkList: null,
+        lastFilterFunc: null,
     },
     
     initialize: function () {
@@ -22,6 +23,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             });
         });
     },
+    
 
     getModel: function () {
         return this.get("masterModel");
@@ -29,29 +31,21 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     setupLinks: function (clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
-        var filteredCrossLinks = this.filterCrossLinks (crossLinks); 
+        var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks); 
         this.setLinkList (filteredCrossLinks);
-        this.makeDistances (clmsModel);      
-    },
-               
-    filterCrossLinks: function (crossLinks) {
-        var filteredCrossLinks = [];
-        crossLinks.forEach (function (value) {
-            if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && !value.toProtein.is_decoy) {
-                filteredCrossLinks.push (value);
-            }
-        });
-        return filteredCrossLinks;
+        var distancesObj = this.makeDistances ();   
+        
+        var distObjPreExists = clmsModel.get("distancesObj");
+        var oldpdbid = distObjPreExists ? distObjPreExists.pdbBaseSeqID : undefined;
+        clmsModel.set ("distancesObj", distancesObj);
+        if (distObjPreExists && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
+            console.log ("FORCE DISTANCES CHANGE EVENT");
+            CLMSUI.vent.trigger ("distancesAdjusted");
+        }
     },
     
-    makeDistances: function (clmsModel) {
-        console.log ("MAKE DISTANCES");
-        var dd = this.getDistances ();
-        var distancesObj = new CLMSUI.DistancesObj (dd, this.get("chainMap"), this.get("pdbBaseSeqID"));
-        //console.log ("distances", distancesObj);
-        // OK UP TO JHRE, BUT DISTANCES OBJ CHANGE NOT GETTING PICKED UP BY OTHER VIEWS - FIX MONDAY
-        clmsModel.set("distancesObj", distancesObj);
-        return distancesObj;
+    makeDistances: function () {
+        return new CLMSUI.DistancesObj (this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
     },
     
     // residueStore maps the NGL-indexed resides to PDB-index
@@ -133,7 +127,17 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     setLinkList: function (crossLinkMap, filterFunc) {
         var linkList = this.makeLinkList (crossLinkMap);
-        if (filterFunc) { linkList = filterFunc (linkList); }
+        // NASTY HACK. A view can supply an extra filter usually to strip out long links, depending on view option.
+        // However, if setLinkList is called from a model rather than a view, we don't know the filter the view is using.
+        // Nasty hack is to use the last used filter.
+        // Ideally filtering should be done in view, but would then a) have to be done for every view rather than just once in the model
+        // and b) would require a lot of refiltering of residues etc that are calculated next in setLinkListWrapped
+        if (filterFunc) { 
+            this.set("lastFilterFunc", filterFunc);
+        }
+        if (this.get("lastFilterFunc")) {
+            linkList = this.get("lastFilterFunc")(linkList);
+        }
         this.setLinkListWrapped (linkList);
         return this;
     },
