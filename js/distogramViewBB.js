@@ -102,10 +102,9 @@
                         label: this.options.ylabel,
                         tick: { // blank non-whole numbers on y axis with this function
                             // except this does the same for tooltips, so non-whole numbers dont get shown in tooltips unless tooltip.value overridden below
-                            //format: function (n) {
-                            //    console.log ("tooltipping", n);
-                            //    return (n == Math.floor(n)) ? n : "";
-                            //}
+                            format: function (n) {
+                                return (n == Math.floor(n)) ? n : "";
+                            }
                         }
                     }
                 },
