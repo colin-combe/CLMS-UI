@@ -317,6 +317,7 @@ CLMSUI.init.viewsEssential = function (options) {
         model: spectrumModel,
         el:"#spectrumPanel",
     });
+    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
     // Update spectrum view when extrenal resize event called
