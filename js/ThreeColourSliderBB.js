@@ -14,6 +14,7 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
     events: {},
+    
     initialize: function (options) {
 
         this.cx = this.el.clientWidth;
@@ -120,6 +121,8 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .attr("width", 50);
         
         this.brushmove();
+        
+        return this;
     },
     
     render: function () {
@@ -130,6 +133,12 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         d3.select(this.el).selectAll(".brushValueText")
             .text (function(d,i) { return self.textFormat(s[s.length - i - 1]); })
         ;
+        return this;
+    },
+    
+    show: function (show) {
+        d3.select(this.el).style("display", show ? null : "none");
+        return this;
     },
 
 	brushstart: function () { return this; },

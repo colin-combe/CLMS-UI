@@ -198,19 +198,19 @@
      * @param a     match score, positive
      * @param b     mismatch score, negative
      *
-     * @return sqaure scoring matrix. The last row and column are zero, for
+     * @return square scoring matrix. The last row and column are zero, for
      * matching an ambiguous residue.
      */
     function bsa_gen_score_matrix(n, a, b)
     {
-        var m = [];
-        if (b > 0) b = -b; // mismatch score b should be non-positive
+        var m = [], mrow;
+        b = - Math.abs(b); // mismatch score b should be non-positive
         for (var i = 0; i < n - 1; ++i) {
-            m[i] = makeIntArray (n, 32);
+            mrow = m[i] = makeIntArray (n, 32);
             for (var j = 0; j < n - 1; ++j) {
-                m[i][j] = i == j? a : b;
+                mrow[j] = i === j? a : b;
             }
-            m[i][j] = 0;
+            mrow[j] = 0;
         }
         m[n-1] = makeIntArray (n, 32, 0);
         //for (var j = 0; j < n; ++j) m[n-1][j] = 0;
@@ -261,8 +261,7 @@
      * higher 28 bits keeps the length and lower 4 bits the operation in order of
      * "MIDNSH". See bsa_cigar2str() for converting cigar to string.
      */
-    function bsa_align(is_local, target, query, matrix, gapsc, w, table)
-    {
+    function bsa_align (is_local, is_semi_local, target, query, matrix, gapsc, w, table) {
         
         // convert bases to integers
         if (table == null) table = bst_nt5;
@@ -271,19 +270,18 @@
         var qlen = qp[0].length;
 
         // adjust band width
-        var orig_w = w;
+        //console.log ("orig w", w);
         var max_len = Math.max (qlen, t.length);
         w = w == null || w < 0? max_len : w;
         var len_diff = Math.abs (t.length - qlen); // MJG - think t.target was a mistake, replace with t.length
-        w = Math.max (w, len_diff);
-        
-        //console.log ("w", w, orig_w, qlen, t.length, len_diff);
+        w = Math.max (w, len_diff); // mjg - dunno why this needs to be done, would just make w massive for small target and big query  
+        //console.log ("w", w, qlen, t.length, len_diff);
 
         // set gap score
-		var gapo, gape, gapswg; // these are penalties which should be non-negative
-        if (typeof gapsc == 'number') { gapo = 0, gape = Math.abs (gapsc), gapswg = undefined; }
+		      var gapo, gape; // these are penalties which should be non-negative
+        if (typeof gapsc == 'number') { gapo = 0, gape = Math.abs (gapsc); }
         else { 
-            gapo = Math.abs(gapsc[0]), gape = Math.abs(gapsc[1]), gapswg = Math.abs(gapsc[2]);
+            gapo = Math.abs(gapsc[0]), gape = Math.abs(gapsc[1]);
         }
         var gapoe = gapo + gape; // penalty for opening the first gap
 
@@ -291,8 +289,9 @@
         var NEG_INF = -0x40000000;
         var H = []; //makeIntArray (qlen+1, 32, is_local ? 0 : undefined); // [];
         var E = []; //makeIntArray (qlen+1, 32, is_local ? 0 : undefined); // [];
+        var C = []; // holds last column scores, added by mjg for semi-global alignment
         var z = [], score, max = 0, end_i = -1, end_j = -1;
-        if (is_local) {
+        if (is_local || is_semi_local) {
             for (var j = 0; j <= qlen; ++j) H[j] = E[j] = 0;
         } else {
             H[0] = 0; E[0] = -gapoe - gapoe;
@@ -302,7 +301,6 @@
             }
         }
 
-        var badGapswg = (gapswg === undefined || isNaN(gapswg));
         // the DP loop
         for (var i = 0; i < t.length; ++i) {
             var h1 = 0, f = 0, m = 0, mj = -1;
@@ -310,9 +308,9 @@
             var beg = Math.max (i - w, 0);
             var end = Math.min (i + w + 1, qlen); // only loop through [beg,end) of the query sequence
             if (!is_local) {
-                // changed so don't have to penalise a start gap (set gapswg to 0) (hopefully)
-                h1 = beg > 0 ? NEG_INF : (badGapswg ? -gapoe - gape * i : gapswg); 
-                f = beg > 0 ? NEG_INF : -gapoe - gapoe - gape * i;
+                // changed so don't have to penalise a start gap (is_semi_local) (hopefully)
+                h1 = beg > 0 ? NEG_INF : (is_semi_local ? 0 : -gapoe - gape * i); 
+                f = beg > 0 ? NEG_INF : (is_semi_local ? 0 : -gapoe - gapoe - gape * i);
             }
             //zi = z[i] = makeIntArray (qlen, 32) ;//[];
             zi = z[i] = makeIntArray (end - beg + 1, 32);   // MJG - crucial end-beg not qlen or end
@@ -360,13 +358,17 @@
                     f = h;
                 }  
                 zi[j - beg] = d;           // z[i,j] keeps h for the current cell and e/f for the next cell // MJG: j-beg -- crucial
+                if (j === end - 1) {    // mjg. keep last scores in each row (forms last column of scores)
+                    C[i] = h1;
+                }
             }
             H[end] = h1, E[end] = is_local? 0 : NEG_INF;
             if (m > max) max = m, end_i = i, end_j = mj;
         }
-        if (is_local && max === 0) return null;
+        //if (is_local && max === 0) return null;
         score = is_local? max : H[qlen];
         
+        //console.log ("\H", H.length, indexOfMax(H), "\nC", C.length, indexOfMax(C));
 
         // backtrack to recover the alignment/cigar
         function push_cigar(ci, op, len) {
@@ -374,20 +376,38 @@
                 ci.push(len<<4|op);
             else ci[ci.length-1] += len<<4;
         }
+        
         var cigar = [], tmp, which = 0, i, k, start_i = 0;
         if (is_local) {
-            i = end_i, k = end_j;
+            i = end_i; k = end_j;
             if (end_j != qlen - 1) // then add soft cliping
                 push_cigar(cigar, 4, qlen - 1 - end_j);
-        } else i = t.length - 1, k = (i + w + 1 < qlen? i + w + 1 : qlen) - 1; // (i,k) points to the last cell
+        } else if (is_semi_local) { // mjg
+            var qlonger = (t.length < qlen);
+            var hmax = indexOfMax(H);
+            var cmax = indexOfMax(C);
+            i = qlonger ? t.length - 1 : cmax.index;
+            var roff = (Math.max (0, qlen - w) + (qlonger ? hmax.index : w));
+            var trailIndelCount = qlonger ? H.length - roff - 1 : C.length - cmax.index - 1;
+            if (trailIndelCount > 0) {  // add the trailing info of the longer sequence to the cigar
+                push_cigar (cigar, qlonger ? 1 : 2, trailIndelCount);
+            }
+            //console.log ("r", roff, qlen, i, qlonger, w, trailIndelCount);
+            k = (roff < qlen? roff : qlen) - 1;
+        } else {
+            i = t.length - 1;
+            var roff = i + w - 1;
+            k = (roff < qlen? roff : qlen) - 1; // (i,k) points to the last cell
+        }
+        
         while (i >= 0 && k >= 0) {
-            tmp = z[i][k - (i > w? i - w : 0)];
+            tmp = z[i][k - (i > w ? i - w : 0)];
             which = tmp >> (which << 1) & 3;
-            if (which == 0 && tmp>>6) break;
-            if (which == 0) which = tmp & 3;
-            if (which == 0)      { push_cigar(cigar, 0, 1); --i, --k; } // match
-            else if (which == 1) { push_cigar(cigar, 2, 1); --i; } // deletion
-            else                 { push_cigar(cigar, 1, 1), --k; } // insertion
+            if (which === 0 && tmp>>6) break;
+            if (which === 0) which = tmp & 3;
+            if (which === 0)      { push_cigar(cigar, 0, 1); --i; --k; } // match
+            else if (which === 1) { push_cigar(cigar, 2, 1); --i; } // deletion
+            else                 { push_cigar(cigar, 1, 1); --k; } // insertion
         }
         if (is_local) {
             if (k >= 0) push_cigar(cigar, 4, k + 1); // add soft clipping
@@ -397,13 +417,20 @@
             if (k >= 0) push_cigar(cigar, 1, k + 1);
         }
         cigar.reverse();
-        /*
-        var cl = cigar.length;
-        for (var i = 0; i < cl>>1; ++i) { // reverse CIGAR
-            tmp = cigar[i], cigar[i] = cigar[cl-1-i], cigar[cl-1-i] = tmp;
-        }
-        */
+
         return [score, start_i, cigar];
+    }
+
+    function indexOfMax (arr) { // mjg
+        var max =  -0x40000000;
+        var index = arr.length;
+        for (var n = arr.length; --n >= 0;) {
+            if (arr[n] > max) {
+                max = arr[n];
+                index = n;
+            }
+        }
+        return {index: index, max: max};
     }
 
     function bsa_cigar2gaps(target, query, start, cigar)
@@ -480,18 +507,19 @@
         return s.join("");
     }
 
-    function align (query, target, scores, isLocal, windowSize) {
+    function align (query, target, scores, isLocal, isSemiLocal, windowSize) {
         var target = target || 'ATAGCTAGCTAGCATAAGC';
         var query  = query || 'AGCTAcCGCAT';
         var isLocal = isLocal || false;
-        var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1, gapAtStart: undefined}, scores || {});
+        var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
         var matrix = scores.matrix || Blosum80Map;
+        //console.log ("scores", scores);
         var rst;
         if (target === query) {
             rst = [Number.MAX_VALUE, 0, [target.length << 4]];  // completely equal
         } else {
             var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
-            var rst = bsa_align (isLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt,scores.gapAtStart], windowSize, table);
+            rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
         }
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);

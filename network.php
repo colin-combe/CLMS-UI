@@ -55,9 +55,9 @@
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
-              <link rel="stylesheet" href="./css/filter.css">
+        <link rel="stylesheet" href="./css/filter.css">
         <link rel="stylesheet" href="./css/nglViewBB.css">
-              <link rel="stylesheet" href="./css/networkPage.css">
+        <link rel="stylesheet" href="./css/networkPage.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -92,6 +92,7 @@
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/fdr.js"></script>
+        <script type="text/javascript" src="./js/distancesObj.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
         <script type="text/javascript" src="./js/ThreeColourSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
@@ -99,6 +100,8 @@
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
+        <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
+        <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
@@ -135,6 +138,7 @@
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
                     <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
                     <p id="viewDropdownPlaceholder"></p>
+                    <p id="loadDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
             </div>
 

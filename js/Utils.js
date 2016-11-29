@@ -8,13 +8,13 @@ CLMSUI.utils = {
     },
 
     arrayConcat: function (d, field) {
-                return d[field].join(", ");
+        return d[field].join(", ");
     },
 
     getSVG: function (d3SvgSelection) {
         console.log ("domElem", d3SvgSelection.node());
         var a = d3SvgSelection.node().outerHTML;
-        a=a.replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" ');
+        a = a.replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" ');
         return'<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'+a;
     },
 
@@ -51,7 +51,7 @@ CLMSUI.utils = {
 
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
-        var height = zeptoElem.height()>0;
+        var height = zeptoElem.height() > 0;
         var visibility = zeptoElem.css('visibility') != 'hidden';
         var display = zeptoElem.css('display') != 'none';
         return (display && visibility && height);
@@ -64,9 +64,37 @@ CLMSUI.utils = {
         //return (evt.layerX || evt.offsetX) - evt.target.offsetLeft;
     },
 
-    crossBrowserElementY : function (evt) {
+    crossBrowserElementY : function (evt, optElem) {
         return evt.clientY - $(optElem || evt.target).offset().top;
     },
+    
+    buttonView: Backbone.View.extend ({
+        tagName: "span",
+        className: "buttonPlaceholder",
+        events: {
+            "click button": "buttonClicked"
+        },
+
+        initialize: function (viewOptions) {
+            var defaultOptions = {};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+
+            // this.el is the dom element this should be getting added to, replaces targetDiv
+            var sel = d3.select(this.el);
+            if (!sel.attr("id")) {
+                sel.attr("id", this.options.id);
+            }
+
+            sel.append("button")
+                .attr("class", "btn")
+                .text (this.options.label)
+            ;
+        },
+
+        buttonClicked: function () {
+            CLMSUI.vent.trigger (this.options.eventName, true);
+        }
+    }),
 
     checkBoxView: Backbone.View.extend ({
         tagName: "span",
@@ -76,7 +104,6 @@ CLMSUI.utils = {
         },
 
         initialize: function (viewOptions) {
-            var self = this;
             var defaultOptions = {
                 labelFirst: true
             };
@@ -87,22 +114,16 @@ CLMSUI.utils = {
             if (!sel.attr("id")) {
                 sel.attr("id", this.options.id);
             }
-            var myid = "#" + sel.attr("id");
 
             var labs = sel.append("label")
                 .attr("class", "btn")
-                .style("padding-left", "0px")
             ;
-            if (this.options.labelFirst) {
-                labs.append("span").text(this.options.label);
-            }
             labs.append ("input")
-                .attr ("id", myid+"ChkBx")
+                .attr ("id", "#"+sel.attr("id")+"ChkBx")
                 .attr("type", "checkbox")
             ;
-            if (!this.options.labelFirst) {
-                labs.append("span").text(this.options.label);
-            }
+            var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
+            labelText.text (this.options.label);
 
             this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
         },
@@ -115,10 +136,6 @@ CLMSUI.utils = {
             CLMSUI.vent.trigger (this.options.eventName, d3.select(this.el).select("input").property("checked"));
         }
     }),
-
-    addCheckboxBackboneView : function (options) {
-        return new CLMSUI.utils.checkBoxView ({myOptions: options});
-    },
 
     dpNumber: function (num, decimalPlaces, roundFunc) {
         var powerOfTen = Math.pow (10, decimalPlaces);
@@ -139,7 +156,7 @@ CLMSUI.utils = {
     displayError: function (condition, message) {
         if (condition()) {
             var box = d3.select("#clmsErrorBox");
-            if (box.size() == 0) {
+            if (box.size() === 0) {
                 box = d3.select("body").append("div").attr("id", "clmsErrorBox");
             }
 
@@ -148,6 +165,19 @@ CLMSUI.utils = {
                 .html (message)
             ;
         }
+    },
+        
+    convertCanvasToImage: function (canvas, image, callback) {
+        image
+            .attr ("width", canvas.attr("width"))
+            .attr ("height", canvas.attr("height"))
+            .attr ("transform", canvas.style("transform"))
+            .attr ("xlink:href", function () {
+                return canvas.node().toDataURL ("image/png");
+            })
+            //.attr ("xlink:href", "http://www.spayaware.ie/images/cat.png")
+        ;
+        callback (image);
     },
 
     RadioButtonFilterViewBB: Backbone.View.extend ({
@@ -252,12 +282,11 @@ CLMSUI.utils = {
         },
 
         downloadSVG: function () {
-            //var svgString = CLMSUI.utils.getSVG(d3.select(this.el).select("svg"));
             var svgSel = d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
-            //console.log ("xml", svgXML);
+            console.log ("xml", svgXML);
             download (svgXML, 'application/svg', "view.svg");
         },
 
@@ -268,17 +297,27 @@ CLMSUI.utils = {
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
-            var z = [];
+            var sortArr = [];
             var activeDivs = d3.selectAll(".dynDiv").filter (function() {
                 return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
             });
-            // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
-            activeDivs.each (function(d,i) { z[i] = +d3.select(this).style("z-index") || 0; });   // all the z-indexes
-            var range = d3.extent (z/*.filter (function(zi) { return zi !== 0; })*/);
-            activeDivs.style("z-index", function() {
-                return Math.max (0, +d3.select(this).style("z-index") - range[0] + 1);
+            
+            // Push objects containing the individual divs as selections along with their z-indexes to an array
+            activeDivs.each (function() { 
+                // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
+                sortArr.push ({z: +d3.select(this).style("z-index") || 0, selection: d3.select(this)}); 
             });
-            d3.select(this.el).style("z-index", range[1] - range[0] + 2);
+            // Sort that array by the z-index
+            sortArr.sort (function (a,b) {
+                return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
+            });
+            // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
+            sortArr.forEach (function (sorted, i) {
+                sorted.selection.style ("z-index", i + 1);    
+            });
+            // Make the current window top of this pile
+            d3.select(this.el).style("z-index", sortArr.length + 1);
+            //console.log ("sortArr", sortArr);
         },
 
         setVisible: function (show) {
@@ -401,7 +440,8 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .enter()
                     .append("p")
                     .text(function(d) {
-                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+d.fdr : ">"+d.fdr+" (Rate not met)");
+                        var saneSigFigs = d3.format(".2f")(d.fdr);  // don't have more than 2 decimal places
+                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+saneSigFigs : ">"+saneSigFigs+" (Rate not met)");
                     })
             ;
             chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);

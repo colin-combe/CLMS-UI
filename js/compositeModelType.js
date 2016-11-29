@@ -56,6 +56,7 @@
 				}
             }
             this.trigger ("filteringDone");
+            return this;
         },
 
         getFilteredCrossLinks: function (crossLinks) {
@@ -156,21 +157,25 @@
             console.log ("map", this.get("selectedProtein"));
         },
         
-        getSingleCrosslinkDistance: function (xlink) {
-            if (xlink.toProtein === xlink.fromProtein) {
-                var distances = xlink.toProtein.distances;
-                if (distances) {
-                    var highRes = Math.max (xlink.toResidue, xlink.fromResidue);
-                    var lowRes = Math.min (xlink.toResidue, xlink.fromResidue);
-                    var values = d3.values(distances);
-                    var dist = d3.min (values.map (function (value) {
-                        return value[highRes] ? value[highRes][lowRes] : null;
-                    }))
-                    //console.log ("dist", dist);
-                    return dist;
+        getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection) {
+            // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
+            distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
+            protAlignCollection = protAlignCollection || this.get("alignColl");   
+            return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, false) : undefined;
+        },
+        
+        getCrossLinkDistances2: function (crossLinks) {
+            var distArr = [];
+            var distModel = this.get("clmsModel").get("distancesObj");
+            var protAlignCollection = this.get ("alignColl");
+            for (var crossLink of crossLinks) {
+                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, protAlignCollection);
+                if (dist != null) {
+                    distArr.push(+dist); // + is to stop it being a string
                 }
             }
-            return null;
-        }
-    
+            console.log ("distArr", distArr);
+
+            return distArr;
+        }, 
     });

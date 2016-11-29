@@ -40,6 +40,23 @@
                 }
             });
             
+            
+            choices
+                .filter(function(d) { return d.sectionEnd; })
+                .insert ("hr")
+            ;
+            
+            return this;
+        },
+        
+        // hide/show or disable menu items by id array ["#myid", "#id2", etc]
+        filter: function (idArr, show) {
+            //d3.selectAll(idArr.join(",")).style ("display", show ? null : "none");
+            d3.selectAll(idArr.join(","))
+                .style ("color", show ? null : "#888")
+                .selectAll("input")
+                    .property("disabled", !show)
+            ;
             return this;
         },
         

@@ -1,5 +1,3 @@
-
-
     var CLMSUI = CLMSUI || {};
     
     CLMSUI.AlignSettingsViewBB = Backbone.View.extend ({
@@ -39,11 +37,11 @@
                     ;
                 }
             });
-            
-            
-            this.listenTo (this.model, "change:compAlignments", this.render);
-            
-            this.render();
+                 
+            this
+                .listenTo (this.model, "change:compAlignments", this.render)
+                .render()
+            ;
             
             return this;
         },
@@ -62,6 +60,9 @@
             var control = d3.select(evt.target);
             var controlDatum = control.datum();
             this.model.set (controlDatum.prop, controlDatum.type === "number" ? +control.property("value") : control.property("value"));
+            // previous set will cause all sequences in this model to recalc
+            // this line inform views that wish to know of such events at a bulk level, rather than individually
+            this.model.collection.bulkAlignChangeFinished();
         },
         
         inputKeyed: function (evt) {
@@ -76,6 +77,9 @@
             var controlDatum = control.datum();
             var selectedOption = control.selectAll("option").filter(function(d,i) { return i == control.property("selectedIndex"); });
             this.model.set (controlDatum.prop, selectedOption.datum().value);   // actual matrix dataset is stored in d3 data, not in html option attributes
+            // previous set will cause all sequences in this model to recalc
+            // this line inform views that wish to know of such events at a bulk level, rather than individually
+            this.model.collection.bulkAlignChangeFinished();
         }
     });
     
@@ -89,13 +93,16 @@
             var tpl = _.template ("<LABEL><%= label %></LABEL><SELECT name='<%= name %>'></SELECT>");
             topElem.html (tpl ({label: viewOptions.label || "Label", name: viewOptions.name || "Name"})); 
             
-            this.listenTo (this.collection, "sync", function () { 
-                console.log ("Collection fetched and synced for view", this);
-                this.render();
-            });
-            // If collection has fetched quickly then the sync event maybe fired before we registered the listener
-            // above, thus we add an immediate this.render() afterwards as a safety net
-            this.render();
+            this
+                .listenTo (this.collection, "sync", function () { 
+                    console.log ("Collection fetched and synced for view", this);
+                    this.render();
+                })
+                // If collection has fetched quickly then the sync event maybe fired before we registered the listener
+                // above, thus we add an immediate this.render() afterwards as a safety net
+                .render()
+            ;
+            return this;
         },
         
         render: function () {
@@ -114,7 +121,7 @@
                 .text (function(d) { return d.get("key"); })
             ;
             
-            options.property ("selected", function(d) { return d.cid == self.lastSelected; })
+            options.property ("selected", function(d) { return d.cid == self.lastSelected; });
             
             options.exit().remove();
 

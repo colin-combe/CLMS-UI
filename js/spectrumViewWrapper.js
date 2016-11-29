@@ -220,10 +220,17 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             this.triggerSpectrumViewer (selectedMatch.match, true);
         }
         // resize the spectrum on drag
-        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);     
+        
+        var altModel = this.alternativesModel.get("clmsModel");
+        var keepDisplayNone = (altModel && altModel.get("matches").size === 1); // altModel check as sometime clmsModel isn't populated (undefined)
+        
         var alts = d3.select("#alternatives");
         var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
-        alts.attr("style", "width:"+w+"px;"); //dont know why d3 style() aint working
+        alts.attr("style", "width:"+w+"px;"+(keepDisplayNone ? " display: none;" : "")); //dont know why d3 style() aint working
+        // mjg - i dunno why d3.style doesn't work either - i might replace later the layout of the wrapper with a flexbox based layout to see if that helps.
+        // anyways at the moment replacing the entire style attribute wipes out display: none when single alt explanation so I've added the above bit of code.
+        //alts.style("width", w+"px");
         return this;
     },
 });

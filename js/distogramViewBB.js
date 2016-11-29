@@ -25,7 +25,7 @@
                 seriesNames: ["Cross Links", "Random"],
                 scaleOthersTo: "Cross Links",
                 chartTitle: "Distogram",
-                maxX: 80
+                maxX: 90
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
             this.colourScaleModel = viewOptions.colourScaleModel;
@@ -45,13 +45,8 @@
 
             var chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner distoDiv")
-                .attr("id", "currentSampleDistogram")
-                .style("position", "relative")
-                .style("height", "calc( 100% - 40px )")
+                .attr ("id", mainDivSel.attr("id")+"c3Chart")
             ;
-            //CLMSUI.utils.addFourCorners(mainDivSel);
-
-            chartDiv.selectAll("*").remove();
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
@@ -107,10 +102,9 @@
                         label: this.options.ylabel,
                         tick: { // blank non-whole numbers on y axis with this function
                             // except this does the same for tooltips, so non-whole numbers dont get shown in tooltips unless tooltip.value overridden below
-                            //format: function (n) {
-                            //    console.log ("tooltipping", n);
-                            //    return (n == Math.floor(n)) ? n : "";
-                            //}
+                            format: function (n) {
+                                return (n == Math.floor(n)) ? n : "";
+                            }
                         }
                     }
                 },
@@ -146,12 +140,21 @@
                     text: this.options.chartTitle
                 }
             });
+            
+            function distancesAvailable () {
+                console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
+                this.recalcRandomBinning();
+                this.render();
+            }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
             this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
-            this.listenTo (this.model.get("distancesModel"), "change:distances", this.recalcRandomBinning);
+            this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
+            this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
-            this.recalcRandomBinning();
+            if (this.model.get("clmsModel").get("distancesObj")) {
+                distancesAvailable();
+            }
             
             return this;
         },
@@ -159,28 +162,21 @@
         render: function () {
             
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-
                 console.log ("re rendering distogram");
 
-                //~ var allProtProtLinks = this.model.get("clmsModel").get("proteinLinks").values();
-                //~ var pp1 = allProtProtLinks.next().value;
-                var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-                var interactorMap = this.model.get("clmsModel").get("interactors");
-                var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
-                //console.log ("fcl", filteredCrossLinks);
-                
-                var distArr = CLMSUI.modelUtils.getCrossLinkDistances2 (filteredCrossLinks.values(), interactorMap);
+                var distArr = this.getRelevantCrossLinkDistances();
                 //console.log ("distArr", distArr);
 
                 var series = [distArr, []];
-                var seriesLengths = [/*crossLinkMap.size*/ filteredCrossLinks.size, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                var seriesLengths = [distArr.length, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                var removeCatchAllCategory = true;
                 //console.log ("seriesLengths", seriesLengths);
-                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions);
+                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
                 var maxY = d3.max(countArrays, function(array) {
-                    return d3.max(array);
+                    return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array as it's dumping ground for everything over last value 
                 });
                 //console.log ("maxY", maxY);
                 
@@ -211,7 +207,15 @@
             return this;
         },
         
-        aggregate: function (series, seriesLengths, precalcedDistributions) {
+        getRelevantCrossLinkDistances: function () {
+            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
+            //var interactorMap = this.model.get("clmsModel").get("interactors");
+            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
+            //console.log ("fcl", filteredCrossLinks);          
+            return this.model.getCrossLinkDistances2 (filteredCrossLinks.values());    
+        },
+        
+        aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
@@ -229,20 +233,27 @@
                     ? precalcedDistributions[aseriesName]
                     : d3.layout.histogram().bins(thresholds)(aseries)
                 ;
+                console.log (aseriesName, "binnedData", binnedData);
 
                 var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
                 return binnedData.map (function (nestedArr) {
                     return nestedArr.y * scale;
                 });
             }, this);
+            
+            if (removeLastEntry) {  // optionally remove the dumping ground entries for values bigger than max cutoff
+                countArrays.forEach (function (array) {
+                    array.pop();
+                });
+            }
 
             return countArrays;
         },
 
         recalcRandomBinning: function () {
-            //console.log ("precalcing random bins for distogram view");
-            //var randArr = this.model.get("distancesModel").flattenedDistances();
-            var randArr = CLMSUI.modelUtils.getFlattenedDistances (Array.from (this.model.get("clmsModel").get("interactors").values()));
+            var distArr = this.getRelevantCrossLinkDistances();
+            //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
+            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((distArr.length * 100) || 10000, 100000));
             //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
@@ -258,9 +269,7 @@
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
             d3.select(this.el).select(".c3").style("max-height", "none");   
-
             this.chart.resize();
-
             return this;
         },
 
@@ -268,10 +277,7 @@
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
         remove: function () {
             CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
-        
             // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
             this.chart = this.chart.destroy();
         }
-
     });
-
