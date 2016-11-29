@@ -208,21 +208,7 @@ CLMSUI.init.views = function () {
             menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
-    
-    // Generate data export drop down
-    new CLMSUI.DropDownMenuViewBB ({
-        el: "#expDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
-        myOptions: {
-            title: "Data-Export",
-            menu: [
-                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
-            ]
-        }
-    });
-
-    
+        
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
     CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
@@ -410,6 +396,19 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
+        // Generate data export drop down
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#expDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Data-Export",
+            menu: [
+                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
+                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
+            ]
+        }
+    });
+    
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
