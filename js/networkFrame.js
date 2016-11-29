@@ -43,23 +43,22 @@ CLMSUI.init = CLMSUI.init || {};
 CLMSUI.init.models = function (options) {
     
     // define alignment model and listeners first, so they're ready to pick up events from other models
-    var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.AlignCollection ();
+    var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection ();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
-        //console.log("Interactors", clmsModel.get("interactors"));
 
         clmsModel.get("interactors").forEach (function (entry) {
-            console.log ("entry", entry);
+            //console.log ("entry", entry);
             if (!entry.is_decoy) {
                 this.add ([{
                     "id": entry.id,
                     "displayLabel": entry.name.replace("_", " "),
                     "refID": "Search",
                     "refSeq": entry.sequence,
-                    "compIDs": this.mergeArrayAttr (entry.id, "compIDs", ["Canonical"]),
-                    "compSeqs": this.mergeArrayAttr (entry.id, "compSeqs", [entry.canonicalSeq]),
                 }]);
+                this.addSeq (entry.id, "Canonical", entry.canonicalSeq, {});
+                console.log ("alignColl", this);
             }
         }, this);
 
@@ -83,8 +82,8 @@ CLMSUI.init.models = function (options) {
     alignmentCollectionInst.listenTo (CLMSUI.blosumCollInst, "modelSelected", function (blosumModel) {
         // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
         // (done internally within alignmentModelInst)
-        this.models.forEach (function (alignModel) {
-            alignModel.set ("scoreMatrix", blosumModel);
+        this.models.forEach (function (protAlignModel) {
+            protAlignModel.set ("scoreMatrix", blosumModel);
         });
     });
 
@@ -146,7 +145,7 @@ CLMSUI.init.modelsEssential = function (options) {
 CLMSUI.init.views = function () {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel", "pdbPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -159,71 +158,61 @@ CLMSUI.init.views = function () {
 
     CLMSUI.init.viewsEssential({"specWrapperDiv":"#spectrumPanelWrapper"});
 
-    // Generate checkboxes
+    // Generate checkboxes for view dropdown
     var checkBoxData = [
-        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
-        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow"},
-        //{id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow"},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
+        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
         {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = CLMSUI.utils.addCheckboxBackboneView ({id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false});
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false}});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     });
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
+    var maybeViews = ["#nglChkBxPlaceholder", "#matrixChkBxPlaceholder", "#distoChkBxPlaceholder"];
     new CLMSUI.DropDownMenuViewBB ({
         el: "#viewDropdownPlaceholder",
-        model: CLMSUI.clmsModelInst,
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
             title: "View",
-            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id }; })
+            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
+        }
+    })
+        // hide/disable view choices that depend on certain data being present until that data arrives
+        .filter (maybeViews, false)
+        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
+            this.filter (maybeViews, !!newDistancesObj);
+        })
+    ;
+    
+    // Generate buttons for load dropdown
+    var buttonData = [
+        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
+    ];
+    buttonData.forEach (function (bdata) {
+        var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
+        $("#loadDropdownPlaceholder").append(bView.$el);
+    });
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#loadDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Load",
+            menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
-
-    console.log ("MODEL", CLMSUI.compositeModelInst);
-    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
-    console.log ("interactors", interactors);
-    var protMap = {
-        "1AO6": ["P02768-A"],
-        "3NBS": ["P00004"],
-        "3J7U": ["P00432"],
-        "2CRK": ["P00563"],
-        "1DPX": ["P00698"],
-        "5D5R": ["P68082"],
-    };
     
-    var invPDBMap = {};
-    [protMap].forEach (function (map) {
-        d3.entries(map).forEach (function (entry) {
-            entry.value.forEach (function (val) {
-                invPDBMap[val] = entry.key;
-            }); 
-        });
-    });
-    var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
-    var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
-    CLMSUI.ThreeDAvailable = invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
-    console.log ("3DAvailable", validAcc, CLMSUI.ThreeDAvailable);
-
-    if (CLMSUI.ThreeDAvailable){
-        // Distance slider
-        new CLMSUI.ThreeColourSliderBB ({
-            el: "#sliderDiv",            
-            model: CLMSUI.linkColour.distanceColoursBB,
-            domain: [0,35],
-            extent: [15,25],
-        });
-    }
-
+    // Generate data export drop down
     new CLMSUI.DropDownMenuViewBB ({
         el: "#expDropdownPlaceholder",
-        model: CLMSUI.clmsModelInst,
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
             title: "Data-Export",
             menu: [
@@ -232,6 +221,23 @@ CLMSUI.init.views = function () {
             ]
         }
     });
+
+    
+    console.log ("MODEL", CLMSUI.compositeModelInst);
+    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
+    CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
+
+    new CLMSUI.ThreeColourSliderBB ({
+        el: "#sliderDiv",            
+        model: CLMSUI.linkColour.distanceColoursBB,
+        domain: [0,35],
+        extent: [15,25],
+    })
+        .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
+        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
+            this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
+        })
+    ;
 
     new CLMSUI.CircularViewBB ({
         el: "#circularPanel",
@@ -252,11 +258,15 @@ CLMSUI.init.viewsEssential = function (options) {
 
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
-        var matches = CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));
-        return matches; // matches is now an array of arrays    //  [matches, []];
+        return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];
     };
 
-    var scoreDistributionView = new CLMSUI.MinigramViewBB ({
+    // When the range changes on the mini histogram model pass the values onto the filter model
+    filterModel.listenTo (miniDistModelInst, "change", function (model) {
+        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
+    }, this);
+    
+    new CLMSUI.MinigramViewBB ({
         el: "#filterPlaceholderSliderHolder",
         model: miniDistModelInst,
         myOptions: {
@@ -268,23 +278,15 @@ CLMSUI.init.viewsEssential = function (options) {
             height: 50,
             colors: {"Matches":"blue", "Decoys":"red"}
         }
-    });
-
-
-    // When the range changes on the mini histogram model pass the values onto the filter model
-    filterModel.listenTo (miniDistModelInst, "change", function (model) {
-        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
-    }, this);
-
-
-    // If the ClmsModel matches attribute changes then tell the mini histogram view
-    scoreDistributionView
-        .listenTo (CLMSUI.clmsModelInst, "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
+    })
+        // If the ClmsModel matches attribute changes then tell the mini histogram view
+        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
         .listenTo (filterModel, "change:cutoff", function (filterModel, newCutoff) {
             this.model.set ({domainStart: newCutoff[0], domainEnd: newCutoff[1]});
             //console.log ("cutoff changed");
         })
     ;
+    
 
     // World of code smells vol.1
     // selectionViewer declared before spectrumWrapper because...
@@ -305,14 +307,48 @@ CLMSUI.init.viewsEssential = function (options) {
     CLMSUI.split.collapse (true);
     selectionViewer.setVisible (false);
 
+
+    var spectrumModel = new AnnotatedSpectrumModel();
+
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
         displayEventName: "spectrumShow",
         myOptions: {wrapperID: "spectrumPanel"}
-    });
-
-    var spectrumModel = new AnnotatedSpectrumModel();
+    })
+        .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+            if (match) {
+                this.primaryMatch = match; // the 'dynamic_rank = true' match
+                var url = "./loadData.php?sid="
+                        + this.model.get("clmsModel").get("sid")
+                        + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
+                var self = this;
+                d3.json (url, function(error, json) {
+                    if (error) {
+                        console.log ("error", error, "for", url);
+                    } else {
+                        console.log (json);
+                        var altModel = new window.CLMS.model.SearchResultsModel (json);
+                        var allCrossLinks = Array.from(altModel.get("crossLinks").values());
+                        // empty selection first
+                        // (important or it will crash coz selection contains links to proteins not in clms model)
+                        self.alternativesModel
+                            .set("selection", [])
+                            .set("clmsModel", altModel)
+                            .applyFilter()
+                            .set ("lastSelectedMatch", {match: match, directSelection: true})
+                        ;
+                        d3.select("#alternatives").style("display", altModel.get("matches").size === 1 ? "none" : "block");
+                        self.alternativesModel.set("selection", allCrossLinks);
+                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+                    }
+                });
+            } else {
+                //~ //this.model.clear();
+            }
+        })
+    ;
+    
     var spectrumViewer = new SpectrumView ({
         model: spectrumModel,
         el:"#spectrumPanel",
@@ -427,93 +463,85 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         sequences.forEach (function (entry) {
-            this.addSeq (entry.id, entry.name, entry.data);
+            this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
         }, this);
+        // this triggers an event to say loads has changed in the alignment collection
+        // more efficient to listen to that then redraw/recalc for every seq addition
+        this.bulkAlignChangeFinished ();
 
         console.log ("3D sequences poked to collection", this);
     });
+     
+    new CLMSUI.DistogramBB ({
+        el: "#distoPanel",
+        model: CLMSUI.compositeModelInst,
+        colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
+        displayEventName: "distoShow",
+        myOptions: {
+            chartTitle: "Cross-Link Distogram",
+            seriesName: "Actual"
+        }
+    }); 
 
-    // if 3d info about
-    if (CLMSUI.ThreeDAvailable) {
-        
-        // Set up listener that waits for distance info to become available via NGLView event
-        CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst, "distancesAvailable", function (distanceInfo) {
-            console.log ("di this", this, distanceInfo);
-            // if distance data present, append it to the correct interactor (protein) object
-            distanceInfo.forEach (function (distanceData) {
-                var protein = this.get("interactors").get (distanceData.proteinID);
-                if (protein) {
-                    protein.distances = distanceData.distances;
-                }
-            }, this);
-            
-            new CLMSUI.DistogramBB ({
-                el: "#distoPanel",
-                model: CLMSUI.compositeModelInst,
-                colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
-                displayEventName: "distoShow",
-                myOptions: {
-                    chartTitle: "Cross-Link Distogram",
-                    seriesName: "Actual"
-                }
-            }); 
-            
-            // This makes a matrix viewer
-            var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
-                el: "#matrixPanel",
-                model: CLMSUI.compositeModelInst,
-                colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
-                displayEventName: "matrixShow",
-            });
+    // This makes a matrix viewer
+    var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
+        el: "#matrixPanel",
+        model: CLMSUI.compositeModelInst,
+        colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
+        displayEventName: "matrixShow",
+    });
 
 
-            // This stuffs a basic filter view into the matrix view
-            var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
-            var matrixFilterEventName = "filterEster";
-            /*
-            matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
-            var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
-                el: "#matrixButtons",
-                myOptions: {
-                    states: [0, 1, 2],
-                    labels: ["Any to Any", "NHS to Any", "NHS to NHS"],
-                    header: "NHS Ester Filter",
-                    labelGroupFlow: "verticalFlow",
-                    eventName: matrixFilterEventName
-                }
-            });
-            */
+    // This stuffs a basic filter view into the matrix view
+    var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
+    var matrixFilterEventName = "filterEster";
+    /*
+    matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
+    var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
+        el: "#matrixButtons",
+        myOptions: {
+            states: [0, 1, 2],
+            labels: ["Any to Any", "NHS to Any", "NHS to NHS"],
+            header: "NHS Ester Filter",
+            labelGroupFlow: "verticalFlow",
+            eventName: matrixFilterEventName
+        }
+    });
+    */
 
-            // the matrix view listens to the event the basic filter view generates and changes a variable on it
-            matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
-                this.filterVal = filterVal;
-                this.render();
-            });
-            CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
+    // the matrix view listens to the event the basic filter view generates and changes a variable on it
+    matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
+        this.filterVal = filterVal;
+        this.render();
+    });
+    CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
 
-            // This is all done outside the matrix view itself as we may not always want a matrix view to have this
-            // functionality. Plus the views don't know about each other now.
-            // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
+    // This is all done outside the matrix view itself as we may not always want a matrix view to have this
+    // functionality. Plus the views don't know about each other now.
+    // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
 
-            
-            // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the DistogramView / MatrixView is too late to be picked up
-            // so we run it again here, doesn't do any harm
-            ByRei_dynDiv.init.main();
-        });
-        
-        // Make new ngl view with pdb dataset
-        // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync and distancesAvailable
-        // events that other views are waiting for.
-        new CLMSUI.NGLViewBB ({
-            el: "#nglPanel",
-            model: CLMSUI.compositeModelInst,
-            displayEventName: "nglShow",
-            myOptions: {
-                pdbFileID: CLMSUI.ThreeDAvailable,
-            }
-        });
-    }
+    // Make new ngl view with pdb dataset
+    // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync
+    // event that other views are waiting for.
+    new CLMSUI.NGLViewBB ({
+        el: "#nglPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "nglShow",
+        myOptions: {
+            initialPdbCode: CLMSUI.firstPdbCode,
+        }
+    });
+    
+    new CLMSUI.PDBFileChooserBB ({
+        el: "#pdbPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "pdbShow",
+        myOptions: {
+            initialPdbCode: CLMSUI.firstPdbCode,
+        }
+    });
 
+    
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",

@@ -31,6 +31,8 @@ DIV.tableWrapper TABLE TH:first-child {
 
 DIV.tableWrapper TABLE TBODY TH:first-child {
      position: fixed;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 DIV.tableWrapper TABLE TBODY TD {
@@ -99,16 +101,10 @@ DIV.checkHolder {
     line-height: 1.2em;
 }
 
-DIV.checkHolder SPAN {
-     white-space: nowrap;
+/* allows breaking after a span but not in the label it contains */
+DIV.checkHolder SPAN:after {
+    content: ' ';
 }
-
-/*
-DIV.checkHolder SPAN:not(:last-child) {
-    padding-right: 0.2em;
-    border-right: 1px solid rgba(255,255,255,0.5);
-}
-*/
 
 /* Next 3 rules give a tab like appearance to input-label sibling pairs inside spans */
 DIV.checkHolder SPAN LABEL {
@@ -118,7 +114,7 @@ DIV.checkHolder SPAN LABEL {
     border-left: 1px solid rgba(255,255,255,0.5);
     border-top: 1px solid rgba(255,255,255,0.5);
     border-top-left-radius: 5px;
-
+    white-space: nowrap;
 }
 
 DIV.checkHolder SPAN INPUT {

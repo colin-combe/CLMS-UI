@@ -67,6 +67,7 @@
             this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
             this.colSectionStarts = d3.set (["protein2", "score"]);
             this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
+            this.maxWidthColumns = d3.set (["protein1", "protein2"]);
 
             // entries commented out until a replacement is found for xlv
             var headerFilterFuncs = {
@@ -258,6 +259,12 @@
             var cellJoin = tjoin.selectAll("TD").data (this.filteredProps, function(d) { return d; });
             cellJoin.exit().remove();
             cellJoin.enter().append("td");
+            
+            var getText = function (d) {
+                var link = d3.select(this.parentNode).datum();
+                var cellFunc = self.cellFuncs[d];
+                return cellFunc ? cellFunc(link) : (link[d] || "");
+            };
 
             cellJoin
                 .classed ("number", function(d) {
@@ -269,10 +276,14 @@
                 .classed ("monospaced", function(d) {
                     return self.monospacedColumns.has(d);
                 })
-                .text (function (d) {
-                    var link = d3.select(this.parentNode).datum();
-                    var cellFunc = self.cellFuncs[d];
-                    return cellFunc ? cellFunc(link) : (link[d] || "");
+                .classed ("maxWidth", function (d) {
+                    return self.maxWidthColumns.has (d);
+                })
+                .text (getText)
+                .each (function (d) {
+                    if (self.maxWidthColumns.has (d)) {
+                        d3.select(this).attr("title", getText.call (this, d));
+                    }
                 })
             ;
         },

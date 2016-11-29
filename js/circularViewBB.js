@@ -60,7 +60,9 @@
                 var tofrom = _options.featureParse (feature, nodeID);
                 //console.log ("nc", nodeCoord, tofrom.fromPos, tofrom.toPos, feature);
                 featureCoords.push ({
-                    id: feature.name,
+                    id: feature.id || feature.notes || feature.name,
+                    category: feature.category,
+                    name: feature.name,
                     nodeID: nodeID,
                     fstart: tofrom.fromPos + 1,
                     fend: tofrom.toPos,
@@ -96,7 +98,8 @@
           }
           return _.extend({},parentEvents,{
               "click .niceButton": "reOrder",
-              "click .flipIntraButton": "flipIntra"
+              "click .flipIntraButton": "flipIntra",
+              "click .showResLabelsButton": "showResLabelsIfRoom",
           });
         },
 
@@ -109,7 +112,7 @@
                 tickWidth: 23,
                 tickLabelCycle: 5,  // show label every nth tick
                 gap: 5,
-                uniprotFeatureFilterSet: d3.set(["DOMAIN"]),
+                uniprotFeatureFilterSet: d3.set(["DOMAIN", "Alignment"]),
                 linkParse: function (link) {
                     // turn toPos and fromPos to zero-based index
                     return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
@@ -119,10 +122,11 @@
                     // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
                     var convStart = feature.start;
                     var convEnd = feature.end;
-                    var alignModel = self.model.get("alignColl").get(nodeid);
-                    if (alignModel) {
-                        convStart = alignModel.mapToSearch ("Canonical", feature.start);
-                        convEnd = alignModel.mapToSearch ("Canonical", feature.end);
+                    var protAlignModel = self.model.get("alignColl").get(nodeid);
+                    if (protAlignModel) {
+                        var alignmentID = feature.alignmentID || "Canonical";
+                        convStart = protAlignModel.mapToSearch (alignmentID, feature.start);
+                        convEnd = protAlignModel.mapToSearch (alignmentID, feature.end);
                         if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
                         if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                     }
@@ -133,10 +137,11 @@
                     //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
                     // e.g. a feature that starts/stops at some point has length of 1, not 0
 
-                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, alignModel);
+                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, protAlignModel);
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,
+                showResLabels: true,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -156,16 +161,30 @@
                 )
             ;
             var buttonData = [
-                {label:"Export Graphic", class:"downloadButton"},
-                {label:"AutoLayout", class :"niceButton"},
-                {label:"Flip Self Links", class:"flipIntraButton"},
+                {label:"Export SVG", class:"downloadButton", type: "button"},
+                {label:"AutoLayout", class :"niceButton", type: "button"},
+                {label:"Flip Self Links", class:"flipIntraButton", type: "button"},
+                {label:"Show Residue Labels If Few", class:"showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
             ];
-            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData)
+            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
                 .enter()
                 .append("button")
                 .text(function(d) { return d.label; })
                 .attr("class", function(d) { return d.class; })
                 .classed("btn btn-1 btn-1a", true)
+            ;
+            mainDivSel.select("div.buttonPanel").selectAll("label").data(buttonData.filter(function(bd) { return bd.type === "checkbox"; }))		
+                .enter()		
+                .append ("label")		
+                .attr ("class", "btn")		
+                    .append ("span")		
+                    .attr("class", "noBreak")		
+                    .text(function(d) { return d.label; })		
+                    .attr ("title", function(d) { return d.title; })		
+                    .append("input")		
+                        .attr("type", "checkbox")		
+                        .attr("class", function(d) { return d.class; })		
+                        .property ("checked", function(d) { return d.optionValue; })		
             ;
 
             var degToRad = Math.PI / 180;
@@ -202,7 +221,7 @@
                 .angle(function(d) { return d.ang * degToRad; })
             ;
 
-            var arcs = ["arc", "textArc", "featureArc"];
+            var arcs = ["arc", "textArc", "featureArc", "resLabelArc"];
             arcs.forEach (function(arc) {
                 this[arc] = d3.svg.arc()
                     .innerRadius(90)
@@ -219,10 +238,8 @@
             this.nodeTip = function (d) {
                 var interactor = self.model.get("clmsModel").get("interactors").get(d.id);
                 self.model.get("tooltipModel")
-                    .set("header", interactor.name.replace("_", " "))
-                    .set("contents", [
-                        ["ID", interactor.id], ["Accession", interactor.accession],["Size", interactor.size], ["Desc.", interactor.description]
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.interactor (interactor))
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.interactor (interactor))
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
@@ -230,26 +247,16 @@
             this.linkTip = function (d) {
                 var xlink = self.model.get("clmsModel").get("crossLinks").get(d.id);
                 self.model.get("tooltipModel")
-                    .set("header", "Linked Residue Pair")
-                    .set("contents", [
-                        ["From", xlink.fromResidue, xlink.fromProtein.name],
-                        ["To", xlink.toResidue, xlink.toProtein.name],
-                        ["Matches", xlink.filteredMatches_pp.length]
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (xlink))
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
 
-			//TODO: could have more general use than just in circle view, more elsewhere, eliminate duplication 
             this.featureTip = function (d) {
                 self.model.get("tooltipModel")
-                    //.set("header", d.id.replace("_", " "))
-                    .set("header", "Feature")
-                    .set("contents", [
-                        ["Name", d.id],
-                        ["Start", d.fstart],
-                        ["End", d.fend]
-                    ])
+                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.feature())
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.feature (d))
                     .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                 ;
             };
@@ -260,17 +267,19 @@
             //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("interactors").values()))
             //    .map(function(p) { return p.id; });
 
+            var alignCall = 0;
+            var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
             // listen to custom filteringDone event from model
-            this.listenTo (this.model, "filteringDone", function () { this.render ({changed : d3.set(["links"]), }); });
+            this.listenTo (this.model, "filteringDone", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
-            this.listenTo (this.model.get("alignColl"), "change:compAlignments", function (alignModel, alignColl) {
-                console.log ("CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
-                this.render ({changed : d3.set(["features"]), });
+            this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
+                console.log (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
+                renderPartial (["features"]);
             });
-            this.listenTo (this.model, "change:linkColourAssignment", function () { this.render ({changed : d3.set(["links"]), }); });
-            this.listenTo (this.model, "currentColourModelChanged", function () { this.render ({changed : d3.set(["links"]), }); });
-            this.listenTo (this.model, "change:selectedProtein", function () { this.render ({changed : d3.set(["nodes"]), }); });
+            this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
+            this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
+            this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             return this;
         },
 
@@ -282,7 +291,11 @@
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
             this.render();
-            //this.render ({changed : d3.set(["links"]), });
+        },
+        
+        showResLabelsIfRoom: function () {		
+            this.options.showResLabels = !this.options.showResLabels;		
+            this.render();		
         },
 
         idFunc: function (d) { return d.id; },
@@ -314,7 +327,7 @@
 
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+            var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
             startPos = startPos || 0;
             endPos = endPos || 100000;
@@ -358,18 +371,11 @@
             return filteredInteractors;
         },
 
-        filterCrossLinks: function (crossLinks) {
-            var filteredCrossLinks = [];
-            crossLinks.forEach (function (value) {
-                if (value.filteredMatches_pp && value.filteredMatches_pp.length > 0 && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
-                    filteredCrossLinks.push (value);
-                }
-            });
-            return filteredCrossLinks;
-        },
-
-        filterFeatures: function (features) {
-            return features ? features.filter (function (f) { return this.options.uniprotFeatureFilterSet.has (f.category); }, this) : [];
+        filterFeatures: function (featureArrays) {
+            var features = d3.merge (featureArrays.filter (function(arr) { return arr !== undefined; }));
+            return features ? features.filter (function (f) { 
+                return !f.category || this.options.uniprotFeatureFilterSet.has (f.category);
+            }, this) : [];
         },
 
         render: function (options) {
@@ -386,7 +392,7 @@
                 //console.log ("model", this.model);
 
                 var filteredInteractors = this.filterInteractors (interactors);
-                var filteredCrossLinks = this.filterCrossLinks (crossLinks);
+                var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 
                 // If only one protein hide some options, and make links go in middle
                 d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")
@@ -405,8 +411,9 @@
                 });
 
                 // After rearrange interactors, because filtered features depends on the interactor order
+                var alignColl = this.model.get("alignColl");
                 var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures (inter.uniprotFeatures);
+                    return this.filterFeatures ([inter.uniprotFeatures, alignColl.getAlignmentsAsFeatures (inter.id)]);
                 }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
 
@@ -420,9 +427,15 @@
                 var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
                 var textRadius = (tickRadius + innerNodeRadius) / 2;
 
-                this.arc.innerRadius(innerNodeRadius).outerRadius(tickRadius);
-                this.featureArc.innerRadius(innerFeatureRadius).outerRadius(tickRadius);
-                this.textArc.innerRadius(textRadius).outerRadius(textRadius); // both radii same for textArc
+                var arcRadii = [
+                    {arc: "arc", inner: innerNodeRadius, outer: tickRadius},
+                    {arc: "featureArc", inner: innerFeatureRadius, outer: tickRadius}, // both radii same for textArc
+                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc		
+                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},		
+                 ];		
+                 arcRadii.forEach (function (arcData) {		
+                     this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);		
+                 }, this);
 
                 var nodes = layout.nodes;
                 var links = layout.links;
@@ -453,6 +466,9 @@
                 if (!changed) {
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
+                }
+                if (!changed || changed.has("links")) {		
+                    this.drawResidueLetters (gRot, linkCoords);		
                 }
             }
 
@@ -663,8 +679,14 @@
                     return pathd;
                 })
             ;
+            
+            // add labels to layer, to ensure they 'float' above feature elements added directly to g
+            var nodeLabelLayer = g.select("g.nodeLabelLayer");
+            if (nodeLabelLayer.empty()) {
+                nodeLabelLayer = g.append("g").attr("class", "nodeLabelLayer");
+            }
 
-            var textJoin = g.selectAll("text.circularNodeLabel")
+            var textJoin = nodeLabelLayer.selectAll("text.circularNodeLabel")
                 .data (tNodes, self.idFunc)
             ;
             textJoin.exit().remove();
@@ -683,7 +705,18 @@
 
         drawFeatures : function (g, features) {
             var self = this;
-            var featureJoin = g.selectAll(".circleFeature").data(features, self.idFunc);
+            features.sort (function (a,b){
+                var diff = (b.end - b.start) - (a.end - a.start);
+                return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
+            });
+            console.log ("features", features);
+            
+            var featureLayer = g.select("g.featureLayer");
+            if (featureLayer.empty()) {
+                featureLayer = g.append("g").attr("class", "featureLayer");
+            }
+            
+            var featureJoin = featureLayer.selectAll(".circleFeature").data(features, self.idFunc);
 
             featureJoin.exit().remove();
 
@@ -707,8 +740,58 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d,i) { return CLMSUI.domainColours(d.id); })
-                .style("fill-opacity", "0.5")
+                .style("fill", function(d) { return CLMSUI.domainColours(d.name); })
+            ;
+
+            return this;
+        },
+        
+        
+        drawResidueLetters : function (g, links) {
+            
+            var circumference = this.resLabelArc.innerRadius()() * 2 * Math.PI;
+            //console.log ("ff", this.resLabelArc, this.resLabelArc.innerRadius(), this.resLabelArc.innerRadius()(), circumference);
+            if (circumference / links.length < 30 || !this.options.showResLabels) {    // arbitrary cutoff decided by me (mjg)
+                links = [];
+            }
+            
+            var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var resMap = d3.map();
+            links.forEach (function (link) {
+                var xlink = crossLinks.get (link.id);
+                resMap.set (xlink.fromProtein.id+"-"+xlink.fromResidue, {polar: link.coords[0], res: CLMSUI.modelUtils.getResidueType (xlink.fromProtein, xlink.fromResidue)});
+                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[2], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
+            });
+            var degToRad = Math.PI / 180;
+            
+            var letterLayer = g.select("g.letterLayer");
+            if (letterLayer.empty()) {
+                letterLayer = g.append("g").attr("class", "letterLayer");
+            }
+            
+            var resJoin = letterLayer.selectAll(".residueLetter").data(resMap.entries(), function(d) { return d.key; });
+            
+            resJoin.exit().remove();
+            
+            resJoin.enter()
+                .append("text")
+                .attr ("class", "residueLetter")
+                .text (function(d) { return d.value.res; })
+            ;
+            
+            resJoin
+                .attr("transform", function(d) {
+                    var polar = d.value.polar;
+                    var rang = (polar.ang - 90) * degToRad;
+                    var x = polar.rad * Math.cos (rang);
+                    var y = polar.rad * Math.sin (rang);
+                    var rot = (polar.ang < 90 || polar.ang > 270) ? polar.ang : polar.ang + 180;
+                    return "rotate ("+rot+" "+x+" "+y+") translate("+x+" "+y+")";   
+                })
+                .attr ("dy", function(d) {
+                    var polar = d.value.polar;
+                    return (polar.ang < 90 || polar.ang > 270) ? "0.8em" : "-0.1em";
+                })
             ;
 
             return this;

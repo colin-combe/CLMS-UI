@@ -58,6 +58,10 @@ svg.circularView {
     stroke: #ff0;
 }
 
+.circleFeature {
+    fill-opacity: 0.5;
+}
+
 .circleNode:hover, .circleFeature:hover {
     stroke: #fdc086;
 }

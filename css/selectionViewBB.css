@@ -3,11 +3,6 @@
     overflow: hidden;
 }
 
-.selectView {
-    height: calc(100%);
-    overflow: hidden;
-}
-
 .selectView > DIV.scrollHolder {
     height: calc(100% - 45px);
     overflow: auto;
@@ -31,7 +26,7 @@
     font-size: 1em;
 }
 
-/* this replaces a .selectView TBODY rule which deosn't work when border-collapse is set to separate */
+/* this replaces a .selectView TBODY rule which doesn't work when border-collapse is set to separate */
 .selectView TBODY TR:first-child TD {
     border-top: 2px solid #668;
 }
@@ -69,12 +64,18 @@
     font-size: 1.1em;
 }
 
+.selectView TD.maxWidth {
+    max-width: 12em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .selectView tbody TR.spectrumShown2 {
     color: black;
     background: #afa;
 }
 
-.crossLinkTotal{
+.crossLinkTotal {
     display: inline-block;
 	color:white;
 }

@@ -182,7 +182,8 @@ body, input, select, textarea {
     margin: 5px;
 	padding:5px;
     position: absolute;
-	z-index: 2;
+    /* increased z-index to 50 so it's children (i.e. drop-down menus) overlay floating windows */
+	z-index: 50;
 }
 
 .headerLabel{
@@ -286,10 +287,10 @@ body, input, select, textarea {
 }
 
 #sliderDiv{
-    height:60%;
+    height:70%;
     position:absolute;
-    top:76px;
-    right:0px;
+    top:15%;
+    right:0%;
 /*
     overflow:hidden;
 */
@@ -485,7 +486,7 @@ tbody tr:hover td, tbody tr:hover td  {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #matrixPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #fdrPanel {
+#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #fdrPanel, #pdbPanel {
     display:none;
     top:80px;
 }
@@ -513,6 +514,11 @@ tbody tr:hover td, tbody tr:hover td  {
     left: 40px;
     width:700px;
     height:400px;
+}
+#pdbPanel {
+    left: 40px;
+    /*width: 500px;
+    height: 100px;*/
 }
 #distoPanel{
     left: 40px;
@@ -552,9 +558,9 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 
 .distoDiv {
-    /*overflow:auto;*/
-     background: rgba(224,224,255, 0.9);
+    background: rgba(224,224,255, 0.9);
     position: relative;
+    height: calc(100% - 40px);
 }
 
 #alignPanel{
@@ -606,8 +612,12 @@ span.noBreak {
     white-space: nowrap;
 }
 
+span.noBreak select {
+    margin-left: 0.5em;
+}
+
 /* and then put spaces after labels to give a known place for content to break */
-label.horizontalFlow::after, #nglPanel label.btn::before {
+label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before, #matrixPanel label.btn::before {
     content: " ";
 }
 

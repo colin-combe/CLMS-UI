@@ -1,5 +1,3 @@
-
-
     var CLMSUI = CLMSUI || {};
     
     CLMSUI.AlignCollectionViewBB = CLMSUI.utils.BaseFrameView.extend ({
@@ -40,6 +38,7 @@
             
             var firstModel = this.collection.models[0];
             this.setFocusModel (firstModel);
+            return this;
         },
         
         hollowElement: function (view) {
@@ -72,6 +71,8 @@
                 .text (function(d) { return d.get("displayLabel"); })
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
             ;
+            
+            return this;
         },
         
         radioClicked: function (evt) {
@@ -100,7 +101,7 @@
                 console.log ("model", model);
                 var modelViewID = d3.select(this.el).attr("id") + "IndView"; 
                 
-                this.modelView = new CLMSUI.AlignViewBB3 ({
+                this.modelView = new CLMSUI.ProtAlignViewBB ({
                     el: "#"+modelViewID, 
                     model: model,
                     tooltipModel: this.tooltipModel,
@@ -113,22 +114,24 @@
                 
                 console.log ("new modelView", this.modelView);
 
-                this.alignViewBlosumSelector.setSelected (model.get("scoreMatrix"));
-                // and then make it track it thereafter
-                this.alignViewBlosumSelector.listenTo (model, "change:scoreMatrix", function(alignModel, scoreMatrix) {
-                    this.setSelected (scoreMatrix);
-                });
+                this.alignViewBlosumSelector
+                    .setSelected (model.get("scoreMatrix"))
+                    .listenTo (model, "change:scoreMatrix", function (protAlignModel, scoreMatrix) { // and then make it track it thereafter
+                        this.setSelected (scoreMatrix);
+                    })
+                ;
                 
                 this.modelView.render();
-                //
             }
+            return this;
         },
     });
     
-    CLMSUI.AlignViewBB3 = Backbone.View.extend ({
+    CLMSUI.ProtAlignViewBB = Backbone.View.extend ({
         events: {
             "mouseleave td.seq>span" : "clearTooltip",
             "change input.diff" : "render",
+            "mouseleave th": "clearTooltip",
         },
 
         initialize: function (viewOptions) {      
@@ -143,10 +146,12 @@
                     diffLabel:"Show differences only",
             }));       
             
-            this.listenTo (this.model, "change:compAlignments", this.render);
+            //this.listenTo (this.model, "change:compAlignments", this.render);
+            this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
+                this.render ({affectedModel: affectedModel});
+            });
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");
-            console.log ("view", this);
             
             return this;
         },
@@ -172,20 +177,25 @@
             return segs.join("");
         },
 
-        render: function () {
-            
-            console.log ("rerendering alignment");
+        render: function (obj) {
+            var affectedModel = obj ? obj.affectedModel : undefined;
+            console.log ("rerendering alignment for", affectedModel);
             var place = d3.select(this.el).select("tbody");
             var self = this;
             
             var showDiff = d3.select(this.el).select("input.diff").property("checked");
             
-            var refs = this.model.get("refAlignments");
-            var comps = this.model.get("compAlignments");
-            
-            console.log ("allSeqs", allSeqs);
-            
-            place.selectAll("tr").remove();
+            // I suppose I could do a view per model rather than this, but it fits the d3 way of doing things
+            var seqModels = this.model.get("seqCollection").models.filter (function (m) {
+                return !affectedModel || (affectedModel.id === m.id);
+            });
+            var refs = seqModels.map (function (seqModel) {
+                return seqModel.get("refAlignment");
+            });
+            var comps = seqModels.map (function (seqModel) {
+                return seqModel.get("compAlignment");
+            });
+            //console.log ("refs, comps", refs, comps);
             
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
@@ -267,39 +277,65 @@
             
             var allSeqs = [];
             var wrap = 2;
-             refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
+            refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
 
+            var nformat = d3.format(",d");
+            var scoreFormat = function (val) {
+                return val === Number.MAX_VALUE ? "Exact" : nformat (val);
+            };
             
-            var seqRows = place.selectAll("tr")
-                .data(allSeqs)
+            var rowBind = place.selectAll("tr")
+                .data(allSeqs, function (d, i) { return d.label + (i % wrap); })
+            ;
+            
+            //rowBind.exit().remove();  // removes other rows if only 1 affectedmodel passed in. Don't want that.
+            
+            var newRows = rowBind
                 .enter()
                 .append ("tr")
-                .attr ("id", function(d,i) { return "seqComp"+d.label+(i % wrap); })
+                .attr ("id", function(d, i) { return "seqComp"+d.label+(i % wrap); })
             ;
             
-            seqRows.append("th")
+            newRows.append("th")
                 .attr("class", "seqLabel")
-                .html (function(d,i) { var v = i % wrap; return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); })
+                .html (function (d, i) { 
+                    var v = i % wrap; 
+                    return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); 
+                })
+                .on ("mouseenter", function(d) {
+                    self.tooltipModel
+                        .set ("header", d.label+" Sequence")
+                        .set("contents", [["Search Length", nformat(d.convertFromRef.length)], [d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],])
+                        .set("location", d3.event)
+                    ;
+                    self.tooltipModel.trigger ("change:location");
+                })
             ;
             
-            seqRows.append("td")
+            newRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
-                    //.html (function(d) { return d.decoratedStr || d.str; })
-                    .html (function(d,i) { var v = i % wrap; return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); })
                     // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
                     .on ("mousemove", function(d) {
                         self.invokeTooltip (d, this);
                     })
             ;
             
+            rowBind.select ("td > span")
+                .html (function(d,i) {
+                    var v = i % wrap; 
+                    return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
+                })
+            ;
+            
             return this;
         },
         
-        clearTooltip: function (evt) {
+        clearTooltip: function () {
             if (this.tooltipModel) {
-                 this.tooltipModel.set ("contents", null);
+                this.tooltipModel.set ("contents", null);
             }
+            return this;
         },
         
         invokeTooltip: function (d, elem) {
@@ -319,14 +355,15 @@
                 //console.log (d.convertToRef, d.convertFromRef);
                 */
                 
-                var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
+                //var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
 
                 this.tooltipModel.set("header", d.label).set("contents", [
                     ["Align Index", charIndex + 1],
-                    ["Value", str[charIndex]],
-                    ["Ref Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
+                    ["Search Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
+                    ["Seq Value", str[charIndex]],
                 ]).set("location", d3.event);
                 this.tooltipModel.trigger ("change:location");
             }
+            return this;
         },
     });
