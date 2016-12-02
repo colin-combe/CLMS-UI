@@ -48,7 +48,7 @@ CLMSUI.init.models = function (options) {
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
 
-        clmsModel.get("interactors").forEach (function (entry) {
+        clmsModel.get("participants").forEach (function (entry) {
             //console.log ("entry", entry);
             if (!entry.is_decoy) {
                 this.add ([{
@@ -210,7 +210,7 @@ CLMSUI.init.views = function () {
     });
         
     console.log ("MODEL", CLMSUI.compositeModelInst);
-    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
+    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
     CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
 
     new CLMSUI.ThreeColourSliderBB ({

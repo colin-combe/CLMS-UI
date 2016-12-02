@@ -187,7 +187,7 @@
 
         addRows : function (selectedLinkArray, filteredProps) {
             var self = this;
-            var proteinMap = this.model.get("clmsModel").get("interactors");
+            var proteinMap = this.model.get("clmsModel").get("participants");
 
             var colspan = d3.select(this.el).select("THEAD").selectAll("TH").size();    // get number of TH elements in header for colspan purposes
 

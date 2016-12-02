@@ -176,7 +176,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 						for (matchedPeptide of match.matchedPeptides) {
 							for (pid of matchedPeptide.prt) {
 
-								var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("interactors").get(pid);
+								var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pid);
 								var toSearch = interactor.name + " " + interactor.description;
 								if (toSearch.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
 									return true;
@@ -195,7 +195,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 								var matchedPeptide = match.matchedPeptides[i];
 								if (found === false && typeof used[i] == 'undefined'){
 									for (pid of matchedPeptide.prt) {
-										var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("interactors").get(pid);
+										var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pid);
 										var toSearch = interactor.name + " " + interactor.description;
 										if (toSearch.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
 											found = true;
