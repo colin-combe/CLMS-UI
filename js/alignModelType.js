@@ -51,7 +51,7 @@
         
         initialize: function () {
             this.listenTo (this, "add", function (addedModel) { 
-                console.log ("new sequence added. align it.", arguments);
+                //~ console.log ("new sequence added. align it.", arguments);
                 this.currentlyAddingModel = addedModel;
                 addedModel.align();
                 this.currentlyAddingModel = null;
@@ -82,14 +82,14 @@
         
         initialize: function () {
             this.listenTo (this, "change", function() { 
-                console.log ("something in per protein align settings changed so realign all prot seqs", this.changed); 
+                //~ console.log ("something in per protein align settings changed so realign all prot seqs", this.changed); 
                 this.get("seqCollection").forEach (function (model) {
                     model.align();
                 });
             });
             
             this.listenTo (this.get("seqCollection"), "change:compAlignment", function (seqModel) {
-                console.log ("collection catching one of its model's compAlignment changing", arguments);
+                //~ console.log ("collection catching one of its model's compAlignment changing", arguments);
                 this.collection.trigger ("oneCompAlignmentChanged", seqModel);
             })
             

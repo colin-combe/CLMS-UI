@@ -136,7 +136,9 @@
 
             <div class="page-header">
                     <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
+<!--
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
+-->
                     <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>
@@ -182,7 +184,8 @@
                 document.title = Array.from(searches.keys()).join();
 
                 CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                    { direction: "vertical", sizes: [60,40], minSize: [200,10] }
+                    { direction: "vertical", sizes: [80,20], minSize: [200,10] 
+						}
                 );
 
                 CLMSUI.init.views();

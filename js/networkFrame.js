@@ -58,7 +58,7 @@ CLMSUI.init.models = function (options) {
                     "refSeq": entry.sequence,
                 }]);
                 this.addSeq (entry.id, "Canonical", entry.canonicalSeq, {});
-                console.log ("alignColl", this);
+                //~ console.log ("alignColl", this);
             }
         }, this);
 
@@ -285,13 +285,13 @@ CLMSUI.init.viewsEssential = function (options) {
         model: CLMSUI.compositeModelInst,
     });
     // redraw / hide table on selected cross-link change
-    selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-        var emptySelection = (selection.length === 0);
-        CLMSUI.split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-        this.setVisible (!emptySelection);
-    });
-    CLMSUI.split.collapse (true);
-    selectionViewer.setVisible (false);
+    //~ selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
+        //~ var emptySelection = (selection.length === 0);
+        //~ CLMSUI.split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
+        //~ this.setVisible (true);
+    //~ });
+    //~ CLMSUI.split.collapse (true);
+    selectionViewer.setVisible (true);
 
 
     var spectrumModel = new AnnotatedSpectrumModel();

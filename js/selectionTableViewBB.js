@@ -11,24 +11,24 @@
 
             // redraw table on filter change if crosslinks selected (matches may have changed)
             this.listenTo (this.model, "filteringDone", function () {
-                if (this.model.get("selection").length > 0) {
+                //~ if (this.model.get("selection").length > 0) {
                     this.render();
-                }
+                //~ }
             });
 
             // rerender if a match's validation details have changed
             this.listenTo (this.model, "matchValidationStateUpdated", function () {
-                if (this.model.get("selection").length > 0) {
+                //~ if (this.model.get("selection").length > 0) {
                     this.render();
-                }
+                //~ }
             });
-            /*
+            
             this.listenTo (this.model, "change:selection", function () {
-                if (this.model.get("selection").length > 0) {
+                //~ if (this.model.get("selection").length > 0) {
                     this.render();
-                }
+                //~ }
             });
-            */
+            
             // highlight selected match table row (or not if nothing selected)
             this.listenTo (this.model, "change:lastSelectedMatch", function () {
                 var selMatch = this.model.get("lastSelectedMatch");

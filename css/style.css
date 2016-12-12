@@ -14,31 +14,22 @@
   src: url('../fonts/lato/regular/Lato-Regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
        url('../fonts/lato/regular/Lato-Regular.woff') format('woff'), /* Modern Browsers */
        url('../fonts/lato/regular/Lato-Regular.ttf')  format('truetype'), /* Safari, Android, iOS  */
-       url('../fonts/lato/regular/Lato-Regular.svg#svgLato-Regular') format('svg');  /* Legacy iOS */ 
+       url('../fonts/lato/regular/Lato-Regular.svg#svgLato-Regular') format('svg');  /* Legacy iOS */
 }
 
 .highlighted {
     stroke: #fdc086;
 }
-/*
-.selected {
-
-}
-*/
 
 /* Btn */
 .btn {
-/*
-    height: 25px;
-*/
     border: none;
     font-family: inherit;
-    font-size: 0.8em;
     color: inherit;
     background: 0 0;/*#091D42;*/
     cursor: pointer;
     padding: 5px 15px;
-    margin: 0 5px 0 5px;
+    margin: 2px 5px 2px 5px;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 300;
@@ -83,13 +74,13 @@ thead{
 th{
     padding-left:5px;
     padding-right:5px;
-    vertical-align: middle; 
+    vertical-align: middle;
     height: 30px;
 }
 td{
     padding-left:5px;
     padding-right:5px;
-    vertical-align: middle; 
+    vertical-align: middle;
     text-align: left;
 }
 th:first-child{
@@ -117,7 +108,6 @@ tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
 /* fa */
 .fa-home{
     font-size:1.5em;
-    padding:0px 4px;
     vertical-align:middle;
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
@@ -142,11 +132,7 @@ tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
     color: #091D42;
     background:white;
 }
-.fa-angle-down{
-/*
-    font-size:1.5em;
-*/
-}
+
 /* Common */
 body, html{
     background: #fff;
@@ -155,11 +141,11 @@ body, html{
     -khtml-user-select: none;
     -moz-user-select: -moz-none;
     -o-user-select: none;
-    user-select: none;   
+    user-select: none;
 }
 body, input, select, textarea {
     Font-family: "Lato-Regular", Helvetica, Arial, sans-serif;
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 300;
     line-height: 1.75em;
     color: #888;
@@ -169,25 +155,22 @@ body, input, select, textarea {
     text-align: center;
     margin-left: auto;
     margin-right: auto;
-    vertical-align: middle; 
+    vertical-align: middle;
 }
 
 .page-header{
-	height:35px;
+    height:35px;
+    padding-left: 10px;
     background-color: #091D42;
     color: #fff;
-/*
-	float:left;
-*/
     position: absolute;
     /* increased z-index to 50 so it's children (i.e. drop-down menus) overlay floating windows */
-	z-index: 50;
+    z-index: 50;
 }
 
 .headerLabel{
     text-transform: uppercase;
     margin-right:10px;
-    font-size:0.9em;
 }
 
 /* history page */
@@ -216,10 +199,8 @@ body, input, select, textarea {
 }
 /* network page */
 #main {
-    
     height:100vh;
     width:100vw;
-    
     position: absolute;
     top: 0;
     bottom: 0;
@@ -231,7 +212,7 @@ body, input, select, textarea {
 
 #main .mainContent {
     top: 0px;
-    bottom: 75px;
+    bottom: 65px;
     position: absolute;
     width: 100%;
     overflow: none;
@@ -289,22 +270,10 @@ body, input, select, textarea {
     position:absolute;
     top:15%;
     right:0%;
-/*
-    overflow:hidden;
-*/
 }
-
-
-/*
-.selecting circle.selected {
-  stroke: #f00;
-}
-*/
-
 
 .resize path {
   fill: #888;
-  /*fill-opacity: .8;*/
   stroke: #000;
   stroke-width: 1.5px;
 }
@@ -322,11 +291,6 @@ body, input, select, textarea {
 }
 
 .brush .extent {
-/*
-  fill-opacity: .125;
-
-  fill:#FDB863;
-    */
 }
 
 #bottomDiv {
@@ -352,9 +316,6 @@ body, input, select, textarea {
 .dynDiv_moveParentDiv{
     height:20px;
     background:#091D42;
-/*
-    background-image:url("../images/mv.png");
-*/
 }
 .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
     width:20px;
@@ -363,39 +324,21 @@ body, input, select, textarea {
     border:none;
 }
 .dynDiv_resizeDiv_tl {
-/*
- top: -1px;
- left: -1px;
-*/
  background-image:url("../images/tl.png");
 }
 
 .dynDiv_resizeDiv_tr {
-/*
- top: -1px;
- left: -1px;
-*/
  background-image:url("../images/tr.png");
 }
 .dynDiv_resizeDiv_bl {
-/*
- top: -1px;
- left: -1px;
-*/
  background-image:url("../images/bl.png");
 }
 .dynDiv_resizeDiv_br {
-/*
- top: -1px;
-*/
-/*
- left: -1px;
-*/
  background-image:url("../images/br.png");
 }
 
 .panelInner{
-    overflow: hidden;   
+    overflow: hidden;
     height:100%;
     width:100%;
     color: #fff;
@@ -418,31 +361,18 @@ body, input, select, textarea {
 }
 .panelInner td, .helpPanel td {
     color: #777;
-}/*
-*/
-/*
-.panelInner tr {
-    color: #ffffff;
-    background-color: #091D42;
 }
-tbody tr:hover td, tbody tr:hover td  {
-    color:#091D42!important;
-    background-color: #fff!important;
-}*/
 
 #main .controls{
     overflow: hidden;
     position: fixed;
     bottom: 0;
     width: 100%;
-    height: 65px;    
+    height: 65px;
     background:#ecedf2;
     color:#091D42;
-    margin-bottom: 5px;
-    margin-top: 5px;
-    /*padding-top: 10px;*/
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -495,11 +425,6 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 
 #spectrumPanel{
-    /*
-    left: 280px;
-    width:600px;
-    height:500px;
-    */
     width: 100%;
     height: 100%;
 }
@@ -515,8 +440,6 @@ tbody tr:hover td, tbody tr:hover td  {
 }
 #pdbPanel {
     left: 40px;
-    /*width: 500px;
-    height: 100px;*/
 }
 #distoPanel{
     left: 40px;
