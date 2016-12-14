@@ -1,9 +1,11 @@
 .protein{
     cursor: crosshair;
+    pointer-events: visible;
 }
 
 .link{
     cursor: crosshair;
+    pointer-events: auto;
 }
 
 .marquee {
