@@ -308,14 +308,9 @@ CLMSUI.init.viewsEssential = function (options) {
         el: "#bottomDiv",
         model: CLMSUI.compositeModelInst,
     });
-    // redraw / hide table on selected cross-link change
-    //~ selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-        //~ var emptySelection = (selection.length === 0);
-        //~ CLMSUI.split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-        //~ this.setVisible (true);
-    //~ });
-    //~ CLMSUI.split.collapse (true);
 
+    selectionViewer.lastCount = 1;
+    selectionViewer.render();
 
     //~ selectionViewer.setVisible (true);
     selectionViewer.render();
