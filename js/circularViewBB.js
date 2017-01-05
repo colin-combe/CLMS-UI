@@ -413,7 +413,7 @@
                 // After rearrange interactors, because filtered features depends on the interactor order
                 var alignColl = this.model.get("alignColl");
                 var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures ([inter.uniprotFeatures, alignColl.getAlignmentsAsFeatures (inter.id)]);
+                    return this.filterFeatures ([inter.uniprot.features, alignColl.getAlignmentsAsFeatures (inter.id)]);
                 }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
 

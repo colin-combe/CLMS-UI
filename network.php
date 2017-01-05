@@ -90,6 +90,7 @@
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/circleArrange.js"></script>
         <script type="text/javascript" src="./js/models.js"></script>
+        <script type="text/javascript" src="./js/annotationTypeModel.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/fdr.js"></script>
@@ -100,6 +101,7 @@
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
+        <script type="text/javascript" src="./js/annotationTypesViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
@@ -139,7 +141,8 @@
 <!--
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
 -->
-                    <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
+                    <p id="linkColourDropdownPlaceholder"></p>
+                    <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
