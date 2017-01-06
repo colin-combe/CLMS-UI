@@ -39,13 +39,15 @@ var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about thi
 	//get uniprot feature types
 	var uniprotFeatureTypes = new Map();     
     for (participant of CLMSUI.compositeModelInst.get("clmsModel").get("participants").values()){
-        for (feature of participant.uniprot.features) {
-            var key = feature.category + "-" + feature.type;
-            if (uniprotFeatureTypes.has(key) === false){
-				var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
-				uniprotFeatureTypes.set(key, annotationType);
+        if (participant.uniprot) {
+			for (feature of participant.uniprot.features) {
+				var key = feature.category + "-" + feature.type;
+				if (uniprotFeatureTypes.has(key) === false){
+					var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
+					uniprotFeatureTypes.set(key, annotationType);
+				}
 			}
-        }
+		}
     }
 	//add uniprot feature types
     annotationTypes = annotationTypes.concat(Array.from(uniprotFeatureTypes.values()));
@@ -85,7 +87,9 @@ CLMSUI.init.models = function (options) {
                     "refID": "Search",
                     "refSeq": entry.sequence,
                 }]);
-                this.addSeq (entry.id, "Canonical", entry.uniprot.sequence, {});
+                if (entry.uniprot){
+					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence, {});
+				}
                 //~ console.log ("alignColl", this);
             }
         }, this);
