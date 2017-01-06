@@ -23,16 +23,18 @@ CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after (3, function() {
+var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about this... - cc
     console.log ("BOTH SYNCS DONE :-)");
     CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
 
     //init annotation types
     var annotationTypes = [];
     //add option for showing PDB aligned regions
-	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType(
-			new CLMSUI.BackboneModelTypes.AnnotationType({category: "Alignment",type:"PDB aligned"})
-		);
+	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+		category: "Alignment",
+		type:"PDB aligned region"}
+	);
+
 	annotationTypes.push(alignedAnnotationType);
 	//get uniprot feature types
 	var uniprotFeatureTypes = new Map();     
@@ -49,12 +51,14 @@ var allDataLoaded = _.after (3, function() {
     annotationTypes = annotationTypes.concat(Array.from(uniprotFeatureTypes.values()));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
-   
-    allDataAndWindowLoaded();
-});
 
-// function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
-var allDataAndWindowLoaded = _.after (1, function () {
+	//martin - got questions about init, at moment i have following commented out - cc
+	//~ allDataAndWindowLoaded();
+	//~ });
+	//~ 
+	//~ // function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
+	//~ var allDataAndWindowLoaded = _.after (1, function () {
+	
     console.log ("DATA LOADED AND WINDOW LOADED");
     CLMSUI.init.viewsThatNeedAsyncData();
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
@@ -447,8 +451,25 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         myOptions: {
             title: "Annotations",
         }
-    })
-    ;
+    });
+
+    var annotationTypesUL = d3.select("#annotationsUL");
+    var lastCat;
+    CLMSUI.compositeModelInst.get("annotationTypes").each(function (annotationType) {
+		var cat = annotationType.get("category");
+		if (lastCat !== cat) {
+			if (lastCat) {
+				annotationTypesUL.append("hr");
+			}	
+			//~ annotationTypesUL.append("span").text(cat);			
+			lastCat = cat;
+		}
+		var annotationTypeLI = annotationTypesUL.append("li");
+        var cbView = new CLMSUI.AnnotationTypeViewBB ({
+			el: annotationTypeLI.node(),
+			model:annotationType
+		});
+    });    
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",

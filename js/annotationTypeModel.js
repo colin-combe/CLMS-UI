@@ -3,6 +3,7 @@ CLMSUI.linkColour = CLMSUI.linkColour || {};
 
 CLMSUI.BackboneModelTypes.AnnotationType = Backbone.Model.extend ({
     defaults: {
+        id: undefined,
         category: undefined,
         type: undefined,
         shown: false, 
@@ -10,8 +11,9 @@ CLMSUI.BackboneModelTypes.AnnotationType = Backbone.Model.extend ({
     initialize: function (options) {
             var defaultOptions = {};
 			this.options = _.extend(defaultOptions, options);
-			this.set();
- 			this.set();
+			this.set("category", options.category + "-" +  options.type);
+			this.set("category", options.category);
+ 			this.set("type", options.type);
     },
 });
 
