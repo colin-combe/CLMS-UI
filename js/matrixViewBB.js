@@ -59,6 +59,11 @@
         ;
         
         this.controlDiv = flexWrapperPanel.append("div");
+        
+        this.controlDiv.append("button")
+            .attr ("class", "downloadButton2 btn btn-1 btn-1a")
+            .text ("Export Graphic")
+        ;
     
         this.controlDiv.append("label")
             .attr("class", "btn")
@@ -73,11 +78,6 @@
                             .render()
                         ;
                     })
-        ;
-        
-        this.controlDiv.append("button")
-            .attr ("class", "downloadButton2 btn btn-1 btn-1a")
-            .text ("Export Graphic")
         ;
         
         var chartDiv = flexWrapperPanel.append("div")
@@ -307,9 +307,11 @@
         this.startPoint = {x: -10, y: -10};
         if (mouseMovement <= 0) {   // Zero tolerance
             var xy = this.convertEvtToXY (evt);
+            var add = evt.ctrlKey || evt.shiftKey;  // should this be added to current selection?
             var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
             var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });   
-            this.model.set ("selection", crossLinks);
+            this.model.calcMatchingCrosslinks ("selection", crossLinks, false, add);
+            //this.model.set ("selection", crossLinks);
         }
     },
         

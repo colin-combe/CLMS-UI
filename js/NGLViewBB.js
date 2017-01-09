@@ -531,6 +531,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var atom = pickingData.atom;
         var bond = pickingData.bond;
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
+        var add = false || pickingData.ctrlKey || pickingData.shiftKey;  // should selection add to current selection?
 
         if (atom !== undefined && bond === undefined) {
             console.log ("picked atom", atom, atom.resno, atom.chainIndex);
@@ -620,7 +621,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         }
         console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
         
-        this.crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, false);
+        this.crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, add);
     },
 
 
