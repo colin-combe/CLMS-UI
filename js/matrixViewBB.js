@@ -168,10 +168,17 @@
     distancesChanged: function () {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         console.log ("IN MATRIX DISTANCES CHANGED", distancesObj, this.model.get("clmsModel"));
-        var matrixOptionData = d3.entries(distancesObj.matrices).map (function (matrixEntry) {
+        var usefulMatrices = d3.entries(distancesObj.matrices);
+        usefulMatrices = this.filterMatrixOptions (usefulMatrices, function (matrix) {
+            return matrix.value.distanceMatrix.some (function (row) {
+                return row.some (function (dist) { return dist > 0 && dist <= 35; });
+            });
+        });
+        console.log ("USEFUL", usefulMatrices);
+        var matrixOptionData = usefulMatrices.map (function (matrixEntry) {
             return {
                 key: matrixEntry.key, 
-                text: [matrixEntry.value.chain1, matrixEntry.value.chain2].map (function(cid) { return this.getLabelText(+cid); }, this).join(" - "),
+                text: [matrixEntry.value.chain1, matrixEntry.value.chain2].map (function(cid) { return this.getLabelText(+cid); }, this).join(" to "),
             };
         }, this);
         
@@ -197,6 +204,7 @@
         
     matrixChosen: function (key) {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        console.log ("DISTANCES OBJ", distancesObj);
         this.options.matrixObj = distancesObj.matrices[key];
         
         var seqLengths = this.getSeqLengthData();
@@ -249,7 +257,7 @@
         var proteinName = this.model.get("clmsModel").get("interactors").get(proteinID).name;
         var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
         proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
-        return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" Chain:"+chainName;
+        return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";
     },
         
     getProteinID: function (chainID) {
@@ -325,6 +333,10 @@
         this.invokeTooltip (evt, linkWrappers);
         
         this.model.set ("highlights", crossLinks);
+    },
+        
+    filterMatrixOptions: function (matrices, filterFunc) {
+        return matrices.filter (filterFunc);
     },
         
     invokeTooltip : function (evt, linkWrappers) {
