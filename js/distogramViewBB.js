@@ -209,7 +209,7 @@
         
         getRelevantCrossLinkDistances: function () {
             var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-            //var interactorMap = this.model.get("clmsModel").get("interactors");
+            //var interactorMap = this.model.get("clmsModel").get("participants");
             var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
             //console.log ("fcl", filteredCrossLinks);          
             return this.model.getCrossLinkDistances2 (filteredCrossLinks.values());    

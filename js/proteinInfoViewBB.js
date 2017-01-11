@@ -92,7 +92,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var idArray = self.splitDataAttr (d3sel, "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         var posData = self.splitDataAttr (d3sel, "data-pos", "_");
-                        var interactor = self.model.get("clmsModel").get("interactors").get(posData[0]);
+                        var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
                         /*
                         var ttinfo = crossLinks.map (function (xlink) {
                             var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;

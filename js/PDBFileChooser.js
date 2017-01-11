@@ -87,7 +87,7 @@
             // callback from the ajax isn't.
             var newtab = window.open ("", "_blank");
             CLMSUI.modelUtils.getPDBIDsForProteins (
-                this.model.get("clmsModel").get("interactors"),
+                this.model.get("clmsModel").get("participants"),
                 function (data) {
                     var ids = data.split("\n");
                     var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
@@ -169,7 +169,7 @@
             this.stage.loadFile (uri, params)
                 .then (function (structureComp) {
                     var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
-                    var interactorArr = Array.from (self.model.get("clmsModel").get("interactors").values());
+                    var interactorArr = Array.from (self.model.get("clmsModel").get("participants").values());
                     // If have a pdb code use a web service to glean matches between ngl protein chains and clms proteins
                     if (pdbInfo.pdbCode) {
                         self.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {

@@ -458,7 +458,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         comp.structure.eachAtom (function (atomProxy) {
             var pid = CLMSUI.modelUtils.getProteinFromChainIndex (self.crosslinkData.get("chainMap"), atomProxy.chainIndex);
             if (pid) {
-                var protein = self.crosslinkData.getModel().get("clmsModel").get("interactors").get(pid);
+                var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[atomProxy.index] = pname + ":" + atomProxy.chainname + "(" +atomProxy.chainIndex+ ")";
             }
@@ -553,7 +553,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 console.log (this.crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
                 
                 var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
-                var protein = this.crosslinkData.getModel().get("clmsModel").get("interactors").get(proteinId);
+                var protein = this.crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
                 this.crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))

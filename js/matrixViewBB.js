@@ -254,7 +254,7 @@
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         var proteinID = this.getProteinID (chainID);
         var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID);
-        var proteinName = this.model.get("clmsModel").get("interactors").get(proteinID).name;
+        var proteinName = this.model.get("clmsModel").get("participants").get(proteinID).name;
         var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
         proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
         return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";

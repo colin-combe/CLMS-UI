@@ -84,11 +84,13 @@
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/vendor/cola.js"></script>
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js"></script>
         <script type="text/javascript" src="./js/circleArrange.js"></script>
         <script type="text/javascript" src="./js/models.js"></script>
+        <script type="text/javascript" src="./js/annotationTypeModel.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/fdr.js"></script>
@@ -99,6 +101,7 @@
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
+        <script type="text/javascript" src="./js/annotationTypesViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
@@ -135,8 +138,11 @@
 
             <div class="page-header">
                     <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
+<!--
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
-                    <p id="colourSelect" class="btn"></p> <!-- placeholder for new colour scheme selector -->
+-->
+                    <p id="linkColourDropdownPlaceholder"></p>
+                    <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
@@ -181,7 +187,8 @@
                 document.title = Array.from(searches.keys()).join();
 
                 CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                    { direction: "vertical", sizes: [60,40], minSize: [200,10] }
+                    { direction: "vertical", sizes: [80,20], minSize: [200,10] 
+						}
                 );
 
                 CLMSUI.init.views();
