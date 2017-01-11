@@ -114,6 +114,7 @@
         },
 
         checkboxClicked: function () {
+            console.warn ("ANNOT CLICKED", this.model);
             this.model.set("shown", d3.select(this.el).select("input").property("checked"));
         }
     });

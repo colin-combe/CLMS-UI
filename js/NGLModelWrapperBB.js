@@ -351,6 +351,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return chainCAtomIndices;
     },
     
+    makeResidueSelectionString: function (resno, chainProxy) {
+        var chainName = chainProxy.chainname;
+        var modelIndex = chainProxy.modelIndex;
+        return resno + (chainName ? ":" + chainName : "") + (modelIndex !== undefined ? "/"+modelIndex : "") + " AND .CA";
+    },
+    
     // used to generate a cache to speed up distance selections / calculations
     _getAtomIndexFromResidue: function (resno, cproxy, sele) {
         var aIndex;
@@ -361,10 +367,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             aIndex = this.residueToAtomIndexMap [key];
             
             if (aIndex === undefined) {
-                var chainName = cproxy.chainname;
-                var modelIndex = cproxy.modelIndex;
-                var resi = resno + (chainName ? ":" + chainName : "") + (modelIndex !== undefined ? "/"+modelIndex : "");
-                sele.setString (resi  + " AND .CA");
+                sele.setString (this.makeResidueSelectionString (resno, cproxy));
                 var ai = this.get("structureComp").structure.getAtomIndices (sele);
                 aIndex = ai[0];
                 if (aIndex === undefined) {
