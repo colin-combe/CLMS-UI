@@ -208,21 +208,7 @@ CLMSUI.init.views = function () {
             menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
-    
-    // Generate data export drop down
-    new CLMSUI.DropDownMenuViewBB ({
-        el: "#expDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
-        myOptions: {
-            title: "Data-Export",
-            menu: [
-                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
-            ]
-        }
-    });
-
-    
+        
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
     CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
@@ -310,7 +296,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     var spectrumModel = new AnnotatedSpectrumModel();
 
-    new SpectrumViewWrapper ({
+    var spectrumWrapper = new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
         displayEventName: "spectrumShow",
@@ -349,32 +335,80 @@ CLMSUI.init.viewsEssential = function (options) {
         })
     ;
     
-    new SpectrumView ({
+    var spectrumViewer = new SpectrumView ({
         model: spectrumModel,
         el:"#spectrumPanel",
-    })
-        // Update spectrum view when extrenal resize event called
-        .listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-            this.resize();
-        })
-        // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
-        // used to transport one Match between views
-        .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-            if (match) {
-                var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
-                CLMSUI.loadSpectra (match, randId, this.model);
-            } else {
-                this.model.clear();
-            }
-        })
-    ;
+    });
+    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
+    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
+
+    // Update spectrum view when extrenal resize event called
+    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.resize();
+    });
+    fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.resize();
+    });
+
+    // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
+    // used to transport one Match between views
+    spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+        if (match) {
+            var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+            CLMSUI.loadSpectra (match, randId, this.model);
+        } else {
+            this.model.clear();
+        }
+    });
+
+    spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+        if (match) {
+			spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
+            var url = "./loadData.php?sid="
+                    + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
+                    + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
+            d3.json (url, function(error, json) {
+                if (error) {
+                    console.log ("error", error, "for", url);
+                } else {
+                    console.log(json);
+                    var altModel = new window.CLMS.model.SearchResultsModel (json);
+                    var allCrossLinks = Array.from(altModel.get("crossLinks").values());
+					// empty selection first
+					// (important or it will crash coz selection contains links to proteins not in clms model)
+					spectrumWrapper.alternativesModel.set("selection", []);
+					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
+					spectrumWrapper.alternativesModel.applyFilter();
+                    spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
+                    if (altModel.get("matches").size == 1) {
+						d3.select("#alternatives").style("display", "none");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					} else {
+						d3.select("#alternatives").style("display", "block");
+						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					}
+                }
+            });
+        } else {
+            //~ //this.model.clear();
+        }
+    });
+
+        // Generate data export drop down
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#expDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Data-Export",
+            menu: [
+                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
+                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
+            ]
+        }
+    });
     
-    new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"})
-        // update frag key view when wrapper resizes
-        .listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
-            this.resize();
-        })
-    ;
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
