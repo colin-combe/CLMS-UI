@@ -417,17 +417,17 @@ CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
 });
 
 
-CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
+CLMSUI.utils.FDRViewBB = Backbone.View.extend  ({
     initialize: function () {
-        CLMSUI.utils.FDRViewBB.__super__.initialize.apply (this, arguments);
+        //CLMSUI.utils.FDRViewBB.__super__.initialize.apply (this, arguments);
 
-        var chartDiv = d3.select(this.el).append("div")
-            .attr("class", "panelInner")
-        ;
+        var chartDiv = d3.select(this.el);//.append("div")
+            //~ .attr("class", "panelInner")
+        //~ ;
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
         chartDiv.html ("<fieldset><legend>Basic FDR Calculation</legend><span></span></fieldset>");
         var self = this;
-        var options = [0.01, 0.05, 0.1, 0.2, 0.5, undefined];
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
         var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
 
         function doFDR (d) {
@@ -444,7 +444,7 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+saneSigFigs : ">"+saneSigFigs+" (Rate not met)");
                     })
             ;
-            chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
+            //~ chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
 
             // bit that communicates to rest of system
             self.model.get("filterModel")
@@ -488,8 +488,8 @@ CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     })
         ;
 
-        chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
-        chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
+        //~ chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
+        //~ chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
         return this;
     }
 });

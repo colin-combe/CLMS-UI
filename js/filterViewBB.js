@@ -15,7 +15,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "input input.filterTypeText": "textFilter",
         "click input.filterSpecialToggle": "filterSpecial",
         "change input.filterSeqSep": "filterSeqSep",
-		"change input.filterFdr": "fdrChanged",
+		//~ "change input.filterFdr": "fdrChanged",
     },
 
     initialize: function (viewOptions) {
@@ -32,7 +32,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Self", "id":"selfLinks", special: true},
             ],
             validationStatuses: [
-                 {"label":"A", "id":"A"},
+                {"label":"A", "id":"A"},
                 {"label":"B", "id":"B"},
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
@@ -174,19 +174,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
         
-        var fdrElem =  cutoffDivSel.append ("div")
-            .attr("class", "numberFilters")
-            .attr("id", "fdrSelect")
-            .append ("label")
-        ;
-        
-        fdrElem.append("span")
-            .text ("FDR")
-        ;
-        
-        fdrElem.append ("input")
-            .attr ({id: "fdrCutoff", class: "filterFdr", type: "number", min: 0, max: 99})
-			.property ("value", self.model.get("fdrCutoff"))
+        var fdrElem =  mainDivSel.append ("div")
+            .attr("class", "filterControlGroup")
+            .attr("id", "fdrPanel")
+            //~ .append ("label")
         ;
         
         var navDivSel = mainDivSel.append ("div").attr("class", "filterControlGroup");
@@ -275,11 +266,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		this.model.set("fdrMode", fdrMode);
     },
 
-    fdrChanged: function () {
-		var fdrCutoff = d3.select("#fdrCutoff").node().value;
-		console.log("fdrCutoff?", fdrCutoff);
-		//this.model.set("fdrMode", fdrMode);
-    },
+    //~ fdrChanged: function () {
+		//~ var fdrCutoff = d3.select("#fdrCutoff").node().value;
+		//~ console.log("fdrCutoff?", fdrCutoff);
+		//~ //this.model.set("fdrMode", fdrMode);
+    //~ },
 
     render: function () {
         return this;
