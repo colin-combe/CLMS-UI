@@ -11,7 +11,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-			fdrMode: true, manualMode:false,
+			fdrMode: true,
             A: true, B: true, C: true, Q: true, unval: true, 
             AUTO: true,
             linears: true,
@@ -24,9 +24,10 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             scanNumber: "",            
             selfLinks: true,
             ambig: true,
-            interFDRCut: undefined,
-            intraFDRCut: undefined,
-            seqSep: "",
+            //~ interFDRCut: undefined,
+            //~ intraFDRCut: undefined,
+            fdrCutoff: 5,
+            seqSep: 0,
         },
 
         initialize: function () {

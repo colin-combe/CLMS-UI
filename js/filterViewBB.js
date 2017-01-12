@@ -10,11 +10,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     tagName: "span",
     className: "filterGroup",
     events: {
-        "click input.modeToggle": "modeChanged",
+        "change input.modeToggle": "modeChanged",
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
         "click input.filterSpecialToggle": "filterSpecial",
-        "change input.filterSeqSep": "filterSeqSep"
+        "change input.filterSeqSep": "filterSeqSep",
+		"change input.filterFdr": "fdrChanged",
     },
 
     initialize: function (viewOptions) {
@@ -71,7 +72,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         modeElems.append ("input")
             .attr ("id", function(d) { return d.id; })
-            .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
+            .attr ("class", "modeToggle")
             .attr ("name", "modeSelect")
             .attr ("type", "radio")
             .property ("checked", function(d) { return self.model.get(d.id); })
@@ -113,12 +114,15 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         seqSepElem.append ("input")
             .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 0, max: 999})
-        ;
+        	.property ("value", self.model.get("seqSep"))
+		;
         
-		var validationDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+		var validationDivSel = mainDivSel.append("div")
+								.attr ("class", "filterControlGroup")
+								.attr ("id", "validationStatusToggles");
         //~ validationDivSel.append("span").attr("class", "sideOn").html("VALIDATION");//<br>STATUS");
        
-        var subsetElems = validationDivSel.selectAll("div.validationToggles")
+        var validationElems = validationDivSel.selectAll("div.validationToggles")
             .data(this.options.validationStatuses, function(d) { return d.id; })
             .enter()
             .append ("div")
@@ -127,11 +131,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .append ("label")
         ;
         
-        subsetElems.append ("span")
+        validationElems.append ("span")
             .text (function(d) { return d.label; })
         ;
         
-        subsetElems.append ("input")
+        validationElems.append ("input")
             .attr ("id", function(d) { return d.id; })
             .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
             .attr ("type", "checkbox")
@@ -148,7 +152,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
 
 
-        mainDivSel.selectAll("p.cutoffLabel")
+        cutoffDivSel.selectAll("p.cutoffLabel")
             .append("input")
             .attr({
                 type: "number",
@@ -168,6 +172,21 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 ;
                 self.model.set("cutoff", newVals);
             })
+        ;
+        
+        var fdrElem =  cutoffDivSel.append ("div")
+            .attr("class", "numberFilters")
+            .attr("id", "fdrSelect")
+            .append ("label")
+        ;
+        
+        fdrElem.append("span")
+            .text ("FDR")
+        ;
+        
+        fdrElem.append ("input")
+            .attr ({id: "fdrCutoff", class: "filterFdr", type: "number", min: 0, max: 99})
+			.property ("value", self.model.get("fdrCutoff"))
         ;
         
         var navDivSel = mainDivSel.append ("div").attr("class", "filterControlGroup");
@@ -208,6 +227,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 .style("pointer-events", hide ? "none" : null)
             ;    
         });
+        
+        this.modeChanged();
     },
 
     filter: function (evt) {
@@ -242,8 +263,22 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 
     modeChanged: function () {
-		alert("mode change");
-        return this;
+		var fdrMode = d3.select("#fdrMode").node().checked;
+		if (fdrMode) {
+			d3.select("#validationStatusToggles").style("display","none");
+			d3.select("#fdrSelect").style("display","inline-block");
+		} else {
+			d3.select("#validationStatusToggles").style("display","inline-block");
+			d3.select("#fdrSelect").style("display","none");
+		}
+		console.log("fdrMode?", fdrMode);
+		this.model.set("fdrMode", fdrMode);
+    },
+
+    fdrChanged: function () {
+		var fdrCutoff = d3.select("#fdrCutoff").node().value;
+		console.log("fdrCutoff?", fdrCutoff);
+		//this.model.set("fdrMode", fdrMode);
     },
 
     render: function () {
