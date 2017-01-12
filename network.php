@@ -93,7 +93,7 @@
         <script type="text/javascript" src="./js/annotationTypeModel.js"></script>
         <script type="text/javascript" src="./js/compositeModelType.js"></script>
         <script type="text/javascript" src="./js/modelUtils.js"></script>
-        <script type="text/javascript" src="./js/fdr.js"></script>
+        <script type="text/javascript" src="./js/fdrAlt.js"></script>
         <script type="text/javascript" src="./js/distancesObj.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
         <script type="text/javascript" src="./js/ThreeColourSliderBB.js"></script>
@@ -157,7 +157,7 @@
             </div>
 
             <div class="controls">
-                <span id="filterPlaceholder"></span>
+                <div id="filterPlaceholder"></div>
             </div>
         </div><!-- MAIN -->
 

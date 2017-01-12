@@ -379,33 +379,7 @@ body, input, select, textarea {
     -o-user-select: none;
     user-select: none;
 }
-.scoreSlider  {
-    display: inline-block;
-    border-left: 1px solid #bbb;
-    border-right: 1px solid #bbb;
-    padding: 0em 0.5em;
-    margin: 0em 0.5em;
-}
-.scoreSlider p {
-    display: inline-block;
-}
-.scoreSlider .cutoffLabel {
-    min-width: 3em;
-}
-.scoreSlider .cutoffLabel.vmin {
-    text-align: right;
-}
-.scoreSlider .cutoffLabel input {
-    width: 4em;
-    color: black;
-}
-.sliderInput {
-    background: none;
-    position: relative;
-    border: none;
-    margin-top:5px;
-    display: inline-block;
-}
+
 #defaultLinkKey{
     background: white;
 }
@@ -496,15 +470,6 @@ body, input, select, textarea {
 
 #colourSelect span {
     margin-right: 0.5em;
-}
-
-.sideOn {
-    -ms-transform:rotate(270deg); /* IE 9 */
-    -moz-transform:rotate(270deg); /* Firefox */
-    -webkit-transform:rotate(270deg); /* Safari and Chrome */
-    -o-transform:rotate(270deg); /* Opera */
-    transform:rotate(270deg);
-    display: inline-block;
 }
 
 label.verticalFlow {

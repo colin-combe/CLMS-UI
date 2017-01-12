@@ -201,7 +201,7 @@ CLMSUI.init.views = function () {
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
-        {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
+        //~ {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false}});
@@ -293,7 +293,7 @@ CLMSUI.init.viewsEssential = function (options) {
             //scaleOthersTo: "Matches",
             xlabel: "Score",
             ylabel: "Count",
-            height: 50,
+            height: 65,
             colors: {"Matches":"blue", "Decoys":"red"}
         }
     })

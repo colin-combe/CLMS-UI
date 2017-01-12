@@ -10,6 +10,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     tagName: "span",
     className: "filterGroup",
     events: {
+        "click input.modeToggle": "modeChanged",
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
         "click input.filterSpecialToggle": "filterSpecial",
@@ -18,13 +19,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     initialize: function (viewOptions) {
         var defaultOptions = {
+            modes: [
+                {"label":"Manual", "id":"manualMode"},
+                {"label":"FDR", "id":"fdrMode"},
+            ],            
             toggles: [
                 {"label":"Decoy", "id":"decoys", special: true},
                 {"label":"Linear", "id":"linears", special: true},
                 {"label":"Cross-links", "id":"crosslinks", special: true},
                 {"label":"Ambig.", "id":"ambig", special: true},
                 {"label":"Self", "id":"selfLinks", special: true},
-                {"label":"A", "id":"A"},
+            ],
+            validationStatuses: [
+                 {"label":"A", "id":"A"},
                 {"label":"B", "id":"B"},
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
@@ -45,9 +52,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
+
+        var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+        //~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
         
-        var toggleElems = mainDivSel.selectAll("div.toggles")
-            .data(this.options.toggles, function(d) { return d.id; })
+        var modeElems = modeDivSel.selectAll("div.modeToggles")
+            .data(this.options.modes, function(d) { return d.id; })
             .enter()
             .append ("div")
             .attr ("class", "toggles")
@@ -55,11 +65,36 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .append ("label")
         ;
         
-        toggleElems.append ("span")
+        modeElems.append ("span")
             .text (function(d) { return d.label; })
         ;
         
-        toggleElems.append ("input")
+        modeElems.append ("input")
+            .attr ("id", function(d) { return d.id; })
+            .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
+            .attr ("name", "modeSelect")
+            .attr ("type", "radio")
+            .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+        		
+		
+		var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+        //~ dataSubsetDivSel.append("span").attr("class", "sideOn").text("SUBSET");
+       
+        var subsetElems = dataSubsetDivSel.selectAll("div.subsetToggles")
+            .data(this.options.toggles, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "toggles subsetToggles")
+            .attr("id", function(d) { return "toggles_" + d.id; })
+            .append ("label")
+        ;
+        
+        subsetElems.append ("span")
+            .text (function(d) { return d.label; })
+        ;
+        
+        subsetElems.append ("input")
             .attr ("id", function(d) { return d.id; })
             .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
             .attr ("type", "checkbox")
@@ -67,7 +102,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
         
         
-        var seqSepElem = mainDivSel.append ("div")
+        var seqSepElem =  dataSubsetDivSel.append ("div")
             .attr("class", "numberFilters")
             .append ("label")
         ;
@@ -79,11 +114,38 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         seqSepElem.append ("input")
             .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 0, max: 999})
         ;
-
-        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
+        
+		var validationDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+        //~ validationDivSel.append("span").attr("class", "sideOn").html("VALIDATION");//<br>STATUS");
+       
+        var subsetElems = validationDivSel.selectAll("div.validationToggles")
+            .data(this.options.validationStatuses, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "toggles validationToggles")
+            .attr("id", function(d) { return "toggles_" + d.id; })
+            .append ("label")
+        ;
+        
+        subsetElems.append ("span")
+            .text (function(d) { return d.label; })
+        ;
+        
+        subsetElems.append ("input")
+            .attr ("id", function(d) { return d.id; })
+            .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
+            .attr ("type", "checkbox")
+            .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+        
+		var cutoffDivSel = mainDivSel.append ("div").attr("class", "filterControlGroup");
+		//~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+       
+        var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
         var tpl = _.template ("<div><span>Score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
+		sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
 
 
         mainDivSel.selectAll("p.cutoffLabel")
@@ -108,7 +170,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
         
-        var textFilters = mainDivSel.selectAll("div.textFilters")
+        var navDivSel = mainDivSel.append ("div").attr("class", "filterControlGroup");
+		//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
+		
+		var textFilters = navDivSel.selectAll("div.textFilters")
             .data(this.options.textFilters, function(d) { return d.id; })
             .enter()
             .append("div")
@@ -127,8 +192,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("size", function(d) { return d.chars; })
             //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
-        sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
 
         this.displayEventName = viewOptions.displayEventName;
 
@@ -178,16 +241,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.model.set("seqSep", target.value);
     },
 
-
-    render: function () {
+    modeChanged: function () {
+		alert("mode change");
         return this;
     },
 
-    // removes view
-    // not really needed unless we want to do something extra on top of the prototype remove function
-    remove: function () {
-        // this line destroys the containing backbone view and it's events
-        Backbone.View.prototype.remove.call(this);
+    render: function () {
+        return this;
     }
-
 });
