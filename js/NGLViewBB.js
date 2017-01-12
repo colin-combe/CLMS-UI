@@ -39,6 +39,7 @@
                 selectedOnly: false,
                 showResidues: true,
                 shortestLinksOnly: true,
+                defaultChainRep: "cartoon",
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -78,6 +79,30 @@
                         .property ("checked", function(d) { return d.initialState; })
             ;
 			
+            var mainReps = NGL.RepresentationRegistry.names;
+            var self = this;
+            var repSection = toolbar
+                .append ("label")
+                .attr ("class", "btn")
+                    .append ("span")
+                    .attr("class", "noBreak")
+                    .text ("Chain Representation")
+            ;
+            repSection.append("select")
+                .on ("change", function () {
+                    console.log ("evt", d3.event.target.value, self);
+                    if (self.xlRepr) {
+                        self.xlRepr.replaceChainRepresentation (d3.event.target.value);
+                    }
+                })
+                .selectAll("option")
+                .data (mainReps)
+                .enter()
+                .append("option")
+                .text (function(d) { return d; })
+                .property ("selected", function(d) { return d === self.options.defaultChainRep; })
+            ;
+            
             toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Re-Centre")
@@ -138,6 +163,7 @@
             this.xlRepr = new CLMSUI.CrosslinkRepresentation (
                 this.model.get("stageModel"),
                 {
+                    defaultChainRep: this.options.defaultChainRep,
                     selectedColor: "lightgreen",
                     selectedLinksColor: "yellow",
                     sstrucColor: "gray",
@@ -257,6 +283,7 @@
 CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
 
     var defaults = {
+        defaultChainRep: "cartoon",
         sstrucColor: "wheat",
         displayedDistanceColor: "grey",
         selectedDistanceColor: "black",
@@ -373,6 +400,30 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         return this._getSelectionFromResidue (sels);
     },
+    
+    replaceChainRepresentation: function (newType) {
+        if (this.sstrucRepr) {
+            this.structureComp.removeRepresentation (this.sstrucRepr);
+        }
+        
+        // to figure out how to change color sclae for hydrophobicity
+        var hscheme = NGL.ColorMakerRegistry.getScheme({scheme: "hydrophobicity"});
+        hscheme.scale = "RdBu";
+        
+        this.sstrucRepr = this.structureComp.addRepresentation (newType, {
+            //color: this.sstrucColor,
+            //colorScheme: "chainname",
+            colorScheme: "hydrophobicity",
+            //colorScheme: hscheme,
+            //colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
+            name: "sstruc",
+            opacity: 0.67,
+            side: "front",
+        });
+        
+        var hscheme = NGL.ColorMakerRegistry.getScheme({scheme: "hydrophobicity"});
+        hscheme.scale = "RdBu";
+    },
 
     _initStructureRepr: function() {
 
@@ -382,15 +433,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var resSele = this._getSelectionFromResidue (this.crosslinkData.getResidues());
         var resEmphSele = this._getSelectionFromResidue ([]);
 
-        this.sstrucRepr = comp.addRepresentation ("cartoon", {
-            //color: this.sstrucColor,
-            //colorScheme: "chainname",
-            //colorScheme: "hydrophobicity",
-            colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
-            name: "sstruc",
-            opacity: 0.67,
-            side: "front",
-        });
+        this.replaceChainRepresentation (this.defaultChainRep);
 
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
@@ -572,7 +615,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))
-                    .set("location", this.makeTooltipCoords (pickingData.mouse))
+                    .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                 ;
                 crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
             }
@@ -631,7 +674,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0]))
-                    .set("location", this.makeTooltipCoords (pickingData.mouse))
+                    .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                 ;
                 crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
             }
@@ -732,7 +775,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
      * - displayedDistanceVisible
      * - selectedDistanceVisible
      */
-    setParameters: function( params, initialize ){
+    setParameters: function (params, initialize) {
 
         var allParams = {};
         var repNameArray = ["resRepr", "linkRepr", "resEmphRepr", "linkEmphRepr", "linkHighRepr", "sstrucRepr"];
@@ -767,6 +810,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             "displayedDistanceVisible": allParams.linkRepr.labelVisible,
             "selectedDistanceVisible": allParams.linkEmphRepr.labelVisible,
             "highlightedDistanceVisible": allParams.linkHighRepr.labelVisible,
+            "defaultChainRep": params.defaultChainRep,
         };
         d3.entries(objProps).forEach (function (entry) {
             if (entry.value !== undefined) {

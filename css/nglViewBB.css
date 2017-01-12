@@ -6,10 +6,11 @@
 
 .overlayInfo {
     position: absolute;
+    color: grey;
 }
 
 .outsideLink {
-    color: white;
+    color: grey;
 }
 
 .outsideLink:hover {
@@ -43,4 +44,8 @@ label.btn input[type=file] {
 
 .nglToolbar button {
     margin-bottom: 0.2em;
+}
+
+.nglToolbar select {
+    text-transform: capitalize;
 }
