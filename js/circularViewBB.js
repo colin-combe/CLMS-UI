@@ -209,10 +209,11 @@
             ;
 
             // Cycle colours through features
-            this.color = d3.scale.ordinal()
-                .domain([0,2])
-                .range(["#beb", "#ebb" , "#bbe"])
-            ;
+             //i think this can go?
+            //~ this.color = d3.scale.ordinal()
+                //~ .domain([0,2])
+                //~ .range(["#beb", "#ebb" , "#bbe"])
+            //~ ;
 
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")
@@ -740,7 +741,7 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d) { return CLMSUI.domainColours(d.name); })
+                .style("fill", function(d) { return CLMSUI.domainColours(anno.category + "-" + anno.type); })
             ;
 
             return this;

@@ -97,7 +97,13 @@ CLMSUI.modelUtils = {
         },
         
         feature: function (feature) {
-             return [["Name", feature.name], ["Type", feature.category], ["Start", feature.fstart], ["End", feature.fend]];
+             return [
+				 ["Description", feature.description], 
+				 ["Type", feature.type], 
+				 ["Category", feature.category], 
+				 ["Start", feature.fstart], 
+				 ["End", feature.fend],
+             ];
         },
         
         linkList: function (linkList, extras) {

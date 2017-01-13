@@ -127,7 +127,7 @@ CLMSUI.init.models = function (options) {
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch();
 
-    CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Accent[8].slice().reverse());
+    CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Set1[7]);//.slice().reverse());
 };
 
 

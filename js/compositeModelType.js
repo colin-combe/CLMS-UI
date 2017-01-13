@@ -55,6 +55,10 @@
 					crossLink.filteredMatches_pp = crossLink.matches_pp;
 				}
             }
+            
+            //foreach participant hide if no links
+            var participants = this.get("clmsModel").get("participants").values();
+
             this.trigger ("filteringDone");
             return this;
         },
