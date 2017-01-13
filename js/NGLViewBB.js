@@ -33,6 +33,7 @@
 
         initialize: function (viewOptions) {
             CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
+            var self = this;
             
             var defaultOptions = {
                 labelVisible: false,
@@ -58,29 +59,58 @@
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
             ;
+            
+            toolbar.append("button")
+                .attr("class", "btn btn-1 btn-1a centreButton")
+                .text("Re-Centre")
+            ;
+
 			
+            
+            // Various view options set up, then put in a dropdown menu
             var toggleButtonData = [
-                {initialState: this.options.labelVisible, klass: "distanceLabelCB", text: "Distance Labels"},
-                {initialState: this.options.selectedOnly, klass: "selectedOnlyCB", text: "Selected Only"},
-                {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues"},
-                {initialState: this.options.shortestLinksOnly, klass: "shortestLinkCB", text: "Shortest Link Option Only"},
+                {initialState: this.options.labelVisible, klass: "distanceLabelCB", text: "Distance Labels", id: "visLabel"},
+                {initialState: this.options.selectedOnly, klass: "selectedOnlyCB", text: "Selected Only", id: "selectedOnly"},
+                {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues", id: "showResidues"},
+                {initialState: this.options.shortestLinksOnly, klass: "shortestLinkCB", text: "Shortest Link Option Only", id: "shortestOnly"},
             ];
             
-            toolbar.selectAll("label").data(toggleButtonData)
+            var viewOpts = toolbar.selectAll("label").data(toggleButtonData)
                 .enter()
-                .append ("label")
-                .attr ("class", "btn")
-                    .append ("span")
-                    .attr("class", "noBreak")
-                    .text(function(d) { return d.text; })
-                    .append("input")
-                        .attr("type", "checkbox")
-                        .attr("class", function(d) { return d.klass; })
-                        .property ("checked", function(d) { return d.initialState; })
+                .append ("span")
+                .attr ("id", function(d) { return self.el.id + d.id; })
+                .attr ("class", "buttonPlaceholder")
+                    .append ("label")
+                    .attr ("class", "btn")
             ;
-			
-            var mainReps = NGL.RepresentationRegistry.names;
-            var self = this;
+            
+            viewOpts.append("input")
+                .attr("type", "checkbox")
+                .attr("class", function(d) { return d.klass; })
+                .property ("checked", function(d) { return d.initialState; })
+            ;
+            
+            viewOpts.append("span")
+                .text(function(d) { return d.text; })
+            ;
+            
+            var optid = this.el.id+"Options";
+            toolbar.append("p").attr("id", optid);
+            new CLMSUI.DropDownMenuViewBB ({
+                el: "#"+optid,
+                model: CLMSUI.compositeModelInst.get("clmsModel"),
+                myOptions: {
+                    title: "Options ▼",
+                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    closeOnClick: false,
+                }
+            });
+		
+            
+            // Protein view type dropdown
+            var mainReps = NGL.RepresentationRegistry.names.slice().sort();
+            var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell"]);
+            mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
             var repSection = toolbar
                 .append ("label")
                 .attr ("class", "btn")
@@ -90,7 +120,6 @@
             ;
             repSection.append("select")
                 .on ("change", function () {
-                    console.log ("evt", d3.event.target.value, self);
                     if (self.xlRepr) {
                         self.xlRepr.replaceChainRepresentation (d3.event.target.value);
                     }
@@ -103,11 +132,8 @@
                 .property ("selected", function(d) { return d === self.options.defaultChainRep; })
             ;
             
-            toolbar.append("button")
-                .attr("class", "btn btn-1 btn-1a centreButton")
-                .text("Re-Centre")
-            ;
-		
+            
+            
             this.chartDiv = flexWrapperPanel.append("div")
                 .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
             ;
@@ -406,23 +432,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             this.structureComp.removeRepresentation (this.sstrucRepr);
         }
         
-        // to figure out how to change color sclae for hydrophobicity
-        var hscheme = NGL.ColorMakerRegistry.getScheme({scheme: "hydrophobicity"});
-        hscheme.scale = "RdBu";
-        
         this.sstrucRepr = this.structureComp.addRepresentation (newType, {
             //color: this.sstrucColor,
             //colorScheme: "chainname",
-            colorScheme: "hydrophobicity",
-            //colorScheme: hscheme,
-            //colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
+            //colorScheme: "hydrophobicity",
+            //colorScheme: this.colorOptions.resHydroColourScheme,
+            colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
             name: "sstruc",
             opacity: 0.67,
             side: "front",
         });
-        
-        var hscheme = NGL.ColorMakerRegistry.getScheme({scheme: "hydrophobicity"});
-        hscheme.scale = "RdBu";
     },
 
     _initStructureRepr: function() {
@@ -438,7 +457,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
-            colorScheme: "hydrophobicity",
+            colorScheme: this.colorOptions.resHydroColourScheme,
+            //colorScheme: "hydrophobicity",
             //colorScale: ["#44f", "#444"],
             scale: 0.6,
             name: "res"
@@ -559,7 +579,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
         };
         
+        // Hydrophobicity scheme but with red-blue colour scale
+        var hscheme = function () {
+            var underScheme =  NGL.ColorMakerRegistry.getScheme ({scheme: "hydrophobicity", scale:"RdBu"});
+            
+            this.atomColor = function (a) {
+                return underScheme.atomColor (a);
+            };
+        };
+        
         this.colorOptions.linkColourScheme = NGL.ColorMakerRegistry.addScheme (linkColourScheme, "xlink");
+        this.colorOptions.resHydroColourScheme = NGL.ColorMakerRegistry.addScheme (hscheme, "newHydro");
+        
+        console.log ("this", this);
     },
 
     _highlightPicking: function (pickingData) {

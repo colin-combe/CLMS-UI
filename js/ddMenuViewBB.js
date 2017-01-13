@@ -12,6 +12,7 @@
             var emptyFunc = function () {};
             var defaultOptions = {
                 title: "A DD Menu",
+                closeOnClick: true,
                 menu: [{name:"Wazzup", func: emptyFunc}, {name:"Buddy", func: emptyFunc}]
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -29,7 +30,7 @@
                 if (d.name) {
                     ind.text(d.name);
                 } else if (d.id) {
-                    var targetSel = d3.select("#"+d.id);
+                    var targetSel = d3.select("#"+d.id); 
                     if (!targetSel.empty()) {
                         var targetNode = targetSel.node();
                         if (targetNode.parentElement) {
@@ -96,6 +97,8 @@
                 (d3target.datum().func)(); // as value holds function reference
             }
             
-            this.hideVis();
+            if (this.options.closeOnClick) {
+                this.hideVis();
+            }
         },
     });

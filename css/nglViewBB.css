@@ -46,6 +46,10 @@ label.btn input[type=file] {
     margin-bottom: 0.2em;
 }
 
-.nglToolbar select {
+.nglToolbar span select {
     text-transform: capitalize;
+}
+
+.nglToolbar > p {
+    display: inline-block;
 }
