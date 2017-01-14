@@ -3,10 +3,9 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.fdr = function (crossLinks, options) {
     
     var threshold = options.threshold;  // can be legitimately undefined to have no fdr   
-    var peptideLength = options.peptideLength || 4; // default for peptideLength cutoff will be 4 if not overridden
     
     // Work out link score based on a function of the related match scores
-    // Ignore crosslinks involving peptides of length 'peptideLength' or less
+    // Ignore matches that don't meet data subset filter
     var defaultScoreCalcFunc = function (crossLink) {      // default function is based on quadratic mean (rms)
         var filtered = crossLink.matches_pp
             .filter (function (match_pp) {
