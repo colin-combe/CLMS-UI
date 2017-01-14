@@ -15,7 +15,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "input input.filterTypeText": "textFilter",
         "click input.filterSpecialToggle": "filterSpecial",
         "change input.filterSeqSep": "filterSeqSep",
-		//~ "change input.filterFdr": "fdrChanged",
     },
 
     initialize: function (viewOptions) {
@@ -211,14 +210,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
         
-        this.listenTo (this.model, "change:interFDRCut change:intraFDRCut", function (model) {
-            var hide = (model.get("intraFDRCut") !== undefined) || (model.get("interFDRCut") !== undefined);
-            d3.select(this.el)
-                .style("opacity", hide ? 0.2 : null)
-                .style("pointer-events", hide ? "none" : null)
-            ;    
-        });
-        
         this.modeChanged();
     },
 
@@ -265,12 +256,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		console.log("fdrMode?", fdrMode);
 		this.model.set("fdrMode", fdrMode);
     },
-
-    //~ fdrChanged: function () {
-		//~ var fdrCutoff = d3.select("#fdrCutoff").node().value;
-		//~ console.log("fdrCutoff?", fdrCutoff);
-		//~ //this.model.set("fdrMode", fdrMode);
-    //~ },
 
     render: function () {
         return this;

@@ -10,7 +10,7 @@ CLMSUI.fdr = function (crossLinks, options) {
     var defaultScoreCalcFunc = function (crossLink) {      // default function is based on quadratic mean (rms)
         var filtered = crossLink.matches_pp
             .filter (function (match_pp) {
-                return match_pp.match.pepSeq1.length > peptideLength && match_pp.match.pepSeq2.length > peptideLength;
+                return CLMSUI.compositeModelInst.get("filter).subsetFilter(match);
             })
         ;
         return Math.sqrt (d3.mean (filtered, function(match_pp) { return match_pp.match.score * match_pp.match.score; }) || 0);

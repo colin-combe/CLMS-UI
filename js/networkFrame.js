@@ -24,8 +24,9 @@ _.extend (CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about this... - cc
-    console.log ("BOTH SYNCS DONE :-)");
-    CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
+    console.log ("DATA LOADED AND WINDOW LOADED");
+	
+	CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
 
     //init annotation types
     var annotationTypes = [];
@@ -53,16 +54,9 @@ var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about thi
     annotationTypes = annotationTypes.concat(Array.from(uniprotFeatureTypes.values()));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
-
-	//martin - got questions about init, at moment i have following commented out - cc
-	//~ allDataAndWindowLoaded();
-	//~ });
-	//~ 
-	//~ // function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
-	//~ var allDataAndWindowLoaded = _.after (1, function () {
-	
-    console.log ("DATA LOADED AND WINDOW LOADED");
+    
     CLMSUI.init.viewsThatNeedAsyncData();
+    
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
     ByRei_dynDiv.init.main();

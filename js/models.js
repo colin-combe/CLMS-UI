@@ -12,45 +12,44 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
     FilterModel: Backbone.Model.extend ({
         defaults: {
 			fdrMode: true,
-            A: true, B: true, C: true, Q: true, unval: true, 
-            AUTO: true,
+			//subset
             linears: true,
             crosslinks: true,
-            decoys: false,
+            selfLinks: true,
+            ambig: true,
+            seqSep: 0,
+            pepLength: 4,
+            //validation status
+            A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
+            //fdr
+            interFDRCut: undefined,
+            intraFDRCut: undefined,
+            //navigation
             pepSeq: "",
             protNames: "",
             charge: "",
             runName: "",
-            scanNumber: "",            
-            selfLinks: true,
-            ambig: true,
-            //~ interFDRCut: undefined,
-            //~ intraFDRCut: undefined,
-            fdrCutoff: 5,
-            seqSep: 0,
+            scanNumber: "",   
         },
 
         initialize: function () {
             // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
-            if (!this.get("cutoff")) {
-                this.set ("cutoff", [0,100]);
+            if (!this.get("matchScoreCutoff")) {
+                this.set ("matchScoreCutoff", [0,100]);
             }
             // scoreExtent used to restrain text input values
-            this.scoreExtent = this.get("cutoff").slice(0);
+            this.scoreExtent = this.get("matchScoreCutoff").slice(0);
         },
 
-        filter: function (match) {
+        subsetFilter: function (match) {
 			//linears? - if linear and linears not selected return false
             if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
 			//cross-links? - if xl and xls not selected return false
             if (match.linkPos1 > 0 && this.get("crosslinks") == false) return false; 
 
-			//decoys? - if decoy and decoys not selected return false
-            if (match.is_decoy && this.get("decoys")  == false) return false; 
-
 			//ambigs? - if ambig's not selected and match is ambig return false
 			if (this.get("ambig") == false) {
-				if (match.pepPos1.length > 1 || match.pepPos2.length > 1) return false;
+				if (match.isAmbig) return false;
 			}
 
 			//self-links? - if self links's not selected and match is self link return false
@@ -74,12 +73,52 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 					return false;
 				}
 			}
-
+			
+            var seqSepFilter = this.get("seqSep");
+            if (!isNaN(seqSepFilter)) {
+                 //if not ambig && is selfLink
+                if (match.protein1.length == 1 && match.protein2
+                        && match.protein1[0] == match.protein2[0]) {
+                    var unambigCrossLink = match.crossLinks[0];
+                    if ((unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < seqSepFilter){
+                        return false;
+                    }
+                }
+            }			
+            
+            var pepLengthFilter = this.get("seqSep");
+            if (!isNaN(pepLengthFilter)) {
+                 //if not ambig && is selfLink
+                if (match.pepSeq1.length < pepLengthFilter && match.pepSeq2.length < pepLengthFiler) {
+                    return false;
+                }
+            }
+            
+            return true;
+            
+       },
+       
+       validationStatusFilter: function (match){
+        
+            var vChar = match.validated;
+            if (vChar == 'R') return false;
+            if (vChar == 'A' && this.get("A")) return true;
+            if (vChar == 'B' && this.get("B")) return true;
+            if (vChar == 'C' && this.get("C")) return true;
+            if (vChar == '?' && this.get("Q")) return true;
+            
+            if (match.autovalidated && this.get("AUTO")) return true;
+			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
+            return false;
+      
 			// if fail score cut off, return false;
-            if (match.score < this.get("cutoff")[0] || match.score > this.get("cutoff")[1]){
+            if (match.score < this.get("matchScoreCutoff")[0] || match.score > this.get("matchScoreCutoff")[1]){
 				return false;
 			}
-			
+		},
+       
+       navigationFilter: function (match) {
+      	
 			//peptide seq check
 			if (seqCheck(this.get("pepSeq")) == false) {
 				return false;
@@ -110,31 +149,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 						.indexOf(scanNumberFilter.toLowerCase()) == -1){
 				return false;
 			}
-
-
-            var seqSepFilter = this.get("seqSep");
-            if (!isNaN(seqSepFilter)) {
-                 //if not ambig && is selfLink
-                if (match.protein1.length == 1 && match.protein2
-                        && match.protein1[0] == match.protein2[0]) {
-                    var unambigCrossLink = match.crossLinks[0];
-                    if ((unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < seqSepFilter){
-                        return false;
-                    }
-                }
-            }
-
-            var vChar = match.validated;
-            if (vChar == 'R') return false;
-            if (vChar == 'A' && this.get("A")) return true;
-            if (vChar == 'B' && this.get("B")) return true;
-            if (vChar == 'C' && this.get("C")) return true;
-            if (vChar == '?' && this.get("Q")) return true;
-            
-            if (match.autovalidated && this.get("AUTO")) return true;
-			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
-            return false;
-            
+          
             //peptide seq check function
 			function seqCheck(searchString) {
 				if (searchString) {
@@ -247,21 +262,6 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
     BlosumModel: Backbone.Model.extend ({
         initialize: function() {
             console.log ("Blosum model initialised", this);
-        },
-    }),
-
-
-    TestModel: Backbone.Model.extend ({
-        defaults : {
-            prime: "animal",
-            //secondaries: ["blee", "whee"],
-            tertiary: 36,
-        },
-
-        initialize: function () {
-            // http://stackoverflow.com/questions/6433795/backbone-js-handling-of-attributes-that-are-arrays
-            // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
-            this.set ("secondaries", ["blee", "whee"]);
         },
     }),
 
