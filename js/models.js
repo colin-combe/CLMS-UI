@@ -11,7 +11,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-			fdrMode: true,
+			fdrMode: false,
 			//subset
             linears: true,
             crosslinks: true,

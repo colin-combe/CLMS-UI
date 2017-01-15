@@ -75,7 +75,6 @@
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
 
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
