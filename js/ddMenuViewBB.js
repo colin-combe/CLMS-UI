@@ -7,22 +7,58 @@
             "click .menuTitle": "toggleVis",
             "click li": "menuSelection",
         },
-
+        
         initialize: function (viewOptions) {
             var emptyFunc = function () {};
             var defaultOptions = {
                 title: "A DD Menu",
                 closeOnClick: true,
-                menu: [{name:"Wazzup", func: emptyFunc}, {name:"Buddy", func: emptyFunc}]
+                menu: [{name:"Wazzup", func: emptyFunc}, {name:"Buddy", func: emptyFunc}],
+                groupByAttribute: "group",
+                labelByAttribute: "name",
+                toggleAttribute: "state",
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
-            var mainDivSel = d3.select(this.el);
-            var placeholder = mainDivSel.attr("class", "btn dropdown");
-            placeholder.append("span").attr("class", "menuTitle").text(this.options.title);           
+            d3.select(this.el)
+                .attr("class", "btn dropdown")
+                .append("span")
+                    .attr("class", "menuTitle")
+                    .text(this.options.title)
+            ;
             
-            var choices = placeholder.append("div").append("ul").selectAll("li")
+            this.render();
+            return this;
+        },
+        
+        render: function () {
+            var self = this;
+            if (this.collection) {
+                var lastCat = null;
+                var adata = [];
+                this.collection.each (function (model) {
+                    //console.log ("model", model);
+                    var cat = model.get(self.options.groupByAttribute);
+                    var cbdata = ({
+                        id: (model.get(self.options.labelByAttribute)+"Placeholder").replace(/ /g, "_"),   // ids may not contain spaces 
+                        label: model.get(self.options.labelByAttribute),
+                        sectionEnd: lastCat !== cat,
+                    });
+                    adata.push (cbdata);
+                    lastCat = cat;
+
+                    var cbView = new CLMSUI.utils.checkBoxView ({
+                        model: model,
+                        myOptions: {id: cbdata.id, label: cbdata.label, toggleAttribute: self.options.toggleAttribute, labelFirst: self.options.labelFirst}
+                    });
+                    self.$el.append(cbView.$el);
+                }); 
+                
+                this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; });
+            }
+            
+            var choices = d3.select(this.el).append("div").append("ul").selectAll("li")
                 .data (this.options.menu, function (d) { return d.name || d.id; })
             ;
             choices.enter().append("li").each(function(d) {
@@ -39,8 +75,7 @@
                         ind.node().appendChild(targetNode);
                     }
                 }
-            });
-            
+            }); 
             
             choices
                 .filter(function(d) { return d.sectionEnd; })

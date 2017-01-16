@@ -204,7 +204,7 @@ CLMSUI.init.views = function () {
         {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false}});
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     });
 
@@ -273,6 +273,11 @@ CLMSUI.init.viewsEssential = function (options) {
         el: "#filterPlaceholder",
         model: filterModel
     });
+    
+    new CLMSUI.FilterSummaryViewBB ({
+        el:"#filterReportPlaceholder",
+        model: CLMSUI.compositeModelInst,
+    });
 
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
@@ -321,7 +326,7 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.render();
 
     //~ selectionViewer.setVisible (true);
-    selectionViewer.render();
+    // selectionViewer.render();
 
     var spectrumModel = new AnnotatedSpectrumModel();
 
@@ -371,7 +376,7 @@ CLMSUI.init.viewsEssential = function (options) {
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
-    // Update spectrum view when extrenal resize event called
+    // Update spectrum view when external resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
@@ -449,6 +454,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
+    /*
     new CLMSUI.AnnotationTypesViewBB ({
         el: "#annotationsDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("annotationTypes"),
@@ -456,7 +462,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             title: "Annotations",
         }
     });
-
+    */
+    /*
     var annotationTypesUL = d3.select("#annotationsUL");
     var lastCat;
     CLMSUI.compositeModelInst.get("annotationTypes").each(function (annotationType) {
@@ -473,7 +480,45 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 			el: annotationTypeLI.node(),
 			model:annotationType
 		});
-    });    
+    });  
+    */
+    
+    /*
+    // Generate checkboxes for view dropdown
+    var lastCat = null;
+    var adata = [];
+    CLMSUI.compositeModelInst.get("annotationTypes").each (function (annotationType) {
+        console.log ("annotationType", annotationType);
+        var cat = annotationType.get("category");
+        var cbdata = ({
+            id: (annotationType.get("type")+"Placeholder").replace(/ /g, "_"),   // ids may not contain spaces 
+            label: annotationType.get("type"),
+            sectionEnd: lastCat !== cat,
+        });
+        adata.push (cbdata);
+        lastCat = cat;
+        
+        var cbView = new CLMSUI.utils.checkBoxView ({
+            model: annotationType,
+            myOptions: {id: cbdata.id, label: cbdata.label, toggleAttribute: "shown", labelFirst: false}
+        });
+        $("#annotationsDropdownPlaceholder").append(cbView.$el);
+    });
+    */
+    
+    // Add them to a drop-down menu (this rips them away from where they currently are)
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#annotationsDropdownPlaceholder",
+        collection: CLMSUI.compositeModelInst.get("annotationTypes"),
+        myOptions: {
+            title: "Annotations",
+            //menu: adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; }),
+            closeOnClick: false,
+            groupByAttribute: "category",
+            labelByAttribute: "type",
+            toggleAttribute: "shown",
+        }
+    });
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",

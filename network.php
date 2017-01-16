@@ -158,6 +158,7 @@
 
             <div class="controls">
                 <span id="filterPlaceholder"></span>
+                <div id="filterReportPlaceholder"></div>
             </div>
         </div><!-- MAIN -->
 
@@ -187,9 +188,9 @@
                 document.title = Array.from(searches.keys()).join();
 
                 CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                    { direction: "vertical", sizes: [80,20], minSize: [200,10] 
-						}
+                    { direction: "vertical", sizes: [80,20], minSize: [200,10] }
                 );
+                //CLMSUI.split.collapse(1);
 
                 CLMSUI.init.views();
 

@@ -201,11 +201,13 @@ body, input, select, textarea {
 #main {
     height:100vh;
     width:100vw;
+    /*display: table;*/
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
+/
     overflow:hidden;
     /*z-index:-1;*/
 }
@@ -214,6 +216,11 @@ body, input, select, textarea {
     top: 0px;
     bottom: 65px;
     position: absolute;
+    
+    /*
+    display: table-row;
+    height: 100%;
+    */
     width: 100%;
     overflow: none;
 }
@@ -365,10 +372,13 @@ body, input, select, textarea {
 
 #main .controls{
     overflow: hidden;
+    /*display: table-row;*/
+    
     position: fixed;
     bottom: 0;
-    width: 100%;
     height: 65px;
+
+    width: 100%;
     background:#ecedf2;
     color:#091D42;
     padding-left: 10px;
