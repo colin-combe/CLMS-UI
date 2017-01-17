@@ -50,6 +50,10 @@
     font-weight: bold;
 }
 
+.CLMStooltip table tr td:first-child, .CLMStooltip table tr th:first-child {
+    text-transform: capitalize;
+}
+
 .CLMStooltip table tr th {
     height: 1em;
 }

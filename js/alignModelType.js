@@ -201,7 +201,7 @@
                 return model.get("seqCollection").models
                     .map (function (seqModel) {
                         var alignment = seqModel.get("compAlignment");
-                        return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", alignmentID: seqModel.get("compID") };
+                        return {start: 1, end: alignment.convertToRef.length, name: alignment.label, protID: protID, id: protID+" "+alignment.label, category: "Alignment", type: "PDB aligned region", alignmentID: seqModel.get("compID") };
                     })
                     .filter(function (alignFeature) {
                         return includeCanonical || alignFeature.name !== "Canonical";     

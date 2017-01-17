@@ -15,7 +15,7 @@ button.C:hover, button.C.validatedState, tr.C {
 }
 
 button.Q:hover, button.Q.validatedState, tr.Q {
-    background-color:light-gray;
+    background-color:lightgray;
 }
 
 button.R:hover, button.R.validatedState, tr.R {

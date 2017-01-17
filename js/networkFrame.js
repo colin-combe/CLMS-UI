@@ -257,12 +257,6 @@ CLMSUI.init.views = function () {
             this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
         })
     ;
-
-    new CLMSUI.CircularViewBB ({
-        el: "#circularPanel",
-        displayEventName: "circularShow",
-        model: CLMSUI.compositeModelInst,
-    });
 };
 
 
@@ -451,6 +445,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     new CLMSUI.KeyViewBB ({
         el: "#keyPanel",
         displayEventName: "keyShow",
+        model: CLMSUI.compositeModelInst,
+    });
+    
+    /* 'cos circle listens to annotation model which is formed from uniprot async data */
+    new CLMSUI.CircularViewBB ({
+        el: "#circularPanel",
+        displayEventName: "circularShow",
         model: CLMSUI.compositeModelInst,
     });
 

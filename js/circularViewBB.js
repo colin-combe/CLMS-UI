@@ -53,15 +53,19 @@
 
 
         var featureCoords = [];
+        var fid = 0;
         featureArrs.forEach (function (farr, i) {
             var nodeID = nodeArr[i].id;
             var nodeCoord = nodeCoordMap.get (nodeID);
             farr.forEach (function (feature) {
                 var tofrom = _options.featureParse (feature, nodeID);
-                //console.log ("nc", nodeCoord, tofrom.fromPos, tofrom.toPos, feature);
+                console.log ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
+                console.log ("ORIG FEATURE", feature);
                 featureCoords.push ({
-                    id: feature.id || feature.notes || feature.name,
+                    id: (feature.id || feature.notes || feature.name || feature.description) + fid,
+                    description: feature.description,
                     category: feature.category,
+                    type: feature.type,
                     name: feature.name,
                     nodeID: nodeID,
                     fstart: tofrom.fromPos + 1,
@@ -69,8 +73,10 @@
                     start: scale (tofrom.fromPos + nodeCoord.rawStart),
                     end: scale (tofrom.toPos + nodeCoord.rawStart),
                 });
+                fid++;
             });
         });
+        console.log ("CONV FEATURES", featureCoords);
 
         var linkCoords = [];
         linkArr.forEach (function (link) {
@@ -112,7 +118,6 @@
                 tickWidth: 23,
                 tickLabelCycle: 5,  // show label every nth tick
                 gap: 5,
-                uniprotFeatureFilterSet: d3.set(["DOMAIN", "Alignment"]),
                 linkParse: function (link) {
                     // turn toPos and fromPos to zero-based index
                     return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
@@ -120,24 +125,25 @@
                 },
                 featureParse: function (feature, nodeid) {
                     // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
-                    var convStart = feature.start;
-                    var convEnd = feature.end;
+                    feature.start = +feature.begin;
+                    var convStart = +feature.start;
+                    var convEnd = +feature.end;
                     var protAlignModel = self.model.get("alignColl").get(nodeid);
                     if (protAlignModel) {
                         var alignmentID = feature.alignmentID || "Canonical";
-                        convStart = protAlignModel.mapToSearch (alignmentID, feature.start);
-                        convEnd = protAlignModel.mapToSearch (alignmentID, feature.end);
+                        convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
+                        convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
                         if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
                         if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                     }
                     convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
                     if (isNaN(convEnd) || convEnd === undefined) {
-                        convEnd = feature.end;
+                        convEnd = +feature.end;
                     }
                     //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
                     // e.g. a feature that starts/stops at some point has length of 1, not 0
 
-                    console.log ("convStart", feature.start, convStart, "convEnd", feature.end, convEnd, protAlignModel);
+                    console.log (feature, "convStart", +feature.start, convStart, "convEnd", +feature.end, convEnd, protAlignModel);
                     return {fromPos: convStart, toPos: convEnd};
                 },
                 intraOutside: true,
@@ -281,6 +287,7 @@
             this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
+            this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             return this;
         },
 
@@ -374,12 +381,16 @@
 
         filterFeatures: function (featureArrays) {
             var features = d3.merge (featureArrays.filter (function(arr) { return arr !== undefined; }));
+            var annots = this.model.get("annotationTypes").where({shown: true});
+            var featureFilterSet = d3.set (annots.map (function(annot) { return annot.get("type"); }));
+            //console.log ("annots", annots, "f", features);
             return features ? features.filter (function (f) { 
-                return !f.category || this.options.uniprotFeatureFilterSet.has (f.category);
+                return !f.category || featureFilterSet.has (f.type) || featureFilterSet.has (f.category);
             }, this) : [];
         },
 
         render: function (options) {
+
             console.log ("render args", arguments);
             var changed = options ? options.changed : undefined;
 
@@ -414,7 +425,7 @@
                 // After rearrange interactors, because filtered features depends on the interactor order
                 var alignColl = this.model.get("alignColl");
                 var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures ([inter.uniprot.features, alignColl.getAlignmentsAsFeatures (inter.id)]);
+                    return this.filterFeatures ([inter.uniprot ? inter.uniprot.features : [], alignColl.getAlignmentsAsFeatures (inter.id)]);
                 }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
 
@@ -706,7 +717,7 @@
 
         drawFeatures : function (g, features) {
             var self = this;
-            features.sort (function (a,b){
+            features.sort (function (a, b){
                 var diff = (b.end - b.start) - (a.end - a.start);
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
             });
@@ -741,7 +752,7 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d) { return CLMSUI.domainColours(anno.category + "-" + anno.type); })
+                .style("fill", function(d) { return CLMSUI.domainColours(d.category + "-" + d.type); })
             ;
 
             return this;
