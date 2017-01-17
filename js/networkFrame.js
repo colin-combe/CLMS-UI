@@ -483,36 +483,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });  
     */
     
-    /*
-    // Generate checkboxes for view dropdown
-    var lastCat = null;
-    var adata = [];
-    CLMSUI.compositeModelInst.get("annotationTypes").each (function (annotationType) {
-        console.log ("annotationType", annotationType);
-        var cat = annotationType.get("category");
-        var cbdata = ({
-            id: (annotationType.get("type")+"Placeholder").replace(/ /g, "_"),   // ids may not contain spaces 
-            label: annotationType.get("type"),
-            sectionEnd: lastCat !== cat,
-        });
-        adata.push (cbdata);
-        lastCat = cat;
-        
-        var cbView = new CLMSUI.utils.checkBoxView ({
-            model: annotationType,
-            myOptions: {id: cbdata.id, label: cbdata.label, toggleAttribute: "shown", labelFirst: false}
-        });
-        $("#annotationsDropdownPlaceholder").append(cbView.$el);
-    });
-    */
     
-    // Add them to a drop-down menu (this rips them away from where they currently are)
+    // Make a drop down menu constructed from the annotations collection
     new CLMSUI.DropDownMenuViewBB ({
         el: "#annotationsDropdownPlaceholder",
         collection: CLMSUI.compositeModelInst.get("annotationTypes"),
         myOptions: {
             title: "Annotations",
-            //menu: adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; }),
             closeOnClick: false,
             groupByAttribute: "category",
             labelByAttribute: "type",
