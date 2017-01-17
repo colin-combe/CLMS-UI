@@ -383,7 +383,7 @@
             var features = d3.merge (featureArrays.filter (function(arr) { return arr !== undefined; }));
             var annots = this.model.get("annotationTypes").where({shown: true});
             var featureFilterSet = d3.set (annots.map (function(annot) { return annot.get("type"); }));
-            console.log ("annots", annots, "f", features);
+            //console.log ("annots", annots, "f", features);
             return features ? features.filter (function (f) { 
                 return !f.category || featureFilterSet.has (f.type) || featureFilterSet.has (f.category);
             }, this) : [];
