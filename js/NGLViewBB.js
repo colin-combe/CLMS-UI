@@ -20,17 +20,27 @@
                 "click .selectedOnlyCB": "toggleNonSelectedLinks",
                 "click .showResiduesCB": "toggleResidues",
                 "click .shortestLinkCB": "toggleShortestLinksOnly",
+                "mousedown .panelInner": "checkCTRL",
             });
+        },
+        
+        // Intercept whether a click on the 3d view had the ctrl key depressed, share it with the 3d crosslink model
+        checkCTRL: function (evt) {
+            if (this.xlRepr) {
+                this.xlRepr.ctrlKey = evt.ctrlKey;
+            }
         },
 
         initialize: function (viewOptions) {
             CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
+            var self = this;
             
             var defaultOptions = {
                 labelVisible: false,
                 selectedOnly: false,
                 showResidues: true,
                 shortestLinksOnly: true,
+                defaultChainRep: "cartoon",
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -49,32 +59,81 @@
                 .attr("class", "btn btn-1 btn-1a downloadButton")
                 .text("Download Image")
             ;
-			
-            var toggleButtonData = [
-                {initialState: this.options.labelVisible, klass: "distanceLabelCB", text: "Distance Labels"},
-                {initialState: this.options.selectedOnly, klass: "selectedOnlyCB", text: "Selected Only"},
-                {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues"},
-                {initialState: this.options.shortestLinksOnly, klass: "shortestLinkCB", text: "Shortest Link Option Only"},
-            ];
             
-            toolbar.selectAll("label").data(toggleButtonData)
-                .enter()
-                .append ("label")
-                .attr ("class", "btn")
-                    .append ("span")
-                    .attr("class", "noBreak")
-                    .text(function(d) { return d.text; })
-                    .append("input")
-                        .attr("type", "checkbox")
-                        .attr("class", function(d) { return d.klass; })
-                        .property ("checked", function(d) { return d.initialState; })
-            ;
-			
             toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a centreButton")
                 .text("Re-Centre")
             ;
+
+			
+            
+            // Various view options set up, then put in a dropdown menu
+            var toggleButtonData = [
+                {initialState: this.options.labelVisible, klass: "distanceLabelCB", text: "Distance Labels", id: "visLabel"},
+                {initialState: this.options.selectedOnly, klass: "selectedOnlyCB", text: "Selected Only", id: "selectedOnly"},
+                {initialState: this.options.showResidues, klass: "showResiduesCB", text: "Residues", id: "showResidues"},
+                {initialState: this.options.shortestLinksOnly, klass: "shortestLinkCB", text: "Shortest Link Option Only", id: "shortestOnly"},
+            ];
+            
+            var viewOpts = toolbar.selectAll("label").data(toggleButtonData)
+                .enter()
+                .append ("span")
+                .attr ("id", function(d) { return self.el.id + d.id; })
+                .attr ("class", "buttonPlaceholder")
+                    .append ("label")
+                    .attr ("class", "btn")
+            ;
+            
+            viewOpts.append("input")
+                .attr("type", "checkbox")
+                .attr("class", function(d) { return d.klass; })
+                .property ("checked", function(d) { return d.initialState; })
+            ;
+            
+            viewOpts.append("span")
+                .text(function(d) { return d.text; })
+            ;
+            
+            var optid = this.el.id+"Options";
+            toolbar.append("p").attr("id", optid);
+            new CLMSUI.DropDownMenuViewBB ({
+                el: "#"+optid,
+                model: CLMSUI.compositeModelInst.get("clmsModel"),
+                myOptions: {
+                    title: "Options ▼",
+                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    closeOnClick: false,
+                }
+            });
 		
+            
+            // Protein view type dropdown
+            var mainReps = NGL.RepresentationRegistry.names.slice().sort();
+            var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell"]);
+            mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
+            var repSection = toolbar
+                .append ("label")
+                .attr ("class", "btn")
+                    .append ("span")
+                    .attr("class", "noBreak")
+                    .text ("Chain Representation")
+            ;
+            repSection.append("select")
+                .on ("change", function () {
+                    if (self.xlRepr) {
+                        self.xlRepr.replaceChainRepresentation (d3.event.target.value);
+                    }
+                })
+                .selectAll("option")
+                .data (mainReps)
+                .enter()
+                .append("option")
+                .text (function(d) { return d; })
+                .property ("selected", function(d) { return d === self.options.defaultChainRep; })
+            ;
+            
+            
+            
             this.chartDiv = flexWrapperPanel.append("div")
                 .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
             ;
@@ -130,13 +189,16 @@
             this.xlRepr = new CLMSUI.CrosslinkRepresentation (
                 this.model.get("stageModel"),
                 {
+                    defaultChainRep: this.options.defaultChainRep,
                     selectedColor: "lightgreen",
                     selectedLinksColor: "yellow",
                     sstrucColor: "gray",
-                    displayedDistanceColor: "tomato",
+                    displayedDistanceColor: "gray",
                     displayedDistanceVisible: this.options.labelVisible,
                 }
             );
+            
+            console.log ("repr", this.xlRepr);
         },
 
         render: function () {
@@ -173,7 +235,7 @@
 		
         centerView: function () {
             if (this.model.get("stageModel")) {
-                this.model.get("stageModel").get("structureComp").stage.centerView();
+                this.model.get("stageModel").get("structureComp").stage.centerView(true);
             }
             return this;
         },
@@ -247,9 +309,10 @@
 CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
 
     var defaults = {
+        defaultChainRep: "cartoon",
         sstrucColor: "wheat",
-        displayedDistanceColor: "tomato",
-        selectedDistanceColor: "white",
+        displayedDistanceColor: "grey",
+        selectedDistanceColor: "black",
         displayedDistanceVisible: false,
         selectedDistanceVisible: true,
         displayedResiduesColor: params.displayedColor ? undefined : "lightgrey",
@@ -363,6 +426,23 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         return this._getSelectionFromResidue (sels);
     },
+    
+    replaceChainRepresentation: function (newType) {
+        if (this.sstrucRepr) {
+            this.structureComp.removeRepresentation (this.sstrucRepr);
+        }
+        
+        this.sstrucRepr = this.structureComp.addRepresentation (newType, {
+            //color: this.sstrucColor,
+            //colorScheme: "chainname",
+            //colorScheme: "hydrophobicity",
+            //colorScheme: this.colorOptions.resHydroColourScheme,
+            colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
+            name: "sstruc",
+            opacity: 0.67,
+            side: "front",
+        });
+    },
 
     _initStructureRepr: function() {
 
@@ -372,18 +452,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var resSele = this._getSelectionFromResidue (this.crosslinkData.getResidues());
         var resEmphSele = this._getSelectionFromResidue ([]);
 
-        this.sstrucRepr = comp.addRepresentation ("cartoon", {
-            //color: this.sstrucColor,
-            colorScheme: "chainname",
-            colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
-            name: "sstruc",
-            opacity: 0.67,
-            side: "front",
-        });
+        this.replaceChainRepresentation (this.defaultChainRep);
 
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
-            color: this.displayedResiduesColor,
+            //color: this.displayedResiduesColor,
+            colorScheme: this.colorOptions.resHydroColourScheme,
+            //colorScheme: "hydrophobicity",
+            //colorScale: ["#44f", "#444"],
             scale: 0.6,
             name: "res"
         });
@@ -397,7 +473,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         });
 
         this.stage.centerView (true);
-        comp.centerView (true);
+        //comp.centerView (true);   // this just seems to 'shrink' (zoom out) the view and not do anything useful
     },
 
     _initLinkRepr: function() {
@@ -458,7 +534,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         comp.structure.eachAtom (function (atomProxy) {
             var pid = CLMSUI.modelUtils.getProteinFromChainIndex (self.crosslinkData.get("chainMap"), atomProxy.chainIndex);
             if (pid) {
-                var protein = self.crosslinkData.getModel().get("clmsModel").get("interactors").get(pid);
+                var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[atomProxy.index] = pname + ":" + atomProxy.chainname + "(" +atomProxy.chainIndex+ ")";
             }
@@ -466,8 +542,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         
         this.labelRepr = comp.addRepresentation ("label", {
-            color: "#ffffff",
-            scale: 1.5,
+            color: "#222",
+            scale: 3.0,
             sele: selection,
             labelType: "text",
             labelText: customText,
@@ -503,7 +579,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
         };
         
+        // Hydrophobicity scheme but with red-blue colour scale
+        var hscheme = function () {
+            var underScheme =  NGL.ColorMakerRegistry.getScheme ({scheme: "hydrophobicity", scale:"RdBu"});
+            
+            this.atomColor = function (a) {
+                return underScheme.atomColor (a);
+            };
+        };
+        
         this.colorOptions.linkColourScheme = NGL.ColorMakerRegistry.addScheme (linkColourScheme, "xlink");
+        this.colorOptions.resHydroColourScheme = NGL.ColorMakerRegistry.addScheme (hscheme, "newHydro");
+        
+        console.log ("this", this);
     },
 
     _highlightPicking: function (pickingData) {
@@ -526,11 +614,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         });
     },
     
+    //makeSelectionString
+    
     _handlePicking: function (pickingData, pickType, doEmpty) {
         var crosslinkData = this.crosslinkData;
         var atom = pickingData.atom;
         var bond = pickingData.bond;
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
+        var add = (false || this.ctrlKey) && (pickType === 'selection');  // should selection add to current selection?
 
         if (atom !== undefined && bond === undefined) {
             console.log ("picked atom", atom, atom.resno, atom.chainIndex);
@@ -540,29 +631,29 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 
                 // this is to find the index of the residue in searchindex (crosslink) terms
                 // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
-                var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex (this.crosslinkData.get("chainMap"), pdtrans.residue.chainIndex);
+                var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex (crosslinkData.get("chainMap"), pdtrans.residue.chainIndex);
                 var alignId = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
                 // align from 3d to search index. resindex is 0-indexed so +1 before querying
                 console.log ("alignid", alignId, proteinId);
-                var srindex = this.crosslinkData.getModel().get("alignColl").getAlignedIndex (pdtrans.residue.resindex + 1, proteinId, true, alignId); 
+                var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex (pdtrans.residue.resindex + 1, proteinId, true, alignId); 
                 
                 pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
                 pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
                 console.log (pdtrans.residue, "links", pdtrans.links); 
-                console.log (this.crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
+                console.log (crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
                 
                 var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
-                var protein = this.crosslinkData.getModel().get("clmsModel").get("interactors").get(proteinId);
-                this.crosslinkData.getModel().get("tooltipModel")
+                var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
+                crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))
-                    .set("location", this.makeTooltipCoords (pickingData.mouse))
+                    .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                 ;
-                this.crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
+                crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
             }
         } else if (bond !== undefined) {
             // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
-            // console.log ("picked bond", bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
+            console.log ("picked bond", bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
 
             // this line worked with one distance rep, but not with two or more
             // var altBondStore = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
@@ -601,17 +692,23 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var residuesA = crosslinkData.findResidues (rp1.resno, c1);
             var residuesB = crosslinkData.findResidues (rp2.resno, c2);
             console.log ("res", ap1.residueIndex, ap2.residueIndex, c1, c2, residuesA, residuesB);
+            if (pickType === "selection") {
+                var selectionSelection = this._getSelectionFromResidue (residuesA.concat(residuesB));
+                console.log ("seleSele", selectionSelection);
+                this.structureComp.centerView (true, selectionSelection);
+            }
+
             // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
             if (residuesA && residuesB) {
                 pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
                 pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
                 
-                this.crosslinkData.getModel().get("tooltipModel")
+                crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0]))
-                    .set("location", this.makeTooltipCoords (pickingData.mouse))
+                    .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                 ;
-                this.crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
+                crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
             }
         }
         
@@ -620,7 +717,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         }
         console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
         
-        this.crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, false);
+        crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, add);
     },
 
 
@@ -680,9 +777,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     setSelectedLinks: function (links) {
         var availableLinks = this._getAvailableLinks (this.filterByModelLinkArray (links, "selection"));
+        var atomPairs = this._getAtomPairsFromLinks (availableLinks);
         this.linkEmphRepr.setParameters ({
-            atomPair: this._getAtomPairsFromLinks (availableLinks),
+            atomPair: atomPairs,
         });
+        console.log ("ATOMPAIRS", atomPairs);
     },
     
     setHighlightedLinks: function (links) {
@@ -708,7 +807,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
      * - displayedDistanceVisible
      * - selectedDistanceVisible
      */
-    setParameters: function( params, initialize ){
+    setParameters: function (params, initialize) {
 
         var allParams = {};
         var repNameArray = ["resRepr", "linkRepr", "resEmphRepr", "linkEmphRepr", "linkHighRepr", "sstrucRepr"];
@@ -743,6 +842,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             "displayedDistanceVisible": allParams.linkRepr.labelVisible,
             "selectedDistanceVisible": allParams.linkEmphRepr.labelVisible,
             "highlightedDistanceVisible": allParams.linkHighRepr.labelVisible,
+            "defaultChainRep": params.defaultChainRep,
         };
         d3.entries(objProps).forEach (function (entry) {
             if (entry.value !== undefined) {

@@ -3,7 +3,7 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.utils = {
     // return comma-separated list of protein names from array of protein ids
     proteinConcat: function (d, field, clmsModel) {
-        var pnames =  d[field].map (function(pid) {return clmsModel.get("interactors").get(pid).name;});
+        var pnames =  d[field].map (function(pid) {return clmsModel.get("participants").get(pid).name;});
         return pnames.join(",");
     },
 
@@ -119,13 +119,18 @@ CLMSUI.utils = {
                 .attr("class", "btn")
             ;
             labs.append ("input")
-                .attr ("id", "#"+sel.attr("id")+"ChkBx")
+                .attr ("id", sel.attr("id")+"ChkBx")
                 .attr("type", "checkbox")
             ;
             var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
             labelText.text (this.options.label);
-
-            this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
+            
+            // Remember to listen to changes to model or global event state that come from outside the view (keeps it in sync with models)
+            if (this.model && this.options.toggleAttribute) {
+                this.listenTo (this.model, "change:"+this.options.toggleAttribute, this.showState);
+            } else if (this.options.eventName) {
+                this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
+            }
         },
 
         showState : function (boolVal) {
@@ -133,7 +138,12 @@ CLMSUI.utils = {
         },
 
         checkboxClicked: function () {
-            CLMSUI.vent.trigger (this.options.eventName, d3.select(this.el).select("input").property("checked"));
+            var checked = d3.select(this.el).select("input").property("checked");
+            if (this.model && this.options.toggleAttribute) {
+                this.model.set (this.options.toggleAttribute, checked);
+            } else if (this.options.eventName) {
+                CLMSUI.vent.trigger (this.options.eventName, checked);
+            }
         }
     }),
 
@@ -359,7 +369,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         var self = this;
         d3.select(this.el)
             .append("span")
-            .text("Link Colours:")
+            .text("LINK-COLOURS:")
         ;
 
         d3.select(this.el)

@@ -55,6 +55,10 @@
 					crossLink.filteredMatches_pp = crossLink.matches_pp;
 				}
             }
+            
+            //foreach participant hide if no links
+            var participants = this.get("clmsModel").get("participants").values();
+
             this.trigger ("filteringDone");
             return this;
         },
@@ -62,6 +66,10 @@
         getFilteredCrossLinks: function (crossLinks) {
             //console.log ("crosslinks", crossLinks);
             var result = new Map;
+            
+            if (!crossLinks) {
+                crossLinks = this.get("clmsModel").get("crossLinks");
+            }
 
             crossLinks.forEach (function (value, key) {
                 if (!value.filteredMatches_pp
@@ -146,7 +154,7 @@
         setSelectedProteins: function (idArr, add) {
             var map = add ? new Map (this.get("selectedProtein")) : new Map ();
             idArr.forEach (function (id) {
-                map.set (id, this.get("clmsModel").get("interactors").get(id));    
+                map.set (id, this.get("clmsModel").get("participants").get(id));    
             }, this);
             console.log ("map eq", map == this.get("selectedProtein"));
             // Currently (03/06/16) Maps/Sets don't trigger change functions even for new Objects

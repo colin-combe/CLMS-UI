@@ -23,14 +23,44 @@ CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after (2, function() {
+var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about this... - cc
     console.log ("BOTH SYNCS DONE :-)");
     CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
-    allDataAndWindowLoaded();
-});
 
-// function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
-var allDataAndWindowLoaded = _.after (2, function () {
+    //init annotation types
+    var annotationTypes = [];
+    //add option for showing PDB aligned regions
+	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+		category: "Alignment",
+		type:"PDB aligned region"}
+	);
+
+	annotationTypes.push(alignedAnnotationType);
+	//get uniprot feature types
+	var uniprotFeatureTypes = new Map();     
+    for (participant of CLMSUI.compositeModelInst.get("clmsModel").get("participants").values()){
+        if (participant.uniprot) {
+			for (feature of participant.uniprot.features) {
+				var key = feature.category + "-" + feature.type;
+				if (uniprotFeatureTypes.has(key) === false){
+					var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
+					uniprotFeatureTypes.set(key, annotationType);
+				}
+			}
+		}
+    }
+	//add uniprot feature types
+    annotationTypes = annotationTypes.concat(Array.from(uniprotFeatureTypes.values()));
+    var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
+    CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
+
+	//martin - got questions about init, at moment i have following commented out - cc
+	//~ allDataAndWindowLoaded();
+	//~ });
+	//~ 
+	//~ // function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
+	//~ var allDataAndWindowLoaded = _.after (1, function () {
+	
     console.log ("DATA LOADED AND WINDOW LOADED");
     CLMSUI.init.viewsThatNeedAsyncData();
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
@@ -41,14 +71,14 @@ var allDataAndWindowLoaded = _.after (2, function () {
 CLMSUI.init = CLMSUI.init || {};
 
 CLMSUI.init.models = function (options) {
-    
+
     // define alignment model and listeners first, so they're ready to pick up events from other models
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection ();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
 
-        clmsModel.get("interactors").forEach (function (entry) {
+        clmsModel.get("participants").forEach (function (entry) {
             //console.log ("entry", entry);
             if (!entry.is_decoy) {
                 this.add ([{
@@ -57,8 +87,10 @@ CLMSUI.init.models = function (options) {
                     "refID": "Search",
                     "refSeq": entry.sequence,
                 }]);
-                this.addSeq (entry.id, "Canonical", entry.canonicalSeq, {});
-                console.log ("alignColl", this);
+                if (entry.uniprot){
+					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence, {});
+				}
+                //~ console.log ("alignColl", this);
             }
         }, this);
 
@@ -95,7 +127,7 @@ CLMSUI.init.models = function (options) {
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch();
 
-    CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Accent[8].slice().reverse());
+    CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Set1[7]);//.slice().reverse());
 };
 
 
@@ -127,6 +159,7 @@ CLMSUI.init.modelsEssential = function (options) {
         selection: [], //will contain cross-link objects
         highlights: [], //will contain cross-link objects
         linkColourAssignment: CLMSUI.linkColour.defaultColoursBB,
+        annotationTypes: null,
         selectedProtein: null, //what type should this be? Set?
         groupColours: null // will be d3.scale for colouring by search/group
     });
@@ -171,7 +204,7 @@ CLMSUI.init.views = function () {
         {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false}});
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     });
 
@@ -191,7 +224,7 @@ CLMSUI.init.views = function () {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
-    
+
     // Generate buttons for load dropdown
     var buttonData = [
         {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
@@ -208,13 +241,13 @@ CLMSUI.init.views = function () {
             menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
-        
+
     console.log ("MODEL", CLMSUI.compositeModelInst);
-    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("interactors");
+    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
     CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
 
     new CLMSUI.ThreeColourSliderBB ({
-        el: "#sliderDiv",            
+        el: "#sliderDiv",
         model: CLMSUI.linkColour.distanceColoursBB,
         domain: [0,35],
         extent: [15,25],
@@ -235,11 +268,15 @@ CLMSUI.init.views = function () {
 
 CLMSUI.init.viewsEssential = function (options) {
 
-
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
     new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder",
         model: filterModel
+    });
+    
+    new CLMSUI.FilterSummaryViewBB ({
+        el:"#filterReportPlaceholder",
+        model: CLMSUI.compositeModelInst,
     });
 
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
@@ -251,7 +288,7 @@ CLMSUI.init.viewsEssential = function (options) {
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
         this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
-    
+
     new CLMSUI.MinigramViewBB ({
         el: "#filterPlaceholderSliderHolder",
         model: miniDistModelInst,
@@ -272,7 +309,7 @@ CLMSUI.init.viewsEssential = function (options) {
             //console.log ("cutoff changed");
         })
     ;
-    
+
 
     // World of code smells vol.1
     // selectionViewer declared before spectrumWrapper because...
@@ -284,15 +321,12 @@ CLMSUI.init.viewsEssential = function (options) {
         el: "#bottomDiv",
         model: CLMSUI.compositeModelInst,
     });
-    // redraw / hide table on selected cross-link change
-    selectionViewer.listenTo (CLMSUI.compositeModelInst, "change:selection", function (model, selection) {
-        var emptySelection = (selection.length === 0);
-        CLMSUI.split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-        this.setVisible (!emptySelection);
-    });
-    CLMSUI.split.collapse (true);
-    selectionViewer.setVisible (false);
 
+    selectionViewer.lastCount = 1;
+    selectionViewer.render();
+
+    //~ selectionViewer.setVisible (true);
+    // selectionViewer.render();
 
     var spectrumModel = new AnnotatedSpectrumModel();
 
@@ -334,7 +368,7 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         })
     ;
-    
+
     var spectrumViewer = new SpectrumView ({
         model: spectrumModel,
         el:"#spectrumPanel",
@@ -342,7 +376,7 @@ CLMSUI.init.viewsEssential = function (options) {
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
-    // Update spectrum view when extrenal resize event called
+    // Update spectrum view when external resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
@@ -363,7 +397,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-			spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
+            spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
             var url = "./loadData.php?sid="
                     + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
                     + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
@@ -374,21 +408,21 @@ CLMSUI.init.viewsEssential = function (options) {
                     console.log(json);
                     var altModel = new window.CLMS.model.SearchResultsModel (json);
                     var allCrossLinks = Array.from(altModel.get("crossLinks").values());
-					// empty selection first
-					// (important or it will crash coz selection contains links to proteins not in clms model)
-					spectrumWrapper.alternativesModel.set("selection", []);
-					spectrumWrapper.alternativesModel.set("clmsModel", altModel);
-					spectrumWrapper.alternativesModel.applyFilter();
+                    // empty selection first
+                    // (important or it will crash coz selection contains links to proteins not in clms model)
+                    spectrumWrapper.alternativesModel.set("selection", []);
+                    spectrumWrapper.alternativesModel.set("clmsModel", altModel);
+                    spectrumWrapper.alternativesModel.applyFilter();
                     spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
                     if (altModel.get("matches").size == 1) {
-						d3.select("#alternatives").style("display", "none");
-						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					} else {
-						d3.select("#alternatives").style("display", "block");
-						spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					}
+                        d3.select("#alternatives").style("display", "none");
+                        spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+                    } else {
+                        d3.select("#alternatives").style("display", "block");
+                        spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
+                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+                    }
                 }
             });
         } else {
@@ -408,7 +442,7 @@ CLMSUI.init.viewsEssential = function (options) {
             ]
         }
     });
-    
+
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
@@ -420,12 +454,55 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
+    /*
+    new CLMSUI.AnnotationTypesViewBB ({
+        el: "#annotationsDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("annotationTypes"),
+        myOptions: {
+            title: "Annotations",
+        }
+    });
+    */
+    /*
+    var annotationTypesUL = d3.select("#annotationsUL");
+    var lastCat;
+    CLMSUI.compositeModelInst.get("annotationTypes").each(function (annotationType) {
+		var cat = annotationType.get("category");
+		if (lastCat !== cat) {
+			if (lastCat) {
+				annotationTypesUL.append("hr");
+			}	
+			//~ annotationTypesUL.append("span").text(cat);			
+			lastCat = cat;
+		}
+		var annotationTypeLI = annotationTypesUL.append("li");
+        var cbView = new CLMSUI.AnnotationTypeViewBB ({
+			el: annotationTypeLI.node(),
+			model:annotationType
+		});
+    });  
+    */
+    
+    
+    // Make a drop down menu constructed from the annotations collection
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#annotationsDropdownPlaceholder",
+        collection: CLMSUI.compositeModelInst.get("annotationTypes"),
+        myOptions: {
+            title: "Annotations",
+            closeOnClick: false,
+            groupByAttribute: "category",
+            labelByAttribute: "type",
+            toggleAttribute: "shown",
+        }
+    });
+
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
-        el: "#colourSelect",
+        el: "#linkColourDropdownPlaceholder",
         model: CLMSUI.linkColour.Collection,
         storeSelectedAt: {model: CLMSUI.compositeModelInst, attr: "linkColourAssignment"},
     });
-    
+
     CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", function (colourModel, newDomain) {
         console.log ("col change args", arguments, this);
         if (this.get("linkColourAssignment") === colourModel) {
@@ -470,7 +547,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
         console.log ("3D sequences poked to collection", this);
     });
-     
+
     new CLMSUI.DistogramBB ({
         el: "#distoPanel",
         model: CLMSUI.compositeModelInst,
@@ -480,7 +557,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             chartTitle: "Cross-Link Distogram",
             seriesName: "Actual"
         }
-    }); 
+    });
 
     // This makes a matrix viewer
     var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
@@ -530,7 +607,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             initialPdbCode: CLMSUI.firstPdbCode,
         }
     });
-    
+
     new CLMSUI.PDBFileChooserBB ({
         el: "#pdbPanel",
         model: CLMSUI.compositeModelInst,
@@ -540,7 +617,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
 
-    
+
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",
@@ -553,8 +630,3 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 };
-
-function changeAnnotations(){
-    var annotationSelect = document.getElementById('annotationsSelect');
-    crosslinkViewer.setAnnotations(annotationSelect.options[annotationSelect.selectedIndex].value);
-}

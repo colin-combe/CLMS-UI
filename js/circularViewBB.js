@@ -209,10 +209,11 @@
             ;
 
             // Cycle colours through features
-            this.color = d3.scale.ordinal()
-                .domain([0,2])
-                .range(["#beb", "#ebb" , "#bbe"])
-            ;
+             //i think this can go?
+            //~ this.color = d3.scale.ordinal()
+                //~ .domain([0,2])
+                //~ .range(["#beb", "#ebb" , "#bbe"])
+            //~ ;
 
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")
@@ -236,7 +237,7 @@
             };
 
             this.nodeTip = function (d) {
-                var interactor = self.model.get("clmsModel").get("interactors").get(d.id);
+                var interactor = self.model.get("clmsModel").get("participants").get(d.id);
                 self.model.get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.interactor (interactor))
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.interactor (interactor))
@@ -262,9 +263,9 @@
             };
 
             // initial Order
-            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"));
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
             // return order as is
-            //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("interactors").values()))
+            //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("participants").values()))
             //    .map(function(p) { return p.id; });
 
             var alignCall = 0;
@@ -284,7 +285,7 @@
         },
 
         reOrder: function () {
-            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("interactors"));
+            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
             this.render();
         },
 
@@ -386,7 +387,7 @@
 
                 console.log ("re-rendering circular view");
 
-                var interactors = this.model.get("clmsModel").get("interactors");
+                var interactors = this.model.get("clmsModel").get("participants");
                 var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
@@ -413,7 +414,7 @@
                 // After rearrange interactors, because filtered features depends on the interactor order
                 var alignColl = this.model.get("alignColl");
                 var filteredFeatures = filteredInteractors.map (function (inter) {
-                    return this.filterFeatures ([inter.uniprotFeatures, alignColl.getAlignmentsAsFeatures (inter.id)]);
+                    return this.filterFeatures ([inter.uniprot.features, alignColl.getAlignmentsAsFeatures (inter.id)]);
                 }, this);
                 //console.log ("filteredFeatures", filteredFeatures);
 
@@ -740,7 +741,7 @@
 
             featureJoin
                 .attr("d", this.featureArc)
-                .style("fill", function(d) { return CLMSUI.domainColours(d.name); })
+                .style("fill", function(d) { return CLMSUI.domainColours(anno.category + "-" + anno.type); })
             ;
 
             return this;
