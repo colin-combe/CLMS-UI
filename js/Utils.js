@@ -133,7 +133,8 @@ CLMSUI.utils = {
             }
         },
 
-        showState : function (boolVal) {
+        showState : function (args) {
+            var boolVal = args.length > 1 ? args[1] : args[0];
             d3.select(this.el).select("input").property("checked", boolVal);
         },
 
