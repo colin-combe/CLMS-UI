@@ -43,8 +43,10 @@
                     var cbdata = ({
                         id: (model.get(self.options.labelByAttribute)+"Placeholder").replace(/ /g, "_"),   // ids may not contain spaces 
                         label: model.get(self.options.labelByAttribute),
-                        sectionEnd: lastCat !== cat,
                     });
+                    if (adata.length && lastCat !== cat) {  // have to access last datum to say it's the last in its category
+                        adata[adata.length - 1].sectionEnd = true; 
+                    }
                     adata.push (cbdata);
                     lastCat = cat;
 

@@ -59,10 +59,10 @@
             var nodeCoord = nodeCoordMap.get (nodeID);
             farr.forEach (function (feature) {
                 var tofrom = _options.featureParse (feature, nodeID);
-                console.log ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
+                //console.log ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
                 console.log ("ORIG FEATURE", feature);
                 featureCoords.push ({
-                    id: (feature.id || feature.notes || feature.name || feature.description) + fid,
+                    id: feature.category + fid.toString(),
                     description: feature.description,
                     category: feature.category,
                     type: feature.type,
@@ -125,7 +125,9 @@
                 },
                 featureParse: function (feature, nodeid) {
                     // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
-                    feature.start = +feature.begin;
+                    if (feature.start == undefined) {
+                        feature.start = +feature.begin;
+                    }
                     var convStart = +feature.start;
                     var convEnd = +feature.end;
                     var protAlignModel = self.model.get("alignColl").get(nodeid);
@@ -385,7 +387,7 @@
             var featureFilterSet = d3.set (annots.map (function(annot) { return annot.get("type"); }));
             //console.log ("annots", annots, "f", features);
             return features ? features.filter (function (f) { 
-                return !f.category || featureFilterSet.has (f.type) || featureFilterSet.has (f.category);
+                return featureFilterSet.has (f.type);
             }, this) : [];
         },
 
@@ -721,7 +723,6 @@
                 var diff = (b.end - b.start) - (a.end - a.start);
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
             });
-            console.log ("features", features);
             
             var featureLayer = g.select("g.featureLayer");
             if (featureLayer.empty()) {
