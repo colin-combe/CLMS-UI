@@ -60,9 +60,9 @@
             farr.forEach (function (feature) {
                 var tofrom = _options.featureParse (feature, nodeID);
                 //console.log ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
-                //console.log ("ORIG FEATURE", feature);
+                console.log ("ORIG FEATURE", feature);
                 featureCoords.push ({
-                    id: (feature.id || feature.notes || feature.name || feature.description) + fid,
+                    id: feature.category + fid.toString(),
                     description: feature.description,
                     category: feature.category,
                     type: feature.type,
@@ -76,7 +76,7 @@
                 fid++;
             });
         });
-        //console.log ("CONV FEATURES", featureCoords);
+        console.log ("CONV FEATURES", featureCoords);
 
         var linkCoords = [];
         linkArr.forEach (function (link) {
