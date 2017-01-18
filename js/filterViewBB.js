@@ -53,7 +53,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+        var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup")
+									.attr ("id", "filterModeDiv");
         //~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
         var modeElems = modeDivSel.selectAll("div.modeToggles")
             .data(this.options.modes, function(d) { return d.id; })
@@ -101,7 +102,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .append ("label")
 		;
         seqSepElem.append("span")
-			.text ("Min.seq.sep.")
+			.text ("AA apart")
         ;
         seqSepElem.append ("input")
             .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 0, max: 999})
@@ -241,10 +242,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     sliderDecimalPlaces: 2,
 
     filterSeqSep: function (evt) {
-        console.log ("this filterBB filterSeqSep", evt);
-        var target = evt.target;
-        console.log(">>seqSep", target.value);
-        this.model.set("seqSep", target.value);
+        this.model.set("seqSep", +evt.target.value);
     },
 
     modeChanged: function () {

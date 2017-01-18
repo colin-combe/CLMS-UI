@@ -11,6 +11,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
+			manualMode: true,
 			fdrMode: false,
 			//subset
             linears: true,
@@ -49,7 +50,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
 			//ambigs? - if ambig's not selected and match is ambig return false
 			if (this.get("ambig") == false) {
-				if (match.isAmbig) return false;
+				if (match.isAmbig()) return false;
 			}
 
 			//self-links? - if self links's not selected and match is self link return false
@@ -77,19 +78,21 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             var seqSepFilter = this.get("seqSep");
             if (!isNaN(seqSepFilter)) {
                  //if not ambig && is selfLink
-                if (match.protein1.length == 1 && match.protein2
+                if (match.protein1.length == 1 && match.protein2.length == 1
                         && match.protein1[0] == match.protein2[0]) {
                     var unambigCrossLink = match.crossLinks[0];
-                    if ((unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < seqSepFilter){
+                    var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue;
+                   // console.log(unambigCrossLink.toResidue, unambigCrossLink.fromResidue, calc ,seqSepFilter);
+                    if ((calc) < seqSepFilter){
                         return false;
                     }
                 }
-            }			
+            }
             
             var pepLengthFilter = this.get("seqSep");
             if (!isNaN(pepLengthFilter)) {
                  //if not ambig && is selfLink
-                if (match.pepSeq1.length < pepLengthFilter && match.pepSeq2.length < pepLengthFiler) {
+                if (match.pepSeq1.length < pepLengthFilter && match.pepSeq2.length < pepLengthFilter) {
                     return false;
                 }
             }
@@ -149,6 +152,11 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 						.indexOf(scanNumberFilter.toLowerCase()) == -1){
 				return false;
 			}
+
+			//end of filtering check
+			return true;
+
+			//util functions used in nav filter check:
           
             //peptide seq check function
 			function seqCheck(searchString) {
@@ -229,7 +237,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			}
         },
         
-        filterLink: function (link) {
+       filterLink: function (link) {
             if (link.meta && link.meta.meanMatchScore !== undefined) {
                 var fdr = link.meta.meanMatchScore;
                 var intra = CLMSUI.modelUtils.isIntraLink (link);

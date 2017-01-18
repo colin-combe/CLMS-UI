@@ -38,7 +38,12 @@
 						crossLink.confirmedHomomultimer = false;
 						for (var matchAndPepPos of crossLink.matches_pp) {	
 							var match = matchAndPepPos.match;
-							var result = filterModel.subsetFilter(match);
+							//~ console.log(filterModel.subsetFilter(match),
+										//~ filterModel.validationStatusFilter(match),
+										//~ filterModel.navigationFilter(match));
+							var result = filterModel.subsetFilter(match)
+											&& filterModel.validationStatusFilter(match)
+											&& filterModel.navigationFilter(match);
 							if (result === true){
 								crossLink.filteredMatches_pp.push(matchAndPepPos);
 								if (match.crossLinks.length === 1) {

@@ -268,6 +268,8 @@ CLMSUI.init.viewsEssential = function (options) {
         model: filterModel
     });
 
+    d3.select("#filterModeDiv").style("display","none");
+
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
         return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];
