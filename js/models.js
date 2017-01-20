@@ -18,7 +18,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             crosslinks: true,
             selfLinks: true,
             ambig: true,
-            aaApart: 0,
+            aaApart: 10,
             pepLength: 4,
             //validation status
             A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
@@ -103,7 +103,11 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
        },
        
        validationStatusFilter: function (match){
-        
+			// if fail score cut off, return false;
+            if (match.score < this.get("matchScoreCutoff")[0] || match.score > this.get("matchScoreCutoff")[1]){
+				return false;
+			}        
+			
             var vChar = match.validated;
             if (vChar == 'R') return false;
             if (vChar == 'A' && this.get("A")) return true;
@@ -114,11 +118,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (match.autovalidated && this.get("AUTO")) return true;
 			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
             return false;
-      
-			// if fail score cut off, return false;
-            if (match.score < this.get("matchScoreCutoff")[0] || match.score > this.get("matchScoreCutoff")[1]){
-				return false;
-			}
+			
+
 		},
        
        navigationFilter: function (match) {

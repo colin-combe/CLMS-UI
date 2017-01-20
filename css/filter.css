@@ -1,7 +1,5 @@
 #filterPlaceholder {
-/*
-	vertical-align:top;
-*/
+    display: inline-flex;
 }
 
 .filterControlGroup {
@@ -93,5 +91,6 @@ div.textFilters:not(:first-child), div.toggles:not(:first-child), div.numberFilt
 
 #filterReportPlaceholder {
     margin: 0 0.3em;
-    line-height: 1.1em;
+    line-height: 1.1em; 
+    display: inline-flex;
 }

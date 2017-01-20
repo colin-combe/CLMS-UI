@@ -164,6 +164,7 @@ CLMSUI.init.modelsEssential = function (options) {
     // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
     // the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
+		console.log("filterChange");
         this.applyFilter();
     });
 
@@ -276,7 +277,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
-        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
+        this.set ("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 
     new CLMSUI.MinigramViewBB ({
@@ -294,7 +295,7 @@ CLMSUI.init.viewsEssential = function (options) {
     })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
         .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
-        .listenTo (filterModel, "change:cutoff", function (filterModel, newCutoff) {
+        .listenTo (filterModel, "change:matchScoreCutoff", function (filterModel, newCutoff) {
             this.model.set ({domainStart: newCutoff[0], domainEnd: newCutoff[1]});
             //console.log ("cutoff changed");
         })

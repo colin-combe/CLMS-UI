@@ -13,8 +13,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "change input.modeToggle": "modeChanged",
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
-        "click input.filterSpecialToggle": "filterSpecial",
-        "change input.subsetNumberFilter": "subsetNumberFilter",
+        "click input.subsetToggleFilterToggle": "subsetToggleFilter",
+        "keyup input.subsetNumberFilter": "subsetNumberFilter",
         "mouseup input.subsetNumberFilter": "subsetNumberFilter",
     },
 
@@ -95,7 +95,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
         subsetToggles.append ("input")
             .attr ("id", function(d) { return d.id; })
-            .attr ("class", "filterSpecialToggle")
+            .attr ("class", "subsetToggleFilterToggle")
             .attr ("type", "checkbox")
             .property ("checked", function(d) { return self.model.get(d.id); })
         ;
@@ -120,35 +120,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
 
 
-        //~ var seqSepElem =  dataSubsetDivSel.append ("div")
-            //~ .attr("class", "numberFilters")
-            //~ .append ("label")
-		//~ ;
-        //~ seqSepElem.append("span")
-			//~ .text ("AA apart")
-        //~ ;
-        //~ seqSepElem.append ("input")
-            //~ .attr ({id: "aaApart", class: "filterSeqSep", type: "number", min: 0, max: 999})
-        	//~ .property ("value", self.model.get("seqSep"))
-		//~ ;
-		
-        //~ var pepLengthElem =  dataSubsetDivSel.append ("div")
-            //~ .attr("class", "numberFilters")
-            //~ .append ("label")
-		//~ ;
-        //~ pepLengthElem.append("span")
-			//~ .text ("Pep.length")
-        //~ ;
-		//~ pepLengthElem.append ("input")
-            //~ .attr ({id: "pepLength", class: "filterSeqSep", type: "number", min: 1, max: 99})
-        	//~ .property ("value", self.model.get("pepLength"))
-		//~ ;
-
 		var validationDivSel = mainDivSel.append("div")
 								.attr ("class", "filterControlGroup")
 								.attr ("id", "validationStatus");
-        //~ validationDivSel.append("span").attr("class", "sideOn").html("VALIDATION");//<br>STATUS");
-		var validationElems = validationDivSel.selectAll("div.validationToggles")
+        var validationElems = validationDivSel.selectAll("div.validationToggles")
             .data(this.options.validationStatusToggles, function(d) { return d.id; })
             .enter()
             .append ("div")
@@ -163,7 +138,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         validationElems.append ("input")
             .attr ("id", function(d) { return d.id; })
-            .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
+            .attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
             .attr ("type", "checkbox")
             .property ("checked", function(d) { return self.model.get(d.id); })
         ;
@@ -189,14 +164,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 //console.log ("model", self.model);
                 var val = +this.value;
                 var isMinInput = d3.select(this.parentNode).classed("vmin");
-                var cutoff = self.model.get("cutoff");
+                var cutoff = self.model.get("matchScoreCutoff");
                 var scoreExtent = self.model.scoreExtent;
                 // take new values, along with score extents, sort them and discard extremes for new cutoff settings
                 var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val, scoreExtent[0], scoreExtent[1]]
                     .sort(function(a,b) { return a - b;})
                     .slice (1,3)
                 ;
-                self.model.set("cutoff", newVals);
+                self.model.set("matchScoreCutoff", newVals);
             })
         ;
 
@@ -231,7 +206,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         this.displayEventName = viewOptions.displayEventName;
 
-        this.listenTo (this.model, "change:cutoff", function(model, val) {
+        this.listenTo (this.model, "change:matchScoreCutoff", function(model, val) {
             //console.log ("cutoff", val);
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
@@ -255,10 +230,17 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.model.set (id, target.value);
     },
 
-    filterSpecial: function (evt) {
-        console.log ("this filterBB filterSpecial", evt);
+    subsetToggleFilter: function (evt) {
+        console.log ("subsetToggleFilter", evt);
         var target = evt.target;
         var id = target.id;
+        if (id == "selfLinks"){
+			if (target.checked) {
+				d3.select("#aaApart").attr("disabled", null);
+			} else {
+				d3.select("#aaApart").attr("disabled", "disabled");
+			}
+		}
         this.model.set (id, target.checked);
     },
 
