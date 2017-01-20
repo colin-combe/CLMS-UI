@@ -436,7 +436,7 @@ CLMSUI.utils.FDRViewBB = Backbone.View.extend  ({
             //~ .attr("class", "panelInner")
         //~ ;
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        chartDiv.html ("<fieldset><legend>Basic FDR Calculation</legend><span></span></fieldset>");
+        chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic FDR Calculation</p><span></span></div>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
         var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
@@ -445,7 +445,7 @@ CLMSUI.utils.FDRViewBB = Backbone.View.extend  ({
             self.lastSetting = d;
             var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
             chartDiv.select(".fdrResult")
-                .style("display", "block")
+                //~ .style("display", "block")
                 .html("")
                 .selectAll("p").data(result)
                     .enter()
@@ -500,7 +500,7 @@ CLMSUI.utils.FDRViewBB = Backbone.View.extend  ({
         ;
 
         //~ chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
-        //~ chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
+        chartDiv.append("div").attr("class", "fdrResult");//.style("display", "none");
         return this;
     }
 });

@@ -268,7 +268,9 @@ CLMSUI.init.viewsEssential = function (options) {
         model: CLMSUI.compositeModelInst,
     });
 
-    d3.select("#filterModeDiv").style("display","none");
+    if (CLMSUI.compositeModelInst.get("clmsModel").get("decoysPresent") === false) {
+		d3.select("#filterModeDiv").style("display","none");
+	}
 
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {

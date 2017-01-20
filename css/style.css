@@ -447,7 +447,7 @@ body, input, select, textarea {
 /*
     left: 40px;
 */
-    width: 420px;
+    width: 900px;
 /*
     height: 9em;
 */
@@ -551,6 +551,7 @@ A.btn {
 }
 
 .fdrResult {
+	display:inline-flex;
     background: #55e;
     border: 1px solid black;
     padding: 0.2em 0.5em;
@@ -559,6 +560,11 @@ A.btn {
      -moz-user-select: text;
      -ms-user-select: text;
      -webkit-user-select: text;
+}
+
+.fdrCalculation {
+    display: inline-block;
+    width: 400px;
 }
 
 .fdrBoost {

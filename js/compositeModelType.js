@@ -20,7 +20,7 @@
                 if (filterModel) {
 					crossLink.filteredMatches_pp = [];
 					
-					if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
+					if (filterModel.get("fdrMode") === true) {
 						var pass = filterModel.filterLink (crossLink);
 						if (pass) {
 							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
@@ -63,6 +63,15 @@
             
             //foreach participant hide if no links
             var participants = this.get("clmsModel").get("participants").values();
+            for (participant of participants) {
+				 var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (participant.crossLinks);
+				 if (filteredCrossLinks.length > 0) {
+					 participant.hidden = false;
+				 }
+				 else {
+					 participant.hidden = true;
+				 }			 
+			}
 
             this.trigger ("filteringDone");
             return this;

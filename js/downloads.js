@@ -70,7 +70,7 @@ function getMatchesCSV () {
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
     for (var match of matches.values()){
         var result;
-        if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
+        if (filterModel.get("fdrMode") === true) {
 			result = match.fdrPass;
 		} else {
 			result = filterModel.filter(match);
