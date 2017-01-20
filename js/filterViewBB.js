@@ -14,7 +14,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
         "click input.filterSpecialToggle": "filterSpecial",
-        "change input.filterSeqSep": "filterSeqSep",
+        "change input.subsetNumberFilter": "subsetNumberFilter",
+        "mouseup input.subsetNumberFilter": "subsetNumberFilter",
     },
 
     initialize: function (viewOptions) {
@@ -29,6 +30,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Cross-links", "id":"crosslinks"},
                 {"label":"Ambig.", "id":"ambig"},
                 {"label":"Self", "id":"selfLinks"},
+            ],
+            subsetNumberFilters: [
+                {"label":"AA apart", "id":"aaApart", min: 0, max: 999},
+                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99},
             ],
             validationStatusToggles: [
                 {"label":"A", "id":"A"},
@@ -77,8 +82,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
 
 		var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
-        //~ dataSubsetDivSel.append("span").attr("class", "sideOn").text("SUBSET");
-        var subsetElems = dataSubsetDivSel.selectAll("div.subsetToggles")
+        var subsetToggles = dataSubsetDivSel.selectAll("div.subsetToggles")
             .data(this.options.subsetToggles, function(d) { return d.id; })
             .enter()
             .append ("div")
@@ -86,40 +90,59 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr("id", function(d) { return "toggles_" + d.id; })
             .append ("label")
         ;
-        subsetElems.append ("span")
+        subsetToggles.append ("span")
             .text (function(d) { return d.label; })
         ;
-        subsetElems.append ("input")
+        subsetToggles.append ("input")
             .attr ("id", function(d) { return d.id; })
             .attr ("class", "filterSpecialToggle")
             .attr ("type", "checkbox")
             .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-
-
-        var seqSepElem =  dataSubsetDivSel.append ("div")
-            .attr("class", "numberFilters")
-            .append ("label")
-		;
-        seqSepElem.append("span")
-			.text ("AA apart")
-        ;
-        seqSepElem.append ("input")
-            .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 0, max: 999})
-        	.property ("value", self.model.get("seqSep"))
-		;
 		
-        var pepLengthElem =  dataSubsetDivSel.append ("div")
-            .attr("class", "numberFilters")
+		
+        var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
+            .data(this.options.subsetNumberFilters, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "toggles subsetNumberFilterDiv")
+            .attr("id", function(d) { return "toggles_" + d.id; })
             .append ("label")
-		;
-        pepLengthElem.append("span")
-			.text ("Pep.length")
         ;
-		pepLengthElem.append ("input")
-            .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 1, max: 99})
-        	.property ("value", self.model.get("pepLength"))
-		;
+        subsetNumberFilters.append ("span")
+            .text (function(d) { return d.label; })
+        ;
+        subsetNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        subsetNumberFilters.append ("input")
+            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number", 
+						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+            .property ("value", function(d) { return self.model.get(d.id); })
+        ;
+
+
+        //~ var seqSepElem =  dataSubsetDivSel.append ("div")
+            //~ .attr("class", "numberFilters")
+            //~ .append ("label")
+		//~ ;
+        //~ seqSepElem.append("span")
+			//~ .text ("AA apart")
+        //~ ;
+        //~ seqSepElem.append ("input")
+            //~ .attr ({id: "aaApart", class: "filterSeqSep", type: "number", min: 0, max: 999})
+        	//~ .property ("value", self.model.get("seqSep"))
+		//~ ;
+		
+        //~ var pepLengthElem =  dataSubsetDivSel.append ("div")
+            //~ .attr("class", "numberFilters")
+            //~ .append ("label")
+		//~ ;
+        //~ pepLengthElem.append("span")
+			//~ .text ("Pep.length")
+        //~ ;
+		//~ pepLengthElem.append ("input")
+            //~ .attr ({id: "pepLength", class: "filterSeqSep", type: "number", min: 1, max: 99})
+        	//~ .property ("value", self.model.get("pepLength"))
+		//~ ;
 
 		var validationDivSel = mainDivSel.append("div")
 								.attr ("class", "filterControlGroup")
@@ -241,8 +264,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     sliderDecimalPlaces: 2,
 
-    filterSeqSep: function (evt) {
-        this.model.set("seqSep", +evt.target.value);
+    subsetNumberFilter: function (evt) {
+		var target = evt.target;
+        var id = target.id;
+        var value = target.value;
+        if (this.model.get (id) != value) {
+			console.log ("subsetNumberFilter:", id, value);
+			this.model.set (id, value);
+		}
     },
 
     modeChanged: function () {

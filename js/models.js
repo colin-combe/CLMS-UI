@@ -18,7 +18,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             crosslinks: true,
             selfLinks: true,
             ambig: true,
-            seqSep: 0,
+            aaApart: 0,
             pepLength: 4,
             //validation status
             A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
@@ -75,24 +75,25 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				}
 			}
 			
-            var seqSepFilter = this.get("seqSep");
-            if (!isNaN(seqSepFilter)) {
+            var aaApart = +this.get("aaApart");
+            if (!isNaN(aaApart)) {
                  //if not ambig && is selfLink
-                if (match.protein1.length == 1 && match.protein2.length == 1
+                if (match.confirmedHomomultimer === false
+						&& match.protein1.length == 1 && match.protein2.length == 1
                         && match.protein1[0] == match.protein2[0]) {
-                    var unambigCrossLink = match.crossLinks[0];
-                    var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue;
-                   // console.log(unambigCrossLink.toResidue, unambigCrossLink.fromResidue, calc ,seqSepFilter);
-                    if ((calc) < seqSepFilter){
-                        return false;
-                    }
-                }
+					var unambigCrossLink = match.crossLinks[0];
+                    var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
+					if (calc < aaApart){
+						return false;
+						
+					}
+				}
             }
             
-            var pepLengthFilter = this.get("seqSep");
+            var pepLengthFilter = this.get("pepLength");
             if (!isNaN(pepLengthFilter)) {
                  //if not ambig && is selfLink
-                if (match.pepSeq1.length < pepLengthFilter && match.pepSeq2.length < pepLengthFilter) {
+                if (match.pepSeq1.length <= pepLengthFilter || match.pepSeq2.length <= pepLengthFilter) {
                     return false;
                 }
             }
