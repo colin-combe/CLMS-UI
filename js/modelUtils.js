@@ -97,13 +97,12 @@ CLMSUI.modelUtils = {
         },
         
         feature: function (feature) {
-             return [
-				 ["Description", feature.description], 
-				 ["Type", feature.type], 
-				 ["Category", feature.category], 
-				 ["Start", feature.fstart], 
-				 ["End", feature.fend],
-             ];
+            var possFields = [["description"], ["type"], ["category"], ["fstart", "start"], ["fend", "end"]];
+            var data = possFields
+                .filter(function (field) { return feature[field[0]] != undefined; })
+                .map(function(field) { return [field.length > 1 ? field[1] : field[0], feature[field[0]]]; })
+            ;
+             return data;
         },
         
         linkList: function (linkList, extras) {

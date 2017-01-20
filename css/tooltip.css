@@ -7,6 +7,7 @@
     z-index: 1001;
     max-width: 300px;
     line-height: 1em;
+    top: 0; /* default tooltip to top so it doesn't sit at bottom and cause unnecessary scrollbar to start with */
 }
 
 .CLMStooltip h2 {
@@ -47,6 +48,10 @@
 
 .CLMStooltip table tr td {
     font-weight: bold;
+}
+
+.CLMStooltip table tr td:first-child, .CLMStooltip table tr th:first-child {
+    text-transform: capitalize;
 }
 
 .CLMStooltip table tr th {

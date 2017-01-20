@@ -57,6 +57,7 @@ div.textFilters:not(:first-child), div.toggles:not(:first-child), div.numberFilt
     margin-left: 0.5em;
 }
 
+<<<<<<< HEAD
 .scoreSlider  {
     display: inline-block;
 /*
@@ -85,4 +86,9 @@ div.textFilters:not(:first-child), div.toggles:not(:first-child), div.numberFilt
     border: none;
     margin-top:5px;
     display: inline-block;
+}
+
+#filterReportPlaceholder {
+    margin: 0 0.3em;
+    line-height: 1.1em;
 }

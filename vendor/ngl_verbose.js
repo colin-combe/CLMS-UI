@@ -4,6 +4,487 @@
 	(factory((global.NGL = global.NGL || {})));
 }(this, (function (exports) { 'use strict';
 
+/**
+ * @file shims
+ * @private
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+//////////////
+// Polyfills
+
+if( typeof window !== "undefined" ){
+
+    ( function() {
+
+        'use strict';
+
+        // Console-polyfill. MIT license.
+        // https://github.com/paulmillr/console-polyfill
+        // Make it safe to do console.log() always.
+
+        window.console = window.console || {};
+        var con = window.console;
+        var prop, method;
+        var empty = {};
+        var dummy = function(){};
+        var properties = 'memory'.split( ',' );
+        var methods = (
+            'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+            'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+            'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
+        ).split(',');
+
+        while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
+        while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
+
+    } )();
+
+}
+
+
+if( typeof HTMLCanvasElement !== "undefined" && !HTMLCanvasElement.prototype.toBlob ){
+
+    // http://code.google.com/p/chromium/issues/detail?id=67587#57
+
+    Object.defineProperty( HTMLCanvasElement.prototype, 'toBlob', {
+
+        value: function( callback, type, quality ){
+
+            var bin = window.atob( this.toDataURL( type, quality ).split( ',' )[ 1 ] ),
+                len = bin.length,
+                len32 = len >> 2,
+                a8 = new Uint8Array( len ),
+                a32 = new Uint32Array( a8.buffer, 0, len32 );
+
+            for( var i=0, j=0; i < len32; i++ ) {
+
+                a32[i] = bin.charCodeAt( j++ ) |
+                    bin.charCodeAt( j++ ) << 8 |
+                    bin.charCodeAt( j++ ) << 16 |
+                    bin.charCodeAt( j++ ) << 24;
+
+            }
+
+            var tailLength = len & 3;
+
+            while( tailLength-- ){
+
+                a8[ j ] = bin.charCodeAt( j++ );
+
+            }
+
+            callback( new Blob( [ a8 ], { 'type': type || 'image/png' } ) );
+
+        }
+
+    } );
+
+}
+
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/cbrt
+Math.cbrt = Math.cbrt || function( x ){
+    var y = Math.pow(Math.abs(x), 1/3);
+    return x < 0 ? -y : y;
+};
+
+
+if( !Number.isInteger ){
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
+
+    Number.isInteger = function isInteger( nVal ){
+        return typeof nVal === "number" && isFinite( nVal ) && nVal > -9007199254740992 && nVal < 9007199254740992 && Math.floor( nVal ) === nVal;
+    };
+
+}
+
+
+if( !Number.isNaN ){
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
+
+    Number.isNaN = function isNaN( value ){
+        return value !== value;
+    };
+
+}
+
+
+if( !Object.assign ){
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+
+    Object.defineProperty( Object, "assign", {
+
+        enumerable: false,
+        configurable: true,
+        writable: true,
+
+        value: function(target/*, firstSource*/) {
+
+            "use strict";
+            if (target === undefined || target === null)
+            throw new TypeError("Cannot convert first argument to object");
+
+            var to = Object(target);
+
+            var hasPendingException = false;
+            var pendingException;
+
+            for (var i = 1; i < arguments.length; i++) {
+
+                var nextSource = arguments[i];
+                if (nextSource === undefined || nextSource === null)
+                    continue;
+
+                var keysArray = Object.keys(Object(nextSource));
+                for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+
+                    var nextKey = keysArray[nextIndex];
+                    try {
+                        var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+                        if (desc !== undefined && desc.enumerable)
+                            to[nextKey] = nextSource[nextKey];
+                    } catch (e) {
+                        if (!hasPendingException) {
+                            hasPendingException = true;
+                            pendingException = e;
+                        }
+                    }
+
+                }
+
+                if (hasPendingException)
+                    throw pendingException;
+
+            }
+
+            return to;
+
+        }
+
+    } );
+
+}
+
+
+if (!String.prototype.startsWith) {
+
+    /*! https://mths.be/startswith v0.2.0 by @mathias */
+
+    (function() {
+        'use strict'; // needed to support `apply`/`call` with `undefined`/`null`
+        var defineProperty = (function() {
+            // IE 8 only supports `Object.defineProperty` on DOM elements
+            var result;
+            try {
+                var object = {};
+                var $defineProperty = Object.defineProperty;
+                result = $defineProperty(object, object, object) && $defineProperty;
+            } catch(error) {}  // eslint-disable-line no-empty
+            return result;
+        }());
+        var toString = {}.toString;
+        var startsWith = function(search) {
+            if (this === null) {
+                throw TypeError();
+            }
+            var string = String(this);
+            if (search && toString.call(search) == '[object RegExp]') {
+                throw TypeError();
+            }
+            var stringLength = string.length;
+            var searchString = String(search);
+            var searchLength = searchString.length;
+            var position = arguments.length > 1 ? arguments[1] : undefined;
+            // `ToInteger`
+            var pos = position ? Number(position) : 0;
+            if (pos != pos) { // better `isNaN`
+                pos = 0;
+            }
+            var start = Math.min(Math.max(pos, 0), stringLength);
+            // Avoid the `indexOf` call if no match is possible
+            if (searchLength + start > stringLength) {
+                return false;
+            }
+            var index = -1;
+            while (++index < searchLength) {
+                if (string.charCodeAt(start + index) != searchString.charCodeAt(index)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        if (defineProperty) {
+            defineProperty(String.prototype, 'startsWith', {
+                'value': startsWith,
+                'configurable': true,
+                'writable': true
+            });
+        } else {
+            String.prototype.startsWith = startsWith;
+        }
+    }());
+
+}
+
+
+if (!String.prototype.endsWith) {
+  String.prototype.endsWith = function(searchString, position) {
+      var subjectString = this.toString();
+      if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+        position = subjectString.length;
+      }
+      position -= searchString.length;
+      var lastIndex = subjectString.indexOf(searchString, position);
+      return lastIndex !== -1 && lastIndex === position;
+  };
+}
+
+
+if (!String.prototype.includes) {
+  String.prototype.includes = function(search, start) {
+    'use strict';
+    if (typeof start !== 'number') {
+      start = 0;
+    }
+
+    if (start + search.length > this.length) {
+      return false;
+    } else {
+      return this.indexOf(search, start) !== -1;
+    }
+  };
+}
+
+
+if (!Array.prototype.includes) {
+  Array.prototype.includes = function(searchElement /*, fromIndex*/) {
+    'use strict';
+    if (this == null) {
+      throw new TypeError('Array.prototype.includes called on null or undefined');
+    }
+
+    var O = Object(this);
+    var len = parseInt(O.length, 10) || 0;
+    if (len === 0) {
+      return false;
+    }
+    var n = parseInt(arguments[1], 10) || 0;
+    var k;
+    if (n >= 0) {
+      k = n;
+    } else {
+      k = len + n;
+      if (k < 0) {k = 0;}
+    }
+    var currentElement;
+    while (k < len) {
+      currentElement = O[k];
+      if (searchElement === currentElement ||
+         (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
+        return true;
+      }
+      k++;
+    }
+    return false;
+  };
+}
+
+
+// Production steps of ECMA-262, Edition 6, 22.1.2.1
+// Reference: https://people.mozilla.org/~jorendorff/es6-draft.html#sec-array.from
+if (!Array.from) {
+
+    Array.from = (function () {
+
+        var toStr = Object.prototype.toString;
+        var isCallable = function (fn) {
+            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+        };
+        var toInteger = function (value) {
+            var number = Number(value);
+            if (isNaN(number)) { return 0; }
+            if (number === 0 || !isFinite(number)) { return number; }
+            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        };
+        var maxSafeInteger = Math.pow(2, 53) - 1;
+        var toLength = function (value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        };
+
+        // The length property of the from method is 1.
+        return function from(arrayLike/*, mapFn, thisArg */) {
+
+            // 1. Let C be the this value.
+            var C = this;
+
+            // 2. Let items be ToObject(arrayLike).
+            var items = Object(arrayLike);
+
+            // 3. ReturnIfAbrupt(items).
+            if (arrayLike == null) {
+                throw new TypeError("Array.from requires an array-like object - not null or undefined");
+            }
+
+            // 4. If mapfn is undefined, then let mapping be false.
+            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+            var T;
+            if (typeof mapFn !== 'undefined') {
+                // 5. else
+                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                if (!isCallable(mapFn)) {
+                    throw new TypeError('Array.from: when provided, the second argument must be a function');
+                }
+
+                // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+                if (arguments.length > 2) {
+                    T = arguments[2];
+                }
+            }
+
+            // 10. Let lenValue be Get(items, "length").
+            // 11. Let len be ToLength(lenValue).
+            var len = toLength(items.length);
+
+            // 13. If IsConstructor(C) is true, then
+            // 13. a. Let A be the result of calling the [[Construct]] internal method of C with an argument list containing the single item len.
+            // 14. a. Else, Let A be ArrayCreate(len).
+            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+            // 16. Let k be 0.
+            var k = 0;
+            // 17. Repeat, while k < len… (also steps a - h)
+            var kValue;
+            while (k < len) {
+                kValue = items[k];
+                if (mapFn) {
+                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                } else {
+                    A[k] = kValue;
+                }
+                k += 1;
+            }
+            // 18. Let putStatus be Put(A, "length", len, true).
+            A.length = len;
+            // 20. Return A.
+            return A;
+        };
+
+    }());
+
+}
+
+
+if( typeof window !== "undefined" ){
+
+    ( function() {
+
+        // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+        // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+
+        // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+
+        // MIT license
+
+        var lastTime = 0;
+        var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
+
+        for( var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x ){
+
+            window.requestAnimationFrame = (
+                window[ vendors[ x ] + 'RequestAnimationFrame' ]
+            );
+
+            window.cancelAnimationFrame = (
+                window[ vendors[ x ] + 'CancelAnimationFrame' ] ||
+                window[ vendors[ x ] + 'CancelRequestAnimationFrame' ]
+            );
+
+        }
+
+        if( !window.requestAnimationFrame ){
+
+            window.requestAnimationFrame = function( callback/*, element*/ ){
+
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
+
+                var id = window.setTimeout( function(){
+
+                    callback( currTime + timeToCall );
+
+                }, timeToCall );
+
+                lastTime = currTime + timeToCall;
+
+                return id;
+
+            };
+
+        }
+
+        if( !window.cancelAnimationFrame ){
+
+            window.cancelAnimationFrame = function( id ){
+                clearTimeout( id );
+            };
+
+        }
+
+    }() );
+
+}
+
+
+if ( Function.prototype.name === undefined && Object.defineProperty !== undefined ) {
+
+    // Missing in IE9-11.
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+
+    Object.defineProperty( Function.prototype, 'name', {
+
+        get: function () {
+
+            return this.toString().match( /^\s*function\s*(\S*)\s*\(/ )[ 1 ];
+
+        }
+
+    } );
+
+}
+
+
+if( typeof window !== "undefined" ){
+
+    if ( window.performance === undefined ) {
+
+        self.performance = {};
+
+    }
+
+    if ( window.performance.now === undefined ) {
+
+        ( function () {
+
+            var start = Date.now();
+
+            window.performance.now = function () {
+
+                return Date.now() - start;
+
+            };
+
+        } )();
+
+    }
+
+}
+
 // https://github.com/taylorhakes/promise-polyfill
 // MIT License
 // Copyright (c) 2014 Taylor Hakes
@@ -230,2973 +711,6 @@ Promise$1._setUnhandledRejectionFn = function _setUnhandledRejectionFn(fn) {
   onUnhandledRejection = fn;
 };
 
-// 'use strict';
-
-
-// var TYPED_OK =  (typeof Uint8Array !== 'undefined') &&
-//                 (typeof Uint16Array !== 'undefined') &&
-//                 (typeof Int32Array !== 'undefined');
-
-
-function assign(obj /*from1, from2, from3, ...*/) {
-  var sources = Array.prototype.slice.call(arguments, 1);
-  while (sources.length) {
-    var source = sources.shift();
-    if (!source) { continue; }
-
-    if (typeof source !== 'object') {
-      throw new TypeError(source + 'must be non-object');
-    }
-
-    for (var p in source) {
-      if (source.hasOwnProperty(p)) {
-        obj[p] = source[p];
-      }
-    }
-  }
-
-  return obj;
-}
-
-
-// reduce buffer size, avoiding mem copy
-function shrinkBuf(buf, size) {
-  if (buf.length === size) { return buf; }
-  if (buf.subarray) { return buf.subarray(0, size); }
-  buf.length = size;
-  return buf;
-}
-
-
-function arraySet(dest, src, src_offs, len, dest_offs) {
-  if (src.subarray && dest.subarray) {
-    dest.set(src.subarray(src_offs, src_offs + len), dest_offs);
-    return;
-  }
-  // Fallback to ordinary array
-  for (var i = 0; i < len; i++) {
-    dest[dest_offs + i] = src[src_offs + i];
-  }
-}
-
-// Join array of chunks to single array.
-function flattenChunks(chunks) {
-  var i, l, len, pos, chunk, result;
-
-  // calculate data length
-  len = 0;
-  for (i = 0, l = chunks.length; i < l; i++) {
-    len += chunks[i].length;
-  }
-
-  // join chunks
-  result = new Uint8Array(len);
-  pos = 0;
-  for (i = 0, l = chunks.length; i < l; i++) {
-    chunk = chunks[i];
-    result.set(chunk, pos);
-    pos += chunk.length;
-  }
-
-  return result;
-}
-
-// 'use strict';
-
-// Note: adler32 takes 12% for level 0 and 2% for level 6.
-// It doesn't worth to make additional optimizationa as in original.
-// Small size is preferable.
-
-function adler32(adler, buf, len, pos) {
-  var s1 = (adler & 0xffff) |0,
-      s2 = ((adler >>> 16) & 0xffff) |0,
-      n = 0;
-
-  while (len !== 0) {
-    // Set limit ~ twice less than 5552, to keep
-    // s2 in 31-bits, because we force signed ints.
-    // in other case %= will fail.
-    n = len > 2000 ? 2000 : len;
-    len -= n;
-
-    do {
-      s1 = (s1 + buf[pos++]) |0;
-      s2 = (s2 + s1) |0;
-    } while (--n);
-
-    s1 %= 65521;
-    s2 %= 65521;
-  }
-
-  return (s1 | (s2 << 16)) |0;
-}
-
-// 'use strict';
-
-// Note: we can't get significant speed boost here.
-// So write code to minimize size - no pregenerated tables
-// and array tools dependencies.
-
-
-// Use ordinary array, since untyped makes no boost here
-function makeTable() {
-  var c, table = [];
-
-  for (var n = 0; n < 256; n++) {
-    c = n;
-    for (var k = 0; k < 8; k++) {
-      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
-    }
-    table[n] = c;
-  }
-
-  return table;
-}
-
-// Create table on load. Just 255 signed longs. Not a problem.
-var crcTable = makeTable();
-
-
-function crc32(crc, buf, len, pos) {
-  var t = crcTable,
-      end = pos + len;
-
-  crc ^= -1;
-
-  for (var i = pos; i < end; i++) {
-    crc = (crc >>> 8) ^ t[(crc ^ buf[i]) & 0xFF];
-  }
-
-  return (crc ^ (-1)); // >>> 0;
-}
-
-// 'use strict';
-
-// See state defs from inflate.js
-var BAD$1 = 30;       /* got a data error -- remain here until reset */
-var TYPE$1 = 12;      /* i: waiting for type bits, including last-flag bit */
-
-/*
-   Decode literal, length, and distance codes and write out the resulting
-   literal and match bytes until either not enough input or output is
-   available, an end-of-block is encountered, or a data error is encountered.
-   When large enough input and output buffers are supplied to inflate(), for
-   example, a 16K input buffer and a 64K output buffer, more than 95% of the
-   inflate execution time is spent in this routine.
-
-   Entry assumptions:
-
-        state.mode === LEN
-        strm.avail_in >= 6
-        strm.avail_out >= 258
-        start >= strm.avail_out
-        state.bits < 8
-
-   On return, state.mode is one of:
-
-        LEN -- ran out of enough output space or enough available input
-        TYPE -- reached end of block code, inflate() to interpret next block
-        BAD -- error in block data
-
-   Notes:
-
-    - The maximum input bits used by a length/distance pair is 15 bits for the
-      length code, 5 bits for the length extra, 15 bits for the distance code,
-      and 13 bits for the distance extra.  This totals 48 bits, or six bytes.
-      Therefore if strm.avail_in >= 6, then there is enough input to avoid
-      checking for available input while decoding.
-
-    - The maximum bytes that a single length/distance pair can output is 258
-      bytes, which is the maximum length that can be coded.  inflate_fast()
-      requires strm.avail_out >= 258 for each loop to avoid checking for
-      output space.
- */
-// module.exports =
-function inflate_fast(strm, start) {
-  var state;
-  var _in;                    /* local strm.input */
-  var last;                   /* have enough input while in < last */
-  var _out;                   /* local strm.output */
-  var beg;                    /* inflate()'s initial strm.output */
-  var end;                    /* while out < end, enough space available */
-//#ifdef INFLATE_STRICT
-  var dmax;                   /* maximum distance from zlib header */
-//#endif
-  var wsize;                  /* window size or zero if not using window */
-  var whave;                  /* valid bytes in the window */
-  var wnext;                  /* window write index */
-  // Use `s_window` instead `window`, avoid conflict with instrumentation tools
-  var s_window;               /* allocated sliding window, if wsize != 0 */
-  var hold;                   /* local strm.hold */
-  var bits;                   /* local strm.bits */
-  var lcode;                  /* local strm.lencode */
-  var dcode;                  /* local strm.distcode */
-  var lmask;                  /* mask for first level of length codes */
-  var dmask;                  /* mask for first level of distance codes */
-  var here;                   /* retrieved table entry */
-  var op;                     /* code bits, operation, extra bits, or */
-                              /*  window position, window bytes to copy */
-  var len;                    /* match length, unused bytes */
-  var dist;                   /* match distance */
-  var from;                   /* where to copy match from */
-  var from_source;
-
-
-  var input, output; // JS specific, because we have no pointers
-
-  /* copy state to local variables */
-  state = strm.state;
-  //here = state.here;
-  _in = strm.next_in;
-  input = strm.input;
-  last = _in + (strm.avail_in - 5);
-  _out = strm.next_out;
-  output = strm.output;
-  beg = _out - (start - strm.avail_out);
-  end = _out + (strm.avail_out - 257);
-//#ifdef INFLATE_STRICT
-  dmax = state.dmax;
-//#endif
-  wsize = state.wsize;
-  whave = state.whave;
-  wnext = state.wnext;
-  s_window = state.window;
-  hold = state.hold;
-  bits = state.bits;
-  lcode = state.lencode;
-  dcode = state.distcode;
-  lmask = (1 << state.lenbits) - 1;
-  dmask = (1 << state.distbits) - 1;
-
-
-  /* decode literals and length/distances until end-of-block or not enough
-     input data or output space */
-
-  top:
-  do {
-    if (bits < 15) {
-      hold += input[_in++] << bits;
-      bits += 8;
-      hold += input[_in++] << bits;
-      bits += 8;
-    }
-
-    here = lcode[hold & lmask];
-
-    dolen:
-    for (;;) { // Goto emulation
-      op = here >>> 24/*here.bits*/;
-      hold >>>= op;
-      bits -= op;
-      op = (here >>> 16) & 0xff/*here.op*/;
-      if (op === 0) {                          /* literal */
-        //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
-        //        "inflate:         literal '%c'\n" :
-        //        "inflate:         literal 0x%02x\n", here.val));
-        output[_out++] = here & 0xffff/*here.val*/;
-      }
-      else if (op & 16) {                     /* length base */
-        len = here & 0xffff/*here.val*/;
-        op &= 15;                           /* number of extra bits */
-        if (op) {
-          if (bits < op) {
-            hold += input[_in++] << bits;
-            bits += 8;
-          }
-          len += hold & ((1 << op) - 1);
-          hold >>>= op;
-          bits -= op;
-        }
-        //Tracevv((stderr, "inflate:         length %u\n", len));
-        if (bits < 15) {
-          hold += input[_in++] << bits;
-          bits += 8;
-          hold += input[_in++] << bits;
-          bits += 8;
-        }
-        here = dcode[hold & dmask];
-
-        dodist:
-        for (;;) { // goto emulation
-          op = here >>> 24/*here.bits*/;
-          hold >>>= op;
-          bits -= op;
-          op = (here >>> 16) & 0xff/*here.op*/;
-
-          if (op & 16) {                      /* distance base */
-            dist = here & 0xffff/*here.val*/;
-            op &= 15;                       /* number of extra bits */
-            if (bits < op) {
-              hold += input[_in++] << bits;
-              bits += 8;
-              if (bits < op) {
-                hold += input[_in++] << bits;
-                bits += 8;
-              }
-            }
-            dist += hold & ((1 << op) - 1);
-//#ifdef INFLATE_STRICT
-            if (dist > dmax) {
-              strm.msg = 'invalid distance too far back';
-              state.mode = BAD$1;
-              break top;
-            }
-//#endif
-            hold >>>= op;
-            bits -= op;
-            //Tracevv((stderr, "inflate:         distance %u\n", dist));
-            op = _out - beg;                /* max distance in output */
-            if (dist > op) {                /* see if copy from window */
-              op = dist - op;               /* distance back in window */
-              if (op > whave) {
-                if (state.sane) {
-                  strm.msg = 'invalid distance too far back';
-                  state.mode = BAD$1;
-                  break top;
-                }
-
-// (!) This block is disabled in zlib defailts,
-// don't enable it for binary compatibility
-//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
-//                if (len <= op - whave) {
-//                  do {
-//                    output[_out++] = 0;
-//                  } while (--len);
-//                  continue top;
-//                }
-//                len -= op - whave;
-//                do {
-//                  output[_out++] = 0;
-//                } while (--op > whave);
-//                if (op === 0) {
-//                  from = _out - dist;
-//                  do {
-//                    output[_out++] = output[from++];
-//                  } while (--len);
-//                  continue top;
-//                }
-//#endif
-              }
-              from = 0; // window index
-              from_source = s_window;
-              if (wnext === 0) {           /* very common case */
-                from += wsize - op;
-                if (op < len) {         /* some from window */
-                  len -= op;
-                  do {
-                    output[_out++] = s_window[from++];
-                  } while (--op);
-                  from = _out - dist;  /* rest from output */
-                  from_source = output;
-                }
-              }
-              else if (wnext < op) {      /* wrap around window */
-                from += wsize + wnext - op;
-                op -= wnext;
-                if (op < len) {         /* some from end of window */
-                  len -= op;
-                  do {
-                    output[_out++] = s_window[from++];
-                  } while (--op);
-                  from = 0;
-                  if (wnext < len) {  /* some from start of window */
-                    op = wnext;
-                    len -= op;
-                    do {
-                      output[_out++] = s_window[from++];
-                    } while (--op);
-                    from = _out - dist;      /* rest from output */
-                    from_source = output;
-                  }
-                }
-              }
-              else {                      /* contiguous in window */
-                from += wnext - op;
-                if (op < len) {         /* some from window */
-                  len -= op;
-                  do {
-                    output[_out++] = s_window[from++];
-                  } while (--op);
-                  from = _out - dist;  /* rest from output */
-                  from_source = output;
-                }
-              }
-              while (len > 2) {
-                output[_out++] = from_source[from++];
-                output[_out++] = from_source[from++];
-                output[_out++] = from_source[from++];
-                len -= 3;
-              }
-              if (len) {
-                output[_out++] = from_source[from++];
-                if (len > 1) {
-                  output[_out++] = from_source[from++];
-                }
-              }
-            }
-            else {
-              from = _out - dist;          /* copy direct from output */
-              do {                        /* minimum length is three */
-                output[_out++] = output[from++];
-                output[_out++] = output[from++];
-                output[_out++] = output[from++];
-                len -= 3;
-              } while (len > 2);
-              if (len) {
-                output[_out++] = output[from++];
-                if (len > 1) {
-                  output[_out++] = output[from++];
-                }
-              }
-            }
-          }
-          else if ((op & 64) === 0) {          /* 2nd level distance code */
-            here = dcode[(here & 0xffff)/*here.val*/ + (hold & ((1 << op) - 1))];
-            continue dodist;
-          }
-          else {
-            strm.msg = 'invalid distance code';
-            state.mode = BAD$1;
-            break top;
-          }
-
-          break; // need to emulate goto via "continue"
-        }
-      }
-      else if ((op & 64) === 0) {              /* 2nd level length code */
-        here = lcode[(here & 0xffff)/*here.val*/ + (hold & ((1 << op) - 1))];
-        continue dolen;
-      }
-      else if (op & 32) {                     /* end-of-block */
-        //Tracevv((stderr, "inflate:         end of block\n"));
-        state.mode = TYPE$1;
-        break top;
-      }
-      else {
-        strm.msg = 'invalid literal/length code';
-        state.mode = BAD$1;
-        break top;
-      }
-
-      break; // need to emulate goto via "continue"
-    }
-  } while (_in < last && _out < end);
-
-  /* return unused bytes (on entry, bits < 8, so in won't go too far back) */
-  len = bits >> 3;
-  _in -= len;
-  bits -= len << 3;
-  hold &= (1 << bits) - 1;
-
-  /* update state and return */
-  strm.next_in = _in;
-  strm.next_out = _out;
-  strm.avail_in = (_in < last ? 5 + (last - _in) : 5 - (_in - last));
-  strm.avail_out = (_out < end ? 257 + (end - _out) : 257 - (_out - end));
-  state.hold = hold;
-  state.bits = bits;
-  return;
-};
-
-// 'use strict';
-
-
-// var utils = require('../utils/common');
-
-var MAXBITS = 15;
-var ENOUGH_LENS$1 = 852;
-var ENOUGH_DISTS$1 = 592;
-//var ENOUGH = (ENOUGH_LENS+ENOUGH_DISTS);
-
-var CODES$1 = 0;
-var LENS$1 = 1;
-var DISTS$1 = 2;
-
-var lbase = [ /* Length codes 257..285 base */
-  3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
-  35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0
-];
-
-var lext = [ /* Length codes 257..285 extra */
-  16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
-  19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 72, 78
-];
-
-var dbase = [ /* Distance codes 0..29 base */
-  1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
-  257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
-  8193, 12289, 16385, 24577, 0, 0
-];
-
-var dext = [ /* Distance codes 0..29 extra */
-  16, 16, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22,
-  23, 23, 24, 24, 25, 25, 26, 26, 27, 27,
-  28, 28, 29, 29, 64, 64
-];
-
-// module.exports =
-function inflate_table(type, lens, lens_index, codes, table, table_index, work, opts)
-{
-  var bits = opts.bits;
-      //here = opts.here; /* table entry for duplication */
-
-  var len = 0;               /* a code's length in bits */
-  var sym = 0;               /* index of code symbols */
-  var min = 0, max = 0;          /* minimum and maximum code lengths */
-  var root = 0;              /* number of index bits for root table */
-  var curr = 0;              /* number of index bits for current table */
-  var drop = 0;              /* code bits to drop for sub-table */
-  var left = 0;                   /* number of prefix codes available */
-  var used = 0;              /* code entries in table used */
-  var huff = 0;              /* Huffman code */
-  var incr;              /* for incrementing code, index */
-  var fill;              /* index for replicating entries */
-  var low;               /* low bits for current root entry */
-  var mask;              /* mask for low root bits */
-  var next;             /* next available space in table */
-  var base = null;     /* base value table to use */
-  var base_index = 0;
-//  var shoextra;    /* extra bits table to use */
-  var end;                    /* use base and extra for symbol > end */
-  var count = new Uint16Array(MAXBITS + 1); //[MAXBITS+1];    /* number of codes of each length */
-  var offs = new Uint16Array(MAXBITS + 1); //[MAXBITS+1];     /* offsets in table for each length */
-  var extra = null;
-  var extra_index = 0;
-
-  var here_bits, here_op, here_val;
-
-  /*
-   Process a set of code lengths to create a canonical Huffman code.  The
-   code lengths are lens[0..codes-1].  Each length corresponds to the
-   symbols 0..codes-1.  The Huffman code is generated by first sorting the
-   symbols by length from short to long, and retaining the symbol order
-   for codes with equal lengths.  Then the code starts with all zero bits
-   for the first code of the shortest length, and the codes are integer
-   increments for the same length, and zeros are appended as the length
-   increases.  For the deflate format, these bits are stored backwards
-   from their more natural integer increment ordering, and so when the
-   decoding tables are built in the large loop below, the integer codes
-   are incremented backwards.
-
-   This routine assumes, but does not check, that all of the entries in
-   lens[] are in the range 0..MAXBITS.  The caller must assure this.
-   1..MAXBITS is interpreted as that code length.  zero means that that
-   symbol does not occur in this code.
-
-   The codes are sorted by computing a count of codes for each length,
-   creating from that a table of starting indices for each length in the
-   sorted table, and then entering the symbols in order in the sorted
-   table.  The sorted table is work[], with that space being provided by
-   the caller.
-
-   The length counts are used for other purposes as well, i.e. finding
-   the minimum and maximum length codes, determining if there are any
-   codes at all, checking for a valid set of lengths, and looking ahead
-   at length counts to determine sub-table sizes when building the
-   decoding tables.
-   */
-
-  /* accumulate lengths for codes (assumes lens[] all in 0..MAXBITS) */
-  for (len = 0; len <= MAXBITS; len++) {
-    count[len] = 0;
-  }
-  for (sym = 0; sym < codes; sym++) {
-    count[lens[lens_index + sym]]++;
-  }
-
-  /* bound code lengths, force root to be within code lengths */
-  root = bits;
-  for (max = MAXBITS; max >= 1; max--) {
-    if (count[max] !== 0) { break; }
-  }
-  if (root > max) {
-    root = max;
-  }
-  if (max === 0) {                     /* no symbols to code at all */
-    //table.op[opts.table_index] = 64;  //here.op = (var char)64;    /* invalid code marker */
-    //table.bits[opts.table_index] = 1;   //here.bits = (var char)1;
-    //table.val[opts.table_index++] = 0;   //here.val = (var short)0;
-    table[table_index++] = (1 << 24) | (64 << 16) | 0;
-
-
-    //table.op[opts.table_index] = 64;
-    //table.bits[opts.table_index] = 1;
-    //table.val[opts.table_index++] = 0;
-    table[table_index++] = (1 << 24) | (64 << 16) | 0;
-
-    opts.bits = 1;
-    return 0;     /* no symbols, but wait for decoding to report error */
-  }
-  for (min = 1; min < max; min++) {
-    if (count[min] !== 0) { break; }
-  }
-  if (root < min) {
-    root = min;
-  }
-
-  /* check for an over-subscribed or incomplete set of lengths */
-  left = 1;
-  for (len = 1; len <= MAXBITS; len++) {
-    left <<= 1;
-    left -= count[len];
-    if (left < 0) {
-      return -1;
-    }        /* over-subscribed */
-  }
-  if (left > 0 && (type === CODES$1 || max !== 1)) {
-    return -1;                      /* incomplete set */
-  }
-
-  /* generate offsets into symbol table for each length for sorting */
-  offs[1] = 0;
-  for (len = 1; len < MAXBITS; len++) {
-    offs[len + 1] = offs[len] + count[len];
-  }
-
-  /* sort symbols by length, by symbol order within each length */
-  for (sym = 0; sym < codes; sym++) {
-    if (lens[lens_index + sym] !== 0) {
-      work[offs[lens[lens_index + sym]]++] = sym;
-    }
-  }
-
-  /*
-   Create and fill in decoding tables.  In this loop, the table being
-   filled is at next and has curr index bits.  The code being used is huff
-   with length len.  That code is converted to an index by dropping drop
-   bits off of the bottom.  For codes where len is less than drop + curr,
-   those top drop + curr - len bits are incremented through all values to
-   fill the table with replicated entries.
-
-   root is the number of index bits for the root table.  When len exceeds
-   root, sub-tables are created pointed to by the root entry with an index
-   of the low root bits of huff.  This is saved in low to check for when a
-   new sub-table should be started.  drop is zero when the root table is
-   being filled, and drop is root when sub-tables are being filled.
-
-   When a new sub-table is needed, it is necessary to look ahead in the
-   code lengths to determine what size sub-table is needed.  The length
-   counts are used for this, and so count[] is decremented as codes are
-   entered in the tables.
-
-   used keeps track of how many table entries have been allocated from the
-   provided *table space.  It is checked for LENS and DIST tables against
-   the constants ENOUGH_LENS and ENOUGH_DISTS to guard against changes in
-   the initial root table size constants.  See the comments in inftrees.h
-   for more information.
-
-   sym increments through all symbols, and the loop terminates when
-   all codes of length max, i.e. all codes, have been processed.  This
-   routine permits incomplete codes, so another loop after this one fills
-   in the rest of the decoding tables with invalid code markers.
-   */
-
-  /* set up for code type */
-  // poor man optimization - use if-else instead of switch,
-  // to avoid deopts in old v8
-  if (type === CODES$1) {
-    base = extra = work;    /* dummy value--not used */
-    end = 19;
-
-  } else if (type === LENS$1) {
-    base = lbase;
-    base_index -= 257;
-    extra = lext;
-    extra_index -= 257;
-    end = 256;
-
-  } else {                    /* DISTS */
-    base = dbase;
-    extra = dext;
-    end = -1;
-  }
-
-  /* initialize opts for loop */
-  huff = 0;                   /* starting code */
-  sym = 0;                    /* starting code symbol */
-  len = min;                  /* starting code length */
-  next = table_index;              /* current table to fill in */
-  curr = root;                /* current table index bits */
-  drop = 0;                   /* current bits to drop from code for index */
-  low = -1;                   /* trigger new sub-table when len > root */
-  used = 1 << root;          /* use root table entries */
-  mask = used - 1;            /* mask for comparing low */
-
-  /* check available table space */
-  if ((type === LENS$1 && used > ENOUGH_LENS$1) ||
-    (type === DISTS$1 && used > ENOUGH_DISTS$1)) {
-    return 1;
-  }
-
-  var i = 0;
-  /* process all codes and make table entries */
-  for (;;) {
-    i++;
-    /* create table entry */
-    here_bits = len - drop;
-    if (work[sym] < end) {
-      here_op = 0;
-      here_val = work[sym];
-    }
-    else if (work[sym] > end) {
-      here_op = extra[extra_index + work[sym]];
-      here_val = base[base_index + work[sym]];
-    }
-    else {
-      here_op = 32 + 64;         /* end of block */
-      here_val = 0;
-    }
-
-    /* replicate for those indices with low len bits equal to huff */
-    incr = 1 << (len - drop);
-    fill = 1 << curr;
-    min = fill;                 /* save offset to next table */
-    do {
-      fill -= incr;
-      table[next + (huff >> drop) + fill] = (here_bits << 24) | (here_op << 16) | here_val |0;
-    } while (fill !== 0);
-
-    /* backwards increment the len-bit code huff */
-    incr = 1 << (len - 1);
-    while (huff & incr) {
-      incr >>= 1;
-    }
-    if (incr !== 0) {
-      huff &= incr - 1;
-      huff += incr;
-    } else {
-      huff = 0;
-    }
-
-    /* go to next symbol, update count, len */
-    sym++;
-    if (--count[len] === 0) {
-      if (len === max) { break; }
-      len = lens[lens_index + work[sym]];
-    }
-
-    /* create new sub-table if needed */
-    if (len > root && (huff & mask) !== low) {
-      /* if first time, transition to sub-tables */
-      if (drop === 0) {
-        drop = root;
-      }
-
-      /* increment past last table */
-      next += min;            /* here min is 1 << curr */
-
-      /* determine length of next table */
-      curr = len - drop;
-      left = 1 << curr;
-      while (curr + drop < max) {
-        left -= count[curr + drop];
-        if (left <= 0) { break; }
-        curr++;
-        left <<= 1;
-      }
-
-      /* check for enough space */
-      used += 1 << curr;
-      if ((type === LENS$1 && used > ENOUGH_LENS$1) ||
-        (type === DISTS$1 && used > ENOUGH_DISTS$1)) {
-        return 1;
-      }
-
-      /* point entry in root table to sub-table */
-      low = huff & mask;
-      /*table.op[low] = curr;
-      table.bits[low] = root;
-      table.val[low] = next - opts.table_index;*/
-      table[low] = (root << 24) | (curr << 16) | (next - table_index) |0;
-    }
-  }
-
-  /* fill in remaining table entry if code is incomplete (guaranteed to have
-   at most one remaining entry, since if the code is incomplete, the
-   maximum code length that was allowed to get this far is one bit) */
-  if (huff !== 0) {
-    //table.op[next + huff] = 64;            /* invalid code marker */
-    //table.bits[next + huff] = len - drop;
-    //table.val[next + huff] = 0;
-    table[next + huff] = ((len - drop) << 24) | (64 << 16) |0;
-  }
-
-  /* set return parameters */
-  //opts.table_index += used;
-  opts.bits = root;
-  return 0;
-};
-
-// 'use strict';
-
-
-// var utils         = require('../utils/common');
-// var adler32       = require('./adler32');
-// var crc32         = require('./crc32');
-// var inflate_fast  = require('./inffast');
-// var inflate_table = require('./inftrees');
-
-var CODES = 0;
-var LENS = 1;
-var DISTS = 2;
-
-/* Public constants ==========================================================*/
-/* ===========================================================================*/
-
-
-/* Allowed flush values; see deflate() and inflate() below for details */
-//var Z_NO_FLUSH      = 0;
-//var Z_PARTIAL_FLUSH = 1;
-//var Z_SYNC_FLUSH    = 2;
-//var Z_FULL_FLUSH    = 3;
-var Z_FINISH        = 4;
-var Z_BLOCK         = 5;
-var Z_TREES         = 6;
-
-
-/* Return codes for the compression/decompression functions. Negative values
- * are errors, positive values are used for special but normal events.
- */
-var Z_OK            = 0;
-var Z_STREAM_END    = 1;
-var Z_NEED_DICT     = 2;
-//var Z_ERRNO         = -1;
-var Z_STREAM_ERROR  = -2;
-var Z_DATA_ERROR    = -3;
-var Z_MEM_ERROR     = -4;
-var Z_BUF_ERROR     = -5;
-//var Z_VERSION_ERROR = -6;
-
-/* The deflate compression method */
-var Z_DEFLATED  = 8;
-
-
-/* STATES ====================================================================*/
-/* ===========================================================================*/
-
-
-var    HEAD = 1;       /* i: waiting for magic header */
-var    FLAGS = 2;      /* i: waiting for method and flags (gzip) */
-var    TIME = 3;       /* i: waiting for modification time (gzip) */
-var    OS = 4;         /* i: waiting for extra flags and operating system (gzip) */
-var    EXLEN = 5;      /* i: waiting for extra length (gzip) */
-var    EXTRA = 6;      /* i: waiting for extra bytes (gzip) */
-var    NAME = 7;       /* i: waiting for end of file name (gzip) */
-var    COMMENT = 8;    /* i: waiting for end of comment (gzip) */
-var    HCRC = 9;       /* i: waiting for header crc (gzip) */
-var    DICTID = 10;    /* i: waiting for dictionary check value */
-var    DICT = 11;      /* waiting for inflateSetDictionary() call */
-var        TYPE = 12;      /* i: waiting for type bits, including last-flag bit */
-var        TYPEDO = 13;    /* i: same, but skip check to exit inflate on new block */
-var        STORED = 14;    /* i: waiting for stored size (length and complement) */
-var        COPY_ = 15;     /* i/o: same as COPY below, but only first time in */
-var        COPY = 16;      /* i/o: waiting for input or output to copy stored block */
-var        TABLE = 17;     /* i: waiting for dynamic block table lengths */
-var        LENLENS = 18;   /* i: waiting for code length code lengths */
-var        CODELENS = 19;  /* i: waiting for length/lit and distance code lengths */
-var            LEN_ = 20;      /* i: same as LEN below, but only first time in */
-var            LEN = 21;       /* i: waiting for length/lit/eob code */
-var            LENEXT = 22;    /* i: waiting for length extra bits */
-var            DIST = 23;      /* i: waiting for distance code */
-var            DISTEXT = 24;   /* i: waiting for distance extra bits */
-var            MATCH = 25;     /* o: waiting for output space to copy string */
-var            LIT = 26;       /* o: waiting for output space to write literal */
-var    CHECK = 27;     /* i: waiting for 32-bit check value */
-var    LENGTH = 28;    /* i: waiting for 32-bit length (gzip) */
-var    DONE = 29;      /* finished check, done -- remain here until reset */
-var    BAD = 30;       /* got a data error -- remain here until reset */
-var    MEM = 31;       /* got an inflate() memory error -- remain here until reset */
-var    SYNC = 32;      /* looking for synchronization bytes to restart inflate() */
-
-/* ===========================================================================*/
-
-
-
-var ENOUGH_LENS = 852;
-var ENOUGH_DISTS = 592;
-function zswap32(q) {
-  return  (((q >>> 24) & 0xff) +
-          ((q >>> 8) & 0xff00) +
-          ((q & 0xff00) << 8) +
-          ((q & 0xff) << 24));
-}
-
-
-function InflateState() {
-  this.mode = 0;             /* current inflate mode */
-  this.last = false;          /* true if processing last block */
-  this.wrap = 0;              /* bit 0 true for zlib, bit 1 true for gzip */
-  this.havedict = false;      /* true if dictionary provided */
-  this.flags = 0;             /* gzip header method and flags (0 if zlib) */
-  this.dmax = 0;              /* zlib header max distance (INFLATE_STRICT) */
-  this.check = 0;             /* protected copy of check value */
-  this.total = 0;             /* protected copy of output count */
-  // TODO: may be {}
-  this.head = null;           /* where to save gzip header information */
-
-  /* sliding window */
-  this.wbits = 0;             /* log base 2 of requested window size */
-  this.wsize = 0;             /* window size or zero if not using window */
-  this.whave = 0;             /* valid bytes in the window */
-  this.wnext = 0;             /* window write index */
-  this.window = null;         /* allocated sliding window, if needed */
-
-  /* bit accumulator */
-  this.hold = 0;              /* input bit accumulator */
-  this.bits = 0;              /* number of bits in "in" */
-
-  /* for string and stored block copying */
-  this.length = 0;            /* literal or length of data to copy */
-  this.offset = 0;            /* distance back to copy string from */
-
-  /* for table and code decoding */
-  this.extra = 0;             /* extra bits needed */
-
-  /* fixed and dynamic code tables */
-  this.lencode = null;          /* starting table for length/literal codes */
-  this.distcode = null;         /* starting table for distance codes */
-  this.lenbits = 0;           /* index bits for lencode */
-  this.distbits = 0;          /* index bits for distcode */
-
-  /* dynamic table building */
-  this.ncode = 0;             /* number of code length code lengths */
-  this.nlen = 0;              /* number of length code lengths */
-  this.ndist = 0;             /* number of distance code lengths */
-  this.have = 0;              /* number of code lengths in lens[] */
-  this.next = null;              /* next available space in codes[] */
-
-  this.lens = new Uint16Array(320); /* temporary storage for code lengths */
-  this.work = new Uint16Array(288); /* work area for code table building */
-
-  /*
-   because we don't have pointers in js, we use lencode and distcode directly
-   as buffers so we don't need codes
-  */
-  //this.codes = new Buf32(ENOUGH);       /* space for code tables */
-  this.lendyn = null;              /* dynamic table for length/literal codes (JS specific) */
-  this.distdyn = null;             /* dynamic table for distance codes (JS specific) */
-  this.sane = 0;                   /* if false, allow invalid distance too far */
-  this.back = 0;                   /* bits back of last unprocessed length/lit */
-  this.was = 0;                    /* initial length of match */
-}
-
-function inflateResetKeep(strm) {
-  var state;
-
-  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
-  state = strm.state;
-  strm.total_in = strm.total_out = state.total = 0;
-  strm.msg = ''; /*Z_NULL*/
-  if (state.wrap) {       /* to support ill-conceived Java test suite */
-    strm.adler = state.wrap & 1;
-  }
-  state.mode = HEAD;
-  state.last = 0;
-  state.havedict = 0;
-  state.dmax = 32768;
-  state.head = null/*Z_NULL*/;
-  state.hold = 0;
-  state.bits = 0;
-  //state.lencode = state.distcode = state.next = state.codes;
-  state.lencode = state.lendyn = new Int32Array(ENOUGH_LENS);
-  state.distcode = state.distdyn = new Int32Array(ENOUGH_DISTS);
-
-  state.sane = 1;
-  state.back = -1;
-  //Tracev((stderr, "inflate: reset\n"));
-  return Z_OK;
-}
-
-function inflateReset(strm) {
-  var state;
-
-  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
-  state = strm.state;
-  state.wsize = 0;
-  state.whave = 0;
-  state.wnext = 0;
-  return inflateResetKeep(strm);
-
-}
-
-function inflateReset2(strm, windowBits) {
-  var wrap;
-  var state;
-
-  /* get the state */
-  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
-  state = strm.state;
-
-  /* extract wrap request from windowBits parameter */
-  if (windowBits < 0) {
-    wrap = 0;
-    windowBits = -windowBits;
-  }
-  else {
-    wrap = (windowBits >> 4) + 1;
-    if (windowBits < 48) {
-      windowBits &= 15;
-    }
-  }
-
-  /* set number of window bits, free window if different */
-  if (windowBits && (windowBits < 8 || windowBits > 15)) {
-    return Z_STREAM_ERROR;
-  }
-  if (state.window !== null && state.wbits !== windowBits) {
-    state.window = null;
-  }
-
-  /* update state and reset the rest of it */
-  state.wrap = wrap;
-  state.wbits = windowBits;
-  return inflateReset(strm);
-}
-
-function inflateInit2(strm, windowBits) {
-  var ret;
-  var state;
-
-  if (!strm) { return Z_STREAM_ERROR; }
-  //strm.msg = Z_NULL;                 /* in case we return an error */
-
-  state = new InflateState();
-
-  //if (state === Z_NULL) return Z_MEM_ERROR;
-  //Tracev((stderr, "inflate: allocated\n"));
-  strm.state = state;
-  state.window = null/*Z_NULL*/;
-  ret = inflateReset2(strm, windowBits);
-  if (ret !== Z_OK) {
-    strm.state = null/*Z_NULL*/;
-  }
-  return ret;
-}
-
-/*
- Return state with length and distance decoding tables and index sizes set to
- fixed code decoding.  Normally this returns fixed tables from inffixed.h.
- If BUILDFIXED is defined, then instead this routine builds the tables the
- first time it's called, and returns those tables the first time and
- thereafter.  This reduces the size of the code by about 2K bytes, in
- exchange for a little execution time.  However, BUILDFIXED should not be
- used for threaded applications, since the rewriting of the tables and virgin
- may not be thread-safe.
- */
-var virgin = true;
-
-var lenfix;
-var distfix;
-// We have no pointers in JS, so keep tables separate
-
-function fixedtables(state) {
-  /* build fixed huffman tables if first call (may not be thread safe) */
-  if (virgin) {
-    var sym;
-
-    lenfix = new Int32Array(512);
-    distfix = new Int32Array(32);
-
-    /* literal/length table */
-    sym = 0;
-    while (sym < 144) { state.lens[sym++] = 8; }
-    while (sym < 256) { state.lens[sym++] = 9; }
-    while (sym < 280) { state.lens[sym++] = 7; }
-    while (sym < 288) { state.lens[sym++] = 8; }
-
-    inflate_table(LENS,  state.lens, 0, 288, lenfix,   0, state.work, { bits: 9 });
-
-    /* distance table */
-    sym = 0;
-    while (sym < 32) { state.lens[sym++] = 5; }
-
-    inflate_table(DISTS, state.lens, 0, 32,   distfix, 0, state.work, { bits: 5 });
-
-    /* do this just once */
-    virgin = false;
-  }
-
-  state.lencode = lenfix;
-  state.lenbits = 9;
-  state.distcode = distfix;
-  state.distbits = 5;
-}
-
-
-/*
- Update the window with the last wsize (normally 32K) bytes written before
- returning.  If window does not exist yet, create it.  This is only called
- when a window is already in use, or when output has been written during this
- inflate call, but the end of the deflate stream has not been reached yet.
- It is also called to create a window for dictionary data when a dictionary
- is loaded.
-
- Providing output buffers larger than 32K to inflate() should provide a speed
- advantage, since only the last 32K of output is copied to the sliding window
- upon return from inflate(), and since all distances after the first 32K of
- output will fall in the output data, making match copies simpler and faster.
- The advantage may be dependent on the size of the processor's data caches.
- */
-function updatewindow(strm, src, end, copy) {
-  var dist;
-  var state = strm.state;
-
-  /* if it hasn't been done already, allocate space for the window */
-  if (state.window === null) {
-    state.wsize = 1 << state.wbits;
-    state.wnext = 0;
-    state.whave = 0;
-
-    state.window = new Uint8Array(state.wsize);
-  }
-
-  /* copy state->wsize or less output bytes into the circular window */
-  if (copy >= state.wsize) {
-    arraySet(state.window, src, end - state.wsize, state.wsize, 0);
-    state.wnext = 0;
-    state.whave = state.wsize;
-  }
-  else {
-    dist = state.wsize - state.wnext;
-    if (dist > copy) {
-      dist = copy;
-    }
-    //zmemcpy(state->window + state->wnext, end - copy, dist);
-    arraySet(state.window, src, end - copy, dist, state.wnext);
-    copy -= dist;
-    if (copy) {
-      //zmemcpy(state->window, end - copy, copy);
-      arraySet(state.window, src, end - copy, copy, 0);
-      state.wnext = copy;
-      state.whave = state.wsize;
-    }
-    else {
-      state.wnext += dist;
-      if (state.wnext === state.wsize) { state.wnext = 0; }
-      if (state.whave < state.wsize) { state.whave += dist; }
-    }
-  }
-  return 0;
-}
-
-function inflate(strm, flush) {
-  var state;
-  var input, output;          // input/output buffers
-  var next;                   /* next input INDEX */
-  var put;                    /* next output INDEX */
-  var have, left;             /* available input and output */
-  var hold;                   /* bit buffer */
-  var bits;                   /* bits in bit buffer */
-  var _in, _out;              /* save starting available input and output */
-  var copy;                   /* number of stored or match bytes to copy */
-  var from;                   /* where to copy match bytes from */
-  var from_source;
-  var here = 0;               /* current decoding table entry */
-  var here_bits, here_op, here_val; // paked "here" denormalized (JS specific)
-  //var last;                   /* parent table entry */
-  var last_bits, last_op, last_val; // paked "last" denormalized (JS specific)
-  var len;                    /* length to copy for repeats, bits to drop */
-  var ret;                    /* return code */
-  var hbuf = new Uint8Array(4);    /* buffer for gzip header crc calculation */
-  var opts;
-
-  var n; // temporary var for NEED_BITS
-
-  var order = /* permutation of code lengths */
-    [ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ];
-
-
-  if (!strm || !strm.state || !strm.output ||
-      (!strm.input && strm.avail_in !== 0)) {
-    return Z_STREAM_ERROR;
-  }
-
-  state = strm.state;
-  if (state.mode === TYPE) { state.mode = TYPEDO; }    /* skip check */
-
-
-  //--- LOAD() ---
-  put = strm.next_out;
-  output = strm.output;
-  left = strm.avail_out;
-  next = strm.next_in;
-  input = strm.input;
-  have = strm.avail_in;
-  hold = state.hold;
-  bits = state.bits;
-  //---
-
-  _in = have;
-  _out = left;
-  ret = Z_OK;
-
-  inf_leave: // goto emulation
-  for (;;) {
-    switch (state.mode) {
-    case HEAD:
-      if (state.wrap === 0) {
-        state.mode = TYPEDO;
-        break;
-      }
-      //=== NEEDBITS(16);
-      while (bits < 16) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      if ((state.wrap & 2) && hold === 0x8b1f) {  /* gzip header */
-        state.check = 0/*crc32(0L, Z_NULL, 0)*/;
-        //=== CRC2(state.check, hold);
-        hbuf[0] = hold & 0xff;
-        hbuf[1] = (hold >>> 8) & 0xff;
-        state.check = crc32(state.check, hbuf, 2, 0);
-        //===//
-
-        //=== INITBITS();
-        hold = 0;
-        bits = 0;
-        //===//
-        state.mode = FLAGS;
-        break;
-      }
-      state.flags = 0;           /* expect zlib header */
-      if (state.head) {
-        state.head.done = false;
-      }
-      if (!(state.wrap & 1) ||   /* check if zlib header allowed */
-        (((hold & 0xff)/*BITS(8)*/ << 8) + (hold >> 8)) % 31) {
-        strm.msg = 'incorrect header check';
-        state.mode = BAD;
-        break;
-      }
-      if ((hold & 0x0f)/*BITS(4)*/ !== Z_DEFLATED) {
-        strm.msg = 'unknown compression method';
-        state.mode = BAD;
-        break;
-      }
-      //--- DROPBITS(4) ---//
-      hold >>>= 4;
-      bits -= 4;
-      //---//
-      len = (hold & 0x0f)/*BITS(4)*/ + 8;
-      if (state.wbits === 0) {
-        state.wbits = len;
-      }
-      else if (len > state.wbits) {
-        strm.msg = 'invalid window size';
-        state.mode = BAD;
-        break;
-      }
-      state.dmax = 1 << len;
-      //Tracev((stderr, "inflate:   zlib header ok\n"));
-      strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
-      state.mode = hold & 0x200 ? DICTID : TYPE;
-      //=== INITBITS();
-      hold = 0;
-      bits = 0;
-      //===//
-      break;
-    case FLAGS:
-      //=== NEEDBITS(16); */
-      while (bits < 16) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      state.flags = hold;
-      if ((state.flags & 0xff) !== Z_DEFLATED) {
-        strm.msg = 'unknown compression method';
-        state.mode = BAD;
-        break;
-      }
-      if (state.flags & 0xe000) {
-        strm.msg = 'unknown header flags set';
-        state.mode = BAD;
-        break;
-      }
-      if (state.head) {
-        state.head.text = ((hold >> 8) & 1);
-      }
-      if (state.flags & 0x0200) {
-        //=== CRC2(state.check, hold);
-        hbuf[0] = hold & 0xff;
-        hbuf[1] = (hold >>> 8) & 0xff;
-        state.check = crc32(state.check, hbuf, 2, 0);
-        //===//
-      }
-      //=== INITBITS();
-      hold = 0;
-      bits = 0;
-      //===//
-      state.mode = TIME;
-      /* falls through */
-    case TIME:
-      //=== NEEDBITS(32); */
-      while (bits < 32) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      if (state.head) {
-        state.head.time = hold;
-      }
-      if (state.flags & 0x0200) {
-        //=== CRC4(state.check, hold)
-        hbuf[0] = hold & 0xff;
-        hbuf[1] = (hold >>> 8) & 0xff;
-        hbuf[2] = (hold >>> 16) & 0xff;
-        hbuf[3] = (hold >>> 24) & 0xff;
-        state.check = crc32(state.check, hbuf, 4, 0);
-        //===
-      }
-      //=== INITBITS();
-      hold = 0;
-      bits = 0;
-      //===//
-      state.mode = OS;
-      /* falls through */
-    case OS:
-      //=== NEEDBITS(16); */
-      while (bits < 16) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      if (state.head) {
-        state.head.xflags = (hold & 0xff);
-        state.head.os = (hold >> 8);
-      }
-      if (state.flags & 0x0200) {
-        //=== CRC2(state.check, hold);
-        hbuf[0] = hold & 0xff;
-        hbuf[1] = (hold >>> 8) & 0xff;
-        state.check = crc32(state.check, hbuf, 2, 0);
-        //===//
-      }
-      //=== INITBITS();
-      hold = 0;
-      bits = 0;
-      //===//
-      state.mode = EXLEN;
-      /* falls through */
-    case EXLEN:
-      if (state.flags & 0x0400) {
-        //=== NEEDBITS(16); */
-        while (bits < 16) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        state.length = hold;
-        if (state.head) {
-          state.head.extra_len = hold;
-        }
-        if (state.flags & 0x0200) {
-          //=== CRC2(state.check, hold);
-          hbuf[0] = hold & 0xff;
-          hbuf[1] = (hold >>> 8) & 0xff;
-          state.check = crc32(state.check, hbuf, 2, 0);
-          //===//
-        }
-        //=== INITBITS();
-        hold = 0;
-        bits = 0;
-        //===//
-      }
-      else if (state.head) {
-        state.head.extra = null/*Z_NULL*/;
-      }
-      state.mode = EXTRA;
-      /* falls through */
-    case EXTRA:
-      if (state.flags & 0x0400) {
-        copy = state.length;
-        if (copy > have) { copy = have; }
-        if (copy) {
-          if (state.head) {
-            len = state.head.extra_len - state.length;
-            if (!state.head.extra) {
-              // Use untyped array for more conveniend processing later
-              state.head.extra = new Array(state.head.extra_len);
-            }
-            arraySet(
-              state.head.extra,
-              input,
-              next,
-              // extra field is limited to 65536 bytes
-              // - no need for additional size check
-              copy,
-              /*len + copy > state.head.extra_max - len ? state.head.extra_max : copy,*/
-              len
-            );
-            //zmemcpy(state.head.extra + len, next,
-            //        len + copy > state.head.extra_max ?
-            //        state.head.extra_max - len : copy);
-          }
-          if (state.flags & 0x0200) {
-            state.check = crc32(state.check, input, copy, next);
-          }
-          have -= copy;
-          next += copy;
-          state.length -= copy;
-        }
-        if (state.length) { break inf_leave; }
-      }
-      state.length = 0;
-      state.mode = NAME;
-      /* falls through */
-    case NAME:
-      if (state.flags & 0x0800) {
-        if (have === 0) { break inf_leave; }
-        copy = 0;
-        do {
-          // TODO: 2 or 1 bytes?
-          len = input[next + copy++];
-          /* use constant limit because in js we should not preallocate memory */
-          if (state.head && len &&
-              (state.length < 65536 /*state.head.name_max*/)) {
-            state.head.name += String.fromCharCode(len);
-          }
-        } while (len && copy < have);
-
-        if (state.flags & 0x0200) {
-          state.check = crc32(state.check, input, copy, next);
-        }
-        have -= copy;
-        next += copy;
-        if (len) { break inf_leave; }
-      }
-      else if (state.head) {
-        state.head.name = null;
-      }
-      state.length = 0;
-      state.mode = COMMENT;
-      /* falls through */
-    case COMMENT:
-      if (state.flags & 0x1000) {
-        if (have === 0) { break inf_leave; }
-        copy = 0;
-        do {
-          len = input[next + copy++];
-          /* use constant limit because in js we should not preallocate memory */
-          if (state.head && len &&
-              (state.length < 65536 /*state.head.comm_max*/)) {
-            state.head.comment += String.fromCharCode(len);
-          }
-        } while (len && copy < have);
-        if (state.flags & 0x0200) {
-          state.check = crc32(state.check, input, copy, next);
-        }
-        have -= copy;
-        next += copy;
-        if (len) { break inf_leave; }
-      }
-      else if (state.head) {
-        state.head.comment = null;
-      }
-      state.mode = HCRC;
-      /* falls through */
-    case HCRC:
-      if (state.flags & 0x0200) {
-        //=== NEEDBITS(16); */
-        while (bits < 16) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        if (hold !== (state.check & 0xffff)) {
-          strm.msg = 'header crc mismatch';
-          state.mode = BAD;
-          break;
-        }
-        //=== INITBITS();
-        hold = 0;
-        bits = 0;
-        //===//
-      }
-      if (state.head) {
-        state.head.hcrc = ((state.flags >> 9) & 1);
-        state.head.done = true;
-      }
-      strm.adler = state.check = 0;
-      state.mode = TYPE;
-      break;
-    case DICTID:
-      //=== NEEDBITS(32); */
-      while (bits < 32) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      strm.adler = state.check = zswap32(hold);
-      //=== INITBITS();
-      hold = 0;
-      bits = 0;
-      //===//
-      state.mode = DICT;
-      /* falls through */
-    case DICT:
-      if (state.havedict === 0) {
-        //--- RESTORE() ---
-        strm.next_out = put;
-        strm.avail_out = left;
-        strm.next_in = next;
-        strm.avail_in = have;
-        state.hold = hold;
-        state.bits = bits;
-        //---
-        return Z_NEED_DICT;
-      }
-      strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
-      state.mode = TYPE;
-      /* falls through */
-    case TYPE:
-      if (flush === Z_BLOCK || flush === Z_TREES) { break inf_leave; }
-      /* falls through */
-    case TYPEDO:
-      if (state.last) {
-        //--- BYTEBITS() ---//
-        hold >>>= bits & 7;
-        bits -= bits & 7;
-        //---//
-        state.mode = CHECK;
-        break;
-      }
-      //=== NEEDBITS(3); */
-      while (bits < 3) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      state.last = (hold & 0x01)/*BITS(1)*/;
-      //--- DROPBITS(1) ---//
-      hold >>>= 1;
-      bits -= 1;
-      //---//
-
-      switch ((hold & 0x03)/*BITS(2)*/) {
-      case 0:                             /* stored block */
-        //Tracev((stderr, "inflate:     stored block%s\n",
-        //        state.last ? " (last)" : ""));
-        state.mode = STORED;
-        break;
-      case 1:                             /* fixed block */
-        fixedtables(state);
-        //Tracev((stderr, "inflate:     fixed codes block%s\n",
-        //        state.last ? " (last)" : ""));
-        state.mode = LEN_;             /* decode codes */
-        if (flush === Z_TREES) {
-          //--- DROPBITS(2) ---//
-          hold >>>= 2;
-          bits -= 2;
-          //---//
-          break inf_leave;
-        }
-        break;
-      case 2:                             /* dynamic block */
-        //Tracev((stderr, "inflate:     dynamic codes block%s\n",
-        //        state.last ? " (last)" : ""));
-        state.mode = TABLE;
-        break;
-      case 3:
-        strm.msg = 'invalid block type';
-        state.mode = BAD;
-      }
-      //--- DROPBITS(2) ---//
-      hold >>>= 2;
-      bits -= 2;
-      //---//
-      break;
-    case STORED:
-      //--- BYTEBITS() ---// /* go to byte boundary */
-      hold >>>= bits & 7;
-      bits -= bits & 7;
-      //---//
-      //=== NEEDBITS(32); */
-      while (bits < 32) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      if ((hold & 0xffff) !== ((hold >>> 16) ^ 0xffff)) {
-        strm.msg = 'invalid stored block lengths';
-        state.mode = BAD;
-        break;
-      }
-      state.length = hold & 0xffff;
-      //Tracev((stderr, "inflate:       stored length %u\n",
-      //        state.length));
-      //=== INITBITS();
-      hold = 0;
-      bits = 0;
-      //===//
-      state.mode = COPY_;
-      if (flush === Z_TREES) { break inf_leave; }
-      /* falls through */
-    case COPY_:
-      state.mode = COPY;
-      /* falls through */
-    case COPY:
-      copy = state.length;
-      if (copy) {
-        if (copy > have) { copy = have; }
-        if (copy > left) { copy = left; }
-        if (copy === 0) { break inf_leave; }
-        //--- zmemcpy(put, next, copy); ---
-        arraySet(output, input, next, copy, put);
-        //---//
-        have -= copy;
-        next += copy;
-        left -= copy;
-        put += copy;
-        state.length -= copy;
-        break;
-      }
-      //Tracev((stderr, "inflate:       stored end\n"));
-      state.mode = TYPE;
-      break;
-    case TABLE:
-      //=== NEEDBITS(14); */
-      while (bits < 14) {
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-      }
-      //===//
-      state.nlen = (hold & 0x1f)/*BITS(5)*/ + 257;
-      //--- DROPBITS(5) ---//
-      hold >>>= 5;
-      bits -= 5;
-      //---//
-      state.ndist = (hold & 0x1f)/*BITS(5)*/ + 1;
-      //--- DROPBITS(5) ---//
-      hold >>>= 5;
-      bits -= 5;
-      //---//
-      state.ncode = (hold & 0x0f)/*BITS(4)*/ + 4;
-      //--- DROPBITS(4) ---//
-      hold >>>= 4;
-      bits -= 4;
-      //---//
-//#ifndef PKZIP_BUG_WORKAROUND
-      if (state.nlen > 286 || state.ndist > 30) {
-        strm.msg = 'too many length or distance symbols';
-        state.mode = BAD;
-        break;
-      }
-//#endif
-      //Tracev((stderr, "inflate:       table sizes ok\n"));
-      state.have = 0;
-      state.mode = LENLENS;
-      /* falls through */
-    case LENLENS:
-      while (state.have < state.ncode) {
-        //=== NEEDBITS(3);
-        while (bits < 3) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        state.lens[order[state.have++]] = (hold & 0x07);//BITS(3);
-        //--- DROPBITS(3) ---//
-        hold >>>= 3;
-        bits -= 3;
-        //---//
-      }
-      while (state.have < 19) {
-        state.lens[order[state.have++]] = 0;
-      }
-      // We have separate tables & no pointers. 2 commented lines below not needed.
-      //state.next = state.codes;
-      //state.lencode = state.next;
-      // Switch to use dynamic table
-      state.lencode = state.lendyn;
-      state.lenbits = 7;
-
-      opts = { bits: state.lenbits };
-      ret = inflate_table(CODES, state.lens, 0, 19, state.lencode, 0, state.work, opts);
-      state.lenbits = opts.bits;
-
-      if (ret) {
-        strm.msg = 'invalid code lengths set';
-        state.mode = BAD;
-        break;
-      }
-      //Tracev((stderr, "inflate:       code lengths ok\n"));
-      state.have = 0;
-      state.mode = CODELENS;
-      /* falls through */
-    case CODELENS:
-      while (state.have < state.nlen + state.ndist) {
-        for (;;) {
-          here = state.lencode[hold & ((1 << state.lenbits) - 1)];/*BITS(state.lenbits)*/
-          here_bits = here >>> 24;
-          here_op = (here >>> 16) & 0xff;
-          here_val = here & 0xffff;
-
-          if ((here_bits) <= bits) { break; }
-          //--- PULLBYTE() ---//
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-          //---//
-        }
-        if (here_val < 16) {
-          //--- DROPBITS(here.bits) ---//
-          hold >>>= here_bits;
-          bits -= here_bits;
-          //---//
-          state.lens[state.have++] = here_val;
-        }
-        else {
-          if (here_val === 16) {
-            //=== NEEDBITS(here.bits + 2);
-            n = here_bits + 2;
-            while (bits < n) {
-              if (have === 0) { break inf_leave; }
-              have--;
-              hold += input[next++] << bits;
-              bits += 8;
-            }
-            //===//
-            //--- DROPBITS(here.bits) ---//
-            hold >>>= here_bits;
-            bits -= here_bits;
-            //---//
-            if (state.have === 0) {
-              strm.msg = 'invalid bit length repeat';
-              state.mode = BAD;
-              break;
-            }
-            len = state.lens[state.have - 1];
-            copy = 3 + (hold & 0x03);//BITS(2);
-            //--- DROPBITS(2) ---//
-            hold >>>= 2;
-            bits -= 2;
-            //---//
-          }
-          else if (here_val === 17) {
-            //=== NEEDBITS(here.bits + 3);
-            n = here_bits + 3;
-            while (bits < n) {
-              if (have === 0) { break inf_leave; }
-              have--;
-              hold += input[next++] << bits;
-              bits += 8;
-            }
-            //===//
-            //--- DROPBITS(here.bits) ---//
-            hold >>>= here_bits;
-            bits -= here_bits;
-            //---//
-            len = 0;
-            copy = 3 + (hold & 0x07);//BITS(3);
-            //--- DROPBITS(3) ---//
-            hold >>>= 3;
-            bits -= 3;
-            //---//
-          }
-          else {
-            //=== NEEDBITS(here.bits + 7);
-            n = here_bits + 7;
-            while (bits < n) {
-              if (have === 0) { break inf_leave; }
-              have--;
-              hold += input[next++] << bits;
-              bits += 8;
-            }
-            //===//
-            //--- DROPBITS(here.bits) ---//
-            hold >>>= here_bits;
-            bits -= here_bits;
-            //---//
-            len = 0;
-            copy = 11 + (hold & 0x7f);//BITS(7);
-            //--- DROPBITS(7) ---//
-            hold >>>= 7;
-            bits -= 7;
-            //---//
-          }
-          if (state.have + copy > state.nlen + state.ndist) {
-            strm.msg = 'invalid bit length repeat';
-            state.mode = BAD;
-            break;
-          }
-          while (copy--) {
-            state.lens[state.have++] = len;
-          }
-        }
-      }
-
-      /* handle error breaks in while */
-      if (state.mode === BAD) { break; }
-
-      /* check for end-of-block code (better have one) */
-      if (state.lens[256] === 0) {
-        strm.msg = 'invalid code -- missing end-of-block';
-        state.mode = BAD;
-        break;
-      }
-
-      /* build code tables -- note: do not change the lenbits or distbits
-         values here (9 and 6) without reading the comments in inftrees.h
-         concerning the ENOUGH constants, which depend on those values */
-      state.lenbits = 9;
-
-      opts = { bits: state.lenbits };
-      ret = inflate_table(LENS, state.lens, 0, state.nlen, state.lencode, 0, state.work, opts);
-      // We have separate tables & no pointers. 2 commented lines below not needed.
-      // state.next_index = opts.table_index;
-      state.lenbits = opts.bits;
-      // state.lencode = state.next;
-
-      if (ret) {
-        strm.msg = 'invalid literal/lengths set';
-        state.mode = BAD;
-        break;
-      }
-
-      state.distbits = 6;
-      //state.distcode.copy(state.codes);
-      // Switch to use dynamic table
-      state.distcode = state.distdyn;
-      opts = { bits: state.distbits };
-      ret = inflate_table(DISTS, state.lens, state.nlen, state.ndist, state.distcode, 0, state.work, opts);
-      // We have separate tables & no pointers. 2 commented lines below not needed.
-      // state.next_index = opts.table_index;
-      state.distbits = opts.bits;
-      // state.distcode = state.next;
-
-      if (ret) {
-        strm.msg = 'invalid distances set';
-        state.mode = BAD;
-        break;
-      }
-      //Tracev((stderr, 'inflate:       codes ok\n'));
-      state.mode = LEN_;
-      if (flush === Z_TREES) { break inf_leave; }
-      /* falls through */
-    case LEN_:
-      state.mode = LEN;
-      /* falls through */
-    case LEN:
-      if (have >= 6 && left >= 258) {
-        //--- RESTORE() ---
-        strm.next_out = put;
-        strm.avail_out = left;
-        strm.next_in = next;
-        strm.avail_in = have;
-        state.hold = hold;
-        state.bits = bits;
-        //---
-        inflate_fast(strm, _out);
-        //--- LOAD() ---
-        put = strm.next_out;
-        output = strm.output;
-        left = strm.avail_out;
-        next = strm.next_in;
-        input = strm.input;
-        have = strm.avail_in;
-        hold = state.hold;
-        bits = state.bits;
-        //---
-
-        if (state.mode === TYPE) {
-          state.back = -1;
-        }
-        break;
-      }
-      state.back = 0;
-      for (;;) {
-        here = state.lencode[hold & ((1 << state.lenbits) - 1)];  /*BITS(state.lenbits)*/
-        here_bits = here >>> 24;
-        here_op = (here >>> 16) & 0xff;
-        here_val = here & 0xffff;
-
-        if (here_bits <= bits) { break; }
-        //--- PULLBYTE() ---//
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-        //---//
-      }
-      if (here_op && (here_op & 0xf0) === 0) {
-        last_bits = here_bits;
-        last_op = here_op;
-        last_val = here_val;
-        for (;;) {
-          here = state.lencode[last_val +
-                  ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
-          here_bits = here >>> 24;
-          here_op = (here >>> 16) & 0xff;
-          here_val = here & 0xffff;
-
-          if ((last_bits + here_bits) <= bits) { break; }
-          //--- PULLBYTE() ---//
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-          //---//
-        }
-        //--- DROPBITS(last.bits) ---//
-        hold >>>= last_bits;
-        bits -= last_bits;
-        //---//
-        state.back += last_bits;
-      }
-      //--- DROPBITS(here.bits) ---//
-      hold >>>= here_bits;
-      bits -= here_bits;
-      //---//
-      state.back += here_bits;
-      state.length = here_val;
-      if (here_op === 0) {
-        //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
-        //        "inflate:         literal '%c'\n" :
-        //        "inflate:         literal 0x%02x\n", here.val));
-        state.mode = LIT;
-        break;
-      }
-      if (here_op & 32) {
-        //Tracevv((stderr, "inflate:         end of block\n"));
-        state.back = -1;
-        state.mode = TYPE;
-        break;
-      }
-      if (here_op & 64) {
-        strm.msg = 'invalid literal/length code';
-        state.mode = BAD;
-        break;
-      }
-      state.extra = here_op & 15;
-      state.mode = LENEXT;
-      /* falls through */
-    case LENEXT:
-      if (state.extra) {
-        //=== NEEDBITS(state.extra);
-        n = state.extra;
-        while (bits < n) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        state.length += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
-        //--- DROPBITS(state.extra) ---//
-        hold >>>= state.extra;
-        bits -= state.extra;
-        //---//
-        state.back += state.extra;
-      }
-      //Tracevv((stderr, "inflate:         length %u\n", state.length));
-      state.was = state.length;
-      state.mode = DIST;
-      /* falls through */
-    case DIST:
-      for (;;) {
-        here = state.distcode[hold & ((1 << state.distbits) - 1)];/*BITS(state.distbits)*/
-        here_bits = here >>> 24;
-        here_op = (here >>> 16) & 0xff;
-        here_val = here & 0xffff;
-
-        if ((here_bits) <= bits) { break; }
-        //--- PULLBYTE() ---//
-        if (have === 0) { break inf_leave; }
-        have--;
-        hold += input[next++] << bits;
-        bits += 8;
-        //---//
-      }
-      if ((here_op & 0xf0) === 0) {
-        last_bits = here_bits;
-        last_op = here_op;
-        last_val = here_val;
-        for (;;) {
-          here = state.distcode[last_val +
-                  ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
-          here_bits = here >>> 24;
-          here_op = (here >>> 16) & 0xff;
-          here_val = here & 0xffff;
-
-          if ((last_bits + here_bits) <= bits) { break; }
-          //--- PULLBYTE() ---//
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-          //---//
-        }
-        //--- DROPBITS(last.bits) ---//
-        hold >>>= last_bits;
-        bits -= last_bits;
-        //---//
-        state.back += last_bits;
-      }
-      //--- DROPBITS(here.bits) ---//
-      hold >>>= here_bits;
-      bits -= here_bits;
-      //---//
-      state.back += here_bits;
-      if (here_op & 64) {
-        strm.msg = 'invalid distance code';
-        state.mode = BAD;
-        break;
-      }
-      state.offset = here_val;
-      state.extra = (here_op) & 15;
-      state.mode = DISTEXT;
-      /* falls through */
-    case DISTEXT:
-      if (state.extra) {
-        //=== NEEDBITS(state.extra);
-        n = state.extra;
-        while (bits < n) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        state.offset += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
-        //--- DROPBITS(state.extra) ---//
-        hold >>>= state.extra;
-        bits -= state.extra;
-        //---//
-        state.back += state.extra;
-      }
-//#ifdef INFLATE_STRICT
-      if (state.offset > state.dmax) {
-        strm.msg = 'invalid distance too far back';
-        state.mode = BAD;
-        break;
-      }
-//#endif
-      //Tracevv((stderr, "inflate:         distance %u\n", state.offset));
-      state.mode = MATCH;
-      /* falls through */
-    case MATCH:
-      if (left === 0) { break inf_leave; }
-      copy = _out - left;
-      if (state.offset > copy) {         /* copy from window */
-        copy = state.offset - copy;
-        if (copy > state.whave) {
-          if (state.sane) {
-            strm.msg = 'invalid distance too far back';
-            state.mode = BAD;
-            break;
-          }
-// (!) This block is disabled in zlib defailts,
-// don't enable it for binary compatibility
-//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
-//          Trace((stderr, "inflate.c too far\n"));
-//          copy -= state.whave;
-//          if (copy > state.length) { copy = state.length; }
-//          if (copy > left) { copy = left; }
-//          left -= copy;
-//          state.length -= copy;
-//          do {
-//            output[put++] = 0;
-//          } while (--copy);
-//          if (state.length === 0) { state.mode = LEN; }
-//          break;
-//#endif
-        }
-        if (copy > state.wnext) {
-          copy -= state.wnext;
-          from = state.wsize - copy;
-        }
-        else {
-          from = state.wnext - copy;
-        }
-        if (copy > state.length) { copy = state.length; }
-        from_source = state.window;
-      }
-      else {                              /* copy from output */
-        from_source = output;
-        from = put - state.offset;
-        copy = state.length;
-      }
-      if (copy > left) { copy = left; }
-      left -= copy;
-      state.length -= copy;
-      do {
-        output[put++] = from_source[from++];
-      } while (--copy);
-      if (state.length === 0) { state.mode = LEN; }
-      break;
-    case LIT:
-      if (left === 0) { break inf_leave; }
-      output[put++] = state.length;
-      left--;
-      state.mode = LEN;
-      break;
-    case CHECK:
-      if (state.wrap) {
-        //=== NEEDBITS(32);
-        while (bits < 32) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          // Use '|' insdead of '+' to make sure that result is signed
-          hold |= input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        _out -= left;
-        strm.total_out += _out;
-        state.total += _out;
-        if (_out) {
-          strm.adler = state.check =
-              /*UPDATE(state.check, put - _out, _out);*/
-              (state.flags ? crc32(state.check, output, _out, put - _out) : adler32(state.check, output, _out, put - _out));
-
-        }
-        _out = left;
-        // NB: crc32 stored as signed 32-bit int, zswap32 returns signed too
-        if ((state.flags ? hold : zswap32(hold)) !== state.check) {
-          strm.msg = 'incorrect data check';
-          state.mode = BAD;
-          break;
-        }
-        //=== INITBITS();
-        hold = 0;
-        bits = 0;
-        //===//
-        //Tracev((stderr, "inflate:   check matches trailer\n"));
-      }
-      state.mode = LENGTH;
-      /* falls through */
-    case LENGTH:
-      if (state.wrap && state.flags) {
-        //=== NEEDBITS(32);
-        while (bits < 32) {
-          if (have === 0) { break inf_leave; }
-          have--;
-          hold += input[next++] << bits;
-          bits += 8;
-        }
-        //===//
-        if (hold !== (state.total & 0xffffffff)) {
-          strm.msg = 'incorrect length check';
-          state.mode = BAD;
-          break;
-        }
-        //=== INITBITS();
-        hold = 0;
-        bits = 0;
-        //===//
-        //Tracev((stderr, "inflate:   length matches trailer\n"));
-      }
-      state.mode = DONE;
-      /* falls through */
-    case DONE:
-      ret = Z_STREAM_END;
-      break inf_leave;
-    case BAD:
-      ret = Z_DATA_ERROR;
-      break inf_leave;
-    case MEM:
-      return Z_MEM_ERROR;
-    case SYNC:
-      /* falls through */
-    default:
-      return Z_STREAM_ERROR;
-    }
-  }
-
-  // inf_leave <- here is real place for "goto inf_leave", emulated via "break inf_leave"
-
-  /*
-     Return from inflate(), updating the total counts and the check value.
-     If there was no progress during the inflate() call, return a buffer
-     error.  Call updatewindow() to create and/or update the window state.
-     Note: a memory error from inflate() is non-recoverable.
-   */
-
-  //--- RESTORE() ---
-  strm.next_out = put;
-  strm.avail_out = left;
-  strm.next_in = next;
-  strm.avail_in = have;
-  state.hold = hold;
-  state.bits = bits;
-  //---
-
-  if (state.wsize || (_out !== strm.avail_out && state.mode < BAD &&
-                      (state.mode < CHECK || flush !== Z_FINISH))) {
-    if (updatewindow(strm, strm.output, strm.next_out, _out - strm.avail_out)) {
-      state.mode = MEM;
-      return Z_MEM_ERROR;
-    }
-  }
-  _in -= strm.avail_in;
-  _out -= strm.avail_out;
-  strm.total_in += _in;
-  strm.total_out += _out;
-  state.total += _out;
-  if (state.wrap && _out) {
-    strm.adler = state.check = /*UPDATE(state.check, strm.next_out - _out, _out);*/
-      (state.flags ? crc32(state.check, output, _out, strm.next_out - _out) : adler32(state.check, output, _out, strm.next_out - _out));
-  }
-  strm.data_type = state.bits + (state.last ? 64 : 0) +
-                    (state.mode === TYPE ? 128 : 0) +
-                    (state.mode === LEN_ || state.mode === COPY_ ? 256 : 0);
-  if (((_in === 0 && _out === 0) || flush === Z_FINISH) && ret === Z_OK) {
-    ret = Z_BUF_ERROR;
-  }
-  return ret;
-}
-
-function inflateEnd(strm) {
-
-  if (!strm || !strm.state /*|| strm->zfree == (free_func)0*/) {
-    return Z_STREAM_ERROR;
-  }
-
-  var state = strm.state;
-  if (state.window) {
-    state.window = null;
-  }
-  strm.state = null;
-  return Z_OK;
-}
-
-function inflateGetHeader(strm, head) {
-  var state;
-
-  /* check state */
-  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
-  state = strm.state;
-  if ((state.wrap & 2) === 0) { return Z_STREAM_ERROR; }
-
-  /* save header structure */
-  state.head = head;
-  head.done = false;
-  return Z_OK;
-}
-
-function inflateSetDictionary(strm, dictionary) {
-  var dictLength = dictionary.length;
-
-  var state;
-  var dictid;
-  var ret;
-
-  /* check state */
-  if (!strm /* == Z_NULL */ || !strm.state /* == Z_NULL */) { return Z_STREAM_ERROR; }
-  state = strm.state;
-
-  if (state.wrap !== 0 && state.mode !== DICT) {
-    return Z_STREAM_ERROR;
-  }
-
-  /* check for correct dictionary identifier */
-  if (state.mode === DICT) {
-    dictid = 1; /* adler32(0, null, 0)*/
-    /* dictid = adler32(dictid, dictionary, dictLength); */
-    dictid = adler32(dictid, dictionary, dictLength, 0);
-    if (dictid !== state.check) {
-      return Z_DATA_ERROR;
-    }
-  }
-  /* copy dictionary to window using updatewindow(), which will amend the
-   existing dictionary if appropriate */
-  ret = updatewindow(strm, dictionary, dictLength, dictLength);
-  if (ret) {
-    state.mode = MEM;
-    return Z_MEM_ERROR;
-  }
-  state.havedict = 1;
-  // Tracev((stderr, "inflate:   dictionary set\n"));
-  return Z_OK;
-}
-
-// String encode/decode helpers
-// 'use strict';
-
-
-// var utils = require('./common');
-
-
-// Quick check if we can use fast array to bin string conversion
-//
-// - apply(Array) can fail on Android 2.2
-// - apply(Uint8Array) can fail on iOS 5.1 Safary
-//
-var STR_APPLY_OK = true;
-var STR_APPLY_UIA_OK = true;
-
-try { String.fromCharCode.apply(null, [ 0 ]); } catch (__) { STR_APPLY_OK = false; }
-try { String.fromCharCode.apply(null, new Uint8Array(1)); } catch (__) { STR_APPLY_UIA_OK = false; }
-
-
-// Table with utf8 lengths (calculated by first byte of sequence)
-// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
-// because max possible codepoint is 0x10ffff
-var _utf8len = new Uint8Array(256);
-for (var q = 0; q < 256; q++) {
-  _utf8len[q] = (q >= 252 ? 6 : q >= 248 ? 5 : q >= 240 ? 4 : q >= 224 ? 3 : q >= 192 ? 2 : 1);
-}
-_utf8len[254] = _utf8len[254] = 1; // Invalid sequence start
-
-
-// convert string to array (typed, when possible)
-function string2buf(str) {
-  var buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
-
-  // count binary size
-  for (m_pos = 0; m_pos < str_len; m_pos++) {
-    c = str.charCodeAt(m_pos);
-    if ((c & 0xfc00) === 0xd800 && (m_pos + 1 < str_len)) {
-      c2 = str.charCodeAt(m_pos + 1);
-      if ((c2 & 0xfc00) === 0xdc00) {
-        c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
-        m_pos++;
-      }
-    }
-    buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
-  }
-
-  // allocate buffer
-  buf = new Uint8Array(buf_len);
-
-  // convert
-  for (i = 0, m_pos = 0; i < buf_len; m_pos++) {
-    c = str.charCodeAt(m_pos);
-    if ((c & 0xfc00) === 0xd800 && (m_pos + 1 < str_len)) {
-      c2 = str.charCodeAt(m_pos + 1);
-      if ((c2 & 0xfc00) === 0xdc00) {
-        c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
-        m_pos++;
-      }
-    }
-    if (c < 0x80) {
-      /* one byte */
-      buf[i++] = c;
-    } else if (c < 0x800) {
-      /* two bytes */
-      buf[i++] = 0xC0 | (c >>> 6);
-      buf[i++] = 0x80 | (c & 0x3f);
-    } else if (c < 0x10000) {
-      /* three bytes */
-      buf[i++] = 0xE0 | (c >>> 12);
-      buf[i++] = 0x80 | (c >>> 6 & 0x3f);
-      buf[i++] = 0x80 | (c & 0x3f);
-    } else {
-      /* four bytes */
-      buf[i++] = 0xf0 | (c >>> 18);
-      buf[i++] = 0x80 | (c >>> 12 & 0x3f);
-      buf[i++] = 0x80 | (c >>> 6 & 0x3f);
-      buf[i++] = 0x80 | (c & 0x3f);
-    }
-  }
-
-  return buf;
-}
-
-// Helper (used in 2 places)
-function _buf2binstring(buf, len) {
-  // use fallback for big arrays to avoid stack overflow
-  if (len < 65537) {
-    if ((buf.subarray && STR_APPLY_UIA_OK) || (!buf.subarray && STR_APPLY_OK)) {
-      return String.fromCharCode.apply(null, shrinkBuf(buf, len));
-    }
-  }
-
-  var result = '';
-  for (var i = 0; i < len; i++) {
-    result += String.fromCharCode(buf[i]);
-  }
-  return result;
-}
-
-
-// Convert binary string (typed, when possible)
-function binstring2buf(str) {
-  var buf = new Uint8Array(str.length);
-  for (var i = 0, len = buf.length; i < len; i++) {
-    buf[i] = str.charCodeAt(i);
-  }
-  return buf;
-}
-
-
-// convert array to string
-function buf2string(buf, max) {
-  var i, out, c, c_len;
-  var len = max || buf.length;
-
-  // Reserve max possible length (2 words per char)
-  // NB: by unknown reasons, Array is significantly faster for
-  //     String.fromCharCode.apply than Uint16Array.
-  var utf16buf = new Array(len * 2);
-
-  for (out = 0, i = 0; i < len;) {
-    c = buf[i++];
-    // quick process ascii
-    if (c < 0x80) { utf16buf[out++] = c; continue; }
-
-    c_len = _utf8len[c];
-    // skip 5 & 6 byte codes
-    if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len - 1; continue; }
-
-    // apply mask on first byte
-    c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
-    // join the rest
-    while (c_len > 1 && i < len) {
-      c = (c << 6) | (buf[i++] & 0x3f);
-      c_len--;
-    }
-
-    // terminated by end of string?
-    if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
-
-    if (c < 0x10000) {
-      utf16buf[out++] = c;
-    } else {
-      c -= 0x10000;
-      utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
-      utf16buf[out++] = 0xdc00 | (c & 0x3ff);
-    }
-  }
-
-  return _buf2binstring(utf16buf, out);
-}
-
-
-// Calculate max possible position in utf8 buffer,
-// that will not break sequence. If that's not possible
-// - (very small limits) return max size as is.
-//
-// buf[] - utf8 bytes array
-// max   - length limit (mandatory);
-function utf8border(buf, max) {
-  var pos;
-
-  max = max || buf.length;
-  if (max > buf.length) { max = buf.length; }
-
-  // go back from last position, until start of sequence found
-  pos = max - 1;
-  while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
-
-  // Fuckup - very small and broken sequence,
-  // return max, because we should return something anyway.
-  if (pos < 0) { return max; }
-
-  // If we came to start of buffer - that means vuffer is too small,
-  // return max too.
-  if (pos === 0) { return max; }
-
-  return (pos + _utf8len[buf[pos]] > max) ? pos : max;
-}
-
-/* Allowed flush values; see deflate() and inflate() below for details */
-var Z_NO_FLUSH        = 0;
-var Z_SYNC_FLUSH      = 2;
-var Z_FINISH$1          = 4;
-/* Return codes for the compression/decompression functions. Negative values
-  * are errors, positive values are used for special but normal events.
-  */
-var Z_OK$1              =  0;
-var Z_STREAM_END$1      =  1;
-var Z_NEED_DICT$1       =  2;
-//export var Z_MEM_ERROR     = -4;
-var Z_BUF_ERROR$1       = -5;
-
-// 'use strict';
-
-var messages = {
-  2:      'need dictionary',     /* Z_NEED_DICT       2  */
-  1:      'stream end',          /* Z_STREAM_END      1  */
-  0:      '',                    /* Z_OK              0  */
-  '-1':   'file error',          /* Z_ERRNO         (-1) */
-  '-2':   'stream error',        /* Z_STREAM_ERROR  (-2) */
-  '-3':   'data error',          /* Z_DATA_ERROR    (-3) */
-  '-4':   'insufficient memory', /* Z_MEM_ERROR     (-4) */
-  '-5':   'buffer error',        /* Z_BUF_ERROR     (-5) */
-  '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
-};
-
-// 'use strict';
-
-
-function ZStream() {
-  /* next input byte */
-  this.input = null; // JS specific, because we have no pointers
-  this.next_in = 0;
-  /* number of bytes available at input */
-  this.avail_in = 0;
-  /* total number of input bytes read so far */
-  this.total_in = 0;
-  /* next output byte should be put there */
-  this.output = null; // JS specific, because we have no pointers
-  this.next_out = 0;
-  /* remaining free space at output */
-  this.avail_out = 0;
-  /* total number of bytes output so far */
-  this.total_out = 0;
-  /* last error message, NULL if no error */
-  this.msg = ''/*Z_NULL*/;
-  /* not visible by applications */
-  this.state = null;
-  /* best guess about the data type: binary or text */
-  this.data_type = 2/*Z_UNKNOWN*/;
-  /* adler32 value of the uncompressed data */
-  this.adler = 0;
-}
-
-// 'use strict';
-
-
-function GZheader() {
-  /* true if compressed data believed to be text */
-  this.text       = 0;
-  /* modification time */
-  this.time       = 0;
-  /* extra flags (not used when writing a gzip file) */
-  this.xflags     = 0;
-  /* operating system */
-  this.os         = 0;
-  /* pointer to extra field or Z_NULL if none */
-  this.extra      = null;
-  /* extra field length (valid if extra != Z_NULL) */
-  this.extra_len  = 0; // Actually, we don't need it in JS,
-                       // but leave for few code modifications
-
-  //
-  // Setup limits is not necessary because in js we should not preallocate memory
-  // for inflate use constant limit in 65536 bytes
-  //
-
-  /* space at extra (only when reading header) */
-  // this.extra_max  = 0;
-  /* pointer to zero-terminated file name or Z_NULL */
-  this.name       = '';
-  /* space at name (only when reading header) */
-  // this.name_max   = 0;
-  /* pointer to zero-terminated comment or Z_NULL */
-  this.comment    = '';
-  /* space at comment (only when reading header) */
-  // this.comm_max   = 0;
-  /* true if there was or will be a header crc */
-  this.hcrc       = 0;
-  /* true when done reading gzip header (not used when writing a gzip file) */
-  this.done       = false;
-}
-
-// 'use strict';
-
-
-// var zlib_inflate = require('./zlib/inflate');
-// var utils        = require('./utils/common');
-// var strings      = require('./utils/strings');
-// var c            = require('./zlib/constants');
-// var msg          = require('./zlib/messages');
-// var ZStream      = require('./zlib/zstream');
-// var GZheader     = require('./zlib/gzheader');
-
-var toString = Object.prototype.toString;
-
-/**
- * class Inflate
- *
- * Generic JS-style wrapper for zlib calls. If you don't need
- * streaming behaviour - use more simple functions: [[inflate]]
- * and [[inflateRaw]].
- **/
-
-/* internal
- * inflate.chunks -> Array
- *
- * Chunks of output data, if [[Inflate#onData]] not overriden.
- **/
-
-/**
- * Inflate.result -> Uint8Array|Array|String
- *
- * Uncompressed result, generated by default [[Inflate#onData]]
- * and [[Inflate#onEnd]] handlers. Filled after you push last chunk
- * (call [[Inflate#push]] with `Z_FINISH` / `true` param) or if you
- * push a chunk with explicit flush (call [[Inflate#push]] with
- * `Z_SYNC_FLUSH` param).
- **/
-
-/**
- * Inflate.err -> Number
- *
- * Error code after inflate finished. 0 (Z_OK) on success.
- * Should be checked if broken data possible.
- **/
-
-/**
- * Inflate.msg -> String
- *
- * Error message, if [[Inflate.err]] != 0
- **/
-
-
-/**
- * new Inflate(options)
- * - options (Object): zlib inflate options.
- *
- * Creates new inflator instance with specified params. Throws exception
- * on bad params. Supported options:
- *
- * - `windowBits`
- * - `dictionary`
- *
- * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
- * for more information on these.
- *
- * Additional options, for internal needs:
- *
- * - `chunkSize` - size of generated data chunks (16K by default)
- * - `raw` (Boolean) - do raw inflate
- * - `to` (String) - if equal to 'string', then result will be converted
- *   from utf8 to utf16 (javascript) string. When string output requested,
- *   chunk length can differ from `chunkSize`, depending on content.
- *
- * By default, when no options set, autodetect deflate/gzip data format via
- * wrapper header.
- *
- * ##### Example:
- *
- * ```javascript
- * var pako = require('pako')
- *   , chunk1 = Uint8Array([1,2,3,4,5,6,7,8,9])
- *   , chunk2 = Uint8Array([10,11,12,13,14,15,16,17,18,19]);
- *
- * var inflate = new pako.Inflate({ level: 3});
- *
- * inflate.push(chunk1, false);
- * inflate.push(chunk2, true);  // true -> last chunk
- *
- * if (inflate.err) { throw new Error(inflate.err); }
- *
- * console.log(inflate.result);
- * ```
- **/
-function Inflate(options) {
-  if (!(this instanceof Inflate)) return new Inflate(options);
-
-  this.options = assign({
-    chunkSize: 16384,
-    windowBits: 0,
-    to: ''
-  }, options || {});
-
-  var opt = this.options;
-
-  // Force window size for `raw` data, if not set directly,
-  // because we have no header for autodetect.
-  if (opt.raw && (opt.windowBits >= 0) && (opt.windowBits < 16)) {
-    opt.windowBits = -opt.windowBits;
-    if (opt.windowBits === 0) { opt.windowBits = -15; }
-  }
-
-  // If `windowBits` not defined (and mode not raw) - set autodetect flag for gzip/deflate
-  if ((opt.windowBits >= 0) && (opt.windowBits < 16) &&
-      !(options && options.windowBits)) {
-    opt.windowBits += 32;
-  }
-
-  // Gzip header has no info about windows size, we can do autodetect only
-  // for deflate. So, if window size not set, force it to max when gzip possible
-  if ((opt.windowBits > 15) && (opt.windowBits < 48)) {
-    // bit 3 (16) -> gzipped data
-    // bit 4 (32) -> autodetect gzip/deflate
-    if ((opt.windowBits & 15) === 0) {
-      opt.windowBits |= 15;
-    }
-  }
-
-  this.err    = 0;      // error code, if happens (0 = Z_OK)
-  this.msg    = '';     // error message
-  this.ended  = false;  // used to avoid multiple onEnd() calls
-  this.chunks = [];     // chunks of compressed data
-
-  this.strm   = new ZStream();
-  this.strm.avail_out = 0;
-
-  var status  = inflateInit2(
-    this.strm,
-    opt.windowBits
-  );
-
-  if (status !== Z_OK$1) {
-    throw new Error(messages[status]);
-  }
-
-  this.header = new GZheader();
-
-  inflateGetHeader(this.strm, this.header);
-}
-
-/**
- * Inflate#push(data[, mode]) -> Boolean
- * - data (Uint8Array|Array|ArrayBuffer|String): input data
- * - mode (Number|Boolean): 0..6 for corresponding Z_NO_FLUSH..Z_TREE modes.
- *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` meansh Z_FINISH.
- *
- * Sends input data to inflate pipe, generating [[Inflate#onData]] calls with
- * new output chunks. Returns `true` on success. The last data block must have
- * mode Z_FINISH (or `true`). That will flush internal pending buffers and call
- * [[Inflate#onEnd]]. For interim explicit flushes (without ending the stream) you
- * can use mode Z_SYNC_FLUSH, keeping the decompression context.
- *
- * On fail call [[Inflate#onEnd]] with error code and return false.
- *
- * We strongly recommend to use `Uint8Array` on input for best speed (output
- * format is detected automatically). Also, don't skip last param and always
- * use the same type in your code (boolean or number). That will improve JS speed.
- *
- * For regular `Array`-s make sure all elements are [0..255].
- *
- * ##### Example
- *
- * ```javascript
- * push(chunk, false); // push one of data chunks
- * ...
- * push(chunk, true);  // push last chunk
- * ```
- **/
-Inflate.prototype.push = function (data, mode) {
-  var strm = this.strm;
-  var chunkSize = this.options.chunkSize;
-  var dictionary = this.options.dictionary;
-  var status, _mode;
-  var next_out_utf8, tail, utf8str;
-  var dict;
-
-  // Flag to properly process Z_BUF_ERROR on testing inflate call
-  // when we check that all output data was flushed.
-  var allowBufError = false;
-
-  if (this.ended) { return false; }
-  _mode = (mode === ~~mode) ? mode : ((mode === true) ? Z_FINISH$1 : Z_NO_FLUSH);
-
-  // Convert data if needed
-  if (typeof data === 'string') {
-    // Only binary strings can be decompressed on practice
-    strm.input = binstring2buf(data);
-  } else if (toString.call(data) === '[object ArrayBuffer]') {
-    strm.input = new Uint8Array(data);
-  } else {
-    strm.input = data;
-  }
-
-  strm.next_in = 0;
-  strm.avail_in = strm.input.length;
-
-  do {
-    if (strm.avail_out === 0) {
-      strm.output = new Uint8Array(chunkSize);
-      strm.next_out = 0;
-      strm.avail_out = chunkSize;
-    }
-
-    status = inflate(strm, Z_NO_FLUSH);    /* no bad return value */
-
-    if (status === Z_NEED_DICT$1 && dictionary) {
-      // Convert data if needed
-      if (typeof dictionary === 'string') {
-        dict = string2buf(dictionary);
-      } else if (toString.call(dictionary) === '[object ArrayBuffer]') {
-        dict = new Uint8Array(dictionary);
-      } else {
-        dict = dictionary;
-      }
-
-      status = inflateSetDictionary(this.strm, dict);
-
-    }
-
-    if (status === Z_BUF_ERROR$1 && allowBufError === true) {
-      status = Z_OK$1;
-      allowBufError = false;
-    }
-
-    if (status !== Z_STREAM_END$1 && status !== Z_OK$1) {
-      this.onEnd(status);
-      this.ended = true;
-      return false;
-    }
-
-    if (strm.next_out) {
-      if (strm.avail_out === 0 || status === Z_STREAM_END$1 || (strm.avail_in === 0 && (_mode === Z_FINISH$1 || _mode === Z_SYNC_FLUSH))) {
-
-        if (this.options.to === 'string') {
-
-          next_out_utf8 = utf8border(strm.output, strm.next_out);
-
-          tail = strm.next_out - next_out_utf8;
-          utf8str = buf2string(strm.output, next_out_utf8);
-
-          // move tail
-          strm.next_out = tail;
-          strm.avail_out = chunkSize - tail;
-          if (tail) { arraySet(strm.output, strm.output, next_out_utf8, tail, 0); }
-
-          this.onData(utf8str);
-
-        } else {
-          this.onData(shrinkBuf(strm.output, strm.next_out));
-        }
-      }
-    }
-
-    // When no more input data, we should check that internal inflate buffers
-    // are flushed. The only way to do it when avail_out = 0 - run one more
-    // inflate pass. But if output data not exists, inflate return Z_BUF_ERROR.
-    // Here we set flag to process this error properly.
-    //
-    // NOTE. Deflate does not return error in this case and does not needs such
-    // logic.
-    if (strm.avail_in === 0 && strm.avail_out === 0) {
-      allowBufError = true;
-    }
-
-  } while ((strm.avail_in > 0 || strm.avail_out === 0) && status !== Z_STREAM_END$1);
-
-  if (status === Z_STREAM_END$1) {
-    _mode = Z_FINISH$1;
-  }
-
-  // Finalize on the last chunk.
-  if (_mode === Z_FINISH$1) {
-    status = inflateEnd(this.strm);
-    this.onEnd(status);
-    this.ended = true;
-    return status === Z_OK$1;
-  }
-
-  // callback interim results if Z_SYNC_FLUSH.
-  if (_mode === Z_SYNC_FLUSH) {
-    this.onEnd(Z_OK$1);
-    strm.avail_out = 0;
-    return true;
-  }
-
-  return true;
-};
-
-
-/**
- * Inflate#onData(chunk) -> Void
- * - chunk (Uint8Array|Array|String): ouput data. Type of array depends
- *   on js engine support. When string output requested, each chunk
- *   will be string.
- *
- * By default, stores data blocks in `chunks[]` property and glue
- * those in `onEnd`. Override this handler, if you need another behaviour.
- **/
-Inflate.prototype.onData = function (chunk) {
-  this.chunks.push(chunk);
-};
-
-
-/**
- * Inflate#onEnd(status) -> Void
- * - status (Number): inflate status. 0 (Z_OK) on success,
- *   other if not.
- *
- * Called either after you tell inflate that the input stream is
- * complete (Z_FINISH) or should be flushed (Z_SYNC_FLUSH)
- * or if an error happened. By default - join collected chunks,
- * free memory and fill `results` / `err` properties.
- **/
-Inflate.prototype.onEnd = function (status) {
-  // On success - join
-  if (status === Z_OK$1) {
-    if (this.options.to === 'string') {
-      // Glue & convert here, until we teach pako to send
-      // utf8 alligned strings to onData
-      this.result = this.chunks.join('');
-    } else {
-      this.result = flattenChunks(this.chunks);
-    }
-  }
-  this.chunks = [];
-  this.err = status;
-  this.msg = this.strm.msg;
-};
-
-
-/**
- * inflate(data[, options]) -> Uint8Array|Array|String
- * - data (Uint8Array|Array|String): input data to decompress.
- * - options (Object): zlib inflate options.
- *
- * Decompress `data` with inflate/ungzip and `options`. Autodetect
- * format via wrapper header by default. That's why we don't provide
- * separate `ungzip` method.
- *
- * Supported options are:
- *
- * - windowBits
- *
- * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
- * for more information.
- *
- * Sugar (options):
- *
- * - `raw` (Boolean) - say that we work with raw stream, if you don't wish to specify
- *   negative windowBits implicitly.
- * - `to` (String) - if equal to 'string', then result will be converted
- *   from utf8 to utf16 (javascript) string. When string output requested,
- *   chunk length can differ from `chunkSize`, depending on content.
- *
- *
- * ##### Example:
- *
- * ```javascript
- * var pako = require('pako')
- *   , input = pako.deflate([1,2,3,4,5,6,7,8,9])
- *   , output;
- *
- * try {
- *   output = pako.inflate(input);
- * } catch (err)
- *   console.log(err);
- * }
- * ```
- **/
-function doInflate(input, options) {
-  var inflator = new Inflate(options);
-
-  inflator.push(input, true);
-
-  // That will never happens, if you don't cheat with options :)
-  if (inflator.err) { throw inflator.msg; }
-
-  return inflator.result;
-}
-
 /**
  * @file Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -3242,27 +756,27 @@ function defaults( value, defaultValue ){
 }
 
 
+function getProtocol(){
+
+    var protocol = window.location.protocol;
+    return protocol.match( /http(s)?:/gi ) === null ? "http:" : protocol;
+
+}
+
+
 function getBrowser(){
 
     if( typeof window === "undefined" ) return false;
 
     var ua = window.navigator.userAgent;
 
-    if ( /Arora/i.test( ua ) ) {
-
-        return 'Arora';
-
-    } else if ( /Opera|OPR/.test( ua ) ) {
+    if ( /Opera|OPR/.test( ua ) ) {
 
         return 'Opera';
 
     } else if ( /Chrome/i.test( ua ) ) {
 
         return 'Chrome';
-
-    } else if ( /Epiphany/i.test( ua ) ) {
-
-        return 'Epiphany';
 
     } else if ( /Firefox/i.test( ua ) ) {
 
@@ -3275,10 +789,6 @@ function getBrowser(){
     } else if ( /MSIE/i.test( ua ) ) {
 
         return 'Internet Explorer';
-
-    } else if ( /Midori/i.test( ua ) ) {
-
-        return 'Midori';
 
     } else if ( /Safari/i.test( ua ) ) {
 
@@ -3419,7 +929,7 @@ function getFileInfo( file ){
 
     var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
-    if( compressedExtList.indexOf( ext ) !== -1 ){
+    if( compressedExtList.includes( ext ) ){
         compressed = ext;
         var n = path.length - ext.length - 1;
         ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
@@ -3607,25 +1117,6 @@ function uint8ToLines( u8a, chunkSize, newline ){
 
 }
 
-
-function decompress( data ){
-
-    var decompressedData;
-
-    if( data instanceof ArrayBuffer ){
-        data = new Uint8Array( data );
-    }
-
-    try{
-        decompressedData = doInflate( data );
-    }catch( e ){
-        decompressedData = data;  // assume it is already uncompressed
-    }
-
-    return decompressedData;
-
-}
-
 /**
  * @file Registry
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -3640,11 +1131,11 @@ function Registry( name ){
     this.name = name;
 
     this.add = function( key, value ){
-        dict[ key.toLowerCase() ] = value;
+        dict[ defaults( key, "" ).toString().toLowerCase() ] = value;
     };
 
     this.get = function( key ){
-        return dict[ key === undefined ? "" : key.toLowerCase() ];
+        return dict[ defaults( key, "" ).toString().toLowerCase() ];
     };
 
     Object.defineProperties( this, {
@@ -3654,242 +1145,6 @@ function Registry( name ){
     } );
 
 }
-
-/**
- * @file Gid Pool
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function GidPool$1( name ){
-
-    this.name = name || "";
-
-    this.nextGid = 1;
-    this.objectList = [];
-    this.rangeList = [];
-
-}
-
-GidPool$1.prototype = {
-
-    constructor: GidPool$1,
-
-    getBaseObject: function( object ){
-
-        if( object.type === "StructureView" ){
-            object = object.getStructure();
-        }
-
-        return object;
-
-    },
-
-    addObject: function( object ){
-
-        object = this.getBaseObject( object );
-
-        this.objectList.push( object );
-        this.rangeList.push( this.allocateGidRange( object ) );
-
-        return this;
-
-    },
-
-    removeObject: function( object ){
-
-        object = this.getBaseObject( object );
-
-        var idx = this.objectList.indexOf( object );
-
-        if( idx !== -1 ){
-
-            this.objectList.splice( idx, 1 );
-            this.rangeList.splice( idx, 1 );
-
-            if( this.objectList.length === 0 ){
-                this.nextGid = 1;
-            }
-
-        }
-
-        return this;
-
-    },
-
-    updateObject: function( object, silent ){
-
-        object = this.getBaseObject( object );
-
-        var idx = this.objectList.indexOf( object );
-
-        if( idx !== -1 ){
-
-            var range = this.rangeList[ idx ];
-
-            if( range[1] === this.nextGid ){
-                var count = this.getGidCount( object );
-                this.nextGid += count - ( range[1] - range[0] );
-                range[ 1 ] = this.nextGid;
-            }else{
-                this.rangeList[ idx ] = this.allocateGidRange( object );
-            }
-
-        }else{
-
-            if( !silent ){
-                Log.warn( "GidPool.updateObject: object not found." );
-            }
-
-        }
-
-        return this;
-
-    },
-
-    getGidCount: function( object ){
-
-        object = this.getBaseObject( object );
-
-        var count = 0;
-
-        if( object.type === "Structure" ){
-            count = (
-                object.atomStore.count +
-                object.bondStore.count +
-                object.backboneBondStore.count +
-                object.rungBondStore.count
-            );
-        }else if( object.type === "Volume" ){
-            count = object.__data.length;
-        }else{
-            Log.warn( "GidPool.getGidCount: unknown object type" );
-        }
-
-        return count;
-
-    },
-
-    allocateGidRange: function( object ){
-
-        object = this.getBaseObject( object );
-
-        var firstGid = this.nextGid;
-
-        this.nextGid += this.getGidCount( object );
-
-        if( this.nextGid > Math.pow( 2, 24 ) ){
-            Log.error( "GidPool.allocateGidRange: GidPool overflown" );
-        }
-
-        return [ firstGid, this.nextGid ];
-
-    },
-
-    //freeGidRange: function( object ){
-
-    //    object = this.getBaseObject( object );
-    //    // TODO
-
-    //},
-
-    getNextGid: function(){
-
-        return this.nextGid++;
-
-    },
-
-    getGid: function( object, offset ){
-
-        object = this.getBaseObject( object );
-        offset = offset || 0;
-
-        var gid = 0;
-        var idx = this.objectList.indexOf( object );
-
-        if( idx !== -1 ){
-
-            var range = this.rangeList[ idx ];
-            var first = range[ 0 ];
-
-            gid = first + offset;
-
-        }else{
-
-            Log.warn( "GidPool.getGid: object not found." );
-
-        }
-
-        return gid;
-
-    },
-
-    getByGid: function( gid ){
-
-        var entity;
-
-        this.objectList.forEach( function( o, i ){
-
-            var range = this.rangeList[ i ];
-            if( gid < range[ 0 ] || gid >= range[ 1 ] ){
-                return;
-            }
-            var offset = gid - range[ 0 ];
-
-            if( o.type === "Structure" ){
-
-                if( offset < o.atomStore.count ){
-
-                    entity = o.getAtomProxy( offset );
-
-                }else if( offset < o.atomStore.count + o.bondStore.count ){
-
-                    offset -= o.atomStore.count;
-                    entity = o.getBondProxy( offset );
-
-                }else if( offset < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){
-
-                    offset -= ( o.atomStore.count + o.bondStore.count );
-                    entity = o.getBondProxy( offset );
-                    entity.bondStore = o.backboneBondStore;
-
-                }else if( offset < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count + o.rungBondStore.count ){
-
-                    offset -= ( o.atomStore.count + o.bondStore.count + o.backboneBondStore.count );
-                    entity = o.getBondProxy( offset );
-                    entity.bondStore = o.rungBondStore;
-
-                }else{
-
-                    Log.warn( "GidPool.getByGid: invalid Structure gid", gid );
-
-                }
-
-            }else if( o.type === "Volume" ){
-
-                entity = {
-                    volume: o,
-                    index: offset,
-                    value: o.data[ offset ],
-                    x: o.dataPosition[ offset * 3 ],
-                    y: o.dataPosition[ offset * 3 + 1 ],
-                    z: o.dataPosition[ offset * 3 + 2 ],
-                };
-
-            }else{
-
-                Log.warn( "GidPool.getByGid: unknown object type for gid", gid );
-
-            }
-
-        }, this );
-
-        return entity;
-
-    }
-
-};
 
 /**
  * @file Worker Utils
@@ -4262,7 +1517,6 @@ var RGBFormat = 1022;
 var RGBAFormat = 1023;
 var LuminanceFormat = 1024;
 var LuminanceAlphaFormat = 1025;
-var RGBEFormat = RGBAFormat;
 var DepthFormat = 1026;
 var DepthStencilFormat = 1027;
 var RGB_S3TC_DXT1_Format = 2001;
@@ -5226,7 +2480,7 @@ Texture.prototype = {
 Object.assign( Texture.prototype, EventDispatcher.prototype );
 
 var count = 0;
-function TextureIdCount() { return count++; };
+function TextureIdCount() { return count++; }
 
 /**
  * @author mrdoob / http://mrdoob.com/
@@ -7494,7 +4748,7 @@ Vector3.prototype = {
         if ( typeof m === 'number' ) {
 
             console.warn( 'THREE.Vector3: setFromMatrixColumn now expects ( matrix, index ).' );
-            var temp = m
+            var temp = m;
             m = index;
             index = temp;
 
@@ -11962,7 +9216,7 @@ Material.prototype = {
 Object.assign( Material.prototype, EventDispatcher.prototype );
 
 var count$1 = 0;
-function MaterialIdCount() { return count$1++; };
+function MaterialIdCount() { return count$1++; }
 
 /**
  * Uniform Utilities
@@ -16645,18 +13899,6 @@ BufferAttribute.prototype = {
 
 };
 
-function Uint16Attribute( array, itemSize ) {
-
-    return new BufferAttribute( new Uint16Array( array ), itemSize );
-
-}
-
-function Uint32Attribute( array, itemSize ) {
-
-    return new BufferAttribute( new Uint32Array( array ), itemSize );
-
-}
-
 function Float32Attribute( array, itemSize ) {
 
     return new BufferAttribute( new Float32Array( array ), itemSize );
@@ -17816,7 +15058,7 @@ Object.assign( Object3D.prototype, EventDispatcher.prototype, {
 } );
 
 var count$3 = 0;
-function Object3DIdCount() { return count$3++; };
+function Object3DIdCount() { return count$3++; }
 
 /**
  * @author mrdoob / http://mrdoob.com/
@@ -19025,7 +16267,7 @@ Object.assign( Geometry.prototype, EventDispatcher.prototype, {
 } );
 
 var count$2 = 0;
-function GeometryIdCount() { return count$2++; };
+function GeometryIdCount() { return count$2++; }
 
 /**
  * @author mrdoob / http://mrdoob.com/
@@ -27948,13 +25190,6 @@ Object.assign( CompressedTextureLoader.prototype, {
 
 } );
 
-/**
- * @author Nikos M. / https://github.com/foo123/
- *
- * Abstract Base class to load generic binary textures formats (rgbe, hdr, ...)
- */
-
-var DataTextureLoader = BinaryTextureLoader;
 function BinaryTextureLoader( manager ) {
 
     this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
@@ -29603,7 +26838,7 @@ KeyframeTrackPrototype = {
 
     }
 
-}
+};
 
 function KeyframeTrackConstructor( name, times, values, interpolation ) {
 
@@ -35335,7 +32570,7 @@ ShapePath.prototype = {
         return shapes;
 
     }
-}
+};
 
 /**
  * @author zz85 / http://www.lab4games.net/zz85/blog
@@ -37143,7 +34378,7 @@ function AnimationAction( mixer, clip, localRoot ) {
     this.zeroSlopeAtStart   = true;     // for smooth interpolation w/o separate
     this.zeroSlopeAtEnd     = true;     // clips for start, loop and end
 
-};
+}
 
 AnimationAction.prototype = {
 
@@ -38639,278 +35874,6 @@ VertexNormalsHelper.prototype.update = ( function () {
 }() );
 
 /**
- * @author alteredq / http://alteredqualia.com/
- * @author mrdoob / http://mrdoob.com/
- * @author WestLangley / http://github.com/WestLangley
-*/
-
-function SpotLightHelper( light ) {
-
-    Object3D.call( this );
-
-    this.light = light;
-    this.light.updateMatrixWorld();
-
-    this.matrix = light.matrixWorld;
-    this.matrixAutoUpdate = false;
-
-    var geometry = new BufferGeometry();
-
-    var positions = [
-        0, 0, 0,   0,   0,   1,
-        0, 0, 0,   1,   0,   1,
-        0, 0, 0, - 1,   0,   1,
-        0, 0, 0,   0,   1,   1,
-        0, 0, 0,   0, - 1,   1
-    ];
-
-    for ( var i = 0, j = 1, l = 32; i < l; i ++, j ++ ) {
-
-        var p1 = ( i / l ) * Math.PI * 2;
-        var p2 = ( j / l ) * Math.PI * 2;
-
-        positions.push(
-            Math.cos( p1 ), Math.sin( p1 ), 1,
-            Math.cos( p2 ), Math.sin( p2 ), 1
-        );
-
-    }
-
-    geometry.addAttribute( 'position', new Float32Attribute( positions, 3 ) );
-
-    var material = new LineBasicMaterial( { fog: false } );
-
-    this.cone = new LineSegments( geometry, material );
-    this.add( this.cone );
-
-    this.update();
-
-}
-
-SpotLightHelper.prototype = Object.create( Object3D.prototype );
-SpotLightHelper.prototype.constructor = SpotLightHelper;
-
-SpotLightHelper.prototype.dispose = function () {
-
-    this.cone.geometry.dispose();
-    this.cone.material.dispose();
-
-};
-
-SpotLightHelper.prototype.update = function () {
-
-    var vector = new Vector3();
-    var vector2 = new Vector3();
-
-    return function update() {
-
-        var coneLength = this.light.distance ? this.light.distance : 1000;
-        var coneWidth = coneLength * Math.tan( this.light.angle );
-
-        this.cone.scale.set( coneWidth, coneWidth, coneLength );
-
-        vector.setFromMatrixPosition( this.light.matrixWorld );
-        vector2.setFromMatrixPosition( this.light.target.matrixWorld );
-
-        this.cone.lookAt( vector2.sub( vector ) );
-
-        this.cone.material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
-
-    };
-
-}();
-
-/**
- * @author benaadams / https://twitter.com/ben_a_adams
- * based on THREE.SphereGeometry
- */
-
-function SphereBufferGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) {
-
-    BufferGeometry.call( this );
-
-    this.type = 'SphereBufferGeometry';
-
-    this.parameters = {
-        radius: radius,
-        widthSegments: widthSegments,
-        heightSegments: heightSegments,
-        phiStart: phiStart,
-        phiLength: phiLength,
-        thetaStart: thetaStart,
-        thetaLength: thetaLength
-    };
-
-    radius = radius || 50;
-
-    widthSegments = Math.max( 3, Math.floor( widthSegments ) || 8 );
-    heightSegments = Math.max( 2, Math.floor( heightSegments ) || 6 );
-
-    phiStart = phiStart !== undefined ? phiStart : 0;
-    phiLength = phiLength !== undefined ? phiLength : Math.PI * 2;
-
-    thetaStart = thetaStart !== undefined ? thetaStart : 0;
-    thetaLength = thetaLength !== undefined ? thetaLength : Math.PI;
-
-    var thetaEnd = thetaStart + thetaLength;
-
-    var vertexCount = ( ( widthSegments + 1 ) * ( heightSegments + 1 ) );
-
-    var positions = new BufferAttribute( new Float32Array( vertexCount * 3 ), 3 );
-    var normals = new BufferAttribute( new Float32Array( vertexCount * 3 ), 3 );
-    var uvs = new BufferAttribute( new Float32Array( vertexCount * 2 ), 2 );
-
-    var index = 0, vertices = [], normal = new Vector3();
-
-    for ( var y = 0; y <= heightSegments; y ++ ) {
-
-        var verticesRow = [];
-
-        var v = y / heightSegments;
-
-        for ( var x = 0; x <= widthSegments; x ++ ) {
-
-            var u = x / widthSegments;
-
-            var px = - radius * Math.cos( phiStart + u * phiLength ) * Math.sin( thetaStart + v * thetaLength );
-            var py = radius * Math.cos( thetaStart + v * thetaLength );
-            var pz = radius * Math.sin( phiStart + u * phiLength ) * Math.sin( thetaStart + v * thetaLength );
-
-            normal.set( px, py, pz ).normalize();
-
-            positions.setXYZ( index, px, py, pz );
-            normals.setXYZ( index, normal.x, normal.y, normal.z );
-            uvs.setXY( index, u, 1 - v );
-
-            verticesRow.push( index );
-
-            index ++;
-
-        }
-
-        vertices.push( verticesRow );
-
-    }
-
-    var indices = [];
-
-    for ( var y = 0; y < heightSegments; y ++ ) {
-
-        for ( var x = 0; x < widthSegments; x ++ ) {
-
-            var v1 = vertices[ y ][ x + 1 ];
-            var v2 = vertices[ y ][ x ];
-            var v3 = vertices[ y + 1 ][ x ];
-            var v4 = vertices[ y + 1 ][ x + 1 ];
-
-            if ( y !== 0 || thetaStart > 0 ) indices.push( v1, v2, v4 );
-            if ( y !== heightSegments - 1 || thetaEnd < Math.PI ) indices.push( v2, v3, v4 );
-
-        }
-
-    }
-
-    this.setIndex( new ( positions.count > 65535 ? Uint32Attribute : Uint16Attribute )( indices, 1 ) );
-    this.addAttribute( 'position', positions );
-    this.addAttribute( 'normal', normals );
-    this.addAttribute( 'uv', uvs );
-
-    this.boundingSphere = new Sphere( new Vector3(), radius );
-
-}
-
-SphereBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
-SphereBufferGeometry.prototype.constructor = SphereBufferGeometry;
-
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
-function SphereGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) {
-
-    Geometry.call( this );
-
-    this.type = 'SphereGeometry';
-
-    this.parameters = {
-        radius: radius,
-        widthSegments: widthSegments,
-        heightSegments: heightSegments,
-        phiStart: phiStart,
-        phiLength: phiLength,
-        thetaStart: thetaStart,
-        thetaLength: thetaLength
-    };
-
-    this.fromBufferGeometry( new SphereBufferGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) );
-
-}
-
-SphereGeometry.prototype = Object.create( Geometry.prototype );
-SphereGeometry.prototype.constructor = SphereGeometry;
-
-/**
- * @author alteredq / http://alteredqualia.com/
- * @author mrdoob / http://mrdoob.com/
- */
-
-function HemisphereLightHelper( light, sphereSize ) {
-
-    Object3D.call( this );
-
-    this.light = light;
-    this.light.updateMatrixWorld();
-
-    this.matrix = light.matrixWorld;
-    this.matrixAutoUpdate = false;
-
-    this.colors = [ new Color(), new Color() ];
-
-    var geometry = new SphereGeometry( sphereSize, 4, 2 );
-    geometry.rotateX( - Math.PI / 2 );
-
-    for ( var i = 0, il = 8; i < il; i ++ ) {
-
-        geometry.faces[ i ].color = this.colors[ i < 4 ? 0 : 1 ];
-
-    }
-
-    var material = new MeshBasicMaterial( { vertexColors: FaceColors, wireframe: true } );
-
-    this.lightSphere = new Mesh( geometry, material );
-    this.add( this.lightSphere );
-
-    this.update();
-
-}
-
-HemisphereLightHelper.prototype = Object.create( Object3D.prototype );
-HemisphereLightHelper.prototype.constructor = HemisphereLightHelper;
-
-HemisphereLightHelper.prototype.dispose = function () {
-
-    this.lightSphere.geometry.dispose();
-    this.lightSphere.material.dispose();
-
-};
-
-HemisphereLightHelper.prototype.update = function () {
-
-    var vector = new Vector3();
-
-    return function update() {
-
-        this.colors[ 0 ].copy( this.light.color ).multiplyScalar( this.light.intensity );
-        this.colors[ 1 ].copy( this.light.groundColor ).multiplyScalar( this.light.intensity );
-
-        this.lightSphere.lookAt( vector.setFromMatrixPosition( this.light.matrixWorld ).negate() );
-        this.lightSphere.geometry.colorsNeedUpdate = true;
-
-    };
-
-}();
-
-/**
  * @author mrdoob / http://mrdoob.com/
  * @author WestLangley / http://github.com/WestLangley
 */
@@ -39020,86 +35983,6 @@ FaceNormalsHelper.prototype.update = ( function () {
     };
 
 }() );
-
-/**
- * @author alteredq / http://alteredqualia.com/
- * @author mrdoob / http://mrdoob.com/
- * @author WestLangley / http://github.com/WestLangley
- */
-
-function DirectionalLightHelper( light, size ) {
-
-    Object3D.call( this );
-
-    this.light = light;
-    this.light.updateMatrixWorld();
-
-    this.matrix = light.matrixWorld;
-    this.matrixAutoUpdate = false;
-
-    if ( size === undefined ) size = 1;
-
-    var geometry = new BufferGeometry();
-    geometry.addAttribute( 'position', new Float32Attribute( [
-        - size,   size, 0,
-          size,   size, 0,
-          size, - size, 0,
-        - size, - size, 0,
-        - size,   size, 0
-    ], 3 ) );
-
-    var material = new LineBasicMaterial( { fog: false } );
-
-    this.add( new Line( geometry, material ) );
-
-    geometry = new BufferGeometry();
-    geometry.addAttribute( 'position', new Float32Attribute( [ 0, 0, 0, 0, 0, 1 ], 3 ) );
-
-    this.add( new Line( geometry, material ));
-
-    this.update();
-
-}
-
-DirectionalLightHelper.prototype = Object.create( Object3D.prototype );
-DirectionalLightHelper.prototype.constructor = DirectionalLightHelper;
-
-DirectionalLightHelper.prototype.dispose = function () {
-
-    var lightPlane = this.children[ 0 ];
-    var targetLine = this.children[ 1 ];
-
-    lightPlane.geometry.dispose();
-    lightPlane.material.dispose();
-    targetLine.geometry.dispose();
-    targetLine.material.dispose();
-
-};
-
-DirectionalLightHelper.prototype.update = function () {
-
-    var v1 = new Vector3();
-    var v2 = new Vector3();
-    var v3 = new Vector3();
-
-    return function update() {
-
-        v1.setFromMatrixPosition( this.light.matrixWorld );
-        v2.setFromMatrixPosition( this.light.target.matrixWorld );
-        v3.subVectors( v2, v1 );
-
-        var lightPlane = this.children[ 0 ];
-        var targetLine = this.children[ 1 ];
-
-        lightPlane.lookAt( v3 );
-        lightPlane.material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
-
-        targetLine.lookAt( v3 );
-        targetLine.scale.z = v3.length();
-
-    };
-
-}();
 
 /**
  * @author alteredq / http://alteredqualia.com/
@@ -39290,91 +36173,6 @@ CameraHelper.prototype.update = function () {
     };
 
 }();
-
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
-function BoxHelper( object, color ) {
-
-    if ( color === undefined ) color = 0xffff00;
-
-    var indices = new Uint16Array( [ 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 ] );
-    var positions = new Float32Array( 8 * 3 );
-
-    var geometry = new BufferGeometry();
-    geometry.setIndex( new BufferAttribute( indices, 1 ) );
-    geometry.addAttribute( 'position', new BufferAttribute( positions, 3 ) );
-
-    LineSegments.call( this, geometry, new LineBasicMaterial( { color: color } ) );
-
-    if ( object !== undefined ) {
-
-        this.update( object );
-
-    }
-
-}
-
-BoxHelper.prototype = Object.create( LineSegments.prototype );
-BoxHelper.prototype.constructor = BoxHelper;
-
-BoxHelper.prototype.update = ( function () {
-
-    var box = new Box3();
-
-    return function update( object ) {
-
-        if ( (object && object.isBox3) ) {
-
-            box.copy( object );
-
-        } else {
-
-            box.setFromObject( object );
-
-        }
-
-        if ( box.isEmpty() ) return;
-
-        var min = box.min;
-        var max = box.max;
-
-        /*
-          5____4
-        1/___0/|
-        | 6__|_7
-        2/___3/
-
-        0: max.x, max.y, max.z
-        1: min.x, max.y, max.z
-        2: min.x, min.y, max.z
-        3: max.x, min.y, max.z
-        4: max.x, max.y, min.z
-        5: min.x, max.y, min.z
-        6: min.x, min.y, min.z
-        7: max.x, min.y, min.z
-        */
-
-        var position = this.geometry.attributes.position;
-        var array = position.array;
-
-        array[  0 ] = max.x; array[  1 ] = max.y; array[  2 ] = max.z;
-        array[  3 ] = min.x; array[  4 ] = max.y; array[  5 ] = max.z;
-        array[  6 ] = min.x; array[  7 ] = min.y; array[  8 ] = max.z;
-        array[  9 ] = max.x; array[ 10 ] = min.y; array[ 11 ] = max.z;
-        array[ 12 ] = max.x; array[ 13 ] = max.y; array[ 14 ] = min.z;
-        array[ 15 ] = min.x; array[ 16 ] = max.y; array[ 17 ] = min.z;
-        array[ 18 ] = min.x; array[ 19 ] = min.y; array[ 20 ] = min.z;
-        array[ 21 ] = max.x; array[ 22 ] = min.y; array[ 23 ] = min.z;
-
-        position.needsUpdate = true;
-
-        this.geometry.computeBoundingSphere();
-
-    };
-
-} )();
 
 /**
  * @author Mugen87 / https://github.com/Mugen87
@@ -39721,87 +36519,6 @@ lineGeometry.addAttribute( 'position', new Float32Attribute( [ 0, 0, 0, 0, 1, 0 
 
 var coneGeometry = new CylinderBufferGeometry( 0, 0.5, 1, 5, 1 );
 coneGeometry.translate( 0, - 0.5, 0 );
-
-function ArrowHelper( dir, origin, length, color, headLength, headWidth ) {
-
-    // dir is assumed to be normalized
-
-    Object3D.call( this );
-
-    if ( color === undefined ) color = 0xffff00;
-    if ( length === undefined ) length = 1;
-    if ( headLength === undefined ) headLength = 0.2 * length;
-    if ( headWidth === undefined ) headWidth = 0.2 * headLength;
-
-    this.position.copy( origin );
-
-    this.line = new Line( lineGeometry, new LineBasicMaterial( { color: color } ) );
-    this.line.matrixAutoUpdate = false;
-    this.add( this.line );
-
-    this.cone = new Mesh( coneGeometry, new MeshBasicMaterial( { color: color } ) );
-    this.cone.matrixAutoUpdate = false;
-    this.add( this.cone );
-
-    this.setDirection( dir );
-    this.setLength( length, headLength, headWidth );
-
-}
-
-ArrowHelper.prototype = Object.create( Object3D.prototype );
-ArrowHelper.prototype.constructor = ArrowHelper;
-
-ArrowHelper.prototype.setDirection = ( function () {
-
-    var axis = new Vector3();
-    var radians;
-
-    return function setDirection( dir ) {
-
-        // dir is assumed to be normalized
-
-        if ( dir.y > 0.99999 ) {
-
-            this.quaternion.set( 0, 0, 0, 1 );
-
-        } else if ( dir.y < - 0.99999 ) {
-
-            this.quaternion.set( 1, 0, 0, 0 );
-
-        } else {
-
-            axis.set( dir.z, 0, - dir.x ).normalize();
-
-            radians = Math.acos( dir.y );
-
-            this.quaternion.setFromAxisAngle( axis, radians );
-
-        }
-
-    };
-
-}() );
-
-ArrowHelper.prototype.setLength = function ( length, headLength, headWidth ) {
-
-    if ( headLength === undefined ) headLength = 0.2 * length;
-    if ( headWidth === undefined ) headWidth = 0.2 * headLength;
-
-    this.line.scale.set( 1, Math.max( 0, length - headLength ), 1 );
-    this.line.updateMatrix();
-
-    this.cone.scale.set( headWidth, headLength, headWidth );
-    this.cone.position.y = length;
-    this.cone.updateMatrix();
-
-};
-
-ArrowHelper.prototype.setColor = function ( color ) {
-
-    this.line.material.color.copy( color );
-    this.cone.material.color.copy( color );
-
-};
 
 /**
  * @author clockworkgeek / https://github.com/clockworkgeek
@@ -40441,48 +37158,6 @@ var LineCurve3 = Curve.create(
     }
 
 );
-
-/**
- * @author alteredq / http://alteredqualia.com/
- */
-
-var SceneUtils = {
-
-    createMultiMaterialObject: function ( geometry, materials ) {
-
-        var group = new Group();
-
-        for ( var i = 0, l = materials.length; i < l; i ++ ) {
-
-            group.add( new Mesh( geometry, materials[ i ] ) );
-
-        }
-
-        return group;
-
-    },
-
-    detach: function ( child, parent, scene ) {
-
-        child.applyMatrix( parent.matrixWorld );
-        parent.remove( child );
-        scene.add( child );
-
-    },
-
-    attach: function ( child, scene, parent ) {
-
-        var matrixWorldInverse = new Matrix4();
-        matrixWorldInverse.getInverse( parent.matrixWorld );
-        child.applyMatrix( matrixWorldInverse );
-
-        scene.remove( child );
-        parent.add( child );
-
-    }
-
-};
-
 
 Object.defineProperty( exports, 'AudioContext', {
     get: function () {
@@ -41548,7 +38223,7 @@ Selection.prototype = {
                     inscode[0] = inscode[0].substr(1);
                     negate = true;
                 }
-                if( inscode[0].indexOf( "--" ) !== -1 ){
+                if( inscode[0].includes( "--" ) ){
                     inscode[0] = inscode[0].replace( "--", "-" );
                     negate2 = true;
                 }
@@ -41897,12 +38572,17 @@ Selection.prototype = {
 
         var selection;
 
+        var chainKeywordList = [
+            kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
+            kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
+        ];
+
         if( chainOnly ){
 
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined ) return true;
+                if( s.keyword!==undefined && !chainKeywordList.includes( s.keyword ) ) return true;
                 // if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
@@ -41923,7 +38603,21 @@ Selection.prototype = {
         var fn = function( c, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined ) return -1;
+            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
+                    ( s.keyword===undefined || !chainKeywordList.includes( s.keyword ) )
+            ) return -1;
+
+            if( s.keyword!==undefined ){
+                if( s.keyword===kwd.HETERO && !c.isHetero() ) return false;
+                if( s.keyword===kwd.PROTEIN && !c.isProtein() ) return false;
+                if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) return false;
+                if( s.keyword===kwd.RNA && !c.isRna() ) return false;
+                if( s.keyword===kwd.DNA && !c.isDna() ) return false;
+                if( s.keyword===kwd.POLYMER && !c.isPolymer() ) return false;
+                if( s.keyword===kwd.WATER && !c.isWater() ) return false;
+                if( s.keyword===kwd.ION && !c.isIon() ) return false;
+                if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) return false;
+            }
 
             if( s.atomindex!==undefined &&
                     ( c.atomOffset > s.atomindexLast || c.atomEnd < s.atomindexFirst )
@@ -42039,6 +38733,14 @@ var generateUUID = function(){
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
+
+
+// entity types
+var UnknownEntity = 0;
+var PolymerEntity = 1;
+var NonPolymerEntity = 2;
+var MacrolideEntity = 3;
+var WaterEntity = 4;
 
 
 // molecule types
@@ -42202,13 +38904,101 @@ var DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
 
 var PurinBases = [ "A", "G", "DA", "DG" ];
 
-var WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O" ];
+var WaterNames = [
+    "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O", "TIP3", "TIP4"
+];
 
+// all chemical components with the word "ion" in their name, Sep 2016
+//
+// SET SESSION group_concat_max_len = 1000000;
+// SELECT GROUP_CONCAT(id_ ORDER BY id_ ASC SEPARATOR '", "') from
+// (
+//     SELECT count(obj_id) as c, id_
+//     FROM pdb.chem_comp WHERE name LIKE "% ION%"
+//     GROUP BY id_
+// ) AS t1;
 var IonNames = [
-    "3CO", "3NI", "4MO", "6MO", "AG", "AL", "AU", "AU3", "BA", "BR", "CA",
-    "CD", "CE", "CL", "CO", "CR", "CU", "CU1", "CU3", "F", "FE", "FE2", "GA",
-    "K", "LI", "MG", "MN", "MN3", "NA", "ND4", "NH4", "NI", "OH", "OHX", "RB",
-    "SR", "V", "Y1", "YT3", "ZN"
+    "118", "119", "1AL", "1CU", "2FK", "2HP", "2OF", "3CO",
+    "3MT", "3NI", "3OF", "3P8", "4MO", "4PU", "543", "6MO", "ACT", "AG", "AL",
+    "ALF", "AM", "ATH", "AU", "AU3", "AUC", "AZI", "BA", "BCT", "BEF", "BF4", "BO4",
+    "BR", "BS3", "BSY", "CA", "CAC", "CD", "CD1", "CD3", "CD5", "CE", "CHT", "CL",
+    "CO", "CO3", "CO5", "CON", "CR", "CS", "CSB", "CU", "CU1", "CU3", "CUA", "CUZ",
+    "CYN", "DME", "DMI", "DSC", "DTI", "DY", "E4N", "EDR", "EMC", "ER3", "EU",
+    "EU3", "F", "FE", "FE2", "FPO", "GA", "GD3", "GEP", "HAI", "HG", "HGC", "IN",
+    "IOD", "IR", "IR3", "IRI", "IUM", "K", "KO4", "LA", "LCO", "LCP", "LI", "LU",
+    "MAC", "MG", "MH2", "MH3", "MLI", "MLT", "MMC", "MN", "MN3", "MN5", "MN6",
+    "MO1", "MO2", "MO3", "MO4", "MO5", "MO6", "MOO", "MOS", "MOW", "MW1", "MW2",
+    "MW3", "NA", "NA2", "NA5", "NA6", "NAO", "NAW", "NCO", "NET", "NH4", "NI",
+    "NI1", "NI2", "NI3", "NO2", "NO3", "NRU", "O4M", "OAA", "OC1", "OC2", "OC3",
+    "OC4", "OC5", "OC6", "OC7", "OC8", "OCL", "OCM", "OCN", "OCO", "OF1", "OF2",
+    "OF3", "OH", "OS", "OS4", "OXL", "PB", "PBM", "PD", "PDV", "PER", "PI", "PO3",
+    "PO4", "PR", "PT", "PT4", "PTN", "RB", "RH3", "RHD", "RU", "SB", "SCN", "SE4",
+    "SEK", "SM", "SMO", "SO3", "SO4", "SR", "T1A", "TB", "TBA", "TCN", "TEA", "TH",
+    "THE", "TL", "TMA", "TRA", "UNX", "V", "VN3", "VO4", "W", "WO5", "Y1", "YB",
+    "YB2", "YH", "YT3", "ZCM", "ZN", "ZN2", "ZN3", "ZNO", "ZO3",
+    // additional ion names
+    "OHX"
+];
+
+// all chemical components with the word "%saccharide%" in their type, Sep 2016
+//
+// SET SESSION group_concat_max_len = 1000000;
+// select GROUP_CONCAT(id_ ORDER BY id_ ASC SEPARATOR '", "') from
+// (
+//     SELECT count(obj_id), id_
+//     FROM pdb.chem_comp WHERE type like "%SACCHARIDE%"
+//     GROUP BY id_
+// ) AS t1;
+var SaccharideNames = [
+    "045", "0AT", "0BD", "0MK", "0NZ", "0TS", "0V4", "0XY", "0YT", "10M",
+    "147", "149", "14T", "15L", "16G", "18T", "18Y", "1AR", "1BW", "1GL", "1GN",
+    "1JB", "1LL", "1NA", "1S3", "26M", "26Q", "26R", "26V", "26W", "26Y", "27C",
+    "289", "291", "293", "2DG", "2F8", "2FG", "2FL", "2FP", "2GL", "2M4", "2M5",
+    "32O", "34V", "3CM", "3DO", "3DY", "3FM", "3LR", "3MF", "3MG", "3SA", "3ZW",
+    "46D", "46M", "46Z", "48Z", "4CQ", "4GC", "4NN", "50A", "5DI", "5GF", "5MM",
+    "5RP", "5SA", "5SP", "64K", "6PG", "6SA", "7JZ", "7SA", "A1Q", "A2G", "AAB",
+    "AAL", "AAO", "ABC", "ABD", "ABE", "ABF", "ABL", "ACG", "ACI", "ACR", "ACX",
+    "ADA", "ADG", "ADR", "AF1", "AFD", "AFL", "AFO", "AFP", "AFR", "AGC", "AGH",
+    "AGL", "AHR", "AIG", "ALL", "ALX", "AMU", "AOG", "AOS", "ARA", "ARB", "ARE",
+    "ARI", "ASG", "ASO", "AXP", "AXR", "B0D", "B16", "B2G", "B4G", "B6D", "B8D",
+    "B9D", "BBK", "BCD", "BDG", "BDP", "BDR", "BEM", "BFP", "BGC", "BGL", "BGP",
+    "BGS", "BHG", "BMA", "BMX", "BNG", "BNX", "BOG", "BRI", "BXF", "BXP", "BXX",
+    "BXY", "C3X", "C4X", "C5X", "CAP", "CBI", "CBK", "CBS", "CDR", "CEG", "CGF",
+    "CHO", "CR1", "CR6", "CRA", "CT3", "CTO", "CTR", "CTT", "D6G", "DAF", "DAG",
+    "DDA", "DDB", "DDL", "DEL", "DFR", "DFX", "DG0", "DGC", "DGD", "DGM", "DGS",
+    "DIG", "DLF", "DLG", "DMU", "DNO", "DOM", "DP5", "DQQ", "DQR", "DR2", "DR3",
+    "DR4", "DRI", "DSR", "DT6", "DVC", "E4P", "E5G", "EAG", "EBG", "EBQ", "EGA",
+    "EJT", "EPG", "ERE", "ERI", "F1P", "F1X", "F6P", "FBP", "FCA", "FCB", "FCT",
+    "FDP", "FDQ", "FFC", "FIX", "FMO", "FRU", "FSI", "FU4", "FUB", "FUC", "FUD",
+    "FUL", "FXP", "G16", "G1P", "G2F", "G3I", "G4D", "G4S", "G6D", "G6P", "G6S",
+    "GAC", "GAD", "GAL", "GC1", "GC4", "GCD", "GCN", "GCO", "GCS", "GCT", "GCU",
+    "GCV", "GCW", "GCX", "GE1", "GFG", "GFP", "GIV", "GL0", "GL2", "GL5", "GL6",
+    "GL7", "GL9", "GLA", "GLB", "GLC", "GLD", "GLF", "GLG", "GLO", "GLP", "GLS",
+    "GLT", "GLW", "GMH", "GN1", "GNX", "GP1", "GP4", "GPH", "GPM", "GQ1", "GQ2",
+    "GQ4", "GS1", "GS4", "GSA", "GSD", "GTE", "GTH", "GTK", "GTR", "GTZ", "GU0",
+    "GU1", "GU2", "GU3", "GU4", "GU5", "GU6", "GU8", "GU9", "GUF", "GUP", "GUZ",
+    "GYP", "GYV", "H2P", "HDL", "HMS", "HS2", "HSD", "HSG", "HSH", "HSJ", "HSQ",
+    "HSR", "HSU", "HSX", "HSY", "HSZ", "IAB", "IDG", "IDR", "IDS", "IDT", "IDU",
+    "IDX", "IDY", "IMK", "IN1", "IPT", "ISL", "KBG", "KD2", "KDA", "KDM", "KDO",
+    "KFN", "KO1", "KO2", "KTU", "L6S", "LAG", "LAI", "LAK", "LAO", "LAT", "LB2",
+    "LBT", "LCN", "LDY", "LGC", "LGU", "LM2", "LMT", "LMU", "LOG", "LOX", "LPK",
+    "LSM", "LTM", "LVZ", "LXB", "LXZ", "M1F", "M3M", "M6P", "M8C", "MA1", "MA2",
+    "MA3", "MAB", "MAG", "MAL", "MAN", "MAT", "MAV", "MAW", "MBG", "MCU", "MDA",
+    "MDM", "MDP", "MFA", "MFB", "MFU", "MG5", "MGA", "MGL", "MLB", "MMA", "MMN",
+    "MN0", "MRP", "MTT", "MUG", "MVP", "MXY", "N1L", "N9S", "NAA", "NAG", "NBG",
+    "NDG", "NED", "NG1", "NG6", "NGA", "NGB", "NGC", "NGE", "NGF", "NGL", "NGS",
+    "NGY", "NHF", "NM6", "NM9", "NTF", "NTO", "NTP", "NXD", "NYT", "OPG", "OPM",
+    "ORP", "OX2", "P3M", "P53", "P6P", "PA5", "PNA", "PNG", "PNW", "PRP", "PSJ",
+    "PSV", "PTQ", "QDK", "QPS", "QV4", "R1P", "R1X", "R2B", "R5P", "RAA", "RAE",
+    "RAF", "RAM", "RAO", "RAT", "RB5", "RBL", "RCD", "RDP", "REL", "RER", "RF5",
+    "RG1", "RGG", "RHA", "RIB", "RIP", "RNS", "RNT", "ROB", "ROR", "RPA", "RST",
+    "RUB", "RUU", "RZM", "S6P", "S7P", "SA0", "SCR", "SDD", "SF6", "SF9", "SG4",
+    "SG5", "SG6", "SG7", "SGA", "SGC", "SGD", "SGN", "SGS", "SHB", "SHG", "SI3",
+    "SIO", "SOE", "SOL", "SSG", "SUC", "SUP", "SUS", "T6P", "T6T", "TAG", "TCB",
+    "TDG", "TGK", "TGY", "TH1", "TIA", "TM5", "TM6", "TM9", "TMR", "TMX", "TOA",
+    "TOC", "TRE", "TYV", "UCD", "UDC", "VG1", "X0X", "X1X", "X2F", "X4S", "X5S",
+    "X6X", "XBP", "XDN", "XDP", "XIF", "XIM", "XLF", "XLS", "XMM", "XUL", "XXR",
+    "XYP", "XYS", "YO5", "Z3Q", "Z6J", "Z9M", "ZDC", "ZDM"
 ];
 
 
@@ -42308,85 +39098,86 @@ ResidueTypeAtoms[ UnknownBackboneType ] = {};
  */
 
   var Color$1;
-var DEG2RAD;
-var LAB_CONSTANTS;
-var PI;
-var PITHIRD;
-var RAD2DEG;
-var TWOPI;
-var _guess_formats;
-var _guess_formats_sorted;
-var _input;
-var _interpolators;
-var abs;
-var atan2;
-var bezier;
-var blend;
-var blend_f;
-var brewer;
-var burn;
-var chroma;
-var clip_rgb;
-var cmyk2rgb;
-var colors;
-var cos;
-var css2rgb;
-var darken;
-var dodge;
-var each;
-var floor;
-var hex2rgb;
-var hsi2rgb;
-var hsl2css;
-var hsl2rgb;
-var hsv2rgb;
-var interpolate;
-var interpolate_hsx;
-var interpolate_lab;
-var interpolate_num;
-var interpolate_rgb;
-var lab2lch;
-var lab2rgb;
-var lab_xyz;
-var lch2lab;
-var lch2rgb;
-var lighten;
-var limit;
-var log;
-var luminance_x;
-var m;
-var max;
-var multiply;
-var normal;
-var num2rgb;
-var overlay;
-var pow;
-var rgb2cmyk;
-var rgb2css;
-var rgb2hex;
-var rgb2hsi;
-var rgb2hsl;
-var rgb2hsv;
-var rgb2lab;
-var rgb2lch;
-var rgb2luminance;
-var rgb2num;
-var rgb2temperature;
-var rgb2xyz;
-var rgb_xyz;
-var rnd;
-var round;
-var screen$1;
-var sin;
-var sqrt;
-var temperature2rgb;
-var type;
-var unpack;
-var w3cx11;
-var xyz_lab;
-var xyz_rgb;
-var slice = [].slice;
-type = (function() {
+  var DEG2RAD;
+  var LAB_CONSTANTS;
+  var PI;
+  var PITHIRD;
+  var RAD2DEG;
+  var TWOPI;
+  var _guess_formats;
+  var _guess_formats_sorted;
+  var _input;
+  var _interpolators;
+  var abs;
+  var atan2;
+  var bezier;
+  var blend;
+  var blend_f;
+  var brewer;
+  var burn;
+  var chroma;
+  var clip_rgb;
+  var cmyk2rgb;
+  var colors;
+  var cos;
+  var css2rgb;
+  var darken;
+  var dodge;
+  var each;
+  var floor;
+  var hex2rgb;
+  var hsi2rgb;
+  var hsl2css;
+  var hsl2rgb;
+  var hsv2rgb;
+  var interpolate;
+  var interpolate_hsx;
+  var interpolate_lab;
+  var interpolate_num;
+  var interpolate_rgb;
+  var lab2lch;
+  var lab2rgb;
+  var lab_xyz;
+  var lch2lab;
+  var lch2rgb;
+  var lighten;
+  var limit;
+  var log;
+  var luminance_x;
+  var m;
+  var max;
+  var multiply;
+  var normal;
+  var num2rgb;
+  var overlay;
+  var pow;
+  var rgb2cmyk;
+  var rgb2css;
+  var rgb2hex;
+  var rgb2hsi;
+  var rgb2hsl;
+  var rgb2hsv;
+  var rgb2lab;
+  var rgb2lch;
+  var rgb2luminance;
+  var rgb2num;
+  var rgb2temperature;
+  var rgb2xyz;
+  var rgb_xyz;
+  var rnd;
+  var round;
+  var screen$1;
+  var sin;
+  var sqrt;
+  var temperature2rgb;
+  var type;
+  var unpack;
+  var w3cx11;
+  var xyz_lab;
+  var xyz_rgb;
+  var slice = [].slice;
+
+  type = (function() {
 
     /*
     for browser-safe type checking+
@@ -45134,14 +41925,15 @@ function ColorMaker( params ){
 
     var p = params || {};
 
-    this.scale = p.scale || "uniform";
-    this.mode = p.mode || "hcl";
-    this.domain = p.domain || [ 0, 1 ];
-    this.value = new Color( p.value || 0xFFFFFF ).getHex();
+    this.scale = defaults( p.scale, "uniform" );
+    this.mode = defaults( p.mode, "hcl" );
+    this.domain = defaults( p.domain, [ 0, 1 ] );
+    this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
 
     this.structure = p.structure;
     this.volume = p.volume;
     this.surface = p.surface;
+    this.gidPool = p.gidPool;
 
     if( this.structure ){
         this.atomProxy = this.structure.getAtomProxy();
@@ -45157,7 +41949,7 @@ ColorMaker.prototype = {
 
         var p = params || {};
 
-        var scale = p.scale || this.scale;
+        var scale = defaults( p.scale, this.scale );
         if( scale === "rainbow" || scale === "roygb" ){
             scale = [ "red", "orange", "yellow", "green", "blue" ];
         }else if( scale === "rwb" ){
@@ -45166,8 +41958,8 @@ ColorMaker.prototype = {
 
         return chroma$1
             .scale( scale )
-            .mode( p.mode || this.mode )
-            .domain( p.domain || this.domain )
+            .mode( defaults( p.mode, this.mode ) )
+            .domain( defaults( p.domain, this.domain ) )
             .out( "num" );
 
     },
@@ -45310,21 +42102,28 @@ function PickingColorMaker( params ){
         }
     }
 
+    if( !this.gidPool ){
+        console.warn( "no gidPool" );
+        this.gidPool = {
+            getGid: function(){ return 0; }
+        };
+    }
+
     this.atomColor = function( a ){
 
-        return GidPool.getGid( this.structure, a.index );
+        return this.gidPool.getGid( this.structure, a.index );
 
     };
 
     this.bondColor = function( b ){
 
-        return GidPool.getGid( this.structure, offset + b.index );
+        return this.gidPool.getGid( this.structure, offset + b.index );
 
     };
 
     this.volumeColor = function( i ){
 
-        return GidPool.getGid( this.volume, i );
+        return this.gidPool.getGid( this.volume, i );
 
     };
 
@@ -45533,6 +42332,66 @@ ChainnameColorMaker.prototype = ColorMaker.prototype;
 ChainnameColorMaker.prototype.constructor = ChainnameColorMaker;
 
 
+function ChainidColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+
+    var chainidDictPerModel = {};
+    var scalePerModel = {};
+
+    this.structure.eachModel( function( mp ){
+        var i = 0;
+        var chainidDict = {};
+        mp.eachChain( function( cp ){
+            if( chainidDict[ cp.chainid ] === undefined ){
+                chainidDict[ cp.chainid ] = i;
+                i += 1;
+            }
+        } );
+        this.domain = [ 0, i - 1 ];
+        chainidDictPerModel[ mp.index ] = chainidDict;
+        scalePerModel[ mp.index ] = this.getScale();
+    }.bind( this ) );
+
+    this.atomColor = function( a ){
+        var chainidDict = chainidDictPerModel[ a.modelIndex ];
+        return scalePerModel[ a.modelIndex ]( chainidDict[ a.chainid ] );
+    };
+
+}
+
+ChainidColorMaker.prototype = ColorMaker.prototype;
+
+ChainidColorMaker.prototype.constructor = ChainidColorMaker;
+
+
+function EntityindexColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+    if( !params.domain ){
+        this.domain = [ 0, this.structure.entityList.length - 1 ];
+    }
+    var entityindexScale = this.getScale();
+
+    this.atomColor = function( a ){
+        return entityindexScale( a.entityIndex );
+    };
+
+}
+
+EntityindexColorMaker.prototype = ColorMaker.prototype;
+
+EntityindexColorMaker.prototype.constructor = EntityindexColorMaker;
+
+
 function ModelindexColorMaker( params ){
 
     ColorMaker.call( this, params );
@@ -45554,6 +42413,64 @@ function ModelindexColorMaker( params ){
 ModelindexColorMaker.prototype = ColorMaker.prototype;
 
 ModelindexColorMaker.prototype.constructor = ModelindexColorMaker;
+
+
+function EntityTypeColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+        var e = a.entity;
+        var et = e ? e.entityType : undefined;
+        switch( et ){
+            case PolymerEntity:
+                return 0x7fc97f;
+            case NonPolymerEntity:
+                return 0xfdc086;
+            case MacrolideEntity:
+                return 0xbeaed4;
+            case WaterEntity:
+                return 0x386cb0;
+            default:
+                return 0xffff99;
+        }
+    };
+
+}
+
+EntityTypeColorMaker.prototype = ColorMaker.prototype;
+
+EntityTypeColorMaker.prototype.constructor = EntityTypeColorMaker;
+
+
+function MoleculeTypeColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+        switch( a.residueType.moleculeType ){
+            case WaterType:
+                return 0x386cb0;
+            case IonType:
+                return 0xf0027f;
+            case ProteinType:
+                return 0xbeaed4;
+            case RnaType:
+                return 0xfdc086;
+            case DnaType:
+                return 0xbf5b17;
+            case SaccharideType:
+                return 0x7fc97f
+            default:
+                return 0xffff99;
+        }
+    };
+
+}
+
+MoleculeTypeColorMaker.prototype = ColorMaker.prototype;
+
+MoleculeTypeColorMaker.prototype.constructor = MoleculeTypeColorMaker;
 
 
 function SstrucColorMaker( params ){
@@ -45760,7 +42677,11 @@ ColorMakerRegistry$1.types = {
     "residueindex": ResidueindexColorMaker,
     "chainindex": ChainindexColorMaker,
     "chainname": ChainnameColorMaker,
+    "chainid": ChainidColorMaker,
+    "entityindex": EntityindexColorMaker,
     "modelindex": ModelindexColorMaker,
+    "entitytype": EntityTypeColorMaker,
+    "moleculetype": MoleculeTypeColorMaker,
     "sstruc": SstrucColorMaker,
     "element": ElementColorMaker,
     "resname": ResnameColorMaker,
@@ -45780,6 +42701,8 @@ ColorMakerRegistry$1.types = {
 
 
 var Browser = getBrowser();
+
+var Mobile = typeof window !== 'undefined' ? typeof window.orientation !== 'undefined' : false;
 
 var SupportsReadPixelsFloat = false;
 function setSupportsReadPixelsFloat( value ){
@@ -45805,86 +42728,16 @@ function setDebug( value ){
     exports.Debug = value;
 }
 
-var GidPool = new GidPool$1();
-
-var WebglErrorMessage = "<div style=\"display:flex; align-items:center; justify-content:center; height:100%;\"><p style=\"padding:15px; text-align:center;\">Your browser/graphics card does not seem to support <a target=\"_blank\" href=\"https://en.wikipedia.org/wiki/WebGL\">WebGL</a>.<br /><br />Find out how to get it <a target=\"_blank\" href=\"http://get.webgl.org/\">here</a>.</p></div>";
+var WebglErrorMessage = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="padding:15px;text-align:center;">Your browser/graphics card does not seem to support <a target="_blank" href="https://en.wikipedia.org/wiki/WebGL">WebGL</a>.<br/><br/>Find out how to get it <a target="_blank" href="http://get.webgl.org/">here</a>.</p></div>';
 
 var WorkerRegistry = new WorkerRegistry$1();
-var ColorMakerRegistry = new ColorMakerRegistry$1();
+var ColorMakerRegistry$$1 = new ColorMakerRegistry$1();
 var DatasourceRegistry = new Registry( "datasource" );
 var RepresentationRegistry = new Registry( "representatation" );
 var ParserRegistry = new Registry( "parser" );
-
-/**
- * @file Datasource Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function PassThroughDatasource(){
-
-    this.getUrl = function( path ){
-        return path;
-    };
-
-}
-
-
-function StaticDatasource( baseUrl ){
-
-    baseUrl = baseUrl || "";
-
-    this.getUrl = function( src ){
-        var info = getFileInfo( src );
-        return getAbsolutePath( baseUrl + info.path );
-    };
-
-}
-
-
-function RcsbDatasource(){
-
-    var baseUrl = "//files.rcsb.org/download/";
-    var mmtfBaseUrl = "//mmtf.rcsb.org/v1.0/";
-    var mmtfFullUrl = mmtfBaseUrl + "full/";
-    var mmtfReducedUrl = mmtfBaseUrl + "reduced/";
-
-    this.getUrl = function( src ){
-        // valid path are
-        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
-        // XXXX defaults to XXXX.cif
-        var info = getFileInfo( src );
-        var protocol = window.location.protocol;
-        var pdbid = info.name.substr( 0, 4 );
-        var url;
-        if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
-            ( info.compressed === false || info.compressed === "gz" )
-        ){
-            url = baseUrl + info.path;
-        }else if( info.ext === "mmtf" ){
-            if( info.base.endsWith( ".bb" ) ){
-                url = mmtfReducedUrl + pdbid;
-            }else{
-                url = mmtfFullUrl + pdbid;
-            }
-        }else if( !info.ext ){
-            url = mmtfFullUrl + pdbid;
-        }else{
-            Log.warn( "unsupported ext", info.ext );
-            url = mmtfFullUrl + pdbid;
-        }
-        return protocol + url;
-    };
-
-    this.getExt = function( src ){
-        var info = getFileInfo( src );
-        if( info.ext === "mmtf" || !info.ext ){
-            return "mmtf";
-        }
-    };
-
-}
+var ShaderRegistry = new Registry( "shader" );
+var DecompressorRegistry = new Registry( "decompressor" );
+var ComponentRegistry = new Registry( "component" );
 
 /**
  * @file Streamer
@@ -45897,9 +42750,10 @@ function Streamer( src, params ){
 
     var p = params || {};
 
-    this.compressed = p.compressed !== undefined ? p.compressed : false;
-    this.binary = p.binary !== undefined ? p.binary : false;
-    this.json = p.json !== undefined ? p.json : false;
+    this.compressed = defaults( p.compressed, false );
+    this.binary = defaults( p.binary, false );
+    this.json = defaults( p.json, false );
+    this.xml = defaults( p.xml, false );
 
     this.src = src;
     this.chunkSize = 1024 * 1024 * 10;
@@ -45922,6 +42776,12 @@ Streamer.prototype = {
 
     __srcName: undefined,
 
+    isBinary: function(){
+
+        return this.binary || this.compressed;
+
+    },
+
     onload: function(){},
 
     onprogress: function(){},
@@ -45932,13 +42792,15 @@ Streamer.prototype = {
 
         this._read( function( data ){
 
-            if( this.compressed ){
+            var decompressFn = DecompressorRegistry.get( this.compressed );
 
-                this.data = decompress( data );
+            if( this.compressed && decompressFn ){
+
+                this.data = decompressFn( data );
 
             }else{
 
-                if( this.binary && data instanceof ArrayBuffer ){
+                if( ( this.binary || this.compressed ) && data instanceof ArrayBuffer ){
                     data = new Uint8Array( data );
                 }
                 this.data = data;
@@ -45972,7 +42834,7 @@ Streamer.prototype = {
 
         }else{
 
-            if( this.binary || this.compressed ){
+            if( this.isBinary() ){
                 return this.data.subarray( start, end );
             }else{
                 return this.data.substring( start, end );
@@ -45996,7 +42858,7 @@ Streamer.prototype = {
         var n = data.length;
 
         // FIXME does not work for multi-char newline
-        var newline = ( this.binary || this.compressed ) ? this.newline.charCodeAt( 0 ) : this.newline;
+        var newline = this.isBinary() ? this.newline.charCodeAt( 0 ) : this.newline;
 
         var i;
         var count = 0;
@@ -46023,7 +42885,7 @@ Streamer.prototype = {
         var n = data.length;
 
         // FIXME does not work for multi-char newline
-        var newline = ( this.binary || this.compressed ) ? this.newline.charCodeAt( 0 ) : this.newline;
+        var newline = this.isBinary() ? this.newline.charCodeAt( 0 ) : this.newline;
 
         var count = 0;
         for( var i = 0; i < n; ++i ){
@@ -46043,11 +42905,7 @@ Streamer.prototype = {
 
     asText: function(){
 
-        if( this.binary || this.compressed ){
-            return uint8ToString( this.data );
-        }else{
-            return this.data;
-        }
+        return this.isBinary() ? uint8ToString( this.data ) : this.data;
 
     },
 
@@ -46055,14 +42913,14 @@ Streamer.prototype = {
 
         var newline = this.newline;
 
-        if( !this.binary && !this.compressed && chunk.length === this.data.length ){
+        if( !this.isBinary() && chunk.length === this.data.length ){
             return {
                 lines: chunk.split( newline ),
                 partialLine: ""
             };
         }
 
-        var str = ( this.binary || this.compressed ) ? uint8ToString( chunk ) : chunk;
+        var str = this.isBinary() ? uint8ToString( chunk ) : chunk;
         var lines = [];
         var idx = str.lastIndexOf( newline );
 
@@ -46307,7 +43165,7 @@ NetworkStreamer.prototype = Object.assign( Object.create(
                 // when requesting from local file system
                 // the status in Google Chrome/Chromium is 0
                 xhr.status === 0
-             ){
+            ){
 
                 callback( xhr.response );
 
@@ -46351,10 +43209,12 @@ NetworkStreamer.prototype = Object.assign( Object.create(
 
         //
 
-        if( this.compressed || this.binary ){
+        if( this.isBinary() ){
             xhr.responseType = "arraybuffer";
         }else if( this.json ){
             xhr.responseType = "json";
+        }else if( this.xml ){
+            xhr.responseType = "document";
         }
         // xhr.crossOrigin = true;
 
@@ -46383,16 +43243,15 @@ function Loader$1( src, params ){
 
     var p = Object.assign( {}, params );
 
-    var binaryExtList = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ];
-    var binary = binaryExtList.indexOf( p.ext ) !== -1;
+    var binary = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ].includes( p.ext );
 
-    this.compressed = p.compressed || false;
-    this.binary = p.binary !== undefined ? p.binary : binary;
-    this.name = p.name || "";
-    this.ext = p.ext || "";
-    this.dir = p.dir || "";
-    this.path = p.path || "";
-    this.protocol = p.protocol || "";
+    this.compressed = defaults( p.compressed, false );
+    this.binary = defaults( p.binary, binary );
+    this.name = defaults( p.name, "" );
+    this.ext = defaults( p.ext, "" );
+    this.dir = defaults( p.dir, "" );
+    this.path = defaults( p.path, "" );
+    this.protocol = defaults( p.protocol, "" );
 
     this.params = params;
 
@@ -46401,7 +43260,8 @@ function Loader$1( src, params ){
     var streamerParams = {
         compressed: this.compressed,
         binary: this.binary,
-        json: this.ext === "json"
+        json: this.ext === "json",
+        xml: this.ext === "xml"
     };
 
     if( ( typeof File !== "undefined" && src instanceof File ) ||
@@ -46703,44 +43563,6 @@ function getDataInfo( src ){
 }
 
 
-var loaderMap = {
-
-    "gro": ParserLoader,
-    "pdb": ParserLoader,
-    "pdb1": ParserLoader,
-    "ent": ParserLoader,
-    "pqr": ParserLoader,
-    "cif": ParserLoader,
-    "mcif": ParserLoader,
-    "mmcif": ParserLoader,
-    "sdf": ParserLoader,
-    "mol2": ParserLoader,
-    "mmtf":  ParserLoader,
-
-    "dcd": ParserLoader,
-
-    "mrc": ParserLoader,
-    "ccp4": ParserLoader,
-    "map": ParserLoader,
-    "cube": ParserLoader,
-    "dx": ParserLoader,
-    "dxbin": ParserLoader,
-
-    "obj": ParserLoader,
-    "ply": ParserLoader,
-
-    "txt": ParserLoader,
-    "text": ParserLoader,
-    "csv": ParserLoader,
-    "json": ParserLoader,
-    "xml": ParserLoader,
-
-    "ngl": ScriptLoader,
-    "plugin": PluginLoader,
-
-};
-
-
 /**
  * Load a file
  *
@@ -46770,9 +43592,18 @@ var loaderMap = {
 function autoLoad( file, params ){
 
     var p = Object.assign( getDataInfo( file ), params );
-    var loader = new loaderMap[ p.ext ]( p.src, p );
 
-    if( loader ){
+    var loaderClass;
+    if( ParserRegistry.names.includes( p.ext ) ){
+        loaderClass = ParserLoader;
+    }else if( p.ext === "ngl" ){
+        loaderClass = ScriptLoader;
+    }else if( p.ext === "plugin" ){
+        loaderClass = PluginLoader;
+    }
+
+    if( loaderClass ){
+        var loader = new loaderClass( p.src, p );
         return loader.load();
     }else{
         return Promise.reject( "autoLoad: ext '" + p.ext + "' unknown" );
@@ -46800,43 +43631,43 @@ function autoLoad( file, params ){
         key_access: /^\.([a-z_][a-z_\d]*)/i,
         index_access: /^\[(\d+)\]/,
         sign: /^[\+\-]/
-    }
+    };
 
     function sprintf() {
-        var key = arguments[0], cache = sprintf.cache
+        var key = arguments[0], cache = sprintf.cache;
         if (!(cache[key] && cache.hasOwnProperty(key))) {
-            cache[key] = sprintf.parse(key)
+            cache[key] = sprintf.parse(key);
         }
         return sprintf.format.call(null, cache[key], arguments)
     }
 
     sprintf.format = function(parse_tree, argv) {
-        var cursor = 1, tree_length = parse_tree.length, node_type = '', arg, output = [], i, k, match, pad, pad_character, pad_length, is_positive = true, sign = ''
+        var cursor = 1, tree_length = parse_tree.length, node_type = '', arg, output = [], i, k, match, pad, pad_character, pad_length, is_positive = true, sign = '';
         for (i = 0; i < tree_length; i++) {
-            node_type = get_type(parse_tree[i])
+            node_type = get_type(parse_tree[i]);
             if (node_type === 'string') {
-                output[output.length] = parse_tree[i]
+                output[output.length] = parse_tree[i];
             }
             else if (node_type === 'array') {
-                match = parse_tree[i] // convenience purposes only
+                match = parse_tree[i]; // convenience purposes only
                 if (match[2]) { // keyword argument
-                    arg = argv[cursor]
+                    arg = argv[cursor];
                     for (k = 0; k < match[2].length; k++) {
                         if (!arg.hasOwnProperty(match[2][k])) {
                             throw new Error(sprintf('[sprintf] property "%s" does not exist', match[2][k]))
                         }
-                        arg = arg[match[2][k]]
+                        arg = arg[match[2][k]];
                     }
                 }
                 else if (match[1]) { // positional argument (explicit)
-                    arg = argv[match[1]]
+                    arg = argv[match[1]];
                 }
                 else { // positional argument (implicit)
-                    arg = argv[cursor++]
+                    arg = argv[cursor++];
                 }
 
                 if (re.not_type.test(match[8]) && re.not_primitive.test(match[8]) && get_type(arg) == 'function') {
-                    arg = arg()
+                    arg = arg();
                 }
 
                 if (re.numeric_arg.test(match[8]) && (get_type(arg) != 'number' && isNaN(arg))) {
@@ -46844,105 +43675,105 @@ function autoLoad( file, params ){
                 }
 
                 if (re.number.test(match[8])) {
-                    is_positive = arg >= 0
+                    is_positive = arg >= 0;
                 }
 
                 switch (match[8]) {
                     case 'b':
-                        arg = parseInt(arg, 10).toString(2)
+                        arg = parseInt(arg, 10).toString(2);
                     break
                     case 'c':
-                        arg = String.fromCharCode(parseInt(arg, 10))
+                        arg = String.fromCharCode(parseInt(arg, 10));
                     break
                     case 'd':
                     case 'i':
-                        arg = parseInt(arg, 10)
+                        arg = parseInt(arg, 10);
                     break
                     case 'j':
-                        arg = JSON.stringify(arg, null, match[6] ? parseInt(match[6]) : 0)
+                        arg = JSON.stringify(arg, null, match[6] ? parseInt(match[6]) : 0);
                     break
                     case 'e':
-                        arg = match[7] ? parseFloat(arg).toExponential(match[7]) : parseFloat(arg).toExponential()
+                        arg = match[7] ? parseFloat(arg).toExponential(match[7]) : parseFloat(arg).toExponential();
                     break
                     case 'f':
-                        arg = match[7] ? parseFloat(arg).toFixed(match[7]) : parseFloat(arg)
+                        arg = match[7] ? parseFloat(arg).toFixed(match[7]) : parseFloat(arg);
                     break
                     case 'g':
-                        arg = match[7] ? parseFloat(arg).toPrecision(match[7]) : parseFloat(arg)
+                        arg = match[7] ? parseFloat(arg).toPrecision(match[7]) : parseFloat(arg);
                     break
                     case 'o':
-                        arg = arg.toString(8)
+                        arg = arg.toString(8);
                     break
                     case 's':
-                        arg = String(arg)
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg)
+                        arg = String(arg);
+                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
                     break
                     case 't':
-                        arg = String(!!arg)
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg)
+                        arg = String(!!arg);
+                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
                     break
                     case 'T':
-                        arg = get_type(arg)
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg)
+                        arg = get_type(arg);
+                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
                     break
                     case 'u':
-                        arg = parseInt(arg, 10) >>> 0
+                        arg = parseInt(arg, 10) >>> 0;
                     break
                     case 'v':
-                        arg = arg.valueOf()
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg)
+                        arg = arg.valueOf();
+                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
                     break
                     case 'x':
-                        arg = parseInt(arg, 10).toString(16)
+                        arg = parseInt(arg, 10).toString(16);
                     break
                     case 'X':
-                        arg = parseInt(arg, 10).toString(16).toUpperCase()
+                        arg = parseInt(arg, 10).toString(16).toUpperCase();
                     break
                 }
                 if (re.json.test(match[8])) {
-                    output[output.length] = arg
+                    output[output.length] = arg;
                 }
                 else {
                     if (re.number.test(match[8]) && (!is_positive || match[3])) {
-                        sign = is_positive ? '+' : '-'
-                        arg = arg.toString().replace(re.sign, '')
+                        sign = is_positive ? '+' : '-';
+                        arg = arg.toString().replace(re.sign, '');
                     }
                     else {
-                        sign = ''
+                        sign = '';
                     }
-                    pad_character = match[4] ? match[4] === '0' ? '0' : match[4].charAt(1) : ' '
-                    pad_length = match[6] - (sign + arg).length
-                    pad = match[6] ? (pad_length > 0 ? str_repeat(pad_character, pad_length) : '') : ''
-                    output[output.length] = match[5] ? sign + arg + pad : (pad_character === '0' ? sign + pad + arg : pad + sign + arg)
+                    pad_character = match[4] ? match[4] === '0' ? '0' : match[4].charAt(1) : ' ';
+                    pad_length = match[6] - (sign + arg).length;
+                    pad = match[6] ? (pad_length > 0 ? str_repeat(pad_character, pad_length) : '') : '';
+                    output[output.length] = match[5] ? sign + arg + pad : (pad_character === '0' ? sign + pad + arg : pad + sign + arg);
                 }
             }
         }
         return output.join('')
-    }
+    };
 
-    sprintf.cache = {}
+    sprintf.cache = {};
 
     sprintf.parse = function(fmt) {
-        var _fmt = fmt, match = [], parse_tree = [], arg_names = 0
+        var _fmt = fmt, match = [], parse_tree = [], arg_names = 0;
         while (_fmt) {
             if ((match = re.text.exec(_fmt)) !== null) {
-                parse_tree[parse_tree.length] = match[0]
+                parse_tree[parse_tree.length] = match[0];
             }
             else if ((match = re.modulo.exec(_fmt)) !== null) {
-                parse_tree[parse_tree.length] = '%'
+                parse_tree[parse_tree.length] = '%';
             }
             else if ((match = re.placeholder.exec(_fmt)) !== null) {
                 if (match[2]) {
-                    arg_names |= 1
-                    var field_list = [], replacement_field = match[2], field_match = []
+                    arg_names |= 1;
+                    var field_list = [], replacement_field = match[2], field_match = [];
                     if ((field_match = re.key.exec(replacement_field)) !== null) {
-                        field_list[field_list.length] = field_match[1]
+                        field_list[field_list.length] = field_match[1];
                         while ((replacement_field = replacement_field.substring(field_match[0].length)) !== '') {
                             if ((field_match = re.key_access.exec(replacement_field)) !== null) {
-                                field_list[field_list.length] = field_match[1]
+                                field_list[field_list.length] = field_match[1];
                             }
                             else if ((field_match = re.index_access.exec(replacement_field)) !== null) {
-                                field_list[field_list.length] = field_match[1]
+                                field_list[field_list.length] = field_match[1];
                             }
                             else {
                                 throw new SyntaxError("[sprintf] failed to parse named argument key")
@@ -46952,23 +43783,23 @@ function autoLoad( file, params ){
                     else {
                         throw new SyntaxError("[sprintf] failed to parse named argument key")
                     }
-                    match[2] = field_list
+                    match[2] = field_list;
                 }
                 else {
-                    arg_names |= 2
+                    arg_names |= 2;
                 }
                 if (arg_names === 3) {
                     throw new Error("[sprintf] mixing positional and named placeholders is not (yet) supported")
                 }
-                parse_tree[parse_tree.length] = match
+                parse_tree[parse_tree.length] = match;
             }
             else {
                 throw new SyntaxError("[sprintf] unexpected placeholder")
             }
-            _fmt = _fmt.substring(match[0].length)
+            _fmt = _fmt.substring(match[0].length);
         }
         return parse_tree
-    }
+    };
 
     /**
      * helpers
@@ -46989,7 +43820,7 @@ function autoLoad( file, params ){
         '0': ['', '0', '00', '000', '0000', '00000', '000000', '0000000'],
         ' ': ['', ' ', '  ', '   ', '    ', '     ', '      ', '       '],
         '_': ['', '_', '__', '___', '____', '_____', '______', '_______'],
-    }
+    };
     function str_repeat(input, multiplier) {
         if (multiplier >= 0 && multiplier <= 7 && preformattedPadding[input]) {
             return preformattedPadding[input][multiplier]
@@ -47157,7 +43988,7 @@ function PdbWriter( structure, params ){
 /**
  * {@link Signal}, dispatched when the `count` changes
  * @example
- * counter.signals.countChanged( function( delta ){ ... } );
+ * counter.signals.countChanged.add( function( delta ){ ... } );
  * @event Counter#countChanged
  * @type {Integer}
  */
@@ -47185,6 +44016,7 @@ Counter.prototype = {
 
     /**
      * Set the `count` to zero
+     * @return {undefined}
      */
     clear: function(){
 
@@ -47196,6 +44028,7 @@ Counter.prototype = {
      * Change the `count`
      * @fires Counter#countChanged
      * @param {Integer} delta - count change
+     * @return {undefined}
      */
     change: function( delta ){
 
@@ -47210,6 +44043,7 @@ Counter.prototype = {
 
     /**
      * Increments the `count` by one.
+     * @return {undefined}
      */
     increment: function(){
 
@@ -47219,6 +44053,7 @@ Counter.prototype = {
 
     /**
      * Decrements the `count` by one.
+     * @return {undefined}
      */
     decrement: function(){
 
@@ -47230,6 +44065,7 @@ Counter.prototype = {
      * Listen to another counter object and change this `count` by the
      * same amount
      * @param  {Counter} counter - the counter object to listen to
+     * @return {undefined}
      */
     listen: function( counter ){
 
@@ -47241,6 +44077,7 @@ Counter.prototype = {
     /**
      * Stop listening to the other counter object
      * @param  {Counter} counter - the counter object to stop listening to
+     * @return {undefined}
      */
     unlisten: function( counter ){
 
@@ -47255,6 +44092,7 @@ Counter.prototype = {
      * Invole the callback function once, when the `count` becomes zero
      * @param  {Function} callback - the callback function
      * @param  {Object}   context - the context for the callback function
+     * @return {undefined}
      */
     onZeroOnce: function( callback, context ){
 
@@ -47286,6 +44124,260 @@ Counter.prototype = {
     }
 
 };
+
+/**
+ * @file Gid Pool
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function GidPool( name ){
+
+    this.name = name || "";
+
+    this.nextGid = 1;
+    this.objectList = [];
+    this.rangeList = [];
+
+}
+
+GidPool.prototype = {
+
+    constructor: GidPool,
+
+    getBaseObject: function( object ){
+
+        if( object.type === "StructureView" ){
+            object = object.getStructure();
+        }
+
+        return object;
+
+    },
+
+    addObject: function( object ){
+
+        object = this.getBaseObject( object );
+
+        var gidRange = this.allocateGidRange( object );
+
+        if( gidRange ){
+            this.objectList.push( object );
+            this.rangeList.push( gidRange );
+        }
+
+        return this;
+
+    },
+
+    removeObject: function( object ){
+
+        object = this.getBaseObject( object );
+
+        var idx = this.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            this.objectList.splice( idx, 1 );
+            this.rangeList.splice( idx, 1 );
+
+            if( this.objectList.length === 0 ){
+                this.nextGid = 1;
+            }
+
+        }
+
+        return this;
+
+    },
+
+    updateObject: function( object, silent ){
+
+        object = this.getBaseObject( object );
+
+        var idx = this.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            var range = this.rangeList[ idx ];
+
+            if( range[1] === this.nextGid ){
+                var count = this.getGidCount( object );
+                this.nextGid += count - ( range[1] - range[0] );
+                range[ 1 ] = this.nextGid;
+            }else{
+                this.rangeList[ idx ] = this.allocateGidRange( object );
+            }
+
+        }else{
+
+            if( !silent ){
+                Log.warn( "GidPool.updateObject: object not found." );
+            }
+
+        }
+
+        return this;
+
+    },
+
+    getGidCount: function( object ){
+
+        object = this.getBaseObject( object );
+
+        var count = 0;
+
+        if( object.type === "Structure" ){
+            count = (
+                object.atomStore.count +
+                object.bondStore.count +
+                object.backboneBondStore.count +
+                object.rungBondStore.count
+            );
+        }else if( object.type === "Volume" ){
+            count = object.__data.length;
+        }else{
+            Log.warn( "GidPool.getGidCount: unknown object type" );
+        }
+
+        return count;
+
+    },
+
+    allocateGidRange: function( object ){
+
+        object = this.getBaseObject( object );
+
+        var gidCount = this.getGidCount( object );
+
+        if( gidCount > Math.pow( 10, 7 ) ){
+            Log.warn( "GidPool.allocateGidRange: gidCount too large" );
+            return null;
+        }
+
+        var firstGid = this.nextGid;
+        this.nextGid += gidCount;
+
+        if( this.nextGid > Math.pow( 2, 24 ) ){
+            Log.error( "GidPool.allocateGidRange: GidPool overflown" );
+        }
+
+        return [ firstGid, this.nextGid ];
+
+    },
+
+    //freeGidRange: function( object ){
+
+    //    object = this.getBaseObject( object );
+    //    // TODO
+
+    //},
+
+    getNextGid: function(){
+
+        return this.nextGid++;
+
+    },
+
+    getGid: function( object, offset ){
+
+        object = this.getBaseObject( object );
+        offset = offset || 0;
+
+        var gid = 0;
+        var idx = this.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            var range = this.rangeList[ idx ];
+            var first = range[ 0 ];
+
+            gid = first + offset;
+
+        }else{
+
+            Log.warn( "GidPool.getGid: object not found." );
+
+        }
+
+        return gid;
+
+    },
+
+    getByGid: function( gid ){
+
+        var entity;
+
+        this.objectList.forEach( function( o, i ){
+
+            var range = this.rangeList[ i ];
+            if( gid < range[ 0 ] || gid >= range[ 1 ] ){
+                return;
+            }
+            var offset = gid - range[ 0 ];
+
+            if( o.type === "Structure" ){
+
+                if( offset < o.atomStore.count ){
+
+                    entity = o.getAtomProxy( offset );
+
+                }else if( offset < o.atomStore.count + o.bondStore.count ){
+
+                    offset -= o.atomStore.count;
+                    entity = o.getBondProxy( offset );
+
+                }else if( offset < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){
+
+                    offset -= ( o.atomStore.count + o.bondStore.count );
+                    entity = o.getBondProxy( offset );
+                    entity.bondStore = o.backboneBondStore;
+
+                }else if( offset < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count + o.rungBondStore.count ){
+
+                    offset -= ( o.atomStore.count + o.bondStore.count + o.backboneBondStore.count );
+                    entity = o.getBondProxy( offset );
+                    entity.bondStore = o.rungBondStore;
+
+                }else{
+
+                    Log.warn( "GidPool.getByGid: invalid Structure gid", gid );
+
+                }
+
+            }else if( o.type === "Volume" ){
+
+                entity = {
+                    volume: o,
+                    index: offset,
+                    value: o.data[ offset ],
+                    x: o.dataPosition[ offset * 3 ],
+                    y: o.dataPosition[ offset * 3 + 1 ],
+                    z: o.dataPosition[ offset * 3 + 2 ],
+                };
+
+            }else{
+
+                Log.warn( "GidPool.getByGid: unknown object type for gid", gid );
+
+            }
+
+        }, this );
+
+        return entity;
+
+    }
+
+};
+
+ShaderRegistry.add('shader/BasicLine.vert', "void main(){\r\n\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\n}");
+
+ShaderRegistry.add('shader/BasicLine.frag', "uniform vec3 uColor;\r\n\r\n#include common\r\n#include fog_pars_fragment\r\n\r\nvoid main(){\r\n\r\ngl_FragColor = vec4( uColor, 1.0 );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}");
+
+ShaderRegistry.add('shader/Quad.vert', "varying vec2 vUv;\r\n\r\nvoid main() {\r\n\r\nvUv = uv;\r\ngl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\r\n\r\n}");
+
+ShaderRegistry.add('shader/Quad.frag', "varying vec2 vUv;\r\n\r\nuniform sampler2D tForeground;\r\nuniform float scale;\r\n\r\nvoid main() {\r\n\r\nvec4 foreground = texture2D( tForeground, vUv );\r\ngl_FragColor = foreground * scale;\r\n\r\n}");
 
 /**
  * @file Stats
@@ -47855,9 +44947,9 @@ function TrackballControls( object, domElement ) {
 
         } else {
 
-            // Firefox
+            // Firefox or IE 11
 
-            delta = - event.deltaY * 3;
+            delta = - event.deltaY / ( event.deltaMode ? 0.33 : 30 );
 
         }
 
@@ -47993,98 +45085,25 @@ function TrackballControls( object, domElement ) {
 TrackballControls.prototype = Object.create( EventDispatcher.prototype );
 TrackballControls.prototype.constructor = TrackballControls;
 
-var CylinderImpostor_vert = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - shift\r\n\r\nattribute vec3 mapping;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\nattribute float radius;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nattribute vec3 pickingColor2;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\n// attribute vec3 color;\r\nattribute vec3 color2;\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#endif\r\n\r\nuniform mat4 modelViewMatrixInverse;\r\nuniform float ortho;\r\n\r\nvoid main(){\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\nvPickingColor2 = pickingColor2;\r\n#else\r\nvColor1 = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\n// vRadius = radius;\r\nbase_radius.w = radius;\r\n\r\nvec3 center = position;\r\nvec3 dir = normalize( position2 - position1 );\r\nfloat ext = length( position2 - position1 ) / 2.0;\r\n\r\n// using cameraPosition fails on some machines, not sure why\r\n// vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );\r\nvec3 cam_dir;\r\nif( ortho == 0.0 ){\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;\r\n}else{\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;\r\n}\r\ncam_dir = normalize( cam_dir );\r\n\r\nvec3 ldir;\r\n\r\nfloat b = dot( cam_dir, dir );\r\nend_b.w = b;\r\n// direction vector looks away, so flip\r\nif( b < 0.0 )\r\nldir = -ext * dir;\r\n// direction vector already looks in my direction\r\nelse\r\nldir = ext * dir;\r\n\r\nvec3 left = normalize( cross( cam_dir, ldir ) );\r\nleft = radius * left;\r\nvec3 up = radius * normalize( cross( left, ldir ) );\r\n\r\n// transform to modelview coordinates\r\naxis = normalize( normalMatrix * ldir );\r\nU = normalize( normalMatrix * up );\r\nV = normalize( normalMatrix * left );\r\n\r\nvec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );\r\nbase_radius.xyz = base4.xyz / base4.w;\r\n\r\nvec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );\r\nvec4 end4 = top_position;\r\nend_b.xyz = end4.xyz / end4.w;\r\n\r\nw = modelViewMatrix * vec4(\r\ncenter + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\r\n);\r\n\r\ngl_Position = projectionMatrix * w;\r\n\r\n// avoid clipping (1.0 seems to induce flickering with some drivers)\r\ngl_Position.z = 0.99;\r\n\r\n}";
+ShaderRegistry.add('shader/chunk/dull_interior_fragment.glsl', "#ifdef DULL_INTERIOR\r\nif( gl_FrontFacing == false ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n#endif");
 
-var CylinderImpostor_frag = "#define STANDARD\r\n#define IMPOSTOR\r\n\r\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - custom clipping\r\n// - three.js lighting\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform mat4 projectionMatrix;\r\nuniform float ortho;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#include common\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool interior = false;\r\n\r\nfloat distSq3( vec3 v3a, vec3 v3b ){\r\n\r\nreturn (\r\n( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\r\n( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\r\n( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\r\n);\r\n\r\n}\r\n\r\n// round caps\r\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\r\n\r\n// void main2(void)\r\n// {\r\n// #ifdef PICKING\r\n// gl_FragColor = vec4( vPickingColor, 1.0 );\r\n// #else\r\n// gl_FragColor = vec4( vColor, 1.0 );\r\n// #endif\r\n// }\r\n\r\n// Calculate depth based on the given camera position.\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\r\n}\r\n\r\nvoid main(){\r\n\r\nvec3 point = w.xyz / w.w;\r\n\r\n// unpacking\r\nvec3 base = base_radius.xyz;\r\nfloat vRadius = base_radius.w;\r\nvec3 end = end_b.xyz;\r\nfloat b = end_b.w;\r\n\r\nvec3 end_cyl = end;\r\nvec3 surface_point = point;\r\n\r\nvec3 ray_target = surface_point;\r\nvec3 ray_origin = vec3(0.0);\r\nvec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\r\nmat3 basis = mat3( U, V, axis );\r\n\r\nvec3 diff = ray_target - 0.5 * (base + end_cyl);\r\nvec3 P = diff * basis;\r\n\r\n// angle (cos) between cylinder cylinder_axis and ray direction\r\nfloat dz = dot( axis, ray_direction );\r\n\r\nfloat radius2 = vRadius*vRadius;\r\n\r\n// calculate distance to the cylinder from ray origin\r\nvec3 D = vec3(dot(U, ray_direction),\r\ndot(V, ray_direction),\r\ndz);\r\nfloat a0 = P.x*P.x + P.y*P.y - radius2;\r\nfloat a1 = P.x*D.x + P.y*D.y;\r\nfloat a2 = D.x*D.x + D.y*D.y;\r\n\r\n// calculate a dicriminant of the above quadratic equation\r\nfloat d = a1*a1 - a0*a2;\r\nif (d < 0.0)\r\n// outside of the cylinder\r\ndiscard;\r\n\r\nfloat dist = (-a1 + sqrt(d)) / a2;\r\n\r\n// point of intersection on cylinder surface\r\nvec3 new_point = ray_target + dist * ray_direction;\r\n\r\nvec3 tmp_point = new_point - base;\r\nvec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\r\n\r\nray_origin = mix( ray_origin, surface_point, ortho );\r\n\r\n// test caps\r\nfloat front_cap_test = dot( tmp_point, axis );\r\nfloat end_cap_test = dot((new_point - end_cyl), axis);\r\n\r\n// to calculate caps, simply check the angle between\r\n// the point of intersection - cylinder end vector\r\n// and a cap plane normal (which is the cylinder cylinder_axis)\r\n// if the angle < 0, the point is outside of cylinder\r\n// test front cap\r\n\r\n#ifndef CAP\r\nvec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\nvec3 tmp_point2 = new_point2 - base;\r\n#endif\r\n\r\n// flat\r\nif (front_cap_test < 0.0)\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(-axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(-axis, (base)) / dNV;\r\nvec3 front_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif (dot(front_point - base, front_point-base) > radius2)\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = front_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(axis, end_cyl) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - end_cyl, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\n// test end cap\r\n\r\n\r\n// flat\r\nif( end_cap_test > 0.0 )\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(axis, end_cyl) / dNV;\r\nvec3 end_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif( dot(end_point - end_cyl, end_point-base) > radius2 )\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = end_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(-axis, (base)) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - base, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\ngl_FragDepthEXT = calcDepth( new_point );\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( new_point ) > 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\nif( calcClip( new_point ) > 0.0 )\r\ndiscard;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\r\n}\r\n}else if( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#else\r\nif( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#endif\r\n\r\n// this is a workaround necessary for Mac\r\n// otherwise the modified fragment won't clip properly\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n#ifdef PICKING\r\n\r\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\r\nif( b < 0.0 ){\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n}else{\r\ngl_FragColor = vec4( vPickingColor2, objectId );\r\n}\r\n}else{\r\nif( b > 0.0 ){\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n}else{\r\ngl_FragColor = vec4( vPickingColor2, objectId );\r\n}\r\n}\r\n\r\n#else\r\n\r\nvec3 vViewPosition = -new_point;\r\nvec3 vNormal = _normal;\r\nvec3 vColor;\r\n\r\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\r\nif( b < 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}else{\r\nif( b > 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n\r\n// don't use #include normal_fragment\r\nvec3 normal = normalize( vNormal );\r\nif( interior ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}";
+ShaderRegistry.add('shader/chunk/fog_fragment.glsl', "#ifdef USE_FOG\r\n\r\n// #if defined( USE_LOGDEPTHBUF_EXT ) || defined( IMPOSTOR )\r\n//\r\n// float depth = gl_FragDepthEXT / gl_FragCoord.w;\r\n//\r\n// #else\r\n//\r\n// float depth = gl_FragCoord.z / gl_FragCoord.w;\r\n//\r\n// #endif\r\n\r\nfloat depth = length( vViewPosition );\r\n\r\n#ifdef FOG_EXP2\r\n\r\nfloat fogFactor = whiteCompliment( exp2( - fogDensity * fogDensity * depth * depth * LOG2 ) );\r\n\r\n#else\r\n\r\nfloat fogFactor = smoothstep( fogNear, fogFar, depth );\r\n\r\n#endif\r\n\r\ngl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );\r\n\r\n#endif");
 
-var HyperballStickImpostor_vert = "// Copyright (C) 2010-2011 by\r\n// Laboratoire de Biochimie Theorique (CNRS),\r\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\r\n// Departement des Sciences de la Simulation et de l'Information (CEA).\r\n//\r\n// License: CeCILL-C license (http://www.cecill.info/)\r\n//\r\n// Contact: Marc Baaden\r\n// E-mail: baaden@smplinux.de\r\n// Webpage: http://hyperballs.sourceforge.net\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n\r\nattribute vec3 mapping;\r\nattribute float radius;\r\nattribute float radius2;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\n\r\nvarying mat4 matrix_near;\r\nvarying vec4 prime1;\r\nvarying vec4 prime2;\r\nvarying float vRadius;\r\nvarying float vRadius2;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nattribute vec3 pickingColor2;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\n// attribute vec3 color;\r\nattribute vec3 color2;\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#endif\r\n\r\nuniform float shrink;\r\nuniform mat4 modelViewProjectionMatrix;\r\nuniform mat4 modelViewProjectionMatrixInverse;\r\n\r\nvoid main(){\r\n\r\nvRadius = radius;\r\nvRadius2 = radius2;\r\n\r\nvec4 spaceposition;\r\nvec3 position_atom1;\r\nvec3 position_atom2;\r\nvec4 vertex_position;\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\nvPickingColor2 = pickingColor2;\r\n#else\r\nvColor1 = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\nfloat radius1 = radius;\r\n\r\nposition_atom1 = position1;\r\nposition_atom2 = position2;\r\n\r\nfloat distance = distance( position_atom1, position_atom2 );\r\n\r\nspaceposition.z = mapping.z * distance;\r\n\r\nif (radius1 > radius2) {\r\nspaceposition.y = mapping.y * 1.5 * radius1;\r\nspaceposition.x = mapping.x * 1.5 * radius1;\r\n} else {\r\nspaceposition.y = mapping.y * 1.5 * radius2;\r\nspaceposition.x = mapping.x * 1.5 * radius2;\r\n}\r\nspaceposition.w = 1.0;\r\n\r\nvec4 e3 = vec4( 1.0 );\r\nvec3 e1, e1_temp, e2, e2_temp;\r\n\r\n// Calculation of bond direction: e3\r\ne3.xyz = normalize(position_atom1-position_atom2);\r\n\r\n// little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\r\nif (e3.z == 0.0) { e3.z = 0.0000000000001;}\r\nif ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\r\nif ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\r\nif ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\r\n\r\n// Focus calculation\r\nvec4 focus = vec4( 1.0 );\r\nfocus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x +\r\n( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\r\nfocus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y +\r\n( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\r\nfocus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z +\r\n( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\r\n\r\n// e1 calculation\r\ne1.x = 1.0;\r\ne1.y = 1.0;\r\ne1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\r\ne1_temp = e1 - focus.xyz;\r\ne1 = normalize(e1_temp);\r\n\r\n// e2 calculation\r\ne2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\r\ne2 = normalize(e2_temp);\r\n\r\n//ROTATION:\r\n// final form of change of basis matrix:\r\nmat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\r\n// Apply rotation and translation to the bond primitive\r\nvertex_position.xyz = R * spaceposition.xyz;\r\nvertex_position.w = 1.0;\r\n\r\n// TRANSLATION:\r\nvertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\r\nvertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\r\nvertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\r\n\r\n// New position\r\ngl_Position = modelViewProjectionMatrix * vertex_position;\r\n\r\nvec4 i_near, i_far;\r\n\r\n// Calculate near from position\r\nvec4 near = gl_Position;\r\nnear.z = 0.0 ;\r\nnear = modelViewProjectionMatrixInverse * near;\r\ni_near = near;\r\n\r\n// Calculate far from position\r\nvec4 far = gl_Position;\r\nfar.z = far.w ;\r\ni_far = modelViewProjectionMatrixInverse * far;\r\n\r\nprime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\r\nprime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\r\n\r\nfloat Rsquare = (radius1*radius1/shrink) - (\r\n(position_atom1.x - focus.x)*(position_atom1.x - focus.x) +\r\n(position_atom1.y - focus.y)*(position_atom1.y - focus.y) +\r\n(position_atom1.z - focus.z)*(position_atom1.z - focus.z)\r\n);\r\n\r\nfocus.w = Rsquare;\r\n\r\nmatrix_near = mat4( i_near, i_far, focus, e3 );\r\n\r\n// avoid clipping\r\ngl_Position.z = 1.0;\r\n\r\n}";
+ShaderRegistry.add('shader/chunk/nearclip_vertex.glsl', "#ifdef NEAR_CLIP\r\nif( vViewPosition.z < nearClip - 5.0 )\r\n// move out of [ -w, +w ]\r\ngl_Position.z = 2.0 * gl_Position.w;\r\n#endif");
 
-var HyperballStickImpostor_frag = "#define STANDARD\r\n#define IMPOSTOR\r\n\r\n// Copyright (C) 2010-2011 by\r\n// Laboratoire de Biochimie Theorique (CNRS),\r\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\r\n// Departement des Sciences de la Simulation et de l'Information (CEA).\r\n//\r\n// License: CeCILL-C license (http://www.cecill.info/)\r\n//\r\n// Contact: Marc Baaden\r\n// E-mail: baaden@smplinux.de\r\n// Webpage: http://hyperballs.sourceforge.net\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - custom clipping\r\n// - three.js lighting\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform float shrink;\r\nuniform mat4 modelViewMatrix;\r\nuniform mat4 modelViewProjectionMatrix;\r\nuniform mat4 modelViewMatrixInverseTranspose;\r\nuniform mat4 projectionMatrix;\r\n\r\nvarying mat4 matrix_near;\r\nvarying vec4 prime1;\r\nvarying vec4 prime2;\r\nvarying float vRadius;\r\nvarying float vRadius2;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#include common\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool interior = false;\r\n\r\nfloat calcClip( vec4 cameraPos ){\r\nreturn dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn calcClip( vec4( cameraPos, 1.0 ) );\r\n}\r\n\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nstruct Ray {\r\nvec3 origin ;\r\nvec3 direction ;\r\n};\r\n\r\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\r\nfloat a = x3.x;\r\nfloat b = x3.y;\r\nfloat c = x3.z;\r\nfloat d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\r\nfloat l = a*M.x+b*M.y+c*M.z+d;\r\nif (l<0.0) {return true;}\r\nelse{return false;}\r\n}\r\n\r\nvec3 isect_surf(Ray r, mat4 matrix_coef){\r\nvec4 direction = vec4(r.direction, 0.0);\r\nvec4 origin = vec4(r.origin, 1.0);\r\nfloat a = dot(direction,(matrix_coef*direction));\r\nfloat b = dot(origin,(matrix_coef*direction));\r\nfloat c = dot(origin,(matrix_coef*origin));\r\nfloat delta =b*b-a*c;\r\ngl_FragColor.a = 1.0;\r\nif (delta<0.0){\r\ndiscard;\r\n// gl_FragColor.a = 0.5;\r\n}\r\nfloat t1 =(-b-sqrt(delta))/a;\r\n\r\n// Second solution not necessary if you don't want\r\n// to see inside spheres and cylinders, save some fps\r\n//float t2 = (-b+sqrt(delta)) / a ;\r\n//float t =(t1<t2) ? t1 : t2;\r\n\r\nreturn r.origin+t1*r.direction;\r\n}\r\n\r\nvec3 isect_surf2(Ray r, mat4 matrix_coef){\r\nvec4 direction = vec4(r.direction, 0.0);\r\nvec4 origin = vec4(r.origin, 1.0);\r\nfloat a = dot(direction,(matrix_coef*direction));\r\nfloat b = dot(origin,(matrix_coef*direction));\r\nfloat c = dot(origin,(matrix_coef*origin));\r\nfloat delta =b*b-a*c;\r\ngl_FragColor.a = 1.0;\r\nif (delta<0.0){\r\ndiscard;\r\n// gl_FragColor.a = 0.5;\r\n}\r\nfloat t2 =(-b+sqrt(delta))/a;\r\n\r\nreturn r.origin+t2*r.direction;\r\n}\r\n\r\nRay primary_ray(vec4 near1, vec4 far1){\r\nvec3 near=near1.xyz/near1.w;\r\nvec3 far=far1.xyz/far1.w;\r\nreturn Ray(near,far-near);\r\n}\r\n\r\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\r\nfloat depth1;\r\nvec4 Ms=(ModelViewP*vec4(M,1.0));\r\nreturn depth1=(1.0+Ms.z/Ms.w)/2.0;\r\n}\r\n\r\nvoid main(){\r\n\r\nfloat radius = max( vRadius, vRadius2 );\r\n\r\nvec4 i_near, i_far, focus;\r\nvec3 e3, e1, e1_temp, e2;\r\n\r\ni_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\r\ni_far = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\r\nfocus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\r\ne3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\r\n\r\ne1.x = 1.0;\r\ne1.y = 1.0;\r\ne1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\r\ne1_temp = e1 - focus.xyz;\r\ne1 = normalize(e1_temp);\r\n\r\ne2 = normalize(cross(e1,e3));\r\n\r\nvec4 equation = focus;\r\n\r\nfloat shrinkfactor = shrink;\r\nfloat t1 = -1.0/(1.0-shrinkfactor);\r\nfloat t2 = 1.0/(shrinkfactor);\r\n// float t3 = 2.0/(shrinkfactor);\r\n\r\nvec4 colonne1, colonne2, colonne3, colonne4;\r\nmat4 mat;\r\n\r\nvec3 equation1 = vec3(t2,t2,t1);\r\n\r\nfloat A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\r\nfloat A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\r\nfloat A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\r\n\r\nfloat A11 = equation1.x*e1.x*e1.x + equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\r\nfloat A21 = equation1.x*e1.x*e1.y + equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\r\nfloat A31 = equation1.x*e1.x*e1.z + equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\r\nfloat A41 = equation1.x*e1.x*A1 + equation1.y*e2.x*A2 + equation1.z*e3.x*A3;\r\n\r\nfloat A22 = equation1.x*e1.y*e1.y + equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\r\nfloat A32 = equation1.x*e1.y*e1.z + equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\r\nfloat A42 = equation1.x*e1.y*A1 + equation1.y*e2.y*A2 + equation1.z*e3.y*A3;\r\n\r\nfloat A33 = equation1.x*e1.z*e1.z + equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\r\nfloat A43 = equation1.x*e1.z*A1 + equation1.y*e2.z*A2 + equation1.z*e3.z*A3;\r\n\r\nfloat A44 = equation1.x*A1*A1 + equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\r\n\r\ncolonne1 = vec4(A11,A21,A31,A41);\r\ncolonne2 = vec4(A21,A22,A32,A42);\r\ncolonne3 = vec4(A31,A32,A33,A43);\r\ncolonne4 = vec4(A41,A42,A43,A44);\r\n\r\nmat = mat4(colonne1,colonne2,colonne3,colonne4);\r\n\r\n// Ray calculation using near and far\r\nRay ray = primary_ray(i_near,i_far) ;\r\n\r\n// Intersection between ray and surface for each pixel\r\nvec3 M;\r\nM = isect_surf(ray, mat);\r\n\r\n// cut the extremities of bonds to superimpose bond and spheres surfaces\r\nif (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\r\n\r\n// Transform normal to model space to view-space\r\nvec4 M1 = vec4(M,1.0);\r\nvec4 M2 = mat*M1;\r\n// vec3 _normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\r\nvec3 _normal = ( modelViewMatrixInverseTranspose * M2 ).xyz;\r\n\r\n// Recalculate the depth in function of the new pixel position\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){\r\nM = isect_surf2(ray, mat);\r\nif( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )\r\ndiscard;\r\ninterior = true;\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );\r\n}\r\n}else if( gl_FragDepthEXT <= 0.0 ){\r\nM = isect_surf2(ray, mat);\r\ninterior = true;\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\r\n}\r\n}\r\n#else\r\nif( gl_FragDepthEXT <= 0.0 ){\r\nM = isect_surf2(ray, mat);\r\ninterior = true;\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\r\n}\r\n}\r\n#endif\r\n\r\n// cut the extremities of bonds to superimpose bond and spheres surfaces\r\nif (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\r\n\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n// Mix the color bond in function of the two atom colors\r\nfloat distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\r\ndistance(prime2.xyz,prime1.xyz);\r\n\r\n#ifdef PICKING\r\n\r\nif( distance_ratio > 0.5 ){\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n}else{\r\ngl_FragColor = vec4( vPickingColor2, objectId );\r\n}\r\n\r\n#else\r\n\r\nvec3 vViewPosition = -( modelViewMatrix * vec4( M, 1.0 ) ).xyz;\r\nvec3 vNormal = _normal;\r\nvec3 vColor;\r\n\r\nif( distance_ratio>0.5 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n\r\n// don't use #include normal_fragment\r\nvec3 normal = normalize( vNormal );\r\nif( interior ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}";
+ShaderRegistry.add('shader/chunk/nearclip_fragment.glsl', "#ifdef NEAR_CLIP\r\nif( vViewPosition.z < nearClip )\r\ndiscard;\r\n#endif");
 
-var Line_vert = "uniform float nearClip;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#include color_pars_vertex\r\n\r\nvoid main(){\r\n\r\n#include color_vertex\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\nvViewPosition = -mvPosition.xyz;\r\n\r\n#include nearclip_vertex\r\n\r\n}";
+ShaderRegistry.add('shader/chunk/radiusclip_vertex.glsl', "#ifdef RADIUS_CLIP\r\nif( distance( vViewPosition, vClipCenter ) > clipRadius + 5.0 )\r\n// move out of [ -w, +w ]\r\ngl_Position.z = 2.0 * gl_Position.w;\r\n#endif");
 
-var Line_frag = "uniform float opacity;\r\nuniform float nearClip;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n\r\ngl_FragColor = vec4( vColor, opacity );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}";
+ShaderRegistry.add('shader/chunk/radiusclip_fragment.glsl', "#ifdef RADIUS_CLIP\r\nif( distance( vViewPosition, vClipCenter ) > clipRadius )\r\ndiscard;\r\n#endif");
 
-var BasicLine_vert = "void main(){\r\n\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\n}";
-
-var BasicLine_frag = "uniform vec3 uColor;\r\n\r\n#include common\r\n#include fog_pars_fragment\r\n\r\nvoid main(){\r\n\r\ngl_FragColor = vec4( uColor, 1.0 );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}";
-
-var Mesh_vert = "#define STANDARD\r\n\r\nuniform float nearClip;\r\n\r\n#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( PICKING )\r\nattribute vec3 pickingColor;\r\nvarying vec3 vPickingColor;\r\n#elif defined( NOLIGHT )\r\nvarying vec3 vColor;\r\n#else\r\n#include color_pars_vertex\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#endif\r\n\r\n#include common\r\n\r\nvoid main(){\r\n\r\n#if defined( PICKING )\r\nvPickingColor = pickingColor;\r\n#elif defined( NOLIGHT )\r\nvColor = color;\r\n#else\r\n#include color_vertex\r\n#include beginnormal_vertex\r\n#include defaultnormal_vertex\r\n// Normal computed with derivatives when FLAT_SHADED\r\n#ifndef FLAT_SHADED\r\nvNormal = normalize( transformedNormal );\r\n#endif\r\n#endif\r\n\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\n#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\r\nvViewPosition = -mvPosition.xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}";
-
-var Mesh_frag = "#define STANDARD\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\n\r\n#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( PICKING )\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#elif defined( NOLIGHT )\r\nvarying vec3 vColor;\r\n#else\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n\r\n#if defined( PICKING )\r\n\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#elif defined( NOLIGHT )\r\n\r\ngl_FragColor = vec4( vColor, opacity );\r\n\r\n#else\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n#include normal_flip\r\n#include normal_fragment\r\n\r\n#include dull_interior_fragment\r\n\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#include opaque_back_fragment\r\n\r\n#endif\r\n\r\n}";
-
-var Point_vert = "uniform float nearClip;\r\nuniform float size;\r\nuniform float canvasHeight;\r\nuniform float pixelRatio;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#include color_pars_vertex\r\n#include common\r\n\r\nvoid main(){\r\n\r\n#include color_vertex\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\n#ifdef USE_SIZEATTENUATION\r\ngl_PointSize = size * pixelRatio * ( ( canvasHeight / 2.0 ) / -mvPosition.z );\r\n#else\r\ngl_PointSize = size * pixelRatio;\r\n#endif\r\n\r\nvViewPosition = -mvPosition.xyz;\r\n\r\n#include nearclip_vertex\r\n\r\n}";
-
-var Point_frag = "uniform vec3 diffuse;\r\nuniform float opacity;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#ifdef USE_MAP\r\nuniform sampler2D map;\r\n#endif\r\n\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n\r\nvoid main(){\r\n\r\nvec3 outgoingLight = vec3( 0.0 );\r\nvec4 diffuseColor = vec4( diffuse, 1.0 );\r\n\r\n#ifdef USE_MAP\r\ndiffuseColor *= texture2D( map, vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y ) );\r\n#endif\r\n\r\n#include color_fragment\r\n#include alphatest_fragment\r\n\r\noutgoingLight = diffuseColor.rgb;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}";
-
-var Quad_vert = "varying vec2 vUv;\r\n\r\nvoid main() {\r\n\r\nvUv = uv;\r\ngl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\r\n\r\n}";
-
-var Quad_frag = "varying vec2 vUv;\r\n\r\nuniform sampler2D tForeground;\r\nuniform float scale;\r\n\r\nvoid main() {\r\n\r\nvec4 foreground = texture2D( tForeground, vUv );\r\ngl_FragColor = foreground * scale;\r\n\r\n}";
-
-var Ribbon_vert = "#define STANDARD\r\n\r\nuniform float nearClip;\r\n\r\n#if defined( NEAR_CLIP ) || !defined( PICKING )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\nattribute vec3 dir;\r\nattribute float size;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include color_pars_vertex\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#endif\r\n\r\n#include common\r\n\r\nvoid main(void){\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\n#else\r\n#include color_vertex\r\n#include beginnormal_vertex\r\n#include defaultnormal_vertex\r\n// Normal computed with derivatives when FLAT_SHADED\r\n#ifndef FLAT_SHADED\r\nvNormal = normalize( transformedNormal );\r\n#endif\r\n#endif\r\n\r\n#include begin_vertex\r\n\r\ntransformed += normalize( dir ) * size;\r\n\r\n#include project_vertex\r\n\r\n#if defined( NEAR_CLIP ) || !defined( PICKING )\r\nvViewPosition = -mvPosition.xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}";
-
-var SDFFont_vert = "uniform float nearClip;\r\nuniform float xOffset;\r\nuniform float yOffset;\r\nuniform float zOffset;\r\nuniform bool ortho;\r\n\r\nvarying vec3 vViewPosition;\r\nvarying vec2 texCoord;\r\n\r\nattribute vec2 mapping;\r\nattribute vec2 inputTexCoord;\r\nattribute float inputSize;\r\n\r\n#include color_pars_vertex\r\n#include common\r\n\r\nvoid main(void){\r\n\r\n#include color_vertex\r\ntexCoord = inputTexCoord;\r\n\r\nfloat _zOffset = zOffset;\r\nif( texCoord.x == 10.0 ){\r\n_zOffset -= 0.001;\r\n}\r\n\r\nvec3 pos = position;\r\nif( ortho ){\r\npos += normalize( cameraPosition ) * _zOffset;\r\n}\r\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\r\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\r\ncameraCornerPos.xy += mapping * inputSize * 0.01;\r\ncameraCornerPos.x += xOffset;\r\ncameraCornerPos.y += yOffset;\r\nif( !ortho ){\r\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\r\n}\r\n\r\ngl_Position = projectionMatrix * cameraCornerPos;\r\n\r\nvViewPosition = -cameraCornerPos.xyz;\r\n\r\n#include nearclip_vertex\r\n\r\n}";
-
-var SDFFont_frag = "uniform sampler2D fontTexture;\r\nuniform float opacity;\r\nuniform bool showBorder;\r\nuniform vec3 borderColor;\r\nuniform float borderWidth;\r\nuniform vec3 backgroundColor;\r\nuniform float backgroundOpacity;\r\n\r\nvarying vec3 vViewPosition;\r\nvarying vec2 texCoord;\r\n\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n\r\n#ifdef SDF\r\nconst float smoothness = 16.0;\r\n#else\r\nconst float smoothness = 256.0;\r\n#endif\r\nconst float gamma = 2.2;\r\n\r\nvoid main(){\r\n\r\nif( texCoord.x == 10.0 ){\r\n\r\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\r\n\r\n}else{\r\n\r\n// retrieve signed distance\r\nfloat sdf = texture2D( fontTexture, texCoord ).a;\r\nif( showBorder ) sdf += borderWidth;\r\n\r\n// perform adaptive anti-aliasing of the edges\r\nfloat w = clamp(\r\nsmoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\r\n0.0,\r\n0.5\r\n);\r\nfloat a = smoothstep( 0.5 - w, 0.5 + w, sdf );\r\n\r\n// gamma correction for linear attenuation\r\na = pow( a, 1.0 / gamma );\r\nif( a < 0.2 ) discard;\r\na *= opacity;\r\n\r\nvec3 outgoingLight = vColor;\r\nif( showBorder && sdf < ( 0.5 + borderWidth ) ){\r\noutgoingLight = borderColor;\r\n}\r\n\r\ngl_FragColor = vec4( outgoingLight, a );\r\n\r\n}\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}";
-
-var SphereImpostor_vert = "uniform mat4 projectionMatrixInverse;\r\nuniform float nearClip;\r\n\r\nvarying float vRadius;\r\nvarying float vRadiusSq;\r\nvarying vec3 vPoint;\r\nvarying vec3 vPointViewPosition;\r\n\r\nattribute vec2 mapping;\r\nattribute float radius;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include color_pars_vertex\r\n#endif\r\n\r\nconst mat4 D = mat4(\r\n1.0, 0.0, 0.0, 0.0,\r\n0.0, 1.0, 0.0, 0.0,\r\n0.0, 0.0, 1.0, 0.0,\r\n0.0, 0.0, 0.0, -1.0\r\n);\r\n\r\nmat4 transpose( in mat4 inMatrix ) {\r\nvec4 i0 = inMatrix[0];\r\nvec4 i1 = inMatrix[1];\r\nvec4 i2 = inMatrix[2];\r\nvec4 i3 = inMatrix[3];\r\n\r\nmat4 outMatrix = mat4(\r\nvec4(i0.x, i1.x, i2.x, i3.x),\r\nvec4(i0.y, i1.y, i2.y, i3.y),\r\nvec4(i0.z, i1.z, i2.z, i3.z),\r\nvec4(i0.w, i1.w, i2.w, i3.w)\r\n);\r\nreturn outMatrix;\r\n}\r\n\r\n//------------------------------------------------------------------------------\r\n// Compute point size and center using the technique described in:\r\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\r\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\r\n//\r\n// Code based on\r\n\r\n\r\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\r\n// .SECTION Thanks\r\n// <verbatim>\r\n//\r\n// This file is part of the PointSprites plugin developed and contributed by\r\n//\r\n// Copyright (c) CSCS - Swiss National Supercomputing Centre\r\n// EDF - Electricite de France\r\n//\r\n// John Biddiscombe, Ugo Varetto (CSCS)\r\n// Stephane Ploix (EDF)\r\n//\r\n// </verbatim>\r\n//\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - adapted to work with quads\r\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\r\n\r\nvec2 xbc;\r\nvec2 ybc;\r\n\r\nmat4 T = mat4(\r\nradius, 0.0, 0.0, 0.0,\r\n0.0, radius, 0.0, 0.0,\r\n0.0, 0.0, radius, 0.0,\r\nposition.x, position.y, position.z, 1.0\r\n);\r\n\r\nmat4 R = transpose( projectionMatrix * modelViewMatrix * T );\r\nfloat A = dot( R[ 3 ], D * R[ 3 ] );\r\nfloat B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\r\nfloat C = dot( R[ 0 ], D * R[ 0 ] );\r\nxbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nxbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nfloat sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\r\n\r\nA = dot( R[ 3 ], D * R[ 3 ] );\r\nB = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\r\nC = dot( R[ 1 ], D * R[ 1 ] );\r\nybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nfloat sy = abs( ybc[ 0 ] - ybc[ 1 ] ) * 0.5;\r\n\r\ngl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\r\ngl_Position.xy -= mapping * vec2( sx, sy );\r\ngl_Position.xy *= gl_Position.w;\r\n\r\n}\r\n\r\nvoid main(void){\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\n#else\r\n#include color_vertex\r\n#endif\r\n\r\nvec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\r\n// avoid clipping, added again in fragment shader\r\nmvPosition.z -= radius;\r\n\r\ngl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );\r\nComputePointSizeAndPositionInClipCoordSphere();\r\n\r\nvRadius = radius;\r\nvRadiusSq = radius * radius;\r\nvec4 vPoint4 = projectionMatrixInverse * gl_Position;\r\nvPoint = vPoint4.xyz / vPoint4.w;\r\nvPointViewPosition = -mvPosition.xyz / mvPosition.w;\r\n\r\n}";
-
-var SphereImpostor_frag = "#define STANDARD\r\n#define IMPOSTOR\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform mat4 projectionMatrix;\r\nuniform float ortho;\r\n\r\n// uniform vec3 specular;\r\n// uniform float shininess;\r\n\r\nvarying float vRadius;\r\nvarying float vRadiusSq;\r\nvarying vec3 vPoint;\r\nvarying vec3 vPointViewPosition;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n// #include lights_phong_pars_fragment\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool flag2 = false;\r\nbool interior = false;\r\nvec3 cameraPos;\r\nvec3 cameraNormal;\r\n\r\n// vec4 poly_color = gl_Color;\r\n// if(uf_use_border_hinting == 1.0)\r\n// {\r\n// vec3 wc_eye_dir = normalize(wc_sp_pt);\r\n// float n_dot_e = abs(dot(wc_sp_nrml,wc_eye_dir));\r\n// float alpha = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\r\n// poly_color = mix(gl_Color,uf_border_color,0.75*alpha);\r\n// }\r\n// color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\r\n\r\n// Calculate depth based on the given camera position.\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\r\n}\r\n\r\nbool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){\r\n\r\nvec3 cameraSpherePos = -vPointViewPosition;\r\ncameraSpherePos.z += vRadius;\r\n\r\nvec3 rayOrigin = mix( vec3( 0.0, 0.0, 0.0 ), vPoint, ortho );\r\nvec3 rayDirection = mix( normalize( vPoint ), vec3( 0.0, 0.0, 1.0 ), ortho );\r\nvec3 cameraSphereDir = mix( cameraSpherePos, rayOrigin - cameraSpherePos, ortho );\r\n\r\nfloat B = dot( rayDirection, cameraSphereDir );\r\nfloat det = B * B + vRadiusSq - dot( cameraSphereDir, cameraSphereDir );\r\n\r\nif( det < 0.0 ){\r\ndiscard;\r\nreturn false;\r\n}else{\r\nfloat sqrtDet = sqrt( det );\r\nfloat posT = mix( B + sqrtDet, B + sqrtDet, ortho );\r\nfloat negT = mix( B - sqrtDet, sqrtDet - B, ortho );\r\n\r\ncameraPos = rayDirection * negT + rayOrigin;\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcDepth( cameraPos ) <= 0.0 ){\r\ncameraPos = rayDirection * posT + rayOrigin;\r\ninterior = true;\r\nreturn false;\r\n}else if( calcClip( cameraPos ) > 0.0 ){\r\ncameraPos = rayDirection * posT + rayOrigin;\r\ninterior = true;\r\nflag2 = true;\r\nreturn false;\r\n}else{\r\ncameraNormal = normalize( cameraPos - cameraSpherePos );\r\n}\r\n#else\r\nif( calcDepth( cameraPos ) <= 0.0 ){\r\ncameraPos = rayDirection * posT + rayOrigin;\r\ninterior = true;\r\nreturn false;\r\n}else{\r\ncameraNormal = normalize( cameraPos - cameraSpherePos );\r\n}\r\n#endif\r\n\r\nreturn true;\r\n}\r\n\r\nreturn false; // ensure that each control flow has a return\r\n\r\n}\r\n\r\nvoid main(void){\r\n\r\n// vec3 specular = vec3( 1.0, 1.0, 1.0 );\r\n// float specularStrength = 1.0;\r\n// float shininess = 1.0;\r\n\r\nbool flag = Impostor( cameraPos, cameraNormal );\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( cameraPos ) > 0.0 )\r\ndiscard;\r\n#endif\r\n\r\n// FIXME not compatible with custom clipping plane\r\n//Set the depth based on the new cameraPos.\r\ngl_FragDepthEXT = calcDepth( cameraPos );\r\nif( !flag ){\r\n\r\n// clamp to near clipping plane and add a tiny value to\r\n// make spheres with a greater radius occlude smaller ones\r\n#ifdef NEAR_CLIP\r\nif( flag2 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\r\n}else if( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n#else\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n#endif\r\n\r\n}\r\n\r\n// bugfix (mac only?)\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n#ifdef PICKING\r\n\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#else\r\n\r\n// vec3 specColor = vColor; // vec3( 1.0, 1.0, 1.0 );\r\n// vec3 lightDir = vec3( 0.0, 0.0, 1.0 );\r\n// vec3 vNormal = cameraNormal;\r\n\r\n// float lambertian = max(dot(lightDir,vNormal), 0.0);\r\n// float specular = 0.0;\r\n\r\n// if(lambertian > 0.0) {\r\n\r\n// vec3 reflectDir = reflect(-lightDir, vNormal);\r\n// vec3 viewDir = normalize(-cameraPos);\r\n\r\n// float specAngle = max(dot(reflectDir, viewDir), 0.0);\r\n// specular = pow(specAngle, 4.0);\r\n\r\n// // the exponent controls the shininess (try mode 2)\r\n// specular = pow(specAngle, 16.0);\r\n\r\n// // according to the rendering equation we would need to multiply\r\n// // with the the \"lambertian\", but this has little visual effect\r\n// specular *= lambertian;\r\n\r\n\r\n// }\r\n\r\n// gl_FragColor = vec4( lambertian*vColor + specular*specColor, opacity );\r\n\r\n//\r\n\r\nvec3 vNormal = cameraNormal;\r\nvec3 vViewPosition = -cameraPos;\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n#include normal_flip\r\n#include normal_fragment\r\nif( interior ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n\r\n// #include lights_phong_fragment\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}";
-
-var DullInteriorFragment_glsl = "#ifdef DULL_INTERIOR\r\nif( gl_FrontFacing == false ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n#endif";
-
-var FogFragment_glsl = "#ifdef USE_FOG\r\n\r\n// #if defined( USE_LOGDEPTHBUF_EXT ) || defined( IMPOSTOR )\r\n//\r\n// float depth = gl_FragDepthEXT / gl_FragCoord.w;\r\n//\r\n// #else\r\n//\r\n// float depth = gl_FragCoord.z / gl_FragCoord.w;\r\n//\r\n// #endif\r\n\r\nfloat depth = length( vViewPosition );\r\n\r\n#ifdef FOG_EXP2\r\n\r\nfloat fogFactor = whiteCompliment( exp2( - fogDensity * fogDensity * depth * depth * LOG2 ) );\r\n\r\n#else\r\n\r\nfloat fogFactor = smoothstep( fogNear, fogFar, depth );\r\n\r\n#endif\r\n\r\ngl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );\r\n\r\n#endif";
-
-var NearclipFragment_glsl = "#ifdef NEAR_CLIP\r\nif( vViewPosition.z < nearClip )\r\ndiscard;\r\n#endif";
-
-var NearclipVertex_glsl = "#ifdef NEAR_CLIP\r\nif( vViewPosition.z < nearClip )\r\n// move out of [ -w, +w ]\r\ngl_Position.z = 2.0 * gl_Position.w;\r\n#endif";
-
-var OpaqueBackFragment_glsl = "#ifdef OPAQUE_BACK\r\n#ifdef FLIP_SIDED\r\nif( gl_FrontFacing == true ){\r\ngl_FragColor.a = 1.0;\r\n}\r\n#else\r\nif( gl_FrontFacing == false ){\r\ngl_FragColor.a = 1.0;\r\n}\r\n#endif\r\n#endif";
+ShaderRegistry.add('shader/chunk/opaque_back_fragment.glsl', "#ifdef OPAQUE_BACK\r\n#ifdef FLIP_SIDED\r\nif( gl_FrontFacing == true ){\r\ngl_FragColor.a = 1.0;\r\n}\r\n#else\r\nif( gl_FrontFacing == false ){\r\ngl_FragColor.a = 1.0;\r\n}\r\n#endif\r\n#endif");
 
 /**
  * @file Shader Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-
-
-var Resources = {
-
-    // shaders
-    'shader/CylinderImpostor.vert': CylinderImpostor_vert,
-    'shader/CylinderImpostor.frag': CylinderImpostor_frag,
-    'shader/HyperballStickImpostor.vert': HyperballStickImpostor_vert,
-    'shader/HyperballStickImpostor.frag': HyperballStickImpostor_frag,
-    'shader/Line.vert': Line_vert,
-    'shader/Line.frag': Line_frag,
-    'shader/BasicLine.vert': BasicLine_vert,
-    'shader/BasicLine.frag': BasicLine_frag,
-    // 'shader/LineSprite.vert': null,
-    // 'shader/LineSprite.frag': null,
-    'shader/Mesh.vert': Mesh_vert,
-    'shader/Mesh.frag': Mesh_frag,
-    // 'shader/ParticleSprite.vert': null,
-    // 'shader/ParticleSprite.frag': null,
-    'shader/Point.vert': Point_vert,
-    'shader/Point.frag': Point_frag,
-    'shader/Quad.vert': Quad_vert,
-    'shader/Quad.frag': Quad_frag,
-    'shader/Ribbon.vert': Ribbon_vert,
-    'shader/SDFFont.vert': SDFFont_vert,
-    'shader/SDFFont.frag': SDFFont_frag,
-    // 'shader/SphereHalo.vert': null,
-    // 'shader/SphereHalo.frag': null,
-    'shader/SphereImpostor.vert': SphereImpostor_vert,
-    'shader/SphereImpostor.frag': SphereImpostor_frag,
-
-    // shader chunks
-    'shader/chunk/dull_interior_fragment.glsl': DullInteriorFragment_glsl,
-    'shader/chunk/fog_fragment.glsl': FogFragment_glsl,
-    'shader/chunk/nearclip_fragment.glsl': NearclipFragment_glsl,
-    'shader/chunk/nearclip_vertex.glsl': NearclipVertex_glsl,
-    'shader/chunk/opaque_back_fragment.glsl': OpaqueBackFragment_glsl,
-
-};
 
 
 function getDefines( defines ){
@@ -48124,14 +45143,14 @@ function getShader( name, defines ){
 
         var definesText = getDefines( defines );
 
-        var shaderText = Resources[ 'shader/' + name ];
+        var shaderText = ShaderRegistry.get( 'shader/' + name );
         if( !shaderText ){
             throw "empty shader, '" + name + "'";
         }
         shaderText = shaderText.replace( reInclude, function( match, p1 ){
 
             var path = 'shader/chunk/' + p1 + '.glsl';
-            var chunk = Resources[ path ] || ShaderChunk[ p1 ];
+            var chunk = ShaderRegistry.get( path ) || ShaderChunk[ p1 ];
 
             return chunk ? chunk : "";
 
@@ -48281,6 +45300,13 @@ function TiledRenderer( renderer, camera, viewer, params ){
 }
 
 TiledRenderer.prototype.constructor = TiledRenderer;
+
+/**
+ * @file Math Constants
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
 
 var TwoPI = 2 * Math.PI;
 
@@ -48435,6 +45461,8 @@ function copyWithin( array, srcOffset, dstOffset, length ){
 }
 
 
+var swap = new Float32Array( 4 );
+var temp = new Float32Array( 4 );
 function quicksortCmp( arr, cmp, begin, end ){
 
     cmp = cmp || function cmp( a, b ){
@@ -48901,6 +45929,94 @@ function updateMaterialUniforms( group, camera, renderer, cDist, bRadius ){
  */
 
 
+if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
+
+    // wrap WebGL debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function getShaderParameter(){
+
+            if( exports.Debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function getShaderInfoLog(){
+
+            if( exports.Debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function getProgramParameter( program, pname ){
+
+            if( exports.Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function getProgramInfoLog(){
+
+            if( exports.Debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        };
+
+    }();
+
+}
+
+
 var JitterVectors = [
     [
         [ 0, 0 ]
@@ -48945,7 +46061,7 @@ JitterVectors.forEach( function( offsetList ){
 /**
  * [Viewer description]
  * @class
- * @param {String} eid
+ * @param {String} eid - dom element id
  */
 function Viewer( eid ){
 
@@ -49155,7 +46271,9 @@ function Viewer( eid ){
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
                 format: RGBAFormat,
-                type: (
+                // problems on mobile so use UnsignedByteType there
+                // see https://github.com/arose/ngl/issues/191
+                type: Mobile ? UnsignedByteType : (
                     supportsHalfFloat ? HalfFloatType :
                         ( SupportsReadPixelsFloat ? FloatType : UnsignedByteType )
                 )
@@ -49334,15 +46452,11 @@ function Viewer( eid ){
         // Log.time( "Viewer.add" );
 
         if( instanceList ){
-
             instanceList.forEach( function( instance ){
                 addBuffer( buffer, instance );
             } );
-
         }else{
-
             addBuffer( buffer );
-
         }
 
         if( buffer.background ){
@@ -49357,10 +46471,7 @@ function Viewer( eid ){
             pickingGroup.add( buffer.pickingGroup );
         }
 
-        rotationGroup.updateMatrixWorld();
         if( exports.Debug ) updateHelper();
-
-        // requestRender();
 
         // Log.timeEnd( "Viewer.add" );
 
@@ -49370,11 +46481,21 @@ function Viewer( eid ){
 
         // Log.time( "Viewer.addBuffer" );
 
+        function setInstance( object ){
+            if( object.type === "Group" ){
+                object.children.forEach( function( child ){
+                    child.userData.instance = instance;
+                } );
+            }else{
+                object.userData.instance = instance;
+            }
+        }
+
         var mesh = buffer.getMesh();
         mesh.userData.buffer = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
-            mesh.userData.instance = instance;
+            setInstance( mesh );
         }
         buffer.group.add( mesh );
 
@@ -49386,7 +46507,7 @@ function Viewer( eid ){
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
-            wireframeMesh.userData.instance = instance;
+            setInstance( wireframeMesh );
         }
         buffer.wireframeGroup.add( wireframeMesh );
 
@@ -49400,7 +46521,7 @@ function Viewer( eid ){
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                pickingMesh.userData.instance = instance;
+                setInstance( pickingMesh );
             }
             buffer.pickingGroup.add( pickingMesh );
 
@@ -49503,7 +46624,7 @@ function Viewer( eid ){
 
     }
 
-    function makeImage$$( params ){
+    function makeImage$$1( params ){
 
         return makeImage( this, params );
 
@@ -49902,8 +47023,8 @@ function Viewer( eid ){
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
-        camera.near = Math.max( 0.1, p.clipDist, cDist - ( bRadius * nearFactor ) );
-        camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
+        camera.near = cDist - ( bRadius * nearFactor );
+        camera.far = cDist + ( bRadius * farFactor );
 
         // fog
 
@@ -49911,8 +47032,19 @@ function Viewer( eid ){
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
         var fog = scene.fog;
         fog.color.set( p.fogColor );
-        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
-        fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
+        fog.near = cDist - ( bRadius * fogNearFactor );
+        fog.far = cDist + ( bRadius * fogFarFactor );
+
+        if( camera.type === "PerspectiveCamera" ){
+            camera.near = Math.max( 0.1, p.clipDist, camera.near );
+            camera.far = Math.max( 1, camera.far );
+            fog.near = Math.max( 0.1, fog.near );
+            fog.far = Math.max( 1, fog.far );
+        }else if( camera.type === "OrthographicCamera" ){
+            if( p.clipNear === 0 && p.clipDist > 0 && cDist + camera.zoom > 2 * -p.clipDist ){
+                camera.near += camera.zoom + p.clipDist;
+            }
+        }
 
     }
 
@@ -49950,7 +47082,7 @@ function Viewer( eid ){
     function __updateLights(){
 
         distVector.copy( camera.position ).sub( controls.target )
-            .setLength( boundingBoxLength * 10 );
+            .setLength( boundingBoxLength * 100 );
 
         pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );
@@ -50216,7 +47348,7 @@ function Viewer( eid ){
     this.clear = clear;
 
     this.getImage = getImage;
-    this.makeImage = makeImage$$;
+    this.makeImage = makeImage$$1;
 
     this.setLight = setLight;
     this.setFog = setFog;
@@ -50258,6 +47390,13 @@ function Viewer( eid ){
 
 Viewer.prototype.constructor = Viewer;
 
+/**
+ * @file Constants
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
 var MiddleMouseButton = 2;
 var RightMouseButton = 3;
 
@@ -50271,6 +47410,7 @@ var RightMouseButton = 3;
 /**
  * Picking data object.
  * @typedef {Object} PickingData - picking data
+ * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
  * @property {AtomProxy} [pickedAtom] - picked atom
  * @property {BondProxy} [pickedBond] - picked bond
  * @property {Volume} [pickedVolume] - picked volume
@@ -50281,7 +47421,10 @@ var RightMouseButton = 3;
  */
 
 
-var PickingControls = function( viewer, params ){
+var PickingControls = function( stage, params ){
+
+    var viewer = stage.viewer;
+    var gidPool = stage.gidPool;
 
     var hoverTimeout = 50;
     setParameters( params );
@@ -50299,6 +47442,7 @@ var PickingControls = function( viewer, params ){
         canvasPosition: new Vector2(),
         moving: false,
         hovering: true,
+        scrolled: false,
         lastMoved: Infinity,
         which: undefined,
         distance: function(){
@@ -50319,7 +47463,8 @@ var PickingControls = function( viewer, params ){
 
     /**
      * pick helper function
-     * @param  {Object} mouse
+     * @param  {Object} mouse - mouse data
+     * @param  {Boolean} [clicked] - flag indication if there was a mouse click
      * @return {PickingData} picking data
      */
     function pick( mouse, clicked ){
@@ -50327,7 +47472,7 @@ var PickingControls = function( viewer, params ){
             mouse.canvasPosition.x, mouse.canvasPosition.y
         );
         var instance = pickingData.instance;
-        var picked = GidPool.getByGid( pickingData.gid );
+        var picked = gidPool.getByGid( pickingData.gid );
 
         var pickedAtom, pickedBond, pickedVolume;
         if( picked && picked.type === "AtomProxy" ){
@@ -50363,7 +47508,7 @@ var PickingControls = function( viewer, params ){
             "volume": pickedVolume,
             "instance": instance,
             "gid": pickingData.gid,
-            "mouse": {x: mouse.canvasPosition.x, y: mouse.canvasPosition.y},
+            "canvasPosition": mouse.canvasPosition.clone()
         };
     }
 
@@ -50371,11 +47516,12 @@ var PickingControls = function( viewer, params ){
         if( performance.now() - mouse.lastMoved > hoverTimeout ){
             mouse.moving = false;
         }
-        if( !mouse.moving && !mouse.hovering ){
-            mouse.hovering = true;
-            var pd = pick( mouse );
-            signals.hovered.dispatch( pd );
-            // if( Debug ) Log.log( "hovered", pd );
+        if( mouse.scrolled || ( !mouse.moving && !mouse.hovering ) ){
+            mouse.scrolled = false;
+            if( hoverTimeout !== -1 ){
+                mouse.hovering = true;
+                signals.hovered.dispatch( pick( mouse ) );
+            }
         }
         requestAnimationFrame( listen );
     }
@@ -50407,9 +47553,19 @@ var PickingControls = function( viewer, params ){
         if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
         var pd = pick( mouse, true );
         mouse.which = undefined;
+        pd.ctrlKey = e.ctrlKey;
         signals.clicked.dispatch( pd );
         if( exports.Debug ) Log.log( "clicked", pd );
     } );
+
+    function scrolled(){
+        setTimeout( function(){
+            mouse.scrolled = true;
+        }, hoverTimeout );
+    }
+    viewer.renderer.domElement.addEventListener( 'mousewheel', scrolled );
+    viewer.renderer.domElement.addEventListener( 'wheel', scrolled );
+    viewer.renderer.domElement.addEventListener( 'MozMousePixelScroll', scrolled );
 
     // API
 
@@ -50664,9 +47820,8 @@ TypedFastBitSet.prototype.sizeRange = function(offset, count) {
 };
 
 // Return an array with the set bit locations (values)
-// - use Uint32Array instead of Array, ASR
 TypedFastBitSet.prototype.array = function() {
-  var answer = new Uint32Array(this.size());
+  var answer = new Array(this.size());
   var pos = 0 | 0;
   var c = this.count | 0;
   for (var k = 0; k < c; ++k) {
@@ -50951,6 +48106,13 @@ TypedFastBitSet.prototype.fromJSON = function(input) {
   return this;
 };
 
+TypedFastBitSet.prototype.toSeleString = function() {
+  var sele = this.array().join(',');
+  return sele ? "@" + sele : "NONE";
+};
+
+TypedFastBitSet.prototype.type = "Bitset";
+
 
 var Bitset = TypedFastBitSet;
 
@@ -51011,7 +48173,7 @@ RadiusFactory.prototype = {
                     r = 0.25;
                 }else if( sstruc === "b" ){
                     r = 0.25;
-                }else if( NucleicBackboneAtoms.indexOf( a.atomname ) !== -1 ){
+                }else if( NucleicBackboneAtoms.includes( a.atomname ) ){
                     r = 0.4;
                 }else{
                     r = 0.1;
@@ -51073,24 +48235,17 @@ function calculateMeanVector3( array ){
 }
 
 
-var pointVectorIntersection = function(){
+function projectPointOnVector( point, vector, origin ){
 
-    var v = new Vector3();
-    var v1 = new Vector3();
+    if( origin ){
+        point.sub( origin ).projectOnVector( vector ).add( origin );
+    }else{
+        point.projectOnVector( vector );
+    }
 
-    return function pointVectorIntersection( point, origin, vector ){
+    return point;
 
-        v.copy( vector );
-        v1.subVectors( point, origin );
-        var distOriginI = Math.cos( v.angleTo( v1 ) ) * v1.length();
-        var vectorI = v.normalize().multiplyScalar( distOriginI );
-        var pointI = new Vector3().addVectors( vectorI, origin );
-
-        return pointI;
-
-    };
-
-}();
+}
 
 
 function computeBoundingBox( array ){
@@ -51171,6 +48326,10 @@ function v3fromArray( out, array, offset ){
     out[2] = array[offset+2];
 }
 
+function v3length( a ){
+    return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
+}
+
 function v3divideScalar( out, a, s ){
     v3multiplyScalar( out, a, 1 / s );
 }
@@ -51181,6 +48340,11 @@ function v3multiplyScalar( out, a, s ){
     out[1] = a[1] * s;
     out[2] = a[2] * s;
 }
+
+function v3normalize( out, a ){
+    v3multiplyScalar( out, a, 1 / v3length( a ) );
+}
+v3normalize.__deps = [ v3multiplyScalar, v3length ];
 
 function v3subScalar( out, a, s ){
     out[0] = a[0] - s;
@@ -51817,6 +48981,136 @@ function m3makeNormal( out, m4 ){
 m3makeNormal.__deps = [ v3new, v3cross ];
 
 /**
+ * @file Spatial Hash
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+//import { Debug, Log } from "../globals.js";
+
+
+function SpatialHash( atomStore, boundingBox ){
+
+    var exp = 3;
+
+    var bb = boundingBox;
+    var minX = bb.min.x;
+    var minY = bb.min.y;
+    var minZ = bb.min.z;
+    var boundX = ( ( bb.max.x - minX ) >> exp ) + 1;
+    var boundY = ( ( bb.max.y - minY ) >> exp ) + 1;
+    var boundZ = ( ( bb.max.z - minZ ) >> exp ) + 1;
+
+    var n = boundX * boundY * boundZ;
+    var an = atomStore.count;
+
+    var xArray = atomStore.x;
+    var yArray = atomStore.y;
+    var zArray = atomStore.z;
+
+    var i, j;
+
+    var count = 0;
+    var grid = new Uint32Array( n );
+    var bucketIndex = new Int32Array( an );
+    for( i = 0; i < an; ++i ){
+        var x = ( xArray[ i ] - minX ) >> exp;
+        var y = ( yArray[ i ] - minY ) >> exp;
+        var z = ( zArray[ i ] - minZ ) >> exp;
+        var idx = ( ( ( x * boundY ) + y ) * boundZ ) + z;
+        if( ( grid[ idx ] += 1 ) === 1 ){
+            count += 1;
+        }
+        bucketIndex[ i ] = idx;
+    }
+
+    var bucketCount = new Uint16Array( count );
+    for( i = 0, j = 0; i < n; ++i ){
+        var c = grid[ i ];
+        if( c > 0 ){
+            grid[ i ] = j + 1;
+            bucketCount[ j ] = c;
+            j += 1;
+        }
+    }
+
+    var bucketOffset = new Uint32Array( count );
+    for( i = 1; i < count; ++i ){
+        bucketOffset[ i ] += bucketOffset[ i - 1 ] + bucketCount[ i - 1 ];
+    }
+
+    var bucketFill = new Uint16Array( count );
+    var bucketArray = new Int32Array( an );
+    for( i = 0; i < an; ++i ){
+        var bucketIdx = grid[ bucketIndex[ i ] ];
+        if( bucketIdx > 0 ){
+            var k = bucketIdx - 1;
+            bucketArray[ bucketOffset[ k ] + bucketFill[ k ] ] = i;
+            bucketFill[ k ] += 1;
+        }
+    }
+
+    //
+
+    function within( x, y, z, r ){
+
+        var rSq = r * r;
+
+        var loX = Math.max( 0, ( x - r - minX ) >> exp );
+        var loY = Math.max( 0, ( y - r - minY ) >> exp );
+        var loZ = Math.max( 0, ( z - r - minZ ) >> exp );
+
+        var hiX = Math.min( boundX, ( x + r - minX ) >> exp );
+        var hiY = Math.min( boundY, ( y + r - minY ) >> exp );
+        var hiZ = Math.min( boundZ, ( z + r - minZ ) >> exp );
+
+        var result = [];
+
+        for( var ix = loX; ix <= hiX; ++ix ){
+            for( var iy = loY; iy <= hiY; ++iy ){
+                for( var iz = loZ; iz <= hiZ; ++iz ){
+
+                    var idx = ( ( ( ix * boundY ) + iy ) * boundZ ) + iz;
+                    var bucketIdx = grid[ idx ];
+
+                    if( bucketIdx > 0 ){
+
+                        var k = bucketIdx - 1;
+                        var offset = bucketOffset[ k ];
+                        var count = bucketCount[ k ];
+                        var end = offset + count;
+
+                        for( var i = offset; i < end; ++i ){
+
+                            var atomIndex = bucketArray[ i ];
+                            var dx = xArray[ atomIndex ] - x;
+                            var dy = yArray[ atomIndex ] - y;
+                            var dz = zArray[ atomIndex ] - z;
+
+                            if( dx * dx + dy * dy + dz * dz <= rSq ){
+                                result.push( atomIndex );
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        return result;
+
+    }
+
+    // API
+
+    this.within = within;
+
+}
+
+/**
  * @file Bond Hash
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -52295,11 +49589,13 @@ ChainStore.prototype = Object.assign( Object.create(
 
     __fields: [
 
+        [ "entityIndex", 1, "uint16" ],
         [ "modelIndex", 1, "uint16" ],
         [ "residueOffset", 1, "uint32" ],
         [ "residueCount", 1, "uint32" ],
 
-        [ "chainname", 4, "uint8" ]
+        [ "chainname", 4, "uint8" ],
+        [ "chainid", 4, "uint8" ]
 
     ],
 
@@ -52325,6 +49621,31 @@ ChainStore.prototype = Object.assign( Object.create(
             }
         }
         return chainname;
+
+    },
+
+    setChainid: function( i, str ){
+
+        var j = 4 * i;
+        this.chainid[ j ] = str.charCodeAt( 0 );
+        this.chainid[ j + 1 ] = str.charCodeAt( 1 );
+        this.chainid[ j + 2 ] = str.charCodeAt( 2 );
+        this.chainid[ j + 3 ] = str.charCodeAt( 3 );
+
+    },
+
+    getChainid: function( i ){
+
+        var chainid = "";
+        for( var k = 0; k < 4; ++k ){
+            var code = this.chainid[ 4 * i + k ];
+            if( code ){
+                chainid += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return chainid;
 
     }
 
@@ -52450,8 +49771,8 @@ Helixorient.prototype = {
         var p = params || {};
         p.structure = structure;
 
-        var colorMaker = ColorMakerRegistry.getScheme( p );
-        var pickingColorMaker = ColorMakerRegistry.getPickingScheme( p );
+        var colorMaker = ColorMakerRegistry$$1.getScheme( p );
+        var pickingColorMaker = ColorMakerRegistry$$1.getPickingScheme( p );
 
         var rp = structure.getResidueProxy();
         var ap = structure.getAtomProxy();
@@ -52528,6 +49849,7 @@ Helixorient.prototype = {
 
         var v1 = new Vector3();
         var v2 = new Vector3();
+        var vt = new Vector3();
 
         var _axis = new Vector3();
         var _prevAxis = new Vector3();
@@ -52612,8 +49934,9 @@ Helixorient.prototype = {
         // _center.copy( res[ 0 ].getTraceAtom() );
         a1.index = polymer.getAtomIndexByType( 0, type );
         _center.copy( a1 );
-        v1 = pointVectorIntersection( _center, v1, _axis );
-        v1.toArray( center, 0 );
+        vt.copy( a1 );
+        projectPointOnVector( vt, _axis, v1 );
+        vt.toArray( center, 0 );
 
         // calc first resdir
         _resdir.subVectors( _center, v1 );
@@ -52627,8 +49950,9 @@ Helixorient.prototype = {
         // _center.copy( res[ n - 1 ].getTraceAtom() );
         a1.index = polymer.getAtomIndexByType( n - 1, type );
         _center.copy( a1 );
-        v1 = pointVectorIntersection( _center, v1, _axis );
-        v1.toArray( center, 3 * n - 3 );
+        vt.copy( a1 );
+        projectPointOnVector( vt, _axis, v1 );
+        vt.toArray( center, 3 * n - 3 );
 
         // calc last three resdir
         for( i = n - 3; i < n; ++i ){
@@ -52740,8 +50064,8 @@ Helixbundle.prototype = {
         var cp = colorParams || {};
         cp.structure = structure;
 
-        var colorMaker = ColorMakerRegistry.getScheme( cp );
-        var pickingColorMaker = ColorMakerRegistry.getPickingScheme( cp );
+        var colorMaker = ColorMakerRegistry$$1.getScheme( cp );
+        var pickingColorMaker = ColorMakerRegistry$$1.getPickingScheme( cp );
 
         var radiusFactory = new RadiusFactory( radius, scale );
 
@@ -52814,10 +50138,10 @@ Helixbundle.prototype = {
                 _center = calculateMeanVector3( tmpCenter );
 
                 _beg.fromArray( tmpCenter );
-                _beg = pointVectorIntersection( _beg, _center, _axis );
+                projectPointOnVector( _beg, _axis, _center );
 
                 _end.fromArray( tmpCenter, tmpCenter.length - 3 );
-                _end = pointVectorIntersection( _end, _center, _axis );
+                projectPointOnVector( _end, _axis, _center );
 
                 _axis.subVectors( _end, _beg );
 
@@ -52869,6 +50193,7 @@ Helixbundle.prototype = {
  * Binary heap implementation
  * @class
  * @author http://eloquentjavascript.net/appendix2.htm
+ * @param {Function} scoreFunction - the heap scoring function
  */
 function BinaryHeap( scoreFunction ){
 
@@ -53079,9 +50404,9 @@ BinaryHeap.prototype = {
  * @param {Float32Array} points - points
  * @param {Function} metric - metric
  */
-function Kdtree$1( points, metric ){
+function Kdtree$2( points, metric ){
 
-    var n = points.length / 3
+    var n = points.length / 3;
     var maxDepth = 0;
 
     var indices = new Uint32Array( n );
@@ -53379,7 +50704,7 @@ function Kdtree( entity, useSquaredDist ){
 
     this.atomIndices = atomIndices;
     this.points = points;
-    this.kdtree = new Kdtree$1( points, metric );
+    this.kdtree = new Kdtree$2( points, metric );
 
     if( exports.Debug ) Log.timeEnd( "Kdtree build" );
 
@@ -53950,6 +51275,7 @@ Assembly.prototype = {
      *
      * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
      * @param {String[]} chainList - array of chain names
+     * @return {AssemblyPart} the added assembly part
      */
     addPart: function( matrixList, chainList ){
         var part = new AssemblyPart( matrixList, chainList );
@@ -53992,7 +51318,7 @@ Assembly.prototype = {
     },
 
     /**
-     * Determine if the assembly is contains the full and untransformed structure
+     * Determine if the assembly is the full and untransformed structure
      * @param  {Structure}  structure - the given structure
      * @return {Boolean} whether the assembly is identical to the structure
      */
@@ -54060,7 +51386,7 @@ AssemblyPart.prototype = {
         var chainList = this.chainList;
 
         structure.eachChain( function( cp ){
-            if( chainList.length === 0 || chainList.indexOf( cp.chainname ) !== -1 ){
+            if( chainList.length === 0 || chainList.includes( cp.chainname ) ){
                 atomCount += cp.atomCount;
             }
         } );
@@ -54121,45 +51447,9 @@ AssemblyPart.prototype = {
  */
 
 
-function reorderAtoms( structure ){
+function assignSecondaryStructure( structure, secStruct ){
 
-    if( exports.Debug ) Log.time( "reorderAtoms" );
-
-    var ap1 = structure.getAtomProxy();
-    var ap2 = structure.getAtomProxy();
-
-    function compareModelChainResno( index1, index2 ){
-        ap1.index = index1;
-        ap2.index = index2;
-        if( ap1.modelindex < ap2.modelindex ){
-            return -1;
-        }else if( ap1.modelindex > ap2.modelindex ){
-            return 1;
-        }else{
-            if( ap1.chainname < ap2.chainname ){
-                return -1;
-            }else if( ap1.chainname > ap2.chainname ){
-                return 1;
-            }else{
-                if( ap1.resno < ap2.resno ){
-                    return -1;
-                }else if( ap1.resno > ap2.resno ){
-                    return 1;
-                }else{
-                    return 0;
-                }
-            }
-        }
-    }
-
-    structure.atomStore.sort( compareModelChainResno );
-
-    if( exports.Debug ) Log.timeEnd( "reorderAtoms" );
-
-}
-
-
-function assignSecondaryStructure( structure ){
+    if( !secStruct ) return;
 
     if( exports.Debug ) Log.time( "assignSecondaryStructure" );
 
@@ -54178,7 +51468,7 @@ function assignSecondaryStructure( structure ){
 
     // helix assignment
 
-    var helices = structure.helices || [];
+    var helices = secStruct.helices;
 
     helices = helices.filter( function( h ){
         return binarySearchIndexOf( chainnamesSorted, h[ 0 ] ) >= 0;
@@ -54271,7 +51561,7 @@ function assignSecondaryStructure( structure ){
 
     // sheet assignment
 
-    var sheets = structure.sheets || [];
+    var sheets = secStruct.sheets;
 
     sheets = sheets.filter( function( s ){
         return binarySearchIndexOf( chainnamesSorted, s[ 0 ] ) >= 0;
@@ -54529,6 +51819,7 @@ function calculateChainnames( structure ){
             chainStore.growIfFull();
             chainStore.modelIndex[ ci ] = mIndex;
             chainStore.setChainname( ci, chainname );
+            chainStore.setChainid( ci, chainname );
             chainStore.residueOffset[ ci ] = rOffset;
             chainStore.residueCount[ ci ] = rCount;
             chainStore.count += 1;
@@ -54615,7 +51906,7 @@ function calculateChainnames( structure ){
                     }
 
                     // new chain for the last residue of the structure
-                    if( rp2.index === residueStore.count - 1 ){
+                    if( rp2.index === residueStore.count - 1 && rEnd !== rp2.index ){
                         chainData.push( {
                             mIndex: mi,
                             chainname: getName( i ),
@@ -54880,6 +52171,8 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
 
 function buildUnitcellAssembly( structure ){
 
+    if( !structure.unitcell ) return;
+
     if( exports.Debug ) Log.time( "buildUnitcellAssembly" );
 
     var uc = structure.unitcell;
@@ -55045,6 +52338,7 @@ var guessElement = function(){
 /**
  * Assigns ResidueType bonds.
  * @param {Structure} structure - the structure object
+ * @return {undefined}
  */
 function assignResidueTypeBonds( structure ){
 
@@ -55249,7 +52543,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1;
 
     var rungEndIndex;
-    if( PurinBases.indexOf( resname ) !== -1 ){
+    if( PurinBases.includes( resname ) ){
         rungEndIndex = this.getAtomIndexByName( "N1" );
     }else{
         rungEndIndex = this.getAtomIndexByName( "N3" );
@@ -55288,7 +52582,7 @@ ResidueType.prototype = {
         var atomTypeIdList = this.atomTypeIdList;
         for( var i = 0, il = this.atomCount; i < il; ++i ){
             var atomType = atomMap.get( atomTypeIdList[ i ] );
-            if( atomnameList.indexOf( atomType.atomname ) !== -1 ){
+            if( atomnameList.includes( atomType.atomname ) ){
                 backboneIndexList.push( i );
             }
         }
@@ -55333,11 +52627,11 @@ ResidueType.prototype = {
 
     isProtein: function(){
         if( this.chemCompType ){
-            return ChemCompProtein.indexOf( this.chemCompType ) !== -1;
+            return ChemCompProtein.includes( this.chemCompType );
         }else{
             return (
                 this.hasAtomWithName( "CA", "C", "N" ) ||
-                AA3.indexOf( this.resname ) !== -1
+                AA3.includes( this.resname )
             );
         }
     },
@@ -55357,13 +52651,13 @@ ResidueType.prototype = {
 
     isRna: function(){
         if( this.chemCompType ){
-            return ChemCompRna.indexOf( this.chemCompType ) !== -1;
+            return ChemCompRna.includes( this.chemCompType );
         }else{
             return (
                 this.hasAtomWithName(
                     [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*", "F2'", "F2*" ]
                 ) ||
-                ( RnaBases.indexOf( this.resname ) !== -1 &&
+                ( RnaBases.includes( this.resname ) &&
                     ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
             );
         }
@@ -55371,18 +52665,14 @@ ResidueType.prototype = {
 
     isDna: function(){
         if( this.chemCompType ){
-            return ChemCompDna.indexOf( this.chemCompType ) !== -1;
+            return ChemCompDna.includes( this.chemCompType );
         }else{
             return (
                 ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
                     !this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) ||
-                DnaBases.indexOf( this.resname ) !== -1
+                DnaBases.includes( this.resname )
             );
         }
-    },
-
-    isPolymer: function(){
-        return this.isProtein() || this.isNucleic();
     },
 
     isHetero: function(){
@@ -55390,15 +52680,19 @@ ResidueType.prototype = {
     },
 
     isIon: function(){
-        return IonNames.indexOf( this.resname ) !== -1;
+        return IonNames.includes( this.resname );
     },
 
     isWater: function(){
-        return WaterNames.indexOf( this.resname ) !== -1;
+        return WaterNames.includes( this.resname );
     },
 
     isSaccharide: function(){
-        return ChemCompSaccharide.indexOf( this.chemCompType ) !== -1;
+        if( this.chemCompType ){
+            return ChemCompSaccharide.includes( this.chemCompType );
+        }else{
+            return SaccharideNames.includes( this.resname );
+        }
     },
 
     hasBackboneAtoms: function( position, type ){
@@ -55495,7 +52789,7 @@ ResidueType.prototype = {
         if( Array.isArray( atomname ) ){
             for( i = 0; i < n; ++i ){
                 index = atomTypeIdList[ i ];
-                if( atomname.indexOf( atomMap.get( index ).atomname ) !== -1 ){
+                if( atomname.includes( atomMap.get( index ).atomname ) ){
                     return i;
                 }
             }
@@ -55545,7 +52839,6 @@ ResidueType.prototype = {
     /**
      * @return {Object} bondGraph - represents the bonding in this
      *   residue: { ai1: [ ai2, ai3, ...], ...}
-     *
      */
     calculateBondGraph: function() {
 
@@ -55582,6 +52875,8 @@ ResidueType.prototype = {
      * connected rings will not detect all rings.
      * The resulting rings object will provide 'a ring' for each ring atom
      * but which ring depends on atom order and connectivity
+     *
+     * @return {undefined}
      */
     calculateRings: function() {
 
@@ -55662,6 +52957,7 @@ ResidueType.prototype = {
 
     /**
      * For bonds with order > 1, pick a reference atom
+     * @return {undefined}
      */
     assignBondReferenceAtomIndices: function() {
 
@@ -55912,7 +53208,7 @@ BondProxy.prototype = {
         if( ix !== undefined ){
             return ix + ap1.residueAtomOffset;
         }else{
-            console.warn( "No reference atom found", ap1.index, ap2.index )
+            console.warn( "No reference atom found", ap1.index, ap2.index );
         }
     },
 
@@ -56012,6 +53308,12 @@ AtomProxy.prototype = {
     atomStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.chainIndex ];
+    },
     get modelIndex () {
         return this.chainStore.modelIndex[ this.chainIndex ];
     },
@@ -56020,7 +53322,7 @@ AtomProxy.prototype = {
     },
     get residue () {
         console.warn( "residue - might be expensive" );
-        return this.structure.getResidueProxy( this.residueIndex, false );
+        return this.structure.getResidueProxy( this.residueIndex );
     },
 
     get residueIndex () {
@@ -56043,6 +53345,9 @@ AtomProxy.prototype = {
     },
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
+    },
+    get chainid () {
+        return this.chainStore.getChainid( this.chainIndex );
     },
 
     //
@@ -56170,22 +53475,25 @@ AtomProxy.prototype = {
 
     isBackbone: function(){
         var backboneIndexList = this.residueType.backboneIndexList;
-        // console.log(backboneIndexList)
         if( backboneIndexList.length > 0 ){
             var atomOffset = this.residueStore.atomOffset[ this.residueIndex ];
-            return backboneIndexList.indexOf( this.index - atomOffset ) !== -1;
+            return backboneIndexList.includes( this.index - atomOffset );
         }else{
             return false;
         }
     },
 
     isPolymer: function(){
-        var moleculeType = this.residueType.moleculeType;
-        return (
-            moleculeType === ProteinType ||
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-        );
+        if( this.structure.entityList.length > 0 ){
+            return this.entity.isPolymer();
+        }else{
+            var moleculeType = this.residueType.moleculeType;
+            return (
+                moleculeType === ProteinType ||
+                moleculeType === RnaType ||
+                moleculeType === DnaType
+            );
+        }
     },
 
     isSidechain: function(){
@@ -56383,7 +53691,7 @@ AtomProxy.prototype = {
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
         if( this.altloc ) name += "%" + this.altloc;
-        name += "/" + this.modelIndex;
+        if( this.structure.modelStore.count > 1 ) name += "/" + this.modelIndex;
         return name;
     },
 
@@ -56457,6 +53765,12 @@ ResidueProxy.prototype = {
     atomStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.chainIndex ];
+    },
     get chain () {
         return this.structure.getChainProxy( this.chainIndex );
     },
@@ -56493,6 +53807,9 @@ ResidueProxy.prototype = {
     },
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
+    },
+    get chainid () {
+        return this.chainStore.getChainid( this.chainIndex );
     },
 
     //
@@ -56618,12 +53935,16 @@ ResidueProxy.prototype = {
     },
 
     isPolymer: function(){
-        var moleculeType = this.residueType.moleculeType;
-        return (
-            moleculeType === ProteinType ||
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-        );
+        if( this.structure.entityList.length > 0 ){
+            return this.entity.isPolymer();
+        }else{
+            var moleculeType = this.residueType.moleculeType;
+            return (
+                moleculeType === ProteinType ||
+                moleculeType === RnaType ||
+                moleculeType === DnaType
+            );
+        }
     },
 
     isHetero: function(){
@@ -57065,6 +54386,8 @@ function ChainProxy( structure, index ){
     this.residueStore = structure.residueStore;
     this.index = index;
 
+    this.__residueProxy = this.structure.getResidueProxy();
+
 }
 
 ChainProxy.prototype = {
@@ -57076,8 +54399,18 @@ ChainProxy.prototype = {
     chainStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
     get model () {
         return this.structure.getModelProxy( this.modelIndex );
+    },
+
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.index ];
+    },
+    set entityIndex ( value ) {
+        this.chainStore.entityIndex[ this.index ] = value;
     },
 
     get modelIndex () {
@@ -57129,6 +54462,58 @@ ChainProxy.prototype = {
     },
     set chainname ( value ) {
         this.chainStore.setChainname( this.index, value );
+    },
+
+    get chainid () {
+        return this.chainStore.getChainid( this.index );
+    },
+    set chainid ( value ) {
+        this.chainStore.setChainid( this.index, value );
+    },
+
+    //
+
+    get __firstResidueProxy () {
+        this.__residueProxy.index = this.residueOffset;
+        return this.__residueProxy;
+    },
+
+    //
+
+    isProtein: function(){
+        return this.__firstResidueProxy.isProtein();
+    },
+
+    isNucleic: function(){
+        return this.__firstResidueProxy.isNucleic();
+    },
+
+    isRna: function(){
+        return this.__firstResidueProxy.isRna();
+    },
+
+    isDna: function(){
+        return this.__firstResidueProxy.isDna();
+    },
+
+    isPolymer: function(){
+        return this.__firstResidueProxy.isPolymer();
+    },
+
+    isHetero: function(){
+        return this.__firstResidueProxy.isHetero();
+    },
+
+    isWater: function(){
+        return this.__firstResidueProxy.isWater();
+    },
+
+    isIon: function(){
+        return this.__firstResidueProxy.isIon();
+    },
+
+    isSaccharide: function(){
+        return this.__firstResidueProxy.isSaccharide();
     },
 
     //
@@ -57487,11 +54872,16 @@ ModelProxy.prototype = {
 // import StructureView from "./structure-view.js";
 
 /**
- * {@link Signal}, dispatched when Structure.refresh() is called
- * @example
- * structure.signals.refreshed( function(){ ... } );
- * @event Structure#refreshed
+ * Structure header object.
+ * @typedef {Object} StructureHeader - structure meta data
+ * @property {String} [releaseDate] - release data, YYYY-MM-DD
+ * @property {String} [depositionDate] - deposition data, YYYY-MM-DD
+ * @property {Float} [resolution] - experimental resolution
+ * @property {Float} [rFree] - r-free value
+ * @property {Float} [rWork] - r-work value
+ * @property {String[]} [experimentalMethods] - experimental methods
  */
+
 
 /**
  * Bond iterator callback
@@ -57552,12 +54942,18 @@ function Structure( name, path ){
     this.path = path;
     this.title = "";
     this.id = "";
+    /**
+     * @member {StructureHeader}
+     */
+    this.header = {};
 
-    this.atomSetCache = {};
+    this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
-    this.helices = [];
-    this.sheets = [];
+    this.entityList = [];
+    /**
+     * @member {Unitcell}
+     */
     this.unitcell = undefined;
 
     this.frames = [];
@@ -57571,18 +54967,35 @@ function Structure( name, path ){
     this.chainStore = new ChainStore( 0 );
     this.modelStore = new ModelStore( 0 );
 
+    /**
+     * @member {AtomMap}
+     */
     this.atomMap = new AtomMap( this );
+    /**
+     * @member {ResidueMap}
+     */
     this.residueMap = new ResidueMap( this );
 
-    this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
+    /**
+     * @member {BondHash}
+     */
+    this.bondHash = undefined;
+    /**
+     * @member {SpatialHash}
+     */
+    this.spatialHash = undefined;
 
-    this.atomSet = this.getAtomSet();
-    this.bondSet = this.getBondSet();
+    this.atomSet = undefined;
+    this.bondSet = undefined;
 
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
-
-    GidPool.addObject( this );
+    /**
+     * @member {Vector3}
+     */
+    this.center = undefined;
+    /**
+     * @member {Box3}
+     */
+    this.boundingBox = undefined;
 
     this._bp = this.getBondProxy();
     this._ap = this.getAtomProxy();
@@ -57596,21 +55009,23 @@ Structure.prototype = {
     constructor: Structure,
     type: "Structure",
 
-    /**
-     * Updates atomSets and bondSets. Updates GidPool entry.
-     * @fires Structure#refreshed
-     */
-    refresh: function(){
+    finalizeAtoms: function(){
 
-        if( exports.Debug ) Log.time( "Structure.refresh" );
+        this.atomSet = this.getAtomSet();
+        this.atomCount = this.atomStore.count;
+        this.boundingBox = this.getBoundingBox();
+        this.center = this.boundingBox.center();
+        this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
+    },
+
+    finalizeBonds: function(){
+
+        this.bondSet = this.getBondSet();
+        this.bondCount = this.bondStore.count;
         this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
 
         this.atomSetCache = {};
-
-        this.atomSet = this.getAtomSet();
-        this.bondSet = this.getBondSet();
-
         if( !this.atomSetDict.rung ){
             this.atomSetDict.rung = this.getAtomSet( false );
         }
@@ -57620,18 +55035,6 @@ Structure.prototype = {
             var as2 = this.getAtomSet( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
-
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
-
-        GidPool.updateObject( this );
-
-        if( exports.Debug ) Log.timeEnd( "Structure.refresh" );
-
-        this.signals.refreshed.dispatch();
 
     },
 
@@ -57643,29 +55046,15 @@ Structure.prototype = {
 
     },
 
-    getAtomProxy: function( index, tmp ){
+    getAtomProxy: function( index ){
 
-        if( tmp ){
-            if( this.__tmpAtomProxy === undefined ){
-                this.__tmpAtomProxy = new AtomProxy( this, index );
-            }
-            return this.__tmpAtomProxy;
-        }else{
-            return new AtomProxy( this, index );
-        }
+        return new AtomProxy( this, index );
 
     },
 
-    getResidueProxy: function( index, tmp ){
+    getResidueProxy: function( index ){
 
-        if( tmp ){
-            if( this.__tmpResidueProxy === undefined ){
-                this.__tmpResidueProxy = new ResidueProxy( this, index );
-            }
-            return this.__tmpResidueProxy;
-        }else{
-            return new ResidueProxy( this, index );
-        }
+        return new ResidueProxy( this, index );
 
     },
 
@@ -57791,7 +55180,11 @@ Structure.prototype = {
         var as;
         var n = this.atomStore.count;
 
-        if( selection === false ){
+        if( selection && selection.type === "Bitset" ){
+
+            as = selection;
+
+        }else if( selection === false ){
 
             as = new Bitset( n );
 
@@ -57831,6 +55224,78 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Get set of atom around a set of atoms from a selection
+     * @param  {Selection} selection - the selection object
+     * @param  {Number} radius - radius to select within
+     * @return {BitSet} set of atoms
+     */
+    getAtomSetWithinSelection: function( selection, radius ){
+
+        var spatialHash = this.spatialHash;
+        var as = this.getAtomSet( false );
+        var ap = this.getAtomProxy();
+
+        this.getAtomSet( selection ).forEach( function( idx ){
+            ap.index = idx;
+            spatialHash.within( ap.x, ap.y, ap.z, radius ).forEach( function( idx2 ){
+                as.add_unsafe( idx2 );
+            } );
+        } );
+
+        return as;
+
+    },
+
+    getAtomSetWithinPoint: function( point, radius ){
+
+        var p = point;
+        var as = this.getAtomSet( false );
+
+        this.spatialHash.within( p.x, p.y, p.z, radius ).forEach( function( idx ){
+            as.add_unsafe( idx );
+        } );
+
+        return as;
+
+    },
+
+    getAtomSetWithinVolume: function( volume, radius, minValue, maxValue, outside ){
+
+        volume.filterData( minValue, maxValue, outside );
+
+        var dp = volume.dataPosition;
+        var n = dp.length;
+        var r = volume.matrix.getMaxScaleOnAxis();
+        var as = this.getAtomSet( false );
+
+        for( var i = 0; i < n; i+=3 ){
+            this.spatialHash.within( dp[ i ], dp[ i + 1 ], dp[ i + 2 ], r ).forEach( function( idx ){
+                as.add_unsafe( idx );
+            } );
+        }
+
+        return as;
+
+    },
+
+    getAtomSetWithinGroup: function( selection ){
+
+        var atomResidueIndex = this.atomStore.residueIndex;
+        var as = this.getAtomSet( false );
+        var rp = this.getResidueProxy();
+
+        this.getAtomSet( selection ).forEach( function( idx ){
+            rp.index = atomResidueIndex[ idx ];
+            for( var idx2 = rp.atomOffset; idx2 <= rp.atomEnd; ++idx2 ){
+                as.add_unsafe( idx2 );
+            }
+        } );
+
+        return as;
+
+    },
+
     //
 
     getSelection: function(){
@@ -57846,9 +55311,26 @@ Structure.prototype = {
     },
 
     /**
+     * Entity iterator
+     * @param  {entityCallback} callback - the callback
+     * @param  {EntityType} type - entity type
+     * @return {undefined}
+     */
+    eachEntity: function( callback, type ){
+
+        this.entityList.forEach( function( entity ){
+            if( type === undefined || entity.getEntityType() === type ){
+                callback( entity );
+            }
+        } );
+
+    },
+
+    /**
      * Bond iterator
      * @param  {bondCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachBond: function( callback, selection ){
 
@@ -57882,6 +55364,7 @@ Structure.prototype = {
      * Atom iterator
      * @param  {atomCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachAtom: function( callback, selection ){
 
@@ -57904,6 +55387,7 @@ Structure.prototype = {
      * Residue iterator
      * @param  {residueCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachResidue: function( callback, selection ){
 
@@ -57940,6 +55424,7 @@ Structure.prototype = {
      * Multi-residue iterator
      * @param {Integer} n - window size
      * @param  {residueListCallback} callback - the callback
+     * @return {undefined}
      */
     eachResidueN: function( n, callback ){
 
@@ -57966,6 +55451,7 @@ Structure.prototype = {
      * Polymer iterator
      * @param  {polymerCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachPolymer: function( callback, selection ){
 
@@ -57993,6 +55479,7 @@ Structure.prototype = {
      * Chain iterator
      * @param  {chainCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachChain: function( callback, selection ){
 
@@ -58015,6 +55502,7 @@ Structure.prototype = {
      * Model iterator
      * @param  {modelCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachModel: function( callback, selection ){
 
@@ -58070,13 +55558,13 @@ Structure.prototype = {
         if( !what || what.color ){
             color = new Float32Array( atomCount * 3 );
             atomData.color = color;
-            colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
+            colorMaker = ColorMakerRegistry$$1.getScheme( p.colorParams );
         }
         if( !what || what.pickingColor ){
             pickingColor = new Float32Array( atomCount * 3 );
             atomData.pickingColor = pickingColor;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
+            pickingColorMaker = ColorMakerRegistry$$1.getScheme( pickingColorParams );
         }
         if( !what || what.radius ){
             radius = new Float32Array( atomCount );
@@ -58154,7 +55642,7 @@ Structure.prototype = {
             color2 = new Float32Array( bondCount * 3 );
             bondData.color1 = color1;
             bondData.color2 = color2;
-            colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
+            colorMaker = ColorMakerRegistry$$1.getScheme( p.colorParams );
         }
         if( !what || what.pickingColor ){
             pickingColor1 = new Float32Array( bondCount * 3 );
@@ -58162,7 +55650,7 @@ Structure.prototype = {
             bondData.pickingColor1 = pickingColor1;
             bondData.pickingColor2 = pickingColor2;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
+            pickingColorMaker = ColorMakerRegistry$$1.getScheme( pickingColorParams );
         }
         if( !what || what.radius || ( isMulti && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
@@ -58196,7 +55684,7 @@ Structure.prototype = {
                 if( isMulti && bondOrder > 1 ){
                     radius = radiusFactory.atomRadius( ap1 );
                     multiRadius = radius * bondScale / ( 0.5 * bondOrder );
-                    
+
                     bp.calculateShiftDir( vShift );
 
                     if( isOffset ) {
@@ -58206,7 +55694,7 @@ Structure.prototype = {
                         vShift.negate();
 
                         // Shortening is calculated so that neighbouring double
-                        // bonds on tetrahedral geometry (e.g. sulphonamide) 
+                        // bonds on tetrahedral geometry (e.g. sulphonamide)
                         // are not quite touching (arccos(1.9 / 2) ~ 109deg)
                         // but don't shorten beyond 10% each end or it looks odd
                         vShortening.subVectors( ap2, ap1 ).multiplyScalar(
@@ -58228,7 +55716,7 @@ Structure.prototype = {
 
                         absOffset = ( bondSpacing - bondScale ) * radius;
                         vShift.multiplyScalar( absOffset );
-                        
+
                         if( bondOrder === 2 ){
                             vt.addVectors( ap1, vShift ).toArray( position1, i3 );
                             vt.subVectors( ap1, vShift ).toArray( position1, i3 + 3 );
@@ -58281,7 +55769,7 @@ Structure.prototype = {
                     for( j = isOffset ? 1 : 0 ; j < bondOrder; ++j ){
                         radius1[ i + j ] = multiRadius;
                     }
-                } 
+                }
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
@@ -58345,11 +55833,11 @@ Structure.prototype = {
 
     //
 
-    getBoundingBox: function( selection ){
+    getBoundingBox: function( selection, box ){
 
         if( exports.Debug ) Log.time( "getBoundingBox" );
 
-        var box = new Box3();
+        box = box || new Box3();
 
         var minX = +Infinity;
         var minY = +Infinity;
@@ -58453,6 +55941,24 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Get number of unique chainnames
+     * @param  {Selection} selection - limit count to selection
+     * @return {Integer} count
+     */
+    getChainnameCount: function( selection ){
+
+        var chainnames = new Set();
+        this.eachChain( function( cp ){
+            if( cp.residueCount ){
+                chainnames.add( cp.chainname );
+            }
+        }, selection );
+
+        return chainnames.size;
+
+    },
+
     //
 
     updatePosition: function( position ){
@@ -58466,13 +55972,20 @@ Structure.prototype = {
 
     },
 
+    refreshPosition: function(){
+
+        this.getBoundingBox( undefined, this.boundingBox );
+        this.boundingBox.center( this.center );
+        this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
+
+    },
+
     /**
-     * Removes structure from the GidPool. Calls dispose() method of property objects.
+     * Calls dispose() method of property objects.
      * Unsets properties to help garbage collection.
+     * @return {undefined}
      */
     dispose: function(){
-
-        GidPool.removeObject( this );
 
         if( this.frames ) this.frames.length = 0;
         if( this.boxes ) this.boxes.length = 0;
@@ -58520,6 +56033,7 @@ Structure.prototype = {
  * @param {Float32Array} data.normal - surface normals
  * @param {Float32Array} data.color - surface colors
  * @param {Int32Array} data.atomindex - atom indices
+ * @param {boolean} data.contour - contour mode flag
  */
 function Surface( name, path, data ){
 
@@ -58545,7 +56059,8 @@ function Surface( name, path, data ){
             data.index,
             data.normal,
             data.color,
-            data.atomindex
+            data.atomindex,
+            data.contour
         );
 
     }
@@ -58564,8 +56079,10 @@ Surface.prototype = {
      * @param {Float32Array} normal - surface normals
      * @param {Float32Array} color - surface colors
      * @param {Int32Array} atomindex - atom indices
+     * @param {boolean} contour - contour mode flag
+     * @return {undefined}
      */
-    set: function( position, index, normal, color, atomindex ){
+    set: function( position, index, normal, color, atomindex, contour ){
 
         this.position = position;
         this.index = index;
@@ -58574,6 +56091,7 @@ Surface.prototype = {
         this.atomindex = atomindex;
 
         this.size = position.length / 3;
+        this.contour = contour;
 
     },
 
@@ -58638,7 +56156,7 @@ Surface.prototype = {
 
             var v = new Vector3();
             var pos = this.position;
-            colorMaker = ColorMakerRegistry.getScheme( p );
+            colorMaker = ColorMakerRegistry$$1.getScheme( p );
 
             array = new Float32Array( n * 3 );
 
@@ -58654,7 +56172,7 @@ Surface.prototype = {
 
             p.surface = this;  // FIXME should this be p.surface???
             array = new Float32Array( n * 3 );
-            colorMaker = ColorMakerRegistry.getScheme( p );
+            colorMaker = ColorMakerRegistry$$1.getScheme( p );
             var atomProxy = p.structure.getAtomProxy();
             var atomindex = this.atomindex;
 
@@ -58713,26 +56231,34 @@ Surface.prototype = {
             var index = this.index;
             var n = index.length;
             var j = 0;
+            var a;
 
-            for( var i = 0; i < n; i+=3 ){
+            var elementSize = this.contour ? 2 : 3;
 
-                var idx1 = index[ i     ];
-                var idx2 = index[ i + 1 ];
-                var idx3 = index[ i + 2 ];
+            for( var i = 0; i < n; i += elementSize ){
 
-                var ai1 = atomindex[ idx1 ];
-                var ai2 = atomindex[ idx2 ];
-                var ai3 = atomindex[ idx3 ];
+                var include = true;
 
-                if( as.has( ai1 ) && as.has( ai2 ) && as.has( ai3 ) ){
-                    filteredIndex[ j     ] = idx1;
-                    filteredIndex[ j + 1 ] = idx2;
-                    filteredIndex[ j + 2 ] = idx3;
-                    j += 3;
+                for( a = 0 ; a < elementSize; a++ ){
+
+                    var idx = index[ i + a ];
+                    var ai = atomindex[ idx ];
+                    if( !as.has( ai ) ){
+                        include = false;
+                        break;
+                    }
+                }
+
+                if( !include ) { continue ; }
+
+                for( a = 0; a < elementSize; a ++, j++ ){
+
+                    filteredIndex[ j ] = index[ i + a ];
+                    
                 }
 
             }
-
+           
             var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
             return new TypedArray( filteredIndex );
 
@@ -59257,6 +56783,42 @@ function getTriTable(){
     ] );
 }
 
+// Triangles are constructed between points on cube edges.
+// allowedContours[edge1][edge1] indicates which lines from a given
+// triangle should be shown in line mode.
+
+// Values are bitmasks:
+// In loop over cubes we keep another bitmask indicating whether our current
+// cell is the first x-value (1),
+// first y-value (2) or first z-value (4) of the current loop.
+// We draw all lines on leading faces but only draw trailing face lines the first
+// time through the loop
+// A value of 8 below means the edge is always drawn (leading face)
+
+// E.g. the first row, lines between edge0 and other edges in the bottom
+// x-y plane are only drawn for the first value of z, edges in the
+// x-z plane are only drawn for the first value of y. No other lines
+// are drawn as they're redundant
+// The line between edge 1 and 5 is always drawn as it's on the leading edge
+
+
+function getAllowedContours() { return [
+
+    [ 0, 4, 4, 4, 2, 0, 0, 0, 2, 2, 0, 0 ], // 1 2 3 4 8 9
+    [ 4, 0, 4, 4, 0, 8, 0, 0, 0, 8, 8, 0 ], // 0 2 3 5 9 10
+    [ 4, 4, 0, 4, 0, 0, 8, 0, 0, 0, 8, 8 ], // 0 1 3 6 10 11
+    [ 4, 4, 4, 0, 0, 0, 0, 1, 1, 0, 0, 1 ], // 0 1 2 7 8 11
+    [ 2, 0, 0, 0, 0, 8, 8, 8, 2, 2, 0, 0 ], // 0 5 6 7 8 9
+    [ 0, 8, 0, 0, 8, 0, 8, 8, 0, 8, 8, 0 ], // And rotate it
+    [ 0, 0, 8, 0, 8, 8, 0, 8, 0, 0, 8, 8 ],
+    [ 0, 0, 0, 1, 8, 8, 8, 0, 1, 0, 0, 1 ],
+    [ 2, 0, 0, 1, 2, 0, 0, 1, 0, 2, 0, 1 ], // 0 3 4 7 9 11
+    [ 2, 8, 0, 0, 2, 8, 0, 0, 2, 0, 8, 0 ], // And rotate some more
+    [ 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 0, 8 ],
+    [ 0, 0, 8, 1, 0, 0, 8, 1, 1, 0, 8, 0 ]
+
+]}
+
 
 function MarchingCubes( field, nx, ny, nz, atomindex ){
 
@@ -59268,6 +56830,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     var isolevel = 0;
     var noNormals = false;
+    var contour = false;
 
     var n = nx * ny * nz;
 
@@ -59287,21 +56850,27 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     var edgeTable = getEdgeTable();
     var triTable = getTriTable();
+    var allowedContours = getAllowedContours();
 
 
     //
 
-    this.triangulate = function( _isolevel, _noNormals, _box ){
+    this.triangulate = function( _isolevel, _noNormals, _box, _contour ){
 
         isolevel = _isolevel;
-        noNormals = _noNormals;
+        contour = _contour;
+        // Normals currently disabled in contour mode for performance (unused)
+        noNormals = _noNormals || contour;
 
         if( !noNormals && !normalCache ){
             normalCache = new Float32Array( n * 3 );
         }
 
         if( !vertexIndex ){
-            vertexIndex = new Int32Array( n );
+            // In contour mode we want all drawn edges parallel to one axis,
+            // so interpolation must be calculated in each dimension (rather
+            // than re-using a single interpolated vertex)
+            vertexIndex = new Int32Array( contour ? n * 3 : n );
         }
 
         count = 0;
@@ -59333,6 +56902,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             normal: noNormals ? undefined : new Float32Array( normalArray ),
             index: new TypedArray( indexArray ),
             atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
+            contour: contour
         };
 
     };
@@ -59343,7 +56913,9 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntX( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ q ] < 0 ){
+        var _q = contour ? 3 * q : q;
+
+        if( vertexIndex[ _q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -59364,16 +56936,16 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             }
 
-            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu ];
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) ];
 
-            vertexIndex[ q ] = count;
+            vertexIndex[ _q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ q ];
+            ilist[ offset ] = vertexIndex[ _q ];
 
         }
 
@@ -59381,7 +56953,9 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntY( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ q ] < 0 ){
+        var _q = contour ? 3 * q + 1 : q;
+
+        if( vertexIndex[ _q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -59403,16 +56977,16 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             }
 
-            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * yd ];
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * yd ];
 
-            vertexIndex[ q ] = count;
+            vertexIndex[ _q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ q ];
+            ilist[ offset ] = vertexIndex[ _q ];
 
         }
 
@@ -59420,7 +56994,9 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntZ( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ q ] < 0 ){
+        var _q = contour ? 3 * q + 2 : q;
+
+        if( vertexIndex[ _q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -59442,16 +57018,16 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             }
 
-            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * zd ];
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * zd ];
 
-            vertexIndex[ q ] = count;
+            vertexIndex[ _q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ q ];
+            ilist[ offset ] = vertexIndex[ _q ];
 
         }
 
@@ -59471,7 +57047,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     }
 
-    function polygonize( fx, fy, fz, q ) {
+    function polygonize( fx, fy, fz, q, edgeFilter ) {
 
         // cache indices
         var q1 = q + 1,
@@ -59636,25 +57212,43 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         }
 
-        cubeindex <<= 4;  // re-purpose cubeindex into an offset into triTable
+        var triIndex = cubeindex << 4;  // re-purpose cubeindex into an offset into triTable
 
-        var o1, o2, o3, i = 0;
+        var e1, e2, e3, i = 0;
 
         // here is where triangles are created
 
-        while ( triTable[ cubeindex + i ] != -1 ) {
+        while ( triTable[ triIndex + i ] != -1 ) {
 
-            o1 = cubeindex + i;
-            o2 = o1 + 1;
-            o3 = o1 + 2;
+            e1 = triTable[ triIndex + i ];
+            e2 = triTable[ triIndex + i + 1 ];
+            e3 = triTable[ triIndex + i + 2 ];
 
-            // FIXME normals flipping (see above) and vertex order reversal
-            indexArray[ icount ]     = ilist[ triTable[ o2 ] ];
-            indexArray[ icount + 1 ] = ilist[ triTable[ o1 ] ];
-            indexArray[ icount + 2 ] = ilist[ triTable[ o3 ] ];
+            if( contour ){
+                if( allowedContours[ e1 ][ e2 ] & edgeFilter ){
+                    indexArray[ icount++ ] = ilist[ e1 ];
+                    indexArray[ icount++ ] = ilist[ e2 ];
+                }
+                if( allowedContours[ e2 ][ e3 ] & edgeFilter ){
+                    indexArray[ icount++ ] = ilist[ e2 ];
+                    indexArray[ icount++ ] = ilist[ e3 ];
+                }
+                if( allowedContours[ e1 ][ e3 ] & edgeFilter ){
+                    indexArray[ icount++ ] = ilist[ e1 ];
+                    indexArray[ icount++ ] = ilist[ e3 ];
+                }
 
-            icount += 3;
+            } else {
+
+                // FIXME normals flipping (see above) and vertex order reversal
+                indexArray[ icount++ ] = ilist[ e2 ];
+                indexArray[ icount++ ] = ilist[ e1 ];
+                indexArray[ icount++ ] = ilist[ e3 ];
+            }
+
+
             i += 3;
+
 
         }
 
@@ -59710,8 +57304,15 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             for ( y = yBeg2; y < yEnd2; ++y ) {
                 y_offset = z_offset + yd * y;
                 for ( x = xBeg2; x < xEnd2; ++x ) {
-                    q = y_offset + x;
-                    vertexIndex[ q ] = -1;
+                    if( contour ) {
+                        q = 3 * ( y_offset + x );
+                        vertexIndex[ q ] = -1;
+                        vertexIndex[ q + 1 ] = -1;
+                        vertexIndex[ q + 2 ] = -1;
+                    } else {
+                        q = ( y_offset + x );
+                        vertexIndex[ q ] = -1;
+                    }
                 }
             }
         }
@@ -59842,15 +57443,18 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         }
 
-        // polygonize part of the grid
 
-        for ( z = zBeg; z < zEnd; ++z ) {
+        // polygonize part of the grid
+        var edgeFilter = 15;
+        for ( z = zBeg; z < zEnd; ++z, edgeFilter &=~4 ) {
             z_offset = zd * z;
-            for ( y = yBeg; y < yEnd; ++y ) {
+            edgeFilter |= 2;
+            for ( y = yBeg; y < yEnd; ++y, edgeFilter &=~2 ) {
                 y_offset = z_offset + yd * y;
-                for ( x = xBeg; x < xEnd; ++x ) {
+                edgeFilter |= 1;
+                for ( x = xBeg; x < xEnd; ++x, edgeFilter &=~1 ) {
                     q = y_offset + x;
-                    polygonize( x, y, z, q );
+                    polygonize( x, y, z, q, edgeFilter );
                 }
             }
         }
@@ -59858,14 +57462,13 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     }
 
 }
-MarchingCubes.__deps = [ getEdgeTable, getTriTable ];
+MarchingCubes.__deps = [ getEdgeTable, getTriTable, getAllowedContours ];
 
 /**
  * @file Surface Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-
 
 function laplacianSmooth( verts, faces, numiter, inflate ){
 
@@ -60183,6 +57786,103 @@ computeVertexNormals.__deps = [
     v3sub, v3cross, v3fromArray, normalizeVector3array
 ];
 
+
+function getRadiusDict( radiusList ){
+
+    var radiusDict = {};
+    for( var i = 0, il = radiusList.length; i < il; ++i ){
+        radiusDict[ radiusList[ i ] ] = true;
+    }
+    return radiusDict;
+
+}
+
+
+function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
+
+    // need margin to avoid boundary/round off effects
+    var margin = ( 1 / scaleFactor ) * 3;
+    margin += maxRadius;
+
+    v3subScalar( min, min, extraMargin + margin );
+    v3addScalar( max, max, extraMargin + margin );
+
+    v3multiplyScalar( min, min, scaleFactor );
+    v3floor( min, min );
+    v3divideScalar( min, min, scaleFactor );
+
+    v3multiplyScalar( max, max, scaleFactor );
+    v3ceil( max, max );
+    v3divideScalar( max, max, scaleFactor );
+
+    var dim = new Float32Array( 3 );
+    v3sub( dim, max, min );
+    v3multiplyScalar( dim, dim, scaleFactor );
+    v3ceil( dim, dim );
+    v3addScalar( dim, dim, 1 );
+
+    var maxSize = Math.pow( 10, 6 ) * 256;
+    var tmpSize = dim[ 0 ] * dim[ 1 ] * dim[ 2 ] * 3;
+
+    if( maxSize <= tmpSize ){
+
+        scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
+
+        v3multiplyScalar( min, min, scaleFactor );
+        v3floor( min, min );
+        v3divideScalar( min, min, scaleFactor );
+
+        v3multiplyScalar( max, max, scaleFactor );
+        v3ceil( max, max );
+        v3divideScalar( max, max, scaleFactor );
+
+        v3sub( dim, max, min );
+        v3multiplyScalar( dim, dim, scaleFactor );
+        v3ceil( dim, dim );
+        v3addScalar( dim, dim, 1 );
+
+    }
+
+    var tran = new Float32Array( min );
+    v3negate( tran, tran );
+
+    // coordinate transformation matrix
+    var matrix = m4new();
+    var mroty = m4new();
+    m4makeRotationY( mroty, degToRad( 90 ) );
+    m4multiply( matrix, matrix, mroty );
+
+    var mscale = m4new();
+    m4makeScale( mscale,
+        -1 / scaleFactor,
+        1 / scaleFactor,
+        1 / scaleFactor
+    );
+    m4multiply( matrix, matrix, mscale );
+
+    var mtrans = m4new();
+    m4makeTranslation( mtrans,
+        -scaleFactor * tran[2],
+        -scaleFactor * tran[1],
+        -scaleFactor * tran[0]
+    );
+    m4multiply( matrix, matrix, mtrans );
+
+    return {
+        dim: dim,
+        tran: tran,
+        matrix: matrix,
+        scaleFactor: scaleFactor
+    };
+
+}
+getSurfaceGrid.__deps = [
+    degToRad,
+    v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
+    v3floor, v3ceil, v3sub, v3negate,
+    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
+];
+
 /**
  * @file Volume
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -60194,8 +57894,8 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
-    function getSurface( isolevel, smooth, box, matrix ){
-        var sd = mc.triangulate( isolevel, smooth, box );
+    function getSurface( isolevel, smooth, box, matrix, contour ){
+        var sd = mc.triangulate( isolevel, smooth, box, contour );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
             sd.normal = computeVertexNormals( sd.position, sd.index );
@@ -60229,7 +57929,7 @@ WorkerRegistry.add( "surf", function func( e, callback ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix );
+        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
@@ -60266,10 +57966,6 @@ function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.setData( data, nx, ny, nz, dataAtomindex );
 
-    if( this.__data.length <= Math.pow( 10, 7 ) ){
-        GidPool.addObject( this );
-    }
-
 }
 
 Volume.prototype = {
@@ -60284,6 +57980,7 @@ Volume.prototype = {
      * @param {Integer} ny - y dimension of the 3d volume
      * @param {Integer} nz - z dimension of the 3d volume
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @return {undefined}
      */
     setData: function( data, nx, ny, nz, dataAtomindex ){
 
@@ -60314,18 +58011,12 @@ Volume.prototype = {
 
         if( this.worker ) this.worker.terminate();
 
-        if( this.__data.length <= Math.pow( 10, 7 ) ){
-            GidPool.updateObject( this, true );
-        }else{
-            Log.warn( "Volume too large (>10^7), not adding to GidPool" );
-            GidPool.removeObject( this );
-        }
-
     },
 
     /**
      * set transformation matrix
      * @param {Matrix4} matrix - 4x4 transformation matrix
+     * @return {undefined}
      */
     setMatrix: function( matrix ){
 
@@ -60383,6 +58074,7 @@ Volume.prototype = {
     /**
      * set atom indices
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @return {undefined}
      */
     setDataAtomindex: function( dataAtomindex ){
 
@@ -60659,7 +58351,7 @@ Volume.prototype = {
         p.scale = p.scale || 'Spectral';
         p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
 
-        var colorMaker = ColorMakerRegistry.getScheme( p );
+        var colorMaker = ColorMakerRegistry$$1.getScheme( p );
 
         var n = this.dataPosition.length / 3;
         var array = new Float32Array( n * 3 );
@@ -60856,8 +58548,6 @@ Volume.prototype = {
     dispose: function(){
 
         if( this.workerPool ) this.workerPool.terminate();
-
-        GidPool.removeObject( this );
 
     }
 
@@ -61082,9 +58772,94 @@ Superposition.prototype = {
  */
 
 
-// TODO params handling in constructor and getParameters method
+function centerPbc( coords, mean, box ){
 
-function Trajectory( trajPath, structure, selectionString ){
+    if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
+        return;
+    }
+
+    var i;
+    var n = coords.length;
+
+    var bx = box[ 0 ], by = box[ 1 ], bz = box[ 2 ];
+    var mx = mean[ 0 ], my = mean[ 1 ], mz = mean[ 2 ];
+
+    var fx = - mx + bx + bx / 2;
+    var fy = - my + by + by / 2;
+    var fz = - mz + bz + bz / 2;
+
+    for( i = 0; i < n; i += 3 ){
+        coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
+        coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
+        coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
+    }
+
+}
+
+
+function removePbc( x, box ){
+
+    if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
+        return;
+    }
+
+    // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
+    // in-place
+
+    var i, j, d, dist;
+    var n = x.length;
+
+    for( i = 3; i < n; i += 3 ){
+
+        for( j = 0; j < 3; ++j ){
+
+            dist = x[ i + j ] - x[ i - 3 + j ];
+
+            if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
+
+                if( dist > 0 ){
+
+                    for( d = 0; d < 3; ++d ){
+                        x[ i + d ] -= box[ j * 3 + d ];
+                    }
+
+                }else{
+
+                    for( d = 0; d < 3; ++d ){
+                        x[ i + d ] += box[ j * 3 + d ];
+                    }
+
+                }
+            }
+
+        }
+
+    }
+
+    return x;
+
+}
+
+
+/**
+ * Trajectory parameter object.
+ * @typedef {Object} TrajectoryParameters - parameters
+ *
+ * @property {String} sele - to restrict atoms used for superposition
+ * @property {Boolean} centerPbc - center on initial frame
+ * @property {Boolean} removePbc - try fixing periodic boundary discontinuities
+ * @property {Boolean} superpose - superpose on initial frame
+ */
+
+
+/**
+ * Trajectory object for tying frames and structure together
+ * @class
+ * @param {String|Frames} trajPath - trajectory source
+ * @param {Structure} structure - the structure object
+ * @param {TrajectoryParameters} params - trajectory parameters
+ */
+function Trajectory( trajPath, structure, params ){
 
     this.signals = {
         gotNumframes: new Signal(),
@@ -61093,17 +58868,17 @@ function Trajectory( trajPath, structure, selectionString ){
         playerChanged: new Signal(),
     };
 
-    this.params = {
-        centerPbc: true,
-        removePbc: true,
-        superpose: true
-    };
+    var p = params || {};
+    p.centerPbc = defaults( p.centerPbc, true );
+    p.removePbc = defaults( p.removePbc, true );
+    p.superpose = defaults( p.superpose, true );
+    this.setParameters( p );
 
     this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
     // selection to restrict atoms used for superposition
     this.selection = new Selection(
-        selectionString || "backbone and not hydrogen"
+        defaults( p.sele, "backbone and not hydrogen" )
     );
 
     this.selection.signals.stringChanged.add( function(){
@@ -61254,28 +59029,21 @@ Trajectory.prototype = {
     setParameters: function( params ){
 
         var p = params;
-        var tp = this.params;
         var resetCache = false;
 
-        if( p.centerPbc !== undefined && p.centerPbc !== tp.centerPbc ){
-
-            tp.centerPbc = p.centerPbc;
+        if( p.centerPbc !== undefined && p.centerPbc !== this.centerPbc ){
+            this.centerPbc = p.centerPbc;
             resetCache = true;
-
         }
 
-        if( p.removePbc !== undefined && p.removePbc !== tp.removePbc ){
-
-            tp.removePbc = p.removePbc;
+        if( p.removePbc !== undefined && p.removePbc !== this.removePbc ){
+            this.removePbc = p.removePbc;
             resetCache = true;
-
         }
 
-        if( p.superpose !== undefined && p.superpose !== tp.superpose ){
-
-            tp.superpose = p.superpose;
+        if( p.superpose !== undefined && p.superpose !== this.superpose ){
+            this.superpose = p.superpose;
             resetCache = true;
-
         }
 
         if( resetCache ) this.resetCache();
@@ -61475,74 +59243,7 @@ Trajectory.prototype = {
 
     },
 
-    centerPbc: function( coords, mean, box ){
-
-        if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
-            return;
-        }
-
-        var i;
-        var n = coords.length;
-
-        var bx = box[ 0 ], by = box[ 1 ], bz = box[ 2 ];
-        var mx = mean[ 0 ], my = mean[ 1 ], mz = mean[ 2 ];
-
-        var fx = - mx + bx + bx / 2;
-        var fy = - my + by + by / 2;
-        var fz = - mz + bz + bz / 2;
-
-        for( i = 0; i < n; i += 3 ){
-            coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
-            coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
-            coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
-        }
-
-    },
-
-    removePbc: function( x, box ){
-
-        if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
-            return;
-        }
-
-        // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
-        // in-place
-
-        var i, j, d, dist;
-        var n = x.length;
-
-        for( i = 3; i < n; i += 3 ){
-
-            for( j = 0; j < 3; ++j ){
-
-                dist = x[ i + j ] - x[ i - 3 + j ];
-
-                if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
-
-                    if( dist > 0 ){
-
-                        for( d = 0; d < 3; ++d ){
-                            x[ i + d ] -= box[ j * 3 + d ];
-                        }
-
-                    }else{
-
-                        for( d = 0; d < 3; ++d ){
-                            x[ i + d ] += box[ j * 3 + d ];
-                        }
-
-                    }
-                }
-
-            }
-
-        }
-
-        return x;
-
-    },
-
-    superpose: function( x ){
+    doSuperpose: function( x ){
 
         var i, j;
         var n = this.indices.length * 3;
@@ -61572,22 +59273,22 @@ Trajectory.prototype = {
 
         if( box ){
 
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+            if( this.backboneIndices.length > 0 && this.centerPbc ){
                 var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
                 var mean = this.getCircularMean(
                     this.backboneIndices, coords, box2
                 );
-                this.centerPbc( coords, mean, box2 );
+                centerPbc( coords, mean, box2 );
             }
 
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
+            if( this.removePbc ){
+                removePbc( coords, box );
             }
 
         }
 
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
+        if( this.indices.length > 0 && this.superpose ){
+            this.doSuperpose( coords );
         }
 
         this.frameCache[ i ] = coords;
@@ -61629,6 +59330,10 @@ Trajectory.prototype = {
     }
 
 };
+
+ShaderRegistry.add('shader/Mesh.vert', "#define STANDARD\r\n\r\nuniform float nearClip;\r\nuniform vec3 clipCenter;\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#if defined( PICKING )\r\nattribute vec3 pickingColor;\r\nvarying vec3 vPickingColor;\r\n#elif defined( NOLIGHT )\r\nvarying vec3 vColor;\r\n#else\r\n#include color_pars_vertex\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#endif\r\n\r\n#include common\r\n\r\nvoid main(){\r\n\r\n#if defined( PICKING )\r\nvPickingColor = pickingColor;\r\n#elif defined( NOLIGHT )\r\nvColor = color;\r\n#else\r\n#include color_vertex\r\n#include beginnormal_vertex\r\n#include defaultnormal_vertex\r\n// Normal computed with derivatives when FLAT_SHADED\r\n#ifndef FLAT_SHADED\r\nvNormal = normalize( transformedNormal );\r\n#endif\r\n#endif\r\n\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\r\nvViewPosition = -mvPosition.xyz;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
+
+ShaderRegistry.add('shader/Mesh.frag', "#define STANDARD\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform float clipRadius;\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#if defined( PICKING )\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#elif defined( NOLIGHT )\r\nvarying vec3 vColor;\r\n#else\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\n#if defined( PICKING )\r\n\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#elif defined( NOLIGHT )\r\n\r\ngl_FragColor = vec4( vColor, opacity );\r\n\r\n#else\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n#include normal_flip\r\n#include normal_fragment\r\n\r\n#include dull_interior_fragment\r\n\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#include opaque_back_fragment\r\n\r\n#endif\r\n\r\n}");
 
 /**
  * @file Buffer
@@ -61702,6 +59407,8 @@ function Buffer( position, color, index, pickingColor, params ){
     this.side = defaults( p.side, "double" );
     this.opacity = defaults( p.opacity, 1.0 );
     this.clipNear = defaults( p.clipNear, 0 );
+    this.clipRadius = defaults( p.clipRadius, 0 );
+    this.clipCenter = defaults( p.clipCenter, new Vector3() );
     this.flatShaded = defaults( p.flatShaded, false );
     this.background = defaults( p.background, false );
     this.linewidth = defaults( p.linewidth, 1 );
@@ -61743,7 +59450,9 @@ function Buffer( position, color, index, pickingColor, params ){
             "fogNear": { value: 0.0 },
             "fogFar": { value: 0.0 },
             "opacity": { value: this.opacity },
-            "nearClip": { value: 0.0 }
+            "nearClip": { value: 0.0 },
+            "clipRadius": { value: this.clipRadius },
+            "clipCenter": { value: this.clipCenter }
         },
         {
             "emissive" : { value: new Color( 0x000000 ) },
@@ -61785,6 +59494,8 @@ Buffer.prototype = {
         side: { updateShader: true, property: true },
         opacity: { uniform: true },
         clipNear: { updateShader: true, property: true },
+        clipRadius: { updateShader: true, property: true, uniform: true },
+        clipCenter: { uniform: true },
         flatShaded: { updateShader: true },
         background: { updateShader: true },
         linewidth: { property: true },
@@ -61896,7 +59607,7 @@ Buffer.prototype = {
             if( list === undefined ){
                 edges[ a ] = [ b ];
                 return true;
-            }else if( list.indexOf( b ) === -1 ){
+            }else if( !list.includes( b ) ){
                 list.push( b );
                 return true;
             }
@@ -62101,6 +59812,10 @@ Buffer.prototype = {
             defines.NEAR_CLIP = 1;
         }
 
+        if( this.clipRadius ){
+            defines.RADIUS_CLIP = 1;
+        }
+
         if( type === "picking" ){
 
             defines.PICKING = 1;
@@ -62224,6 +59939,7 @@ Buffer.prototype = {
     /**
      * Set buffer parameters
      * @param {BufferParameters} params - buffer parameters object
+     * @return {undefined}
      */
     setParameters: function( params ){
 
@@ -62373,7 +60089,9 @@ Buffer.prototype = {
             }
 
             if( u[ name ] !== undefined ){
-                if( u[ name ].value.set ){
+                if( u[ name ].value.isVector3 ){
+                    u[ name ].value.copy( data[ name ] );
+                }else if( u[ name ].value.set ){
                     u[ name ].value.set( data[ name ] );
                 }else{
                     u[ name ].value = data[ name ];
@@ -62381,7 +60099,9 @@ Buffer.prototype = {
             }
 
             if( wu[ name ] !== undefined ){
-                if( wu[ name ].value.set ){
+                if( wu[ name ].value.isVector3 ){
+                    wu[ name ].value.copy( data[ name ] );
+                }else if( wu[ name ].value.set ){
                     wu[ name ].value.set( data[ name ] );
                 }else{
                     wu[ name ].value = data[ name ];
@@ -62389,7 +60109,9 @@ Buffer.prototype = {
             }
 
             if( pu[ name ] !== undefined ){
-                if( pu[ name ].value.set ){
+                if( pu[ name ].value.isVector3 ){
+                    pu[ name ].value.copy( data[ name ] );
+                }else if( pu[ name ].value.set ){
                     pu[ name ].value.set( data[ name ] );
                 }else{
                     pu[ name ].value = data[ name ];
@@ -62441,6 +60163,7 @@ Buffer.prototype = {
     /**
      * Set buffer visibility
      * @param {Boolean} value - visibility value
+     * @return {undefined}
      */
     setVisibility: function( value ){
 
@@ -62468,6 +60191,7 @@ Buffer.prototype = {
 
     /**
      * Free buffer resources
+     * @return {undefined}
      */
     dispose: function(){
 
@@ -62877,6 +60601,10 @@ SphereGeometryBuffer.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ShaderRegistry.add('shader/SphereImpostor.vert', "uniform mat4 projectionMatrixInverse;\r\nuniform float nearClip;\r\n\r\nvarying float vRadius;\r\nvarying float vRadiusSq;\r\nvarying vec3 vPoint;\r\nvarying vec3 vPointViewPosition;\r\n\r\nattribute vec2 mapping;\r\nattribute float radius;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include color_pars_vertex\r\n#endif\r\n\r\nconst mat4 D = mat4(\r\n1.0, 0.0, 0.0, 0.0,\r\n0.0, 1.0, 0.0, 0.0,\r\n0.0, 0.0, 1.0, 0.0,\r\n0.0, 0.0, 0.0, -1.0\r\n);\r\n\r\nmat4 transpose( in mat4 inMatrix ) {\r\nvec4 i0 = inMatrix[0];\r\nvec4 i1 = inMatrix[1];\r\nvec4 i2 = inMatrix[2];\r\nvec4 i3 = inMatrix[3];\r\n\r\nmat4 outMatrix = mat4(\r\nvec4(i0.x, i1.x, i2.x, i3.x),\r\nvec4(i0.y, i1.y, i2.y, i3.y),\r\nvec4(i0.z, i1.z, i2.z, i3.z),\r\nvec4(i0.w, i1.w, i2.w, i3.w)\r\n);\r\nreturn outMatrix;\r\n}\r\n\r\n//------------------------------------------------------------------------------\r\n// Compute point size and center using the technique described in:\r\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\r\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\r\n//\r\n// Code based on\r\n\r\n\r\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\r\n// .SECTION Thanks\r\n// <verbatim>\r\n//\r\n// This file is part of the PointSprites plugin developed and contributed by\r\n//\r\n// Copyright (c) CSCS - Swiss National Supercomputing Centre\r\n// EDF - Electricite de France\r\n//\r\n// John Biddiscombe, Ugo Varetto (CSCS)\r\n// Stephane Ploix (EDF)\r\n//\r\n// </verbatim>\r\n//\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - adapted to work with quads\r\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\r\n\r\nvec2 xbc;\r\nvec2 ybc;\r\n\r\nmat4 T = mat4(\r\nradius, 0.0, 0.0, 0.0,\r\n0.0, radius, 0.0, 0.0,\r\n0.0, 0.0, radius, 0.0,\r\nposition.x, position.y, position.z, 1.0\r\n);\r\n\r\nmat4 R = transpose( projectionMatrix * modelViewMatrix * T );\r\nfloat A = dot( R[ 3 ], D * R[ 3 ] );\r\nfloat B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\r\nfloat C = dot( R[ 0 ], D * R[ 0 ] );\r\nxbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nxbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nfloat sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\r\n\r\nA = dot( R[ 3 ], D * R[ 3 ] );\r\nB = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\r\nC = dot( R[ 1 ], D * R[ 1 ] );\r\nybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\r\nfloat sy = abs( ybc[ 0 ] - ybc[ 1 ] ) * 0.5;\r\n\r\ngl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\r\ngl_Position.xy -= mapping * vec2( sx, sy );\r\ngl_Position.xy *= gl_Position.w;\r\n\r\n}\r\n\r\nvoid main(void){\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\n#else\r\n#include color_vertex\r\n#endif\r\n\r\nvec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\r\n// avoid clipping, added again in fragment shader\r\nmvPosition.z -= radius;\r\n\r\ngl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );\r\nComputePointSizeAndPositionInClipCoordSphere();\r\n\r\nvRadius = radius;\r\nvRadiusSq = radius * radius;\r\nvec4 vPoint4 = projectionMatrixInverse * gl_Position;\r\nvPoint = vPoint4.xyz / vPoint4.w;\r\nvPointViewPosition = -mvPosition.xyz / mvPosition.w;\r\n\r\n}");
+
+ShaderRegistry.add('shader/SphereImpostor.frag', "#define STANDARD\r\n#define IMPOSTOR\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform mat4 projectionMatrix;\r\nuniform float ortho;\r\n\r\n// uniform vec3 specular;\r\n// uniform float shininess;\r\n\r\nvarying float vRadius;\r\nvarying float vRadiusSq;\r\nvarying vec3 vPoint;\r\nvarying vec3 vPointViewPosition;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n// #include lights_phong_pars_fragment\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool flag2 = false;\r\nbool interior = false;\r\nvec3 cameraPos;\r\nvec3 cameraNormal;\r\n\r\n// vec4 poly_color = gl_Color;\r\n// if(uf_use_border_hinting == 1.0)\r\n// {\r\n// vec3 wc_eye_dir = normalize(wc_sp_pt);\r\n// float n_dot_e = abs(dot(wc_sp_nrml,wc_eye_dir));\r\n// float alpha = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\r\n// poly_color = mix(gl_Color,uf_border_color,0.75*alpha);\r\n// }\r\n// color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\r\n\r\n// Calculate depth based on the given camera position.\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\r\n}\r\n\r\nbool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){\r\n\r\nvec3 cameraSpherePos = -vPointViewPosition;\r\ncameraSpherePos.z += vRadius;\r\n\r\nvec3 rayOrigin = mix( vec3( 0.0, 0.0, 0.0 ), vPoint, ortho );\r\nvec3 rayDirection = mix( normalize( vPoint ), vec3( 0.0, 0.0, 1.0 ), ortho );\r\nvec3 cameraSphereDir = mix( cameraSpherePos, rayOrigin - cameraSpherePos, ortho );\r\n\r\nfloat B = dot( rayDirection, cameraSphereDir );\r\nfloat det = B * B + vRadiusSq - dot( cameraSphereDir, cameraSphereDir );\r\n\r\nif( det < 0.0 ){\r\ndiscard;\r\nreturn false;\r\n}else{\r\nfloat sqrtDet = sqrt( det );\r\nfloat posT = mix( B + sqrtDet, B + sqrtDet, ortho );\r\nfloat negT = mix( B - sqrtDet, sqrtDet - B, ortho );\r\n\r\ncameraPos = rayDirection * negT + rayOrigin;\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcDepth( cameraPos ) <= 0.0 ){\r\ncameraPos = rayDirection * posT + rayOrigin;\r\ninterior = true;\r\nreturn false;\r\n}else if( calcClip( cameraPos ) > 0.0 ){\r\ncameraPos = rayDirection * posT + rayOrigin;\r\ninterior = true;\r\nflag2 = true;\r\nreturn false;\r\n}else{\r\ncameraNormal = normalize( cameraPos - cameraSpherePos );\r\n}\r\n#else\r\nif( calcDepth( cameraPos ) <= 0.0 ){\r\ncameraPos = rayDirection * posT + rayOrigin;\r\ninterior = true;\r\nreturn false;\r\n}else{\r\ncameraNormal = normalize( cameraPos - cameraSpherePos );\r\n}\r\n#endif\r\n\r\nreturn true;\r\n}\r\n\r\nreturn false; // ensure that each control flow has a return\r\n\r\n}\r\n\r\nvoid main(void){\r\n\r\n// vec3 specular = vec3( 1.0, 1.0, 1.0 );\r\n// float specularStrength = 1.0;\r\n// float shininess = 1.0;\r\n\r\nbool flag = Impostor( cameraPos, cameraNormal );\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( cameraPos ) > 0.0 )\r\ndiscard;\r\n#endif\r\n\r\n// FIXME not compatible with custom clipping plane\r\n//Set the depth based on the new cameraPos.\r\ngl_FragDepthEXT = calcDepth( cameraPos );\r\nif( !flag ){\r\n\r\n// clamp to near clipping plane and add a tiny value to\r\n// make spheres with a greater radius occlude smaller ones\r\n#ifdef NEAR_CLIP\r\nif( flag2 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\r\n}else if( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n#else\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n#endif\r\n\r\n}\r\n\r\n// bugfix (mac only?)\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n#ifdef PICKING\r\n\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#else\r\n\r\n// vec3 specColor = vColor; // vec3( 1.0, 1.0, 1.0 );\r\n// vec3 lightDir = vec3( 0.0, 0.0, 1.0 );\r\n// vec3 vNormal = cameraNormal;\r\n\r\n// float lambertian = max(dot(lightDir,vNormal), 0.0);\r\n// float specular = 0.0;\r\n\r\n// if(lambertian > 0.0) {\r\n\r\n// vec3 reflectDir = reflect(-lightDir, vNormal);\r\n// vec3 viewDir = normalize(-cameraPos);\r\n\r\n// float specAngle = max(dot(reflectDir, viewDir), 0.0);\r\n// specular = pow(specAngle, 4.0);\r\n\r\n// // the exponent controls the shininess (try mode 2)\r\n// specular = pow(specAngle, 16.0);\r\n\r\n// // according to the rendering equation we would need to multiply\r\n// // with the the \"lambertian\", but this has little visual effect\r\n// specular *= lambertian;\r\n\r\n\r\n// }\r\n\r\n// gl_FragColor = vec4( lambertian*vColor + specular*specColor, opacity );\r\n\r\n//\r\n\r\nvec3 vNormal = cameraNormal;\r\nvec3 vViewPosition = -cameraPos;\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n#include normal_flip\r\n#include normal_fragment\r\nif( interior ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n\r\n// #include lights_phong_fragment\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
 
 /**
  * @file Mapped Buffer
@@ -63366,6 +61094,10 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ShaderRegistry.add('shader/CylinderImpostor.vert', "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - shift\r\n\r\nattribute vec3 mapping;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\nattribute float radius;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nattribute vec3 pickingColor2;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\n// attribute vec3 color;\r\nattribute vec3 color2;\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#endif\r\n\r\nuniform mat4 modelViewMatrixInverse;\r\nuniform float ortho;\r\n\r\nvoid main(){\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\nvPickingColor2 = pickingColor2;\r\n#else\r\nvColor1 = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\n// vRadius = radius;\r\nbase_radius.w = radius;\r\n\r\nvec3 center = position;\r\nvec3 dir = normalize( position2 - position1 );\r\nfloat ext = length( position2 - position1 ) / 2.0;\r\n\r\n// using cameraPosition fails on some machines, not sure why\r\n// vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );\r\nvec3 cam_dir;\r\nif( ortho == 0.0 ){\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;\r\n}else{\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;\r\n}\r\ncam_dir = normalize( cam_dir );\r\n\r\nvec3 ldir;\r\n\r\nfloat b = dot( cam_dir, dir );\r\nend_b.w = b;\r\n// direction vector looks away, so flip\r\nif( b < 0.0 )\r\nldir = -ext * dir;\r\n// direction vector already looks in my direction\r\nelse\r\nldir = ext * dir;\r\n\r\nvec3 left = normalize( cross( cam_dir, ldir ) );\r\nleft = radius * left;\r\nvec3 up = radius * normalize( cross( left, ldir ) );\r\n\r\n// transform to modelview coordinates\r\naxis = normalize( normalMatrix * ldir );\r\nU = normalize( normalMatrix * up );\r\nV = normalize( normalMatrix * left );\r\n\r\nvec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );\r\nbase_radius.xyz = base4.xyz / base4.w;\r\n\r\nvec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );\r\nvec4 end4 = top_position;\r\nend_b.xyz = end4.xyz / end4.w;\r\n\r\nw = modelViewMatrix * vec4(\r\ncenter + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\r\n);\r\n\r\ngl_Position = projectionMatrix * w;\r\n\r\n// avoid clipping (1.0 seems to induce flickering with some drivers)\r\ngl_Position.z = 0.99;\r\n\r\n}");
+
+ShaderRegistry.add('shader/CylinderImpostor.frag', "#define STANDARD\r\n#define IMPOSTOR\r\n\r\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - custom clipping\r\n// - three.js lighting\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform mat4 projectionMatrix;\r\nuniform float ortho;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#include common\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool interior = false;\r\n\r\nfloat distSq3( vec3 v3a, vec3 v3b ){\r\n\r\nreturn (\r\n( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\r\n( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\r\n( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\r\n);\r\n\r\n}\r\n\r\n// round caps\r\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\r\n\r\n// void main2(void)\r\n// {\r\n// #ifdef PICKING\r\n// gl_FragColor = vec4( vPickingColor, 1.0 );\r\n// #else\r\n// gl_FragColor = vec4( vColor, 1.0 );\r\n// #endif\r\n// }\r\n\r\n// Calculate depth based on the given camera position.\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\r\n}\r\n\r\nvoid main(){\r\n\r\nvec3 point = w.xyz / w.w;\r\n\r\n// unpacking\r\nvec3 base = base_radius.xyz;\r\nfloat vRadius = base_radius.w;\r\nvec3 end = end_b.xyz;\r\nfloat b = end_b.w;\r\n\r\nvec3 end_cyl = end;\r\nvec3 surface_point = point;\r\n\r\nvec3 ray_target = surface_point;\r\nvec3 ray_origin = vec3(0.0);\r\nvec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\r\nmat3 basis = mat3( U, V, axis );\r\n\r\nvec3 diff = ray_target - 0.5 * (base + end_cyl);\r\nvec3 P = diff * basis;\r\n\r\n// angle (cos) between cylinder cylinder_axis and ray direction\r\nfloat dz = dot( axis, ray_direction );\r\n\r\nfloat radius2 = vRadius*vRadius;\r\n\r\n// calculate distance to the cylinder from ray origin\r\nvec3 D = vec3(dot(U, ray_direction),\r\ndot(V, ray_direction),\r\ndz);\r\nfloat a0 = P.x*P.x + P.y*P.y - radius2;\r\nfloat a1 = P.x*D.x + P.y*D.y;\r\nfloat a2 = D.x*D.x + D.y*D.y;\r\n\r\n// calculate a dicriminant of the above quadratic equation\r\nfloat d = a1*a1 - a0*a2;\r\nif (d < 0.0)\r\n// outside of the cylinder\r\ndiscard;\r\n\r\nfloat dist = (-a1 + sqrt(d)) / a2;\r\n\r\n// point of intersection on cylinder surface\r\nvec3 new_point = ray_target + dist * ray_direction;\r\n\r\nvec3 tmp_point = new_point - base;\r\nvec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\r\n\r\nray_origin = mix( ray_origin, surface_point, ortho );\r\n\r\n// test caps\r\nfloat front_cap_test = dot( tmp_point, axis );\r\nfloat end_cap_test = dot((new_point - end_cyl), axis);\r\n\r\n// to calculate caps, simply check the angle between\r\n// the point of intersection - cylinder end vector\r\n// and a cap plane normal (which is the cylinder cylinder_axis)\r\n// if the angle < 0, the point is outside of cylinder\r\n// test front cap\r\n\r\n#ifndef CAP\r\nvec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\nvec3 tmp_point2 = new_point2 - base;\r\n#endif\r\n\r\n// flat\r\nif (front_cap_test < 0.0)\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(-axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(-axis, (base)) / dNV;\r\nvec3 front_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif (dot(front_point - base, front_point-base) > radius2)\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = front_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(axis, end_cyl) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - end_cyl, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\n// test end cap\r\n\r\n\r\n// flat\r\nif( end_cap_test > 0.0 )\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(axis, end_cyl) / dNV;\r\nvec3 end_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif( dot(end_point - end_cyl, end_point-base) > radius2 )\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = end_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(-axis, (base)) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - base, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\ngl_FragDepthEXT = calcDepth( new_point );\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( new_point ) > 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\nif( calcClip( new_point ) > 0.0 )\r\ndiscard;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\r\n}\r\n}else if( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#else\r\nif( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#endif\r\n\r\n// this is a workaround necessary for Mac\r\n// otherwise the modified fragment won't clip properly\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n#ifdef PICKING\r\n\r\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\r\nif( b < 0.0 ){\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n}else{\r\ngl_FragColor = vec4( vPickingColor2, objectId );\r\n}\r\n}else{\r\nif( b > 0.0 ){\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n}else{\r\ngl_FragColor = vec4( vPickingColor2, objectId );\r\n}\r\n}\r\n\r\n#else\r\n\r\nvec3 vViewPosition = -new_point;\r\nvec3 vNormal = _normal;\r\nvec3 vColor;\r\n\r\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\r\nif( b < 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}else{\r\nif( b > 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n\r\n// don't use #include normal_fragment\r\nvec3 normal = normalize( vNormal );\r\nif( interior ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
 
 /**
  * @file Aligned Box Buffer
@@ -63886,6 +61618,7 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
     /**
      * Set buffer parameters
      * @param {BufferParameters} params - buffer parameters object
+     * @return {undefined}
      */
     this.setParameters = function( params ){
 
@@ -63950,6 +61683,12 @@ function Shape$1( name, params ){
     var disableImpostor = defaults( p.disableImpostor, false );
     var openEnded = defaults( p.openEnded, false );
 
+    var center = new Vector3();
+    var boundingBox = new Box3();
+
+    var tmpVec = new Vector3();
+    var tmpBox = new Box3();
+
     var bufferList = [];
 
     var spherePosition = [];
@@ -63983,6 +61722,8 @@ function Shape$1( name, params ){
             elm = elm.toArray();
         }else if( elm.x !== undefined ){
             elm = [ elm.x, elm.y, elm.z ];
+        }else if( elm.r !== undefined ){
+            elm = [ elm.r, elm.g, elm.b ];
         }
         array.push.apply( array, elm );
 
@@ -63993,6 +61734,7 @@ function Shape$1( name, params ){
      * @instance
      * @memberof Shape
      * @param {Buffer} buffer - buffer object
+     * @return {undefined}
      */
     function addBuffer( buffer ){
 
@@ -64014,6 +61756,7 @@ function Shape$1( name, params ){
      * @param {Float32Array|Array} color - colors
      * @param {Uint32Array|Uint16Array|Array} [index] - indices
      * @param {Float32Array|Array} [normal] - normals
+     * @return {undefined}
      */
     function addMesh( position, color, index, normal ){
 
@@ -64034,6 +61777,9 @@ function Shape$1( name, params ){
         var meshBuffer = new MeshBuffer( position, color, index, normal );
         bufferList.push( meshBuffer );
 
+        tmpBox.setFromArray( position );
+        boundingBox.union( tmpBox );
+
     }
 
     /**
@@ -64046,12 +61792,15 @@ function Shape$1( name, params ){
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addSphere( position, color, radius ){
 
         addElement( position, spherePosition );
         addElement( color, sphereColor );
         sphereRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
     }
 
@@ -64067,6 +61816,7 @@ function Shape$1( name, params ){
      * @param {Float} radius - radius value
      * @param {Vector3|Array} majorAxis - major axis vector or array
      * @param {Vector3|Array} minorAxis - minor axis vector or array
+     * @return {undefined}
      */
     function addEllipsoid( position, color, radius, majorAxis, minorAxis ){
 
@@ -64075,6 +61825,8 @@ function Shape$1( name, params ){
         ellipsoidRadius.push( radius );
         addElement( majorAxis, ellipsoidMajorAxis );
         addElement( minorAxis, ellipsoidMinorAxis );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
     }
 
@@ -64089,6 +61841,7 @@ function Shape$1( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addCylinder( from, to, color, radius ){
 
@@ -64096,6 +61849,9 @@ function Shape$1( name, params ){
         addElement( to, cylinderTo );
         addElement( color, cylinderColor );
         cylinderRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -64110,6 +61866,7 @@ function Shape$1( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addCone( from, to, color, radius ){
 
@@ -64117,6 +61874,9 @@ function Shape$1( name, params ){
         addElement( to, coneTo );
         addElement( color, coneColor );
         coneRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -64131,6 +61891,7 @@ function Shape$1( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addArrow( from, to, color, radius ){
 
@@ -64138,6 +61899,9 @@ function Shape$1( name, params ){
         addElement( to, arrowTo );
         addElement( color, arrowColor );
         arrowRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -64266,6 +62030,13 @@ function Shape$1( name, params ){
 
     // API
 
+    Object.defineProperties( this, {
+        center: {
+            get: function(){ return boundingBox.center( center ); }
+        },
+    } );
+    this.boundingBox = boundingBox;
+
     this.addBuffer = addBuffer;
     this.addMesh = addMesh;
     this.addSphere = addSphere;
@@ -64295,6 +62066,8 @@ Shape$1.prototype.type = "Shape";
  *                            otherwise defer changes until set visible again
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
+ * @property {Integer} clipRadius - radius of clipping sphere
+ * @property {Vector3} clipCenter - position of for spherical clipping
  * @property {Boolean} flatShaded - render flat shaded
  * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
  * @property {String} side - which triangle sides to render, "front" front-side,
@@ -64327,6 +62100,8 @@ function Representation( object, viewer, params ){
      * @member {Viewer}
      */
     this.viewer = viewer;
+
+    this.gidPool = params ? params.gidPool : undefined;
 
     /**
      * Counter that keeps track of tasks related to the creation of
@@ -64366,6 +62141,12 @@ Representation.prototype = {
         clipNear: {
             type: "range", step: 1, max: 100, min: 0, buffer: true
         },
+        clipRadius: {
+            type: "number", precision: 1, max: 1000, min: 0, buffer: true
+        },
+        clipCenter: {
+            type: "vector3", precision: 1, buffer: true
+        },
         flatShaded: {
             type: "boolean", buffer: true
         },
@@ -64385,11 +62166,11 @@ Representation.prototype = {
 
         colorScheme: {
             type: "select", update: "color",
-            options: ColorMakerRegistry.getTypes()
+            options: ColorMakerRegistry$$1.getTypes()
         },
         colorScale: {
             type: "select", update: "color",
-            options: ColorMakerRegistry.getScales()
+            options: ColorMakerRegistry$$1.getScales()
         },
         colorValue: {
             type: "color", update: "color"
@@ -64399,7 +62180,7 @@ Representation.prototype = {
         },
         colorMode: {
             type: "select", update: "color",
-            options: ColorMakerRegistry.getModes()
+            options: ColorMakerRegistry$$1.getModes()
         },
 
         roughness: {
@@ -64419,6 +62200,8 @@ Representation.prototype = {
         var p = params || {};
 
         this.clipNear = defaults( p.clipNear, 0 );
+        this.clipRadius = defaults( p.clipRadius, 0 );
+        this.clipCenter = defaults( p.clipCenter, new Vector3() );
         this.flatShaded = defaults( p.flatShaded, false );
         this.side = defaults( p.side, "double" );
         this.opacity = defaults( p.opacity, 1.0 );
@@ -64500,9 +62283,11 @@ Representation.prototype = {
 
     },
 
-    getColorParams: function(){
+    getColorParams: function( p ){
 
-        return {
+        return Object.assign( {
+
+            gidPool: this.gidPool,
 
             scheme: this.colorScheme,
             scale: this.colorScale,
@@ -64510,7 +62295,7 @@ Representation.prototype = {
             domain: this.colorDomain,
             mode: this.colorMode,
 
-        };
+        }, p );
 
     },
 
@@ -64519,6 +62304,8 @@ Representation.prototype = {
         return Object.assign( {
 
             clipNear: this.clipNear,
+            clipRadius: this.clipRadius,
+            clipCenter: this.clipCenter,
             flatShaded: this.flatShaded,
             opacity: this.opacity,
             side: this.side,
@@ -64535,9 +62322,9 @@ Representation.prototype = {
 
     setColor: function( value, p ){
 
-        var types = Object.keys( ColorMakerRegistry.getTypes() );
+        var types = Object.keys( ColorMakerRegistry$$1.getTypes() );
 
-        if( types.indexOf( value ) !== -1 ){
+        if( types.includes( value ) ){
 
             if( p ){
                 p.colorScheme = value;
@@ -64577,7 +62364,7 @@ Representation.prototype = {
 
     },
 
-    build: function( params ){
+    build: function( updateWhat ){
 
         if( this.lazy && !this.visible ){
             this.lazyProps.build = true;
@@ -64585,12 +62372,8 @@ Representation.prototype = {
         }
 
         if( !this.prepare ){
-            if( !params ){
-                params = this.getParameters();
-                delete params.quality;
-            }
             this.tasks.increment();
-            this.make( params, function(){} );
+            this.make();
             return;
         }
 
@@ -64602,30 +62385,21 @@ Representation.prototype = {
             this.tasks.increment();
         }
 
-        if( !params ){
-            params = this.getParameters();
-            delete params.quality;
-        }
-
-        this.queue.push( params );
+        this.queue.push( updateWhat || false );
 
     },
 
-    make: function( params, callback ){
+    make: function( updateWhat, callback ){
 
         if( exports.Debug ) Log.time( "Representation.make " + this.type );
 
-        if( params && !params.__update ){
-            this.init( params );
-        }
-
         var _make = function(){
 
-            if( params.__update ){
-                this.update( params.__update );
+            if( updateWhat ){
+                this.update( updateWhat );
                 this.viewer.requestRender();
                 this.tasks.decrement();
-                callback();
+                if( callback ) callback();
             }else{
                 this.clear();
                 this.create();
@@ -64634,7 +62408,7 @@ Representation.prototype = {
                     this.attach( function(){
                         if( exports.Debug ) Log.timeEnd( "Representation.attach " + this.type );
                         this.tasks.decrement();
-                        callback();
+                        if( callback ) callback();
                     }.bind( this ) );
                 }
             }
@@ -64672,6 +62446,8 @@ Representation.prototype = {
         if( this.visible ){
 
             var lazyProps = this.lazyProps;
+            var bufferParams = lazyProps.bufferParams;
+            var what = lazyProps.what;
 
             if( lazyProps.build ){
 
@@ -64679,9 +62455,11 @@ Representation.prototype = {
                 this.build();
                 return;
 
-            }else if( lazyProps.bufferParams || lazyProps.what ){
+            }else if( Object.keys( bufferParams ).length || Object.keys( what ).length ){
 
-                this.updateParameters( lazyProps.bufferParams, lazyProps.what );
+                lazyProps.bufferParams = {};
+                lazyProps.what = {};
+                this.updateParameters( bufferParams, what );
 
             }
 
@@ -64798,9 +62576,7 @@ Representation.prototype = {
         };
 
         Object.keys( this.parameters ).forEach( function( name ){
-            if( this.parameters.type === "button" ){
-                params[ name ] = this[ name ].bind( this );
-            }else{
+            if( this.parameters[ name ] !== null ){
                 params[ name ] = this[ name ];
             }
         }, this );
@@ -64848,7 +62624,7 @@ Representation.prototype = {
  * @extends Representation
  * @param {SphereBuffer|CylinderBuffer} buffer - a buffer object
  * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params- representation parameters
+ * @param {RepresentationParameters} params - representation parameters
  */
 function BufferRepresentation( buffer, viewer, params ){
 
@@ -65369,12 +63145,10 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             )
         ){
             this.build( {
-                "__update": {
-                    "position": true,
-                    "color": true,
-                    "index": true,
-                    "normal": true
-                }
+                "position": true,
+                "color": true,
+                "index": true,
+                "normal": true
             } );
         }
 
@@ -65393,6 +63167,10 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ShaderRegistry.add('shader/Point.vert', "uniform float nearClip;\r\nuniform float clipRadius;\r\nuniform vec3 clipCenter;\r\nuniform float size;\r\nuniform float canvasHeight;\r\nuniform float pixelRatio;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#include color_pars_vertex\r\n#include common\r\n\r\nvoid main(){\r\n\r\n#include color_vertex\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\n#ifdef USE_SIZEATTENUATION\r\ngl_PointSize = size * pixelRatio * ( ( canvasHeight / 2.0 ) / -mvPosition.z );\r\n#else\r\ngl_PointSize = size * pixelRatio;\r\n#endif\r\n\r\nvViewPosition = -mvPosition.xyz;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n#include radiusclip_vertex\r\n\r\n}");
+
+ShaderRegistry.add('shader/Point.frag', "uniform vec3 diffuse;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform float clipRadius;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#ifdef USE_MAP\r\nuniform sampler2D map;\r\n#endif\r\n\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\nvec3 outgoingLight = vec3( 0.0 );\r\nvec4 diffuseColor = vec4( diffuse, 1.0 );\r\n\r\n#ifdef USE_MAP\r\ndiffuseColor *= texture2D( map, vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y ) );\r\n#endif\r\n\r\n#include color_fragment\r\n#include alphatest_fragment\r\n\r\noutgoingLight = diffuseColor.rgb;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}");
 
 /**
  * @file Point Buffer
@@ -65930,6 +63708,377 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
 } );
 
+ShaderRegistry.add('shader/Image.vert', "uniform float clipRadius;\r\nuniform vec3 clipCenter;\r\n\r\nvarying vec2 vUv;\r\nvarying vec3 vViewPosition;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n\r\nvoid main() {\r\n\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\nvUv = uv;\r\nvViewPosition = -mvPosition.xyz;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n}");
+
+ShaderRegistry.add('shader/Image.frag', "uniform sampler2D map;\r\nuniform float opacity;\r\nuniform vec2 mapSize;\r\nuniform float nearClip;\r\nuniform float clipRadius;\r\n\r\nvarying vec2 vUv;\r\nvarying vec3 vViewPosition;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#include fog_pars_fragment\r\n\r\n\r\n#if defined( CUBIC_INTERPOLATION )\r\n\r\n#if defined( CATMULROM_FILTER ) || defined( MITCHELL_FILTER )\r\n\r\n#if defined( CATMULROM_FILTER )\r\nconst float B = 0.0;\r\nconst float C = 0.5;\r\n#elif defined( MITCHELL_FILTER )\r\nconst float B = 0.333;\r\nconst float C = 0.333;\r\n#endif\r\n\r\nfloat filter( float x ){\r\nfloat f = x;\r\nif( f < 0.0 )\r\n{\r\nf = -f;\r\n}\r\nif( f < 1.0 )\r\n{\r\nreturn ( ( 12.0 - 9.0 * B - 6.0 * C ) * ( f * f * f ) +\r\n( -18.0 + 12.0 * B + 6.0 *C ) * ( f * f ) +\r\n( 6.0 - 2.0 * B ) ) / 6.0;\r\n}\r\nelse if( f >= 1.0 && f < 2.0 )\r\n{\r\nreturn ( ( -B - 6.0 * C ) * ( f * f * f )\r\n+ ( 6.0 * B + 30.0 * C ) * ( f *f ) +\r\n( - ( 12.0 * B ) - 48.0 * C ) * f +\r\n8.0 * B + 24.0 * C)/ 6.0;\r\n}\r\nelse\r\n{\r\nreturn 0.0;\r\n}\r\n}\r\n\r\n#elif defined( BSPLINE_FILTER )\r\n\r\nfloat filter( float x ){\r\nfloat f = x;\r\nif( f < 0.0 ){\r\nf = -f;\r\n}\r\nif( f >= 0.0 && f <= 1.0 ){\r\nreturn ( 2.0 / 3.0 ) + ( 0.5 ) * ( f*f*f ) - ( f*f );\r\n}else if( f > 1.0 && f <= 2.0 ){\r\nreturn 1.0 / 6.0 * pow( ( 2.0 - f ), 3.0 );\r\n}\r\nreturn 1.0;\r\n}\r\n\r\n#else\r\n\r\nfloat filter( float x ){\r\nreturn 1.0;\r\n}\r\n\r\n#endif\r\n\r\nvec4 biCubic( sampler2D tex, vec2 texCoord ){\r\nvec2 texelSize = 1.0 / mapSize;\r\ntexCoord -= texelSize / 2.0;\r\nvec4 nSum = vec4( 0.0 );\r\nfloat nDenom = 0.0;\r\nvec2 cell = fract( texCoord * mapSize );\r\nfor( float m = -1.0; m <= 2.0; ++m ){\r\nfor( float n = -1.0; n <= 2.0; ++n ){\r\nvec4 vecData = texture2D(\r\ntex, texCoord + texelSize * vec2( m, n )\r\n);\r\nfloat c = filter( m - cell.x ) * filter( -n + cell.y );\r\nnSum += vecData * c;\r\nnDenom += c;\r\n}\r\n}\r\nreturn nSum / nDenom;\r\n}\r\n\r\n#endif\r\n\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\n#if defined( CUBIC_INTERPOLATION )\r\ngl_FragColor = biCubic( map, vUv );\r\n#else\r\ngl_FragColor = texture2D( map, vUv );\r\n#endif\r\n\r\ngl_FragColor.a *= opacity;\r\n\r\nif( gl_FragColor.a < 0.01 )\r\ndiscard;\r\n\r\n#include fog_fragment\r\n\r\n}");
+
+/**
+ * @file Image Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+var quadIndices = new Uint16Array([
+    0, 1, 2,
+    1, 3, 2
+]);
+
+var quadUvs = new Float32Array([
+    0, 1,
+    0, 0,
+    1, 1,
+    1, 0
+]);
+
+
+function ImageBuffer( position, data, width, height, params ){
+
+    var p = params || {};
+
+    this.size = 4;
+    this.attributeSize = this.size;
+    this.vertexShader = 'Image.vert';
+    this.fragmentShader = 'Image.frag';
+
+    Buffer.call( this, position, undefined, quadIndices, undefined, p );
+
+    this.forceTransparent = true;
+    this.filter = defaults( p.filter, "nearest" );
+
+    this.tex = new DataTexture( data, width, height );
+    this.tex.flipY = true;
+
+    this.addUniforms( {
+        "map": { value: null },
+        "mapSize": { value: new Vector2( width, height ) }
+    } );
+
+    this.geometry.addAttribute( 'uv', new BufferAttribute( quadUvs, 2 ) );
+
+}
+
+ImageBuffer.prototype = Object.assign( Object.create(
+
+    Buffer.prototype ), {
+
+    constructor: ImageBuffer,
+
+    parameters: Object.assign( {
+
+        filter: { updateShader: true, uniform: true },
+
+    }, Buffer.prototype.parameters ),
+
+    getDefines: function( type ){
+
+        var defines = Buffer.prototype.getDefines.call( this, type );
+
+        if( this.filter.startsWith( "cubic" ) ){
+            defines.CUBIC_INTERPOLATION = 1;
+            if( this.filter.endsWith( "bspline" ) ){
+                defines.BSPLINE_FILTER = 1;
+            }else if( this.filter.endsWith( "catmulrom" ) ){
+                defines.CATMULROM_FILTER = 1;
+            }else if( this.filter.endsWith( "mitchell" ) ){
+                defines.MITCHELL_FILTER = 1;
+            }
+        }
+
+        return defines;
+
+    },
+
+    updateTexture: function(){
+
+        var tex = this.tex;
+
+        if( this.filter.startsWith( "cubic" ) ){
+
+            tex.minFilter = NearestFilter;
+            tex.magFilter = NearestFilter;
+
+        }else if( this.filter === "linear" ){
+
+            tex.minFilter = LinearFilter;
+            tex.magFilter = LinearFilter;
+
+        }else{  // this.filter === "nearest"
+
+            tex.minFilter = NearestFilter;
+            tex.magFilter = NearestFilter;
+
+        }
+
+        tex.needsUpdate = true;
+
+    },
+
+    makeMaterial: function(){
+
+        Buffer.prototype.makeMaterial.call( this );
+
+        this.updateTexture();
+
+        var m = this.material;
+        m.uniforms.map.value = this.tex;
+        m.blending = NormalBlending;
+        m.needsUpdate = true;
+
+        var wm = this.wireframeMaterial;
+        wm.uniforms.map.value = this.tex;
+        wm.blending = NormalBlending;
+        wm.needsUpdate = true;
+
+        var pm = this.pickingMaterial;
+        pm.uniforms.map.value = this.tex;
+        pm.blending = NormalBlending;
+        pm.needsUpdate = true;
+
+    },
+
+    setUniforms: function( data ){
+
+        if( data && data.filter !== undefined ){
+
+            this.updateTexture();
+            data.map = this.tex;
+
+        }
+
+        Buffer.prototype.setUniforms.call( this, data );
+
+    },
+
+} );
+
+/**
+ * @file Slice Representation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function SliceRepresentation( volume, viewer, params ){
+
+    Representation.call( this, volume, viewer, params );
+
+    this.volume = volume;
+
+    this.build();
+
+}
+
+SliceRepresentation.prototype = Object.assign( Object.create(
+
+    Representation.prototype ), {
+
+    constructor: SliceRepresentation,
+
+    type: "slice",
+
+    parameters: Object.assign( {
+
+        filter: {
+            type: "select", buffer: true, options: {
+                "nearest": "nearest",
+                "linear": "linear",
+                "cubic-bspline": "cubic-bspline",
+                "cubic-catmulrom": "cubic-catmulrom",
+                "cubic-mitchell": "cubic-mitchell"
+            }
+        },
+        position: {
+            type: "range", step: 0.1, max: 100, min: 1,
+            rebuild: true
+        },
+        dimension: {
+            type: "select", rebuild: true, options: {
+                "x": "x", "y": "y", "z": "z"
+            }
+        },
+        thresholdType: {
+            type: "select", rebuild: true, options: {
+                "value": "value", "sigma": "sigma"
+            }
+        },
+        thresholdMin: {
+            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+        },
+        thresholdMax: {
+            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+        },
+
+    }, Representation.prototype.parameters, {
+
+        flatShaded: null,
+        side: null,
+        wireframe: null,
+        linewidth: null,
+        colorScheme: null,
+
+        roughness: null,
+        metalness: null,
+        diffuse: null,
+
+    } ),
+
+    init: function( params ){
+
+        var p = params || {};
+        p.colorScheme = defaults( p.colorScheme, "value" );
+        p.colorScale = defaults( p.colorScale, "Spectral" );
+
+        Representation.prototype.init.call( this, p );
+
+        this.colorScheme = "value";
+        this.dimension = defaults( p.dimension, "x" );
+        this.filter = defaults( p.filter, "cubic-bspline" );
+        this.position = defaults( p.position, 30 );
+        this.thresholdType = defaults( p.thresholdType, "sigma" );
+        this.thresholdMin = defaults( p.thresholdMin, -Infinity );
+        this.thresholdMax = defaults( p.thresholdMax, Infinity );
+
+    },
+
+    attach: function( callback ){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.add( buffer );
+
+        }, this );
+
+        this.setVisibility( this.visible );
+
+        callback();
+
+    },
+
+    create: function(){
+
+        var p = this.position;
+        var v = this.volume;
+        v.filterData( -Infinity, Infinity, false );
+        var d = v.data;
+        var m = v.matrix;
+
+        function pos( dimLen ){
+            return Math.round( ( dimLen  / 100 ) * ( p - 1 ) )
+        }
+
+        function index( x, y, z, i ){
+            return ( z * v.ny * v.nx + y * v.nx + x ) * 3 + i;
+        }
+
+        var position = new Float32Array( 4 * 3 );
+        var width, height;
+        var x, y, z;
+
+        var x0 = 0, y0 = 0, z0 = 0;
+        var nx = v.nx, ny = v.ny, nz = v.nz;
+        var vec = new Vector3();
+
+        if( this.dimension === "x" ){
+
+            x = pos( v.nx );
+            y = v.ny-1;
+            z = v.nz-1;
+
+            width = v.nz;
+            height = v.ny;
+
+            x0 = x;
+            nx = x0 + 1;
+
+            vec.set( x, 0, 0 ).applyMatrix4( m ).toArray( position, 0 );
+            vec.set( x, y, 0 ).applyMatrix4( m ).toArray( position, 3 );
+            vec.set( x, 0, z ).applyMatrix4( m ).toArray( position, 6 );
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+
+        }else if( this.dimension === "y" ){
+
+            x = v.nx-1;
+            y = pos( v.ny );
+            z = v.nz-1;
+
+            width = v.nz;
+            height = v.nx;
+
+            y0 = y;
+            ny = y0 + 1;
+
+            vec.set( 0, y, 0 ).applyMatrix4( m ).toArray( position, 0 );
+            vec.set( x, y, 0 ).applyMatrix4( m ).toArray( position, 3 );
+            vec.set( 0, y, z ).applyMatrix4( m ).toArray( position, 6 );
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+
+        }else if( this.dimension === "z" ){
+
+            x = v.nx-1;
+            y = v.ny-1;
+            z = pos( v.nz );
+
+            width = v.nx;
+            height = v.ny;
+
+            z0 = z;
+            nz = z0 + 1;
+
+            vec.set( 0, 0, z ).applyMatrix4( m ).toArray( position, 0 );
+            vec.set( 0, y, z ).applyMatrix4( m ).toArray( position, 3 );
+            vec.set( x, 0, z ).applyMatrix4( m ).toArray( position, 6 );
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+
+        }
+
+        var i = 0;
+        var data = new Uint8Array( width * height * 4 );
+
+        var min, max;
+        if( this.thresholdType === "sigma" ){
+            min = v.getValueForSigma( this.thresholdMin );
+            max = v.getValueForSigma( this.thresholdMax );
+        }else{
+            min = this.thresholdMin;
+            max = this.thresholdMax;
+        }
+
+        var cp = this.getColorParams( { volume: v } );
+        cp.domain = [ v.getDataMin(), v.getDataMax() ];
+        var colorMaker = ColorMakerRegistry$$1.getScheme( cp );
+        var tmp = new Float32Array( 3 );
+
+        for ( var iy = y0; iy < ny; ++iy ) {
+            for ( var ix = x0; ix < nx; ++ix ) {
+                for ( var iz = z0; iz < nz; ++iz ) {
+
+                    var idx = index( ix, iy, iz, 0 ) / 3;
+                    var val = d[ idx ];
+                    colorMaker.volumeColorToArray( idx, tmp );
+                    data[ i     ] = Math.round( tmp[ 0 ] * 255 );
+                    data[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
+                    data[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
+                    data[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
+                    i += 4;
+
+                }
+            }
+        }
+
+        var sliceBuffer = new ImageBuffer(
+            position, data, width, height,
+            this.getBufferParams( {
+                filter: this.filter
+            } )
+        );
+
+        this.bufferList.push( sliceBuffer );
+
+    }
+
+} );
+
 /**
  * @file Structure Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -66031,7 +64180,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        assembly: null
+        assembly: null,
+        defaultAssembly: {
+            type: "hidden"
+        }
 
     }, Representation.prototype.parameters ),
 
@@ -66053,6 +64205,31 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.scale = defaults( p.scale, 1.0 );
         this.assembly = defaults( p.assembly, "default" );
         this.defaultAssembly = defaults( p.defaultAssembly, "" );
+
+        if( p.quality === "auto" ){
+            var atomCount;
+            var s = this.structureView;
+            var assembly = this.getAssembly();
+            if( assembly ){
+                atomCount = assembly.getAtomCount( s );
+            }else{
+                atomCount = s.atomCount;
+            }
+            if( Mobile ){
+                atomCount *= 4;
+            }
+            var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+            if( backboneOnly ){
+                atomCount *= 10;
+            }
+            if( atomCount < 15000 ){
+                p.quality = "high";
+            }else if( atomCount < 80000 ){
+                p.quality = "medium";
+            }else{
+                p.quality = "low";
+            }
+        }
 
         Representation.prototype.init.call( this, p );
 
@@ -66152,6 +64329,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * Set representation parameters
      * @alias StructureRepresentation#setSelection
      * @param {String} string - selection string, see {@tutorial selection-language}
+     * @param {Boolean} [silent] - don't trigger a change event in the selection
      * @return {StructureRepresentation} this object
      */
     setSelection: function( string, silent ){
@@ -66204,6 +64382,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             if( !ExtensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
+        }
+
+        if( params && params.defaultAssembly !== undefined ){
+            rebuild = true;
         }
 
         Representation.prototype.setParameters.call(
@@ -66265,6 +64447,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ShaderRegistry.add('shader/Line.vert', "uniform float nearClip;\r\nuniform vec3 clipCenter;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#include color_pars_vertex\r\n\r\nvoid main(){\r\n\r\n#include color_vertex\r\n#include begin_vertex\r\n#include project_vertex\r\n\r\nvViewPosition = -mvPosition.xyz;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
+
+ShaderRegistry.add('shader/Line.frag', "uniform float opacity;\r\nuniform float nearClip;\r\nuniform float clipRadius;\r\n\r\nvarying vec3 vViewPosition;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\ngl_FragColor = vec4( vColor, opacity );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}");
 
 /**
  * @file Line Buffer
@@ -66590,6 +64776,11 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
  */
 
 
+function logReprUnknown( type ){
+    Log.error( "makeRepresentation: representation type " + type + " unknown" );
+}
+
+
 function makeRepresentation( type, object, viewer, params ){
 
     if( exports.Debug ) Log.time( "makeRepresentation " + type );
@@ -66601,31 +64792,32 @@ function makeRepresentation( type, object, viewer, params ){
         ReprClass = RepresentationRegistry.get( type );
 
         if( !ReprClass ){
-
-            Log.error(
-                "makeRepresentation: representation type " + type + " unknown"
-            );
+            logReprUnknown( type );
             return;
-
         }
 
-    }else if( object instanceof Surface || object instanceof Volume ){
+    }else if( object instanceof Surface ){
 
         if( type === "surface" ){
-
             ReprClass = SurfaceRepresentation;
-
         }else if( type === "dot" ){
-
             ReprClass = DotRepresentation;
-
         }else{
-
-            Log.error(
-                "makeRepresentation: representation type " + type + " unknown"
-            );
+            logReprUnknown( type );
             return;
+        }
 
+    }else if( object instanceof Volume ){
+
+        if( type === "surface" ){
+            ReprClass = SurfaceRepresentation;
+        }else if( type === "dot" ){
+            ReprClass = DotRepresentation;
+        }else if( type === "slice" ){
+            ReprClass = SliceRepresentation;
+        }else{
+            logReprUnknown( type );
+            return;
         }
 
     }else if( object instanceof Trajectory ){
@@ -66643,9 +64835,7 @@ function makeRepresentation( type, object, viewer, params ){
 
     }else{
 
-        Log.error(
-            "makeRepresentation: object " + object + " unknown"
-        );
+        Log.error( "makeRepresentation: object " + object + " unknown" );
         return;
 
     }
@@ -66679,7 +64869,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when a representation is added
  * @example
- * component.signals.representationAdded( function( representationComponent ){ ... } );
+ * component.signals.representationAdded.add( function( representationComponent ){ ... } );
  * @event Component#representationAdded
  * @type {RepresentationComponent}
  */
@@ -66687,7 +64877,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when a representation is removed
  * @example
- * component.signals.representationRemoved( function( representationComponent ){ ... } );
+ * component.signals.representationRemoved.add( function( representationComponent ){ ... } );
  * @event Component#representationRemoved
  * @type {RepresentationComponent}
  */
@@ -66695,7 +64885,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when the visibility changes
  * @example
- * component.signals.visibilityChanged( function( value ){ ... } );
+ * component.signals.visibilityChanged.add( function( value ){ ... } );
  * @event Component#visibilityChanged
  * @type {Boolean}
  */
@@ -66764,7 +64954,9 @@ Component.prototype = {
         var sp = this.stage.getParameters();
         p.quality = p.quality || sp.quality;
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
+        p.useWorker = defaults( p.useWorker, sp.workerDefault );
         p.visible = defaults( p.visible, true );
+        p.gidPool = this.stage.gidPool;
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
         var repr = makeRepresentation( type, object, this.viewer, p2 );
@@ -66785,20 +64977,26 @@ Component.prototype = {
 
     },
 
+    hasRepresentation: function( repr ){
+
+        return this.reprList.indexOf( repr ) !== -1;
+
+    },
+
     /**
      * Removes a representation component
      * @fires Component#representationRemoved
      * @param {RepresentationComponent} repr - the representation component
+     * @return {undefined}
      */
     removeRepresentation: function( repr ){
 
         var idx = this.reprList.indexOf( repr );
-
         if( idx !== -1 ){
             this.reprList.splice( idx, 1 );
+            repr.dispose();
+            this.signals.representationRemoved.dispatch( repr );
         }
-
-        this.signals.representationRemoved.dispatch( repr );
 
     },
 
@@ -66812,21 +65010,31 @@ Component.prototype = {
 
     },
 
-    clearRepresentations: function(){
+    /**
+     * Removes all representation components
+     * @fires Component#representationRemoved
+     * @return {undefined}
+     */
+    removeAllRepresentations: function(){
 
         // copy via .slice because side effects may change reprList
         this.reprList.slice().forEach( function( repr ){
-            repr.dispose();
-        } );
+            this.removeRepresentation( repr );
+        }, this );
+
+    },
+
+    clearRepresentations: function(){
+
+        console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
+        this.removeAllRepresentations();
 
     },
 
     dispose: function(){
 
-        this.clearRepresentations();
-
+        this.removeAllRepresentations();
         delete this.reprList;
-
         this.signals.disposed.dispatch();
 
     },
@@ -66911,7 +65119,7 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
 /**
  * {@link Signal}, dispatched when parameters change
  * @example
- * component.signals.parametersChanged( function( params ){ ... } );
+ * component.signals.parametersChanged.add( function( params ){ ... } );
  * @event RepresentationComponent#parametersChanged
  * @type {RepresentationParameters}
  */
@@ -66972,14 +65180,23 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     /**
      * @ignore
      * @alias RepresentationComponent#addRepresentation
+     * @return {undefined}
      */
     addRepresentation: function(){},
 
     /**
      * @ignore
      * @alias RepresentationComponent#removeRepresentation
+     * @return {undefined}
      */
     removeRepresentation: function(){},
+
+    /**
+     * @ignore
+     * @alias RepresentationComponent#hasRepresentation
+     * @return {undefined}
+     */
+    hasRepresentation: function(){},
 
     disposeRepresentation: function(){
 
@@ -66992,12 +65209,12 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        if( this.parent ){
+        if( this.parent && this.parent.hasRepresentation( this ) ){
             this.parent.removeRepresentation( this );
+        }else{
+            this.disposeRepresentation();
+            this.signals.disposed.dispatch();
         }
-        this.disposeRepresentation();
-        delete this.reprArgs;
-        this.signals.disposed.dispatch();
 
     },
 
@@ -67034,6 +65251,15 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set selection
+     * @alias RepresentationComponent#update
+     * @param {Object} what - flags indicating what attributes to update
+     * @param {Boolean} what.position - update position attribute
+     * @param {Boolean} what.color - update color attribute
+     * @param {Boolean} what.radius - update radius attribute
+     * @return {RepresentationComponent} this object
+     */
     update: function( what ){
 
         this.repr.update( what );
@@ -67099,6 +65325,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     /**
      * @ignore
      * @alias RepresentationComponent#getCenter
+     * @return {undefined}
      */
     getCenter: function(){}
 
@@ -67253,849 +65480,1149 @@ RepresentationCollection.prototype = Object.assign( Object.create(
 } );
 
 /**
- * @file Trajectory Component
+ * @file Stage
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
 
-function TrajectoryComponent( stage, trajectory, params, parent ){
+// eslint-disable-next-line no-unused-vars
+function matchName( name, comp ){
+    if( name instanceof RegExp ){
+        return comp.name.match( name ) !== null;
+    }else{
+        return comp.name === name;
+    }
+}
 
-    var p = params || {};
-    p.name = p.name !== undefined ? p.name : trajectory.name;
 
-    Component.call( this, stage, p );
+/**
+ * Stage parameter object.
+ * @typedef {Object} StageParameters - stage parameters
+ * @property {Color} backgroundColor - background color
+ * @property {Integer} sampleLevel - sampling level for antialiasing, between -1 and 5;
+ *                                   -1: no sampling, 0: only sampling when not moving
+ * @property {Boolean} workerDefault - default value for useWorker parameter of representations
+ * @property {Float} rotateSpeed - camera-controls rotation speed, between 0 and 10
+ * @property {Float} zoomSpeed - camera-controls zoom speed, between 0 and 10
+ * @property {Float} panSpeed - camera-controls pan speed, between 0 and 10
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {Integer} clipFar - position of camera far/back clipping plane
+ *                               in percent of scene bounding box
+ * @property {Float} clipDist - camera clipping distance in Angstrom
+ * @property {Integer} fogNear - position of the start of the fog effect
+ *                               in percent of scene bounding box
+ * @property {Integer} fogFar - position where the fog is in full effect
+ *                              in percent of scene bounding box
+ * @property {String} cameraType - type of camera, either 'persepective' or 'orthographic'
+ * @property {Float} cameraFov - camera field of view in degree, between 15 and 120
+ * @property {Color} lightColor - point light color
+ * @property {Float} lightIntensity - point light intensity
+ * @property {Color} ambientColor - ambient light color
+ * @property {Float} ambientIntensity - ambient light intensity
+ * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered}
+ *                                      signal is fired, set to -1 to ignore hovering
+ */
 
-    this.trajectory = trajectory;
-    this.parent = parent;
-    this.status = "loaded";
 
-    // signals
+/**
+ * {@link Signal}, dispatched when stage parameters change {@link Signal}
+ * @example
+ * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
+ * @event Stage#parametersChanged
+ * @type {StageParameters}
+ */
 
-    trajectory.signals.frameChanged.add( function( i ){
+/**
+ * {@link Signal}, dispatched when the fullscreen is entered or left
+ * @example
+ * stage.signals.fullscreenChanged.add( function( isFullscreen ){ ... } );
+ * @event Stage#fullscreenChanged
+ * @type {Boolean}
+ */
 
-        this.signals.frameChanged.dispatch( i );
+/**
+ * {@link Signal}, dispatched when a component is added to the stage
+ * @example
+ * stage.signals.componentAdded.add( function( component ){ ... } );
+ * @event Stage#componentAdded
+ * @type {Component}
+ */
 
-    }, this );
+/**
+ * {@link Signal}, dispatched when a component is removed from the stage
+ * @example
+ * stage.signals.componentRemoved.add( function( component ){ ... } );
+ * @event Stage#componentRemoved
+ * @type {Component}
+ */
 
-    trajectory.signals.playerChanged.add( function( player ){
+/**
+ * {@link Signal}, dispatched upon clicking in the viewer canvas
+ * @example
+ * stage.signals.clicked.add( function( pickingData ){ ... } );
+ * @event Stage#clicked
+ * @type {PickingData}
+ */
 
-        this.signals.playerChanged.dispatch( player );
+/**
+ * {@link Signal}, dispatched upon hovering over the viewer canvas
+ * @example
+ * stage.signals.hovered.add( function( pickingData ){ ... } );
+ * @event Stage#hovered
+ * @type {PickingData}
+ */
 
-    }, this );
 
-    trajectory.signals.gotNumframes.add( function( n ){
+/**
+ * Stage objects are central for creating molecular scenes with NGL.
+ * @class
+ * @example
+ *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
+ *
+ * @param {String} eid - document id
+ * @param {StageParameters} params -
+ */
+function Stage( eid, params ){
 
-        this.signals.gotNumframes.dispatch( n );
+    this.signals = {
+        parametersChanged: new Signal(),
+        fullscreenChanged: new Signal(),
 
-    }, this );
+        componentAdded: new Signal(),
+        componentRemoved: new Signal(),
+
+        clicked: new Signal(),
+        hovered: new Signal()
+    };
 
     //
 
-    if( p.i !== undefined ){
+    /**
+     * Counter that keeps track of various potentially long-running tasks,
+     * including file loading and surface calculation.
+     * @member {Counter}
+     */
+    this.tasks = new Counter();
+    this.gidPool = new GidPool();
+    this.compList = [];
+    this.defaultFileParams = {};
 
-        this.setFrame( p.i );
+    //
 
-    }
+    this.viewer = new Viewer( eid );
+    if( !this.viewer.renderer ) return;
+
+    this.pickingControls = new PickingControls( this );
+    this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
+    this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
+
+    var p = Object.assign( {
+        impostor: true,
+        quality: "medium",
+        workerDefault: true,
+        sampleLevel: 0,
+        backgroundColor: "black",
+        rotateSpeed: 2.0,
+        zoomSpeed: 1.2,
+        panSpeed: 0.8,
+        clipNear: 0,
+        clipFar: 100,
+        clipDist: 10,
+        fogNear: 50,
+        fogFar: 100,
+        cameraFov: 40,
+        cameraType: "perspective",
+        lightColor: 0xdddddd,
+        lightIntensity: 1.0,
+        ambientColor: 0xdddddd,
+        ambientIntensity: 0.2,
+        hoverTimeout: 500,
+    }, params );
+    this.parameters = deepCopy( Stage.prototype.parameters );
+    this.setParameters( p );  // must come after the viewer has been instantiated
+
+    this.viewer.animate();
 
 }
 
-TrajectoryComponent.prototype = Object.assign( Object.create(
+Stage.prototype = {
 
-    Component.prototype ), {
+    constructor: Stage,
 
-    constructor: TrajectoryComponent,
+    parameters: {
 
-    type: "trajectory",
-
-    signals: Object.assign( {
-
-        frameChanged: null,
-        playerChanged: null,
-        gotNumframes: null,
-        parametersChanged: null
-
-    }, Component.prototype.signals ),
-
-    addRepresentation: function( type, params ){
-
-        return Component.prototype.addRepresentation.call(
-            this, type, this.trajectory, params
-        );
+        backgroundColor: {
+            type: "color"
+        },
+        quality: {
+            type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
+        },
+        sampleLevel: {
+            type: "range", step: 1, max: 5, min: -1
+        },
+        impostor: {
+            type: "boolean"
+        },
+        workerDefault: {
+            type: "boolean"
+        },
+        rotateSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        zoomSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        panSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        clipNear: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        clipFar: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        clipDist: {
+            type: "integer", max: 200, min: 0
+        },
+        fogNear: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        fogFar: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        cameraType: {
+            type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+        },
+        cameraFov: {
+            type: "range", step: 1, max: 120, min: 15
+        },
+        lightColor: {
+            type: "color"
+        },
+        lightIntensity: {
+            type: "number", precision: 2, max: 10, min: 0
+        },
+        ambientColor: {
+            type: "color"
+        },
+        ambientIntensity: {
+            type: "number", precision: 2, max: 10, min: 0
+        },
+        hoverTimeout: {
+            type: "integer", max: 10000, min: -1
+        },
 
     },
 
-    setFrame: function( i ){
-
-        this.trajectory.setFrame( i );
-
-    },
-
+    /**
+     * Set stage parameters
+     * @fires Stage#parametersChanged
+     * @param {StageParameters} params - stage parameters
+     * @return {Stage} this object
+     */
     setParameters: function( params ){
 
-        this.trajectory.setParameters( params );
-        this.signals.parametersChanged.dispatch( params );
+        var p = Object.assign( {}, params );
+        var tp = this.parameters;
+        var viewer = this.viewer;
+        var controls = viewer.controls;
+        var pickingControls = this.pickingControls;
+
+        for( var name in p ){
+
+            if( p[ name ] === undefined ) continue;
+            if( !tp[ name ] ) continue;
+
+            if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
+            if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
+
+            tp[ name ].value = p[ name ];
+
+        }
+
+        // apply parameters
+        if( p.quality !== undefined ) this.setQuality( p.quality );
+        if( p.impostor !== undefined ) this.setImpostor( p.impostor );
+        if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
+        if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
+        if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        pickingControls.setParameters( { hoverTimeout: p.hoverTimeout } );
+        viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
+        viewer.setFog( undefined, p.fogNear, p.fogFar );
+        viewer.setCamera( p.cameraType, p.cameraFov );
+        viewer.setSampling( p.sampleLevel );
+        viewer.setBackground( p.backgroundColor );
+        viewer.setLight(
+            p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
+        );
+
+        this.signals.parametersChanged.dispatch(
+            this.getParameters()
+        );
 
         return this;
 
     },
 
-    dispose: function(){
+    /**
+     * Get stage parameters
+     * @return {StageParameters} parameter object
+     */
+    getParameters: function(){
 
-        this.trajectory.dispose();
-
-        Component.prototype.dispose.call( this );
-
-    },
-
-    getCenter: function(){}
-
-} );
-
-/**
- * @file Frames Trajectory
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function FramesTrajectory( frames, structure, selectionString ){
-
-    if( frames instanceof Promise ){
-
-        frames.then( function( _frames ){
-
-            this.setFrames( _frames );
-            this.getNumframes();
-
-        }.bind( this ) );
-
-    }else{
-
-        this.setFrames( frames );
-
-    }
-
-    Trajectory.call( this, "", structure, selectionString );
-
-}
-
-FramesTrajectory.prototype = Object.assign( Object.create(
-
-    Trajectory.prototype ), {
-
-    constructor: FramesTrajectory,
-
-    type: "frames",
-
-    setFrames: function( frames ){
-
-        this.name = frames.name;
-        this.path = frames.path;
-
-        this.frames = frames.coordinates;
-        this.boxes = frames.boxes;
-
-    },
-
-    makeAtomIndices:  function(){
-
-        if( this.structure.type === "StructureView" ){
-
-            this.atomIndices = this.structure.getAtomIndices();
-
-        }else{
-
-            this.atomIndices = null;
-
+        var params = {};
+        for( var name in this.parameters ){
+            params[ name ] = this.parameters[ name ].value;
         }
-
-    },
-
-    _loadFrame: function( i, callback ){
-
-        var coords;
-        var frame = this.frames[ i ];
-
-        if( this.atomIndices ){
-
-            var indices = this.atomIndices;
-            var m = indices.length;
-
-            coords = new Float32Array( m * 3 );
-
-            for( var j = 0; j < m; ++j ){
-
-                var j3 = j * 3;
-                var idx3 = indices[ j ] * 3;
-
-                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
-                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
-                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
-
-            }
-
-        }else{
-
-            coords = new Float32Array( frame );
-
-        }
-
-        var box = this.boxes[ i ];
-        var numframes = this.frames.length;
-
-        this.process( i, box, coords, numframes );
-
-        if( typeof callback === "function" ){
-
-            callback();
-
-        }
-
-    },
-
-    getNumframes: function(){
-
-        if( this.frames ){
-
-            this.setNumframes( this.frames.length );
-
-        }
-
-    },
-
-    getPath: function( index, callback ){
-
-        var i, j, f;
-        var n = this.numframes;
-        var k = index * 3;
-
-        var path = new Float32Array( n * 3 );
-
-        for( i = 0; i < n; ++i ){
-
-            j = 3 * i;
-            f = this.frames[ i ];
-
-            path[ j + 0 ] = f[ k + 0 ];
-            path[ j + 1 ] = f[ k + 1 ];
-            path[ j + 2 ] = f[ k + 2 ];
-
-        }
-
-        callback( path );
-
-    }
-
-} );
-
-/**
- * @file Structure Trajectory
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function StructureTrajectory( trajPath, structure, selectionString ){
-
-    // if( !trajPath ) trajPath = structure.path;
-    trajPath = "";
-
-    Trajectory.call( this, trajPath, structure, selectionString );
-
-}
-
-StructureTrajectory.prototype = Object.assign( Object.create(
-
-    Trajectory.prototype ), {
-
-    constructor: StructureTrajectory,
-
-    type: "structure",
-
-    makeAtomIndices: function(){
-
-        if( this.structure.atomSet.size() < this.structure.atomStore.count ){
-            this.atomIndices = this.structure.getAtomIndices();
-        }else{
-            this.atomIndices = null;
-        }
-
-    },
-
-    _loadFrame: function( i, callback ){
-
-        var coords;
-        var structure = this.structure;
-        var frame = structure.frames[ i ];
-
-        if( this.atomIndices ){
-
-            var indices = this.atomIndices;
-            var m = indices.length;
-
-            coords = new Float32Array( m * 3 );
-
-            for( var j = 0; j < m; ++j ){
-
-                var j3 = j * 3;
-                var idx3 = indices[ j ] * 3;
-
-                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
-                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
-                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
-
-            }
-
-        }else{
-
-            coords = new Float32Array( frame );
-
-        }
-
-        var box = structure.boxes[ i ];
-        var numframes = structure.frames.length;
-
-        this.process( i, box, coords, numframes );
-
-        if( typeof callback === "function" ){
-            callback();
-        }
-
-    },
-
-    getNumframes: function(){
-
-        this.setNumframes( this.structure.frames.length );
-
-    },
-
-    getPath: function( index, callback ){
-
-        var i, j, f;
-        var n = this.numframes;
-        var k = index * 3;
-
-        var path = new Float32Array( n * 3 );
-
-        for( i = 0; i < n; ++i ){
-
-            j = 3 * i;
-            f = this.structure.frames[ i ];
-
-            path[ j + 0 ] = f[ k + 0 ];
-            path[ j + 1 ] = f[ k + 1 ];
-            path[ j + 2 ] = f[ k + 2 ];
-
-        }
-
-        callback( path );
-
-    }
-
-} );
-
-/**
- * @file Remote Trajectory
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function RemoteTrajectory( trajPath, structure, selectionString ){
-
-    Trajectory.call( this, trajPath, structure, selectionString );
-
-}
-
-RemoteTrajectory.prototype = Object.assign( Object.create(
-
-    Trajectory.prototype ), {
-
-    constructor: RemoteTrajectory,
-
-    type: "remote",
-
-    makeAtomIndices: function(){
-
-        var atomIndices = [];
-
-        if( this.structure.type === "StructureView" ){
-
-            var indices = this.structure.getAtomIndices();
-
-            var i, r;
-            var p = indices[ 0 ];
-            var q = indices[ 0 ];
-            var n = indices.length;
-
-            for( i = 1; i < n; ++i ){
-
-                r = indices[ i ];
-
-                if( q + 1 < r ){
-
-                    atomIndices.push( [ p, q + 1 ] );
-                    p = r;
-
-                }
-
-                q = r;
-
-            }
-
-            atomIndices.push( [ p, q + 1 ] );
-
-        }else{
-
-            atomIndices.push( [ 0, this.atomCount ] );
-
-        }
-
-        this.atomIndices = atomIndices;
-
-    },
-
-    _loadFrame: function( i, callback ){
-
-        // TODO implement max frameCache size, re-use arrays
-
-        var request = new XMLHttpRequest();
-
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getFrameUrl( this.trajPath, i );
-        var params = ds.getFrameParams( this.trajPath, this.atomIndices );
-
-        request.open( "POST", url, true );
-        request.responseType = "arraybuffer";
-        request.setRequestHeader(
-            "Content-type", "application/x-www-form-urlencoded"
-        );
-
-        request.addEventListener( 'load', function(){
-
-            var arrayBuffer = request.response;
-            if( !arrayBuffer ){
-                Log.error( "empty arrayBuffer for '" + url + "'" );
-                return;
-            }
-
-            var numframes = new Int32Array( arrayBuffer, 0, 1 )[ 0 ];
-            // var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
-            var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
-            var coords = new Float32Array( arrayBuffer, 11 * 4 );
-
-            this.process( i, box, coords, numframes );
-            if( typeof callback === "function" ){
-                callback();
-            }
-
-        }.bind( this ), false );
-
-        request.send( params );
-
-    },
-
-    getNumframes: function(){
-
-        var request = new XMLHttpRequest();
-
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getNumframesUrl( this.trajPath );
-
-        request.open( "GET", url, true );
-        request.addEventListener( 'load', function(){
-            this.setNumframes( parseInt( request.response ) );
-        }.bind( this ), false );
-        request.send( null );
-
-    },
-
-    getPath: function( index, callback ){
-
-        if( this.pathCache[ index ] ){
-            callback( this.pathCache[ index ] );
-            return;
-        }
-
-        Log.time( "loadPath" );
-
-        var request = new XMLHttpRequest();
-
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getPathUrl( this.trajPath, index );
-        var params = "";
-
-        request.open( "POST", url, true );
-        request.responseType = "arraybuffer";
-        request.setRequestHeader(
-            "Content-type", "application/x-www-form-urlencoded"
-        );
-
-        request.addEventListener( 'load', function(){
-
-            Log.timeEnd( "loadPath" );
-
-            var arrayBuffer = request.response;
-            if( !arrayBuffer ){
-                Log.error( "empty arrayBuffer for '" + url + "'" );
-                return;
-            }
-
-            var path = new Float32Array( arrayBuffer );
-            // Log.log( path )
-            this.pathCache[ index ] = path;
-            callback( path );
-
-        }.bind( this ), false );
-
-        request.send( params );
-
-    }
-
-} );
-
-/**
- * @file Trajectory Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function makeTrajectory( trajSrc, structure, sele ){
-
-    var traj;
-
-    if( ( trajSrc && trajSrc.type === "frames" ) || trajSrc instanceof Promise ){
-
-        traj = new FramesTrajectory( trajSrc, structure, sele );
-
-    }else if( !trajSrc && structure.frames ){
-
-        traj = new StructureTrajectory( trajSrc, structure, sele );
-
-    }else{
-
-        traj = new RemoteTrajectory( trajSrc, structure, sele );
-
-    }
-
-    return traj;
-
-}
-
-/**
- * @file Structure View
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-/**
- * Get view on structure restricted to the selection
- * @param  {Selection} selection - the selection
- * @return {StructureView} the view on the structure
- */
-Structure.prototype.getView = function( selection ){
-    // added here to avoid cyclic import dependency
-    return new StructureView( this, selection );
-};
-
-
-/**
- * View on the structure, restricted to the selection
- * @class
- * @extends Structure
- * @param {Structure} structure - the structure
- * @param {Selection} selection - the selection
- */
-function StructureView( structure, selection ){
-
-    this.signals = {
-        refreshed: new Signal(),
-    };
-
-    this.structure = structure;
-    this.selection = selection;
-
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
-
-    // to allow creating an empty object to call .fromJSON onto
-    if( !structure && !selection ) return;
-
-    this.init();
-
-    this.refresh();
-
-}
-
-StructureView.prototype = Object.assign( Object.create(
-
-    Structure.prototype ), {
-
-    constructor: StructureView,
-    type: "StructureView",
-
-    init: function(){
-
-        Object.defineProperties( this, {
-            name: {
-                get: function(){ return this.structure.name; }
-            },
-            path: {
-                get: function(){ return this.structure.path; }
-            },
-            title: {
-                get: function(){ return this.structure.title; }
-            },
-            id: {
-                get: function(){ return this.structure.id; }
-            },
-
-            atomSetDict: {
-                get: function(){ return this.structure.atomSetDict; }
-            },
-            biomolDict: {
-                get: function(){ return this.structure.biomolDict; }
-            },
-            unitcell: {
-                get: function(){ return this.structure.unitcell; }
-            },
-
-            frames: {
-                get: function(){ return this.structure.frames; }
-            },
-            boxes: {
-                get: function(){ return this.structure.boxes; }
-            },
-
-            bondStore: {
-                get: function(){ return this.structure.bondStore; }
-            },
-            backboneBondStore: {
-                get: function(){ return this.structure.backboneBondStore; }
-            },
-            rungBondStore: {
-                get: function(){ return this.structure.rungBondStore; }
-            },
-            atomStore: {
-                get: function(){ return this.structure.atomStore; }
-            },
-            residueStore: {
-                get: function(){ return this.structure.residueStore; }
-            },
-            chainStore: {
-                get: function(){ return this.structure.chainStore; }
-            },
-            modelStore: {
-                get: function(){ return this.structure.modelStore; }
-            },
-
-            atomMap: {
-                get: function(){ return this.structure.atomMap; }
-            },
-            residueMap: {
-                get: function(){ return this.structure.residueMap; }
-            },
-
-            bondHash: {
-                get: function(){ return this.structure.bondHash; }
-            }
-        } );
-
-        this._ap = this.getAtomProxy();
-        this._rp = this.getResidueProxy();
-        this._cp = this.getChainProxy();
-
-        if( this.selection ){
-            this.selection.signals.stringChanged.add( this.refresh, this );
-        }
-
-        this.structure.signals.refreshed.add( this.refresh, this );
-
-    },
-
-    refresh: function(){
-
-        if( exports.Debug ) Log.time( "StructureView.refresh" );
-
-        this.atomSetCache = {};
-
-        this.atomSet = this.getAtomSet( this.selection, true );
-        if( this.structure.atomSet ){
-            if( exports.Debug ) Log.time( "StructureView.refresh#atomSet.intersection" );
-            this.atomSet = this.atomSet.intersection( this.structure.atomSet );
-            if( exports.Debug ) Log.timeEnd( "StructureView.refresh#atomSet.intersection" );
-        }
-
-        this.bondSet = this.getBondSet();
-
-        if( exports.Debug ) Log.time( "StructureView.refresh#atomSetDict.new_intersection" );
-        for( var name in this.atomSetDict ){
-            var as = this.atomSetDict[ name ];
-            this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
-        }
-        if( exports.Debug ) Log.timeEnd( "StructureView.refresh#atomSetDict.new_intersection" );
-
-        if( exports.Debug ) Log.time( "StructureView.refresh#size" );
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-        if( exports.Debug ) Log.timeEnd( "StructureView.refresh#size" );
-
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
-
-        if( exports.Debug ) Log.timeEnd( "StructureView.refresh" );
-
-        this.signals.refreshed.dispatch();
-
-    },
-
-    //
-
-    setSelection: function( selection ){
-
-        this.selection = selection;
-
-        this.refresh();
-
-    },
-
-    getSelection: function( selection ){
-
-        var seleList = [];
-
-        if( selection && selection.string ){
-            seleList.push( selection.string );
-        }
-
-        var parentSelection = this.structure.getSelection();
-        if( parentSelection && parentSelection.string ){
-            seleList.push( parentSelection.string );
-        }
-
-        if( this.selection && this.selection.string ){
-            seleList.push( this.selection.string );
-        }
-
-        var sele = "";
-        if( seleList.length > 0 ){
-            sele = "( " + seleList.join( " ) AND ( " ) + " )";
-        }
-
-        return new Selection( sele );
-
-    },
-
-    getStructure: function(){
-
-        return this.structure.getStructure();
-
-    },
-
-    //
-
-    eachBond: function( callback, selection ){
-
-        this.structure.eachBond( callback, this.getSelection( selection ) );
-
-    },
-
-    eachAtom: function( callback, selection ){
-
-        var ap = this.getAtomProxy();
-        var as = this.getAtomSet( selection );
-        var n = this.atomStore.count;
-
-        if( as && as.size() < n ){
-            as.forEach( function( index ){
-                ap.index = index;
-                callback( ap );
-            } );
-        }else{
-            for( var i = 0; i < n; ++i ){
-                ap.index = i;
-                callback( ap );
-            }
-        }
-
-    },
-
-    eachResidue: function( callback, selection ){
-
-        this.structure.eachResidue( callback, this.getSelection( selection ) );
+        return params;
 
     },
 
     /**
-     * Not implemented
-     * @alias StructureView#eachResidueN
+     * Create default representations for the given component
+     * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
+     * @return {undefined}
      */
-    eachResidueN: function( n, callback ){
+    defaultFileRepresentation: function( object ){
 
-        console.error( "StructureView.eachResidueN() not implemented", n, callback );
+        if( object.type === "structure" ){
 
-    },
+            object.setSelection( "/0" );
 
-    eachChain: function( callback, selection ){
+            var atomCount, instanceCount;
+            var structure = object.structure;
 
-        this.structure.eachChain( callback, this.getSelection( selection ) );
+            if( structure.biomolDict.BU1 ){
+                var assembly = structure.biomolDict.BU1;
+                atomCount = assembly.getAtomCount( structure );
+                instanceCount = assembly.getInstanceCount();
+                object.setDefaultAssembly( "BU1" );
+            }else{
+                atomCount = structure.getModelProxy( 0 ).atomCount;
+                instanceCount = 1;
+            }
 
-    },
+            if( Mobile ){
+                atomCount *= 4;
+            }
 
-    eachModel: function( callback, selection ){
+            var backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
+            if( backboneOnly ){
+                atomCount *= 10;
+            }
 
-        this.structure.eachModel( callback, this.getSelection( selection ) );
+            var colorScheme = "chainname";
+            if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
+                colorScheme = "residueindex";
+            }
 
-    },
+            if( exports.Debug ) console.log( atomCount, instanceCount, backboneOnly );
 
-    //
+            if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
 
-    getAtomSet: function( selection, ignoreView ){
+                var scaleFactor = (
+                    Math.min(
+                        1.5,
+                        Math.max(
+                            0.1,
+                            2000 / ( atomCount / instanceCount )
+                        )
+                    )
+                );
+                if( backboneOnly ) scaleFactor = Math.min( scaleFactor, 0.15 );
 
-        if( exports.Debug ) Log.time( "StructureView.getAtomSet" );
+                object.addRepresentation( "surface", {
+                    sele: "polymer",
+                    surfaceType: "sas",
+                    probeRadius: 1.4,
+                    scaleFactor: scaleFactor,
+                    colorScheme: colorScheme,
+                    colorScale: "RdYlBu",
+                    useWorker: false
+                } );
 
-        var as = this.structure.getAtomSet( selection );
-        if( !ignoreView && this.atomSet ){
-            as = as.new_intersection( this.atomSet );
+            }else if( atomCount > 250000 ){
+
+                object.addRepresentation( "backbone", {
+                    lineOnly: true,
+                    colorScheme: colorScheme,
+                    colorScale: "RdYlBu"
+                } );
+
+            }else if( atomCount > 100000 ){
+
+                object.addRepresentation( "backbone", {
+                    quality: "low",
+                    disableImpostor: true,
+                    colorScheme: colorScheme,
+                    colorScale: "RdYlBu",
+                    scale: 2.0
+                } );
+
+            }else if( atomCount > 80000 ){
+
+                object.addRepresentation( "backbone", {
+                    colorScheme: colorScheme,
+                    colorScale: "RdYlBu",
+                    scale: 2.0
+                } );
+
+            }else{
+
+                object.addRepresentation( "cartoon", {
+                    color: colorScheme,
+                    colorScale: "RdYlBu",
+                    scale: 0.7,
+                    aspectRatio: 5,
+                    quality: "auto"
+                } );
+                if( atomCount < 50000 ){
+                    object.addRepresentation( "base", {
+                        color: colorScheme,
+                        colorScale: "RdYlBu",
+                        quality: "auto"
+                    } );
+                }
+                object.addRepresentation( "ball+stick", {
+                    sele: "hetero and not ( water or ion )",
+                    colorScheme: "element",
+                    scale: 2.0,
+                    aspectRatio: 1.5,
+                    bondScale: 0.3,
+                    bondSpacing: 0.75,
+                    quality: "auto"
+                } );
+
+            }
+
+            this.centerView();
+
+            // add frames as trajectory
+            if( object.structure.frames.length ) object.addTrajectory();
+
+        }else if( object.type === "surface" || object.type === "volume" ){
+
+            object.addRepresentation( "surface" );
+            this.centerView();
+
         }
 
-        if( exports.Debug ) Log.timeEnd( "StructureView.getAtomSet" );
+    },
 
-        return as;
+    /**
+     * Load a file onto the stage
+     *
+     * @example
+     * // load from URL
+     * stage.loadFile( "http://files.rcsb.org/download/5IOS.cif" );
+     *
+     * @example
+     * // load binary data in CCP4 format via a Blob
+     * var binaryBlob = new Blob( [ ccp4Data ], { type: 'application/octet-binary'} );
+     * stage.loadFile( binaryBlob, { ext: "ccp4" } );
+     *
+     * @example
+     * // load string data in PDB format via a Blob
+     * var stringBlob = new Blob( [ pdbData ], { type: 'text/plain'} );
+     * stage.loadFile( stringBlob, { ext: "pdb" } );
+     *
+     * @example
+     * // load a File object
+     * stage.loadFile( file );
+     *
+     * @example
+     * // load from URL and add a 'ball+stick' representation with double/triple bonds
+     * stage.loadFile( "http://files.rcsb.org/download/1crn.cif" ).then( function( comp ){
+     *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
+     * } );
+     *
+     * @fires Stage#componentAdded
+     * @param  {String|File|Blob} path - either a URL or an object containing the file data
+     * @param  {Object} params - loading parameters
+     * @param  {String} params.ext - file extension, determines file type
+     * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
+     * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
+     *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
+     *                   depending on the type of the loaded file.
+     */
+    loadFile: function( path, params ){
+
+        var p = Object.assign( {}, this.defaultFileParams, params );
+
+        // placeholder component
+        var component = new Component( this, p );
+        component.name = getFileInfo( path ).name;
+        this.addComponent( component );
+
+        // tasks
+        var tasks = this.tasks;
+        tasks.increment();
+
+        var onLoadFn = function( object ){
+
+            // remove placeholder component
+            this.removeComponent( component );
+
+            component = this.addComponentFromObject( object, p );
+
+            if( component.type === "script" ){
+                component.run();
+            }
+
+            if( p.defaultRepresentation ){
+                this.defaultFileRepresentation( component );
+            }
+
+            tasks.decrement();
+
+            return component;
+
+        }.bind( this );
+
+        var onErrorFn = function( e ){
+
+            component.setStatus( e );
+            tasks.decrement();
+            throw e;
+
+        };
+
+        var ext = defaults( p.ext, getFileInfo( path ).ext );
+        var promise;
+
+        if( ext === "dcd" ){
+            promise = Promise.reject( "loadFile: ext 'dcd' must be loaded into a structure component" );
+        }else{
+            promise = autoLoad( path, p );
+        }
+
+        return promise.then( onLoadFn, onErrorFn );
 
     },
 
-    //
+    addComponent: function( component ){
 
-    getAtomIndices: function( selection ){
+        if( !component ){
 
-        return this.structure.getAtomIndices( this.getSelection( selection ) );
+            Log.warn( "Stage.addComponent: no component given" );
+            return;
+
+        }
+
+        this.compList.push( component );
+
+        this.signals.componentAdded.dispatch( component );
 
     },
 
-    //
+    addComponentFromObject: function( object, params ){
+
+        var CompClass = ComponentRegistry.get( object.type );
+
+        if( CompClass ){
+            var component = new CompClass( this, object, params );
+            this.addComponent( component );
+            return component
+        }
+
+        Log.warn( "no component for object type", object.type );
+
+    },
+
+    removeComponent: function( component ){
+
+        var idx = this.compList.indexOf( component );
+        if( idx !== -1 ){
+            this.compList.splice( idx, 1 );
+            component.dispose();
+            this.signals.componentRemoved.dispatch( component );
+        }
+
+    },
+
+    removeAllComponents: function( type ){
+
+        this.compList.slice().forEach( function( o ){
+            if( !type || o.type === type ){
+                this.removeComponent( o );
+            }
+        }, this );
+
+    },
+
+    /**
+     * Handle any size-changes of the container element
+     * @return {undefined}
+     */
+    handleResize: function(){
+
+        this.viewer.handleResize();
+
+    },
+
+    /**
+     * Toggle fullscreen
+     * @fires Stage#fullscreenChanged
+     * @param  {Element} [element] - document element to put into fullscreen,
+     *                               defaults to the viewer container
+     * @return {undefined}
+     */
+    toggleFullscreen: function( element ){
+
+        if( !document.fullscreenEnabled && !document.mozFullScreenEnabled &&
+            !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
+        ){
+            Log.log( "fullscreen mode (currently) not possible" );
+            return;
+        }
+
+        var self = this;
+        element = element || this.viewer.container;
+        this.lastFullscreenElement = element;
+
+        //
+
+        function getFullscreenElement(){
+            return document.fullscreenElement || document.mozFullScreenElement ||
+                document.webkitFullscreenElement || document.msFullscreenElement;
+        }
+
+        function resizeElement(){
+
+            if( !getFullscreenElement() && self.lastFullscreenElement ){
+
+                var element = self.lastFullscreenElement;
+                element.style.width = element.dataset.normalWidth;
+                element.style.height = element.dataset.normalHeight;
+
+                document.removeEventListener( "fullscreenchange", resizeElement );
+                document.removeEventListener( "mozfullscreenchange", resizeElement );
+                document.removeEventListener( "webkitfullscreenchange", resizeElement );
+                document.removeEventListener( "MSFullscreenChange", resizeElement );
+
+                self.handleResize();
+                self.signals.fullscreenChanged.dispatch( false );
+
+            }
+
+        }
+
+        //
+
+        if( !getFullscreenElement() ){
+
+            element.dataset.normalWidth = element.style.width;
+            element.dataset.normalHeight = element.style.height;
+            element.style.width = screen.width + "px";
+            element.style.height = screen.height + "px";
+
+            if( element.requestFullscreen ){
+                element.requestFullscreen();
+            }else if( element.msRequestFullscreen ){
+                element.msRequestFullscreen();
+            }else if( element.mozRequestFullScreen ){
+                element.mozRequestFullScreen();
+            }else if( element.webkitRequestFullscreen ){
+                element.webkitRequestFullscreen();
+            }
+
+            document.addEventListener( "fullscreenchange", resizeElement );
+            document.addEventListener( "mozfullscreenchange", resizeElement );
+            document.addEventListener( "webkitfullscreenchange", resizeElement );
+            document.addEventListener( "MSFullscreenChange", resizeElement );
+
+            this.handleResize();
+            this.signals.fullscreenChanged.dispatch( true );
+
+            // workaround for Safari
+            setTimeout( function(){ self.handleResize(); }, 100 );
+
+        }else{
+
+            if( document.exitFullscreen ){
+                document.exitFullscreen();
+            }else if( document.msExitFullscreen ){
+                document.msExitFullscreen();
+            }else if( document.mozCancelFullScreen ){
+                document.mozCancelFullScreen();
+            }else if( document.webkitExitFullscreen ){
+                document.webkitExitFullscreen();
+            }
+
+        }
+
+    },
+
+    centerView: function(){
+
+        if( this.tasks.count > 0 ){
+
+            var centerFn = function( delta, count ){
+
+                if( count === 0 ){
+
+                    this.tasks.signals.countChanged.remove( centerFn, this );
+
+                }
+
+                this.viewer.centerView( true );
+
+            };
+
+            this.tasks.signals.countChanged.add( centerFn, this );
+
+        }
+
+        this.viewer.centerView( true );
+
+    },
+
+    /**
+     * Spin the whole scene around an axis at the center
+     * @example
+     * stage.setSpin( [ 0, 1, 0 ], 0.01 );
+     *
+     * @param {Number[]|Vector3} axis - the axis to spin around
+     * @param {Number} angle - amount to spin per render call
+     * @return {undefined}
+     */
+    setSpin: function( axis, angle ){
+
+        if( Array.isArray( axis ) ){
+            axis = new Vector3().fromArray( axis );
+        }
+
+        this.viewer.setSpin( axis, angle );
+
+    },
+
+    setOrientation: function( orientation ){
+
+        this.tasks.onZeroOnce( function(){
+
+            this.viewer.setOrientation( orientation );
+
+        }, this );
+
+    },
+
+    getOrientation: function(){
+
+        return this.viewer.getOrientation();
+
+    },
+
+    makeImage: function( params ){
+
+        var viewer = this.viewer;
+        var tasks = this.tasks;
+
+        return new Promise( function( resolve, reject ){
+
+            function makeImage(){
+                tasks.increment();
+                viewer.makeImage( params ).then( function( blob ){
+                    tasks.decrement();
+                    resolve( blob );
+                } ).catch( function( e ){
+                    tasks.decrement();
+                    reject( e );
+                } );
+            }
+
+            tasks.onZeroOnce( makeImage );
+
+        } );
+
+    },
+
+    setImpostor: function( value ) {
+
+        this.parameters.impostor.value = value;
+
+        var types = [
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket", "helixorient", "contact", "distance",
+            "dot"
+        ];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr.type === "script" ) return;
+
+            if( !types.includes( repr.getType() ) ){
+                return;
+            }
+
+            var p = repr.getParameters();
+            p.disableImpostor = !value;
+            repr.build( p );
+
+        } );
+
+    },
+
+    setQuality: function( value ) {
+
+        this.parameters.quality.value = value;
+
+        var types = [
+            "tube", "cartoon", "ribbon", "trace", "rope"
+        ];
+
+        var impostorTypes = [
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket", "helixorient", "contact", "distance",
+            "dot"
+        ];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr.type === "script" ) return;
+
+            var p = repr.getParameters();
+
+            if( !types.includes( repr.getType() ) ){
+
+                if( !impostorTypes.includes( repr.getType() ) ){
+                    return;
+                }
+
+                if( !p.disableImpostor ){
+                    repr.repr.quality = value;
+                    return;
+                }
+
+            }
+
+            p.quality = value;
+            repr.build( p );
+
+        } );
+
+    },
+
+    eachComponent: function( callback, type ){
+
+        this.compList.forEach( function( o, i ){
+
+            if( !type || o.type === type ){
+                callback( o, i );
+            }
+
+        } );
+
+    },
+
+    eachRepresentation: function( callback, componentType ){
+
+        this.eachComponent( function( comp ){
+
+            comp.reprList.forEach( function( repr ){
+                callback( repr, comp );
+            } );
+
+        }, componentType );
+
+    },
+
+    getComponentsByName: function( name, componentType ){
+
+        var compList = [];
+
+        this.eachComponent( function( comp ){
+
+            if( name === undefined || matchName( name, comp ) ){
+                compList.push( comp );
+            }
+
+        }, componentType );
+
+        return new ComponentCollection( compList );
+
+    },
+
+    getRepresentationsByName: function( name, componentType ){
+
+        var compName, reprName;
+
+        if( typeof name !== "object" ){
+            compName = undefined;
+            reprName = name;
+        }else{
+            compName = name.comp;
+            reprName = name.repr;
+        }
+
+        var reprList = [];
+
+        this.eachRepresentation( function( repr, comp ){
+
+            if( compName !== undefined && !matchName( compName, comp ) ){
+                return;
+            }
+
+            if( reprName === undefined || matchName( reprName, repr ) ){
+                reprList.push( repr );
+            }
+
+        }, componentType );
+
+        return new RepresentationCollection( reprList );
+
+    },
+
+    getAnythingByName: function( name ){
+
+        var compList = this.getComponentsByName( name ).list;
+        var reprList = this.getRepresentationsByName( name ).list;
+
+        return new Collection( compList.concat( reprList ) );
+
+    },
 
     dispose: function(){
 
-        if( this.selection ){
-            this.selection.signals.stringChanged.remove( this.refresh, this );
-        }
-
-        this.structure.signals.refreshed.remove( this.refresh, this );
-
-        delete this.structure;
-
-        delete this.atomSet;
-        delete this.bondSet;
-
-        delete this.atomCount;
-        delete this.bondCount;
+        this.tasks.dispose();
 
     }
 
-} );
+};
+
+/**
+ * @file Trajectory Player
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * Trajectory player parameter object.
+ * @typedef {Object} TrajectoryPlayerParameters - parameters
+ *
+ * @property {Integer} step - how many frames to skip when playing
+ * @property {Integer} timeout - how many milliseconds to wait between playing frames
+ * @property {Integer} start - first frame to play
+ * @property {Integer} end - last frame to play
+ * @property {String} interpolateType - one of "" (empty string), "linear" or "spline"
+ * @property {Integer} interpolateStep - window size used for interpolation
+ * @property {String} mode - either "loop" or "once"
+ * @property {String} direction - either "forward" or "backward"
+ */
+
+
+/**
+ * Trajectory player to animate coordinate frames
+ * @class
+ * @param {Trajectory} traj - the trajectory
+ * @param {TrajectoryPlayerParameters} [params] - parameter object
+ */
+function TrajectoryPlayer( traj, params ){
+
+    this.signals = {
+        startedRunning: new Signal(),
+        haltedRunning: new Signal()
+    };
+
+    var p = Object.assign( {}, params );
+
+    traj.signals.playerChanged.add( function( player ){
+        if( player !== this ){
+            this.pause();
+        }
+    }, this );
+
+    var n = traj.numframes;
+    this.traj = traj;
+    this.start = defaults( p.start, 0 );
+    this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
+
+    this.step = defaults( p.step, Math.ceil( ( n + 1 ) / 100 ) );
+    this.timeout = defaults( p.timeout, 50 );
+    this.interpolateType = defaults( p.interpolateType, "" );
+    this.interpolateStep = defaults( p.interpolateStep, 5 );
+    this.mode = defaults( p.mode, "loop" );  // loop, once
+    this.direction = defaults( p.direction, "forward" );  // forward, backward
+
+    this._stopFlag = false;
+    this._running = false;
+
+}
+
+TrajectoryPlayer.prototype = {
+
+    constructor: TrajectoryPlayer,
+
+    _animate: function(){
+
+        var i;
+        this._running = true;
+
+        if( !this.traj.inProgress && !this._stopFlag ){
+
+            if( this.direction === "forward" ){
+                i = this.traj.currentFrame + this.step;
+            }else{
+                i = this.traj.currentFrame - this.step;
+            }
+
+            if( i >= this.end || i < this.start ){
+
+                if( this.mode === "once" ){
+
+                    this.pause();
+
+                    if( this.direction === "forward" ){
+                        i = this.end;
+                    }else{
+                        i = this.start;
+                    }
+
+                }else{
+
+                    if( this.direction === "forward" ){
+                        i = this.start;
+                    }else{
+                        i = this.end;
+                    }
+
+                }
+
+            }
+
+            if( !this.interpolateType ){
+                this.traj.setFrame( i );
+            }
+
+        }
+
+        if( !this._stopFlag ){
+
+            if( !this.traj.inProgress && this.interpolateType ){
+
+                var ip, ipp, ippp;
+
+                if( this.direction === "forward" ){
+
+                    ip = Math.max( this.start, i - this.step );
+                    ipp = Math.max( this.start, i - 2 * this.step );
+                    ippp = Math.max( this.start, i - 3 * this.step );
+
+                }else{
+
+                    ip = Math.min( this.end, i + this.step );
+                    ipp = Math.min( this.end, i + 2 * this.step );
+                    ippp = Math.min( this.end, i + 3 * this.step );
+
+                }
+
+                this._interpolate(
+                    i, ip, ipp, ippp, 1 / this.interpolateStep, 0
+                );
+
+            }else{
+
+                setTimeout( this._animate.bind( this ), this.timeout );
+
+            }
+
+        }else{
+
+            this._running = false;
+
+        }
+
+    },
+
+    _interpolate: function( i, ip, ipp, ippp, d, t ){
+
+        t += d;
+
+        if( t <= 1 ){
+
+            var deltaTime = Math.round( this.timeout * d );
+
+            this.traj.setFrameInterpolated(
+                i, ip, ipp, ippp, t, this.interpolateType,
+                function(){
+                    setTimeout( function(){
+                        this._interpolate( i, ip, ipp, ippp, d, t );
+                    }.bind( this ), deltaTime );
+                }.bind( this )
+            );
+
+        }else{
+
+            setTimeout( this._animate.bind( this ), 0 );
+
+        }
+
+    },
+
+    toggle: function(){
+
+        if( this._running ){
+            this.pause();
+        }else{
+            this.play();
+        }
+
+    },
+
+    play: function(){
+
+        if( !this._running ){
+
+            if( this.traj.player !== this ){
+                this.traj.setPlayer( this );
+            }
+
+            var frame = this.traj.currentFrame;
+
+            // snap to the grid implied by this.step division and multiplication
+            // thus minimizing cache misses
+            var i = Math.ceil( frame / this.step ) * this.step;
+
+            // wrap when restarting from the limit (i.e. end or start)
+            if( this.direction === "forward" && frame >= this.end ){
+
+                i = this.start;
+
+            }else if( this.direction === "backward" && frame <= this.start ){
+
+                i = this.end;
+
+            }
+
+            this.traj.setFrame( i );
+
+            this._stopFlag = false;
+            this._animate();
+            this.signals.startedRunning.dispatch();
+
+        }
+
+    },
+
+    pause: function(){
+
+        if( this._running ){
+            this._stopFlag = true;
+            this.signals.haltedRunning.dispatch();
+        }
+
+    },
+
+    stop: function(){
+
+        this.traj.setFrame( this.start );
+        this.pause();
+
+    }
+
+};
 
 /**
  * @file Alignment
@@ -68506,6 +67033,7 @@ Alignment.prototype = {
  * @param  {Boolean} [align] - guide the superposition by a sequence alignment
  * @param  {String} [sele1] - selection string for structure 1
  * @param  {String} [sele2] - selection string for structure 2
+ * @return {undefined}
  */
 function superpose( s1, s2, align, sele1, sele2 ){
 
@@ -68628,9 +67156,1056 @@ function superpose( s1, s2, align, sele1, sele2 ){
 
     var superpose = new Superposition( atoms1, atoms2 );
     superpose.transform( s1 );
-    s1.getStructure().refresh();
+    s1.refreshPosition();
 
 }
+
+/**
+ * @file Script Component
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * Component wrapping a Script object
+ * @class
+ * @extends Component
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Script} script - script object to wrap
+ * @param {ComponentParameters} params - component parameters
+ */
+function ScriptComponent( stage, script, params ){
+
+    var p = params || {};
+    p.name = defaults( p.name, script.name );
+
+    Component.call( this, stage, p );
+
+    this.script = script;
+    this.status = "loaded";
+
+    this.script.signals.nameChanged.add( function( value ){
+
+        this.setName( value );
+
+    }, this );
+
+}
+
+ScriptComponent.prototype = Object.assign( Object.create(
+
+    Component.prototype ), {
+
+    constructor: ScriptComponent,
+
+    type: "script",
+
+    addRepresentation: function( /*type*/ ){},
+
+    removeRepresentation: function( /*repr*/ ){},
+
+    run: function(){
+
+        var scope = this;
+
+        this.setStatus( "running" );
+
+        this.script.call( this.stage, function(){
+
+            scope.setStatus( "finished" );
+
+        } );
+
+        this.setStatus( "called" );
+
+    },
+
+    dispose: function(){
+
+        this.signals.disposed.dispatch();
+
+    },
+
+    setVisibility: function( /*value*/ ){},
+
+    getCenter: function(){}
+
+} );
+
+ComponentRegistry.add( "script", ScriptComponent );
+
+/**
+ * @file Shape Component
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * Component wrapping a shape object
+ * @class
+ * @extends Component
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Shape} shape - shape object to wrap
+ * @param {ComponentParameters} params - component parameters
+ */
+function ShapeComponent( stage, shape, params ){
+
+    var p = params || {};
+    p.name = defaults( p.name, shape.name );
+
+    Component.call( this, stage, p );
+
+    this.shape = shape;
+
+}
+
+ShapeComponent.prototype = Object.assign( Object.create(
+
+    Component.prototype ), {
+
+    constructor: ShapeComponent,
+
+    /**
+     * Component type
+     * @alias ShapeComponent#type
+     * @constant
+     * @type {String}
+     * @default
+     */
+    type: "shape",
+
+    /**
+     * Add a new shape representation to the component
+     * @alias ShapeComponent#addRepresentation
+     * @param {String} type - the name of the representation, one of:
+     *                        buffer.
+     * @param {BufferRepresentationParameters} params - representation parameters
+     * @return {RepresentationComponent} the created representation wrapped into
+     *                                   a representation component object
+     */
+    addRepresentation: function( type, params ){
+
+        return Component.prototype.addRepresentation.call(
+            this, type, this.shape, params
+        );
+
+    },
+
+    centerView: function( zoom ){
+
+        zoom = defaults( zoom, true );
+
+        var center = this.getCenter();
+
+        if( zoom ){
+
+            var bb = this.shape.boundingBox;
+            var bbSize = bb.size();
+            var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+            var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+            // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+            zoom = Math.max( 1, maxSize + ( minSize / 2 ) );  // object size
+
+            // zoom = bb.size().length();
+
+        }
+
+        this.viewer.centerView( zoom, center );
+
+        return this;
+
+    },
+
+    getCenter: function(){
+
+        return this.shape.center;
+
+    },
+
+    dispose: function(){
+
+        this.shape.dispose();
+
+        Component.prototype.dispose.call( this );
+
+    }
+
+} );
+
+ComponentRegistry.add( "shape", ShapeComponent );
+
+/**
+ * @file Trajectory Component
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * Trajectory component parameter object.
+ * @typedef {Object} TrajectoryComponentParameters - component parameters
+ *
+ * @property {String} name - component name
+ * @property {Integer} initialFrame - initial frame the trajectory is set to
+ * @property {Integer} defaultStep - default step size to be used by trajectory players
+ * @property {Integer} defaultTimeout - default timeout to be used by trajectory players
+ * @property {String} defaultInterpolateType - one of "" (empty string), "linear" or "spline"
+ * @property {Integer} defaultInterpolateStep - window size used for interpolation
+ * @property {String} defaultMode - either "loop" or "once"
+ * @property {String} defaultDirection - either "forward" or "backward"
+ */
+
+
+/**
+ * Component wrapping a trajectory object
+ * @class
+ * @extends Component
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Trajectory} trajectory - the trajectory object
+ * @param {TrajectoryComponentParameters} params - component parameters
+ * @param {StructureComponent} parent - the parent structure
+ */
+function TrajectoryComponent( stage, trajectory, params, parent ){
+
+    var p = params || {};
+    p.name = defaults( p.name, trajectory.name );
+
+    Component.call( this, stage, p );
+
+    this.trajectory = trajectory;
+    this.parent = parent;
+    this.status = "loaded";
+
+    this.defaultStep = defaults( p.defaultStep, undefined );
+    this.defaultTimeout = defaults( p.defaultTimeout, 50 );
+    this.defaultInterpolateType = defaults( p.defaultInterpolateType, "" );
+    this.defaultInterpolateStep = defaults( p.defaultInterpolateStep, 5 );
+    this.defaultMode = defaults( p.defaultMode, "loop" );
+    this.defaultDirection = defaults( p.defaultDirection, "forward" );
+
+    // signals
+
+    trajectory.signals.frameChanged.add( function( i ){
+        this.signals.frameChanged.dispatch( i );
+    }, this );
+
+    trajectory.signals.playerChanged.add( function( player ){
+        this.signals.playerChanged.dispatch( player );
+    }, this );
+
+    trajectory.signals.gotNumframes.add( function( n ){
+        this.signals.gotNumframes.dispatch( n );
+    }, this );
+
+    //
+
+    if( p.initialFrame !== undefined ){
+        this.setFrame( p.initialFrame );
+    }
+
+}
+
+TrajectoryComponent.prototype = Object.assign( Object.create(
+
+    Component.prototype ), {
+
+    constructor: TrajectoryComponent,
+
+    type: "trajectory",
+
+    signals: Object.assign( {
+
+        frameChanged: null,
+        playerChanged: null,
+        gotNumframes: null,
+        parametersChanged: null
+
+    }, Component.prototype.signals ),
+
+    addRepresentation: function( type, params ){
+
+        return Component.prototype.addRepresentation.call(
+            this, type, this.trajectory, params
+        );
+
+    },
+
+    setFrame: function( i ){
+
+        this.trajectory.setFrame( i );
+
+    },
+
+    setParameters: function( params ){
+
+        this.trajectory.setParameters( params );
+        this.signals.parametersChanged.dispatch( params );
+
+        return this;
+
+    },
+
+    dispose: function(){
+
+        this.trajectory.dispose();
+
+        Component.prototype.dispose.call( this );
+
+    },
+
+    getCenter: function(){}
+
+} );
+
+/**
+ * @file Frames Trajectory
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function FramesTrajectory( frames, structure, params ){
+
+    Trajectory.call( this, "", structure, params );
+
+    this.name = frames.name;
+    this.path = frames.path;
+
+    this.frames = frames.coordinates;
+    this.boxes = frames.boxes;
+
+}
+
+FramesTrajectory.prototype = Object.assign( Object.create(
+
+    Trajectory.prototype ), {
+
+    constructor: FramesTrajectory,
+
+    type: "frames",
+
+    makeAtomIndices:  function(){
+
+        if( this.structure.type === "StructureView" ){
+
+            this.atomIndices = this.structure.getAtomIndices();
+
+        }else{
+
+            this.atomIndices = null;
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        var coords;
+        var frame = this.frames[ i ];
+
+        if( this.atomIndices ){
+
+            var indices = this.atomIndices;
+            var m = indices.length;
+
+            coords = new Float32Array( m * 3 );
+
+            for( var j = 0; j < m; ++j ){
+
+                var j3 = j * 3;
+                var idx3 = indices[ j ] * 3;
+
+                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
+                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
+                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
+
+            }
+
+        }else{
+
+            coords = new Float32Array( frame );
+
+        }
+
+        var box = this.boxes[ i ];
+        var numframes = this.frames.length;
+
+        this.process( i, box, coords, numframes );
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    },
+
+    getNumframes: function(){
+
+        if( this.frames ){
+
+            this.setNumframes( this.frames.length );
+
+        }
+
+    },
+
+    getPath: function( index, callback ){
+
+        var i, j, f;
+        var n = this.numframes;
+        var k = index * 3;
+
+        var path = new Float32Array( n * 3 );
+
+        for( i = 0; i < n; ++i ){
+
+            j = 3 * i;
+            f = this.frames[ i ];
+
+            path[ j + 0 ] = f[ k + 0 ];
+            path[ j + 1 ] = f[ k + 1 ];
+            path[ j + 2 ] = f[ k + 2 ];
+
+        }
+
+        callback( path );
+
+    }
+
+} );
+
+/**
+ * @file Structure Trajectory
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function StructureTrajectory( trajPath, structure, params ){
+
+    // if( !trajPath ) trajPath = structure.path;
+    trajPath = "";
+
+    Trajectory.call( this, trajPath, structure, params );
+
+}
+
+StructureTrajectory.prototype = Object.assign( Object.create(
+
+    Trajectory.prototype ), {
+
+    constructor: StructureTrajectory,
+
+    type: "structure",
+
+    makeAtomIndices: function(){
+
+        if( this.structure.atomSet.size() < this.structure.atomStore.count ){
+            this.atomIndices = this.structure.getAtomIndices();
+        }else{
+            this.atomIndices = null;
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        var coords;
+        var structure = this.structure;
+        var frame = structure.frames[ i ];
+
+        if( this.atomIndices ){
+
+            var indices = this.atomIndices;
+            var m = indices.length;
+
+            coords = new Float32Array( m * 3 );
+
+            for( var j = 0; j < m; ++j ){
+
+                var j3 = j * 3;
+                var idx3 = indices[ j ] * 3;
+
+                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
+                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
+                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
+
+            }
+
+        }else{
+
+            coords = new Float32Array( frame );
+
+        }
+
+        var box = structure.boxes[ i ];
+        var numframes = structure.frames.length;
+
+        this.process( i, box, coords, numframes );
+
+        if( typeof callback === "function" ){
+            callback();
+        }
+
+    },
+
+    getNumframes: function(){
+
+        this.setNumframes( this.structure.frames.length );
+
+    },
+
+    getPath: function( index, callback ){
+
+        var i, j, f;
+        var n = this.numframes;
+        var k = index * 3;
+
+        var path = new Float32Array( n * 3 );
+
+        for( i = 0; i < n; ++i ){
+
+            j = 3 * i;
+            f = this.structure.frames[ i ];
+
+            path[ j + 0 ] = f[ k + 0 ];
+            path[ j + 1 ] = f[ k + 1 ];
+            path[ j + 2 ] = f[ k + 2 ];
+
+        }
+
+        callback( path );
+
+    }
+
+} );
+
+/**
+ * @file Remote Trajectory
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function RemoteTrajectory( trajPath, structure, params ){
+
+    Trajectory.call( this, trajPath, structure, params );
+
+}
+
+RemoteTrajectory.prototype = Object.assign( Object.create(
+
+    Trajectory.prototype ), {
+
+    constructor: RemoteTrajectory,
+
+    type: "remote",
+
+    makeAtomIndices: function(){
+
+        var atomIndices = [];
+
+        if( this.structure.type === "StructureView" ){
+
+            var indices = this.structure.getAtomIndices();
+
+            var i, r;
+            var p = indices[ 0 ];
+            var q = indices[ 0 ];
+            var n = indices.length;
+
+            for( i = 1; i < n; ++i ){
+
+                r = indices[ i ];
+
+                if( q + 1 < r ){
+
+                    atomIndices.push( [ p, q + 1 ] );
+                    p = r;
+
+                }
+
+                q = r;
+
+            }
+
+            atomIndices.push( [ p, q + 1 ] );
+
+        }else{
+
+            atomIndices.push( [ 0, this.atomCount ] );
+
+        }
+
+        this.atomIndices = atomIndices;
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        // TODO implement max frameCache size, re-use arrays
+
+        var request = new XMLHttpRequest();
+
+        var ds = DatasourceRegistry.trajectory;
+        var url = ds.getFrameUrl( this.trajPath, i );
+        var params = ds.getFrameParams( this.trajPath, this.atomIndices );
+
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
+
+        request.addEventListener( 'load', function(){
+
+            var arrayBuffer = request.response;
+            if( !arrayBuffer ){
+                Log.error( "empty arrayBuffer for '" + url + "'" );
+                return;
+            }
+
+            var numframes = new Int32Array( arrayBuffer, 0, 1 )[ 0 ];
+            // var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+            var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
+            var coords = new Float32Array( arrayBuffer, 11 * 4 );
+
+            this.process( i, box, coords, numframes );
+            if( typeof callback === "function" ){
+                callback();
+            }
+
+        }.bind( this ), false );
+
+        request.send( params );
+
+    },
+
+    getNumframes: function(){
+
+        var request = new XMLHttpRequest();
+
+        var ds = DatasourceRegistry.trajectory;
+        var url = ds.getNumframesUrl( this.trajPath );
+
+        request.open( "GET", url, true );
+        request.addEventListener( 'load', function(){
+            this.setNumframes( parseInt( request.response ) );
+        }.bind( this ), false );
+        request.send( null );
+
+    },
+
+    getPath: function( index, callback ){
+
+        if( this.pathCache[ index ] ){
+            callback( this.pathCache[ index ] );
+            return;
+        }
+
+        Log.time( "loadPath" );
+
+        var request = new XMLHttpRequest();
+
+        var ds = DatasourceRegistry.trajectory;
+        var url = ds.getPathUrl( this.trajPath, index );
+        var params = "";
+
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
+
+        request.addEventListener( 'load', function(){
+
+            Log.timeEnd( "loadPath" );
+
+            var arrayBuffer = request.response;
+            if( !arrayBuffer ){
+                Log.error( "empty arrayBuffer for '" + url + "'" );
+                return;
+            }
+
+            var path = new Float32Array( arrayBuffer );
+            // Log.log( path )
+            this.pathCache[ index ] = path;
+            callback( path );
+
+        }.bind( this ), false );
+
+        request.send( params );
+
+    }
+
+} );
+
+/**
+ * @file Trajectory Utils
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function makeTrajectory( trajSrc, structure, params ){
+
+    var traj;
+
+    if( trajSrc && trajSrc.type === "Frames" ){
+
+        traj = new FramesTrajectory( trajSrc, structure, params );
+
+    }else if( !trajSrc && structure.frames ){
+
+        traj = new StructureTrajectory( trajSrc, structure, params );
+
+    }else{
+
+        traj = new RemoteTrajectory( trajSrc, structure, params );
+
+    }
+
+    return traj;
+
+}
+
+/**
+ * @file Structure View
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * {@link Signal}, dispatched when StructureView.refresh() is called
+ * @example
+ * structureView.signals.refreshed.add( function(){ ... } );
+ * @event StructureView#refreshed
+ */
+
+
+/**
+ * Get view on structure restricted to the selection
+ * @param  {Selection} selection - the selection
+ * @return {StructureView} the view on the structure
+ */
+Structure.prototype.getView = function( selection ){
+    // added here to avoid cyclic import dependency
+    return new StructureView( this, selection );
+};
+
+
+/**
+ * View on the structure, restricted to the selection
+ * @class
+ * @extends Structure
+ * @param {Structure} structure - the structure
+ * @param {Selection} selection - the selection
+ */
+function StructureView( structure, selection ){
+
+    this.signals = {
+        refreshed: new Signal(),
+    };
+
+    this.structure = structure;
+    this.selection = selection;
+
+    this.center = new Vector3();
+    this.boundingBox = new Box3();
+
+    this.init();
+    this.refresh();
+
+}
+
+StructureView.prototype = Object.assign( Object.create(
+
+    Structure.prototype ), {
+
+    constructor: StructureView,
+    type: "StructureView",
+
+    init: function(){
+
+        Object.defineProperties( this, {
+            name: {
+                get: function(){ return this.structure.name; }
+            },
+            path: {
+                get: function(){ return this.structure.path; }
+            },
+            title: {
+                get: function(){ return this.structure.title; }
+            },
+            id: {
+                get: function(){ return this.structure.id; }
+            },
+
+            atomSetDict: {
+                get: function(){ return this.structure.atomSetDict; }
+            },
+            biomolDict: {
+                get: function(){ return this.structure.biomolDict; }
+            },
+            entityList: {
+                get: function(){ return this.structure.entityList; }
+            },
+            unitcell: {
+                get: function(){ return this.structure.unitcell; }
+            },
+
+            frames: {
+                get: function(){ return this.structure.frames; }
+            },
+            boxes: {
+                get: function(){ return this.structure.boxes; }
+            },
+
+            bondStore: {
+                get: function(){ return this.structure.bondStore; }
+            },
+            backboneBondStore: {
+                get: function(){ return this.structure.backboneBondStore; }
+            },
+            rungBondStore: {
+                get: function(){ return this.structure.rungBondStore; }
+            },
+            atomStore: {
+                get: function(){ return this.structure.atomStore; }
+            },
+            residueStore: {
+                get: function(){ return this.structure.residueStore; }
+            },
+            chainStore: {
+                get: function(){ return this.structure.chainStore; }
+            },
+            modelStore: {
+                get: function(){ return this.structure.modelStore; }
+            },
+
+            atomMap: {
+                get: function(){ return this.structure.atomMap; }
+            },
+            residueMap: {
+                get: function(){ return this.structure.residueMap; }
+            },
+
+            bondHash: {
+                get: function(){ return this.structure.bondHash; }
+            },
+            spatialHash: {
+                get: function(){ return this.structure.spatialHash; }
+            }
+        } );
+
+        this._ap = this.getAtomProxy();
+        this._rp = this.getResidueProxy();
+        this._cp = this.getChainProxy();
+
+        if( this.selection ){
+            this.selection.signals.stringChanged.add( this.refresh, this );
+        }
+
+        this.structure.signals.refreshed.add( this.refresh, this );
+
+    },
+
+    /**
+     * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
+     * @fires StructureView#refreshed
+     * @return {undefined}
+     */
+    refresh: function(){
+
+        if( exports.Debug ) Log.time( "StructureView.refresh" );
+
+        this.atomSetCache = {};
+
+        this.atomSet = this.getAtomSet( this.selection, true );
+        if( this.structure.atomSet ){
+            if( exports.Debug ) Log.time( "StructureView.refresh#atomSet.intersection" );
+            this.atomSet = this.atomSet.intersection( this.structure.atomSet );
+            if( exports.Debug ) Log.timeEnd( "StructureView.refresh#atomSet.intersection" );
+        }
+
+        this.bondSet = this.getBondSet();
+
+        if( exports.Debug ) Log.time( "StructureView.refresh#atomSetDict.new_intersection" );
+        for( var name in this.atomSetDict ){
+            var as = this.atomSetDict[ name ];
+            this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
+        }
+        if( exports.Debug ) Log.timeEnd( "StructureView.refresh#atomSetDict.new_intersection" );
+
+        if( exports.Debug ) Log.time( "StructureView.refresh#size" );
+        this.atomCount = this.atomSet.size();
+        this.bondCount = this.bondSet.size();
+        if( exports.Debug ) Log.timeEnd( "StructureView.refresh#size" );
+
+        this.boundingBox = this.getBoundingBox();
+        this.center = this.boundingBox.center();
+
+        if( exports.Debug ) Log.timeEnd( "StructureView.refresh" );
+
+        this.signals.refreshed.dispatch();
+
+    },
+
+    //
+
+    setSelection: function( selection ){
+
+        this.selection = selection;
+
+        this.refresh();
+
+    },
+
+    getSelection: function( selection ){
+
+        var seleList = [];
+
+        if( selection && selection.string ){
+            seleList.push( selection.string );
+        }
+
+        var parentSelection = this.structure.getSelection();
+        if( parentSelection && parentSelection.string ){
+            seleList.push( parentSelection.string );
+        }
+
+        if( this.selection && this.selection.string ){
+            seleList.push( this.selection.string );
+        }
+
+        var sele = "";
+        if( seleList.length > 0 ){
+            sele = "( " + seleList.join( " ) AND ( " ) + " )";
+        }
+
+        return new Selection( sele );
+
+    },
+
+    getStructure: function(){
+
+        return this.structure.getStructure();
+
+    },
+
+    //
+
+    eachBond: function( callback, selection ){
+
+        this.structure.eachBond( callback, this.getSelection( selection ) );
+
+    },
+
+    eachAtom: function( callback, selection ){
+
+        var ap = this.getAtomProxy();
+        var as = this.getAtomSet( selection );
+        var n = this.atomStore.count;
+
+        if( as && as.size() < n ){
+            as.forEach( function( index ){
+                ap.index = index;
+                callback( ap );
+            } );
+        }else{
+            for( var i = 0; i < n; ++i ){
+                ap.index = i;
+                callback( ap );
+            }
+        }
+
+    },
+
+    eachResidue: function( callback, selection ){
+
+        this.structure.eachResidue( callback, this.getSelection( selection ) );
+
+    },
+
+    /**
+     * Not implemented
+     * @alias StructureView#eachResidueN
+     * @return {undefined}
+     */
+    eachResidueN: function( /*n, callback*/ ){
+
+        console.error( "StructureView.eachResidueN() not implemented" );
+
+    },
+
+    eachChain: function( callback, selection ){
+
+        this.structure.eachChain( callback, this.getSelection( selection ) );
+
+    },
+
+    eachModel: function( callback, selection ){
+
+        this.structure.eachModel( callback, this.getSelection( selection ) );
+
+    },
+
+    //
+
+    getAtomSet: function( selection, ignoreView ){
+
+        if( exports.Debug ) Log.time( "StructureView.getAtomSet" );
+
+        var as = this.structure.getAtomSet( selection );
+        if( !ignoreView && this.atomSet ){
+            as = as.new_intersection( this.atomSet );
+        }
+
+        if( exports.Debug ) Log.timeEnd( "StructureView.getAtomSet" );
+
+        return as;
+
+    },
+
+    //
+
+    getAtomIndices: function( selection ){
+
+        return this.structure.getAtomIndices( this.getSelection( selection ) );
+
+    },
+
+    refreshPosition: function(){
+
+        return this.structure.refreshPosition();
+
+    },
+
+    //
+
+    dispose: function(){
+
+        if( this.selection ){
+            this.selection.signals.stringChanged.remove( this.refresh, this );
+        }
+
+        this.structure.signals.refreshed.remove( this.refresh, this );
+
+        delete this.structure;
+
+        delete this.atomSet;
+        delete this.bondSet;
+
+        delete this.atomCount;
+        delete this.bondCount;
+
+    }
+
+} );
 
 /**
  * @file Sturucture Component
@@ -68642,7 +68217,7 @@ function superpose( s1, s2, align, sele1, sele2 ){
 /**
  * {@link Signal}, dispatched when the default assembly is changed
  * @example
- * structureComponent.signals.defaultAssemblyChanged( function( value ){ ... } );
+ * structureComponent.signals.defaultAssemblyChanged.add( function( value ){ ... } );
  * @event StructureComponent#defaultAssemblyChanged
  * @type {String}
  */
@@ -68659,7 +68234,7 @@ function superpose( s1, s2, align, sele1, sele2 ){
 function StructureComponent( stage, structure, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : structure.name;
+    p.name = defaults( p.name, structure.name );
 
     Component.call( this, stage, p );
 
@@ -68673,6 +68248,8 @@ function StructureComponent( stage, structure, params ){
     this.trajList = [];
     this.initSelection( p.sele );
     this.setDefaultAssembly( p.assembly || "" );
+
+    this.stage.gidPool.addObject( this.structure );
 
 }
 
@@ -68702,7 +68279,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Initialize selection
      * @private
-     * @param {String} string - selection string
+     * @param {String} sele - selection string
+     * @return {undefined}
      */
     initSelection: function( sele ){
 
@@ -68739,6 +68317,7 @@ StructureComponent.prototype = Object.assign( Object.create(
      * Set selection of {@link StructureComponent#structureView}
      * @alias StructureComponent#setSelection
      * @param {String} string - selection string
+     * @return {StructureComponent} this object
      */
     setSelection: function( string ){
 
@@ -68753,11 +68332,14 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @alias StructureComponent#setDefaultAssembly
      * @fires StructureComponent#defaultAssemblyChanged
      * @param {String} value - assembly name
+     * @return {undefined}
      */
     setDefaultAssembly: function( value ){
 
         this.defaultAssembly = value;
-        this.rebuildRepresentations();
+        this.reprList.forEach( function( repr ){
+            repr.setParameters( { defaultAssembly: this.defaultAssembly } );
+        }, this );
         this.signals.defaultAssemblyChanged.dispatch( value );
 
     },
@@ -68765,23 +68347,20 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Rebuild all representations
      * @alias StructureComponent#rebuildRepresentations
+     * @return {undefined}
      */
     rebuildRepresentations: function(){
 
         this.reprList.forEach( function( repr ){
-
-            var p = repr.getParameters();
-            p.defaultAssembly = this.defaultAssembly;
-
-            repr.build( p );
-
-        }, this );
+            repr.build();
+        } );
 
     },
 
     /**
      * Rebuild all trajectories
      * @alias StructureComponent#rebuildTrajectories
+     * @return {undefined}
      */
     rebuildTrajectories: function(){
 
@@ -68815,15 +68394,17 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
-    addTrajectory: function( trajPath, sele, i ){
+    /**
+     * Add a new trajectory component to the structure
+     * @param {String|Frames} trajPath - path or frames object
+     * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
+     * @return {TrajectoryComponent} the created trajectory component object
+     */
+    addTrajectory: function( trajPath, params ){
 
-        var params = { "i": i };
+        var traj = makeTrajectory( trajPath, this.structureView, params );
 
-        var traj = makeTrajectory(
-            trajPath, this.structureView, sele
-        );
-
-        traj.signals.frameChanged.add( function( /*value*/ ){
+        traj.signals.frameChanged.add( function(){
             this.updateRepresentations( { "position": true } );
         }, this );
 
@@ -68850,6 +68431,8 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
+        this.stage.gidPool.removeObject( this.structure );
+
         // copy via .slice because side effects may change trajList
         this.trajList.slice().forEach( function( traj ){
             traj.dispose();
@@ -68864,7 +68447,7 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     centerView: function( zoom, sele ){
 
-        zoom = zoom !== undefined ? zoom : true;
+        zoom = defaults( zoom, true );
 
         var center = this.getCenter( sele );
 
@@ -68937,6 +68520,8 @@ StructureComponent.prototype = Object.assign( Object.create(
 
 } );
 
+ComponentRegistry.add( "structure", StructureComponent );
+
 /**
  * @file Surface Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -68945,17 +68530,17 @@ StructureComponent.prototype = Object.assign( Object.create(
 
 
 /**
- * Component wrapping a Surface or Volume object
+ * Component wrapping a Surface object
  * @class
  * @extends Component
  * @param {Stage} stage - stage object the component belongs to
- * @param {Surface|Volume} surface - surface or volume object to wrap
+ * @param {Surface} surface - surface object to wrap
  * @param {ComponentParameters} params - component parameters
  */
 function SurfaceComponent( stage, surface, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : surface.name;
+    p.name = defaults( p.name, surface.name );
 
     Component.call( this, stage, p );
 
@@ -69017,1293 +68602,91 @@ SurfaceComponent.prototype = Object.assign( Object.create(
 
 } );
 
+ComponentRegistry.add( "surface", SurfaceComponent );
+
 /**
- * @file Shape Component
+ * @file Volume Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
 
 /**
- * Component wrapping a shape object
+ * Component wrapping a Volume object
  * @class
  * @extends Component
  * @param {Stage} stage - stage object the component belongs to
- * @param {Shape} shape - shape object to wrap
+ * @param {Volume} volume - volume object to wrap
  * @param {ComponentParameters} params - component parameters
  */
-function ShapeComponent( stage, shape, params ){
+function VolumeComponent( stage, volume, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : shape.name;
+    p.name = defaults( p.name, volume.name );
 
     Component.call( this, stage, p );
 
-    this.shape = shape;
+    this.volume = volume;
+    this.stage.gidPool.addObject( this.volume );
 
 }
 
-ShapeComponent.prototype = Object.assign( Object.create(
+VolumeComponent.prototype = Object.assign( Object.create(
 
     Component.prototype ), {
 
-    constructor: ShapeComponent,
+    constructor: VolumeComponent,
 
     /**
      * Component type
-     * @alias ShapeComponent#type
+     * @alias VolumeComponent#type
      * @constant
      * @type {String}
      * @default
      */
-    type: "shape",
+    type: "volume",
 
     /**
-     * Add a new shape representation to the component
-     * @alias ShapeComponent#addRepresentation
+     * Add a new volume representation to the component
+     * @alias VolumeComponent#addRepresentation
      * @param {String} type - the name of the representation, one of:
-     *                        buffer.
-     * @param {BufferRepresentationParameters} params - representation parameters
+     *                        surface, dot.
+     * @param {VolumeRepresentationParameters} params - representation parameters
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
     addRepresentation: function( type, params ){
 
         return Component.prototype.addRepresentation.call(
-            this, type, this.shape, params
+            this, type, this.volume, params
         );
 
     },
 
     dispose: function(){
 
-        this.shape.dispose();
+        this.stage.gidPool.removeObject( this.volume );
+        this.volume.dispose();
 
         Component.prototype.dispose.call( this );
 
-    }
+    },
+
+    centerView: function( zoom ){
+
+        var center = this.volume.center;
+
+        if( zoom ){
+            zoom = this.volume.boundingBox.size().length();
+        }
+
+        this.viewer.centerView( zoom, center );
+
+    },
 
 } );
 
-/**
- * @file Script Component
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-/**
- * Component wrapping a Script object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Script} script - script object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function ScriptComponent( stage, script, params ){
-
-    var p = params || {};
-    p.name = p.name !== undefined ? p.name : script.name;
-
-    Component.call( this, stage, p );
-
-    this.script = script;
-    this.status = "loaded";
-
-    this.script.signals.nameChanged.add( function( value ){
-
-        this.setName( value );
-
-    }, this );
-
-}
-
-ScriptComponent.prototype = Object.assign( Object.create(
-
-    Component.prototype ), {
-
-    constructor: ScriptComponent,
-
-    type: "script",
-
-    addRepresentation: function( /*type*/ ){},
-
-    removeRepresentation: function( /*repr*/ ){},
-
-    run: function(){
-
-        var scope = this;
-
-        this.setStatus( "running" );
-
-        this.script.call( this.stage, function(){
-
-            scope.setStatus( "finished" );
-
-        } );
-
-        this.setStatus( "called" );
-
-    },
-
-    dispose: function(){
-
-        this.signals.disposed.dispatch();
-
-    },
-
-    setVisibility: function( /*value*/ ){},
-
-    getCenter: function(){}
-
-} );
-
-/**
- * @file Component Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function makeComponent( stage, object, params ){
-
-    var component;
-
-    if( object.type === "Structure" ){
-
-        component = new StructureComponent( stage, object, params );
-
-    }else if( object.type == "Surface" || object.type === "Volume" ){
-
-        component = new SurfaceComponent( stage, object, params );
-
-    }else if( object.type === "Shape" ){
-
-        component = new ShapeComponent( stage, object, params );
-
-    }else if( object.type === "Script" ){
-
-        component = new ScriptComponent( stage, object, params );
-
-    }else{
-
-        Log.warn( "makeComponent: object type unknown", object );
-
-    }
-
-    return component;
-
-}
-
-/**
- * @file Stage
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-// eslint-disable-next-line no-unused-vars
-/**
- * Stage parameter object.
- * @typedef {Object} StageParameters - stage parameters
- * @property {Color} backgroundColor - background color
- * @property {Integer} sampleLevel - sampling level for antialiasing, between -1 and 5;
- *                                   -1: no sampling, 0: only sampling when not moving
- * @property {Float} rotateSpeed - camera-controls rotation speed, between 0 and 10
- * @property {Float} zoomSpeed - camera-controls zoom speed, between 0 and 10
- * @property {Float} panSpeed - camera-controls pan speed, between 0 and 10
- * @property {Integer} clipNear - position of camera near/front clipping plane
- *                                in percent of scene bounding box
- * @property {Integer} clipFar - position of camera far/back clipping plane
- *                               in percent of scene bounding box
- * @property {Float} clipDist - camera clipping distance in Angstrom
- * @property {Integer} fogNear - position of the start of the fog effect
- *                               in percent of scene bounding box
- * @property {Integer} fogFar - position where the fog is in full effect
- *                              in percent of scene bounding box
- * @property {String} cameraType - type of camera, either 'persepective' or 'orthographic'
- * @property {Float} cameraFov - camera field of view in degree, between 15 and 120
- * @property {Color} lightColor - point light color
- * @property {Float} lightIntensity - point light intensity
- * @property {Color} ambientColor - ambient light color
- * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered} signal is fired
- */
-
-
-/**
- * {@link Signal}, dispatched when stage parameters change {@link Signal}
- * @example
- * stage.signals.parametersChanged( function( stageParameters ){ ... } );
- * @event Stage#parametersChanged
- * @type {StageParameters}
- */
-
-/**
- * {@link Signal}, dispatched when the fullscreen is entered or left
- * @example
- * stage.signals.fullscreenChanged( function( isFullscreen ){ ... } );
- * @event Stage#fullscreenChanged
- * @type {Boolean}
- */
-
-/**
- * {@link Signal}, dispatched when a component is added to the stage
- * @example
- * stage.signals.componentAdded( function( component ){ ... } );
- * @event Stage#componentAdded
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched when a component is removed from the stage
- * @example
- * stage.signals.componentRemoved( function( component ){ ... } );
- * @event Stage#componentRemoved
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched upon clicking in the viewer canvas
- * @example
- * stage.signals.clicked( function( pickingData ){ ... } );
- * @event Stage#clicked
- * @type {PickingData}
- */
-
-/**
- * {@link Signal}, dispatched upon hovering over the viewer canvas
- * @example
- * stage.signals.hovered( function( pickingData ){ ... } );
- * @event Stage#hovered
- * @type {PickingData}
- */
-
-
-/**
- * Stage objects are central for creating molecular scenes with NGL.
- * @class
- * @example
- *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
- *
- * @param {String} eid - document id
- * @param {StageParameters} params -
- */
-function Stage( eid, params ){
-
-    this.signals = {
-        parametersChanged: new Signal(),
-        fullscreenChanged: new Signal(),
-
-        componentAdded: new Signal(),
-        componentRemoved: new Signal(),
-
-        clicked: new Signal(),
-        hovered: new Signal()
-    };
-
-    //
-
-    /**
-     * Counter that keeps track of various potential long-running tasks,
-     * including file loading and surface calculation.
-     * @member {Counter}
-     */
-    this.tasks = new Counter();
-    this.compList = [];
-    this.defaultFileParams = {};
-
-    //
-
-    this.viewer = new Viewer( eid );
-    if( !this.viewer.renderer ) return;
-
-    this.pickingControls = new PickingControls( this.viewer );
-    this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
-    this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
-
-    var p = Object.assign( {
-        impostor: true,
-        quality: "medium",
-        sampleLevel: 0,
-        backgroundColor: "black",
-        rotateSpeed: 2.0,
-        zoomSpeed: 1.2,
-        panSpeed: 0.8,
-        clipNear: 0,
-        clipFar: 100,
-        clipDist: 10,
-        fogNear: 50,
-        fogFar: 100,
-        cameraFov: 40,
-        cameraType: "perspective",
-        lightColor: 0xdddddd,
-        lightIntensity: 1.0,
-        ambientColor: 0xdddddd,
-        ambientIntensity: 0.2,
-        hoverTimeout: 500,
-    }, params );
-    this.parameters = deepCopy( Stage.prototype.parameters );
-    this.setParameters( p );  // must come after the viewer has been instantiated
-
-    this.viewer.animate();
-
-}
-
-Stage.prototype = {
-
-    constructor: Stage,
-
-    parameters: {
-
-        backgroundColor: {
-            type: "color"
-        },
-        quality: {
-            type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
-        },
-        sampleLevel: {
-            type: "range", step: 1, max: 5, min: -1
-        },
-        impostor: {
-            type: "boolean"
-        },
-        rotateSpeed: {
-            type: "number", precision: 1, max: 10, min: 0
-        },
-        zoomSpeed: {
-            type: "number", precision: 1, max: 10, min: 0
-        },
-        panSpeed: {
-            type: "number", precision: 1, max: 10, min: 0
-        },
-        clipNear: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        clipFar: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        clipDist: {
-            type: "integer", max: 200, min: 0
-        },
-        fogNear: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        fogFar: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        cameraType: {
-            type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
-        },
-        cameraFov: {
-            type: "range", step: 1, max: 120, min: 15
-        },
-        lightColor: {
-            type: "color"
-        },
-        lightIntensity: {
-            type: "number", precision: 2, max: 10, min: 0
-        },
-        ambientColor: {
-            type: "color"
-        },
-        ambientIntensity: {
-            type: "number", precision: 2, max: 10, min: 0
-        },
-        hoverTimeout: {
-            type: "integer", max: 10000, min: 10
-        },
-
-    },
-
-    /**
-     * Set stage parameters
-     * @fires Stage#parametersChanged
-     * @param {StageParameters} params - stage parameters
-     */
-    setParameters: function( params ){
-
-        var p = Object.assign( {}, params );
-        var tp = this.parameters;
-        var viewer = this.viewer;
-        var controls = viewer.controls;
-        var pickingControls = this.pickingControls;
-
-        for( var name in p ){
-
-            if( p[ name ] === undefined ) continue;
-            if( !tp[ name ] ) continue;
-
-            if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
-            if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
-
-            tp[ name ].value = p[ name ];
-
-        }
-
-        // apply parameters
-        if( p.quality !== undefined ) this.setQuality( p.quality );
-        if( p.impostor !== undefined ) this.setImpostor( p.impostor );
-        if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
-        if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
-        if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
-        pickingControls.setParameters( { hoverTimeout: p.hoverTimeout } );
-        viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
-        viewer.setFog( undefined, p.fogNear, p.fogFar );
-        viewer.setCamera( p.cameraType, p.cameraFov );
-        viewer.setSampling( p.sampleLevel );
-        viewer.setBackground( p.backgroundColor );
-        viewer.setLight(
-            p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
-        );
-
-        this.signals.parametersChanged.dispatch(
-            this.getParameters()
-        );
-
-        return this;
-
-    },
-
-    /**
-     * Get stage parameters
-     * @return {StageParameters} parameter object
-     */
-    getParameters: function(){
-
-        var params = {};
-        for( var name in this.parameters ){
-            params[ name ] = this.parameters[ name ].value;
-        }
-        return params;
-
-    },
-
-    /**
-     * Create default representations for the given component
-     * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
-     * @return {undefined}
-     */
-    defaultFileRepresentation: function( object ){
-
-        if( object.type === "structure" ){
-
-            object.setSelection( "/0" );
-
-            var atomCount, instanceCount;
-            var structure = object.structure;
-
-            if( structure.biomolDict.BU1 ){
-                var assembly = structure.biomolDict.BU1;
-                atomCount = assembly.getAtomCount( structure );
-                instanceCount = assembly.getInstanceCount();
-                object.setDefaultAssembly( "BU1" );
-            }else{
-                atomCount = structure.getModelProxy( 0 ).atomCount;
-                instanceCount = 1;
-            }
-
-            if( typeof window.orientation !== 'undefined' ){
-                atomCount *= 4;
-            }
-
-            var backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
-            if( backboneOnly ){
-                atomCount *= 10;
-            }
-
-            var colorScheme = "chainname";
-            var polymerChainnames = new Set();
-            var rp = structure.getResidueProxy();
-            structure.getModelProxy( 0 ).eachChain( function( cp ){
-                rp.index = cp.residueOffset;
-                if( rp.isPolymer() ){
-                    polymerChainnames.add( cp.chainname );
-                }
-            } );
-            if( polymerChainnames.size === 1 ){
-                colorScheme = "residueindex";
-            }
-
-            if( exports.Debug ) console.log( atomCount, instanceCount, backboneOnly );
-
-            if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
-
-                var scaleFactor = (
-                    Math.min(
-                        1.5,
-                        Math.max(
-                            0.1,
-                            2000 / ( atomCount / instanceCount )
-                        )
-                    )
-                );
-                if( backboneOnly ) scaleFactor = Math.min( scaleFactor, 0.15 );
-
-                object.addRepresentation( "surface", {
-                    sele: "polymer",
-                    surfaceType: "sas",
-                    probeRadius: 1.4,
-                    scaleFactor: scaleFactor,
-                    colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
-                    useWorker: false
-                } );
-
-            }else if( atomCount > 250000 ){
-
-                object.addRepresentation( "backbone", {
-                    lineOnly: true,
-                    colorScheme: colorScheme,
-                    colorScale: "RdYlBu"
-                } );
-
-            }else if( atomCount > 100000 ){
-
-                object.addRepresentation( "backbone", {
-                    quality: "low",
-                    disableImpostor: true,
-                    colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
-                    scale: 2.0
-                } );
-
-            }else if( atomCount > 80000 ){
-
-                object.addRepresentation( "backbone", {
-                    colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
-                    scale: 2.0
-                } );
-
-            }else{
-
-                var quality = atomCount < 15000 ? "high" : "medium";
-
-                object.addRepresentation( "cartoon", {
-                    color: colorScheme,
-                    colorScale: "RdYlBu",
-                    scale: 0.7,
-                    aspectRatio: 5,
-                    quality: quality
-                } );
-                if( atomCount < 50000 ){
-                    object.addRepresentation( "base", {
-                        color: colorScheme,
-                        colorScale: "RdYlBu",
-                        quality: quality
-                    } );
-                }
-                object.addRepresentation( "ball+stick", {
-                    sele: "hetero and not ( water or ion )",
-                    colorScheme: "element",
-                    scale: 2.0,
-                    aspectRatio: 1.5,
-                    bondScale: 0.3,
-                    bondSpacing: 0.75,
-                    quality: quality
-                } );
-
-            }
-
-            this.centerView();
-
-            // add frames as trajectory
-            if( object.structure.frames.length ) object.addTrajectory();
-
-        }else if( object.type === "surface" || object.type === "volume" ){
-
-            object.addRepresentation( "surface" );
-            this.centerView();
-
-        }
-
-    },
-
-    /**
-     * Load a file onto the stage
-     *
-     * @example
-     * // load from URL
-     * stage.loadFile( "http://files.rcsb.org/download/5IOS.cif" );
-     *
-     * @example
-     * // load binary data in CCP4 format via a Blob
-     * var binaryBlob = new Blob( [ ccp4Data ], { type: 'application/octet-binary'} );
-     * stage.loadFile( binaryBlob, { ext: "ccp4" } );
-     *
-     * @example
-     * // load string data in PDB format via a Blob
-     * var stringBlob = new Blob( [ pdbData ], { type: 'text/plain'} );
-     * stage.loadFile( stringBlob, { ext: "pdb" } );
-     *
-     * @example
-     * // load a File object
-     * stage.loadFile( file );
-     *
-     * @example
-     * // load from URL and add a 'ball+stick' representation with double/triple bonds
-     * stage.loadFile( "http://files.rcsb.org/download/1crn.cif" ).then( function( comp ){
-     *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
-     * } );
-     *
-     * @fires Stage#componentAdded
-     * @param  {String|File|Blob} path - either a URL or an object containing the file data
-     * @param  {Object} params - loading parameters
-     * @param  {String} params.ext - file extension, determines file type
-     * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
-     * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
-     *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
-     *                   depending on the type of the loaded file.
-     */
-    loadFile: function( path, params ){
-
-        var p = Object.assign( {}, this.defaultFileParams, params );
-
-        // placeholder component
-        var component = new Component( this, p );
-        component.name = getFileInfo( path ).name;
-        this.addComponent( component );
-
-        // tasks
-        var tasks = this.tasks;
-        tasks.increment();
-
-        var onLoadFn = function( object ){
-
-            // remove placeholder component
-            this.removeComponent( component );
-
-            component = this.addComponentFromObject( object, p );
-
-            if( component.type === "script" ){
-                component.run();
-            }
-
-            if( p.defaultRepresentation ){
-                this.defaultFileRepresentation( component );
-            }
-
-            tasks.decrement();
-
-            return component;
-
-        }.bind( this );
-
-        var onErrorFn = function( e ){
-
-            component.setStatus( e );
-            tasks.decrement();
-            throw e;
-
-        };
-
-        return autoLoad( path, p ).then( onLoadFn, onErrorFn );
-
-    },
-
-    addComponent: function( component ){
-
-        if( !component ){
-
-            Log.warn( "Stage.addComponent: no component given" );
-            return;
-
-        }
-
-        this.compList.push( component );
-
-        this.signals.componentAdded.dispatch( component );
-
-    },
-
-    addComponentFromObject: function( object, params ){
-
-        var component = makeComponent( this, object, params );
-
-        this.addComponent( component );
-
-        return component;
-
-    },
-
-    removeComponent: function( component ){
-
-        var idx = this.compList.indexOf( component );
-
-        if( idx !== -1 ){
-
-            this.compList.splice( idx, 1 );
-
-        }
-
-        component.dispose();
-
-        this.signals.componentRemoved.dispatch( component );
-
-    },
-
-    removeAllComponents: function( type ){
-
-        this.compList.slice().forEach( function( o ){
-
-            if( !type || o.type === type ){
-
-                this.removeComponent( o );
-
-            }
-
-        }, this );
-
-    },
-
-    /**
-     * Handle any size-changes of the container element
-     * @return {undefined}
-     */
-    handleResize: function(){
-
-        this.viewer.handleResize();
-
-    },
-
-    /**
-     * Toggle fullscreen
-     * @fires Stage#fullscreenChanged
-     * @param  {Element} [element] - document element to put into fullscreen,
-     *                               defaults to the viewer container
-     * @return {undefined}
-     */
-    toggleFullscreen: function( element ){
-
-        if( !document.fullscreenEnabled && !document.mozFullScreenEnabled &&
-            !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
-        ){
-            Log.log( "fullscreen mode (currently) not possible" );
-            return;
-        }
-
-        var self = this;
-        element = element || this.viewer.container;
-        this.lastFullscreenElement = element;
-
-        //
-
-        function getFullscreenElement(){
-            return document.fullscreenElement || document.mozFullScreenElement ||
-                document.webkitFullscreenElement || document.msFullscreenElement;
-        }
-
-        function resizeElement(){
-
-            if( !getFullscreenElement() && self.lastFullscreenElement ){
-
-                var element = self.lastFullscreenElement;
-                element.style.width = element.dataset.normalWidth;
-                element.style.height = element.dataset.normalHeight;
-
-                document.removeEventListener( "fullscreenchange", resizeElement );
-                document.removeEventListener( "mozfullscreenchange", resizeElement );
-                document.removeEventListener( "webkitfullscreenchange", resizeElement );
-                document.removeEventListener( "MSFullscreenChange", resizeElement );
-
-                self.handleResize();
-                self.signals.fullscreenChanged.dispatch( false );
-
-            }
-
-        }
-
-        //
-
-        if( !getFullscreenElement() ){
-
-            element.dataset.normalWidth = element.style.width;
-            element.dataset.normalHeight = element.style.height;
-            element.style.width = screen.width + "px";
-            element.style.height = screen.height + "px";
-
-            if( element.requestFullscreen ){
-                element.requestFullscreen();
-            }else if( element.msRequestFullscreen ){
-                element.msRequestFullscreen();
-            }else if( element.mozRequestFullScreen ){
-                element.mozRequestFullScreen();
-            }else if( element.webkitRequestFullscreen ){
-                element.webkitRequestFullscreen();
-            }
-
-            document.addEventListener( "fullscreenchange", resizeElement );
-            document.addEventListener( "mozfullscreenchange", resizeElement );
-            document.addEventListener( "webkitfullscreenchange", resizeElement );
-            document.addEventListener( "MSFullscreenChange", resizeElement );
-
-            this.handleResize();
-            this.signals.fullscreenChanged.dispatch( true );
-
-            // workaround for Safari
-            setTimeout( function(){ self.handleResize(); }, 100 );
-
-        }else{
-
-            if( document.exitFullscreen ){
-                document.exitFullscreen();
-            }else if( document.msExitFullscreen ){
-                document.msExitFullscreen();
-            }else if( document.mozCancelFullScreen ){
-                document.mozCancelFullScreen();
-            }else if( document.webkitExitFullscreen ){
-                document.webkitExitFullscreen();
-            }
-
-        }
-
-    },
-
-    centerView: function(){
-
-        if( this.tasks.count > 0 ){
-
-            var centerFn = function( delta, count ){
-
-                if( count === 0 ){
-
-                    this.tasks.signals.countChanged.remove( centerFn, this );
-
-                }
-
-                this.viewer.centerView( true );
-
-            };
-
-            this.tasks.signals.countChanged.add( centerFn, this );
-
-        }
-
-        this.viewer.centerView( true );
-
-    },
-
-    /**
-     * Spin the whole scene around an axis at the center
-     * @example
-     * stage.setSpin( [ 0, 1, 0 ], 0.01 );
-     *
-     * @param {Number[]|Vector3} axis - the axis to spin around
-     * @param {Number} angle - amount to spin per render call
-     */
-    setSpin: function( axis, angle ){
-
-        if( Array.isArray( axis ) ){
-            axis = new Vector3().fromArray( axis );
-        }
-
-        this.viewer.setSpin( axis, angle );
-
-    },
-
-    setOrientation: function( orientation ){
-
-        this.tasks.onZeroOnce( function(){
-
-            this.viewer.setOrientation( orientation );
-
-        }, this );
-
-    },
-
-    getOrientation: function(){
-
-        return this.viewer.getOrientation();
-
-    },
-
-    makeImage: function( params ){
-
-        var viewer = this.viewer;
-        var tasks = this.tasks;
-
-        return new Promise( function( resolve, reject ){
-
-            function makeImage(){
-                tasks.increment();
-                viewer.makeImage( params ).then( function( blob ){
-                    tasks.decrement();
-                    resolve( blob );
-                } ).catch( function( e ){
-                    tasks.decrement();
-                    reject( e );
-                } );
-            }
-
-            tasks.onZeroOnce( makeImage );
-
-        } );
-
-    },
-
-    setImpostor: function( value ) {
-
-        this.parameters.impostor.value = value;
-
-        var types = [
-            "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "helixorient", "contact", "distance",
-            "dot"
-        ];
-
-        this.eachRepresentation( function( repr ){
-
-            if( repr.type === "script" ) return;
-
-            if( types.indexOf( repr.getType() ) === -1 ){
-                return;
-            }
-
-            var p = repr.getParameters();
-            p.disableImpostor = !value;
-            repr.build( p );
-
-        } );
-
-    },
-
-    setQuality: function( value ) {
-
-        this.parameters.quality.value = value;
-
-        var types = [
-            "tube", "cartoon", "ribbon", "trace", "rope"
-        ];
-
-        var impostorTypes = [
-            "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "helixorient", "contact", "distance",
-            "dot"
-        ];
-
-        this.eachRepresentation( function( repr ){
-
-            if( repr.type === "script" ) return;
-
-            var p = repr.getParameters();
-
-            if( types.indexOf( repr.getType() ) === -1 ){
-
-                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
-                    return;
-                }
-
-                if( !p.disableImpostor ){
-                    repr.repr.quality = value;
-                    return;
-                }
-
-            }
-
-            p.quality = value;
-            repr.build( p );
-
-        } );
-
-    },
-
-    eachComponent: function( callback, type ){
-
-        this.compList.forEach( function( o, i ){
-
-            if( !type || o.type === type ){
-                callback( o, i );
-            }
-
-        } );
-
-    },
-
-    eachRepresentation: function( callback, componentType ){
-
-        this.eachComponent( function( comp ){
-
-            comp.reprList.forEach( function( repr ){
-                callback( repr, comp );
-            } );
-
-        }, componentType );
-
-    },
-
-    getComponentsByName: function( name, componentType ){
-
-        var compList = [];
-
-        this.eachComponent( function( comp ){
-
-            if( name === undefined || comp.name.match( name ) !== null ){
-                compList.push( comp );
-            }
-
-        }, componentType );
-
-        return new ComponentCollection( compList );
-
-    },
-
-    getRepresentationsByName: function( name, componentType ){
-
-        var compName, reprName;
-
-        if( typeof name !== "object" ){
-            compName = undefined;
-            reprName = name;
-        }else{
-            compName = name.comp;
-            reprName = name.repr;
-        }
-
-        var reprList = [];
-
-        this.eachRepresentation( function( repr, comp ){
-
-            if( compName !== undefined && comp.name.match( compName ) === null ){
-                return;
-            }
-
-            if( reprName === undefined || repr.name.match( reprName ) !== null ){
-                reprList.push( repr );
-            }
-
-        }, componentType );
-
-        return new RepresentationCollection( reprList );
-
-    },
-
-    getAnythingByName: function( name ){
-
-        var compList = this.getComponentsByName( name ).list;
-        var reprList = this.getRepresentationsByName( name ).list;
-
-        return new Collection( compList.concat( reprList ) );
-
-    },
-
-    dispose: function(){
-
-        this.tasks.dispose();
-
-    }
-
-};
-
-/**
- * @file Trajectory Player
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function TrajectoryPlayer( traj, step, timeout, start, end ){
-
-    this.signals = {
-        startedRunning: new Signal(),
-        haltedRunning: new Signal()
-    };
-
-    traj.signals.playerChanged.add( function( player ){
-        if( player !== this ){
-            this.pause();
-        }
-    }, this );
-
-    this.traj = traj;
-    this.step = step || Math.ceil( ( traj.numframes + 1 ) / 100 );
-    this.timeout = timeout || 50;
-    this.start = start || 0;
-    this.end = end || traj.numframes - 1;
-    this.end = Math.min( this.end, traj.numframes - 1 );
-    this.interpolateType = "";
-    this.interpolateStep = 5;
-
-    this.mode = "loop"; // loop, once
-    this.direction = "forward"; // forward, backward
-
-    this._stopFlag = false;
-    this._running = false;
-
-}
-
-TrajectoryPlayer.prototype = {
-
-    constructor: TrajectoryPlayer,
-
-    _animate: function(){
-
-        var i;
-        this._running = true;
-
-        if( !this.traj.inProgress && !this._stopFlag ){
-
-            if( this.direction === "forward" ){
-                i = this.traj.currentFrame + this.step;
-            }else{
-                i = this.traj.currentFrame - this.step;
-            }
-
-            if( i >= this.end || i < this.start ){
-
-                if( this.mode === "once" ){
-
-                    this.pause();
-
-                    if( this.direction === "forward" ){
-                        i = this.end;
-                    }else{
-                        i = this.start;
-                    }
-
-                }else{
-
-                    if( this.direction === "forward" ){
-                        i = this.start;
-                    }else{
-                        i = this.end;
-                    }
-
-                }
-
-            }
-
-            if( !this.interpolateType ){
-                this.traj.setFrame( i );
-            }
-
-        }
-
-        if( !this._stopFlag ){
-
-            if( !this.traj.inProgress && this.interpolateType ){
-
-                var ip, ipp, ippp;
-
-                if( this.direction === "forward" ){
-
-                    ip = Math.max( this.start, i - this.step );
-                    ipp = Math.max( this.start, i - 2 * this.step );
-                    ippp = Math.max( this.start, i - 3 * this.step );
-
-                }else{
-
-                    ip = Math.min( this.end, i + this.step );
-                    ipp = Math.min( this.end, i + 2 * this.step );
-                    ippp = Math.min( this.end, i + 3 * this.step );
-
-                }
-
-                this._interpolate(
-                    i, ip, ipp, ippp, 1 / this.interpolateStep, 0
-                );
-
-            }else{
-
-                setTimeout( this._animate.bind( this ), this.timeout );
-
-            }
-
-        }else{
-
-            this._running = false;
-
-        }
-
-    },
-
-    _interpolate: function( i, ip, ipp, ippp, d, t ){
-
-        t += d;
-
-        if( t <= 1 ){
-
-            var deltaTime = Math.round( this.timeout * d );
-
-            this.traj.setFrameInterpolated(
-                i, ip, ipp, ippp, t, this.interpolateType,
-                function(){
-                    setTimeout( function(){
-                        this._interpolate( i, ip, ipp, ippp, d, t );
-                    }.bind( this ), deltaTime );
-                }.bind( this )
-            );
-
-        }else{
-
-            setTimeout( this._animate.bind( this ), 0 );
-
-        }
-
-    },
-
-    toggle: function(){
-
-        if( this._running ){
-            this.pause();
-        }else{
-            this.play();
-        }
-
-    },
-
-    play: function(){
-
-        if( !this._running ){
-
-            if( this.traj.player !== this ){
-                this.traj.setPlayer( this );
-            }
-
-            var frame = this.traj.currentFrame;
-
-            // snap to the grid implied by this.step division and multiplication
-            // thus minimizing cache misses
-            var i = Math.ceil( frame / this.step ) * this.step;
-
-            // wrap when restarting from the limit (i.e. end or start)
-            if( this.direction === "forward" && frame >= this.end ){
-
-                i = this.start;
-
-            }else if( this.direction === "backward" && frame <= this.start ){
-
-                i = this.end;
-
-            }
-
-            this.traj.setFrame( i );
-
-            this._stopFlag = false;
-            this._animate();
-            this.signals.startedRunning.dispatch();
-
-        }
-
-    },
-
-    pause: function(){
-
-        if( this._running ){
-            this._stopFlag = true;
-            this.signals.haltedRunning.dispatch();
-        }
-
-    },
-
-    stop: function(){
-
-        this.traj.setFrame( this.start );
-        this.pause();
-
-    }
-
-};
+ComponentRegistry.add( "volume", VolumeComponent );
 
 /**
  * @file Axes Representation
@@ -70336,6 +68719,12 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         disableImpostor: true,
         align: {
             type: "button"
+        },
+        showAxes: {
+            type: "boolean", rebuild: true
+        },
+        showBox: {
+            type: "boolean", rebuild: true
         }
 
     }, Representation.prototype.parameters, {
@@ -70350,6 +68739,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         p.colorValue = defaults( p.colorValue, "lightgreen" );
 
         StructureRepresentation.prototype.init.call( this, p );
+
+        this.showAxes = defaults( p.showAxes, true );
+        this.showBox = defaults( p.showBox, false );
 
     },
 
@@ -70384,27 +68776,131 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         var pa = this.getPrincipalAxes( sview );
         var c = new Color( this.colorValue );
 
-        var vertexPosition = new Float32Array( 3 * 6 );
-        var vertexColor = uniformArray3( 6, c.r, c.g, c.b );
-        var vertexRadius = uniformArray( 6, this.radius );
+        var vn = 0;
+        var en = 0;
 
-        var edgePosition1 = new Float32Array( 3 * 3 );
-        var edgePosition2 = new Float32Array( 3 * 3 );
-        var edgeColor = uniformArray3( 3, c.r, c.g, c.b );
-        var edgeRadius = uniformArray( 3, this.radius );
-
-        var offset = 0;
-        function addAxis( v1, v2 ){
-            v1.toArray( vertexPosition, offset * 2 );
-            v2.toArray( vertexPosition, offset * 2 + 3 );
-            v1.toArray( edgePosition1, offset );
-            v2.toArray( edgePosition2, offset );
-            offset += 3;
+        if( this.showAxes ){
+            vn += 6;
+            en += 3;
         }
 
-        addAxis( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] );
-        addAxis( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] );
-        addAxis( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] );
+        if( this.showBox ){
+            vn += 8;
+            en += 12;
+        }
+
+        var vertexPosition = new Float32Array( 3 * vn );
+        var vertexColor = uniformArray3( vn, c.r, c.g, c.b );
+        var vertexRadius = uniformArray( vn, this.radius );
+
+        var edgePosition1 = new Float32Array( 3 * en );
+        var edgePosition2 = new Float32Array( 3 * en );
+        var edgeColor = uniformArray3( en, c.r, c.g, c.b );
+        var edgeRadius = uniformArray( en, this.radius );
+
+        var offset = 0;
+
+        if( this.showAxes ){
+
+            var addAxis = function( v1, v2 ){
+                v1.toArray( vertexPosition, offset * 2 );
+                v2.toArray( vertexPosition, offset * 2 + 3 );
+                v1.toArray( edgePosition1, offset );
+                v2.toArray( edgePosition2, offset );
+                offset += 3;
+            };
+
+            addAxis( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] );
+            addAxis( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] );
+            addAxis( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] );
+
+        }
+
+        if( this.showBox ){
+
+            var ax1 = new Vector3().subVectors( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] ).normalize();
+            var ax2 = new Vector3().subVectors( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] ).normalize();
+            var ax3 = new Vector3().subVectors( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] ).normalize();
+            var p1 = new Vector3();
+            var p2 = new Vector3();
+            var p3 = new Vector3();
+            var t = new Vector3();
+            var v = new Vector3();
+            var d1a = -Infinity;
+            var d1b = -Infinity;
+            var d2a = -Infinity;
+            var d2b = -Infinity;
+            var d3a = -Infinity;
+            var d3b = -Infinity;
+            sview.eachAtom( function( ap ){
+                projectPointOnVector( p1.copy( ap ), ax1, pa[ 3 ] );
+                var dp1 = t.subVectors( p1, pa[3] ).normalize().dot( ax1 );
+                var dt1 = p1.distanceTo( pa[3] );
+                if( dp1 > 0 ){
+                    if( dt1 > d1a ) d1a = dt1;
+                }else{
+                    if( dt1 > d1b ) d1b = dt1;
+                }
+
+                projectPointOnVector( p2.copy( ap ), ax2, pa[ 3 ] );
+                var dp2 = t.subVectors( p2, pa[3] ).normalize().dot( ax2 );
+                var dt2 = p2.distanceTo( pa[3] );
+                if( dp2 > 0 ){
+                    if( dt2 > d2a ) d2a = dt2;
+                }else{
+                    if( dt2 > d2b ) d2b = dt2;
+                }
+
+                projectPointOnVector( p3.copy( ap ), ax3, pa[ 3 ] );
+                var dp3 = t.subVectors( p3, pa[3] ).normalize().dot( ax3 );
+                var dt3 = p3.distanceTo( pa[3] );
+                if( dp3 > 0 ){
+                    if( dt3 > d3a ) d3a = dt3;
+                }else{
+                    if( dt3 > d3b ) d3b = dt3;
+                }
+            } );
+
+            var offset2 = offset * 2;
+            var addCorner = function( d1, d2, d3 ){
+                v.copy( pa[3] )
+                    .addScaledVector( ax1, d1 )
+                    .addScaledVector( ax2, d2 )
+                    .addScaledVector( ax3, d3 );
+                v.toArray( vertexPosition, offset2 );
+                offset2 += 3;
+            };
+            addCorner( d1a, d2a, d3a );
+            addCorner( d1a, d2a, -d3b );
+            addCorner( d1a, -d2b, -d3b );
+            addCorner( d1a, -d2b, d3a );
+            addCorner( -d1b, -d2b, -d3b );
+            addCorner( -d1b, -d2b, d3a );
+            addCorner( -d1b, d2a, d3a );
+            addCorner( -d1b, d2a, -d3b );
+
+            var edgeOffset = offset;
+            var addEdge = function( a, b ){
+                v.fromArray( vertexPosition, offset * 2 + a * 3 )
+                    .toArray( edgePosition1, edgeOffset );
+                v.fromArray( vertexPosition, offset * 2 + b * 3 )
+                    .toArray( edgePosition2, edgeOffset );
+                edgeOffset += 3;
+            };
+            addEdge( 0, 1 );
+            addEdge( 0, 3 );
+            addEdge( 0, 6 );
+            addEdge( 1, 2 );
+            addEdge( 1, 7 );
+            addEdge( 2, 3 );
+            addEdge( 2, 4 );
+            addEdge( 3, 5 );
+            addEdge( 4, 5 );
+            addEdge( 4, 7 );
+            addEdge( 5, 6 );
+            addEdge( 6, 7 );
+
+        }
 
         return {
             vertexPosition: vertexPosition,
@@ -71361,8 +69857,8 @@ Spline$1.prototype = {
         var p = params || {};
         p.structure = polymer.structure;
 
-        var colorMaker = ColorMakerRegistry.getScheme( p );
-        var pickingColorMaker = ColorMakerRegistry.getPickingScheme( p );
+        var colorMaker = ColorMakerRegistry$$1.getScheme( p );
+        var pickingColorMaker = ColorMakerRegistry$$1.getPickingScheme( p );
 
         function colFn( item, array, offset ){
             colorMaker.atomColorToArray( item, array, offset );
@@ -71956,20 +70452,10 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScheme = defaults( p.colorScheme, "chainname" );
         p.colorScale = defaults( p.colorScale, "RdYlBu" );
         p.radius = defaults( p.radius, "sstruc" );
         p.scale = defaults( p.scale, 0.7 );
-
-        if( p.quality === "low" ){
-            this.subdiv = 3;
-        }else if( p.quality === "medium" ){
-            this.subdiv = 6;
-        }else if( p.quality === "high" ){
-            this.subdiv = 12;
-        }else{
-            this.subdiv = defaults( p.subdiv, 6 );
-        }
 
         this.aspectRatio = defaults( p.aspectRatio, 5.0 );
         this.tension = defaults( p.tension, NaN );
@@ -71979,7 +70465,14 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         StructureRepresentation.prototype.init.call( this, p );
 
         if( p.quality === "low" ){
+            this.subdiv = 3;
             this.radialSegments = 6;
+        }else if( p.quality === "medium" ){
+            this.subdiv = 6;
+        }else if( p.quality === "high" ){
+            this.subdiv = 12;
+        }else{
+            this.subdiv = defaults( p.subdiv, 6 );
         }
 
     },
@@ -72571,6 +71064,10 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
 
 RepresentationRegistry.add( "contact", ContactRepresentation );
+
+ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\r\nuniform float clipRadius;\r\nuniform vec3 clipCenter;\r\nuniform float xOffset;\r\nuniform float yOffset;\r\nuniform float zOffset;\r\nuniform bool ortho;\r\n\r\nvarying vec3 vViewPosition;\r\nvarying vec2 texCoord;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\nattribute vec2 mapping;\r\nattribute vec2 inputTexCoord;\r\nattribute float inputSize;\r\n\r\n#include color_pars_vertex\r\n#include common\r\n\r\nvoid main(void){\r\n\r\n#include color_vertex\r\ntexCoord = inputTexCoord;\r\n\r\nfloat _zOffset = zOffset;\r\nif( texCoord.x == 10.0 ){\r\n_zOffset -= 0.001;\r\n}\r\n\r\nvec3 pos = position;\r\nif( ortho ){\r\npos += normalize( cameraPosition ) * _zOffset;\r\n}\r\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\r\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\r\ncameraCornerPos.xy += mapping * inputSize * 0.01;\r\ncameraCornerPos.x += xOffset;\r\ncameraCornerPos.y += yOffset;\r\nif( !ortho ){\r\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\r\n}\r\n\r\ngl_Position = projectionMatrix * cameraCornerPos;\r\n\r\nvViewPosition = -cameraCornerPos.xyz;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n#include radiusclip_vertex\r\n\r\n}");
+
+ShaderRegistry.add('shader/SDFFont.frag', "uniform sampler2D fontTexture;\r\nuniform float opacity;\r\nuniform bool showBorder;\r\nuniform vec3 borderColor;\r\nuniform float borderWidth;\r\nuniform vec3 backgroundColor;\r\nuniform float backgroundOpacity;\r\nuniform float nearClip;\r\nuniform float clipRadius;\r\n\r\nvarying vec3 vViewPosition;\r\nvarying vec2 texCoord;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#include common\r\n#include color_pars_fragment\r\n#include fog_pars_fragment\r\n\r\n#ifdef SDF\r\nconst float smoothness = 16.0;\r\n#else\r\nconst float smoothness = 256.0;\r\n#endif\r\nconst float gamma = 2.2;\r\n\r\nvoid main(){\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\nif( texCoord.x > 1.0 ){\r\n\r\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\r\n\r\n}else{\r\n\r\n// retrieve signed distance\r\nfloat sdf = texture2D( fontTexture, texCoord ).a;\r\nif( showBorder ) sdf += borderWidth;\r\n\r\n// perform adaptive anti-aliasing of the edges\r\nfloat w = clamp(\r\nsmoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\r\n0.0,\r\n0.5\r\n);\r\nfloat a = smoothstep( 0.5 - w, 0.5 + w, sdf );\r\n\r\n// gamma correction for linear attenuation\r\na = pow( a, 1.0 / gamma );\r\nif( a < 0.2 ) discard;\r\na *= opacity;\r\n\r\nvec3 outgoingLight = vColor;\r\nif( showBorder && sdf < ( 0.5 + borderWidth ) ){\r\noutgoingLight = borderColor;\r\n}\r\n\r\ngl_FragColor = vec4( outgoingLight, a );\r\n\r\n}\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n}");
 
 /**
  * @file Text Buffer
@@ -73822,6 +72319,10 @@ LicoriceRepresentation.prototype = Object.assign( Object.create(
 
 RepresentationRegistry.add( "licorice", LicoriceRepresentation );
 
+ShaderRegistry.add('shader/HyperballStickImpostor.vert', "// Copyright (C) 2010-2011 by\r\n// Laboratoire de Biochimie Theorique (CNRS),\r\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\r\n// Departement des Sciences de la Simulation et de l'Information (CEA).\r\n//\r\n// License: CeCILL-C license (http://www.cecill.info/)\r\n//\r\n// Contact: Marc Baaden\r\n// E-mail: baaden@smplinux.de\r\n// Webpage: http://hyperballs.sourceforge.net\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n\r\nattribute vec3 mapping;\r\nattribute float radius;\r\nattribute float radius2;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\n\r\nvarying mat4 matrix_near;\r\nvarying vec4 prime1;\r\nvarying vec4 prime2;\r\nvarying float vRadius;\r\nvarying float vRadius2;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nattribute vec3 pickingColor2;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\n// attribute vec3 color;\r\nattribute vec3 color2;\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#endif\r\n\r\nuniform float shrink;\r\nuniform mat4 modelViewProjectionMatrix;\r\nuniform mat4 modelViewProjectionMatrixInverse;\r\n\r\nvoid main(){\r\n\r\nvRadius = radius;\r\nvRadius2 = radius2;\r\n\r\nvec4 spaceposition;\r\nvec3 position_atom1;\r\nvec3 position_atom2;\r\nvec4 vertex_position;\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\nvPickingColor2 = pickingColor2;\r\n#else\r\nvColor1 = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\nfloat radius1 = radius;\r\n\r\nposition_atom1 = position1;\r\nposition_atom2 = position2;\r\n\r\nfloat distance = distance( position_atom1, position_atom2 );\r\n\r\nspaceposition.z = mapping.z * distance;\r\n\r\nif (radius1 > radius2) {\r\nspaceposition.y = mapping.y * 1.5 * radius1;\r\nspaceposition.x = mapping.x * 1.5 * radius1;\r\n} else {\r\nspaceposition.y = mapping.y * 1.5 * radius2;\r\nspaceposition.x = mapping.x * 1.5 * radius2;\r\n}\r\nspaceposition.w = 1.0;\r\n\r\nvec4 e3 = vec4( 1.0 );\r\nvec3 e1, e1_temp, e2, e2_temp;\r\n\r\n// Calculation of bond direction: e3\r\ne3.xyz = normalize(position_atom1-position_atom2);\r\n\r\n// little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\r\nif (e3.z == 0.0) { e3.z = 0.0000000000001;}\r\nif ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\r\nif ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\r\nif ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\r\n\r\n// Focus calculation\r\nvec4 focus = vec4( 1.0 );\r\nfocus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x +\r\n( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\r\nfocus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y +\r\n( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\r\nfocus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z +\r\n( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\r\n\r\n// e1 calculation\r\ne1.x = 1.0;\r\ne1.y = 1.0;\r\ne1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\r\ne1_temp = e1 - focus.xyz;\r\ne1 = normalize(e1_temp);\r\n\r\n// e2 calculation\r\ne2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\r\ne2 = normalize(e2_temp);\r\n\r\n//ROTATION:\r\n// final form of change of basis matrix:\r\nmat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\r\n// Apply rotation and translation to the bond primitive\r\nvertex_position.xyz = R * spaceposition.xyz;\r\nvertex_position.w = 1.0;\r\n\r\n// TRANSLATION:\r\nvertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\r\nvertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\r\nvertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\r\n\r\n// New position\r\ngl_Position = modelViewProjectionMatrix * vertex_position;\r\n\r\nvec4 i_near, i_far;\r\n\r\n// Calculate near from position\r\nvec4 near = gl_Position;\r\nnear.z = 0.0 ;\r\nnear = modelViewProjectionMatrixInverse * near;\r\ni_near = near;\r\n\r\n// Calculate far from position\r\nvec4 far = gl_Position;\r\nfar.z = far.w ;\r\ni_far = modelViewProjectionMatrixInverse * far;\r\n\r\nprime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\r\nprime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\r\n\r\nfloat Rsquare = (radius1*radius1/shrink) - (\r\n(position_atom1.x - focus.x)*(position_atom1.x - focus.x) +\r\n(position_atom1.y - focus.y)*(position_atom1.y - focus.y) +\r\n(position_atom1.z - focus.z)*(position_atom1.z - focus.z)\r\n);\r\n\r\nfocus.w = Rsquare;\r\n\r\nmatrix_near = mat4( i_near, i_far, focus, e3 );\r\n\r\n// avoid clipping\r\ngl_Position.z = 1.0;\r\n\r\n}");
+
+ShaderRegistry.add('shader/HyperballStickImpostor.frag', "#define STANDARD\r\n#define IMPOSTOR\r\n\r\n// Copyright (C) 2010-2011 by\r\n// Laboratoire de Biochimie Theorique (CNRS),\r\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\r\n// Departement des Sciences de la Simulation et de l'Information (CEA).\r\n//\r\n// License: CeCILL-C license (http://www.cecill.info/)\r\n//\r\n// Contact: Marc Baaden\r\n// E-mail: baaden@smplinux.de\r\n// Webpage: http://hyperballs.sourceforge.net\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - custom clipping\r\n// - three.js lighting\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float nearClip;\r\nuniform float shrink;\r\nuniform mat4 modelViewMatrix;\r\nuniform mat4 modelViewProjectionMatrix;\r\nuniform mat4 modelViewMatrixInverseTranspose;\r\nuniform mat4 projectionMatrix;\r\n\r\nvarying mat4 matrix_near;\r\nvarying vec4 prime1;\r\nvarying vec4 prime2;\r\nvarying float vRadius;\r\nvarying float vRadius2;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\nvarying vec3 vPickingColor2;\r\n#else\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#include common\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool interior = false;\r\n\r\nfloat calcClip( vec4 cameraPos ){\r\nreturn dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn calcClip( vec4( cameraPos, 1.0 ) );\r\n}\r\n\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nstruct Ray {\r\nvec3 origin ;\r\nvec3 direction ;\r\n};\r\n\r\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\r\nfloat a = x3.x;\r\nfloat b = x3.y;\r\nfloat c = x3.z;\r\nfloat d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\r\nfloat l = a*M.x+b*M.y+c*M.z+d;\r\nif (l<0.0) {return true;}\r\nelse{return false;}\r\n}\r\n\r\nvec3 isect_surf(Ray r, mat4 matrix_coef){\r\nvec4 direction = vec4(r.direction, 0.0);\r\nvec4 origin = vec4(r.origin, 1.0);\r\nfloat a = dot(direction,(matrix_coef*direction));\r\nfloat b = dot(origin,(matrix_coef*direction));\r\nfloat c = dot(origin,(matrix_coef*origin));\r\nfloat delta =b*b-a*c;\r\ngl_FragColor.a = 1.0;\r\nif (delta<0.0){\r\ndiscard;\r\n// gl_FragColor.a = 0.5;\r\n}\r\nfloat t1 =(-b-sqrt(delta))/a;\r\n\r\n// Second solution not necessary if you don't want\r\n// to see inside spheres and cylinders, save some fps\r\n//float t2 = (-b+sqrt(delta)) / a ;\r\n//float t =(t1<t2) ? t1 : t2;\r\n\r\nreturn r.origin+t1*r.direction;\r\n}\r\n\r\nvec3 isect_surf2(Ray r, mat4 matrix_coef){\r\nvec4 direction = vec4(r.direction, 0.0);\r\nvec4 origin = vec4(r.origin, 1.0);\r\nfloat a = dot(direction,(matrix_coef*direction));\r\nfloat b = dot(origin,(matrix_coef*direction));\r\nfloat c = dot(origin,(matrix_coef*origin));\r\nfloat delta =b*b-a*c;\r\ngl_FragColor.a = 1.0;\r\nif (delta<0.0){\r\ndiscard;\r\n// gl_FragColor.a = 0.5;\r\n}\r\nfloat t2 =(-b+sqrt(delta))/a;\r\n\r\nreturn r.origin+t2*r.direction;\r\n}\r\n\r\nRay primary_ray(vec4 near1, vec4 far1){\r\nvec3 near=near1.xyz/near1.w;\r\nvec3 far=far1.xyz/far1.w;\r\nreturn Ray(near,far-near);\r\n}\r\n\r\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\r\nfloat depth1;\r\nvec4 Ms=(ModelViewP*vec4(M,1.0));\r\nreturn depth1=(1.0+Ms.z/Ms.w)/2.0;\r\n}\r\n\r\nvoid main(){\r\n\r\nfloat radius = max( vRadius, vRadius2 );\r\n\r\nvec4 i_near, i_far, focus;\r\nvec3 e3, e1, e1_temp, e2;\r\n\r\ni_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\r\ni_far = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\r\nfocus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\r\ne3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\r\n\r\ne1.x = 1.0;\r\ne1.y = 1.0;\r\ne1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\r\ne1_temp = e1 - focus.xyz;\r\ne1 = normalize(e1_temp);\r\n\r\ne2 = normalize(cross(e1,e3));\r\n\r\nvec4 equation = focus;\r\n\r\nfloat shrinkfactor = shrink;\r\nfloat t1 = -1.0/(1.0-shrinkfactor);\r\nfloat t2 = 1.0/(shrinkfactor);\r\n// float t3 = 2.0/(shrinkfactor);\r\n\r\nvec4 colonne1, colonne2, colonne3, colonne4;\r\nmat4 mat;\r\n\r\nvec3 equation1 = vec3(t2,t2,t1);\r\n\r\nfloat A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\r\nfloat A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\r\nfloat A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\r\n\r\nfloat A11 = equation1.x*e1.x*e1.x + equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\r\nfloat A21 = equation1.x*e1.x*e1.y + equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\r\nfloat A31 = equation1.x*e1.x*e1.z + equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\r\nfloat A41 = equation1.x*e1.x*A1 + equation1.y*e2.x*A2 + equation1.z*e3.x*A3;\r\n\r\nfloat A22 = equation1.x*e1.y*e1.y + equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\r\nfloat A32 = equation1.x*e1.y*e1.z + equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\r\nfloat A42 = equation1.x*e1.y*A1 + equation1.y*e2.y*A2 + equation1.z*e3.y*A3;\r\n\r\nfloat A33 = equation1.x*e1.z*e1.z + equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\r\nfloat A43 = equation1.x*e1.z*A1 + equation1.y*e2.z*A2 + equation1.z*e3.z*A3;\r\n\r\nfloat A44 = equation1.x*A1*A1 + equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\r\n\r\ncolonne1 = vec4(A11,A21,A31,A41);\r\ncolonne2 = vec4(A21,A22,A32,A42);\r\ncolonne3 = vec4(A31,A32,A33,A43);\r\ncolonne4 = vec4(A41,A42,A43,A44);\r\n\r\nmat = mat4(colonne1,colonne2,colonne3,colonne4);\r\n\r\n// Ray calculation using near and far\r\nRay ray = primary_ray(i_near,i_far) ;\r\n\r\n// Intersection between ray and surface for each pixel\r\nvec3 M;\r\nM = isect_surf(ray, mat);\r\n\r\n// cut the extremities of bonds to superimpose bond and spheres surfaces\r\nif (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\r\n\r\n// Transform normal to model space to view-space\r\nvec4 M1 = vec4(M,1.0);\r\nvec4 M2 = mat*M1;\r\n// vec3 _normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\r\nvec3 _normal = ( modelViewMatrixInverseTranspose * M2 ).xyz;\r\n\r\n// Recalculate the depth in function of the new pixel position\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){\r\nM = isect_surf2(ray, mat);\r\nif( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )\r\ndiscard;\r\ninterior = true;\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );\r\n}\r\n}else if( gl_FragDepthEXT <= 0.0 ){\r\nM = isect_surf2(ray, mat);\r\ninterior = true;\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\r\n}\r\n}\r\n#else\r\nif( gl_FragDepthEXT <= 0.0 ){\r\nM = isect_surf2(ray, mat);\r\ninterior = true;\r\ngl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\r\n}\r\n}\r\n#endif\r\n\r\n// cut the extremities of bonds to superimpose bond and spheres surfaces\r\nif (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\r\n\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n// Mix the color bond in function of the two atom colors\r\nfloat distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\r\ndistance(prime2.xyz,prime1.xyz);\r\n\r\n#ifdef PICKING\r\n\r\nif( distance_ratio > 0.5 ){\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n}else{\r\ngl_FragColor = vec4( vPickingColor2, objectId );\r\n}\r\n\r\n#else\r\n\r\nvec3 vViewPosition = -( modelViewMatrix * vec4( M, 1.0 ) ).xyz;\r\nvec3 vNormal = _normal;\r\nvec3 vColor;\r\n\r\nif( distance_ratio>0.5 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n\r\n// don't use #include normal_fragment\r\nvec3 normal = normalize( vNormal );\r\nif( interior ){\r\nnormal = vec3( 0.0, 0.0, 0.4 );\r\n}\r\n\r\n#include lights_physical_fragment\r\n#include lights_template\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
+
 /**
  * @file Box Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -74769,103 +73270,6 @@ function Grid( length, width, height, dataCtor, elemSize ){
  */
 
 
-function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
-
-    // need margin to avoid boundary/round off effects
-    var margin = ( 1 / scaleFactor ) * 3;
-    margin += maxRadius;
-
-    v3subScalar( min, min, extraMargin + margin );
-    v3addScalar( max, max, extraMargin + margin );
-
-    v3multiplyScalar( min, min, scaleFactor );
-    v3floor( min, min );
-    v3divideScalar( min, min, scaleFactor );
-
-    v3multiplyScalar( max, max, scaleFactor );
-    v3ceil( max, max );
-    v3divideScalar( max, max, scaleFactor );
-
-    var dim = new Float32Array( 3 );
-    v3sub( dim, max, min );
-    v3multiplyScalar( dim, dim, scaleFactor );
-    v3ceil( dim, dim );
-    v3addScalar( dim, dim, 1 );
-
-    var maxSize = Math.pow( 10, 6 ) * 256;
-    var tmpSize = dim[ 0 ] * dim[ 1 ] * dim[ 2 ] * 3;
-
-    if( maxSize <= tmpSize ){
-
-        scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
-
-        v3multiplyScalar( min, min, scaleFactor );
-        v3floor( min, min );
-        v3divideScalar( min, min, scaleFactor );
-
-        v3multiplyScalar( max, max, scaleFactor );
-        v3ceil( max, max );
-        v3divideScalar( max, max, scaleFactor );
-
-        v3sub( dim, max, min );
-        v3multiplyScalar( dim, dim, scaleFactor );
-        v3ceil( dim, dim );
-        v3addScalar( dim, dim, 1 );
-
-    }
-
-    var tran = new Float32Array( min );
-    v3negate( tran, tran );
-
-    // coordinate transformation matrix
-    var matrix = m4new();
-    var mroty = m4new();
-    m4makeRotationY( mroty, degToRad( 90 ) );
-    m4multiply( matrix, matrix, mroty );
-
-    var mscale = m4new();
-    m4makeScale( mscale,
-        -1 / scaleFactor,
-        1 / scaleFactor,
-        1 / scaleFactor
-    );
-    m4multiply( matrix, matrix, mscale );
-
-    var mtrans = m4new();
-    m4makeTranslation( mtrans,
-        -scaleFactor * tran[2],
-        -scaleFactor * tran[1],
-        -scaleFactor * tran[0]
-    );
-    m4multiply( matrix, matrix, mtrans );
-
-    return {
-        dim: dim,
-        tran: tran,
-        matrix: matrix,
-        scaleFactor: scaleFactor
-    };
-
-}
-getSurfaceGrid.__deps = [
-    degToRad,
-    v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
-    v3floor, v3ceil, v3sub, v3negate,
-    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
-];
-
-
-function getRadiusDict( radiusList ){
-
-    var radiusDict = {};
-    for( var i = 0, il = radiusList.length; i < il; ++i ){
-        radiusDict[ radiusList[ i ] ] = true;
-    }
-    return radiusDict;
-
-}
-
-
 function EDTSurface( coordList, radiusList, indexList ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
@@ -74885,6 +73289,10 @@ function EDTSurface( coordList, radiusList, indexList ){
 
     var radiusDict = getRadiusDict( radiusList );
     var bbox = computeBoundingBox( coordList );
+    if( coordList.length === 0 ){
+        bbox[ 0 ].set( [ 0, 0, 0 ] );
+        bbox[ 1 ].set( [ 0, 0, 0 ] );
+    }
     var min = bbox[ 0 ];
     var max = bbox[ 1 ];
 
@@ -75005,7 +73413,7 @@ function EDTSurface( coordList, radiusList, indexList ){
 
     };
 
-    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth ){
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour ){
 
         var vd = this.getVolume(
             type, probeRadius, scaleFactor, cutoff, setAtomID
@@ -75015,7 +73423,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             vd.data, vd.nx, vd.ny, vd.nz, vd.atomindex
         );
 
-        return volsurf.getSurface( 1, smooth, undefined, matrix );
+        return volsurf.getSurface( 1, smooth, undefined, matrix, contour );
 
     };
 
@@ -75358,11 +73766,9 @@ function EDTSurface( coordList, radiusList, indexList ){
         var cutRSq = cutRadius * cutRadius;
 
         var totalsurfacevox = 0;
-        var totalinnervox = 0;
+        // var totalinnervox = 0;
 
         var index;
-
-        console.log( "l, w, h", pLength, pWidth, pHeight );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
@@ -75386,20 +73792,17 @@ function EDTSurface( coordList, radiusList, indexList ){
 
                             totalsurfacevox += 1;
 
-                        }else{
+                        }/*else{
 
                             totalinnervox += 1;
 
-                        }
+                        }*/
 
                     }
 
                 }
             }
         }
-
-        console.log( "totalsurfacevox", totalsurfacevox );
-        console.log( "totalinnervox", totalinnervox );
 
         var inarray = new Int32Array( 3 * totalsurfacevox );
         var positin = 0;
@@ -75431,8 +73834,6 @@ function EDTSurface( coordList, radiusList, indexList ){
 
             positout = fastoneshell( inarray, boundPoint, positin, outarray );
             positin = 0;
-
-            console.log( "positout", positout / 3 );
 
             for( i = 0, n = positout; i < n; i+=3 ){
 
@@ -75498,8 +73899,6 @@ function EDTSurface( coordList, radiusList, indexList ){
     }
 
     function fastoneshell( inarray, boundPoint, positin, outarray ){
-
-        console.log( "positin", positin / 3 );
 
         // *allocout,voxel2
         // ***boundPoint, int*
@@ -75594,8 +73993,6 @@ function EDTSurface( coordList, radiusList, indexList ){
             }
         }
 
-        // console.log("part1", positout);
-
         for( i = 0, n = positin; i < n; i+=3 ){
 
             tx = inarray[ i     ];
@@ -75666,8 +74063,6 @@ function EDTSurface( coordList, radiusList, indexList ){
                 }
             }
         }
-
-        // console.log("part2", positout);
 
         for( i = 0, n = positin; i < n; i+=3 ){
 
@@ -75740,8 +74135,6 @@ function EDTSurface( coordList, radiusList, indexList ){
             }
         }
 
-        // console.log("part3", positout);
-
         return positout;
 
     }
@@ -75805,6 +74198,663 @@ EDTSurface.__deps = [
 ];
 
 /**
+ * @file AV Surface
+ * @author Fred Ludlow <fred.ludlow@gmail.com>
+ * @private
+ */
+
+
+/**
+ * Modifed from SpatialHash
+ *
+ * Main differences are:
+ * - Optimized grid size to ensure we only ever need to look +/-1 cell
+ * - Aware of atomic radii and will only output atoms within rAtom + rExtra
+ *   (see withinRadii method)
+ *
+ * (Uses rounding rather than bitshifting as consequence of arbitrary grid size)
+ * @class
+ * @param {Float32Array} atomsX - x coordinates
+ * @param {Float32Array} atomsY - y coordinates
+ * @param {Float32Array} atomsZ - z coordinates
+ * @param {Float32Array} atomsR - atom radii
+ * @param {Float32Array} min - xyz min coordinates
+ * @param {Float32Array} max - xyz max coordinates
+ * @param {Float} maxDistance - max distance
+ */
+function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
+
+    var nAtoms = atomsX.length;
+
+    var minX = min[ 0 ];
+    var minY = min[ 1 ];
+    var minZ = min[ 2 ];
+
+    var maxX = max[ 0 ];
+    var maxY = max[ 1 ];
+    var maxZ = max[ 2 ];
+
+    function hashFunc( w, minW) {
+       return Math.floor( ( w - minW ) / maxDistance );
+    }
+
+    var iDim = hashFunc( maxX, minX ) + 1;
+    var jDim = hashFunc( maxY, minY ) + 1;
+    var kDim = hashFunc( maxZ, minZ ) + 1;
+
+    var nCells = iDim * jDim * kDim;
+
+    var jkDim = jDim * kDim;
+
+
+    /* Get cellID for cartesian x,y,z */
+    var cellID = function( x, y, z ) {
+        return ((( hashFunc( x, minX ) * jDim ) + hashFunc( y, minY ) )  * kDim ) + hashFunc( z, minZ );
+    };
+
+
+    /* Initial building, could probably be optimized further */
+    var preHash = []; // preHash[ cellID ] = [ atomId1, atomId2 ];
+
+    for( var i = 0; i < nAtoms; i++ ){
+
+        var cid = cellID( atomsX[ i ], atomsY[ i ], atomsZ[ i ] );
+
+        if( preHash[ cid ] === undefined ) {
+            preHash[ cid ] = [ i ];
+        } else {
+            preHash[ cid ].push( i );
+        }
+
+    }
+
+    var cellOffsets = new Uint32Array( nCells );
+    var cellLengths = new Uint16Array( nCells );
+    var data = new Uint32Array( nAtoms );
+
+    var offset = 0;
+    var maxCellLength = 0;
+
+    for( i = 0; i < nCells; i++ ) {
+
+        var start = cellOffsets[ i ] = offset;
+
+        var subArray = preHash[ i ];
+
+        if( subArray !== undefined ) {
+            for( var j = 0; j < subArray.length; j++ ){
+                data[ offset ] = subArray[ j ];
+                offset++;
+            }
+        }
+
+        var cellLength = offset - start;
+        cellLengths[ i ] = cellLength;
+
+        if (cellLength > maxCellLength) { maxCellLength = cellLength; }
+
+    }
+
+    // Maximum number of neighbours we could ever produce (27 adjacent cells of equal population)
+    this.neighbourListLength = ( 27 * maxCellLength ) + 1;
+
+    /**
+     * Populate the supplied out array with atom indices that are within rAtom + rExtra
+     * of x,y,z
+     *
+     * -1 in out array indicates the end of the list
+     *
+     * @param  {Float} x - x coordinate
+     * @param  {Float} y - y coordinate
+     * @param  {Float} z - z coordinate
+     * @param  {Float} rExtra - additional radius
+     * @param  {Float32Array} out - pre-allocated output array
+     * @return {undefined}
+     */
+    this.withinRadii = function( x, y, z, rExtra, out ) {
+
+        var outIdx = 0;
+
+        var nearI = hashFunc( x, minX );
+        var nearJ = hashFunc( y, minY );
+        var nearK = hashFunc( z, minZ );
+
+        var loI = Math.max( 0, nearI - 1 );
+        var loJ = Math.max( 0, nearJ - 1 );
+        var loK = Math.max( 0, nearK - 1 );
+
+        var hiI = Math.min( iDim, nearI + 1 );
+        var hiJ = Math.min( jDim, nearJ + 1 );
+        var hiK = Math.min( kDim, nearK + 1 );
+
+        for( var i = loI; i <= hiI; ++i ) {
+
+            var iOffset = i * jkDim;
+
+            for( var j = loJ; j <= hiJ; ++j ){
+
+                var jOffset = j * kDim;
+
+                for( var k = loK; k <= hiK; ++k ){
+
+                    var cid = iOffset + jOffset + k;
+
+                    var cellStart = cellOffsets[ cid ];
+                    var cellEnd = cellStart + cellLengths[ cid ];
+
+                    for( var dataIndex = cellStart; dataIndex < cellEnd; dataIndex++ ){
+
+                        var atomIndex = data[ dataIndex ];
+                        var dx = atomsX[ atomIndex ] - x;
+                        var dy = atomsY[ atomIndex ] - y;
+                        var dz = atomsZ[ atomIndex ] - z;
+                        var rSum = atomsR[ atomIndex ] + rExtra;
+
+                        if( (dx * dx + dy * dy + dz * dz ) <= ( rSum * rSum ) ){
+                            out[ outIdx++ ] = data[ dataIndex ];
+                        }
+                    }
+                }
+            }
+        }
+        // Add terminator
+        out[ outIdx ] = -1;
+    };
+}
+
+
+function AVSurface( coordList, radiusList, indexList ){
+
+    // Field generation method adapted from AstexViewer (Mike Hartshorn)
+    // by Fred Ludlow.
+    // Other parts based heavily on NGL (Alexander Rose) EDT Surface class
+    //
+    // Should work as a drop-in alternative to EDTSurface (though some of
+    // the EDT paramters are not relevant in this method).
+
+    var nAtoms = radiusList.length;
+
+    var x = new Float32Array( nAtoms );
+    var y = new Float32Array( nAtoms );
+    var z = new Float32Array( nAtoms );
+
+    for( var i = 0; i < nAtoms; i++ ) {
+        var ci = 3 * i;
+        x[ i ] = coordList[ ci ];
+        y[ i ] = coordList[ ci + 1 ];
+        z[ i ] = coordList[ ci + 2 ];
+    }
+
+    var bbox = computeBoundingBox( coordList );
+    if( coordList.length === 0 ){
+        bbox[ 0 ].set( [ 0, 0, 0 ] );
+        bbox[ 1 ].set( [ 0, 0, 0 ] );
+    }
+    var min = bbox[0];
+    var max = bbox[1];
+
+    var r, r2;  // Atom positions, expanded radii (squared)
+    var maxRadius;
+
+    // Parameters
+    var probeRadius, scaleFactor, setAtomID, probePositions;
+
+    // Cache last value for obscured test
+    var lastClip = -1;
+
+    // Grid params
+    var dim, matrix, grid, atomIndex;
+
+    // grid indices -> xyz coords
+    var gridx, gridy, gridz;
+
+    // Lookup tables:
+    var sinTable, cosTable;
+
+    // Spatial Hash
+    var hash;
+
+    // Neighbour array to be filled by hash
+    var neighbours;
+
+    // Vectors for Torus Projection
+    var mid = new Float32Array( [ 0.0, 0.0, 0.0 ] );
+    var n1 = new Float32Array( [ 0.0, 0.0, 0.0 ] );
+    var n2 = new Float32Array( [ 0.0, 0.0, 0.0 ] );
+
+    var ngTorus;
+
+    function init( _probeRadius, _scaleFactor, _setAtomID, _probePositions ) {
+
+        probeRadius = defaults( _probeRadius, 1.4 );
+        scaleFactor = defaults( _scaleFactor, 2.0 );
+        setAtomID = defaults( _setAtomID, true );
+        probePositions = defaults( _probePositions, 30 );
+
+        r = new Float32Array( nAtoms );
+        r2 = new Float32Array( nAtoms );
+
+        for( var i = 0; i < r.length; ++i ){
+            var rExt = radiusList[ i ] + probeRadius;
+            r[ i ] = rExt;
+            r2[ i ] = rExt * rExt;
+        }
+
+        maxRadius = 0;
+        for( var j = 0; j < r.length; ++j ){
+            if( r[ j ] > maxRadius ) maxRadius = r[ j ];
+        }
+
+        initializeGrid();
+        initializeAngleTables();
+        initializeHash();
+
+        lastClip = -1;
+
+    }
+
+    function fillGridDim( a, start, step ){
+
+        for( var i = 0; i < a.length; i ++ ) {
+            a[i] = start + (step * i);
+        }
+
+    }
+
+    function initializeGrid() {
+
+        var surfGrid = getSurfaceGrid(
+            min, max, maxRadius, scaleFactor, 0.0
+        );
+
+        scaleFactor = surfGrid.scaleFactor;
+        dim = surfGrid.dim;
+        matrix = surfGrid.matrix;
+
+        ngTorus = Math.min(5, 2 + Math.floor( probeRadius * scaleFactor ));
+
+        grid = uniformArray( dim[0] * dim[1] * dim[2], -1001.0 );
+
+        atomIndex = new Int32Array( grid.length );
+
+        gridx = new Float32Array( dim[0] );
+        gridy = new Float32Array( dim[1] );
+        gridz = new Float32Array( dim[2] );
+
+        fillGridDim( gridx, min[0], 1/scaleFactor );
+        fillGridDim( gridy, min[1], 1/scaleFactor );
+        fillGridDim( gridz, min[2], 1/scaleFactor );
+
+    }
+
+    function initializeAngleTables() {
+
+        var theta = 0.0;
+        var step = 2 * Math.PI / probePositions;
+
+        cosTable = new Float32Array( probePositions );
+        sinTable = new Float32Array( probePositions );
+        for( var i = 0; i < probePositions; i++ ){
+            cosTable[ i ] = Math.cos( theta );
+            sinTable[ i ] = Math.sin( theta );
+            theta += step;
+        }
+
+    }
+
+    function initializeHash() {
+
+        hash = new AVHash( x, y, z, r, min, max, 2.01 * maxRadius );
+        neighbours = new Int32Array( hash.neighbourListLength );
+
+    }
+
+    function obscured( x, y, z, a, b ) {
+
+        // Is the point at x,y,z obscured by any of the atoms
+        // specifeid by indices in neighbours. Ignore indices
+        // a and b (these are the relevant atoms in projectPoints/Torii)
+
+        // Cache the last clipped atom (as very often the same one in
+        // subsequent calls)
+        var ai;
+
+        if( lastClip !== -1 ){
+            ai = lastClip;
+            if( ai !== a && ai !== b && singleAtomObscures( ai, x, y, z ) ){
+                return ai;
+            } else {
+                lastClip = -1;
+            }
+        }
+
+        var ni = 0;
+        ai = neighbours[ ni ];
+        while( ai >= 0 ){
+            if( ai !== a && ai !== b && singleAtomObscures( ai, x, y, z ) ){
+                lastClip = ai;
+                return ai;
+            }
+            ai = neighbours[ ++ni ];
+        }
+
+        lastClip = -1;
+
+        return -1;
+
+    }
+
+    function singleAtomObscures( ai, x, y, z ) {
+
+        var ci = 3 * ai;
+        var ra2 = r2[ ai ];
+        var dx = coordList[ ci ] - x;
+        var dy = coordList[ ci + 1 ] - y;
+        var dz = coordList[ ci + 2 ] - z;
+        var d2 = dx * dx + dy * dy + dz * dz;
+
+        return d2 < ra2;
+
+    }
+
+    function projectPoints() {
+
+        // For each atom:
+        //     Iterate over a subsection of the grid, for each point:
+        //         If current value < 0.0, unvisited, set positive
+        //
+        //         In any case: Project this point onto surface of the atomic sphere
+        //         If this projected point is not obscured by any other atom
+        //             Calcualte delta distance and set grid value to minimum of
+        //             itself and delta
+
+        // Should we alias frequently accessed closure variables??
+        // Assume JS engine capable of optimizing this
+        // anyway...
+
+        for( var i = 0; i < nAtoms; i++ ) {
+
+            var ax = x[ i ];
+            var ay = y[ i ];
+            var az = z[ i ];
+            var ar = r[ i ];
+            var ar2 = r2[ i ];
+
+            hash.withinRadii( ax, ay, az, ar, neighbours );
+
+            // Number of grid points, round this up...
+            var ng = Math.ceil( ar * scaleFactor );
+
+            // Center of the atom, mapped to grid points (take floor)
+            var iax = Math.floor( scaleFactor * ( ax - min[ 0 ] ));
+            var iay = Math.floor( scaleFactor * ( ay - min[ 1 ] ));
+            var iaz = Math.floor( scaleFactor * ( az - min[ 2 ] ));
+
+            // Extents of grid to consider for this atom
+            var minx = Math.max( 0, iax - ng );
+            var miny = Math.max( 0, iay - ng );
+            var minz = Math.max( 0, iaz - ng );
+
+            // Add two to these points:
+            // - iax are floor'd values so this ensures coverage
+            // - these are loop limits (exclusive)
+            var maxx = Math.min( dim[ 0 ], iax + ng + 2 );
+            var maxy = Math.min( dim[ 1 ], iay + ng + 2 );
+            var maxz = Math.min( dim[ 2 ], iaz + ng + 2 );
+
+            for( var ix = minx; ix < maxx; ix++ ){
+
+                var dx = gridx[ ix ] - ax;
+                var xoffset = dim[ 1 ] * dim[ 2 ] * ix;
+
+                for( var iy = miny; iy < maxy; iy++ ){
+
+                    var dy = gridy[ iy ] - ay;
+                    var dxy2 = dx * dx + dy * dy;
+                    var xyoffset = xoffset + dim[ 2 ] * iy;
+
+                    for( var iz = minz; iz < maxz; iz++ ){
+
+                        var dz = gridz[ iz ] - az;
+                        var d2 = dxy2 + dz * dz;
+
+                        if( d2 < ar2 ){
+                            var idx = iz + xyoffset;
+
+                            if( grid[idx] < 0.0 ){
+                                // Unvisited, make positive
+                                grid[ idx ] = -grid[ idx ];
+                            }
+                            // Project on to the surface of the sphere
+                            // sp is the projected point ( dx, dy, dz ) * ( ra / d )
+                            var d = Math.sqrt( d2 );
+                            var ap = ar / d;
+                            var spx = dx * ap;
+                            var spy = dy * ap;
+                            var spz = dz * ap;
+
+                            spx += ax;
+                            spy += ay;
+                            spz += az;
+
+                            if( obscured( spx, spy, spz, i, -1 ) === -1 ) {
+                                var dd = ar - d;
+                                if( dd < grid[ idx ] ) {
+                                    grid[ idx ] = dd;
+                                    if( setAtomID ) atomIndex[ idx ] = i;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    function projectTorii() {
+
+        for( var i = 0; i < nAtoms; i++ ){
+            hash.withinRadii( x[ i ], y[ i ], z[ i ], r[ i ], neighbours );
+            var ia = 0;
+            var ni = neighbours[ ia ];
+            while( ni >= 0 ) {
+                if( i < ni ){
+                    projectTorus( i, ni );
+                }
+                ni = neighbours[ ++ia ];
+            }
+        }
+    }
+
+    function projectTorus( a, b ) {
+
+        var r1 = r[ a ];
+        var r2 = r[ b ];
+        var dx = mid[0] = x[ b ] - x[ a ];
+        var dy = mid[1] = y[ b ] - y[ a ];
+        var dz = mid[2] = z[ b ] - z[ a ];
+        var d2 = dx * dx + dy * dy + dz * dz;
+
+        // This check now redundant as already done in AVHash.withinRadii
+        // if( d2 > (( r1 + r2 ) * ( r1 + r2 )) ){ return; }
+
+        var d = Math.sqrt( d2 );
+
+        // Find angle between a->b vector and the circle
+        // of their intersection by cosine rule
+        var cosA = ( r1 * r1 + d * d - r2 * r2 ) / ( 2.0 * r1 * d );
+
+        // distance along a->b at intersection
+        var dmp = r1 * cosA;
+
+        v3normalize( mid, mid );
+
+        // Create normal to line
+        normalToLine( n1, mid );
+        v3normalize( n1, n1 );
+
+        // Cross together for second normal vector
+        v3cross( n2, mid, n1 );
+        v3normalize( n2, n2 );
+
+        // r is radius of circle of intersection
+        var rInt = Math.sqrt( r1 * r1 - dmp * dmp );
+
+        v3multiplyScalar( n1, n1, rInt );
+        v3multiplyScalar( n2, n2, rInt );
+        v3multiplyScalar( mid, mid, dmp );
+
+        mid[ 0 ] += x[ a ];
+        mid[ 1 ] += y[ a ];
+        mid[ 2 ] += z[ a ];
+
+        lastClip = -1;
+
+        var ng = ngTorus;
+
+        for( var i = 0; i < probePositions; i++ ){
+
+            var cost = cosTable[ i ];
+            var sint = sinTable[ i ];
+
+            var px = mid[ 0 ] + cost * n1[ 0 ] + sint * n2[ 0 ];
+            var py = mid[ 1 ] + cost * n1[ 1 ] + sint * n2[ 1 ];
+            var pz = mid[ 2 ] + cost * n1[ 2 ] + sint * n2[ 2 ];
+
+            if( obscured( px, py, pz, a, b ) == -1 ) {
+
+                // As above, iterate over our grid...
+                // px, py, pz in grid coords
+                var iax = Math.floor( scaleFactor * ( px - min[ 0 ] ));
+                var iay = Math.floor( scaleFactor * ( py - min[ 1 ] ));
+                var iaz = Math.floor( scaleFactor * ( pz - min[ 2 ] ));
+
+                var minx = Math.max( 0, iax - ng );
+                var miny = Math.max( 0, iay - ng );
+                var minz = Math.max( 0, iaz - ng );
+
+                var maxx = Math.min( dim[ 0 ], iax + ng + 2 );
+                var maxy = Math.min( dim[ 1 ], iay + ng + 2 );
+                var maxz = Math.min( dim[ 2 ], iaz + ng + 2 );
+
+                for( var ix = minx; ix < maxx; ix++ ){
+
+                    dx = px - gridx[ ix ];
+                    var xoffset = dim[ 1 ] * dim[ 2 ] * ix;
+
+                    for( var iy = miny; iy < maxy; iy++ ){
+
+                        dy = py - gridy[ iy ];
+                        var dxy2 = dx * dx + dy * dy;
+                        var xyoffset = xoffset + dim[ 2 ] * iy;
+
+                        for( var iz = minz; iz < maxz; iz++ ){
+
+                            dz = pz - gridz[ iz ];
+                            d2 = dxy2 + dz * dz;
+                            var idx = iz + xyoffset;
+                            var current = grid[ idx ];
+
+                            if( current > 0.0 && d2 < ( current * current)){
+                                grid[ idx ] = Math.sqrt( d2 );
+                                if( setAtomID ) atomIndex[ idx ] = a;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    function normalToLine( out, p ) {
+
+        out[ 0 ] = out[ 1 ] = out[ 2 ] = 1.0;
+        if( p[ 0 ] != 0 ) {
+            out[ 0 ] = ( p[ 1 ] + p[ 2 ] ) / -p[ 0 ];
+        }
+        else if( p[ 1 ] != 0 ) {
+            out[ 1 ] = ( p[ 0 ] + p[ 2 ] ) / -p[ 1 ];
+        }
+        else if( p[ 2 ] != 0 ) {
+            out[ 2 ] = ( p[ 0 ] + p[ 1 ] ) / -p[ 2 ];
+        }
+        return out;
+
+    }
+
+
+    function fixNegatives() {
+
+        for( var i = 0; i < grid.length; i++ ){
+            if( grid[ i ] < 0 ) grid[ i ] = 0;
+        }
+
+    }
+
+
+    function fixAtomIDs() {
+
+        for( var i = 0; i < atomIndex.length; i++ ){
+            atomIndex[ i ] = indexList[ atomIndex[ i ] ];
+        }
+
+    }
+
+
+    function getVolume( probeRadius, scaleFactor, setAtomID ) {
+
+        // Basic steps are:
+        // 1) Initialize
+        // 2) Project points
+        // 3) Project torii
+
+        console.time( "AVSurface.getVolume" );
+
+        console.time( "AVSurface.init" );
+        init( probeRadius, scaleFactor, setAtomID );
+        console.timeEnd( "AVSurface.init" );
+
+        console.time( "AVSurface.projectPoints" );
+        projectPoints();
+        console.timeEnd( "AVSurface.projectPoints" );
+
+        console.time( "AVSurface.projectTorii" );
+        projectTorii();
+        console.timeEnd( "AVSurface.projectTorii" );
+        fixNegatives();
+        fixAtomIDs();
+
+        console.timeEnd( "AVSurface.getVolume" );
+
+    }
+
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour ) {
+
+        // type and cutoff left in for compatibility with EDTSurface.getSurface
+        // function signature
+
+        getVolume( probeRadius, scaleFactor, setAtomID );
+
+        var volsurf = new VolumeSurface(
+            grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex
+        );
+
+        return volsurf.getSurface( probeRadius, false, undefined, matrix, contour );
+
+    };
+
+}
+AVSurface.__deps = [
+    getSurfaceGrid, VolumeSurface, uniformArray, computeBoundingBox,
+    v3multiplyScalar, v3cross, v3normalize,
+    AVHash,
+    defaults
+];
+
+/**
  * @file Molecular Surface
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -75816,10 +74866,10 @@ WorkerRegistry.add( "molsurf", function func( e, callback ){
     var a = e.data.args;
     var p = e.data.params;
     if( a && p ){
-
-        var edtsurf = new EDTSurface( a.coordList, a.radiusList, a.indexList );
-        var sd = edtsurf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
+        var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
+        var surf = new SurfClass(a.coordList, a.radiusList, a.indexList );
+        var sd = surf.getSurface(
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
@@ -75830,7 +74880,7 @@ WorkerRegistry.add( "molsurf", function func( e, callback ){
         }, transferList );
     }
 
-}, [ EDTSurface ] );
+}, [ EDTSurface, AVSurface ] );
 
 
 
@@ -75874,9 +74924,10 @@ MolecularSurface.prototype = {
         var radiusList = atomData.radius;
         var indexList = atomData.index;
 
-        var edtsurf = new EDTSurface( coordList, radiusList, indexList );
-        var sd = edtsurf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
+        var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
+        var surf = new SurfClass( coordList, radiusList, indexList );
+        var sd = surf.getSurface(
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );
 
         return this.makeSurface( sd, p );
@@ -75948,6 +74999,55 @@ MolecularSurface.prototype = {
 };
 
 /**
+ * @file Contour Buffer
+ * @author Fred ludlow <fred.ludlow@gmail.com>
+ * @private
+ */
+
+function ContourBuffer( position, color, index, params ){
+
+    var p = params || {};
+    this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
+    this.attributeSize = this.size;
+
+    Buffer.call(
+        this, position, color, index, undefined, p 
+    );
+
+}
+
+ContourBuffer.prototype = Object.assign( Object.create(
+
+    Buffer.prototype ), {
+
+    constructor: ContourBuffer,
+
+    setAttributes: function( data ){
+
+        var attributes = this.geometry.attributes;
+
+        if( data.color ){
+            
+            attributes.color.array.set( data.color );
+            attributes.color.needsUpdate = true;
+
+        }
+
+        if( data.index ){
+
+            attributes.index.array.set( data.index );
+            attributes.index.needsUpdate = true;
+
+        }
+            
+    }
+        
+});
+
+/**
  * @file Molecular Surface Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -75983,7 +75083,8 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
                 "vws": "vws",
                 "sas": "sas",
                 "ms": "ms",
-                "ses": "ses"
+                "ses": "ses",
+                "av": "av"
             }
         },
         probeRadius: {
@@ -76002,6 +75103,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "number", precision: 2, max: 50, min: 0,
             rebuild: true
         },
+        contour: {
+            type: "boolean", rebuild: true
+        },
         background: {
             type: "boolean", rebuild: true  // FIXME
         },
@@ -76009,7 +75113,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", buffer: true
         },
         filterSele: {
-            type: "text"
+            type: "text", rebuild: true
         },
         volume: {
             type: "hidden"
@@ -76037,6 +75141,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.smooth = defaults( p.smooth, 2 );
         this.scaleFactor = defaults( p.scaleFactor, 2.0 );
         this.cutoff = defaults( p.cutoff, 0.0 );
+        this.contour = defaults( p.contour, false );
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
         this.filterSele = defaults( p.filterSele, "" );
@@ -76056,6 +75161,17 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         }
 
         if( !info.molsurf || info.sele !== sview.selection.string ){
+
+            if( this.filterSele ){
+                var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
+                var bbSize = sviewFilter.boundingBox.size();
+                var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, maxDim / 2 );
+                sview = sview.getView(
+                    new Selection( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
+                );
+                // this.filterSele = "";
+            }
 
             info.sele = sview.selection.string;
             info.molsurf = new MolecularSurface( sview );
@@ -76122,24 +75238,41 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         var info = this.__infoList[ i ];
 
-        var surfaceBuffer = new SurfaceBuffer(
-            info.surface.getPosition(),
-            info.surface.getColor( this.getColorParams() ),
-            info.surface.getFilteredIndex( this.filterSele, sview ),
-            info.surface.getNormal(),
-            info.surface.getPickingColor( this.getColorParams() ),
-            this.getBufferParams( {
-                background: this.background,
-                opaqueBack: this.opaqueBack,
-                dullInterior: false
-            } )
-        );
-        var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+        var position = info.surface.getPosition();
+        var color = info.surface.getColor( this.getColorParams() );
+        var index = info.surface.getFilteredIndex( this.filterSele, sview );
 
-        return {
-            bufferList: [ doubleSidedBuffer ],
-            info: info
-        };
+        if( info.surface.contour ){
+
+            var contourBuffer = new ContourBuffer(
+                position, color, index,
+                this.getBufferParams( {
+                    wireframe: false
+                } )
+            );
+
+            return { bufferList: [ contourBuffer ], info: info };
+
+        } else {
+
+            var surfaceBuffer = new SurfaceBuffer(
+                position, color, index,
+                info.surface.getNormal(),
+                info.surface.getPickingColor( this.getColorParams() ),
+                this.getBufferParams( {
+                    background: this.background,
+                    opaqueBack: this.opaqueBack,
+                    dullInterior: false
+                } )
+            );
+
+            var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+
+            return {
+                bufferList: [ doubleSidedBuffer ],
+                info: info
+            };
+        }
 
     },
 
@@ -76177,6 +75310,14 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             what.color = true;
         }
 
+        // forbid setting wireframe to true when contour is true
+        if( params && params.wireframe && (
+                params.contour || ( params.contour === undefined && this.contour )
+            )
+        ){
+            params.wireframe = false;
+        }
+
         StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -76191,8 +75332,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: this.surfaceType,
             probeRadius: this.probeRadius,
             scaleFactor: this.scaleFactor,
-            smooth: this.smooth,
+            smooth: this.smooth && !this.contour,
             cutoff: this.cutoff,
+            contour: this.contour,
             useWorker: this.useWorker
         }, params );
 
@@ -76350,6 +75492,8 @@ PointRepresentation.prototype = Object.assign( Object.create(
 
 
 RepresentationRegistry.add( "point", PointRepresentation );
+
+ShaderRegistry.add('shader/Ribbon.vert', "#define STANDARD\r\n\r\nuniform float nearClip;\r\nuniform vec3 clipCenter;\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\nattribute vec3 dir;\r\nattribute float size;\r\n\r\n#ifdef PICKING\r\nattribute vec3 pickingColor;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include color_pars_vertex\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#endif\r\n\r\n#include common\r\n\r\nvoid main(void){\r\n\r\n#ifdef PICKING\r\nvPickingColor = pickingColor;\r\n#else\r\n#include color_vertex\r\n#include beginnormal_vertex\r\n#include defaultnormal_vertex\r\n// Normal computed with derivatives when FLAT_SHADED\r\n#ifndef FLAT_SHADED\r\nvNormal = normalize( transformedNormal );\r\n#endif\r\n#endif\r\n\r\n#include begin_vertex\r\n\r\ntransformed += normalize( dir ) * size;\r\n\r\n#include project_vertex\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\r\nvViewPosition = -mvPosition.xyz;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
 
 /**
  * @file Ribbon Buffer
@@ -76632,7 +75776,7 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScheme = defaults( p.colorScheme, "chainname" );
         p.colorScale = defaults( p.colorScale, "RdYlBu" );
         p.radius = defaults( p.radius, "sstruc" );
         p.scale = defaults( p.scale, 4.0 );
@@ -77227,7 +76371,7 @@ TraceRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScheme = defaults( p.colorScheme, "chainname" );
         p.colorScale = defaults( p.colorScale, "RdYlBu" );
 
         if( p.quality === "low" ){
@@ -77372,6 +76516,10 @@ TubeRepresentation.prototype = Object.assign( Object.create(
 
         CartoonRepresentation.prototype.init.call( this, p );
 
+        if( p.quality === "low" ){
+            this.radialSegments = 5;
+        }
+
     },
 
     getSplineParams: function( /*params*/ ){
@@ -77425,7 +76573,12 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
-        p.radius = defaults( p.radius, 0.5 );
+        var defaultRadius = 0.5;
+        if( this.structure.unitcell ){
+            defaultRadius = Math.cbrt( this.structure.unitcell.volume ) / 200;
+        }
+
+        p.radius = defaults( p.radius, defaultRadius );
         p.colorValue = defaults( p.colorValue, "orange" );
 
         StructureRepresentation.prototype.init.call( this, p );
@@ -77603,26 +76756,18 @@ Parser.prototype = {
 
     parse: function( callback ){
 
-        var self = this;
-
         this.streamer.read( function(){
-            self._beforeParse();
-            self._parse( function(){
-                self._afterParse();
-                callback( self[ self.__objName ] );
-            } );
-        } );
+            this._beforeParse();
+            this._parse();
+            this._afterParse();
+            callback( this[ this.__objName ] );
+        }.bind( this ) );
 
         return this[ this.__objName ];
 
     },
 
-    _parse: function( callback ){
-
-        Log.warn( "Parser._parse not implemented" );
-        callback();
-
-    },
+    _parse: function(){},
 
     _beforeParse: function(){},
 
@@ -77644,7 +76789,7 @@ Parser.prototype = {
 function StructureBuilder( structure ){
 
     var currentModelindex = null;
-    var currentChainname = null;
+    var currentChainid = null;
     var currentResname = null;
     var currentResno = null;
     var currentInscode = null;
@@ -77677,7 +76822,7 @@ function StructureBuilder( structure ){
         );
     }
 
-    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc, inscode ){
+    this.addAtom = function( modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode ){
 
         var addModel = false;
         var addChain = false;
@@ -77690,7 +76835,7 @@ function StructureBuilder( structure ){
             mi += 1;
             ci += 1;
             ri += 1;
-        }else if( currentChainname !== chainname ){
+        }else if( currentChainid !== chainid ){
             addChain = true;
             addResidue = true;
             ci += 1;
@@ -77712,6 +76857,7 @@ function StructureBuilder( structure ){
         if( addChain ){
             chainStore.growIfFull();
             chainStore.setChainname( ci, chainname );
+            chainStore.setChainid( ci, chainid );
             chainStore.residueOffset[ ci ] = ri;
             chainStore.residueCount[ ci ] = 0;
             chainStore.count += 1;
@@ -77744,7 +76890,7 @@ function StructureBuilder( structure ){
         residueStore.atomCount[ ri ] += 1;
 
         currentModelindex = modelindex;
-        currentChainname = chainname;
+        currentChainid = chainid;
         currentResname = resname;
         currentResno = resno;
         currentInscode = inscode;
@@ -77774,10 +76920,6 @@ function StructureParser( streamer, params ){
     this.firstModelOnly = defaults( p.firstModelOnly, false );
     this.asTrajectory = defaults( p.asTrajectory, false );
     this.cAlphaOnly = defaults( p.cAlphaOnly, false );
-    this.reorderAtoms = defaults( p.reorderAtoms, false );
-    this.dontAutoBond = defaults( p.dontAutoBond, false );
-    this.autoBondBetween = defaults( p.autoBondBetween, false );
-    this.doAutoSS = defaults( p.doAutoSS, true );
 
     Parser.call( this, streamer, p );
 
@@ -77794,51 +76936,6 @@ StructureParser.prototype = Object.assign( Object.create(
     type: "structure",
 
     __objName: "structure",
-
-    _afterParse: function(){
-
-        if( exports.Debug ) Log.time( "StructureParser._afterParse" );
-
-        var s = this.structure;
-        s.refresh();
-
-        if( this.reorderAtoms ){
-            reorderAtoms( s );
-        }
-
-        // check for chain names
-        calculateChainnames( s );
-
-        if( this.dontAutoBond ){
-            if( this.autoBondBetween ){
-                calculateBondsBetween( s );
-            }
-        }else{
-            calculateBonds( s );
-        }
-        s.refresh();
-
-        // check for secondary structure
-        if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
-            calculateSecondaryStructure( s );
-        }
-
-        if( s.helices.length > 0 || s.sheets.length > 0 ){
-            assignSecondaryStructure( s );
-        }
-
-        this._postProcess();
-
-        if( s.unitcell ){
-            buildUnitcellAssembly( s );
-        }
-
-        if( exports.Debug ) Log.timeEnd( "StructureParser._afterParse" );
-        if( exports.Debug ) Log.log( this[ this.__objName ] );
-
-    },
-
-    _postProcess: function(){}
 
 } );
 
@@ -77926,11 +77023,7 @@ Unitcell.prototype = {
 
 function GroParser( streamer, params ){
 
-    var p = params || {};
-
-    p.doAutoSS = defaults( p.doAutoSS, true );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -77941,7 +77034,7 @@ GroParser.prototype = Object.assign( Object.create(
     constructor: GroParser,
     type: "gro",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://manual.gromacs.org/current/online/gro.html
 
@@ -78063,7 +77156,7 @@ GroParser.prototype = Object.assign( Object.create(
                     atomStore.z[ idx ] = z;
                     atomStore.serial[ idx ] = serial;
 
-                    sb.addAtom( modelIdx, "", resname, resno, 0, "l" );
+                    sb.addAtom( modelIdx, "", "", resname, resno, 0, "l" );
 
                     idx += 1;
 
@@ -78077,21 +77170,112 @@ GroParser.prototype = Object.assign( Object.create(
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        sb.finalize();
-
         s.unitcell = new Unitcell(
             boxes[ 0 ][ 0 ], boxes[ 0 ][ 4 ], boxes[ 0 ][ 8 ],
             90, 90, 90, "P 1"
         );
 
+        sb.finalize();
+        s.finalizeAtoms();
+        calculateChainnames( s );
+        calculateBonds( s );
+        s.finalizeBonds();
+
+        calculateSecondaryStructure( s );
+        buildUnitcellAssembly( s );
+
         if( exports.Debug ) Log.timeEnd( "GroParser._parse " + this.name );
-        callback();
 
     }
 
 } );
 
 ParserRegistry.add( "gro", GroParser );
+
+/**
+ * @file Entity
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function entityTypeFromString( string ){
+    string = string.toLowerCase();
+    switch( string ){
+        case "polymer":
+            return PolymerEntity;
+        case "non-polymer":
+            return NonPolymerEntity;
+        case "macrolide":
+            return MacrolideEntity;
+        case "water":
+            return WaterEntity;
+        default:
+            return UnknownEntity;
+    }
+}
+
+
+/**
+ * Entity of a {@link Structure}
+ * @class
+ * @param {Structure} structure - structure the entity belongs to
+ * @param {Integer} index - index within structure.entityList
+ * @param {String} description - entity description
+ * @param {String} type - entity type
+ * @param {Array} chainIndexList - entity chainIndexList
+ */
+function Entity( structure, index, description, type, chainIndexList ){
+
+    this.structure = structure;
+    this.index = index;
+    this.description = description || "";
+    this.entityType = entityTypeFromString( type || "" );
+    this.chainIndexList = chainIndexList || [];
+
+    chainIndexList.forEach( function( ci ){
+        structure.chainStore.entityIndex[ ci ] = index;
+    } );
+
+}
+
+Entity.prototype = {
+
+    constructor: Entity,
+    type: "Entity",
+
+    getEntityType: function(){
+        return this.entityType;
+    },
+
+    isPolymer: function(){
+        return this.entityType === PolymerEntity;
+    },
+
+    isNonPolymer: function(){
+        return this.entityType === NonPolymerEntity;
+    },
+
+    isMacrolide: function(){
+        return this.entityType === MacrolideEntity;
+    },
+
+    isWater: function(){
+        return this.entityType === WaterEntity;
+    },
+
+    eachChain: function( callback ){
+
+        var cp = this.structure.getChainProxy();
+
+        this.chainIndexList.forEach( function( index ){
+            cp.index = index;
+            callback( cp );
+        } );
+
+    }
+
+};
 
 /**
  * @file Pdb Parser
@@ -78129,7 +77313,7 @@ PdbParser.prototype = Object.assign( Object.create(
     constructor: PdbParser,
     type: "pdb",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.wwpdb.org/documentation/file-format.php
 
@@ -78150,8 +77334,6 @@ PdbParser.prototype = Object.assign( Object.create(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var helices = s.helices;
-        var sheets = s.sheets;
         var biomolDict = s.biomolDict;
         var currentBiomol;
         var currentPart;
@@ -78168,7 +77350,37 @@ PdbParser.prototype = Object.assign( Object.create(
         var unitcellDict = {};
         var bondDict = {};
 
-        s.hasConnect = false;
+        var entityDataList = [];
+        var currentEntityData;
+        var currentEntityKey;
+        // MOL_ID                 Numbers each component; also used in  SOURCE to associate
+        //                        the information.
+        // MOLECULE               Name of the macromolecule.
+        // CHAIN                  Comma-separated list of chain  identifier(s).
+        // FRAGMENT               Specifies a domain or region of the  molecule.
+        // SYNONYM                Comma-separated list of synonyms for  the MOLECULE.
+        // EC                     The Enzyme Commission number associated  with the molecule.
+        //                        If there is more than one EC number,  they are presented
+        //                        as a comma-separated list.
+        // ENGINEERED             Indicates that the molecule was  produced using
+        //                        recombinant technology or by purely  chemical synthesis.
+        // MUTATION               Indicates if there is a mutation.
+        // OTHER_DETAILS          Additional comments.
+        var entityKeyList = [
+            "MOL_ID", "MOLECULE", "CHAIN", "FRAGMENT", "SYNONYM",
+            "EC", "ENGINEERED", "MUTATION", "OTHER_DETAILS"
+        ];
+        var chainDict = {};
+        var hetnameDict = {};
+        var chainIdx, chainid, newChain;
+        var currentChainname, currentResno, currentResname, currentInscode;
+
+        var secStruct = {
+            helices: [],
+            sheets: []
+        };
+        var helices = secStruct.helices;
+        var sheets = secStruct.sheets;
 
         var atomMap = s.atomMap;
         var atomStore = s.atomStore;
@@ -78213,9 +77425,13 @@ PdbParser.prototype = Object.assign( Object.create(
 
                         }
 
-                    }
+                        chainIdx = 1;
+                        chainid = chainIdx.toString();
+                        newChain = true;
 
-                    pendingStart = false;
+                        pendingStart = false;
+
+                    }
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -78279,7 +77495,7 @@ PdbParser.prototype = Object.assign( Object.create(
                         serial = parseInt( line.substr( 6, 5 ) );
                         element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                        chainname = line[ 21 ].trim();
+                        chainname = line[ 21 ].trim() || line.substr( 72, 4 ).trim();  // segid
                         resno = parseInt( line.substr( 22, 4 ) );
                         inscode = line[ 26 ].trim();
                         resname = line.substr( 17, 4 ).trim();
@@ -78300,11 +77516,35 @@ PdbParser.prototype = Object.assign( Object.create(
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
                     atomStore.occupancy[ idx ] = isNaN( occupancy ) ? 0 : occupancy;
 
-                    sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
+                    if( hetero ){
+
+                        if( currentChainname !== chainname || currentResname !== resname ||
+                            ( !WaterNames.includes( resname ) &&
+                                ( currentResno !== resno || currentInscode !== inscode ) )
+                        ){
+
+                            chainIdx += 1;
+                            chainid = chainIdx.toString();
+
+                            currentResno = resno;
+                            currentResname = resname;
+                            currentInscode = inscode;
+
+                        }
+
+                    }else if( !newChain && currentChainname !== chainname ){
+
+                        chainIdx += 1;
+                        chainid = chainIdx.toString();
+
+                    }
+
+                    sb.addAtom( modelIdx, chainname, chainid, resname, resno, hetero, undefined, inscode );
 
                     serialDict[ serial ] = idx;
-
                     idx += 1;
+                    newChain = false;
+                    currentChainname = chainname;
 
                 }else if( recordName === 'CONECT' ){
 
@@ -78355,8 +77595,6 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     }
 
-                    s.hasConnect = true;
-
                 }else if( recordName === 'HELIX ' ){
 
                     startChain = line[ 19 ].trim();
@@ -78385,6 +77623,55 @@ PdbParser.prototype = Object.assign( Object.create(
                         startChain, startResi, startIcode,
                         endChain, endResi, endIcode
                     ] );
+
+                }else if( recordName === 'HETNAM' ){
+
+                    hetnameDict[ line.substr( 11, 3 ) ] = line.substr( 15 ).trim();
+
+                }else if( recordName === 'COMPND' ){
+
+                    var comp = line.substr( 10, 70 ).trim();
+                    var keyEnd = comp.indexOf( ":" );
+                    var key = comp.substring( 0, keyEnd );
+                    var value;
+
+                    if( entityKeyList.includes( key ) ){
+                        currentEntityKey = key;
+                        value = comp.substring( keyEnd + 2 );
+                    }else{
+                        value = comp;
+                    }
+                    value = value.replace( /;$/, "" );
+
+                    if( currentEntityKey === "MOL_ID" ){
+
+                        currentEntityData = {
+                            chainList: [],
+                            name: ""
+                        };
+                        entityDataList.push( currentEntityData );
+
+                    }else if( currentEntityKey === "MOLECULE" ){
+
+                        if( currentEntityData.name ) currentEntityData.name += " ";
+                        currentEntityData.name += value;
+
+                    }else if( currentEntityKey === "CHAIN" ){
+
+                        Array.prototype.push.apply(
+                            currentEntityData.chainList,
+                            value.split( /\s*,\s*/ )
+                        );
+
+                    }
+
+                }else if( line.startsWith( 'TER' ) ){
+
+                    var cp = s.getChainProxy( s.chainStore.count - 1 );
+                    chainDict[ cp.chainname ] = cp.index;
+                    chainIdx += 1;
+                    chainid = chainIdx.toString();
+                    newChain = true;
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
@@ -78442,7 +77729,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     pendingStart = true;
 
-                }else if( recordName === 'ENDMDL' || line.substr( 0, 3 ) === 'END' ){
+                }else if( recordName === 'ENDMDL' || line.startsWith( 'END' ) ){
 
                     if( pendingStart ) continue;
 
@@ -78564,7 +77851,56 @@ PdbParser.prototype = Object.assign( Object.create(
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        sb.finalize();
+        //
+
+        var en = entityDataList.length;
+
+        if( entityDataList.length ){
+
+            s.eachChain( function( cp ){
+                cp.entityIndex = en;
+            } );
+
+            entityDataList.forEach( function( e, i ){
+                var chainIndexList = e.chainList.map( function( chainname ){
+                    return chainDict[ chainname ];
+                } );
+                s.entityList.push( new Entity(
+                    s, i, e.name, "polymer", chainIndexList
+                ) );
+            } );
+
+            var ei = entityDataList.length;
+            var rp = s.getResidueProxy();
+            var residueDict = {};
+
+            s.eachChain( function( cp ){
+                if( cp.entityIndex === en ){
+                    rp.index = cp.residueOffset;
+                    if( !residueDict[ rp.resname ] ){
+                        residueDict[ rp.resname ] = [];
+                    }
+                    residueDict[ rp.resname ].push( cp.index );
+                }
+            } );
+
+            Object.keys( residueDict ).forEach( function( resname ){
+                var chainList = residueDict[ resname ];
+                var type = "non-polymer";
+                var name = hetnameDict[ resname ] || resname;
+                if( WaterNames.includes( resname ) ){
+                    name = "water";
+                    type = "water";
+                }
+                s.entityList.push( new Entity(
+                    s, ei, name, type, chainList
+                ) );
+                ei += 1;
+            } );
+
+        }
+
+        //
 
         if( unitcellDict.a !== undefined ){
             s.unitcell = new Unitcell(
@@ -78576,8 +77912,20 @@ PdbParser.prototype = Object.assign( Object.create(
             s.unitcell = undefined;
         }
 
+        sb.finalize();
+        s.finalizeAtoms();
+        calculateChainnames( s );
+        calculateBonds( s );
+        s.finalizeBonds();
+
+        if( !helices.length && !sheets.length ){
+            calculateSecondaryStructure( s );
+        }else{
+            assignSecondaryStructure( s, secStruct );
+        }
+        buildUnitcellAssembly( s );
+
         if( exports.Debug ) Log.timeEnd( "PdbParser._parse " + this.name );
-        callback();
 
     }
 
@@ -78620,6 +77968,659 @@ ParserRegistry.add( "pqr", PqrParser );
  */
 
 
+var reWhitespace = /\s+/;
+var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
+var reDoubleQuote = /"/g;
+var reTrimQuotes = /^['"]+|['"]+$/g;
+
+
+function ensureArray( dict, field ){
+    if( !Array.isArray( dict[ field ] ) ){
+        Object.keys( dict ).forEach( function( key ){
+            dict[ key ] = [ dict[ key ] ];
+        } );
+    }
+}
+
+function hasValue( d ){
+    return d !== "?";
+}
+
+function cifDefaults( value, defaultValue ){
+    return hasValue( value ) ? value : defaultValue;
+}
+
+function getBondOrder( valueOrder ){
+    switch( valueOrder.toLowerCase() ){
+        case "?":  // assume single bond
+        case "sing":
+            return 1;
+        case "doub":
+            return 2;
+        case "trip":
+            return 3;
+        case "quad":
+            return 4;
+    }
+    return 0;
+}
+
+
+function parseChemComp( cif, structure, structureBuilder ){
+
+    var atomStore = structure.atomStore;
+    var atomMap = structure.atomMap;
+
+    var i, n;
+    var cc = cif.chem_comp;
+    var cca = cif.chem_comp_atom;
+    var ccb = cif.chem_comp_bond;
+
+    if( cc ){
+
+        if( cc.name ){
+            structure.title = cc.name.trim().replace( reTrimQuotes, "" );
+        }
+        if( cc.id ){
+            structure.id = cc.id.trim().replace( reTrimQuotes, "" );
+        }
+
+    }
+
+    var atomnameDict = {};
+
+    if( cca ){
+
+        var atomname, element, resname, resno;
+        n = cca.comp_id.length;
+
+        for( i = 0; i < n; ++i ){
+
+            atomStore.growIfFull();
+
+            atomname = cca.atom_id[ i ].replace( reDoubleQuote, '' );
+            element = cca.type_symbol[ i ];
+
+            atomnameDict[ atomname ] = i;
+            atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
+
+            atomStore.x[ i ] = cca.model_Cartn_x[ i ];
+            atomStore.y[ i ] = cca.model_Cartn_y[ i ];
+            atomStore.z[ i ] = cca.model_Cartn_z[ i ];
+            atomStore.serial[ i ] = i;
+
+            resname = cca.pdbx_component_comp_id[ i ];
+            resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
+
+            structureBuilder.addAtom( 0, "", "", resname, resno, 1 );
+
+        }
+
+        for( i = 0; i < n; ++i ){
+
+            var j = i + n;
+
+            atomStore.growIfFull();
+
+            atomname = cca.atom_id[ i ].replace( reDoubleQuote, '' );
+            element = cca.type_symbol[ i ];
+
+            atomStore.atomTypeId[ j ] = atomMap.add( atomname, element );
+
+            atomStore.x[ j ] = cca.pdbx_model_Cartn_x_ideal[ i ];
+            atomStore.y[ j ] = cca.pdbx_model_Cartn_y_ideal[ i ];
+            atomStore.z[ j ] = cca.pdbx_model_Cartn_z_ideal[ i ];
+            atomStore.serial[ j ] = j;
+
+            resname = cca.pdbx_component_comp_id[ i ];
+            resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
+
+            structureBuilder.addAtom( 1, "", "", resname, resno, 1 );
+
+        }
+
+    }
+
+    if( cca && ccb ){
+
+        var atomname1, atomname2, bondOrder;
+        n = ccb.comp_id.length;
+        var na = cca.comp_id.length;
+
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy();
+
+        for( i = 0; i < n; ++i ){
+
+            atomname1 = ccb.atom_id_1[ i ].replace( reDoubleQuote, '' );
+            atomname2 = ccb.atom_id_2[ i ].replace( reDoubleQuote, '' );
+            bondOrder = getBondOrder( ccb.value_order[ i ] );
+
+            ap1.index = atomnameDict[ atomname1 ];
+            ap2.index = atomnameDict[ atomname2 ];
+            structure.bondStore.growIfFull();
+            structure.bondStore.addBond( ap1, ap2, bondOrder );
+
+            ap1.index += na;
+            ap2.index += na;
+            structure.bondStore.growIfFull();
+            structure.bondStore.addBond( ap1, ap2, bondOrder );
+
+        }
+
+    }
+
+}
+
+
+function processSecondaryStructure( cif, structure, asymIdDict ){
+
+    var helices = [];
+    var sheets = [];
+
+    var i, il, begIcode, endIcode;
+
+    // get helices
+    var sc = cif.struct_conf;
+
+    if( sc ){
+
+        ensureArray( sc, "id" );
+
+        for( i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
+            var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
+            if( !Number.isNaN( helixType ) ){
+                begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
+                endIcode = sc.pdbx_end_PDB_ins_code[ i ];
+                helices.push( [
+                    asymIdDict[ sc.beg_label_asym_id[ i ] ],
+                    parseInt( sc.beg_auth_seq_id[ i ] ),
+                    cifDefaults( begIcode, "" ),
+                    asymIdDict[ sc.end_label_asym_id[ i ] ],
+                    parseInt( sc.end_auth_seq_id[ i ] ),
+                    cifDefaults( endIcode, "" ),
+                    ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 )
+                ] );
+            }
+        }
+
+    }
+
+    // get sheets
+    var ssr = cif.struct_sheet_range;
+
+    if( ssr ){
+
+        ensureArray( ssr, "id" );
+
+        for( i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
+            begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
+            endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
+            sheets.push( [
+                asymIdDict[ ssr.beg_label_asym_id[ i ] ],
+                parseInt( ssr.beg_auth_seq_id[ i ] ),
+                cifDefaults( begIcode, "" ),
+                asymIdDict[ ssr.end_label_asym_id[ i ] ],
+                parseInt( ssr.end_auth_seq_id[ i ] ),
+                cifDefaults( endIcode, "" )
+            ] );
+        }
+
+    }
+
+    if( sc || ssr ){
+        return {
+            helices: helices,
+            sheets: sheets
+        };
+    }else{
+        return false;
+    }
+
+}
+
+
+function processSymmetry( cif, structure, asymIdDict ){
+
+    // biomol & ncs processing
+    var operDict = {};
+    var biomolDict = structure.biomolDict;
+
+    if( cif.pdbx_struct_oper_list ){
+
+        var biomolOp = cif.pdbx_struct_oper_list;
+        ensureArray( biomolOp, "id" );
+
+        biomolOp.id.forEach( function( id, i ){
+
+            var m = new Matrix4();
+            var elms = m.elements;
+
+            elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
+            elms[  1 ] = parseFloat( biomolOp[ "matrix[1][2]" ][ i ] );
+            elms[  2 ] = parseFloat( biomolOp[ "matrix[1][3]" ][ i ] );
+
+            elms[  4 ] = parseFloat( biomolOp[ "matrix[2][1]" ][ i ] );
+            elms[  5 ] = parseFloat( biomolOp[ "matrix[2][2]" ][ i ] );
+            elms[  6 ] = parseFloat( biomolOp[ "matrix[2][3]" ][ i ] );
+
+            elms[  8 ] = parseFloat( biomolOp[ "matrix[3][1]" ][ i ] );
+            elms[  9 ] = parseFloat( biomolOp[ "matrix[3][2]" ][ i ] );
+            elms[ 10 ] = parseFloat( biomolOp[ "matrix[3][3]" ][ i ] );
+
+            elms[  3 ] = parseFloat( biomolOp[ "vector[1]" ][ i ] );
+            elms[  7 ] = parseFloat( biomolOp[ "vector[2]" ][ i ] );
+            elms[ 11 ] = parseFloat( biomolOp[ "vector[3]" ][ i ] );
+
+            m.transpose();
+
+            operDict[ id ] = m;
+
+        } );
+
+    }
+
+    if( cif.pdbx_struct_assembly_gen ){
+
+        var gen = cif.pdbx_struct_assembly_gen;
+        ensureArray( gen, "assembly_id" );
+
+        var getMatrixDict = function( expr ){
+
+            var matDict = {};
+
+            var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+
+            l.forEach( function( e ){
+
+                if( e.includes( "-" ) ){
+
+                    var es = e.split( "-" );
+
+                    var j = parseInt( es[ 0 ] );
+                    var m = parseInt( es[ 1 ] );
+
+                    for( ; j <= m; ++j ){
+
+                        matDict[ j ] = operDict[ j ];
+
+                    }
+
+                }else{
+
+                    matDict[ e ] = operDict[ e ];
+
+                }
+
+            } );
+
+            return matDict;
+
+        };
+
+        gen.assembly_id.forEach( function( id, i ){
+
+            var md = {};
+            var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
+
+            if( oe.includes( ")(" ) || oe.indexOf( "(" ) > 0 ){
+
+                oe = oe.split( "(" );
+
+                var md1 = getMatrixDict( oe[ 0 ] );
+                var md2 = getMatrixDict( oe[ 1 ] );
+
+                Object.keys( md1 ).forEach( function( k1 ){
+
+                    Object.keys( md2 ).forEach( function( k2 ){
+
+                        var mat = new Matrix4();
+
+                        mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
+                        md[ k1 + "x" + k2 ] = mat;
+
+                    } );
+
+                } );
+
+            }else{
+
+                md = getMatrixDict( oe );
+
+            }
+
+            var matrixList = [];
+            for( var k in md ){
+                matrixList.push( md[ k ] );
+            }
+
+            var name = id;
+            if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
+
+            var chainList = gen.asym_id_list[ i ].split( "," );
+            for( var j = 0, jl = chainList.length; j < jl; ++j ){
+                chainList[ j ] = asymIdDict[ chainList[ j ] ];
+            }
+
+            if( biomolDict[ name ] === undefined ){
+                biomolDict[ name ] = new Assembly( name );
+            }
+            biomolDict[ name ].addPart( matrixList, chainList );
+
+        } );
+
+    }
+
+    // non-crystallographic symmetry operations
+    if( cif.struct_ncs_oper ){
+
+        var ncsOp = cif.struct_ncs_oper;
+        ensureArray( ncsOp, "id" );
+
+        var ncsName = "NCS";
+        biomolDict[ ncsName ] = new Assembly( ncsName );
+        var ncsPart = biomolDict[ ncsName ].addPart();
+
+        ncsOp.id.forEach( function( id, i ){
+
+            // ignore 'given' operators
+            if( ncsOp.code[ i ] === "given" ) return;
+
+            var m = new Matrix4();
+            var elms = m.elements;
+
+            elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
+            elms[  1 ] = parseFloat( ncsOp[ "matrix[1][2]" ][ i ] );
+            elms[  2 ] = parseFloat( ncsOp[ "matrix[1][3]" ][ i ] );
+
+            elms[  4 ] = parseFloat( ncsOp[ "matrix[2][1]" ][ i ] );
+            elms[  5 ] = parseFloat( ncsOp[ "matrix[2][2]" ][ i ] );
+            elms[  6 ] = parseFloat( ncsOp[ "matrix[2][3]" ][ i ] );
+
+            elms[  8 ] = parseFloat( ncsOp[ "matrix[3][1]" ][ i ] );
+            elms[  9 ] = parseFloat( ncsOp[ "matrix[3][2]" ][ i ] );
+            elms[ 10 ] = parseFloat( ncsOp[ "matrix[3][3]" ][ i ] );
+
+            elms[  3 ] = parseFloat( ncsOp[ "vector[1]" ][ i ] );
+            elms[  7 ] = parseFloat( ncsOp[ "vector[2]" ][ i ] );
+            elms[ 11 ] = parseFloat( ncsOp[ "vector[3]" ][ i ] );
+
+            m.transpose();
+
+            ncsPart.matrixList.push( m );
+
+        } );
+
+        if( ncsPart.matrixList.length === 0 ){
+            delete biomolDict[ ncsName ];
+        }
+
+    }
+
+    // cell & symmetry
+    var unitcellDict = {};
+
+    if( cif.cell ){
+
+        var cell = cif.cell;
+
+        var a = parseFloat( cell.length_a );
+        var b = parseFloat( cell.length_b );
+        var c = parseFloat( cell.length_c );
+
+        var box = new Float32Array( 9 );
+        box[ 0 ] = a;
+        box[ 4 ] = b;
+        box[ 8 ] = c;
+        structure.boxes.push( box );
+
+        unitcellDict.a = a;
+        unitcellDict.b = b;
+        unitcellDict.c = c;
+        unitcellDict.alpha = parseFloat( cell.angle_alpha );
+        unitcellDict.beta = parseFloat( cell.angle_beta );
+        unitcellDict.gamma = parseFloat( cell.angle_gamma );
+
+    }
+
+    if( cif.symmetry ){
+
+        var symmetry = cif.symmetry;
+
+        var sGroup = symmetry[ "space_group_name_H-M" ];
+        if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+            ( sGroup[0] === "'" || sGroup[0] === '"' )
+        ){
+            sGroup = sGroup.substring( 1, sGroup.length-1 );
+        }
+
+        unitcellDict.spacegroup = sGroup;
+
+    }
+
+    // origx
+    var origx = new Matrix4();
+
+    if( cif.database_PDB_matrix ){
+
+        var origxMat = cif.database_PDB_matrix;
+        var origxElms = origx.elements;
+
+        origxElms[  0 ] = parseFloat( origxMat[ "origx[1][1]" ] );
+        origxElms[  1 ] = parseFloat( origxMat[ "origx[1][2]" ] );
+        origxElms[  2 ] = parseFloat( origxMat[ "origx[1][3]" ] );
+
+        origxElms[  4 ] = parseFloat( origxMat[ "origx[2][1]" ] );
+        origxElms[  5 ] = parseFloat( origxMat[ "origx[2][2]" ] );
+        origxElms[  6 ] = parseFloat( origxMat[ "origx[2][3]" ] );
+
+        origxElms[  8 ] = parseFloat( origxMat[ "origx[3][1]" ] );
+        origxElms[  9 ] = parseFloat( origxMat[ "origx[3][2]" ] );
+        origxElms[ 10 ] = parseFloat( origxMat[ "origx[3][3]" ] );
+
+        origxElms[  3 ] = parseFloat( origxMat[ "origx_vector[1]" ] );
+        origxElms[  7 ] = parseFloat( origxMat[ "origx_vector[2]" ] );
+        origxElms[ 11 ] = parseFloat( origxMat[ "origx_vector[3]" ] );
+
+        origx.transpose();
+
+        unitcellDict.origx = origx;
+
+    }
+
+    // scale
+    var scale = new Matrix4();
+
+    if( cif.atom_sites ){
+
+        var scaleMat = cif.atom_sites;
+        var scaleElms = scale.elements;
+
+        scaleElms[  0 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][1]" ] );
+        scaleElms[  1 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][2]" ] );
+        scaleElms[  2 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][3]" ] );
+
+        scaleElms[  4 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][1]" ] );
+        scaleElms[  5 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][2]" ] );
+        scaleElms[  6 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][3]" ] );
+
+        scaleElms[  8 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][1]" ] );
+        scaleElms[  9 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][2]" ] );
+        scaleElms[ 10 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][3]" ] );
+
+        scaleElms[  3 ] = parseFloat( scaleMat[ "fract_transf_vector[1]" ] );
+        scaleElms[  7 ] = parseFloat( scaleMat[ "fract_transf_vector[2]" ] );
+        scaleElms[ 11 ] = parseFloat( scaleMat[ "fract_transf_vector[3]" ] );
+
+        scale.transpose();
+
+        unitcellDict.scale = scale;
+
+    }
+
+    if( unitcellDict.a !== undefined ){
+        structure.unitcell = new Unitcell(
+            unitcellDict.a, unitcellDict.b, unitcellDict.c,
+            unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
+            unitcellDict.spacegroup, unitcellDict.scale
+        );
+    }else{
+        structure.unitcell = undefined;
+    }
+
+}
+
+
+function processConnections( cif, structure, asymIdDict ){
+
+    // add connections
+    var sc = cif.struct_conn;
+
+    if( sc ){
+
+        ensureArray( sc, "id" );
+
+        var reDoubleQuote = /"/g;
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy();
+        var atomIndicesCache = {};
+
+        for( var i = 0, il = sc.id.length; i < il; ++i ){
+
+            // ignore:
+            // hydrog - hydrogen bond
+            // mismat - mismatched base pairs
+            // saltbr - ionic interaction
+
+            var conn_type_id = sc.conn_type_id[ i ];
+            if( conn_type_id === "hydrog" ||
+                conn_type_id === "mismat" ||
+                conn_type_id === "saltbr" ) continue;
+
+            // ignore bonds between symmetry mates
+            if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
+                sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
+
+            // process:
+            // covale - covalent bond
+            // covale_base -
+            //      covalent modification of a nucleotide base
+            // covale_phosphate -
+            //      covalent modification of a nucleotide phosphate
+            // covale_sugar -
+            //      covalent modification of a nucleotide sugar
+            // disulf - disulfide bridge
+            // metalc - metal coordination
+            // modres - covalent residue modification
+
+            var inscode1 = sc.pdbx_ptnr1_PDB_ins_code[ i ];
+            var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
+            var sele1 = (
+                sc.ptnr1_auth_seq_id[ i ] +
+                ( hasValue( inscode1 ) ? ( "^" + inscode1 ) : "" ) +
+                ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
+                "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                ( hasValue( altloc1 ) ? ( "%" + altloc1 ) : "" )
+            );
+            var atomIndices1 = atomIndicesCache[ sele1 ];
+            if( !atomIndices1 ){
+                var selection1 = new Selection( sele1 );
+                if( selection1.selection.error ){
+                    Log.warn( "invalid selection for connection", sele1 );
+                    continue;
+                }
+                atomIndices1 = structure.getAtomIndices( selection1 );
+                atomIndicesCache[ sele1 ] = atomIndices1;
+            }
+
+            var inscode2 = sc.pdbx_ptnr2_PDB_ins_code[ i ];
+            var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
+            var sele2 = (
+                sc.ptnr2_auth_seq_id[ i ] +
+                ( hasValue( inscode2 ) ? ( "^" + inscode2 ) : "" ) +
+                ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
+                "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                ( hasValue( altloc2 ) ? ( "%" + altloc2 ) : "" )
+            );
+            var atomIndices2 = atomIndicesCache[ sele2 ];
+            if( !atomIndices2 ){
+                var selection2 = new Selection( sele2 );
+                if( selection2.selection.error ){
+                    Log.warn( "invalid selection for connection", sele2 );
+                    continue;
+                }
+                atomIndices2 = structure.getAtomIndices( selection2 );
+                atomIndicesCache[ sele2 ] = atomIndices2;
+            }
+
+            // cases with more than one atom per selection
+            // - #altloc1 to #altloc2
+            // - #model to #model
+            // - #altloc1 * #model to #altloc2 * #model
+
+            var k = atomIndices1.length;
+            var l = atomIndices2.length;
+
+            if( k > l ){
+                var tmpA = k;
+                k = l;
+                l = tmpA;
+                var tmpB = atomIndices1;
+                atomIndices1 = atomIndices2;
+                atomIndices2 = tmpB;
+            }
+
+            // console.log( k, l );
+
+            if( k === 0 || l === 0 ){
+                Log.warn( "no atoms found for", sele1, sele2 );
+                continue;
+            }
+
+            for( var j = 0; j < l; ++j ){
+
+                ap1.index = atomIndices1[ j % k ];
+                ap2.index = atomIndices2[ j ];
+
+                if( ap1 && ap2 ){
+                    structure.bondStore.addBond(
+                        ap1, ap2, getBondOrder( sc.pdbx_value_order[ i ] )
+                    );
+                }else{
+                    Log.log( "atoms for connection not found" );
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+
+function processEntities( cif, structure, chainIndexDict ){
+
+    if( cif.entity ){
+        ensureArray( cif.entity, "id" );
+        var e = cif.entity;
+        var n = e.id.length;
+        for( var i = 0; i < n; ++i ){
+            var description = e.pdbx_description[ i ];
+            var type = e.type[ i ];
+            var chainIndexList = Array.from( chainIndexDict[ e.id[ i ] ] );
+            structure.entityList[ i ] = new Entity(
+                structure, i, description, type, chainIndexList
+            );
+        }
+    }
+
+}
+
+
+//
+
+
 function CifParser( streamer, params ){
 
     StructureParser.call( this, streamer, params );
@@ -78633,7 +78634,7 @@ CifParser.prototype = Object.assign( Object.create(
     constructor: CifParser,
     type: "cif",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://mmcif.wwpdb.org/
 
@@ -78649,24 +78650,19 @@ CifParser.prototype = Object.assign( Object.create(
         var frames = s.frames;
         var currentFrame, currentCoord;
 
-        var line;
-
-        s.hasConnect = false;
+        var rawline, line;
 
         //
 
-        var reWhitespace = /\s+/;
-        var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
-        var reDoubleQuote = /"/g;
-        var reTrimQuotes = /^['"]+|['"]+$/g;
-
         var cif = {};
-        this.cif = cif;
+        var asymIdDict = {};
+        var chainIndexDict = {};
 
         var pendingString = false;
         var currentString = null;
         var pendingValue = false;
         var pendingLoop = false;
+        var pendingName = false;
         var loopPointers = [];
         var currentLoopIndex = null;
         var currentCategory = null;
@@ -78675,12 +78671,9 @@ CifParser.prototype = Object.assign( Object.create(
         var pointerNames = [];
 
         var auth_asym_id, auth_seq_id,
-            label_atom_id, label_comp_id, label_asym_id, label_alt_id,
+            label_atom_id, label_comp_id, label_asym_id, label_entity_id, label_alt_id,
             group_PDB, id, type_symbol, pdbx_PDB_model_num, pdbx_PDB_ins_code,
             Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv, occupancy;
-
-        var asymIdDict = {};
-        this.asymIdDict = asymIdDict;
 
         //
 
@@ -78696,7 +78689,8 @@ CifParser.prototype = Object.assign( Object.create(
 
             for( var i = _i; i < _n; ++i ){
 
-                line = lines[i].trim();
+                rawline = lines[i];
+                line = rawline.trim();
 
                 if( ( !line && !pendingString && !pendingLoop ) || line[0]==="#" ){
 
@@ -78734,7 +78728,11 @@ CifParser.prototype = Object.assign( Object.create(
 
                         }else{
 
-                            cif[ currentCategory ][ currentName ] = currentString;
+                            if( currentName === false ){
+                                cif[ currentCategory ] = currentString;
+                            }else{
+                                cif[ currentCategory ][ currentName ] = currentString;
+                            }
 
                         }
 
@@ -78755,6 +78753,7 @@ CifParser.prototype = Object.assign( Object.create(
                     // Log.log( "LOOP START" );
 
                     pendingLoop = true;
+                    pendingName = true;
                     loopPointers.length = 0;
                     pointerNames.length = 0;
                     currentLoopIndex = 0;
@@ -78762,6 +78761,10 @@ CifParser.prototype = Object.assign( Object.create(
                 }else if( line[0]==="_" ){
 
                     var keyParts, category, name;
+
+                    if( pendingLoop && !pendingName ){
+                        pendingLoop = false;
+                    }
 
                     if( pendingLoop ){
 
@@ -78806,7 +78809,6 @@ CifParser.prototype = Object.assign( Object.create(
                         if( keyParts.length === 1 ){
 
                             name = false;
-                            if( !cif[ category ] ) cif[ category ] = [];
                             cif[ category ] = value;
 
                         }else{
@@ -78834,7 +78836,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         // Log.log( "STRING VALUE", line );
 
-                        currentString += " " + line;
+                        currentString += rawline;
 
                     }else if( pendingLoop ){
 
@@ -78858,6 +78860,7 @@ CifParser.prototype = Object.assign( Object.create(
                                 label_atom_id = pointerNames.indexOf( "label_atom_id" );
                                 label_comp_id = pointerNames.indexOf( "label_comp_id" );
                                 label_asym_id = pointerNames.indexOf( "label_asym_id" );
+                                label_entity_id = pointerNames.indexOf( "label_entity_id" );
                                 label_alt_id = pointerNames.indexOf( "label_alt_id" );
                                 Cartn_x = pointerNames.indexOf( "Cartn_x" );
                                 Cartn_y = pointerNames.indexOf( "Cartn_y" );
@@ -78938,6 +78941,7 @@ CifParser.prototype = Object.assign( Object.create(
                             var inscode = ls[ pdbx_PDB_ins_code ];
                             inscode = ( inscode === '?' ) ? '' : inscode;
                             var chainname = ls[ auth_asym_id ];
+                            var chainid = ls[ label_asym_id ];
                             var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
                             //
@@ -78959,18 +78963,25 @@ CifParser.prototype = Object.assign( Object.create(
                             atomStore.occupancy[ idx ] = isNaN( occ ) ? 0 : occ;
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
 
-                            sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
+                            sb.addAtom( modelIdx, chainname, chainid, resname, resno, hetero, undefined, inscode );
 
                             if( exports.Debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
                                 // actually a many-to-many mapping
-                                var assignedChainname = asymIdDict[ ls[ label_asym_id ] ];
+                                var assignedChainname = asymIdDict[ chainid ];
                                 if( assignedChainname !== undefined && assignedChainname !== chainname ){
                                     Log.warn( assignedChainname, chainname );
                                 }
                             }
                             // chainname mapping: label_asym_id -> auth_asym_id
-                            asymIdDict[ ls[ label_asym_id ] ] = chainname;
+                            asymIdDict[ chainid ] = chainname;
+
+                            // entity mapping: chainIndex -> label_entity_id
+                            var entityId = ls[ label_entity_id ];
+                            if( !chainIndexDict[ entityId ] ){
+                                chainIndexDict[ entityId ] = new Set();
+                            }
+                            chainIndexDict[ entityId ].add( s.chainStore.count - 1 );
 
                             idx += 1;
 
@@ -78993,11 +79004,13 @@ CifParser.prototype = Object.assign( Object.create(
 
                         }
 
-                    }else if( line[0]==="'" && line.substring( line.length-1 )==="'" ){
+                        pendingName = false;
+
+                    }else if( line[0]==="'" && line[line.length-1]==="'" ){
 
                         // Log.log( "NEWLINE STRING", line );
 
-                        var str = line.substring( 1, line.length - 2 );
+                        var str = line.substring( 1, line.length - 1 );
 
                         if( currentName === false ){
                             cif[ currentCategory ] = str;
@@ -79010,9 +79023,9 @@ CifParser.prototype = Object.assign( Object.create(
                         // Log.log( "NEWLINE VALUE", line );
 
                         if( currentName === false ){
-                            cif[ currentCategory ] = line.trim();
+                            cif[ currentCategory ] = line;
                         }else{
-                            cif[ currentCategory ][ currentName ] = line.trim();
+                            cif[ currentCategory ][ currentName ] = line;
                         }
 
                     }else{
@@ -79023,197 +79036,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                 }
 
-
             }
-
-        }
-
-        function postProcess(){
-
-            function _ensureArray( dict, field ){
-
-                if( !Array.isArray( dict[ field ] ) ){
-                    Object.keys( dict ).forEach( function( key ){
-                        dict[ key ] = [ dict[ key ] ];
-                    } );
-                }
-
-            }
-
-            var i, il, begIcode, endIcode;
-
-            // get helices
-            var sc = cif.struct_conf;
-
-            if( sc ){
-
-                var helices = s.helices;
-
-                // ensure data is in lists
-                _ensureArray( sc, "id" );
-
-                for( i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
-                    var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
-                    if( !Number.isNaN( helixType ) ){
-                        begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
-                        endIcode = sc.pdbx_end_PDB_ins_code[ i ];
-                        helices.push( [
-                            asymIdDict[ sc.beg_label_asym_id[ i ] ],
-                            parseInt( sc.beg_auth_seq_id[ i ] ),
-                            begIcode === "?" ? "" : begIcode,
-                            asymIdDict[ sc.end_label_asym_id[ i ] ],
-                            parseInt( sc.end_auth_seq_id[ i ] ),
-                            endIcode === "?" ? "" : endIcode,
-                            ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 )
-                        ] );
-                    }
-                }
-
-            }
-
-            // get sheets
-            var ssr = cif.struct_sheet_range;
-
-            if( ssr ){
-
-                var sheets = s.sheets;
-
-                // ensure data is in lists
-                _ensureArray( ssr, "id" );
-
-                for( i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
-                    begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
-                    endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
-                    sheets.push( [
-                        asymIdDict[ ssr.beg_label_asym_id[ i ] ],
-                        parseInt( ssr.beg_auth_seq_id[ i ] ),
-                        begIcode === "?" ? "" : begIcode,
-                        asymIdDict[ ssr.end_label_asym_id[ i ] ],
-                        parseInt( ssr.end_auth_seq_id[ i ] ),
-                        endIcode === "?" ? "" : endIcode
-                    ] );
-                }
-
-            }
-
-        }
-
-        function parseChemComp(){
-
-            var i, n;
-            var cc = cif.chem_comp;
-            var cca = cif.chem_comp_atom;
-            var ccb = cif.chem_comp_bond;
-
-            if( cc ){
-
-                if( cc.name ){
-                    s.title = cc.name.trim().replace( reTrimQuotes, "" );
-                }
-                if( cc.id ){
-                    s.id = cc.id.trim().replace( reTrimQuotes, "" );
-                }
-
-            }
-
-            var atomnameDict = {};
-
-            if( cca ){
-
-                var atomname, element, resname, resno;
-                n = cca.comp_id.length;
-
-                for( i = 0; i < n; ++i ){
-
-                    atomStore.growIfFull();
-
-                    atomname = cca.atom_id[ i ];
-                    element = cca.type_symbol[ i ];
-
-                    atomnameDict[ atomname ] = i;
-                    atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
-
-                    atomStore.x[ i ] = cca.model_Cartn_x[ i ];
-                    atomStore.y[ i ] = cca.model_Cartn_y[ i ];
-                    atomStore.z[ i ] = cca.model_Cartn_z[ i ];
-                    atomStore.serial[ i ] = i;
-
-                    resname = cca.pdbx_component_comp_id[ i ];
-                    resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
-
-                    sb.addAtom( 0, "", resname, resno, 1 );
-
-                }
-
-                for( i = 0; i < n; ++i ){
-
-                    var j = i + n;
-
-                    atomStore.growIfFull();
-
-                    atomname = cca.atom_id[ i ];
-                    element = cca.type_symbol[ i ];
-
-                    atomStore.atomTypeId[ j ] = atomMap.add( atomname, element );
-
-                    atomStore.x[ j ] = cca.pdbx_model_Cartn_x_ideal[ i ];
-                    atomStore.y[ j ] = cca.pdbx_model_Cartn_y_ideal[ i ];
-                    atomStore.z[ j ] = cca.pdbx_model_Cartn_z_ideal[ i ];
-                    atomStore.serial[ j ] = j;
-
-                    resname = cca.pdbx_component_comp_id[ i ];
-                    resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
-
-                    sb.addAtom( 1, "", resname, resno, 1 );
-
-                }
-
-            }
-
-            sb.finalize();
-
-            if( cca && ccb ){
-
-                var atomname1, atomname2, valueOrder, bondOrder;
-                n = ccb.comp_id.length;
-                var na = cca.comp_id.length;
-
-                var ap1 = s.getAtomProxy();
-                var ap2 = s.getAtomProxy();
-
-                for( i = 0; i < n; ++i ){
-
-                    atomname1 = ccb.atom_id_1[ i ];
-                    atomname2 = ccb.atom_id_2[ i ];
-                    valueOrder = ccb.value_order[ i ].toLowerCase();
-
-                    if( valueOrder === "?" ){
-                        bondOrder = 1;  // assume single bond
-                    }else if( valueOrder === "sing" ){
-                        bondOrder = 1;
-                    }else if( valueOrder === "doub" ){
-                        bondOrder = 2;
-                    }else if( valueOrder === "trip" ){
-                        bondOrder = 3;
-                    }else if( valueOrder === "quad" ){
-                        bondOrder = 4;
-                    }
-
-                    ap1.index = atomnameDict[ atomname1 ];
-                    ap2.index = atomnameDict[ atomname2 ];
-                    s.bondStore.growIfFull();
-                    s.bondStore.addBond( ap1, ap2, bondOrder );
-
-                    ap1.index += na;
-                    ap2.index += na;
-                    s.bondStore.growIfFull();
-                    s.bondStore.addBond( ap1, ap2, bondOrder );
-
-                }
-
-            }
-
-            s.refresh();
 
         }
 
@@ -79223,13 +79046,18 @@ CifParser.prototype = Object.assign( Object.create(
 
         if( cif.chem_comp && cif.chem_comp_atom ){
 
-            parseChemComp();
-            this.dontAutoBond = true;
+            parseChemComp( cif, s, sb );
+            sb.finalize();
+            s.finalizeAtoms();
+            s.finalizeBonds();
             assignResidueTypeBonds( s );
 
         }else{
 
-            sb.finalize();
+            var secStruct = processSecondaryStructure( cif, s, asymIdDict );
+            processSymmetry( cif, s, asymIdDict );
+            processConnections( cif, s, asymIdDict );
+            processEntities( cif, s, chainIndexDict );
 
             if( cif.struct && cif.struct.title ){
                 s.title = cif.struct.title.trim().replace( reTrimQuotes, "" );
@@ -79238,462 +79066,64 @@ CifParser.prototype = Object.assign( Object.create(
                 s.id = cif.entry.id.trim().replace( reTrimQuotes, "" );
             }
 
-            postProcess();
+            // structure header (mimicking biojava)
+            if( cif.database_PDB_rev ){
+                if( cif.database_PDB_rev.date ){
+                    ensureArray( cif.database_PDB_rev, "date" );
+                    var dates = cif.database_PDB_rev.date.filter( hasValue );
+                    if( dates.length ){
+                        s.header.releaseDate = dates[ dates.length - 1 ];
+                    }
+                }
+                if( cif.database_PDB_rev.date_original ){
+                    ensureArray( cif.database_PDB_rev, "date_original" );
+                    var depDates = cif.database_PDB_rev.date_original.filter( hasValue );
+                    if( depDates.length ){
+                        s.header.depositionDate = depDates[ depDates.length - 1 ];
+                    }
+                }
+            }
+            if( cif.reflns && cif.reflns.d_resolution_high ){
+                if( hasValue( cif.reflns.d_resolution_high ) ){
+                    s.header.resolution = parseFloat( cif.reflns.d_resolution_high );
+                }
+            }else if( cif.refine && cif.refine.ls_d_res_high ){
+                if( hasValue( cif.refine.ls_d_res_high ) ){
+                    s.header.resolution = parseFloat( cif.refine.ls_d_res_high );
+                }
+            }
+            if( cif.refine && cif.refine.ls_R_factor_R_free ){
+                if( hasValue( cif.refine.ls_R_factor_R_free ) ){
+                    s.header.rFree = parseFloat( cif.refine.ls_R_factor_R_free );
+                }
+            }
+            if( cif.refine && cif.refine.ls_R_factor_R_work ){
+                if( hasValue( cif.refine.ls_R_factor_R_work ) ){
+                    s.header.rWork = parseFloat( cif.refine.ls_R_factor_R_work );
+                }
+            }
+            if( cif.exptl && cif.exptl.method ){
+                ensureArray( cif.exptl, "method" );
+                s.header.experimentalMethods = cif.exptl.method.map( function( m ){
+                    return m.replace( reTrimQuotes, "" );
+                } );
+            }
+
+            sb.finalize();
+            s.finalizeAtoms();
+            calculateBonds( s );
+            s.finalizeBonds();
+
+            if( !secStruct ){
+                calculateSecondaryStructure( s );
+            }else{
+                assignSecondaryStructure( s, secStruct );
+            }
+            buildUnitcellAssembly( s );
 
         }
 
         if( exports.Debug ) Log.timeEnd( "CifParser._parse " + this.name );
-        callback();
-
-    },
-
-    _postProcess: function(){
-
-        if( exports.Debug ) Log.time( "CifParser._postProcess" );
-
-        var s = this.structure;
-        var structure = this.structure;
-        var cif = this.cif;
-        var asymIdDict = this.asymIdDict;
-
-        function _ensureArray( dict, field ){
-
-            if( !Array.isArray( dict[ field ] ) ){
-                Object.keys( dict ).forEach( function( key ){
-                    dict[ key ] = [ dict[ key ] ];
-                } );
-            }
-
-        }
-
-        // biomol & ncs processing
-        var operDict = {};
-        var biomolDict = s.biomolDict;
-
-        if( cif.pdbx_struct_oper_list ){
-
-            var biomolOp = cif.pdbx_struct_oper_list;
-
-            // ensure data is in lists
-            _ensureArray( biomolOp, "id" );
-
-            biomolOp.id.forEach( function( id, i ){
-
-                var m = new Matrix4();
-                var elms = m.elements;
-
-                elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( biomolOp[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( biomolOp[ "matrix[1][3]" ][ i ] );
-
-                elms[  4 ] = parseFloat( biomolOp[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( biomolOp[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( biomolOp[ "matrix[2][3]" ][ i ] );
-
-                elms[  8 ] = parseFloat( biomolOp[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( biomolOp[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( biomolOp[ "matrix[3][3]" ][ i ] );
-
-                elms[  3 ] = parseFloat( biomolOp[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( biomolOp[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( biomolOp[ "vector[3]" ][ i ] );
-
-                m.transpose();
-
-                operDict[ id ] = m;
-
-            } );
-
-        }
-
-        if( cif.pdbx_struct_assembly_gen ){
-
-            var gen = cif.pdbx_struct_assembly_gen;
-
-            // ensure data is in lists
-            _ensureArray( gen, "assembly_id" );
-
-            var getMatrixDict = function( expr ){
-
-                var matDict = {};
-
-                var l = expr.replace( /[\(\)']/g, "" ).split( "," );
-
-                l.forEach( function( e ){
-
-                    if( e.indexOf( "-" ) !== -1 ){
-
-                        var es = e.split( "-" );
-
-                        var j = parseInt( es[ 0 ] );
-                        var m = parseInt( es[ 1 ] );
-
-                        for( ; j <= m; ++j ){
-
-                            matDict[ j ] = operDict[ j ];
-
-                        }
-
-                    }else{
-
-                        matDict[ e ] = operDict[ e ];
-
-                    }
-
-                } );
-
-                return matDict;
-
-            };
-
-            gen.assembly_id.forEach( function( id, i ){
-
-                var md = {};
-                var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
-
-                if( oe.indexOf( ")(" || oe.indexOf( "(" ) > 0 ) !== -1 ){
-
-                    oe = oe.split( "(" );
-
-                    var md1 = getMatrixDict( oe[ 0 ] );
-                    var md2 = getMatrixDict( oe[ 1 ] );
-
-                    Object.keys( md1 ).forEach( function( k1 ){
-
-                        Object.keys( md2 ).forEach( function( k2 ){
-
-                            var mat = new Matrix4();
-
-                            mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
-                            md[ k1 + "x" + k2 ] = mat;
-
-                        } );
-
-                    } );
-
-                }else{
-
-                    md = getMatrixDict( oe );
-
-                }
-
-                var matrixList = [];
-                for( var k in md ){
-                    matrixList.push( md[ k ] );
-                }
-
-                var name = id;
-                if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
-
-                var chainList = gen.asym_id_list[ i ].split( "," );
-                for( var j = 0, jl = chainList.length; j < jl; ++j ){
-                    chainList[ j ] = asymIdDict[ chainList[ j ] ];
-                }
-
-                if( biomolDict[ name ] === undefined ){
-                    biomolDict[ name ] = new Assembly( name );
-                }
-                biomolDict[ name ].addPart( matrixList, chainList );
-
-            } );
-
-        }
-
-        // non-crystallographic symmetry operations
-        if( cif.struct_ncs_oper ){
-
-            var ncsOp = cif.struct_ncs_oper;
-
-            // ensure data is in lists
-            _ensureArray( ncsOp, "id" );
-
-            var ncsName = "NCS";
-            biomolDict[ ncsName ] = new Assembly( ncsName );
-            var ncsPart = biomolDict[ ncsName ].addPart();
-
-            ncsOp.id.forEach( function( id, i ){
-
-                // ignore 'given' operators
-                if( ncsOp.code[ i ] === "given" ) return;
-
-                var m = new Matrix4();
-                var elms = m.elements;
-
-                elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( ncsOp[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( ncsOp[ "matrix[1][3]" ][ i ] );
-
-                elms[  4 ] = parseFloat( ncsOp[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( ncsOp[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( ncsOp[ "matrix[2][3]" ][ i ] );
-
-                elms[  8 ] = parseFloat( ncsOp[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( ncsOp[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( ncsOp[ "matrix[3][3]" ][ i ] );
-
-                elms[  3 ] = parseFloat( ncsOp[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( ncsOp[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( ncsOp[ "vector[3]" ][ i ] );
-
-                m.transpose();
-
-                ncsPart.matrixList.push( m );
-
-            } );
-
-            if( ncsPart.matrixList.length === 0 ){
-                delete biomolDict[ ncsName ];
-            }
-
-        }
-
-        // cell & symmetry
-        var unitcellDict = {};
-
-        if( cif.cell ){
-
-            var cell = cif.cell;
-
-            var a = parseFloat( cell.length_a );
-            var b = parseFloat( cell.length_b );
-            var c = parseFloat( cell.length_c );
-
-            var box = new Float32Array( 9 );
-            box[ 0 ] = a;
-            box[ 4 ] = b;
-            box[ 8 ] = c;
-            structure.boxes.push( box );
-
-            unitcellDict.a = a;
-            unitcellDict.b = b;
-            unitcellDict.c = c;
-            unitcellDict.alpha = parseFloat( cell.angle_alpha );
-            unitcellDict.beta = parseFloat( cell.angle_beta );
-            unitcellDict.gamma = parseFloat( cell.angle_gamma );
-
-        }
-
-        if( cif.symmetry ){
-
-            var symmetry = cif.symmetry;
-
-            var sGroup = symmetry[ "space_group_name_H-M" ];
-            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-                ( sGroup[0] === "'" || sGroup[0] === '"' )
-            ){
-                sGroup = sGroup.substring( 1, sGroup.length-1 );
-            }
-
-            unitcellDict.spacegroup = sGroup;
-
-        }
-
-        // origx
-        var origx = new Matrix4();
-
-        if( cif.database_PDB_matrix ){
-
-            var origxMat = cif.database_PDB_matrix;
-            var origxElms = origx.elements;
-
-            origxElms[  0 ] = parseFloat( origxMat[ "origx[1][1]" ] );
-            origxElms[  1 ] = parseFloat( origxMat[ "origx[1][2]" ] );
-            origxElms[  2 ] = parseFloat( origxMat[ "origx[1][3]" ] );
-
-            origxElms[  4 ] = parseFloat( origxMat[ "origx[2][1]" ] );
-            origxElms[  5 ] = parseFloat( origxMat[ "origx[2][2]" ] );
-            origxElms[  6 ] = parseFloat( origxMat[ "origx[2][3]" ] );
-
-            origxElms[  8 ] = parseFloat( origxMat[ "origx[3][1]" ] );
-            origxElms[  9 ] = parseFloat( origxMat[ "origx[3][2]" ] );
-            origxElms[ 10 ] = parseFloat( origxMat[ "origx[3][3]" ] );
-
-            origxElms[  3 ] = parseFloat( origxMat[ "origx_vector[1]" ] );
-            origxElms[  7 ] = parseFloat( origxMat[ "origx_vector[2]" ] );
-            origxElms[ 11 ] = parseFloat( origxMat[ "origx_vector[3]" ] );
-
-            origx.transpose();
-
-            unitcellDict.origx = origx;
-
-        }
-
-        // scale
-        var scale = new Matrix4();
-
-        if( cif.atom_sites ){
-
-            var scaleMat = cif.atom_sites;
-            var scaleElms = scale.elements;
-
-            scaleElms[  0 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][1]" ] );
-            scaleElms[  1 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][2]" ] );
-            scaleElms[  2 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][3]" ] );
-
-            scaleElms[  4 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][1]" ] );
-            scaleElms[  5 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][2]" ] );
-            scaleElms[  6 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][3]" ] );
-
-            scaleElms[  8 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][1]" ] );
-            scaleElms[  9 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][2]" ] );
-            scaleElms[ 10 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][3]" ] );
-
-            scaleElms[  3 ] = parseFloat( scaleMat[ "fract_transf_vector[1]" ] );
-            scaleElms[  7 ] = parseFloat( scaleMat[ "fract_transf_vector[2]" ] );
-            scaleElms[ 11 ] = parseFloat( scaleMat[ "fract_transf_vector[3]" ] );
-
-            scale.transpose();
-
-            unitcellDict.scale = scale;
-
-        }
-
-        if( unitcellDict.a !== undefined ){
-            s.unitcell = new Unitcell(
-                unitcellDict.a, unitcellDict.b, unitcellDict.c,
-                unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
-                unitcellDict.spacegroup, unitcellDict.scale
-            );
-        }else{
-            s.unitcell = undefined;
-        }
-
-        // add connections
-        var sc = cif.struct_conn;
-
-        if( sc ){
-
-            // ensure data is in lists
-            _ensureArray( sc, "id" );
-
-            var reDoubleQuote = /"/g;
-            var ap1 = s.getAtomProxy();
-            var ap2 = s.getAtomProxy();
-            var atomIndicesCache = {};
-
-            for( var i = 0, il = sc.id.length; i < il; ++i ){
-
-                // ignore:
-                // hydrog - hydrogen bond
-                // mismat - mismatched base pairs
-                // saltbr - ionic interaction
-
-                var conn_type_id = sc.conn_type_id[ i ];
-                if( conn_type_id === "hydrog" ||
-                    conn_type_id === "mismat" ||
-                    conn_type_id === "saltbr" ) continue;
-
-                // ignore bonds between symmetry mates
-                if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
-                    sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
-
-                // process:
-                // covale - covalent bond
-                // covale_base -
-                //      covalent modification of a nucleotide base
-                // covale_phosphate -
-                //      covalent modification of a nucleotide phosphate
-                // covale_sugar -
-                //      covalent modification of a nucleotide sugar
-                // disulf - disulfide bridge
-                // metalc - metal coordination
-                // modres - covalent residue modification
-
-                var inscode1 = sc.pdbx_ptnr1_PDB_ins_code[ i ];
-                var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
-                var sele1 = (
-                    sc.ptnr1_auth_seq_id[ i ] +
-                    ( inscode1 === "?" ? "" : ( "^" + inscode1 ) ) +
-                    ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
-                    "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
-                    ( altloc1 === "?" ? "" : ( "%" + altloc1 ) )
-                );
-                var atomIndices1 = atomIndicesCache[ sele1 ];
-                if( !atomIndices1 ){
-                    var selection1 = new Selection( sele1 );
-                    if( selection1.selection.error ){
-                        Log.warn( "invalid selection for connection", sele1 );
-                        continue;
-                    }
-                    atomIndices1 = s.getAtomIndices( selection1 );
-                    atomIndicesCache[ sele1 ] = atomIndices1;
-                }
-
-                var inscode2 = sc.pdbx_ptnr2_PDB_ins_code[ i ];
-                var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
-                var sele2 = (
-                    sc.ptnr2_auth_seq_id[ i ] +
-                    ( inscode2 === "?" ? "" : ( "^" + inscode2 ) ) +
-                    ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
-                    "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
-                    ( altloc2 === "?" ? "" : ( "%" + altloc2 ) )
-                );
-                var atomIndices2 = atomIndicesCache[ sele2 ];
-                if( !atomIndices2 ){
-                    var selection2 = new Selection( sele2 );
-                    if( selection2.selection.error ){
-                        Log.warn( "invalid selection for connection", sele2 );
-                        continue;
-                    }
-                    atomIndices2 = s.getAtomIndices( selection2 );
-                    atomIndicesCache[ sele2 ] = atomIndices2;
-                }
-
-                // cases with more than one atom per selection
-                // - #altloc1 to #altloc2
-                // - #model to #model
-                // - #altloc1 * #model to #altloc2 * #model
-
-                var k = atomIndices1.length;
-                var l = atomIndices2.length;
-
-                if( k > l ){
-                    var tmpA = k;
-                    k = l;
-                    l = tmpA;
-                    var tmpB = atomIndices1;
-                    atomIndices1 = atomIndices2;
-                    atomIndices2 = tmpB;
-                }
-
-                // console.log( k, l );
-
-                if( k === 0 || l === 0 ){
-                    Log.warn( "no atoms found for", sele1, sele2 );
-                    continue;
-                }
-
-                for( var j = 0; j < l; ++j ){
-
-                    ap1.index = atomIndices1[ j % k ];
-                    ap2.index = atomIndices2[ j ];
-
-                    if( ap1 && ap2 ){
-                        var bondOrder;
-                        var valueOrder = sc.pdbx_value_order[ i ].toLowerCase();
-                        if( valueOrder === "?" ){
-                            bondOrder = 1;  // assume single bond
-                        }else if( valueOrder === "sing" ){
-                            bondOrder = 1;
-                        }else if( valueOrder === "doub" ){
-                            bondOrder = 2;
-                        }else if( valueOrder === "trip" ){
-                            bondOrder = 3;
-                        }else if( valueOrder === "quad" ){
-                            bondOrder = 4;
-                        }
-                        s.bondStore.addBond( ap1, ap2, bondOrder );
-                    }else{
-                        Log.log( "atoms for connection not found" );
-                    }
-
-                }
-
-            }
-
-        }
-
-        if( exports.Debug ) Log.timeEnd( "CifParser._postProcess" );
 
     }
 
@@ -79712,11 +79142,7 @@ ParserRegistry.add( "mmcif", CifParser );
 
 function SdfParser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -79727,7 +79153,7 @@ SdfParser.prototype = Object.assign( Object.create(
     constructor: SdfParser,
     type: "sdf",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
         // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
@@ -79832,7 +79258,7 @@ SdfParser.prototype = Object.assign( Object.create(
                     atomStore.z[ idx ] = z;
                     atomStore.serial[ idx ] = idx;
 
-                    sb.addAtom( modelIdx, "", "HET", 1, 1 );
+                    sb.addAtom( modelIdx, "", "", "HET", 1, 1 );
 
                     idx += 1;
 
@@ -79862,10 +79288,11 @@ SdfParser.prototype = Object.assign( Object.create(
         } );
 
         sb.finalize();
-        s.unitcell = undefined;
+        s.finalizeAtoms();
+        s.finalizeBonds();
+        assignResidueTypeBonds( s );
 
         if( exports.Debug ) Log.timeEnd( "SdfParser._parse " + this.name );
-        callback();
 
     },
 
@@ -79888,11 +79315,7 @@ ParserRegistry.add( "sdf", SdfParser );
 
 function Mol2Parser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -79903,7 +79326,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
     constructor: Mol2Parser,
     type: "mol2",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.tripos.com/data/support/mol2.pdf
 
@@ -80072,7 +79495,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
                     atomStore.serial[ idx ] = serial;
                     atomStore.bfactor[ idx ] = bfactor;
 
-                    sb.addAtom( modelIdx, "", resname, resno, 1 );
+                    sb.addAtom( modelIdx, "", "", resname, resno, 1 );
 
                     idx += 1;
 
@@ -80101,16 +79524,15 @@ Mol2Parser.prototype = Object.assign( Object.create(
         } );
 
         sb.finalize();
-        s.unitcell = undefined;
+        s.finalizeAtoms();
+        calculateChainnames( s );
+        calculateBondsWithin( s, true );
+        calculateBondsBetween( s, true );
+        s.finalizeBonds();
+        assignResidueTypeBonds( s );
+        calculateSecondaryStructure( s );
 
         if( exports.Debug ) Log.timeEnd( "Mol2Parser._parse " + this.name );
-        callback();
-
-    },
-
-    _postProcess: function(){
-
-        assignResidueTypeBonds( this.structure );
 
     }
 
@@ -80118,6 +79540,16 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
 ParserRegistry.add( "mol2", Mol2Parser );
 
+/**
+ * @file utf8-utils
+ * @private
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * mostly copied from https://github.com/creationix/msgpack-js-browser
+ * by Tim Caswell <tim@creationix.com>, MIT License, Copyright (c) 2013
+ */
+
+
+// Encode string as utf8 into dataview at offset
 /**
  * @file mmtf-constants
  * @private
@@ -80854,7 +80286,7 @@ function performDecoding( type, bytes, size, param ){
             return decodePacking( getInt8View( bytes ) );
     }
 
-};
+}
 
 
 /**
@@ -80909,13 +80341,7 @@ var SstrucMap = {
 
 function MmtfParser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-    p.autoBondBetween = defaults( p.autoBondBetween, false );
-    p.doAutoSS = defaults( p.doAutoSS, false );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -80926,7 +80352,7 @@ MmtfParser.prototype = Object.assign( Object.create(
     constructor: MmtfParser,
     type: "mmtf",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://github.com/rcsb/mmtf
 
@@ -80936,6 +80362,17 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
+
+        // structure header
+        var headerFields = [
+            "depositionDate", "releaseDate", "resolution",
+            "rFree", "rWork", "experimentalMethods"
+        ];
+        headerFields.forEach( function( name ){
+            if( sd[ name ] !== undefined ){
+                s.header[ name ] = sd[ name ];
+            }
+        } );
 
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;
@@ -81129,17 +80566,19 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         s.chainStore.length = numChains;
         s.chainStore.count = numChains;
+        s.chainStore.entityIndex = new Uint16Array( numChains );
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
         s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains * 4 );
+        s.chainStore.chainid = sd.chainIdList.subarray( 0, numChains * 4 );
 
         s.modelStore.length = numModels;
         s.modelStore.count = numModels;
         s.modelStore.chainOffset = mChainOffset;
         s.modelStore.chainCount = mChainCount;
 
-
+        //
 
         var groupTypeDict = {};
         for( i = 0, il = sd.groupList.length; i < il; ++i ){
@@ -81151,7 +80590,7 @@ MmtfParser.prototype = Object.assign( Object.create(
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
             var chemCompType = groupType.chemCompType.toUpperCase();
-            var hetFlag = ChemCompHetero.indexOf( chemCompType ) !== -1;
+            var hetFlag = ChemCompHetero.includes( chemCompType );
 
             var numGroupBonds = groupType.bondOrderList.length;
             var atomIndices1 = new Array( numGroupBonds );
@@ -81192,6 +80631,14 @@ MmtfParser.prototype = Object.assign( Object.create(
         }
 
         //
+
+        if( sd.entityList ){
+            sd.entityList.forEach( function( e, i ){
+                s.entityList[ i ] = new Entity(
+                    s, i, e.description, e.type, e.chainIndexList
+                );
+            } );
+        }
 
         if( sd.bioAssemblyList ){
             sd.bioAssemblyList.forEach( function( _assembly, k ){
@@ -81254,7 +80701,10 @@ MmtfParser.prototype = Object.assign( Object.create(
         // calculate rung bonds
         calculateBondsWithin( s, true );
 
-        callback();
+        s.finalizeAtoms();
+        s.finalizeBonds();
+
+        buildUnitcellAssembly( s );
 
     }
 
@@ -81282,6 +80732,7 @@ function Frames( name, path ){
 Frames.prototype = {
 
     constructor: Frames,
+    type: "Frames",
 
 };
 
@@ -81294,9 +80745,7 @@ Frames.prototype = {
 
 function TrajectoryParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.frames = new Frames( this.name, this.path );
 
@@ -81322,9 +80771,7 @@ TrajectoryParser.prototype = Object.assign( Object.create(
 
 function DcdParser( streamer, params ){
 
-    var p = params || {};
-
-    TrajectoryParser.call( this, streamer, p );
+    TrajectoryParser.call( this, streamer, params );
 
 }
 
@@ -81335,7 +80782,7 @@ DcdParser.prototype = Object.assign( Object.create(
     constructor: DcdParser,
     type: "dcd",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
 
@@ -81450,7 +80897,6 @@ DcdParser.prototype = Object.assign( Object.create(
         if( header.NAMNF > 0 ){
             // TODO read coordinates and indices of fixed atoms
             Log.error( "dcd format with fixed atoms unsupported, aborting" );
-            callback();
             return;
         }
 
@@ -81504,7 +80950,6 @@ DcdParser.prototype = Object.assign( Object.create(
         // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
 
         if( exports.Debug ) Log.timeEnd( "DcdParser._parse " + this.name );
-        callback();
 
     },
 
@@ -81521,9 +80966,7 @@ ParserRegistry.add( "dcd", DcdParser );
 
 function VolumeParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.volume = new Volume( this.name, this.path );
 
@@ -81572,7 +81015,7 @@ MrcParser.prototype = Object.assign( Object.create(
     constructor: MrcParser,
     type: "mrc",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // MRC
         // http://ami.scripps.edu/software/mrctools/mrc_specification.php
@@ -81709,16 +81152,43 @@ MrcParser.prototype = Object.assign( Object.create(
 
         // Log.log( header )
 
-        // FIXME depends on mode
-        var data = new Float32Array(
-            bin, 256 * 4 + header.NSYMBT,
-            header.NX * header.NY * header.NZ
-        );
+        var data;
+        if( header.MODE === 2 ){
+
+            data = new Float32Array(
+                bin, 256 * 4 + header.NSYMBT,
+                header.NX * header.NY * header.NZ
+            );
+
+        }else if( header.MODE === 0 ){
+
+            data = new Float32Array( new Int8Array(
+                bin, 256 * 4 + header.NSYMBT,
+                header.NX * header.NY * header.NZ
+            ) );
+
+            // based on uglymol (https://github.com/uglymol/uglymol) by Marcin Wojdyr (wojdyr)
+            // if the file was converted by mapmode2to0 - scale the data
+            var b1 = 1;
+            var b0 = 0;
+            if( intView[ 39 ] === -128 && intView[ 40 ] === 127 ){
+                // scaling f(x)=b1*x+b0 such that f(-128)=min and f(127)=max
+                b1 = ( header.DMAX - header.DMIN ) / 255.0;
+                b0 = 0.5 * ( header.DMIN + header.DMAX + b1 );
+                for( var j = 0, jl = data.length; j < jl; ++j ){
+                    data[ j ] = b1 * data[ j ] + b0;
+                }
+            }
+
+        }else{
+
+            console.error( "MrcParser unknown mode", header.MODE );
+
+        }
 
         v.setData( data, header.NX, header.NY, header.NZ );
 
         if( exports.Debug ) Log.timeEnd( "MrcParser._parse " + this.name );
-        callback();
 
     },
 
@@ -81820,7 +81290,7 @@ CubeParser.prototype = Object.assign( Object.create(
     constructor: CubeParser,
     type: "cube",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://paulbourke.net/dataformats/cube/
 
@@ -81837,20 +81307,21 @@ CubeParser.prototype = Object.assign( Object.create(
             return parseFloat( field );
         }
 
-        header.atomCount = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
-        header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor; //Position of origin of volumetric data
+        header.atomCount = Math.abs( headerhelper( 2, 0 ) );  // Number of atoms
+        header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor;  // Position of origin of volumetric data
         header.originY = headerhelper( 2, 2 ) * bohrToAngstromFactor;
         header.originZ = headerhelper( 2, 3 ) * bohrToAngstromFactor;
-        header.NVX = headerhelper( 3, 0 ); //Number of voxels
+        header.NVX = headerhelper( 3, 0 );  // Number of voxels
         header.NVY = headerhelper( 4, 0 );
         header.NVZ = headerhelper( 5, 0 );
-        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor; //Axis vector
+        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor;  // Axis vector
         header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor;
         header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor;
 
         var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
         var count = 0;
         var lineNo = 0;
+        var oribitalFlag = headerhelper( 2, 0 ) > 0 ? 0 : 1;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -81858,7 +81329,7 @@ CubeParser.prototype = Object.assign( Object.create(
 
                 var line = lines[ i ].trim();
 
-                if( line !== "" && lineNo >= header.atomCount + 6 ){
+                if( line !== "" && lineNo >= header.atomCount + 6 + oribitalFlag ){
 
                     line = line.split( reWhitespace );
                     for( var j = 0, lj = line.length; j < lj; ++j ){
@@ -81884,7 +81355,6 @@ CubeParser.prototype = Object.assign( Object.create(
         v.setData( data, header.NVZ, header.NVY, header.NVX );
 
         if( exports.Debug ) Log.timeEnd( "CubeParser._parse " + this.name );
-        callback();
 
     },
 
@@ -81915,6 +81385,7 @@ CubeParser.prototype = Object.assign( Object.create(
 
 } );
 
+ParserRegistry.add( "cub", CubeParser );
 ParserRegistry.add( "cube", CubeParser );
 
 /**
@@ -81937,7 +81408,7 @@ DxParser.prototype = Object.assign( Object.create(
     constructor: DxParser,
     type: "dx",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.poissonboltzmann.org/docs/file-format-info/
 
@@ -81989,7 +81460,6 @@ DxParser.prototype = Object.assign( Object.create(
         v.setData( data, header.nz, header.ny, header.nx );
 
         if( exports.Debug ) Log.timeEnd( "DxParser._parse " + this.name );
-        callback();
 
     },
 
@@ -82108,7 +81578,7 @@ DxbinParser.prototype = Object.assign( Object.create(
     constructor: DxbinParser,
     type: "dxbin",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
 
@@ -82136,13 +81606,186 @@ DxbinParser.prototype = Object.assign( Object.create(
 
         if( exports.Debug ) Log.timeEnd( "DxbinParser._parse " + this.name );
 
-        callback();
-
     }
 
 } );
 
 ParserRegistry.add( "dxbin", DxbinParser );
+
+/**
+ * @file Xplor Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function XplorParser( streamer, params ){
+
+    VolumeParser.call( this, streamer, params );
+
+}
+
+XplorParser.prototype = Object.assign( Object.create(
+
+    VolumeParser.prototype ), {
+
+    constructor: XplorParser,
+    type: "xplor",
+
+    _parse: function(){
+
+        // http://hincklab.uthscsa.edu/html/soft_packs/msi_docs/insight980/xplor/formats.html
+        // http://www.mrc-lmb.cam.ac.uk/public/xtal/doc/cns/cns_1.3/tutorial/formats/maps/text.html
+
+        if( exports.Debug ) Log.time( "XplorParser._parse " + this.name );
+
+        var v = this.volume;
+        var headerLines = this.streamer.peekLines( 8 );
+        var header = {};
+        var reWhitespace = /\s+/;
+
+        function parseNumberLine( line ){
+            return line.trim().split( reWhitespace ).map( parseFloat );
+        }
+
+        var infoStart;
+        if( headerLines[ 2 ].startsWith( "REMARKS" ) ){
+            infoStart = parseInt( headerLines[ 1 ].substring( 0, 8 ) ) + 2;
+        }else{
+            infoStart = 5;
+        }
+        var dataStart = infoStart + 3;
+
+        var gridInfo = parseNumberLine( headerLines[ infoStart ] );
+        header.NA = gridInfo[ 0 ];
+        header.AMIN = gridInfo[ 1 ];
+        header.AMAX = gridInfo[ 2 ];
+        header.NB = gridInfo[ 3 ];
+        header.BMIN = gridInfo[ 4 ];
+        header.BMAX = gridInfo[ 5 ];
+        header.NC = gridInfo[ 6 ];
+        header.CMIN = gridInfo[ 7 ];
+        header.CMAX = gridInfo[ 8 ];
+
+        var cellInfo = parseNumberLine( headerLines[ infoStart + 1 ] );
+        header.a = cellInfo[ 0 ];
+        header.b = cellInfo[ 1 ];
+        header.c = cellInfo[ 2 ];
+        header.alpha = cellInfo[ 3 ];
+        header.beta = cellInfo[ 4 ];
+        header.gamma = cellInfo[ 5 ];
+
+        var na = header.AMAX - header.AMIN + 1;
+        var nb = header.BMAX - header.BMIN + 1;
+        var nc = header.CMAX - header.CMIN + 1;
+        var n = na * nb * nc;
+
+        var data = new Float32Array( n );
+        var count = 0;
+        var lineNo = 0;
+        var lineSection = 1 + ( na * nb ) / 6;
+
+        function _parseChunkOfLines( _i, _n, lines ){
+
+            for( var i = _i; i < _n; ++i ){
+
+                var line = lines[ i ];
+
+                if( lineNo >= dataStart && ( lineNo - dataStart ) % lineSection !== 0 && count < n ){
+
+                    for( var j = 0, lj = 6; j < lj; ++j ){
+                        data[ count ] = parseFloat( line.substr( 12 * j, 12 ) );
+                        ++count;
+                    }
+
+                }
+
+                ++lineNo;
+
+            }
+
+        }
+
+        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
+
+        v.header = header;
+        v.setData( data, na, nb, nc );
+
+        if( exports.Debug ) Log.timeEnd( "XplorParser._parse " + this.name );
+
+    },
+
+    getMatrix: function(){
+
+        var h = this.volume.header;
+
+        var basisX = [
+            h.a,
+            0,
+            0
+        ];
+
+        var basisY = [
+            h.b * Math.cos( Math.PI / 180.0 * h.gamma ),
+            h.b * Math.sin( Math.PI / 180.0 * h.gamma ),
+            0
+        ];
+
+        var basisZ = [
+            h.c * Math.cos( Math.PI / 180.0 * h.beta ),
+            h.c * (
+                    Math.cos( Math.PI / 180.0 * h.alpha ) -
+                    Math.cos( Math.PI / 180.0 * h.gamma ) *
+                    Math.cos( Math.PI / 180.0 * h.beta )
+                ) / Math.sin( Math.PI / 180.0 * h.gamma ),
+            0
+        ];
+        basisZ[ 2 ] = Math.sqrt(
+            h.c * h.c * Math.sin( Math.PI / 180.0 * h.beta ) *
+            Math.sin( Math.PI / 180.0 * h.beta ) - basisZ[ 1 ] * basisZ[ 1 ]
+        );
+
+        var basis = [ 0, basisX, basisY, basisZ ];
+        var nxyz = [ 0, h.NA, h.NB, h.NC ];
+        var mapcrs = [ 0, 1, 2, 3 ];
+
+        var matrix = new Matrix4();
+
+        matrix.set(
+
+            basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+            basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+            basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+            0,
+
+            basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+            basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+            basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+            0,
+
+            basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+            basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+            basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+            0,
+
+            0, 0, 0, 1
+
+        );
+
+        matrix.multiply( new Matrix4().makeTranslation(
+            h.AMIN, h.BMIN, h.CMIN
+        ) );
+
+        return matrix;
+
+    }
+
+} );
+
+ParserRegistry.add( "xplor", XplorParser );
+ParserRegistry.add( "cns", XplorParser );
 
 /**
  * @file Surface Parser
@@ -82153,9 +81796,7 @@ ParserRegistry.add( "dxbin", DxbinParser );
 
 function SurfaceParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.loader = undefined;
     this.surface = new Surface( this.name, this.path );
@@ -82171,13 +81812,11 @@ SurfaceParser.prototype = Object.assign( Object.create(
 
     __objName: "surface",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         var geometry = this.loader.parse( this.streamer.asText() );
 
         this.surface.fromGeometry( geometry );
-
-        callback();
 
     }
 
@@ -82655,9 +82294,7 @@ PLYLoader.prototype = {
 
 function PlyParser( streamer, params ){
 
-    var p = params || {};
-
-    SurfaceParser.call( this, streamer, p );
+    SurfaceParser.call( this, streamer, params );
 
     this.loader = new PLYLoader();
 
@@ -82891,14 +82528,19 @@ OBJLoader.prototype = {
 
     parse: function ( text ) {
 
-        console.time( 'OBJLoader' );
-
         var state = this._createParserState();
 
         if ( text.indexOf( '\r\n' ) !== - 1 ) {
 
             // This is faster than String.split with regex that splits on both
-            text = text.replace( '\r\n', '\n' );
+            text = text.replace( /\r\n/g, '\n' );
+
+        }
+
+        if ( text.indexOf( '\\\n' ) !== - 1) {
+
+            // join lines separated by a line continuation character (\)
+            text = text.replace( /\\\n/g, '' );
 
         }
 
@@ -83085,8 +82727,6 @@ OBJLoader.prototype = {
 
         }
 
-        console.timeEnd( 'OBJLoader' );
-
         return container;
 
     }
@@ -83096,9 +82736,7 @@ OBJLoader.prototype = {
 
 function ObjParser( streamer, params ){
 
-    var p = params || {};
-
-    SurfaceParser.call( this, streamer, p );
+    SurfaceParser.call( this, streamer, params );
 
     this.loader = new OBJLoader();
 
@@ -83124,9 +82762,7 @@ ParserRegistry.add( "obj", ObjParser );
 
 function TextParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.text = {
 
@@ -83147,11 +82783,9 @@ TextParser.prototype = Object.assign( Object.create(
 
     __objName: "text",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         this.text.data = this.streamer.asText();
-
-        callback();
 
     }
 
@@ -83169,17 +82803,13 @@ ParserRegistry.add( "text", TextParser );
 
 function CsvParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.table = {
-
         name: this.name,
         path: this.path,
         colNames: [],
         data: []
-
     };
 
 }
@@ -83193,7 +82823,7 @@ CsvParser.prototype = Object.assign( Object.create(
 
     __objName: "table",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         var data = this.table.data;
         var reDelimiter = /\s*,\s*/;
@@ -83221,8 +82851,6 @@ CsvParser.prototype = Object.assign( Object.create(
 
         }.bind( this ) );
 
-        callback();
-
     }
 
 } );
@@ -83242,14 +82870,12 @@ function JsonParser( streamer, params ){
 
     Parser.call( this, streamer, p );
 
-    this.string = defaults( p, false );
+    this.string = defaults( p.string, false );
 
     this.json = {
-
         name: this.name,
         path: this.path,
         data: {}
-
     };
 
 }
@@ -83263,15 +82889,13 @@ JsonParser.prototype = Object.assign( Object.create(
 
     __objName: "json",
 
-    _parse: function( callback ){
+    _parse: function(){
 
-        if( this.streamer.compressed || this.streamer.binary || this.string ){
+        if( this.streamer.isBinary() || this.string ){
             this.json.data = JSON.parse( this.streamer.asText() );
         }else{
             this.json.data = this.streamer.data;
         }
-
-        callback();
 
     }
 
@@ -83295,11 +82919,9 @@ function XmlParser( streamer, params ){
     Parser.call( this, streamer, p );
 
     this.xml = {
-
         name: this.name,
         path: this.path,
         data: {}
-
     };
 
 }
@@ -83421,20 +83043,21 @@ XmlParser.prototype = Object.assign( Object.create(
 
     },
 
-    _parse: function( callback ){
+    _parse: function(){
 
         if( exports.Debug ) Log.time( "XmlParser._parse " + this.name );
 
-        var text = this.streamer.asText();
         if( this.useDomParser ){
-            this.xml.data = this.__domParser( text );
+            if( this.streamer.isBinary() || this.string ){
+                this.xml.data = this.__domParser( this.streamer.asText() );
+            }else{
+                this.xml.data = this.streamer.data;
+            }
         }else{
-            this.xml.data = this.__xmlParser( text );
+            this.xml.data = this.__xmlParser( this.streamer.asText() );
         }
 
         if( exports.Debug ) Log.timeEnd( "XmlParser._parse " + this.name );
-
-        callback();
 
     }
 
@@ -83442,134 +83065,3131 @@ XmlParser.prototype = Object.assign( Object.create(
 
 ParserRegistry.add( "xml", XmlParser );
 
+// 'use strict';
+
+
+// var TYPED_OK =  (typeof Uint8Array !== 'undefined') &&
+//                 (typeof Uint16Array !== 'undefined') &&
+//                 (typeof Int32Array !== 'undefined');
+
+
+function assign(obj /*from1, from2, from3, ...*/) {
+  var sources = Array.prototype.slice.call(arguments, 1);
+  while (sources.length) {
+    var source = sources.shift();
+    if (!source) { continue; }
+
+    if (typeof source !== 'object') {
+      throw new TypeError(source + 'must be non-object');
+    }
+
+    for (var p in source) {
+      if (source.hasOwnProperty(p)) {
+        obj[p] = source[p];
+      }
+    }
+  }
+
+  return obj;
+}
+
+
+// reduce buffer size, avoiding mem copy
+function shrinkBuf(buf, size) {
+  if (buf.length === size) { return buf; }
+  if (buf.subarray) { return buf.subarray(0, size); }
+  buf.length = size;
+  return buf;
+}
+
+
+function arraySet(dest, src, src_offs, len, dest_offs) {
+  if (src.subarray && dest.subarray) {
+    dest.set(src.subarray(src_offs, src_offs + len), dest_offs);
+    return;
+  }
+  // Fallback to ordinary array
+  for (var i = 0; i < len; i++) {
+    dest[dest_offs + i] = src[src_offs + i];
+  }
+}
+
+// Join array of chunks to single array.
+function flattenChunks(chunks) {
+  var i, l, len, pos, chunk, result;
+
+  // calculate data length
+  len = 0;
+  for (i = 0, l = chunks.length; i < l; i++) {
+    len += chunks[i].length;
+  }
+
+  // join chunks
+  result = new Uint8Array(len);
+  pos = 0;
+  for (i = 0, l = chunks.length; i < l; i++) {
+    chunk = chunks[i];
+    result.set(chunk, pos);
+    pos += chunk.length;
+  }
+
+  return result;
+}
+
+// 'use strict';
+
+// Note: adler32 takes 12% for level 0 and 2% for level 6.
+// It doesn't worth to make additional optimizationa as in original.
+// Small size is preferable.
+
+function adler32(adler, buf, len, pos) {
+  var s1 = (adler & 0xffff) |0,
+      s2 = ((adler >>> 16) & 0xffff) |0,
+      n = 0;
+
+  while (len !== 0) {
+    // Set limit ~ twice less than 5552, to keep
+    // s2 in 31-bits, because we force signed ints.
+    // in other case %= will fail.
+    n = len > 2000 ? 2000 : len;
+    len -= n;
+
+    do {
+      s1 = (s1 + buf[pos++]) |0;
+      s2 = (s2 + s1) |0;
+    } while (--n);
+
+    s1 %= 65521;
+    s2 %= 65521;
+  }
+
+  return (s1 | (s2 << 16)) |0;
+}
+
+// 'use strict';
+
+// Note: we can't get significant speed boost here.
+// So write code to minimize size - no pregenerated tables
+// and array tools dependencies.
+
+
+// Use ordinary array, since untyped makes no boost here
+function makeTable() {
+  var c, table = [];
+
+  for (var n = 0; n < 256; n++) {
+    c = n;
+    for (var k = 0; k < 8; k++) {
+      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+    }
+    table[n] = c;
+  }
+
+  return table;
+}
+
+// Create table on load. Just 255 signed longs. Not a problem.
+var crcTable = makeTable();
+
+
+function crc32(crc, buf, len, pos) {
+  var t = crcTable,
+      end = pos + len;
+
+  crc ^= -1;
+
+  for (var i = pos; i < end; i++) {
+    crc = (crc >>> 8) ^ t[(crc ^ buf[i]) & 0xFF];
+  }
+
+  return (crc ^ (-1)); // >>> 0;
+}
+
+// 'use strict';
+
+// See state defs from inflate.js
+var BAD$1 = 30;       /* got a data error -- remain here until reset */
+var TYPE$1 = 12;      /* i: waiting for type bits, including last-flag bit */
+
+/*
+   Decode literal, length, and distance codes and write out the resulting
+   literal and match bytes until either not enough input or output is
+   available, an end-of-block is encountered, or a data error is encountered.
+   When large enough input and output buffers are supplied to inflate(), for
+   example, a 16K input buffer and a 64K output buffer, more than 95% of the
+   inflate execution time is spent in this routine.
+
+   Entry assumptions:
+
+        state.mode === LEN
+        strm.avail_in >= 6
+        strm.avail_out >= 258
+        start >= strm.avail_out
+        state.bits < 8
+
+   On return, state.mode is one of:
+
+        LEN -- ran out of enough output space or enough available input
+        TYPE -- reached end of block code, inflate() to interpret next block
+        BAD -- error in block data
+
+   Notes:
+
+    - The maximum input bits used by a length/distance pair is 15 bits for the
+      length code, 5 bits for the length extra, 15 bits for the distance code,
+      and 13 bits for the distance extra.  This totals 48 bits, or six bytes.
+      Therefore if strm.avail_in >= 6, then there is enough input to avoid
+      checking for available input while decoding.
+
+    - The maximum bytes that a single length/distance pair can output is 258
+      bytes, which is the maximum length that can be coded.  inflate_fast()
+      requires strm.avail_out >= 258 for each loop to avoid checking for
+      output space.
+ */
+// module.exports =
+function inflate_fast(strm, start) {
+  var state;
+  var _in;                    /* local strm.input */
+  var last;                   /* have enough input while in < last */
+  var _out;                   /* local strm.output */
+  var beg;                    /* inflate()'s initial strm.output */
+  var end;                    /* while out < end, enough space available */
+//#ifdef INFLATE_STRICT
+  var dmax;                   /* maximum distance from zlib header */
+//#endif
+  var wsize;                  /* window size or zero if not using window */
+  var whave;                  /* valid bytes in the window */
+  var wnext;                  /* window write index */
+  // Use `s_window` instead `window`, avoid conflict with instrumentation tools
+  var s_window;               /* allocated sliding window, if wsize != 0 */
+  var hold;                   /* local strm.hold */
+  var bits;                   /* local strm.bits */
+  var lcode;                  /* local strm.lencode */
+  var dcode;                  /* local strm.distcode */
+  var lmask;                  /* mask for first level of length codes */
+  var dmask;                  /* mask for first level of distance codes */
+  var here;                   /* retrieved table entry */
+  var op;                     /* code bits, operation, extra bits, or */
+                              /*  window position, window bytes to copy */
+  var len;                    /* match length, unused bytes */
+  var dist;                   /* match distance */
+  var from;                   /* where to copy match from */
+  var from_source;
+
+
+  var input, output; // JS specific, because we have no pointers
+
+  /* copy state to local variables */
+  state = strm.state;
+  //here = state.here;
+  _in = strm.next_in;
+  input = strm.input;
+  last = _in + (strm.avail_in - 5);
+  _out = strm.next_out;
+  output = strm.output;
+  beg = _out - (start - strm.avail_out);
+  end = _out + (strm.avail_out - 257);
+//#ifdef INFLATE_STRICT
+  dmax = state.dmax;
+//#endif
+  wsize = state.wsize;
+  whave = state.whave;
+  wnext = state.wnext;
+  s_window = state.window;
+  hold = state.hold;
+  bits = state.bits;
+  lcode = state.lencode;
+  dcode = state.distcode;
+  lmask = (1 << state.lenbits) - 1;
+  dmask = (1 << state.distbits) - 1;
+
+
+  /* decode literals and length/distances until end-of-block or not enough
+     input data or output space */
+
+  top:
+  do {
+    if (bits < 15) {
+      hold += input[_in++] << bits;
+      bits += 8;
+      hold += input[_in++] << bits;
+      bits += 8;
+    }
+
+    here = lcode[hold & lmask];
+
+    dolen:
+    for (;;) { // Goto emulation
+      op = here >>> 24/*here.bits*/;
+      hold >>>= op;
+      bits -= op;
+      op = (here >>> 16) & 0xff/*here.op*/;
+      if (op === 0) {                          /* literal */
+        //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
+        //        "inflate:         literal '%c'\n" :
+        //        "inflate:         literal 0x%02x\n", here.val));
+        output[_out++] = here & 0xffff/*here.val*/;
+      }
+      else if (op & 16) {                     /* length base */
+        len = here & 0xffff/*here.val*/;
+        op &= 15;                           /* number of extra bits */
+        if (op) {
+          if (bits < op) {
+            hold += input[_in++] << bits;
+            bits += 8;
+          }
+          len += hold & ((1 << op) - 1);
+          hold >>>= op;
+          bits -= op;
+        }
+        //Tracevv((stderr, "inflate:         length %u\n", len));
+        if (bits < 15) {
+          hold += input[_in++] << bits;
+          bits += 8;
+          hold += input[_in++] << bits;
+          bits += 8;
+        }
+        here = dcode[hold & dmask];
+
+        dodist:
+        for (;;) { // goto emulation
+          op = here >>> 24/*here.bits*/;
+          hold >>>= op;
+          bits -= op;
+          op = (here >>> 16) & 0xff/*here.op*/;
+
+          if (op & 16) {                      /* distance base */
+            dist = here & 0xffff/*here.val*/;
+            op &= 15;                       /* number of extra bits */
+            if (bits < op) {
+              hold += input[_in++] << bits;
+              bits += 8;
+              if (bits < op) {
+                hold += input[_in++] << bits;
+                bits += 8;
+              }
+            }
+            dist += hold & ((1 << op) - 1);
+//#ifdef INFLATE_STRICT
+            if (dist > dmax) {
+              strm.msg = 'invalid distance too far back';
+              state.mode = BAD$1;
+              break top;
+            }
+//#endif
+            hold >>>= op;
+            bits -= op;
+            //Tracevv((stderr, "inflate:         distance %u\n", dist));
+            op = _out - beg;                /* max distance in output */
+            if (dist > op) {                /* see if copy from window */
+              op = dist - op;               /* distance back in window */
+              if (op > whave) {
+                if (state.sane) {
+                  strm.msg = 'invalid distance too far back';
+                  state.mode = BAD$1;
+                  break top;
+                }
+
+// (!) This block is disabled in zlib defailts,
+// don't enable it for binary compatibility
+//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
+//                if (len <= op - whave) {
+//                  do {
+//                    output[_out++] = 0;
+//                  } while (--len);
+//                  continue top;
+//                }
+//                len -= op - whave;
+//                do {
+//                  output[_out++] = 0;
+//                } while (--op > whave);
+//                if (op === 0) {
+//                  from = _out - dist;
+//                  do {
+//                    output[_out++] = output[from++];
+//                  } while (--len);
+//                  continue top;
+//                }
+//#endif
+              }
+              from = 0; // window index
+              from_source = s_window;
+              if (wnext === 0) {           /* very common case */
+                from += wsize - op;
+                if (op < len) {         /* some from window */
+                  len -= op;
+                  do {
+                    output[_out++] = s_window[from++];
+                  } while (--op);
+                  from = _out - dist;  /* rest from output */
+                  from_source = output;
+                }
+              }
+              else if (wnext < op) {      /* wrap around window */
+                from += wsize + wnext - op;
+                op -= wnext;
+                if (op < len) {         /* some from end of window */
+                  len -= op;
+                  do {
+                    output[_out++] = s_window[from++];
+                  } while (--op);
+                  from = 0;
+                  if (wnext < len) {  /* some from start of window */
+                    op = wnext;
+                    len -= op;
+                    do {
+                      output[_out++] = s_window[from++];
+                    } while (--op);
+                    from = _out - dist;      /* rest from output */
+                    from_source = output;
+                  }
+                }
+              }
+              else {                      /* contiguous in window */
+                from += wnext - op;
+                if (op < len) {         /* some from window */
+                  len -= op;
+                  do {
+                    output[_out++] = s_window[from++];
+                  } while (--op);
+                  from = _out - dist;  /* rest from output */
+                  from_source = output;
+                }
+              }
+              while (len > 2) {
+                output[_out++] = from_source[from++];
+                output[_out++] = from_source[from++];
+                output[_out++] = from_source[from++];
+                len -= 3;
+              }
+              if (len) {
+                output[_out++] = from_source[from++];
+                if (len > 1) {
+                  output[_out++] = from_source[from++];
+                }
+              }
+            }
+            else {
+              from = _out - dist;          /* copy direct from output */
+              do {                        /* minimum length is three */
+                output[_out++] = output[from++];
+                output[_out++] = output[from++];
+                output[_out++] = output[from++];
+                len -= 3;
+              } while (len > 2);
+              if (len) {
+                output[_out++] = output[from++];
+                if (len > 1) {
+                  output[_out++] = output[from++];
+                }
+              }
+            }
+          }
+          else if ((op & 64) === 0) {          /* 2nd level distance code */
+            here = dcode[(here & 0xffff)/*here.val*/ + (hold & ((1 << op) - 1))];
+            continue dodist;
+          }
+          else {
+            strm.msg = 'invalid distance code';
+            state.mode = BAD$1;
+            break top;
+          }
+
+          break; // need to emulate goto via "continue"
+        }
+      }
+      else if ((op & 64) === 0) {              /* 2nd level length code */
+        here = lcode[(here & 0xffff)/*here.val*/ + (hold & ((1 << op) - 1))];
+        continue dolen;
+      }
+      else if (op & 32) {                     /* end-of-block */
+        //Tracevv((stderr, "inflate:         end of block\n"));
+        state.mode = TYPE$1;
+        break top;
+      }
+      else {
+        strm.msg = 'invalid literal/length code';
+        state.mode = BAD$1;
+        break top;
+      }
+
+      break; // need to emulate goto via "continue"
+    }
+  } while (_in < last && _out < end);
+
+  /* return unused bytes (on entry, bits < 8, so in won't go too far back) */
+  len = bits >> 3;
+  _in -= len;
+  bits -= len << 3;
+  hold &= (1 << bits) - 1;
+
+  /* update state and return */
+  strm.next_in = _in;
+  strm.next_out = _out;
+  strm.avail_in = (_in < last ? 5 + (last - _in) : 5 - (_in - last));
+  strm.avail_out = (_out < end ? 257 + (end - _out) : 257 - (_out - end));
+  state.hold = hold;
+  state.bits = bits;
+  return;
+}
+
+// 'use strict';
+
+
+// var utils = require('../utils/common');
+
+var MAXBITS = 15;
+var ENOUGH_LENS$1 = 852;
+var ENOUGH_DISTS$1 = 592;
+//var ENOUGH = (ENOUGH_LENS+ENOUGH_DISTS);
+
+var CODES$1 = 0;
+var LENS$1 = 1;
+var DISTS$1 = 2;
+
+var lbase = [ /* Length codes 257..285 base */
+  3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
+  35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0
+];
+
+var lext = [ /* Length codes 257..285 extra */
+  16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
+  19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 72, 78
+];
+
+var dbase = [ /* Distance codes 0..29 base */
+  1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
+  257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
+  8193, 12289, 16385, 24577, 0, 0
+];
+
+var dext = [ /* Distance codes 0..29 extra */
+  16, 16, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22,
+  23, 23, 24, 24, 25, 25, 26, 26, 27, 27,
+  28, 28, 29, 29, 64, 64
+];
+
+// module.exports =
+function inflate_table(type, lens, lens_index, codes, table, table_index, work, opts)
+{
+  var bits = opts.bits;
+      //here = opts.here; /* table entry for duplication */
+
+  var len = 0;               /* a code's length in bits */
+  var sym = 0;               /* index of code symbols */
+  var min = 0, max = 0;          /* minimum and maximum code lengths */
+  var root = 0;              /* number of index bits for root table */
+  var curr = 0;              /* number of index bits for current table */
+  var drop = 0;              /* code bits to drop for sub-table */
+  var left = 0;                   /* number of prefix codes available */
+  var used = 0;              /* code entries in table used */
+  var huff = 0;              /* Huffman code */
+  var incr;              /* for incrementing code, index */
+  var fill;              /* index for replicating entries */
+  var low;               /* low bits for current root entry */
+  var mask;              /* mask for low root bits */
+  var next;             /* next available space in table */
+  var base = null;     /* base value table to use */
+  var base_index = 0;
+//  var shoextra;    /* extra bits table to use */
+  var end;                    /* use base and extra for symbol > end */
+  var count = new Uint16Array(MAXBITS + 1); //[MAXBITS+1];    /* number of codes of each length */
+  var offs = new Uint16Array(MAXBITS + 1); //[MAXBITS+1];     /* offsets in table for each length */
+  var extra = null;
+  var extra_index = 0;
+
+  var here_bits, here_op, here_val;
+
+  /*
+   Process a set of code lengths to create a canonical Huffman code.  The
+   code lengths are lens[0..codes-1].  Each length corresponds to the
+   symbols 0..codes-1.  The Huffman code is generated by first sorting the
+   symbols by length from short to long, and retaining the symbol order
+   for codes with equal lengths.  Then the code starts with all zero bits
+   for the first code of the shortest length, and the codes are integer
+   increments for the same length, and zeros are appended as the length
+   increases.  For the deflate format, these bits are stored backwards
+   from their more natural integer increment ordering, and so when the
+   decoding tables are built in the large loop below, the integer codes
+   are incremented backwards.
+
+   This routine assumes, but does not check, that all of the entries in
+   lens[] are in the range 0..MAXBITS.  The caller must assure this.
+   1..MAXBITS is interpreted as that code length.  zero means that that
+   symbol does not occur in this code.
+
+   The codes are sorted by computing a count of codes for each length,
+   creating from that a table of starting indices for each length in the
+   sorted table, and then entering the symbols in order in the sorted
+   table.  The sorted table is work[], with that space being provided by
+   the caller.
+
+   The length counts are used for other purposes as well, i.e. finding
+   the minimum and maximum length codes, determining if there are any
+   codes at all, checking for a valid set of lengths, and looking ahead
+   at length counts to determine sub-table sizes when building the
+   decoding tables.
+   */
+
+  /* accumulate lengths for codes (assumes lens[] all in 0..MAXBITS) */
+  for (len = 0; len <= MAXBITS; len++) {
+    count[len] = 0;
+  }
+  for (sym = 0; sym < codes; sym++) {
+    count[lens[lens_index + sym]]++;
+  }
+
+  /* bound code lengths, force root to be within code lengths */
+  root = bits;
+  for (max = MAXBITS; max >= 1; max--) {
+    if (count[max] !== 0) { break; }
+  }
+  if (root > max) {
+    root = max;
+  }
+  if (max === 0) {                     /* no symbols to code at all */
+    //table.op[opts.table_index] = 64;  //here.op = (var char)64;    /* invalid code marker */
+    //table.bits[opts.table_index] = 1;   //here.bits = (var char)1;
+    //table.val[opts.table_index++] = 0;   //here.val = (var short)0;
+    table[table_index++] = (1 << 24) | (64 << 16) | 0;
+
+
+    //table.op[opts.table_index] = 64;
+    //table.bits[opts.table_index] = 1;
+    //table.val[opts.table_index++] = 0;
+    table[table_index++] = (1 << 24) | (64 << 16) | 0;
+
+    opts.bits = 1;
+    return 0;     /* no symbols, but wait for decoding to report error */
+  }
+  for (min = 1; min < max; min++) {
+    if (count[min] !== 0) { break; }
+  }
+  if (root < min) {
+    root = min;
+  }
+
+  /* check for an over-subscribed or incomplete set of lengths */
+  left = 1;
+  for (len = 1; len <= MAXBITS; len++) {
+    left <<= 1;
+    left -= count[len];
+    if (left < 0) {
+      return -1;
+    }        /* over-subscribed */
+  }
+  if (left > 0 && (type === CODES$1 || max !== 1)) {
+    return -1;                      /* incomplete set */
+  }
+
+  /* generate offsets into symbol table for each length for sorting */
+  offs[1] = 0;
+  for (len = 1; len < MAXBITS; len++) {
+    offs[len + 1] = offs[len] + count[len];
+  }
+
+  /* sort symbols by length, by symbol order within each length */
+  for (sym = 0; sym < codes; sym++) {
+    if (lens[lens_index + sym] !== 0) {
+      work[offs[lens[lens_index + sym]]++] = sym;
+    }
+  }
+
+  /*
+   Create and fill in decoding tables.  In this loop, the table being
+   filled is at next and has curr index bits.  The code being used is huff
+   with length len.  That code is converted to an index by dropping drop
+   bits off of the bottom.  For codes where len is less than drop + curr,
+   those top drop + curr - len bits are incremented through all values to
+   fill the table with replicated entries.
+
+   root is the number of index bits for the root table.  When len exceeds
+   root, sub-tables are created pointed to by the root entry with an index
+   of the low root bits of huff.  This is saved in low to check for when a
+   new sub-table should be started.  drop is zero when the root table is
+   being filled, and drop is root when sub-tables are being filled.
+
+   When a new sub-table is needed, it is necessary to look ahead in the
+   code lengths to determine what size sub-table is needed.  The length
+   counts are used for this, and so count[] is decremented as codes are
+   entered in the tables.
+
+   used keeps track of how many table entries have been allocated from the
+   provided *table space.  It is checked for LENS and DIST tables against
+   the constants ENOUGH_LENS and ENOUGH_DISTS to guard against changes in
+   the initial root table size constants.  See the comments in inftrees.h
+   for more information.
+
+   sym increments through all symbols, and the loop terminates when
+   all codes of length max, i.e. all codes, have been processed.  This
+   routine permits incomplete codes, so another loop after this one fills
+   in the rest of the decoding tables with invalid code markers.
+   */
+
+  /* set up for code type */
+  // poor man optimization - use if-else instead of switch,
+  // to avoid deopts in old v8
+  if (type === CODES$1) {
+    base = extra = work;    /* dummy value--not used */
+    end = 19;
+
+  } else if (type === LENS$1) {
+    base = lbase;
+    base_index -= 257;
+    extra = lext;
+    extra_index -= 257;
+    end = 256;
+
+  } else {                    /* DISTS */
+    base = dbase;
+    extra = dext;
+    end = -1;
+  }
+
+  /* initialize opts for loop */
+  huff = 0;                   /* starting code */
+  sym = 0;                    /* starting code symbol */
+  len = min;                  /* starting code length */
+  next = table_index;              /* current table to fill in */
+  curr = root;                /* current table index bits */
+  drop = 0;                   /* current bits to drop from code for index */
+  low = -1;                   /* trigger new sub-table when len > root */
+  used = 1 << root;          /* use root table entries */
+  mask = used - 1;            /* mask for comparing low */
+
+  /* check available table space */
+  if ((type === LENS$1 && used > ENOUGH_LENS$1) ||
+    (type === DISTS$1 && used > ENOUGH_DISTS$1)) {
+    return 1;
+  }
+
+  var i = 0;
+  /* process all codes and make table entries */
+  for (;;) {
+    i++;
+    /* create table entry */
+    here_bits = len - drop;
+    if (work[sym] < end) {
+      here_op = 0;
+      here_val = work[sym];
+    }
+    else if (work[sym] > end) {
+      here_op = extra[extra_index + work[sym]];
+      here_val = base[base_index + work[sym]];
+    }
+    else {
+      here_op = 32 + 64;         /* end of block */
+      here_val = 0;
+    }
+
+    /* replicate for those indices with low len bits equal to huff */
+    incr = 1 << (len - drop);
+    fill = 1 << curr;
+    min = fill;                 /* save offset to next table */
+    do {
+      fill -= incr;
+      table[next + (huff >> drop) + fill] = (here_bits << 24) | (here_op << 16) | here_val |0;
+    } while (fill !== 0);
+
+    /* backwards increment the len-bit code huff */
+    incr = 1 << (len - 1);
+    while (huff & incr) {
+      incr >>= 1;
+    }
+    if (incr !== 0) {
+      huff &= incr - 1;
+      huff += incr;
+    } else {
+      huff = 0;
+    }
+
+    /* go to next symbol, update count, len */
+    sym++;
+    if (--count[len] === 0) {
+      if (len === max) { break; }
+      len = lens[lens_index + work[sym]];
+    }
+
+    /* create new sub-table if needed */
+    if (len > root && (huff & mask) !== low) {
+      /* if first time, transition to sub-tables */
+      if (drop === 0) {
+        drop = root;
+      }
+
+      /* increment past last table */
+      next += min;            /* here min is 1 << curr */
+
+      /* determine length of next table */
+      curr = len - drop;
+      left = 1 << curr;
+      while (curr + drop < max) {
+        left -= count[curr + drop];
+        if (left <= 0) { break; }
+        curr++;
+        left <<= 1;
+      }
+
+      /* check for enough space */
+      used += 1 << curr;
+      if ((type === LENS$1 && used > ENOUGH_LENS$1) ||
+        (type === DISTS$1 && used > ENOUGH_DISTS$1)) {
+        return 1;
+      }
+
+      /* point entry in root table to sub-table */
+      low = huff & mask;
+      /*table.op[low] = curr;
+      table.bits[low] = root;
+      table.val[low] = next - opts.table_index;*/
+      table[low] = (root << 24) | (curr << 16) | (next - table_index) |0;
+    }
+  }
+
+  /* fill in remaining table entry if code is incomplete (guaranteed to have
+   at most one remaining entry, since if the code is incomplete, the
+   maximum code length that was allowed to get this far is one bit) */
+  if (huff !== 0) {
+    //table.op[next + huff] = 64;            /* invalid code marker */
+    //table.bits[next + huff] = len - drop;
+    //table.val[next + huff] = 0;
+    table[next + huff] = ((len - drop) << 24) | (64 << 16) |0;
+  }
+
+  /* set return parameters */
+  //opts.table_index += used;
+  opts.bits = root;
+  return 0;
+}
+
+// 'use strict';
+
+
+// var utils         = require('../utils/common');
+// var adler32       = require('./adler32');
+// var crc32         = require('./crc32');
+// var inflate_fast  = require('./inffast');
+// var inflate_table = require('./inftrees');
+
+var CODES = 0;
+var LENS = 1;
+var DISTS = 2;
+
+/* Public constants ==========================================================*/
+/* ===========================================================================*/
+
+
+/* Allowed flush values; see deflate() and inflate() below for details */
+//var Z_NO_FLUSH      = 0;
+//var Z_PARTIAL_FLUSH = 1;
+//var Z_SYNC_FLUSH    = 2;
+//var Z_FULL_FLUSH    = 3;
+var Z_FINISH        = 4;
+var Z_BLOCK         = 5;
+var Z_TREES         = 6;
+
+
+/* Return codes for the compression/decompression functions. Negative values
+ * are errors, positive values are used for special but normal events.
+ */
+var Z_OK            = 0;
+var Z_STREAM_END    = 1;
+var Z_NEED_DICT     = 2;
+//var Z_ERRNO         = -1;
+var Z_STREAM_ERROR  = -2;
+var Z_DATA_ERROR    = -3;
+var Z_MEM_ERROR     = -4;
+var Z_BUF_ERROR     = -5;
+//var Z_VERSION_ERROR = -6;
+
+/* The deflate compression method */
+var Z_DEFLATED  = 8;
+
+
+/* STATES ====================================================================*/
+/* ===========================================================================*/
+
+
+var HEAD = 1;       /* i: waiting for magic header */
+var FLAGS = 2;      /* i: waiting for method and flags (gzip) */
+var TIME = 3;       /* i: waiting for modification time (gzip) */
+var OS = 4;         /* i: waiting for extra flags and operating system (gzip) */
+var EXLEN = 5;      /* i: waiting for extra length (gzip) */
+var EXTRA = 6;      /* i: waiting for extra bytes (gzip) */
+var NAME = 7;       /* i: waiting for end of file name (gzip) */
+var COMMENT = 8;    /* i: waiting for end of comment (gzip) */
+var HCRC = 9;       /* i: waiting for header crc (gzip) */
+var DICTID = 10;    /* i: waiting for dictionary check value */
+var DICT = 11;      /* waiting for inflateSetDictionary() call */
+var TYPE = 12;      /* i: waiting for type bits, including last-flag bit */
+var TYPEDO = 13;    /* i: same, but skip check to exit inflate on new block */
+var STORED = 14;    /* i: waiting for stored size (length and complement) */
+var COPY_ = 15;     /* i/o: same as COPY below, but only first time in */
+var COPY = 16;      /* i/o: waiting for input or output to copy stored block */
+var TABLE = 17;     /* i: waiting for dynamic block table lengths */
+var LENLENS = 18;   /* i: waiting for code length code lengths */
+var CODELENS = 19;  /* i: waiting for length/lit and distance code lengths */
+var LEN_ = 20;      /* i: same as LEN below, but only first time in */
+var LEN = 21;       /* i: waiting for length/lit/eob code */
+var LENEXT = 22;    /* i: waiting for length extra bits */
+var DIST = 23;      /* i: waiting for distance code */
+var DISTEXT = 24;   /* i: waiting for distance extra bits */
+var MATCH = 25;     /* o: waiting for output space to copy string */
+var LIT = 26;       /* o: waiting for output space to write literal */
+var CHECK = 27;     /* i: waiting for 32-bit check value */
+var LENGTH = 28;    /* i: waiting for 32-bit length (gzip) */
+var DONE = 29;      /* finished check, done -- remain here until reset */
+var BAD = 30;       /* got a data error -- remain here until reset */
+var MEM = 31;       /* got an inflate() memory error -- remain here until reset */
+var SYNC = 32;      /* looking for synchronization bytes to restart inflate() */
+
+/* ===========================================================================*/
+
+
+
+var ENOUGH_LENS = 852;
+var ENOUGH_DISTS = 592;
+function zswap32(q) {
+  return  (((q >>> 24) & 0xff) +
+          ((q >>> 8) & 0xff00) +
+          ((q & 0xff00) << 8) +
+          ((q & 0xff) << 24));
+}
+
+
+function InflateState() {
+  this.mode = 0;             /* current inflate mode */
+  this.last = false;          /* true if processing last block */
+  this.wrap = 0;              /* bit 0 true for zlib, bit 1 true for gzip */
+  this.havedict = false;      /* true if dictionary provided */
+  this.flags = 0;             /* gzip header method and flags (0 if zlib) */
+  this.dmax = 0;              /* zlib header max distance (INFLATE_STRICT) */
+  this.check = 0;             /* protected copy of check value */
+  this.total = 0;             /* protected copy of output count */
+  // TODO: may be {}
+  this.head = null;           /* where to save gzip header information */
+
+  /* sliding window */
+  this.wbits = 0;             /* log base 2 of requested window size */
+  this.wsize = 0;             /* window size or zero if not using window */
+  this.whave = 0;             /* valid bytes in the window */
+  this.wnext = 0;             /* window write index */
+  this.window = null;         /* allocated sliding window, if needed */
+
+  /* bit accumulator */
+  this.hold = 0;              /* input bit accumulator */
+  this.bits = 0;              /* number of bits in "in" */
+
+  /* for string and stored block copying */
+  this.length = 0;            /* literal or length of data to copy */
+  this.offset = 0;            /* distance back to copy string from */
+
+  /* for table and code decoding */
+  this.extra = 0;             /* extra bits needed */
+
+  /* fixed and dynamic code tables */
+  this.lencode = null;          /* starting table for length/literal codes */
+  this.distcode = null;         /* starting table for distance codes */
+  this.lenbits = 0;           /* index bits for lencode */
+  this.distbits = 0;          /* index bits for distcode */
+
+  /* dynamic table building */
+  this.ncode = 0;             /* number of code length code lengths */
+  this.nlen = 0;              /* number of length code lengths */
+  this.ndist = 0;             /* number of distance code lengths */
+  this.have = 0;              /* number of code lengths in lens[] */
+  this.next = null;              /* next available space in codes[] */
+
+  this.lens = new Uint16Array(320); /* temporary storage for code lengths */
+  this.work = new Uint16Array(288); /* work area for code table building */
+
+  /*
+   because we don't have pointers in js, we use lencode and distcode directly
+   as buffers so we don't need codes
+  */
+  //this.codes = new Buf32(ENOUGH);       /* space for code tables */
+  this.lendyn = null;              /* dynamic table for length/literal codes (JS specific) */
+  this.distdyn = null;             /* dynamic table for distance codes (JS specific) */
+  this.sane = 0;                   /* if false, allow invalid distance too far */
+  this.back = 0;                   /* bits back of last unprocessed length/lit */
+  this.was = 0;                    /* initial length of match */
+}
+
+function inflateResetKeep(strm) {
+  var state;
+
+  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
+  state = strm.state;
+  strm.total_in = strm.total_out = state.total = 0;
+  strm.msg = ''; /*Z_NULL*/
+  if (state.wrap) {       /* to support ill-conceived Java test suite */
+    strm.adler = state.wrap & 1;
+  }
+  state.mode = HEAD;
+  state.last = 0;
+  state.havedict = 0;
+  state.dmax = 32768;
+  state.head = null/*Z_NULL*/;
+  state.hold = 0;
+  state.bits = 0;
+  //state.lencode = state.distcode = state.next = state.codes;
+  state.lencode = state.lendyn = new Int32Array(ENOUGH_LENS);
+  state.distcode = state.distdyn = new Int32Array(ENOUGH_DISTS);
+
+  state.sane = 1;
+  state.back = -1;
+  //Tracev((stderr, "inflate: reset\n"));
+  return Z_OK;
+}
+
+function inflateReset(strm) {
+  var state;
+
+  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
+  state = strm.state;
+  state.wsize = 0;
+  state.whave = 0;
+  state.wnext = 0;
+  return inflateResetKeep(strm);
+
+}
+
+function inflateReset2(strm, windowBits) {
+  var wrap;
+  var state;
+
+  /* get the state */
+  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
+  state = strm.state;
+
+  /* extract wrap request from windowBits parameter */
+  if (windowBits < 0) {
+    wrap = 0;
+    windowBits = -windowBits;
+  }
+  else {
+    wrap = (windowBits >> 4) + 1;
+    if (windowBits < 48) {
+      windowBits &= 15;
+    }
+  }
+
+  /* set number of window bits, free window if different */
+  if (windowBits && (windowBits < 8 || windowBits > 15)) {
+    return Z_STREAM_ERROR;
+  }
+  if (state.window !== null && state.wbits !== windowBits) {
+    state.window = null;
+  }
+
+  /* update state and reset the rest of it */
+  state.wrap = wrap;
+  state.wbits = windowBits;
+  return inflateReset(strm);
+}
+
+function inflateInit2(strm, windowBits) {
+  var ret;
+  var state;
+
+  if (!strm) { return Z_STREAM_ERROR; }
+  //strm.msg = Z_NULL;                 /* in case we return an error */
+
+  state = new InflateState();
+
+  //if (state === Z_NULL) return Z_MEM_ERROR;
+  //Tracev((stderr, "inflate: allocated\n"));
+  strm.state = state;
+  state.window = null/*Z_NULL*/;
+  ret = inflateReset2(strm, windowBits);
+  if (ret !== Z_OK) {
+    strm.state = null/*Z_NULL*/;
+  }
+  return ret;
+}
+
+/*
+ Return state with length and distance decoding tables and index sizes set to
+ fixed code decoding.  Normally this returns fixed tables from inffixed.h.
+ If BUILDFIXED is defined, then instead this routine builds the tables the
+ first time it's called, and returns those tables the first time and
+ thereafter.  This reduces the size of the code by about 2K bytes, in
+ exchange for a little execution time.  However, BUILDFIXED should not be
+ used for threaded applications, since the rewriting of the tables and virgin
+ may not be thread-safe.
+ */
+var virgin = true;
+
+var lenfix;
+var distfix;
+// We have no pointers in JS, so keep tables separate
+
+function fixedtables(state) {
+  /* build fixed huffman tables if first call (may not be thread safe) */
+  if (virgin) {
+    var sym;
+
+    lenfix = new Int32Array(512);
+    distfix = new Int32Array(32);
+
+    /* literal/length table */
+    sym = 0;
+    while (sym < 144) { state.lens[sym++] = 8; }
+    while (sym < 256) { state.lens[sym++] = 9; }
+    while (sym < 280) { state.lens[sym++] = 7; }
+    while (sym < 288) { state.lens[sym++] = 8; }
+
+    inflate_table(LENS,  state.lens, 0, 288, lenfix,   0, state.work, { bits: 9 });
+
+    /* distance table */
+    sym = 0;
+    while (sym < 32) { state.lens[sym++] = 5; }
+
+    inflate_table(DISTS, state.lens, 0, 32,   distfix, 0, state.work, { bits: 5 });
+
+    /* do this just once */
+    virgin = false;
+  }
+
+  state.lencode = lenfix;
+  state.lenbits = 9;
+  state.distcode = distfix;
+  state.distbits = 5;
+}
+
+
+/*
+ Update the window with the last wsize (normally 32K) bytes written before
+ returning.  If window does not exist yet, create it.  This is only called
+ when a window is already in use, or when output has been written during this
+ inflate call, but the end of the deflate stream has not been reached yet.
+ It is also called to create a window for dictionary data when a dictionary
+ is loaded.
+
+ Providing output buffers larger than 32K to inflate() should provide a speed
+ advantage, since only the last 32K of output is copied to the sliding window
+ upon return from inflate(), and since all distances after the first 32K of
+ output will fall in the output data, making match copies simpler and faster.
+ The advantage may be dependent on the size of the processor's data caches.
+ */
+function updatewindow(strm, src, end, copy) {
+  var dist;
+  var state = strm.state;
+
+  /* if it hasn't been done already, allocate space for the window */
+  if (state.window === null) {
+    state.wsize = 1 << state.wbits;
+    state.wnext = 0;
+    state.whave = 0;
+
+    state.window = new Uint8Array(state.wsize);
+  }
+
+  /* copy state->wsize or less output bytes into the circular window */
+  if (copy >= state.wsize) {
+    arraySet(state.window, src, end - state.wsize, state.wsize, 0);
+    state.wnext = 0;
+    state.whave = state.wsize;
+  }
+  else {
+    dist = state.wsize - state.wnext;
+    if (dist > copy) {
+      dist = copy;
+    }
+    //zmemcpy(state->window + state->wnext, end - copy, dist);
+    arraySet(state.window, src, end - copy, dist, state.wnext);
+    copy -= dist;
+    if (copy) {
+      //zmemcpy(state->window, end - copy, copy);
+      arraySet(state.window, src, end - copy, copy, 0);
+      state.wnext = copy;
+      state.whave = state.wsize;
+    }
+    else {
+      state.wnext += dist;
+      if (state.wnext === state.wsize) { state.wnext = 0; }
+      if (state.whave < state.wsize) { state.whave += dist; }
+    }
+  }
+  return 0;
+}
+
+function inflate(strm, flush) {
+  var state;
+  var input, output;          // input/output buffers
+  var next;                   /* next input INDEX */
+  var put;                    /* next output INDEX */
+  var have, left;             /* available input and output */
+  var hold;                   /* bit buffer */
+  var bits;                   /* bits in bit buffer */
+  var _in, _out;              /* save starting available input and output */
+  var copy;                   /* number of stored or match bytes to copy */
+  var from;                   /* where to copy match bytes from */
+  var from_source;
+  var here = 0;               /* current decoding table entry */
+  var here_bits, here_op, here_val; // paked "here" denormalized (JS specific)
+  //var last;                   /* parent table entry */
+  var last_bits, last_op, last_val; // paked "last" denormalized (JS specific)
+  var len;                    /* length to copy for repeats, bits to drop */
+  var ret;                    /* return code */
+  var hbuf = new Uint8Array(4);    /* buffer for gzip header crc calculation */
+  var opts;
+
+  var n; // temporary var for NEED_BITS
+
+  var order = /* permutation of code lengths */
+    [ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ];
+
+
+  if (!strm || !strm.state || !strm.output ||
+      (!strm.input && strm.avail_in !== 0)) {
+    return Z_STREAM_ERROR;
+  }
+
+  state = strm.state;
+  if (state.mode === TYPE) { state.mode = TYPEDO; }    /* skip check */
+
+
+  //--- LOAD() ---
+  put = strm.next_out;
+  output = strm.output;
+  left = strm.avail_out;
+  next = strm.next_in;
+  input = strm.input;
+  have = strm.avail_in;
+  hold = state.hold;
+  bits = state.bits;
+  //---
+
+  _in = have;
+  _out = left;
+  ret = Z_OK;
+
+  inf_leave: // goto emulation
+  for (;;) {
+    switch (state.mode) {
+    case HEAD:
+      if (state.wrap === 0) {
+        state.mode = TYPEDO;
+        break;
+      }
+      //=== NEEDBITS(16);
+      while (bits < 16) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      if ((state.wrap & 2) && hold === 0x8b1f) {  /* gzip header */
+        state.check = 0/*crc32(0L, Z_NULL, 0)*/;
+        //=== CRC2(state.check, hold);
+        hbuf[0] = hold & 0xff;
+        hbuf[1] = (hold >>> 8) & 0xff;
+        state.check = crc32(state.check, hbuf, 2, 0);
+        //===//
+
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        state.mode = FLAGS;
+        break;
+      }
+      state.flags = 0;           /* expect zlib header */
+      if (state.head) {
+        state.head.done = false;
+      }
+      if (!(state.wrap & 1) ||   /* check if zlib header allowed */
+        (((hold & 0xff)/*BITS(8)*/ << 8) + (hold >> 8)) % 31) {
+        strm.msg = 'incorrect header check';
+        state.mode = BAD;
+        break;
+      }
+      if ((hold & 0x0f)/*BITS(4)*/ !== Z_DEFLATED) {
+        strm.msg = 'unknown compression method';
+        state.mode = BAD;
+        break;
+      }
+      //--- DROPBITS(4) ---//
+      hold >>>= 4;
+      bits -= 4;
+      //---//
+      len = (hold & 0x0f)/*BITS(4)*/ + 8;
+      if (state.wbits === 0) {
+        state.wbits = len;
+      }
+      else if (len > state.wbits) {
+        strm.msg = 'invalid window size';
+        state.mode = BAD;
+        break;
+      }
+      state.dmax = 1 << len;
+      //Tracev((stderr, "inflate:   zlib header ok\n"));
+      strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
+      state.mode = hold & 0x200 ? DICTID : TYPE;
+      //=== INITBITS();
+      hold = 0;
+      bits = 0;
+      //===//
+      break;
+    case FLAGS:
+      //=== NEEDBITS(16); */
+      while (bits < 16) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      state.flags = hold;
+      if ((state.flags & 0xff) !== Z_DEFLATED) {
+        strm.msg = 'unknown compression method';
+        state.mode = BAD;
+        break;
+      }
+      if (state.flags & 0xe000) {
+        strm.msg = 'unknown header flags set';
+        state.mode = BAD;
+        break;
+      }
+      if (state.head) {
+        state.head.text = ((hold >> 8) & 1);
+      }
+      if (state.flags & 0x0200) {
+        //=== CRC2(state.check, hold);
+        hbuf[0] = hold & 0xff;
+        hbuf[1] = (hold >>> 8) & 0xff;
+        state.check = crc32(state.check, hbuf, 2, 0);
+        //===//
+      }
+      //=== INITBITS();
+      hold = 0;
+      bits = 0;
+      //===//
+      state.mode = TIME;
+      /* falls through */
+    case TIME:
+      //=== NEEDBITS(32); */
+      while (bits < 32) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      if (state.head) {
+        state.head.time = hold;
+      }
+      if (state.flags & 0x0200) {
+        //=== CRC4(state.check, hold)
+        hbuf[0] = hold & 0xff;
+        hbuf[1] = (hold >>> 8) & 0xff;
+        hbuf[2] = (hold >>> 16) & 0xff;
+        hbuf[3] = (hold >>> 24) & 0xff;
+        state.check = crc32(state.check, hbuf, 4, 0);
+        //===
+      }
+      //=== INITBITS();
+      hold = 0;
+      bits = 0;
+      //===//
+      state.mode = OS;
+      /* falls through */
+    case OS:
+      //=== NEEDBITS(16); */
+      while (bits < 16) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      if (state.head) {
+        state.head.xflags = (hold & 0xff);
+        state.head.os = (hold >> 8);
+      }
+      if (state.flags & 0x0200) {
+        //=== CRC2(state.check, hold);
+        hbuf[0] = hold & 0xff;
+        hbuf[1] = (hold >>> 8) & 0xff;
+        state.check = crc32(state.check, hbuf, 2, 0);
+        //===//
+      }
+      //=== INITBITS();
+      hold = 0;
+      bits = 0;
+      //===//
+      state.mode = EXLEN;
+      /* falls through */
+    case EXLEN:
+      if (state.flags & 0x0400) {
+        //=== NEEDBITS(16); */
+        while (bits < 16) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.length = hold;
+        if (state.head) {
+          state.head.extra_len = hold;
+        }
+        if (state.flags & 0x0200) {
+          //=== CRC2(state.check, hold);
+          hbuf[0] = hold & 0xff;
+          hbuf[1] = (hold >>> 8) & 0xff;
+          state.check = crc32(state.check, hbuf, 2, 0);
+          //===//
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+      }
+      else if (state.head) {
+        state.head.extra = null/*Z_NULL*/;
+      }
+      state.mode = EXTRA;
+      /* falls through */
+    case EXTRA:
+      if (state.flags & 0x0400) {
+        copy = state.length;
+        if (copy > have) { copy = have; }
+        if (copy) {
+          if (state.head) {
+            len = state.head.extra_len - state.length;
+            if (!state.head.extra) {
+              // Use untyped array for more conveniend processing later
+              state.head.extra = new Array(state.head.extra_len);
+            }
+            arraySet(
+              state.head.extra,
+              input,
+              next,
+              // extra field is limited to 65536 bytes
+              // - no need for additional size check
+              copy,
+              /*len + copy > state.head.extra_max - len ? state.head.extra_max : copy,*/
+              len
+            );
+            //zmemcpy(state.head.extra + len, next,
+            //        len + copy > state.head.extra_max ?
+            //        state.head.extra_max - len : copy);
+          }
+          if (state.flags & 0x0200) {
+            state.check = crc32(state.check, input, copy, next);
+          }
+          have -= copy;
+          next += copy;
+          state.length -= copy;
+        }
+        if (state.length) { break inf_leave; }
+      }
+      state.length = 0;
+      state.mode = NAME;
+      /* falls through */
+    case NAME:
+      if (state.flags & 0x0800) {
+        if (have === 0) { break inf_leave; }
+        copy = 0;
+        do {
+          // TODO: 2 or 1 bytes?
+          len = input[next + copy++];
+          /* use constant limit because in js we should not preallocate memory */
+          if (state.head && len &&
+              (state.length < 65536 /*state.head.name_max*/)) {
+            state.head.name += String.fromCharCode(len);
+          }
+        } while (len && copy < have);
+
+        if (state.flags & 0x0200) {
+          state.check = crc32(state.check, input, copy, next);
+        }
+        have -= copy;
+        next += copy;
+        if (len) { break inf_leave; }
+      }
+      else if (state.head) {
+        state.head.name = null;
+      }
+      state.length = 0;
+      state.mode = COMMENT;
+      /* falls through */
+    case COMMENT:
+      if (state.flags & 0x1000) {
+        if (have === 0) { break inf_leave; }
+        copy = 0;
+        do {
+          len = input[next + copy++];
+          /* use constant limit because in js we should not preallocate memory */
+          if (state.head && len &&
+              (state.length < 65536 /*state.head.comm_max*/)) {
+            state.head.comment += String.fromCharCode(len);
+          }
+        } while (len && copy < have);
+        if (state.flags & 0x0200) {
+          state.check = crc32(state.check, input, copy, next);
+        }
+        have -= copy;
+        next += copy;
+        if (len) { break inf_leave; }
+      }
+      else if (state.head) {
+        state.head.comment = null;
+      }
+      state.mode = HCRC;
+      /* falls through */
+    case HCRC:
+      if (state.flags & 0x0200) {
+        //=== NEEDBITS(16); */
+        while (bits < 16) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        if (hold !== (state.check & 0xffff)) {
+          strm.msg = 'header crc mismatch';
+          state.mode = BAD;
+          break;
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+      }
+      if (state.head) {
+        state.head.hcrc = ((state.flags >> 9) & 1);
+        state.head.done = true;
+      }
+      strm.adler = state.check = 0;
+      state.mode = TYPE;
+      break;
+    case DICTID:
+      //=== NEEDBITS(32); */
+      while (bits < 32) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      strm.adler = state.check = zswap32(hold);
+      //=== INITBITS();
+      hold = 0;
+      bits = 0;
+      //===//
+      state.mode = DICT;
+      /* falls through */
+    case DICT:
+      if (state.havedict === 0) {
+        //--- RESTORE() ---
+        strm.next_out = put;
+        strm.avail_out = left;
+        strm.next_in = next;
+        strm.avail_in = have;
+        state.hold = hold;
+        state.bits = bits;
+        //---
+        return Z_NEED_DICT;
+      }
+      strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
+      state.mode = TYPE;
+      /* falls through */
+    case TYPE:
+      if (flush === Z_BLOCK || flush === Z_TREES) { break inf_leave; }
+      /* falls through */
+    case TYPEDO:
+      if (state.last) {
+        //--- BYTEBITS() ---//
+        hold >>>= bits & 7;
+        bits -= bits & 7;
+        //---//
+        state.mode = CHECK;
+        break;
+      }
+      //=== NEEDBITS(3); */
+      while (bits < 3) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      state.last = (hold & 0x01)/*BITS(1)*/;
+      //--- DROPBITS(1) ---//
+      hold >>>= 1;
+      bits -= 1;
+      //---//
+
+      switch ((hold & 0x03)/*BITS(2)*/) {
+      case 0:                             /* stored block */
+        //Tracev((stderr, "inflate:     stored block%s\n",
+        //        state.last ? " (last)" : ""));
+        state.mode = STORED;
+        break;
+      case 1:                             /* fixed block */
+        fixedtables(state);
+        //Tracev((stderr, "inflate:     fixed codes block%s\n",
+        //        state.last ? " (last)" : ""));
+        state.mode = LEN_;             /* decode codes */
+        if (flush === Z_TREES) {
+          //--- DROPBITS(2) ---//
+          hold >>>= 2;
+          bits -= 2;
+          //---//
+          break inf_leave;
+        }
+        break;
+      case 2:                             /* dynamic block */
+        //Tracev((stderr, "inflate:     dynamic codes block%s\n",
+        //        state.last ? " (last)" : ""));
+        state.mode = TABLE;
+        break;
+      case 3:
+        strm.msg = 'invalid block type';
+        state.mode = BAD;
+      }
+      //--- DROPBITS(2) ---//
+      hold >>>= 2;
+      bits -= 2;
+      //---//
+      break;
+    case STORED:
+      //--- BYTEBITS() ---// /* go to byte boundary */
+      hold >>>= bits & 7;
+      bits -= bits & 7;
+      //---//
+      //=== NEEDBITS(32); */
+      while (bits < 32) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      if ((hold & 0xffff) !== ((hold >>> 16) ^ 0xffff)) {
+        strm.msg = 'invalid stored block lengths';
+        state.mode = BAD;
+        break;
+      }
+      state.length = hold & 0xffff;
+      //Tracev((stderr, "inflate:       stored length %u\n",
+      //        state.length));
+      //=== INITBITS();
+      hold = 0;
+      bits = 0;
+      //===//
+      state.mode = COPY_;
+      if (flush === Z_TREES) { break inf_leave; }
+      /* falls through */
+    case COPY_:
+      state.mode = COPY;
+      /* falls through */
+    case COPY:
+      copy = state.length;
+      if (copy) {
+        if (copy > have) { copy = have; }
+        if (copy > left) { copy = left; }
+        if (copy === 0) { break inf_leave; }
+        //--- zmemcpy(put, next, copy); ---
+        arraySet(output, input, next, copy, put);
+        //---//
+        have -= copy;
+        next += copy;
+        left -= copy;
+        put += copy;
+        state.length -= copy;
+        break;
+      }
+      //Tracev((stderr, "inflate:       stored end\n"));
+      state.mode = TYPE;
+      break;
+    case TABLE:
+      //=== NEEDBITS(14); */
+      while (bits < 14) {
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+      }
+      //===//
+      state.nlen = (hold & 0x1f)/*BITS(5)*/ + 257;
+      //--- DROPBITS(5) ---//
+      hold >>>= 5;
+      bits -= 5;
+      //---//
+      state.ndist = (hold & 0x1f)/*BITS(5)*/ + 1;
+      //--- DROPBITS(5) ---//
+      hold >>>= 5;
+      bits -= 5;
+      //---//
+      state.ncode = (hold & 0x0f)/*BITS(4)*/ + 4;
+      //--- DROPBITS(4) ---//
+      hold >>>= 4;
+      bits -= 4;
+      //---//
+//#ifndef PKZIP_BUG_WORKAROUND
+      if (state.nlen > 286 || state.ndist > 30) {
+        strm.msg = 'too many length or distance symbols';
+        state.mode = BAD;
+        break;
+      }
+//#endif
+      //Tracev((stderr, "inflate:       table sizes ok\n"));
+      state.have = 0;
+      state.mode = LENLENS;
+      /* falls through */
+    case LENLENS:
+      while (state.have < state.ncode) {
+        //=== NEEDBITS(3);
+        while (bits < 3) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.lens[order[state.have++]] = (hold & 0x07);//BITS(3);
+        //--- DROPBITS(3) ---//
+        hold >>>= 3;
+        bits -= 3;
+        //---//
+      }
+      while (state.have < 19) {
+        state.lens[order[state.have++]] = 0;
+      }
+      // We have separate tables & no pointers. 2 commented lines below not needed.
+      //state.next = state.codes;
+      //state.lencode = state.next;
+      // Switch to use dynamic table
+      state.lencode = state.lendyn;
+      state.lenbits = 7;
+
+      opts = { bits: state.lenbits };
+      ret = inflate_table(CODES, state.lens, 0, 19, state.lencode, 0, state.work, opts);
+      state.lenbits = opts.bits;
+
+      if (ret) {
+        strm.msg = 'invalid code lengths set';
+        state.mode = BAD;
+        break;
+      }
+      //Tracev((stderr, "inflate:       code lengths ok\n"));
+      state.have = 0;
+      state.mode = CODELENS;
+      /* falls through */
+    case CODELENS:
+      while (state.have < state.nlen + state.ndist) {
+        for (;;) {
+          here = state.lencode[hold & ((1 << state.lenbits) - 1)];/*BITS(state.lenbits)*/
+          here_bits = here >>> 24;
+          here_op = (here >>> 16) & 0xff;
+          here_val = here & 0xffff;
+
+          if ((here_bits) <= bits) { break; }
+          //--- PULLBYTE() ---//
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+          //---//
+        }
+        if (here_val < 16) {
+          //--- DROPBITS(here.bits) ---//
+          hold >>>= here_bits;
+          bits -= here_bits;
+          //---//
+          state.lens[state.have++] = here_val;
+        }
+        else {
+          if (here_val === 16) {
+            //=== NEEDBITS(here.bits + 2);
+            n = here_bits + 2;
+            while (bits < n) {
+              if (have === 0) { break inf_leave; }
+              have--;
+              hold += input[next++] << bits;
+              bits += 8;
+            }
+            //===//
+            //--- DROPBITS(here.bits) ---//
+            hold >>>= here_bits;
+            bits -= here_bits;
+            //---//
+            if (state.have === 0) {
+              strm.msg = 'invalid bit length repeat';
+              state.mode = BAD;
+              break;
+            }
+            len = state.lens[state.have - 1];
+            copy = 3 + (hold & 0x03);//BITS(2);
+            //--- DROPBITS(2) ---//
+            hold >>>= 2;
+            bits -= 2;
+            //---//
+          }
+          else if (here_val === 17) {
+            //=== NEEDBITS(here.bits + 3);
+            n = here_bits + 3;
+            while (bits < n) {
+              if (have === 0) { break inf_leave; }
+              have--;
+              hold += input[next++] << bits;
+              bits += 8;
+            }
+            //===//
+            //--- DROPBITS(here.bits) ---//
+            hold >>>= here_bits;
+            bits -= here_bits;
+            //---//
+            len = 0;
+            copy = 3 + (hold & 0x07);//BITS(3);
+            //--- DROPBITS(3) ---//
+            hold >>>= 3;
+            bits -= 3;
+            //---//
+          }
+          else {
+            //=== NEEDBITS(here.bits + 7);
+            n = here_bits + 7;
+            while (bits < n) {
+              if (have === 0) { break inf_leave; }
+              have--;
+              hold += input[next++] << bits;
+              bits += 8;
+            }
+            //===//
+            //--- DROPBITS(here.bits) ---//
+            hold >>>= here_bits;
+            bits -= here_bits;
+            //---//
+            len = 0;
+            copy = 11 + (hold & 0x7f);//BITS(7);
+            //--- DROPBITS(7) ---//
+            hold >>>= 7;
+            bits -= 7;
+            //---//
+          }
+          if (state.have + copy > state.nlen + state.ndist) {
+            strm.msg = 'invalid bit length repeat';
+            state.mode = BAD;
+            break;
+          }
+          while (copy--) {
+            state.lens[state.have++] = len;
+          }
+        }
+      }
+
+      /* handle error breaks in while */
+      if (state.mode === BAD) { break; }
+
+      /* check for end-of-block code (better have one) */
+      if (state.lens[256] === 0) {
+        strm.msg = 'invalid code -- missing end-of-block';
+        state.mode = BAD;
+        break;
+      }
+
+      /* build code tables -- note: do not change the lenbits or distbits
+         values here (9 and 6) without reading the comments in inftrees.h
+         concerning the ENOUGH constants, which depend on those values */
+      state.lenbits = 9;
+
+      opts = { bits: state.lenbits };
+      ret = inflate_table(LENS, state.lens, 0, state.nlen, state.lencode, 0, state.work, opts);
+      // We have separate tables & no pointers. 2 commented lines below not needed.
+      // state.next_index = opts.table_index;
+      state.lenbits = opts.bits;
+      // state.lencode = state.next;
+
+      if (ret) {
+        strm.msg = 'invalid literal/lengths set';
+        state.mode = BAD;
+        break;
+      }
+
+      state.distbits = 6;
+      //state.distcode.copy(state.codes);
+      // Switch to use dynamic table
+      state.distcode = state.distdyn;
+      opts = { bits: state.distbits };
+      ret = inflate_table(DISTS, state.lens, state.nlen, state.ndist, state.distcode, 0, state.work, opts);
+      // We have separate tables & no pointers. 2 commented lines below not needed.
+      // state.next_index = opts.table_index;
+      state.distbits = opts.bits;
+      // state.distcode = state.next;
+
+      if (ret) {
+        strm.msg = 'invalid distances set';
+        state.mode = BAD;
+        break;
+      }
+      //Tracev((stderr, 'inflate:       codes ok\n'));
+      state.mode = LEN_;
+      if (flush === Z_TREES) { break inf_leave; }
+      /* falls through */
+    case LEN_:
+      state.mode = LEN;
+      /* falls through */
+    case LEN:
+      if (have >= 6 && left >= 258) {
+        //--- RESTORE() ---
+        strm.next_out = put;
+        strm.avail_out = left;
+        strm.next_in = next;
+        strm.avail_in = have;
+        state.hold = hold;
+        state.bits = bits;
+        //---
+        inflate_fast(strm, _out);
+        //--- LOAD() ---
+        put = strm.next_out;
+        output = strm.output;
+        left = strm.avail_out;
+        next = strm.next_in;
+        input = strm.input;
+        have = strm.avail_in;
+        hold = state.hold;
+        bits = state.bits;
+        //---
+
+        if (state.mode === TYPE) {
+          state.back = -1;
+        }
+        break;
+      }
+      state.back = 0;
+      for (;;) {
+        here = state.lencode[hold & ((1 << state.lenbits) - 1)];  /*BITS(state.lenbits)*/
+        here_bits = here >>> 24;
+        here_op = (here >>> 16) & 0xff;
+        here_val = here & 0xffff;
+
+        if (here_bits <= bits) { break; }
+        //--- PULLBYTE() ---//
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+        //---//
+      }
+      if (here_op && (here_op & 0xf0) === 0) {
+        last_bits = here_bits;
+        last_op = here_op;
+        last_val = here_val;
+        for (;;) {
+          here = state.lencode[last_val +
+                  ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
+          here_bits = here >>> 24;
+          here_op = (here >>> 16) & 0xff;
+          here_val = here & 0xffff;
+
+          if ((last_bits + here_bits) <= bits) { break; }
+          //--- PULLBYTE() ---//
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+          //---//
+        }
+        //--- DROPBITS(last.bits) ---//
+        hold >>>= last_bits;
+        bits -= last_bits;
+        //---//
+        state.back += last_bits;
+      }
+      //--- DROPBITS(here.bits) ---//
+      hold >>>= here_bits;
+      bits -= here_bits;
+      //---//
+      state.back += here_bits;
+      state.length = here_val;
+      if (here_op === 0) {
+        //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
+        //        "inflate:         literal '%c'\n" :
+        //        "inflate:         literal 0x%02x\n", here.val));
+        state.mode = LIT;
+        break;
+      }
+      if (here_op & 32) {
+        //Tracevv((stderr, "inflate:         end of block\n"));
+        state.back = -1;
+        state.mode = TYPE;
+        break;
+      }
+      if (here_op & 64) {
+        strm.msg = 'invalid literal/length code';
+        state.mode = BAD;
+        break;
+      }
+      state.extra = here_op & 15;
+      state.mode = LENEXT;
+      /* falls through */
+    case LENEXT:
+      if (state.extra) {
+        //=== NEEDBITS(state.extra);
+        n = state.extra;
+        while (bits < n) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.length += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
+        //--- DROPBITS(state.extra) ---//
+        hold >>>= state.extra;
+        bits -= state.extra;
+        //---//
+        state.back += state.extra;
+      }
+      //Tracevv((stderr, "inflate:         length %u\n", state.length));
+      state.was = state.length;
+      state.mode = DIST;
+      /* falls through */
+    case DIST:
+      for (;;) {
+        here = state.distcode[hold & ((1 << state.distbits) - 1)];/*BITS(state.distbits)*/
+        here_bits = here >>> 24;
+        here_op = (here >>> 16) & 0xff;
+        here_val = here & 0xffff;
+
+        if ((here_bits) <= bits) { break; }
+        //--- PULLBYTE() ---//
+        if (have === 0) { break inf_leave; }
+        have--;
+        hold += input[next++] << bits;
+        bits += 8;
+        //---//
+      }
+      if ((here_op & 0xf0) === 0) {
+        last_bits = here_bits;
+        last_op = here_op;
+        last_val = here_val;
+        for (;;) {
+          here = state.distcode[last_val +
+                  ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
+          here_bits = here >>> 24;
+          here_op = (here >>> 16) & 0xff;
+          here_val = here & 0xffff;
+
+          if ((last_bits + here_bits) <= bits) { break; }
+          //--- PULLBYTE() ---//
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+          //---//
+        }
+        //--- DROPBITS(last.bits) ---//
+        hold >>>= last_bits;
+        bits -= last_bits;
+        //---//
+        state.back += last_bits;
+      }
+      //--- DROPBITS(here.bits) ---//
+      hold >>>= here_bits;
+      bits -= here_bits;
+      //---//
+      state.back += here_bits;
+      if (here_op & 64) {
+        strm.msg = 'invalid distance code';
+        state.mode = BAD;
+        break;
+      }
+      state.offset = here_val;
+      state.extra = (here_op) & 15;
+      state.mode = DISTEXT;
+      /* falls through */
+    case DISTEXT:
+      if (state.extra) {
+        //=== NEEDBITS(state.extra);
+        n = state.extra;
+        while (bits < n) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.offset += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
+        //--- DROPBITS(state.extra) ---//
+        hold >>>= state.extra;
+        bits -= state.extra;
+        //---//
+        state.back += state.extra;
+      }
+//#ifdef INFLATE_STRICT
+      if (state.offset > state.dmax) {
+        strm.msg = 'invalid distance too far back';
+        state.mode = BAD;
+        break;
+      }
+//#endif
+      //Tracevv((stderr, "inflate:         distance %u\n", state.offset));
+      state.mode = MATCH;
+      /* falls through */
+    case MATCH:
+      if (left === 0) { break inf_leave; }
+      copy = _out - left;
+      if (state.offset > copy) {         /* copy from window */
+        copy = state.offset - copy;
+        if (copy > state.whave) {
+          if (state.sane) {
+            strm.msg = 'invalid distance too far back';
+            state.mode = BAD;
+            break;
+          }
+// (!) This block is disabled in zlib defailts,
+// don't enable it for binary compatibility
+//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
+//          Trace((stderr, "inflate.c too far\n"));
+//          copy -= state.whave;
+//          if (copy > state.length) { copy = state.length; }
+//          if (copy > left) { copy = left; }
+//          left -= copy;
+//          state.length -= copy;
+//          do {
+//            output[put++] = 0;
+//          } while (--copy);
+//          if (state.length === 0) { state.mode = LEN; }
+//          break;
+//#endif
+        }
+        if (copy > state.wnext) {
+          copy -= state.wnext;
+          from = state.wsize - copy;
+        }
+        else {
+          from = state.wnext - copy;
+        }
+        if (copy > state.length) { copy = state.length; }
+        from_source = state.window;
+      }
+      else {                              /* copy from output */
+        from_source = output;
+        from = put - state.offset;
+        copy = state.length;
+      }
+      if (copy > left) { copy = left; }
+      left -= copy;
+      state.length -= copy;
+      do {
+        output[put++] = from_source[from++];
+      } while (--copy);
+      if (state.length === 0) { state.mode = LEN; }
+      break;
+    case LIT:
+      if (left === 0) { break inf_leave; }
+      output[put++] = state.length;
+      left--;
+      state.mode = LEN;
+      break;
+    case CHECK:
+      if (state.wrap) {
+        //=== NEEDBITS(32);
+        while (bits < 32) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          // Use '|' insdead of '+' to make sure that result is signed
+          hold |= input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        _out -= left;
+        strm.total_out += _out;
+        state.total += _out;
+        if (_out) {
+          strm.adler = state.check =
+              /*UPDATE(state.check, put - _out, _out);*/
+              (state.flags ? crc32(state.check, output, _out, put - _out) : adler32(state.check, output, _out, put - _out));
+
+        }
+        _out = left;
+        // NB: crc32 stored as signed 32-bit int, zswap32 returns signed too
+        if ((state.flags ? hold : zswap32(hold)) !== state.check) {
+          strm.msg = 'incorrect data check';
+          state.mode = BAD;
+          break;
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        //Tracev((stderr, "inflate:   check matches trailer\n"));
+      }
+      state.mode = LENGTH;
+      /* falls through */
+    case LENGTH:
+      if (state.wrap && state.flags) {
+        //=== NEEDBITS(32);
+        while (bits < 32) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        if (hold !== (state.total & 0xffffffff)) {
+          strm.msg = 'incorrect length check';
+          state.mode = BAD;
+          break;
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        //Tracev((stderr, "inflate:   length matches trailer\n"));
+      }
+      state.mode = DONE;
+      /* falls through */
+    case DONE:
+      ret = Z_STREAM_END;
+      break inf_leave;
+    case BAD:
+      ret = Z_DATA_ERROR;
+      break inf_leave;
+    case MEM:
+      return Z_MEM_ERROR;
+    case SYNC:
+      /* falls through */
+    default:
+      return Z_STREAM_ERROR;
+    }
+  }
+
+  // inf_leave <- here is real place for "goto inf_leave", emulated via "break inf_leave"
+
+  /*
+     Return from inflate(), updating the total counts and the check value.
+     If there was no progress during the inflate() call, return a buffer
+     error.  Call updatewindow() to create and/or update the window state.
+     Note: a memory error from inflate() is non-recoverable.
+   */
+
+  //--- RESTORE() ---
+  strm.next_out = put;
+  strm.avail_out = left;
+  strm.next_in = next;
+  strm.avail_in = have;
+  state.hold = hold;
+  state.bits = bits;
+  //---
+
+  if (state.wsize || (_out !== strm.avail_out && state.mode < BAD &&
+                      (state.mode < CHECK || flush !== Z_FINISH))) {
+    if (updatewindow(strm, strm.output, strm.next_out, _out - strm.avail_out)) {
+      state.mode = MEM;
+      return Z_MEM_ERROR;
+    }
+  }
+  _in -= strm.avail_in;
+  _out -= strm.avail_out;
+  strm.total_in += _in;
+  strm.total_out += _out;
+  state.total += _out;
+  if (state.wrap && _out) {
+    strm.adler = state.check = /*UPDATE(state.check, strm.next_out - _out, _out);*/
+      (state.flags ? crc32(state.check, output, _out, strm.next_out - _out) : adler32(state.check, output, _out, strm.next_out - _out));
+  }
+  strm.data_type = state.bits + (state.last ? 64 : 0) +
+                    (state.mode === TYPE ? 128 : 0) +
+                    (state.mode === LEN_ || state.mode === COPY_ ? 256 : 0);
+  if (((_in === 0 && _out === 0) || flush === Z_FINISH) && ret === Z_OK) {
+    ret = Z_BUF_ERROR;
+  }
+  return ret;
+}
+
+function inflateEnd(strm) {
+
+  if (!strm || !strm.state /*|| strm->zfree == (free_func)0*/) {
+    return Z_STREAM_ERROR;
+  }
+
+  var state = strm.state;
+  if (state.window) {
+    state.window = null;
+  }
+  strm.state = null;
+  return Z_OK;
+}
+
+function inflateGetHeader(strm, head) {
+  var state;
+
+  /* check state */
+  if (!strm || !strm.state) { return Z_STREAM_ERROR; }
+  state = strm.state;
+  if ((state.wrap & 2) === 0) { return Z_STREAM_ERROR; }
+
+  /* save header structure */
+  state.head = head;
+  head.done = false;
+  return Z_OK;
+}
+
+function inflateSetDictionary(strm, dictionary) {
+  var dictLength = dictionary.length;
+
+  var state;
+  var dictid;
+  var ret;
+
+  /* check state */
+  if (!strm /* == Z_NULL */ || !strm.state /* == Z_NULL */) { return Z_STREAM_ERROR; }
+  state = strm.state;
+
+  if (state.wrap !== 0 && state.mode !== DICT) {
+    return Z_STREAM_ERROR;
+  }
+
+  /* check for correct dictionary identifier */
+  if (state.mode === DICT) {
+    dictid = 1; /* adler32(0, null, 0)*/
+    /* dictid = adler32(dictid, dictionary, dictLength); */
+    dictid = adler32(dictid, dictionary, dictLength, 0);
+    if (dictid !== state.check) {
+      return Z_DATA_ERROR;
+    }
+  }
+  /* copy dictionary to window using updatewindow(), which will amend the
+   existing dictionary if appropriate */
+  ret = updatewindow(strm, dictionary, dictLength, dictLength);
+  if (ret) {
+    state.mode = MEM;
+    return Z_MEM_ERROR;
+  }
+  state.havedict = 1;
+  // Tracev((stderr, "inflate:   dictionary set\n"));
+  return Z_OK;
+}
+
+// String encode/decode helpers
+// 'use strict';
+
+
+// var utils = require('./common');
+
+
+// Quick check if we can use fast array to bin string conversion
+//
+// - apply(Array) can fail on Android 2.2
+// - apply(Uint8Array) can fail on iOS 5.1 Safary
+//
+var STR_APPLY_OK = true;
+var STR_APPLY_UIA_OK = true;
+
+try { String.fromCharCode.apply(null, [ 0 ]); } catch (__) { STR_APPLY_OK = false; }
+try { String.fromCharCode.apply(null, new Uint8Array(1)); } catch (__) { STR_APPLY_UIA_OK = false; }
+
+
+// Table with utf8 lengths (calculated by first byte of sequence)
+// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
+// because max possible codepoint is 0x10ffff
+var _utf8len = new Uint8Array(256);
+for (var q = 0; q < 256; q++) {
+  _utf8len[q] = (q >= 252 ? 6 : q >= 248 ? 5 : q >= 240 ? 4 : q >= 224 ? 3 : q >= 192 ? 2 : 1);
+}
+_utf8len[254] = _utf8len[254] = 1; // Invalid sequence start
+
+
+// convert string to array (typed, when possible)
+function string2buf(str) {
+  var buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
+
+  // count binary size
+  for (m_pos = 0; m_pos < str_len; m_pos++) {
+    c = str.charCodeAt(m_pos);
+    if ((c & 0xfc00) === 0xd800 && (m_pos + 1 < str_len)) {
+      c2 = str.charCodeAt(m_pos + 1);
+      if ((c2 & 0xfc00) === 0xdc00) {
+        c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+        m_pos++;
+      }
+    }
+    buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+  }
+
+  // allocate buffer
+  buf = new Uint8Array(buf_len);
+
+  // convert
+  for (i = 0, m_pos = 0; i < buf_len; m_pos++) {
+    c = str.charCodeAt(m_pos);
+    if ((c & 0xfc00) === 0xd800 && (m_pos + 1 < str_len)) {
+      c2 = str.charCodeAt(m_pos + 1);
+      if ((c2 & 0xfc00) === 0xdc00) {
+        c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+        m_pos++;
+      }
+    }
+    if (c < 0x80) {
+      /* one byte */
+      buf[i++] = c;
+    } else if (c < 0x800) {
+      /* two bytes */
+      buf[i++] = 0xC0 | (c >>> 6);
+      buf[i++] = 0x80 | (c & 0x3f);
+    } else if (c < 0x10000) {
+      /* three bytes */
+      buf[i++] = 0xE0 | (c >>> 12);
+      buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+      buf[i++] = 0x80 | (c & 0x3f);
+    } else {
+      /* four bytes */
+      buf[i++] = 0xf0 | (c >>> 18);
+      buf[i++] = 0x80 | (c >>> 12 & 0x3f);
+      buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+      buf[i++] = 0x80 | (c & 0x3f);
+    }
+  }
+
+  return buf;
+}
+
+// Helper (used in 2 places)
+function _buf2binstring(buf, len) {
+  // use fallback for big arrays to avoid stack overflow
+  if (len < 65537) {
+    if ((buf.subarray && STR_APPLY_UIA_OK) || (!buf.subarray && STR_APPLY_OK)) {
+      return String.fromCharCode.apply(null, shrinkBuf(buf, len));
+    }
+  }
+
+  var result = '';
+  for (var i = 0; i < len; i++) {
+    result += String.fromCharCode(buf[i]);
+  }
+  return result;
+}
+
+
+// Convert binary string (typed, when possible)
+function binstring2buf(str) {
+  var buf = new Uint8Array(str.length);
+  for (var i = 0, len = buf.length; i < len; i++) {
+    buf[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+
+
+// convert array to string
+function buf2string(buf, max) {
+  var i, out, c, c_len;
+  var len = max || buf.length;
+
+  // Reserve max possible length (2 words per char)
+  // NB: by unknown reasons, Array is significantly faster for
+  //     String.fromCharCode.apply than Uint16Array.
+  var utf16buf = new Array(len * 2);
+
+  for (out = 0, i = 0; i < len;) {
+    c = buf[i++];
+    // quick process ascii
+    if (c < 0x80) { utf16buf[out++] = c; continue; }
+
+    c_len = _utf8len[c];
+    // skip 5 & 6 byte codes
+    if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len - 1; continue; }
+
+    // apply mask on first byte
+    c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
+    // join the rest
+    while (c_len > 1 && i < len) {
+      c = (c << 6) | (buf[i++] & 0x3f);
+      c_len--;
+    }
+
+    // terminated by end of string?
+    if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
+
+    if (c < 0x10000) {
+      utf16buf[out++] = c;
+    } else {
+      c -= 0x10000;
+      utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
+      utf16buf[out++] = 0xdc00 | (c & 0x3ff);
+    }
+  }
+
+  return _buf2binstring(utf16buf, out);
+}
+
+
+// Calculate max possible position in utf8 buffer,
+// that will not break sequence. If that's not possible
+// - (very small limits) return max size as is.
+//
+// buf[] - utf8 bytes array
+// max   - length limit (mandatory);
+function utf8border(buf, max) {
+  var pos;
+
+  max = max || buf.length;
+  if (max > buf.length) { max = buf.length; }
+
+  // go back from last position, until start of sequence found
+  pos = max - 1;
+  while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
+
+  // Fuckup - very small and broken sequence,
+  // return max, because we should return something anyway.
+  if (pos < 0) { return max; }
+
+  // If we came to start of buffer - that means vuffer is too small,
+  // return max too.
+  if (pos === 0) { return max; }
+
+  return (pos + _utf8len[buf[pos]] > max) ? pos : max;
+}
+
+/* Allowed flush values; see deflate() and inflate() below for details */
+var Z_NO_FLUSH        = 0;
+var Z_SYNC_FLUSH      = 2;
+var Z_FINISH$1          = 4;
+/* Return codes for the compression/decompression functions. Negative values
+  * are errors, positive values are used for special but normal events.
+  */
+var Z_OK$1              =  0;
+var Z_STREAM_END$1      =  1;
+var Z_NEED_DICT$1       =  2;
+//export var Z_MEM_ERROR     = -4;
+var Z_BUF_ERROR$1       = -5;
+
+// 'use strict';
+
+var messages = {
+  2:      'need dictionary',     /* Z_NEED_DICT       2  */
+  1:      'stream end',          /* Z_STREAM_END      1  */
+  0:      '',                    /* Z_OK              0  */
+  '-1':   'file error',          /* Z_ERRNO         (-1) */
+  '-2':   'stream error',        /* Z_STREAM_ERROR  (-2) */
+  '-3':   'data error',          /* Z_DATA_ERROR    (-3) */
+  '-4':   'insufficient memory', /* Z_MEM_ERROR     (-4) */
+  '-5':   'buffer error',        /* Z_BUF_ERROR     (-5) */
+  '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
+};
+
+// 'use strict';
+
+
+function ZStream() {
+  /* next input byte */
+  this.input = null; // JS specific, because we have no pointers
+  this.next_in = 0;
+  /* number of bytes available at input */
+  this.avail_in = 0;
+  /* total number of input bytes read so far */
+  this.total_in = 0;
+  /* next output byte should be put there */
+  this.output = null; // JS specific, because we have no pointers
+  this.next_out = 0;
+  /* remaining free space at output */
+  this.avail_out = 0;
+  /* total number of bytes output so far */
+  this.total_out = 0;
+  /* last error message, NULL if no error */
+  this.msg = ''/*Z_NULL*/;
+  /* not visible by applications */
+  this.state = null;
+  /* best guess about the data type: binary or text */
+  this.data_type = 2/*Z_UNKNOWN*/;
+  /* adler32 value of the uncompressed data */
+  this.adler = 0;
+}
+
+// 'use strict';
+
+
+function GZheader() {
+  /* true if compressed data believed to be text */
+  this.text       = 0;
+  /* modification time */
+  this.time       = 0;
+  /* extra flags (not used when writing a gzip file) */
+  this.xflags     = 0;
+  /* operating system */
+  this.os         = 0;
+  /* pointer to extra field or Z_NULL if none */
+  this.extra      = null;
+  /* extra field length (valid if extra != Z_NULL) */
+  this.extra_len  = 0; // Actually, we don't need it in JS,
+                       // but leave for few code modifications
+
+  //
+  // Setup limits is not necessary because in js we should not preallocate memory
+  // for inflate use constant limit in 65536 bytes
+  //
+
+  /* space at extra (only when reading header) */
+  // this.extra_max  = 0;
+  /* pointer to zero-terminated file name or Z_NULL */
+  this.name       = '';
+  /* space at name (only when reading header) */
+  // this.name_max   = 0;
+  /* pointer to zero-terminated comment or Z_NULL */
+  this.comment    = '';
+  /* space at comment (only when reading header) */
+  // this.comm_max   = 0;
+  /* true if there was or will be a header crc */
+  this.hcrc       = 0;
+  /* true when done reading gzip header (not used when writing a gzip file) */
+  this.done       = false;
+}
+
+// 'use strict';
+
+
+// var zlib_inflate = require('./zlib/inflate');
+// var utils        = require('./utils/common');
+// var strings      = require('./utils/strings');
+// var c            = require('./zlib/constants');
+// var msg          = require('./zlib/messages');
+// var ZStream      = require('./zlib/zstream');
+// var GZheader     = require('./zlib/gzheader');
+
+var toString = Object.prototype.toString;
+
 /**
- * @file Spatial Hash
+ * class Inflate
+ *
+ * Generic JS-style wrapper for zlib calls. If you don't need
+ * streaming behaviour - use more simple functions: [[inflate]]
+ * and [[inflateRaw]].
+ **/
+
+/* internal
+ * inflate.chunks -> Array
+ *
+ * Chunks of output data, if [[Inflate#onData]] not overriden.
+ **/
+
+/**
+ * Inflate.result -> Uint8Array|Array|String
+ *
+ * Uncompressed result, generated by default [[Inflate#onData]]
+ * and [[Inflate#onEnd]] handlers. Filled after you push last chunk
+ * (call [[Inflate#push]] with `Z_FINISH` / `true` param) or if you
+ * push a chunk with explicit flush (call [[Inflate#push]] with
+ * `Z_SYNC_FLUSH` param).
+ **/
+
+/**
+ * Inflate.err -> Number
+ *
+ * Error code after inflate finished. 0 (Z_OK) on success.
+ * Should be checked if broken data possible.
+ **/
+
+/**
+ * Inflate.msg -> String
+ *
+ * Error message, if [[Inflate.err]] != 0
+ **/
+
+
+/**
+ * new Inflate(options)
+ * - options (Object): zlib inflate options.
+ *
+ * Creates new inflator instance with specified params. Throws exception
+ * on bad params. Supported options:
+ *
+ * - `windowBits`
+ * - `dictionary`
+ *
+ * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
+ * for more information on these.
+ *
+ * Additional options, for internal needs:
+ *
+ * - `chunkSize` - size of generated data chunks (16K by default)
+ * - `raw` (Boolean) - do raw inflate
+ * - `to` (String) - if equal to 'string', then result will be converted
+ *   from utf8 to utf16 (javascript) string. When string output requested,
+ *   chunk length can differ from `chunkSize`, depending on content.
+ *
+ * By default, when no options set, autodetect deflate/gzip data format via
+ * wrapper header.
+ *
+ * ##### Example:
+ *
+ * ```javascript
+ * var pako = require('pako')
+ *   , chunk1 = Uint8Array([1,2,3,4,5,6,7,8,9])
+ *   , chunk2 = Uint8Array([10,11,12,13,14,15,16,17,18,19]);
+ *
+ * var inflate = new pako.Inflate({ level: 3});
+ *
+ * inflate.push(chunk1, false);
+ * inflate.push(chunk2, true);  // true -> last chunk
+ *
+ * if (inflate.err) { throw new Error(inflate.err); }
+ *
+ * console.log(inflate.result);
+ * ```
+ **/
+function Inflate(options) {
+  if (!(this instanceof Inflate)) return new Inflate(options);
+
+  this.options = assign({
+    chunkSize: 16384,
+    windowBits: 0,
+    to: ''
+  }, options || {});
+
+  var opt = this.options;
+
+  // Force window size for `raw` data, if not set directly,
+  // because we have no header for autodetect.
+  if (opt.raw && (opt.windowBits >= 0) && (opt.windowBits < 16)) {
+    opt.windowBits = -opt.windowBits;
+    if (opt.windowBits === 0) { opt.windowBits = -15; }
+  }
+
+  // If `windowBits` not defined (and mode not raw) - set autodetect flag for gzip/deflate
+  if ((opt.windowBits >= 0) && (opt.windowBits < 16) &&
+      !(options && options.windowBits)) {
+    opt.windowBits += 32;
+  }
+
+  // Gzip header has no info about windows size, we can do autodetect only
+  // for deflate. So, if window size not set, force it to max when gzip possible
+  if ((opt.windowBits > 15) && (opt.windowBits < 48)) {
+    // bit 3 (16) -> gzipped data
+    // bit 4 (32) -> autodetect gzip/deflate
+    if ((opt.windowBits & 15) === 0) {
+      opt.windowBits |= 15;
+    }
+  }
+
+  this.err    = 0;      // error code, if happens (0 = Z_OK)
+  this.msg    = '';     // error message
+  this.ended  = false;  // used to avoid multiple onEnd() calls
+  this.chunks = [];     // chunks of compressed data
+
+  this.strm   = new ZStream();
+  this.strm.avail_out = 0;
+
+  var status  = inflateInit2(
+    this.strm,
+    opt.windowBits
+  );
+
+  if (status !== Z_OK$1) {
+    throw new Error(messages[status]);
+  }
+
+  this.header = new GZheader();
+
+  inflateGetHeader(this.strm, this.header);
+}
+
+/**
+ * Inflate#push(data[, mode]) -> Boolean
+ * - data (Uint8Array|Array|ArrayBuffer|String): input data
+ * - mode (Number|Boolean): 0..6 for corresponding Z_NO_FLUSH..Z_TREE modes.
+ *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` meansh Z_FINISH.
+ *
+ * Sends input data to inflate pipe, generating [[Inflate#onData]] calls with
+ * new output chunks. Returns `true` on success. The last data block must have
+ * mode Z_FINISH (or `true`). That will flush internal pending buffers and call
+ * [[Inflate#onEnd]]. For interim explicit flushes (without ending the stream) you
+ * can use mode Z_SYNC_FLUSH, keeping the decompression context.
+ *
+ * On fail call [[Inflate#onEnd]] with error code and return false.
+ *
+ * We strongly recommend to use `Uint8Array` on input for best speed (output
+ * format is detected automatically). Also, don't skip last param and always
+ * use the same type in your code (boolean or number). That will improve JS speed.
+ *
+ * For regular `Array`-s make sure all elements are [0..255].
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * push(chunk, false); // push one of data chunks
+ * ...
+ * push(chunk, true);  // push last chunk
+ * ```
+ **/
+Inflate.prototype.push = function (data, mode) {
+  var strm = this.strm;
+  var chunkSize = this.options.chunkSize;
+  var dictionary = this.options.dictionary;
+  var status, _mode;
+  var next_out_utf8, tail, utf8str;
+  var dict;
+
+  // Flag to properly process Z_BUF_ERROR on testing inflate call
+  // when we check that all output data was flushed.
+  var allowBufError = false;
+
+  if (this.ended) { return false; }
+  _mode = (mode === ~~mode) ? mode : ((mode === true) ? Z_FINISH$1 : Z_NO_FLUSH);
+
+  // Convert data if needed
+  if (typeof data === 'string') {
+    // Only binary strings can be decompressed on practice
+    strm.input = binstring2buf(data);
+  } else if (toString.call(data) === '[object ArrayBuffer]') {
+    strm.input = new Uint8Array(data);
+  } else {
+    strm.input = data;
+  }
+
+  strm.next_in = 0;
+  strm.avail_in = strm.input.length;
+
+  do {
+    if (strm.avail_out === 0) {
+      strm.output = new Uint8Array(chunkSize);
+      strm.next_out = 0;
+      strm.avail_out = chunkSize;
+    }
+
+    status = inflate(strm, Z_NO_FLUSH);    /* no bad return value */
+
+    if (status === Z_NEED_DICT$1 && dictionary) {
+      // Convert data if needed
+      if (typeof dictionary === 'string') {
+        dict = string2buf(dictionary);
+      } else if (toString.call(dictionary) === '[object ArrayBuffer]') {
+        dict = new Uint8Array(dictionary);
+      } else {
+        dict = dictionary;
+      }
+
+      status = inflateSetDictionary(this.strm, dict);
+
+    }
+
+    if (status === Z_BUF_ERROR$1 && allowBufError === true) {
+      status = Z_OK$1;
+      allowBufError = false;
+    }
+
+    if (status !== Z_STREAM_END$1 && status !== Z_OK$1) {
+      this.onEnd(status);
+      this.ended = true;
+      return false;
+    }
+
+    if (strm.next_out) {
+      if (strm.avail_out === 0 || status === Z_STREAM_END$1 || (strm.avail_in === 0 && (_mode === Z_FINISH$1 || _mode === Z_SYNC_FLUSH))) {
+
+        if (this.options.to === 'string') {
+
+          next_out_utf8 = utf8border(strm.output, strm.next_out);
+
+          tail = strm.next_out - next_out_utf8;
+          utf8str = buf2string(strm.output, next_out_utf8);
+
+          // move tail
+          strm.next_out = tail;
+          strm.avail_out = chunkSize - tail;
+          if (tail) { arraySet(strm.output, strm.output, next_out_utf8, tail, 0); }
+
+          this.onData(utf8str);
+
+        } else {
+          this.onData(shrinkBuf(strm.output, strm.next_out));
+        }
+      }
+    }
+
+    // When no more input data, we should check that internal inflate buffers
+    // are flushed. The only way to do it when avail_out = 0 - run one more
+    // inflate pass. But if output data not exists, inflate return Z_BUF_ERROR.
+    // Here we set flag to process this error properly.
+    //
+    // NOTE. Deflate does not return error in this case and does not needs such
+    // logic.
+    if (strm.avail_in === 0 && strm.avail_out === 0) {
+      allowBufError = true;
+    }
+
+  } while ((strm.avail_in > 0 || strm.avail_out === 0) && status !== Z_STREAM_END$1);
+
+  if (status === Z_STREAM_END$1) {
+    _mode = Z_FINISH$1;
+  }
+
+  // Finalize on the last chunk.
+  if (_mode === Z_FINISH$1) {
+    status = inflateEnd(this.strm);
+    this.onEnd(status);
+    this.ended = true;
+    return status === Z_OK$1;
+  }
+
+  // callback interim results if Z_SYNC_FLUSH.
+  if (_mode === Z_SYNC_FLUSH) {
+    this.onEnd(Z_OK$1);
+    strm.avail_out = 0;
+    return true;
+  }
+
+  return true;
+};
+
+
+/**
+ * Inflate#onData(chunk) -> Void
+ * - chunk (Uint8Array|Array|String): ouput data. Type of array depends
+ *   on js engine support. When string output requested, each chunk
+ *   will be string.
+ *
+ * By default, stores data blocks in `chunks[]` property and glue
+ * those in `onEnd`. Override this handler, if you need another behaviour.
+ **/
+Inflate.prototype.onData = function (chunk) {
+  this.chunks.push(chunk);
+};
+
+
+/**
+ * Inflate#onEnd(status) -> Void
+ * - status (Number): inflate status. 0 (Z_OK) on success,
+ *   other if not.
+ *
+ * Called either after you tell inflate that the input stream is
+ * complete (Z_FINISH) or should be flushed (Z_SYNC_FLUSH)
+ * or if an error happened. By default - join collected chunks,
+ * free memory and fill `results` / `err` properties.
+ **/
+Inflate.prototype.onEnd = function (status) {
+  // On success - join
+  if (status === Z_OK$1) {
+    if (this.options.to === 'string') {
+      // Glue & convert here, until we teach pako to send
+      // utf8 alligned strings to onData
+      this.result = this.chunks.join('');
+    } else {
+      this.result = flattenChunks(this.chunks);
+    }
+  }
+  this.chunks = [];
+  this.err = status;
+  this.msg = this.strm.msg;
+};
+
+
+/**
+ * inflate(data[, options]) -> Uint8Array|Array|String
+ * - data (Uint8Array|Array|String): input data to decompress.
+ * - options (Object): zlib inflate options.
+ *
+ * Decompress `data` with inflate/ungzip and `options`. Autodetect
+ * format via wrapper header by default. That's why we don't provide
+ * separate `ungzip` method.
+ *
+ * Supported options are:
+ *
+ * - windowBits
+ *
+ * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
+ * for more information.
+ *
+ * Sugar (options):
+ *
+ * - `raw` (Boolean) - say that we work with raw stream, if you don't wish to specify
+ *   negative windowBits implicitly.
+ * - `to` (String) - if equal to 'string', then result will be converted
+ *   from utf8 to utf16 (javascript) string. When string output requested,
+ *   chunk length can differ from `chunkSize`, depending on content.
+ *
+ *
+ * ##### Example:
+ *
+ * ```javascript
+ * var pako = require('pako')
+ *   , input = pako.deflate([1,2,3,4,5,6,7,8,9])
+ *   , output;
+ *
+ * try {
+ *   output = pako.inflate(input);
+ * } catch (err)
+ *   console.log(err);
+ * }
+ * ```
+ **/
+function doInflate(input, options) {
+  var inflator = new Inflate(options);
+
+  inflator.push(input, true);
+
+  // That will never happens, if you don't cheat with options :)
+  if (inflator.err) { throw inflator.msg; }
+
+  return inflator.result;
+}
+
+/**
+ * @file Gzip Decompressor
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
 
-function SpatialHash( atomStore, boundingBox ){
+function gzipDecompress( data ){
 
-    if( exports.Debug ) Log.time( "SpatialHash init" );
+    var decompressedData;
 
-    var exp = 3;
-
-    var bb = boundingBox;
-    var minX = bb.min.x;
-    var minY = bb.min.y;
-    var minZ = bb.min.z;
-    var boundX = ( ( bb.max.x - minX ) >> exp ) + 1;
-    var boundY = ( ( bb.max.y - minY ) >> exp ) + 1;
-    var boundZ = ( ( bb.max.z - minZ ) >> exp ) + 1;
-
-    var n = boundX * boundY * boundZ;
-    var an = atomStore.count;
-
-    var xArray = atomStore.x;
-    var yArray = atomStore.y;
-    var zArray = atomStore.z;
-
-    var i, j;
-
-    var count = 0;
-    var grid = new Uint32Array( n );
-    var bucketIndex = new Int32Array( an );
-    for( i = 0; i < an; ++i ){
-        var x = ( xArray[ i ] - minX ) >> exp;
-        var y = ( yArray[ i ] - minY ) >> exp;
-        var z = ( zArray[ i ] - minZ ) >> exp;
-        var idx = ( ( ( x * boundY ) + y ) * boundZ ) + z;
-        if( ( grid[ idx ] += 1 ) === 1 ){
-            count += 1;
-        }
-        bucketIndex[ i ] = idx;
+    if( data instanceof ArrayBuffer ){
+        data = new Uint8Array( data );
     }
 
-    var bucketCount = new Uint16Array( count );
-    for( i = 0, j = 0; i < n; ++i ){
-        var c = grid[ i ];
-        if( c > 0 ){
-            grid[ i ] = j + 1;
-            bucketCount[ j ] = c;
-            j += 1;
-        }
+    try{
+        decompressedData = doInflate( data );
+    }catch( e ){
+        decompressedData = data;  // assume it is already uncompressed
     }
 
-    var bucketOffset = new Uint32Array( count );
-    for( i = 1; i < count; ++i ){
-        bucketOffset[ i ] += bucketOffset[ i - 1 ] + bucketCount[ i - 1 ];
-    }
-
-    var bucketFill = new Uint16Array( count );
-    var bucketArray = new Int32Array( an );
-    for( i = 0; i < an; ++i ){
-        var bucketIdx = grid[ bucketIndex[ i ] ];
-        if( bucketIdx > 0 ){
-            var k = bucketIdx - 1;
-            bucketArray[ bucketOffset[ k ] + bucketFill[ k ] ] = i;
-            bucketFill[ k ] += 1;
-        }
-    }
-
-    if( exports.Debug ) Log.timeEnd( "SpatialHash init" );
-
-    function within( x, y, z, r ){
-
-        var rSq = r * r;
-
-        var loX = Math.max( 0, ( x - r - minX ) >> exp );
-        var loY = Math.max( 0, ( y - r - minY ) >> exp );
-        var loZ = Math.max( 0, ( z - r - minZ ) >> exp );
-
-        var hiX = Math.min( boundX, ( x + r - minX ) >> exp );
-        var hiY = Math.min( boundY, ( y + r - minY ) >> exp );
-        var hiZ = Math.min( boundZ, ( z + r - minZ ) >> exp );
-
-        var result = [];
-
-        for( var ix = loX; ix <= hiX; ++ix ){
-            for( var iy = loY; iy <= hiY; ++iy ){
-                for( var iz = loZ; iz <= hiZ; ++iz ){
-
-                    var idx = ( ( ( ix * boundY ) + iy ) * boundZ ) + iz;
-                    var bucketIdx = grid[ idx ];
-
-                    if( bucketIdx > 0 ){
-
-                        var k = bucketIdx - 1;
-                        var offset = bucketOffset[ k ];
-                        var count = bucketCount[ k ];
-                        var end = offset + count;
-
-                        for( var i = offset; i < end; ++i ){
-
-                            var atomIndex = bucketArray[ i ];
-                            var dx = xArray[ atomIndex ] - x;
-                            var dy = yArray[ atomIndex ] - y;
-                            var dz = zArray[ atomIndex ] - z;
-
-                            if( dx * dx + dy * dy + dz * dz <= rSq ){
-                                result.push( atomIndex );
-                            }
-
-                        }
-
-                    }
-
-                }
-            }
-        }
-
-        return result;
-
-    }
-
-    // API
-
-    this.within = within;
+    return decompressedData;
 
 }
+
+
+DecompressorRegistry.add( "gz", gzipDecompress );
+
+/**
+ * @file RCSB Datasource
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+var baseUrl$1 = "//files.rcsb.org/download/";
+var mmtfBaseUrl = "//mmtf.rcsb.org/v1.0/";
+var mmtfFullUrl = mmtfBaseUrl + "full/";
+var mmtfReducedUrl = mmtfBaseUrl + "reduced/";
+
+
+function RcsbDatasource(){
+
+    this.getUrl = function( src ){
+        // valid path are
+        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
+        // XXXX defaults to XXXX.cif
+        var info = getFileInfo( src );
+        var pdbid = info.name.substr( 0, 4 );
+        var url;
+        if( [ "pdb", "cif" ].includes( info.ext ) &&
+            ( info.compressed === false || info.compressed === "gz" )
+        ){
+            url = baseUrl$1 + info.path;
+        }else if( info.ext === "mmtf" ){
+            if( info.base.endsWith( ".bb" ) ){
+                url = mmtfReducedUrl + pdbid;
+            }else{
+                url = mmtfFullUrl + pdbid;
+            }
+        }else if( !info.ext ){
+            url = mmtfFullUrl + pdbid;
+        }else{
+            Log.warn( "unsupported ext", info.ext );
+            url = mmtfFullUrl + pdbid;
+        }
+        return getProtocol() + url;
+    };
+
+    this.getExt = function( src ){
+        var info = getFileInfo( src );
+        if( info.ext === "mmtf" || !info.ext ){
+            return "mmtf";
+        }
+    };
+
+}
+
+
+DatasourceRegistry.add( "rcsb", new RcsbDatasource() );
+
+/**
+ * @file PubChem Datasource
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+var baseUrl$2 = "//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/";
+var suffixUrl = "/SDF?record_type=3d";
+
+
+function PubchemDatasource(){
+
+    this.getUrl = function( src ){
+        var info = getFileInfo( src );
+        var cid = info.name;
+        var url;
+        if( !info.ext || info.ext === "sdf" ){
+            url = baseUrl$2 + cid + suffixUrl;
+        }else{
+            Log.warn( "unsupported ext", info.ext );
+            url = baseUrl$2 + cid + suffixUrl;
+        }
+        return getProtocol() + url;
+    };
+
+    this.getExt = function( src ){
+        var info = getFileInfo( src );
+        if( !info.ext || info.ext === "sdf" ){
+            return "sdf";
+        }
+    };
+
+}
+
+
+DatasourceRegistry.add( "pubchem", new PubchemDatasource() );
+
+/**
+ * @file Pass Through Datasource
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function PassThroughDatasource(){
+
+    this.getUrl = function( path ){
+        return path;
+    };
+
+}
+
+
+DatasourceRegistry.add( "ftp", new PassThroughDatasource() );
+DatasourceRegistry.add( "http", new PassThroughDatasource() );
+DatasourceRegistry.add( "https", new PassThroughDatasource() );
+
+/**
+ * @file Static Datasource
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function StaticDatasource( baseUrl ){
+
+    baseUrl = baseUrl || "";
+
+    this.getUrl = function( src ){
+        var info = getFileInfo( src );
+        return getAbsolutePath( baseUrl + info.path );
+    };
+
+}
+
+var version$1 = "0.10.0-dev.5";
 
 /**
  * @file ngl
@@ -83578,531 +86198,8 @@ function SpatialHash( atomStore, boundingBox ){
  */
 
 
-if( !window.Promise ){
+if( typeof window !== 'undefined' && !window.Promise ){
     window.Promise = Promise$1;
-}
-
-
-//////////////
-// Polyfills
-
-( function( global ) {
-
-    'use strict';
-
-    // Console-polyfill. MIT license.
-    // https://github.com/paulmillr/console-polyfill
-    // Make it safe to do console.log() always.
-
-    global.console = global.console || {};
-    var con = global.console;
-    var prop, method;
-    var empty = {};
-    var dummy = function(){};
-    var properties = 'memory'.split( ',' );
-    var methods = (
-        'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
-        'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
-        'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
-    ).split(',');
-
-    while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
-    while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
-
-    // Using `self` for web workers while maintaining compatibility with browser
-    // targeted script loaders such as Browserify or Webpack where the only way to
-    // get to the global object is via `window`.
-
-} )( typeof window === 'undefined' ? self : window );
-
-
-if( !HTMLCanvasElement.prototype.toBlob ){
-
-    // http://code.google.com/p/chromium/issues/detail?id=67587#57
-
-    Object.defineProperty( HTMLCanvasElement.prototype, 'toBlob', {
-
-        value: function( callback, type, quality ){
-
-            var bin = window.atob( this.toDataURL( type, quality ).split( ',' )[ 1 ] ),
-                len = bin.length,
-                len32 = len >> 2,
-                a8 = new Uint8Array( len ),
-                a32 = new Uint32Array( a8.buffer, 0, len32 );
-
-            for( var i=0, j=0; i < len32; i++ ) {
-
-                a32[i] = bin.charCodeAt( j++ ) |
-                    bin.charCodeAt( j++ ) << 8 |
-                    bin.charCodeAt( j++ ) << 16 |
-                    bin.charCodeAt( j++ ) << 24;
-
-            }
-
-            var tailLength = len & 3;
-
-            while( tailLength-- ){
-
-                a8[ j ] = bin.charCodeAt( j++ );
-
-            }
-
-            callback( new Blob( [ a8 ], { 'type': type || 'image/png' } ) );
-
-        }
-
-    } );
-
-}
-
-
-if( !Number.isInteger ){
-
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
-
-    Number.isInteger = function isInteger( nVal ){
-        return typeof nVal === "number" && isFinite( nVal ) && nVal > -9007199254740992 && nVal < 9007199254740992 && Math.floor( nVal ) === nVal;
-    };
-
-}
-
-
-if( !Number.isNaN ){
-
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
-
-    Number.isNaN = function isNaN( value ){
-        return value !== value;
-    };
-
-}
-
-
-if( !Object.assign ){
-
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
-
-    Object.defineProperty( Object, "assign", {
-
-        enumerable: false,
-        configurable: true,
-        writable: true,
-
-        value: function(target/*, firstSource*/) {
-
-            "use strict";
-            if (target === undefined || target === null)
-            throw new TypeError("Cannot convert first argument to object");
-
-            var to = Object(target);
-
-            var hasPendingException = false;
-            var pendingException;
-
-            for (var i = 1; i < arguments.length; i++) {
-
-                var nextSource = arguments[i];
-                if (nextSource === undefined || nextSource === null)
-                    continue;
-
-                var keysArray = Object.keys(Object(nextSource));
-                for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
-
-                    var nextKey = keysArray[nextIndex];
-                    try {
-                        var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
-                        if (desc !== undefined && desc.enumerable)
-                            to[nextKey] = nextSource[nextKey];
-                    } catch (e) {
-                        if (!hasPendingException) {
-                            hasPendingException = true;
-                            pendingException = e;
-                        }
-                    }
-
-                }
-
-                if (hasPendingException)
-                    throw pendingException;
-
-            }
-
-            return to;
-
-        }
-
-    } );
-
-}
-
-
-if (!String.prototype.startsWith) {
-
-    /*! https://mths.be/startswith v0.2.0 by @mathias */
-
-    (function() {
-        'use strict'; // needed to support `apply`/`call` with `undefined`/`null`
-        var defineProperty = (function() {
-            // IE 8 only supports `Object.defineProperty` on DOM elements
-            var result;
-            try {
-                var object = {};
-                var $defineProperty = Object.defineProperty;
-                result = $defineProperty(object, object, object) && $defineProperty;
-            } catch(error) {}  // eslint-disable-line no-empty
-            return result;
-        }());
-        var toString = {}.toString;
-        var startsWith = function(search) {
-            if (this === null) {
-                throw TypeError();
-            }
-            var string = String(this);
-            if (search && toString.call(search) == '[object RegExp]') {
-                throw TypeError();
-            }
-            var stringLength = string.length;
-            var searchString = String(search);
-            var searchLength = searchString.length;
-            var position = arguments.length > 1 ? arguments[1] : undefined;
-            // `ToInteger`
-            var pos = position ? Number(position) : 0;
-            if (pos != pos) { // better `isNaN`
-                pos = 0;
-            }
-            var start = Math.min(Math.max(pos, 0), stringLength);
-            // Avoid the `indexOf` call if no match is possible
-            if (searchLength + start > stringLength) {
-                return false;
-            }
-            var index = -1;
-            while (++index < searchLength) {
-                if (string.charCodeAt(start + index) != searchString.charCodeAt(index)) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        if (defineProperty) {
-            defineProperty(String.prototype, 'startsWith', {
-                'value': startsWith,
-                'configurable': true,
-                'writable': true
-            });
-        } else {
-            String.prototype.startsWith = startsWith;
-        }
-    }());
-
-}
-
-
-if (!String.prototype.endsWith) {
-  String.prototype.endsWith = function(searchString, position) {
-      var subjectString = this.toString();
-      if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-        position = subjectString.length;
-      }
-      position -= searchString.length;
-      var lastIndex = subjectString.indexOf(searchString, position);
-      return lastIndex !== -1 && lastIndex === position;
-  };
-}
-
-
-// Production steps of ECMA-262, Edition 6, 22.1.2.1
-// Reference: https://people.mozilla.org/~jorendorff/es6-draft.html#sec-array.from
-if (!Array.from) {
-
-    Array.from = (function () {
-
-        var toStr = Object.prototype.toString;
-        var isCallable = function (fn) {
-            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
-        };
-        var toInteger = function (value) {
-            var number = Number(value);
-            if (isNaN(number)) { return 0; }
-            if (number === 0 || !isFinite(number)) { return number; }
-            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
-        };
-        var maxSafeInteger = Math.pow(2, 53) - 1;
-        var toLength = function (value) {
-            var len = toInteger(value);
-            return Math.min(Math.max(len, 0), maxSafeInteger);
-        };
-
-        // The length property of the from method is 1.
-        return function from(arrayLike/*, mapFn, thisArg */) {
-
-            // 1. Let C be the this value.
-            var C = this;
-
-            // 2. Let items be ToObject(arrayLike).
-            var items = Object(arrayLike);
-
-            // 3. ReturnIfAbrupt(items).
-            if (arrayLike == null) {
-                throw new TypeError("Array.from requires an array-like object - not null or undefined");
-            }
-
-            // 4. If mapfn is undefined, then let mapping be false.
-            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
-            var T;
-            if (typeof mapFn !== 'undefined') {
-                // 5. else
-                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
-                if (!isCallable(mapFn)) {
-                    throw new TypeError('Array.from: when provided, the second argument must be a function');
-                }
-
-                // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
-                if (arguments.length > 2) {
-                    T = arguments[2];
-                }
-            }
-
-            // 10. Let lenValue be Get(items, "length").
-            // 11. Let len be ToLength(lenValue).
-            var len = toLength(items.length);
-
-            // 13. If IsConstructor(C) is true, then
-            // 13. a. Let A be the result of calling the [[Construct]] internal method of C with an argument list containing the single item len.
-            // 14. a. Else, Let A be ArrayCreate(len).
-            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
-
-            // 16. Let k be 0.
-            var k = 0;
-            // 17. Repeat, while k < len… (also steps a - h)
-            var kValue;
-            while (k < len) {
-                kValue = items[k];
-                if (mapFn) {
-                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
-                } else {
-                    A[k] = kValue;
-                }
-                k += 1;
-            }
-            // 18. Let putStatus be Put(A, "length", len, true).
-            A.length = len;
-            // 20. Return A.
-            return A;
-        };
-
-    }());
-
-}
-
-
-( function() {
-
-    // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-    // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
-
-    // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
-
-    // MIT license
-
-    var lastTime = 0;
-    var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
-
-    for( var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x ){
-
-        window.requestAnimationFrame = (
-            window[ vendors[ x ] + 'RequestAnimationFrame' ]
-        );
-
-        window.cancelAnimationFrame = (
-            window[ vendors[ x ] + 'CancelAnimationFrame' ] ||
-            window[ vendors[ x ] + 'CancelRequestAnimationFrame' ]
-        );
-
-    }
-
-    if( !window.requestAnimationFrame ){
-
-        window.requestAnimationFrame = function( callback/*, element*/ ){
-
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
-
-            var id = window.setTimeout( function(){
-
-                callback( currTime + timeToCall );
-
-            }, timeToCall );
-
-            lastTime = currTime + timeToCall;
-
-            return id;
-
-        };
-
-    }
-
-    if( !window.cancelAnimationFrame ){
-
-        window.cancelAnimationFrame = function( id ){
-            clearTimeout( id );
-        };
-
-    }
-
-}() );
-
-
-if ( Function.prototype.name === undefined && Object.defineProperty !== undefined ) {
-
-    // Missing in IE9-11.
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
-
-    Object.defineProperty( Function.prototype, 'name', {
-
-        get: function () {
-
-            return this.toString().match( /^\s*function\s*(\S*)\s*\(/ )[ 1 ];
-
-        }
-
-    } );
-
-}
-
-
-if ( self.performance === undefined ) {
-
-    self.performance = {};
-
-}
-
-if ( self.performance.now === undefined ) {
-
-    ( function () {
-
-        var start = Date.now();
-
-        self.performance.now = function () {
-
-            return Date.now() - start;
-
-        };
-
-    } )();
-
-}
-
-
-////////////////
-// Workarounds
-
-HTMLElement.prototype.getBoundingClientRect = function(){
-
-    // workaround for ie11 behavior with disconnected dom nodes
-
-    var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
-
-    return function getBoundingClientRect(){
-        try{
-            return _getBoundingClientRect.apply( this, arguments );
-        }catch( e ){
-            return {
-                top: 0,
-                left: 0,
-                width: this.width,
-                height: this.height
-            };
-        }
-    };
-
-}();
-
-
-if( WebGLRenderingContext ){
-
-    // wrap WebGL debug function used by three.js and
-    // ignore calls to them when the debug flag is not set
-
-    WebGLRenderingContext.prototype.getShaderParameter = function(){
-
-        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
-
-        return function getShaderParameter(){
-
-            if( exports.Debug ){
-
-                return _getShaderParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
-
-        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
-
-        return function getShaderInfoLog(){
-
-            if( exports.Debug ){
-
-                return _getShaderInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramParameter = function(){
-
-        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
-
-        return function getProgramParameter( program, pname ){
-
-            if( exports.Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
-
-                return _getProgramParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
-
-        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
-
-        return function getProgramInfoLog(){
-
-            if( exports.Debug ){
-
-                return _getProgramInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
 }
 
 
@@ -84113,41 +86210,28 @@ if( WebGLRenderingContext ){
 
 //
 
-/* eslint-disable no-unused-vars */
-/* eslint-enable no-unused-vars */
-
 //
 
-/* eslint-disable no-unused-vars */
-/* eslint-enable no-unused-vars */
+//
 
 //
 
 //
 
-DatasourceRegistry.add( "rcsb", new RcsbDatasource() );
-DatasourceRegistry.add( "ftp", new PassThroughDatasource() );
-DatasourceRegistry.add( "http", new PassThroughDatasource() );
-DatasourceRegistry.add( "https", new PassThroughDatasource() );
+//
 
 //
 
 //
 
-/**
- * Version name
- * @static
- * @type {String}
- */
-var Version = "v0.9.0dev";
-
-exports.Version = Version;
+exports.Version = version$1;
 exports.setDebug = setDebug;
 exports.DatasourceRegistry = DatasourceRegistry;
 exports.StaticDatasource = StaticDatasource;
+exports.ParserRegistry = ParserRegistry;
 exports.autoLoad = autoLoad;
 exports.RepresentationRegistry = RepresentationRegistry;
-exports.ColorMakerRegistry = ColorMakerRegistry;
+exports.ColorMakerRegistry = ColorMakerRegistry$$1;
 exports.ColorMaker = ColorMaker;
 exports.Selection = Selection;
 exports.PdbWriter = PdbWriter;
@@ -84165,6 +86249,7 @@ exports.throttle = throttle;
 exports.download = download;
 exports.getQuery = getQuery;
 exports.getDataInfo = getDataInfo;
+exports.getFileInfo = getFileInfo;
 exports.uniqueArray = uniqueArray;
 exports.BufferRepresentation = BufferRepresentation;
 exports.SphereBuffer = SphereBuffer;
@@ -84178,7 +86263,9 @@ exports.SpatialHash = SpatialHash;
 exports.Signal = Signal;
 exports.Matrix3 = Matrix3;
 exports.Matrix4 = Matrix4;
+exports.Vector2 = Vector2;
 exports.Vector3 = Vector3;
+exports.Box3 = Box3;
 exports.Quaternion = Quaternion;
 exports.Plane = Plane;
 exports.Color = Color;
@@ -84186,3 +86273,4 @@ exports.Color = Color;
 Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
+//# sourceMappingURL=ngl.dev.js.map

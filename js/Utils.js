@@ -119,21 +119,32 @@ CLMSUI.utils = {
                 .attr("class", "btn")
             ;
             labs.append ("input")
-                .attr ("id", "#"+sel.attr("id")+"ChkBx")
+                .attr ("id", sel.attr("id")+"ChkBx")
                 .attr("type", "checkbox")
             ;
             var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
             labelText.text (this.options.label);
-
-            this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
+            
+            // Remember to listen to changes to model or global event state that come from outside the view (keeps it in sync with models)
+            if (this.model && this.options.toggleAttribute) {
+                this.listenTo (this.model, "change:"+this.options.toggleAttribute, this.showState);
+            } else if (this.options.eventName) {
+                this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
+            }
         },
 
-        showState : function (boolVal) {
+        showState : function (args) {
+            var boolVal = args.length > 1 ? args[1] : args[0];
             d3.select(this.el).select("input").property("checked", boolVal);
         },
 
         checkboxClicked: function () {
-            CLMSUI.vent.trigger (this.options.eventName, d3.select(this.el).select("input").property("checked"));
+            var checked = d3.select(this.el).select("input").property("checked");
+            if (this.model && this.options.toggleAttribute) {
+                this.model.set (this.options.toggleAttribute, checked);
+            } else if (this.options.eventName) {
+                CLMSUI.vent.trigger (this.options.eventName, checked);
+            }
         }
     }),
 

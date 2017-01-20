@@ -70,8 +70,8 @@
                 .text (function(d) { return d.label; })
             ;
             
-            this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100*/});
-            
+            this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white"});
+            console.log ("STAGE", this.stage);
             // populate 3D network viewer if hard-coded pdb id present
             if (this.options.initialPdbCode) { 
                 this.repopulate ({pdbCode: this.options.initialPdbCode});

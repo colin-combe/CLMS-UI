@@ -265,3 +265,23 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         return this;
     }
 });
+
+
+CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
+    events: {},
+
+    initialize: function () {
+        this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
+        this
+            .listenTo (this.model, "filteringDone", this.render)
+            .render()
+        ;
+    },
+
+    render: function () {
+        var mainDivSel = d3.select(this.el);
+        var filteredCrossLinks = this.model.getFilteredCrossLinks();
+        mainDivSel.text (this.template ({total: filteredCrossLinks.size}));
+        return this;
+    },
+});

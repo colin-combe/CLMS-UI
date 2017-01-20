@@ -198,7 +198,7 @@ CLMSUI.init.views = function () {
         //~ {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label:cbdata.label, eventName:cbdata.eventName, labelFirst: false}});
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     });
 
@@ -251,12 +251,6 @@ CLMSUI.init.views = function () {
             this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
         })
     ;
-
-    new CLMSUI.CircularViewBB ({
-        el: "#circularPanel",
-        displayEventName: "circularShow",
-        model: CLMSUI.compositeModelInst,
-    });
 };
 
 
@@ -266,6 +260,11 @@ CLMSUI.init.viewsEssential = function (options) {
     new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder",
         model: filterModel
+    });
+    
+    new CLMSUI.FilterSummaryViewBB ({
+        el:"#filterReportPlaceholder",
+        model: CLMSUI.compositeModelInst,
     });
 
     d3.select("#filterModeDiv").style("display","none");
@@ -317,7 +316,7 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.render();
 
     //~ selectionViewer.setVisible (true);
-    selectionViewer.render();
+    // selectionViewer.render();
 
     var spectrumModel = new AnnotatedSpectrumModel();
 
@@ -367,7 +366,7 @@ CLMSUI.init.viewsEssential = function (options) {
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
 
-    // Update spectrum view when extrenal resize event called
+    // Update spectrum view when external resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
@@ -444,7 +443,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "keyShow",
         model: CLMSUI.compositeModelInst,
     });
+    
+    /* 'cos circle listens to annotation model which is formed from uniprot async data */
+    new CLMSUI.CircularViewBB ({
+        el: "#circularPanel",
+        displayEventName: "circularShow",
+        model: CLMSUI.compositeModelInst,
+    });
 
+    /*
     new CLMSUI.AnnotationTypesViewBB ({
         el: "#annotationsDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("annotationTypes"),
@@ -452,7 +459,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             title: "Annotations",
         }
     });
-
+    */
+    /*
     var annotationTypesUL = d3.select("#annotationsUL");
     var lastCat;
     CLMSUI.compositeModelInst.get("annotationTypes").each(function (annotationType) {
@@ -469,7 +477,22 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 			el: annotationTypeLI.node(),
 			model:annotationType
 		});
-    });    
+    });  
+    */
+    
+    
+    // Make a drop down menu constructed from the annotations collection
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#annotationsDropdownPlaceholder",
+        collection: CLMSUI.compositeModelInst.get("annotationTypes"),
+        myOptions: {
+            title: "Annotations",
+            closeOnClick: false,
+            groupByAttribute: "category",
+            labelByAttribute: "type",
+            toggleAttribute: "shown",
+        }
+    });
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",

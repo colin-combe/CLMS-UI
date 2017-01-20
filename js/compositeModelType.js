@@ -71,6 +71,10 @@
         getFilteredCrossLinks: function (crossLinks) {
             //console.log ("crosslinks", crossLinks);
             var result = new Map;
+            
+            if (!crossLinks) {
+                crossLinks = this.get("clmsModel").get("crossLinks");
+            }
 
             crossLinks.forEach (function (value, key) {
                 if (!value.filteredMatches_pp
