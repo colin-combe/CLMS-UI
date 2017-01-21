@@ -72,8 +72,10 @@
 					 participant.hidden = true;
 				 }			 
 			}
-
-            this.trigger ("filteringDone");
+			
+			this.trigger ("filteringDone");
+            this.trigger ("hiddenChanged");
+                        
             return this;
         },
 
