@@ -189,7 +189,7 @@ else {
 			mp.link_position + 1 AS link_position, sm.spectrum_id,
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy,
-			sp.scan_number, ss.name as run_name
+			sp.scan_number, sp.source_id as source
 		FROM
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
@@ -201,7 +201,6 @@ else {
 			FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp
 			ON sm.id = mp.match_id
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id
-		INNER JOIN spectrum_source ss ON sp.source_id = ss.id
 		ORDER BY score DESC, sm.id;";
 }
 $startTime = microtime(true);
@@ -212,10 +211,13 @@ $endTime = microtime(true);
 $startTime = microtime(true);
 echo "\"rawMatches\":[\n";
 $peptideIds = array();
+$sourceIds = array();
 $line = pg_fetch_array($res, null, PGSQL_ASSOC);
 while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 		$peptideId = $line["peptide_id"];
 		$peptideIds[$peptideId] = 1;
+		$sourceId = $line["source"];
+		$sourceIds[$sourceId] = 1;
 		echo "{"
 			. '"id":' . $line["match_id"] . ','
 			. '"ty":' . $line["match_type"] . ','
@@ -228,20 +230,20 @@ while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 		$autoVal =  $line["autovalidated"];
 		if (isset($autoVal)){
 			echo '"av":"' . $autoVal.'"' . ',';
-	}
+		}
 		$val = $line["validated"];
 		if (isset($val)){
 			echo '"v":"'.$val.'"' . ',';
-	}
+		}
 		$rej = $line["rejected"];
 		if (isset($rej)){
 			echo '"rj":"'.$rej.'"' . ',';
-	}
-		echo '"r":"' . $line["run_name"]. '",'//"run" . '",'
+		}
+		echo '"src":"' . $sourceId. '",'//"run" . '",'
 			. '"sn":' . $line["scan_number"]. ','
 			. '"pc":' . $line["precursor_charge"]
 			. "}";
-	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		if ($line) {echo ",\n";}
 }
 echo "\n],\n";
@@ -252,6 +254,36 @@ $proteinIdField = "hp.protein_id";
 if (count($searchId_randGroup) > 1) {
 	$proteinIdField = "p.accession_number";
 }
+
+/*
+ * SPECTRUM SOURCES
+ */
+if (sizeof($sourceIds) === 0) {
+	echo "\"spectrumSources\":[],";
+} else {
+	$implodedSourceIds = '('.implode(array_keys($sourceIds), ",").')';
+	$query = "SELECT src.id, src.name
+		FROM spectrum_source AS src WHERE src.id IN "
+				.$implodedSourceIds.";";
+	$startTime = microtime(true);
+	$res = pg_query($query) or die('Query failed: ' . pg_last_error());
+	$endTime = microtime(true);
+	//~ echo '//db time: '.($endTime - $startTime)."ms\n";
+	//~ echo '//rows:'.pg_num_rows($res)."\n";
+	echo "\"spectrumSources\":[\n";
+	$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+	while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+			echo '{"id":' . $line["id"] . ','
+				. '"name":"' . $line["name"] . '"}';
+			$line = pg_fetch_array($res, null, PGSQL_ASSOC);
+			if ($line) {echo ",\n";}
+			}
+	echo "\n],\n";
+	$endTime = microtime(true);
+}
+
+
+
 /*
  * PEPTIDES
  */

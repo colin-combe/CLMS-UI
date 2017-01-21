@@ -98,6 +98,7 @@
                     "protein2": function (d) {
                         return CLMSUI.utils.proteinConcat (d, "protein2", self.model.get("clmsModel"));
                     },
+                    "runName": function(d) { return d.runName(); },
                     "pepPos1": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos1"); },
                     "pepPos2": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos2"); },
                     "linkPos1": function(d) { return d.linkPos1; },

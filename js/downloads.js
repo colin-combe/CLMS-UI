@@ -82,7 +82,7 @@ function getMatchesCSV () {
                 + CLMSUI.utils.proteinConcat(match, "protein2", CLMSUI.compositeModelInst.get("clmsModel")) + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
                 + match.pepSeq2 + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.autovalidated + '","' + match.validated + '","'
-                + match.searchId + '","' + match.runName + '","' + match.scanNumber + '"\r\n';
+                + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '"\r\n';
         }
     }
     return csv;
