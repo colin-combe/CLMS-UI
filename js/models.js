@@ -57,15 +57,15 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			// possible an ambiguous self link will still get displayed
 			if (this.get("selfLinks") == false) {
 				var isSelfLink = true;
-				var p1 = match.protein1[0];
-				for (var i = 1; i < match.protein1.length; i++) {
-					if (match.protein1[i] != p1){
+				var p1 = match.matchedPeptides[0].prt[0];
+				for (var i = 1; i < match.matchedPeptides[0].prt.length; i++) {
+					if (match.matchedPeptides[0].prt[i] != p1){
 						 isSelfLink = false;
 						 break;
 					 }
 				}
-				for (var i = 0; i < match.protein2.length; i++) {
-					if (match.protein2[i] != p1){
+				for (var i = 0; i < match.matchedPeptides[1].prt.length; i++) {
+					if (match.matchedPeptides[1].prt[i] != p1){
 						isSelfLink = false;
 						break;
 					}
@@ -79,8 +79,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (!isNaN(aaApart)) {
                  //if not ambig && is selfLink
                 if (match.confirmedHomomultimer === false
-						&& match.protein1.length == 1 && match.protein2.length == 1
-                        && match.protein1[0] == match.protein2[0]) {
+						&& match.matchedPeptides[0].prt.length == 1 && match.matchedPeptides[1].prt.length == 1
+                        && match.matchedPeptides[0].prt[0] == match.matchedPeptides[1].prt[0]) {
 					var unambigCrossLink = match.crossLinks[0];
                     var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
 					if (calc < aaApart){
@@ -93,7 +93,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             var pepLengthFilter = this.get("pepLength");
             if (!isNaN(pepLengthFilter)) {
                  //if not ambig && is selfLink
-                if (match.pepSeq1.length <= pepLengthFilter || match.pepSeq2.length <= pepLengthFilter) {
+                if (match.matchedPeptides[0].sequence.length <= pepLengthFilter || match.matchedPeptides[1].sequence.length <= pepLengthFilter) {
                     return false;
                 }
             }

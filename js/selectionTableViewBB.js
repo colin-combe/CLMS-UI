@@ -49,7 +49,7 @@
                 "ambiguity": "Ambiguity",
                 "protein1": "Protein 1",
                 "pepPos1": "Pep Pos",
-                "pepSeq1raw": "Pep 1 Sequence",
+                "matchedPeptides[0].seq_mods": "Pep 1 Sequence",
                 "linkPos1": "Link Pos",
                 "protein2": "Protein 2",
                 "pepPos2": "Pep Pos",
@@ -66,7 +66,7 @@
 
             this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
             this.colSectionStarts = d3.set (["protein2", "score"]);
-            this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
+            this.monospacedColumns = d3.set (["matchedPeptides[0].seq_mods", "pepSeq2raw"]);
             this.maxWidthColumns = d3.set (["protein1", "protein2"]);
 
             // entries commented out until a replacement is found for xlv
@@ -90,17 +90,19 @@
             var self = this;
             this.cellFuncs = {
                     "id": function (d) { return d.id; },
-                    "ambiguity": function (d) { return d.protein1.length *
-                                    ((d.protein2.length != 0)? d.protein2.length : 1); },
+                    "ambiguity": function (d) { return d.matchedPeptides[0].prt.length *
+                                    ((d.matchedPeptides[1].prt.length != 0)? d.matchedPeptides[1].prt.length : 1); },
                     "protein1": function (d) {
-                        return CLMSUI.utils.proteinConcat (d, "protein1", self.model.get("clmsModel"));
+                        return CLMSUI.utils.proteinConcat (d, 0, self.model.get("clmsModel"));
                     },
                     "protein2": function (d) {
-                        return CLMSUI.utils.proteinConcat (d, "protein2", self.model.get("clmsModel"));
+                        return CLMSUI.utils.proteinConcat (d, 1, self.model.get("clmsModel"));
                     },
                     "runName": function(d) { return d.runName(); },
-                    "pepPos1": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos1"); },
-                    "pepPos2": function(d) { return CLMSUI.utils.arrayConcat (d, "pepPos2"); },
+                    "pepPos1": function(d) { return CLMSUI.utils.pepPosConcat (d, 0); },
+                    "pepPos2": function(d) { return CLMSUI.utils.pepPosConcat (d, 1); },
+                    "pepSeq1raw": function(d) { return d.matchedPeptides[0].seq_mods; },
+                    "pepSeq2raw": function(d) { return d.matchedPeptides[1].seq_mods; },
                     "linkPos1": function(d) { return d.linkPos1; },
                     "linkPos2": function(d) { return d.linkPos2; },
                     "score": function (d) { return d.score; }

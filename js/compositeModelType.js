@@ -107,8 +107,8 @@
                 crossLink.filteredMatches_pp.forEach (function (matchAndPepPos) {
                     console.log ("match", match);
                     var smatch = matchAndPepPos.match;
-                    var prot1 = smatch.protein1[0];
-                    var prot2 = smatch.protein2[0];
+                    var prot1 = smatch.matchedPeptides[0].prt[0];
+                    var prot2 = smatch.matchedPeptides[1].prt[0];
                     prots[prot1] = prots[prot1] || [];
                     prots[prot2] = prots[prot2] || [];
 
