@@ -9,7 +9,7 @@
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
 
 			//if its FDR based filtering, set all matches fdrPass att to false
-			if (filterModel && (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut"))) {
+			if (filterModel && filterModel.get("fdrMode")) {
 				var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 				for (match of matches.values()){
 					match.fdrPass = false;

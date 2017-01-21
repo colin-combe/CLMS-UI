@@ -73,8 +73,10 @@ function getMatchesCSV () {
         if (filterModel.get("fdrMode") === true) {
 			result = match.fdrPass;
 		} else {
-			result = filterModel.filter(match);
-		}
+			result = filterModel.subsetFilter(match)
+						&& filterModel.validationStatusFilter(match)
+						&& filterModel.navigationFilter(match);
+							}
         if (result === true){
             csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
                 + '","' + CLMSUI.utils.pepPosConcat(match, 0) + '","'
