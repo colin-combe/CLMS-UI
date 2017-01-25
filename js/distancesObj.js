@@ -139,7 +139,7 @@ CLMSUI.DistancesObj.prototype = {
         return val;
     },
     
-    isSymmetricMatrix : function (matrixEntry) {
+    isSymmetricMatrix: function (matrixEntry) {
         return matrixEntry.value.isSymmetric;
     },
     
@@ -149,8 +149,19 @@ CLMSUI.DistancesObj.prototype = {
         var matrixEntries = d3.entries (this.matrices);
         var matLengths = matrixEntries.map (function (matrixEntry) {
             var isSymmetric = this.isSymmetricMatrix (matrixEntry);
+            var size = matrixEntry.value.size;
+            tot += (size[0] + 1) * isSymmetric ? (size[1] - 1) / 2 : size[1]; // do tomorrow
+            /*
             var distanceMatrix = matrixEntry.value.distanceMatrix;
-            tot += distanceMatrix.length * (isSymmetric ? (distanceMatrix[0].length - 1) / 2 : distanceMatrix[0].length);
+            console.log ("distanceMatrix", distanceMatrix);
+            if (distanceMatrix.length) {
+                var firstRow = distanceMatrix[0];
+                if (!firstRow) {
+                    firstRow = d3.values(distanceMatrix)[0];
+                }
+                tot += distanceMatrix.length * (isSymmetric ? (distanceMatrix[0].length - 1) / 2 : distanceMatrix[0].length);
+            }
+            */
             return tot;
         }, this);
         console.log ("matLengths", matLengths);

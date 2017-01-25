@@ -244,11 +244,13 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         
         console.log ("RESCOUNT", resCount, viableChainIndices);
         
-        return this.getChainDistances (viableChainIndices, resCount > 4000);
+        return this.getChainDistances (viableChainIndices, resCount > 1500);
     },
     
     getChainDistances: function (chainIndices, linksOnly) {
         var chainCAtomIndices = this.getCAtomsAllResidues (chainIndices);
+        this.set ("chainCAtomIndices", chainCAtomIndices); // store for later
+        
         console.log ("residue atom indices", chainCAtomIndices);
         var keys = d3.keys (chainCAtomIndices);
         
@@ -258,13 +260,16 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         keys.forEach (function (chain1) {
             for (var m = 0; m < keys.length; m++) {
                 var chain2 = keys[m];
+                var cindices1 = chainCAtomIndices [chain1];
+                var cindices2 = chainCAtomIndices [chain2];
                 matrixMap[chain1+"-"+chain2] = {
                     chain1: chain1,
                     chain2: chain2,
                     isSymmetric: chain1 === chain2,
+                    size: [cindices1.length, cindices2.length],
                     distanceMatrix: linksOnly
-                        ? this.getLinkDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], +chain1, +chain2, links)
-                        : this.getAllDistancesBetween2Chains (chainCAtomIndices [chain1], chainCAtomIndices [chain2], chain1, chain2)
+                        ? this.getLinkDistancesBetween2Chains (cindices1, cindices2, +chain1, +chain2, links)
+                        : this.getAllDistancesBetween2Chains (cindices1, cindices2, chain1, chain2)
                 };
             }
         }, this);
@@ -285,8 +290,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }, this);
            
         var matrix = [];
-        var ap1 = this.get("structureComp").structure.getAtomProxy();
-        var ap2 = this.get("structureComp").structure.getAtomProxy();
+        var struc = this.get("structureComp").structure;
+        var ap1 = struc.getAtomProxy();
+        var ap2 = struc.getAtomProxy();
         
         links.forEach (function (link) {
             var idA = link.residueA.resindex;   // was previously link.residueA.resno;
@@ -307,8 +313,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     getAllDistancesBetween2Chains: function (chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2) {
         var matrix = [];
-        var ap1 = this.get("structureComp").structure.getAtomProxy();
-        var ap2 = this.get("structureComp").structure.getAtomProxy();
+        var struc = this.get("structureComp").structure;
+        var ap1 = struc.getAtomProxy();
+        var ap2 = struc.getAtomProxy();
         var cai2length = chainAtomIndices2.length;
         var diffChains = (chainIndex1 !== chainIndex2);
         
@@ -327,6 +334,18 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }
         
         return matrix;
+    },
+    
+    getSingleDistanceBetween2Residues: function (resIndex1, resIndex2, chainIndex1, chainIndex2) {
+        var struc = this.get("structureComp").structure;
+        var ap1 = struc.getAtomProxy();
+        var ap2 = struc.getAtomProxy();
+        var ci1 = this.get("chainCAtomIndices")[chainIndex1];
+        var ci2 = this.get("chainCAtomIndices")[chainIndex2];
+        ap1.index = ci1[resIndex1];
+        ap2.index = ci2[resIndex2];
+
+        return ap1.distanceTo(ap2);
     },
     
     getCAtomsAllResidues : function (chainIndices) {
