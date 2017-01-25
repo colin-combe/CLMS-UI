@@ -54,7 +54,7 @@
                 .append("input")
                     .attr({
                         type: "text", class: "inputPDBCode", maxlength: 4,
-                        pattern: "[A-Z0-9]{4}", size: 4, title: "Four letter alphanumeric PDB code"
+                        pattern: CLMSUI.modelUtils.commonRegexes.pdbPattern, size: 4, title: "Four letter alphanumeric PDB code"
                     })
                     .property ("required", true)
             ;
@@ -86,14 +86,19 @@
             // Basically chrome has this point in this function as being traceable back to a user click event but the
             // callback from the ajax isn't.
             var newtab = window.open ("", "_blank");
-            CLMSUI.modelUtils.getPDBIDsForProteins (
-                this.model.get("clmsModel").get("participants"),
-                function (data) {
-                    var ids = data.split("\n");
-                    var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
-                    newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
-                }
-            );    
+            var accessionIDs = CLMSUI.modelUtils.getLegalAccessionIDs (CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
+            if (accessionIDs.length) {
+                CLMSUI.modelUtils.getPDBIDsForProteins (
+                    accessionIDs,
+                    function (data) {
+                        var ids = data.split("\n");
+                        var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
+                        newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
+                    }
+                ); 
+            } else {
+                newtab.document.body.innerHTML = "No legal Accession IDs are in the current dataset. These are required to query the PDB service.";
+            }
         },
         
         selectPDBFile: function (evt) {
@@ -169,10 +174,12 @@
             this.stage.loadFile (uri, params)
                 .then (function (structureComp) {
                     var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
-                    var interactorArr = Array.from (self.model.get("clmsModel").get("participants").values());
-                    // If have a pdb code use a web service to glean matches between ngl protein chains and clms proteins
-                    if (pdbInfo.pdbCode) {
+                    var interactorMap = self.model.get("clmsModel").get("participants");
+                    var interactorArr = Array.from (interactorMap.values());
+                    // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
+                    if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
                         self.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
+                            //console.log ("pdbUniProtMap", pdbUniProtMap);
                             sequenceMapsAvailable (pdbUniProtMap);
                         });
                     }

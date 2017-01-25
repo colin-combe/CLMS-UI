@@ -244,7 +244,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         
         console.log ("RESCOUNT", resCount, viableChainIndices);
         
-        return this.getChainDistances (viableChainIndices, resCount > 1500);
+        return this.getChainDistances (viableChainIndices, resCount > 4000);
     },
     
     getChainDistances: function (chainIndices, linksOnly) {
