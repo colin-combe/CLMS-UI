@@ -168,6 +168,11 @@ CLMSUI.modelUtils = {
         return a;
     },
     
+    commonRegexes: {
+        uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
+        pdbPattern: "[A-Z0-9]{4}",
+    },
+    
     amino3to1Map: {
          "Ala": "A",
         "Asx": "B",
@@ -329,21 +334,29 @@ CLMSUI.modelUtils = {
         return [];
     },
     
-    getPDBIDsForProteins: function (interactorMap, success) {
-        var ids = Array.from(interactorMap.values())
-            .filter (function (prot) { return !prot.is_decoy; })
-            .map (function(prot) { return prot.accession; })
-        ;
-        
-        var xmlString = "<orgPdbQuery><queryType>org.pdb.query.simple.UpAccessionIdQuery</queryType>"
-            +"<description>PDB Query Using Uniprot IDs</description><accessionIdList>"
-            +ids.join(",")
-            +"</accessionIdList></orgPdbQuery>"
-        ;
-        
-        var encodedXmlString = encodeURIComponent (xmlString);
-        
-        $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, success);
+    getLegalAccessionIDs (interactorMap) {
+        var ids = [];
+        if (interactorMap) {
+            ids = Array.from(interactorMap.values())
+                .filter (function (prot) { return !prot.is_decoy; })
+                .map (function(prot) { return prot.accession; })
+                .filter (function (accession) { return accession.match (CLMSUI.modelUtils.commonRegexes.uniprotAccession); })
+            ;
+        }
+        return ids;
+    },
+    
+    getPDBIDsForProteins: function (accessionIDs, success) {
+        if (accessionIDs.length) {
+            var xmlString = "<orgPdbQuery><queryType>org.pdb.query.simple.UpAccessionIdQuery</queryType>"
+                +"<description>PDB Query Using Uniprot IDs</description><accessionIdList>"
+                +accessionIDs.join(",")
+                +"</accessionIdList></orgPdbQuery>"
+            ;
+            var encodedXmlString = encodeURIComponent (xmlString);
+
+            $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, success);
+        }
     },
     
     loadUserFile: function (fileObj, successFunc) {
