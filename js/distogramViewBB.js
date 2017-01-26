@@ -41,7 +41,7 @@
             mainDivSel.append("div").style("height", "40px")
                 .append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Export Graphic");
+                .text(CLMSUI.utils.commonLabels.downloadImg+"SVG");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner distoDiv")

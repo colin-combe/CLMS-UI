@@ -57,7 +57,7 @@
             
             toolbar.append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Download Image")
+                .text(CLMSUI.utils.commonLabels.downloadImg+"PNG")
             ;
             
             toolbar.append("button")

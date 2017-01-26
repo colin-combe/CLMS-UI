@@ -10,6 +10,10 @@ CLMSUI.utils = {
     arrayConcat: function (d, field) {
         return d[field].join(", ");
     },
+    
+    commonLabels: {
+        downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906 
+    },
 
     getSVG: function (d3SvgSelection) {
         console.log ("domElem", d3SvgSelection.node());
@@ -34,12 +38,17 @@ CLMSUI.utils = {
         var parentBar = d3DivSelection
             .append("div")
             .attr("class", "dynDiv_moveParentDiv")
-                .append ("i")
-                .attr ("class", "fa fa-times-circle closeButton")
-                // below 2 lines not needed as handled/set up in respective backbone view (now using closeButton class as identifier)
-                // means we dont need hardcoded unique ids or top-level functions like showDistoPanel hanging around the code
-                //.attr ("id", "distoHide")
-                //.on ("click", function() { showDistoPanel (false); })
+        ;
+        
+        parentBar
+            .append("span")
+            .attr("class", "dynTitle")
+            //.text ("Title")
+        ;
+        
+        parentBar
+            .append ("i")
+            .attr ("class", "fa fa-times-circle closeButton")
         ;
         return parentBar;
     },
@@ -269,7 +278,7 @@ CLMSUI.utils = {
             var mainDivSel = d3.select(this.el);
 
             // Set up some html scaffolding in d3
-            CLMSUI.utils.addDynDivScaffolding (mainDivSel);
+            CLMSUI.utils.addDynDivScaffolding (mainDivSel, "Title");
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
             var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });

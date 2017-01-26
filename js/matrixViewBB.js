@@ -62,7 +62,7 @@
         
         this.controlDiv.append("button")
             .attr ("class", "downloadButton2 btn btn-1 btn-1a")
-            .text ("Export Graphic")
+            .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
         ;
     
         this.controlDiv.append("label")
