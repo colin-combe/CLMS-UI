@@ -10,7 +10,7 @@
             tooltip.append("p");
             this.holdDuration = 10000;
             this.fadeDuration = 200;
-            this.mouseOffset = 10;
+            this.mouseOffset = 60;
             
             this.listenTo (this.model, "change:location", this.setPosition); 
             this.listenTo (this.model, "change:contents change:header", this.render);                  

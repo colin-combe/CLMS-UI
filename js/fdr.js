@@ -37,7 +37,7 @@ CLMSUI.fdr = function (crossLinks, options) {
     
     // What kind of link is this, TT, DT or DD? (0, 1 or 2)
     function decoyClass (link) {
-        return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
+        return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein && link.toProtein.is_decoy ? 1 : 0);
     }
     
     // Loop through both groups and work out the fdr

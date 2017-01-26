@@ -316,7 +316,7 @@ CLMSUI.modelUtils = {
     },
     
     isIntraLink: function (crossLink) {
-         return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
+         return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein)));
     },
     
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
