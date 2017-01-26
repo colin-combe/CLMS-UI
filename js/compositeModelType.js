@@ -61,9 +61,23 @@
 				}
             }
             
+            this.filteredCrossLinks = new Map;
+ 
+            //~ if (!crossLinks) {
+            var crossLinks = this.get("clmsModel").get("crossLinks");
+            //~ }
+
+            crossLinks.forEach (function (value, key) {
+                if (!value.filteredMatches_pp
+						|| value.filteredMatches_pp.length > 0) {
+							this.filteredCrossLinks.set (key, value);
+				}
+            }, this);
+            
             //foreach participant hide if no links
             var participants = this.get("clmsModel").get("participants").values();
             for (participant of participants) {
+				 //todo? tidy up to unify ways for accessing filtered non decoy links
 				 var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (participant.crossLinks);
 				 if (filteredCrossLinks.length > 0) {
 					 participant.hidden = false;
@@ -80,25 +94,12 @@
         },
 
         getFilteredCrossLinks: function (crossLinks) {
-            //console.log ("crosslinks", crossLinks);
-            var result = new Map;
-            
-            if (!crossLinks) {
-                crossLinks = this.get("clmsModel").get("crossLinks");
-            }
-
-            crossLinks.forEach (function (value, key) {
-                if (!value.filteredMatches_pp
-						|| value.filteredMatches_pp.length > 0) {
-							result.set (key, value);
-				}
-            }, this);
-
-            return result;
-
-            //return crossLinks.filter (function(cLink) {
-            //    return cLink.filteredMatches_pp.length > 0;
-            //}); 
+			
+			/*
+			 * store results and return that, see above
+			 * */
+			
+            return this.filteredCrossLinks;
         },
         
         collateMatchRegions: function (crossLinks) {
