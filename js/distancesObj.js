@@ -93,9 +93,9 @@ CLMSUI.DistancesObj.prototype = {
         return dist;
     },
     
-    flattenDistanceMatrix: function (matrixEntry) {
-        var isSymmetric = this.isSymmetricMatrix (matrixEntry); // don't want to count distances in symmetric matrices twice
-        var distanceMatrix = matrixEntry.value.distanceMatrix;
+    flattenDistanceMatrix: function (matrixValue) {
+        var isSymmetric = this.isSymmetricMatrix (matrixValue); // don't want to count distances in symmetric matrices twice
+        var distanceMatrix = matrixValue.distanceMatrix;
         var distanceList = d3.values(distanceMatrix).map (function (row, i) {
             if (row && isSymmetric) {
                 row = row.slice (0, Math.max (0, i)); // For future remembering if I change things: beware negative i, as negative value starts slice from end of array
@@ -106,19 +106,19 @@ CLMSUI.DistancesObj.prototype = {
     },
     
     getFlattenedDistances: function () {
-        var matrixEntries = d3.entries (this.matrices);
-        var perMatrixDistances = matrixEntries.map (function (matrixEntry) {
-            return this.flattenDistanceMatrix (matrixEntry);    
+        var matrixValues = d3.values (this.matrices);
+        var perMatrixDistances = matrixValues.map (function (matrixValue) {
+            return this.flattenDistanceMatrix (matrixValue);    
         }, this);
         console.log ("ad", perMatrixDistances);
         return [].concat.apply([], perMatrixDistances);
     },
     
-    getMatCellFromIndex: function (cellIndex, matLengths, matEntries) {
+    getMatCellFromIndex: function (cellIndex, matLengths, matValues) {
         var matrixIndex = d3.bisectRight (matLengths, cellIndex);
-        var matrixEntry = matEntries[matrixIndex];
-        var distanceMatrix = matrixEntry.value.distanceMatrix;
-        var isSymmetric = this.isSymmetricMatrix (matrixEntry);
+        var matrixValue = matValues[matrixIndex];
+        var size = matrixValue.size;
+        var isSymmetric = this.isSymmetricMatrix (matrixValue);
         
         var row, col;
         var orig = cellIndex;
@@ -129,39 +129,31 @@ CLMSUI.DistancesObj.prototype = {
             col = cellIndex - triangularNumber;
             row++;  // [0,0] is not used (first residue distance to itself), first usable distance is [1,0] in symmetrix matrix
         } else {
-            row = Math.floor (cellIndex / distanceMatrix[0].length);
-            col = cellIndex - (row * distanceMatrix[0].length);  
+            row = Math.floor (cellIndex / size[1]);
+            col = cellIndex - (row * size[1]);  
         }
-        var val = distanceMatrix[row][col];
+        
+        var distanceMatrix = matrixValue.distanceMatrix;
+        var val = distanceMatrix[row] ? distanceMatrix[row][col] : undefined;
         if (val === undefined) {
-            console.log ("matrix", matrixEntry.key, orig, cellIndex, matrixIndex, row, col, val);
+            val = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, row, col, matrixValue.chain1, matrixValue.chain2);
+            //console.log ("matrix", matrixValue, orig, cellIndex, matrixIndex, row, col, val);
         }
         return val;
     },
     
-    isSymmetricMatrix: function (matrixEntry) {
-        return matrixEntry.value.isSymmetric;
+    isSymmetricMatrix: function (matrixValue) {
+        return matrixValue.isSymmetric;
     },
     
     getRandomDistances: function (size) {
         var randDists = [];
         var tot = 0;
-        var matrixEntries = d3.entries (this.matrices);
-        var matLengths = matrixEntries.map (function (matrixEntry) {
-            var isSymmetric = this.isSymmetricMatrix (matrixEntry);
-            var size = matrixEntry.value.size;
-            tot += (size[0] + 1) * isSymmetric ? (size[1] - 1) / 2 : size[1]; // do tomorrow
-            /*
-            var distanceMatrix = matrixEntry.value.distanceMatrix;
-            console.log ("distanceMatrix", distanceMatrix);
-            if (distanceMatrix.length) {
-                var firstRow = distanceMatrix[0];
-                if (!firstRow) {
-                    firstRow = d3.values(distanceMatrix)[0];
-                }
-                tot += distanceMatrix.length * (isSymmetric ? (distanceMatrix[0].length - 1) / 2 : distanceMatrix[0].length);
-            }
-            */
+        var matrixValues = d3.values (this.matrices);
+        var matLengths = matrixValues.map (function (matrixValue) {
+            var isSymmetric = this.isSymmetricMatrix (matrixValue);
+            var size = matrixValue.size;
+            tot += size[0] * (isSymmetric ? (size[1] - 1) / 2 : size[1]);
             return tot;
         }, this);
         console.log ("matLengths", matLengths);
@@ -170,8 +162,8 @@ CLMSUI.DistancesObj.prototype = {
             randDists = this.getFlattenedDistances ();
         } else {    // pick random distances randomly
             for (var n = 0; n < size; n++) {
-                var offset = Math.floor (Math.random () * tot);
-                randDists.push (this.getMatCellFromIndex (offset, matLengths, matrixEntries));
+                var cellIndex = Math.floor (Math.random () * tot);
+                randDists.push (this.getMatCellFromIndex (cellIndex, matLengths, matrixValues));
             }
         }
         

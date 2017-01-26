@@ -260,7 +260,7 @@ CLMSUI.modelUtils = {
                 matchMatrix[prot.id] = scores;
             }   
         });
-        console.log ("matchMatrix", matchMatrix);
+        console.log ("matchMatrix", matchMatrix, sequenceObjs);
         return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
     },
     
@@ -282,7 +282,6 @@ CLMSUI.modelUtils = {
                 pairings.push ({id: max.key, seqObj: max.seqObj});
             }
         }
-        
         return pairings;
     },
     
@@ -419,6 +418,17 @@ CLMSUI.modelUtils = {
         });
         return matchChains[0].name;
     },
+    
+    // If distances matrix not fully populated
+    get3DDistance: function (compModel, res1, res2, chain1, chain2) {
+        if (compModel) {
+            var stageModel = compModel.get("stageModel");
+            if (stageModel) {
+                return stageModel.getSingleDistanceBetween2Residues (res1, res2, chain1, chain2);
+            }
+        }
+        return 0;
+    }
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);
