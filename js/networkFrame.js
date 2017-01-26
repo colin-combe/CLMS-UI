@@ -394,7 +394,7 @@ CLMSUI.init.viewsEssential = function (options) {
             spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
             var url = "./loadData.php?sid="
                     + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
-                    + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
+                    + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
             d3.json (url, function(error, json) {
                 if (error) {
                     console.log ("error", error, "for", url);
