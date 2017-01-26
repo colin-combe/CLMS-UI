@@ -114,15 +114,15 @@ CLMSUI.DistancesObj.prototype = {
         return [].concat.apply([], perMatrixDistances);
     },
     
-    getMatCellFromIndex: function (cellIndex, matLengths, matValues) {
-        var matrixIndex = d3.bisectRight (matLengths, cellIndex);
+    getMatCellFromIndex: function (cellIndex, matEndPoints, matValues) {
+        var matrixIndex = d3.bisectRight (matEndPoints, cellIndex);
         var matrixValue = matValues[matrixIndex];
         var size = matrixValue.size;
         var isSymmetric = this.isSymmetricMatrix (matrixValue);
         
         var row, col;
         var orig = cellIndex;
-        cellIndex -= matrixIndex ? matLengths[matrixIndex - 1] : 0;
+        cellIndex -= matrixIndex ? matEndPoints[matrixIndex - 1] : 0;
         if (isSymmetric) {
             row = Math.floor(-0.5 + Math.sqrt(0.25 + 2 * cellIndex));
             var triangularNumber = row * (row + 1) / 2;
@@ -150,20 +150,20 @@ CLMSUI.DistancesObj.prototype = {
         var randDists = [];
         var tot = 0;
         var matrixValues = d3.values (this.matrices);
-        var matLengths = matrixValues.map (function (matrixValue) {
+        var matEndPoints = matrixValues.map (function (matrixValue) {
             var isSymmetric = this.isSymmetricMatrix (matrixValue);
             var size = matrixValue.size;
             tot += size[0] * (isSymmetric ? (size[1] - 1) / 2 : size[1]);
             return tot;
         }, this);
-        console.log ("matLengths", matLengths);
+        console.log ("matEndPoints", matEndPoints);
         
         if (size > tot) {   // use all distances as random background
             randDists = this.getFlattenedDistances ();
         } else {    // pick random distances randomly
             for (var n = 0; n < size; n++) {
                 var cellIndex = Math.floor (Math.random () * tot);
-                randDists.push (this.getMatCellFromIndex (cellIndex, matLengths, matrixValues));
+                randDists.push (this.getMatCellFromIndex (cellIndex, matEndPoints, matrixValues));
             }
         }
         
