@@ -165,6 +165,9 @@ body, input, select, textarea {
     color: #fff;
     position: absolute;
     /* increased z-index to 50 so it's children (i.e. drop-down menus) overlay floating windows */
+/*
+    todo? would be better if floaty windows didn't go under this -- cc
+*/
     z-index: 50;
 }
 

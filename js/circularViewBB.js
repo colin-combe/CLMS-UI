@@ -271,10 +271,10 @@
             };
 
             // initial Order
-            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
+            //this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
             // return order as is
-            //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("participants").values()))
-            //    .map(function(p) { return p.id; });
+            this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("participants").values()))
+                .map(function(p) { return p.id; });
 
             var alignCall = 0;
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
