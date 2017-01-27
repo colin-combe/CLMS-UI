@@ -142,7 +142,8 @@
                             var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
                             
                             map.forEach (function (mapping) {
-                                var chainName = mapping.pdb.slice(-1);
+                                var dotIndex = mapping.pdb.indexOf(".");
+                                var chainName = dotIndex >= 0 ? mapping.pdb.slice(dotIndex + 1) : mapping.pdb.slice(-1);    // bug fix 27/01/17
                                 var matchSeqs = nglSequences.filter (function (seqObj) {
                                     return seqObj.chainName === chainName;    
                                 });

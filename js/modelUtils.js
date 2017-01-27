@@ -379,25 +379,30 @@ CLMSUI.modelUtils = {
     },
     
     pickCommonPDB: function (interactors) {
-        var protMap = {
-            "1AO6": ["P02768-A"],
-            "3NBS": ["P00004"],
-            "3J7U": ["P00432"],
-            "2CRK": ["P00563"],
-            "1DPX": ["P00698"],
-            "5D5R": ["P68082"],
-        };
-
+        var interactorVals = interactors.values();
         var invPDBMap = {};
-        [protMap].forEach (function (map) {
-            d3.entries(map).forEach (function (entry) {
-                entry.value.forEach (function (val) {
-                    invPDBMap[val] = entry.key;
-                }); 
+        var validAcc = null;
+        
+        if (interactorVals.length < 4) {
+            var protMap = {
+                "1AO6": ["P02768-A"],
+                "3NBS": ["P00004"],
+                "3J7U": ["P00432"],
+                "2CRK": ["P00563"],
+                "1DPX": ["P00698"],
+                "5D5R": ["P68082"],
+            };
+
+            [protMap].forEach (function (map) {
+                d3.entries(map).forEach (function (entry) {
+                    entry.value.forEach (function (val) {
+                        invPDBMap[val] = entry.key;
+                    }); 
+                });
             });
-        });
-        var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
-        var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
+            var protAccs = Array.from(interactorVals).map (function (prot) { return prot.accession; });
+            validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
+        }
         return invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
     },
          
