@@ -19,9 +19,11 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             //~ +"<div id='spectrum'>"
             +"<div id='spectrumControls'>"
             +"<div id='spectrumControlsTop'>"
+            +"<button class='downloadButton'>"
+            +(CLMSUI.utils.commonLabels.downloadImg+"SVG")
+            +"</button>"
             +"<button id='reset'>Reset Zoom</button>"
             +"<button id='clearHighlights'>Clear Highlights</button>"
-            +"<button class='downloadButton'>Export Graphic</button>"
             +"</div>"
             +"<div  id='spectrumControlsBottom'>"
             +"<label id='colorSelectorLabel'>Colour scheme:</label>"

@@ -169,10 +169,10 @@
                 )
             ;
             var buttonData = [
-                {label:"Export SVG", class:"downloadButton", type: "button"},
-                {label:"AutoLayout", class :"niceButton", type: "button"},
-                {label:"Flip Self Links", class:"flipIntraButton", type: "button"},
-                {label:"Show Residue Labels If Few", class:"showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
+                {label: CLMSUI.utils.commonLabels.downloadImg+"SVG", class:"downloadButton", type: "button"},
+                {label: "AutoLayout", class: "niceButton", type: "button"},
+                {label: "Flip Self Links", class: "flipIntraButton", type: "button"},
+                {label: "Show Residue Labels If Few", class: "showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
             ];
             mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
                 .enter()

@@ -260,7 +260,7 @@ CLMSUI.modelUtils = {
                 matchMatrix[prot.id] = scores;
             }   
         });
-        console.log ("matchMatrix", matchMatrix);
+        console.log ("matchMatrix", matchMatrix, sequenceObjs);
         return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
     },
     
@@ -282,7 +282,6 @@ CLMSUI.modelUtils = {
                 pairings.push ({id: max.key, seqObj: max.seqObj});
             }
         }
-        
         return pairings;
     },
     
@@ -380,25 +379,30 @@ CLMSUI.modelUtils = {
     },
     
     pickCommonPDB: function (interactors) {
-        var protMap = {
-            "1AO6": ["P02768-A"],
-            "3NBS": ["P00004"],
-            "3J7U": ["P00432"],
-            "2CRK": ["P00563"],
-            "1DPX": ["P00698"],
-            "5D5R": ["P68082"],
-        };
-
+        var interactorVals = interactors.values();
         var invPDBMap = {};
-        [protMap].forEach (function (map) {
-            d3.entries(map).forEach (function (entry) {
-                entry.value.forEach (function (val) {
-                    invPDBMap[val] = entry.key;
-                }); 
+        var validAcc = null;
+        
+        if (interactorVals.length < 4) {
+            var protMap = {
+                "1AO6": ["P02768-A"],
+                "3NBS": ["P00004"],
+                "3J7U": ["P00432"],
+                "2CRK": ["P00563"],
+                "1DPX": ["P00698"],
+                "5D5R": ["P68082"],
+            };
+
+            [protMap].forEach (function (map) {
+                d3.entries(map).forEach (function (entry) {
+                    entry.value.forEach (function (val) {
+                        invPDBMap[val] = entry.key;
+                    }); 
+                });
             });
-        });
-        var protAccs = Array.from(interactors.values()).map (function (prot) { return prot.accession; });
-        var validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
+            var protAccs = Array.from(interactorVals).map (function (prot) { return prot.accession; });
+            validAcc = protAccs.find (function(acc) { return invPDBMap[acc] !== undefined; });
+        }
         return invPDBMap [validAcc];    // quick protein accession to pdb lookup for now
     },
          
@@ -419,6 +423,17 @@ CLMSUI.modelUtils = {
         });
         return matchChains[0].name;
     },
+    
+    // If distances matrix not fully populated
+    get3DDistance: function (compModel, res1, res2, chain1, chain2) {
+        if (compModel) {
+            var stageModel = compModel.get("stageModel");
+            if (stageModel) {
+                return stageModel.getSingleDistanceBetween2Residues (res1, res2, chain1, chain2);
+            }
+        }
+        return 0;
+    }
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

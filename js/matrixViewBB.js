@@ -62,7 +62,7 @@
         
         this.controlDiv.append("button")
             .attr ("class", "downloadButton2 btn btn-1 btn-1a")
-            .text ("Export Graphic")
+            .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
         ;
     
         this.controlDiv.append("label")
@@ -168,6 +168,7 @@
     distancesChanged: function () {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         console.log ("IN MATRIX DISTANCES CHANGED", distancesObj, this.model.get("clmsModel"));
+        
         var usefulMatrices = d3.entries(distancesObj.matrices);
         usefulMatrices = this.filterMatrixOptions (usefulMatrices, function (matrix) {
             return matrix.value.distanceMatrix.some (function (row) {
@@ -181,6 +182,10 @@
                 text: [matrixEntry.value.chain1, matrixEntry.value.chain2].map (function(cid) { return this.getLabelText(+cid); }, this).join(" to "),
             };
         }, this);
+        
+        if (!matrixOptionData.length) {
+            matrixOptionData.push ({text: "No Viable Pairs", key: null});
+        }
         
         var matrixOptions = d3.select(this.el).select("#chainSelect")
             .selectAll("option")
@@ -197,7 +202,7 @@
         ;
         
         this
-            .matrixChosen(matrixOptionData[0].key)
+            .matrixChosen (matrixOptionData[0].key)
             .render()
         ;
     },
@@ -244,20 +249,24 @@
     },
         
     getCurrentProteinIDs : function () {
-        var chainIDs = [this.options.matrixObj.chain1, this.options.matrixObj.chain2];
+        var chainIDs = this.options.matrixObj ? [this.options.matrixObj.chain1, this.options.matrixObj.chain2] : [null, null];
         return chainIDs.map (function (ci) { 
-            return {chainID: +ci, proteinID: this.getProteinID (+ci), labelText: this.getLabelText (+ci)};
+            ci = ci ? + ci : ci;    // make sure ci becomes a number, unless it's null/undefined
+            return {chainID: ci, proteinID: this.getProteinID (ci), labelText: this.getLabelText (ci)};
         }, this);
     },
         
     getLabelText: function (chainID) {
-        var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        var proteinID = this.getProteinID (chainID);
-        var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID);
-        var proteinName = this.model.get("clmsModel").get("participants").get(proteinID).name;
-        var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
-        proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
-        return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";
+        if (chainID != null) {
+            var distancesObj = this.model.get("clmsModel").get("distancesObj");
+            var proteinID = this.getProteinID (chainID);
+            var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID);
+            var proteinName = this.model.get("clmsModel").get("participants").get(proteinID).name;
+            var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
+            proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
+            return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";
+        }
+        return "No Chain";
     },
         
     getProteinID: function (chainID) {
@@ -268,8 +277,11 @@
     getAlignIDs: function (proteinIDsObj) {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         return proteinIDsObj.map (function (pid) {
-            var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, pid.chainID);
-            return CLMSUI.modelUtils.make3DAlignID (distancesObj.pdbBaseSeqID, chainName, pid.chainID);
+            if (pid.proteinID) {
+                var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, pid.chainID);
+                return CLMSUI.modelUtils.make3DAlignID (distancesObj.pdbBaseSeqID, chainName, pid.chainID);
+            }
+            return null;
         }, this);
     },
         
@@ -340,21 +352,23 @@
     },
         
     invokeTooltip : function (evt, linkWrappers) {
-        var distanceMatrix = this.options.matrixObj.distanceMatrix;
-        linkWrappers.forEach (function (linkWrapper) {
-            linkWrapper.distance = distanceMatrix[linkWrapper.x][linkWrapper.y];
-            linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
-        });
-        linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
-        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
-        var linkDistances = linkWrappers.map (function (linkWrapper) { return linkWrapper.distanceFixed; });
-        
-        this.model.get("tooltipModel")
-            .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (crossLinks.length - 1))
-            .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance": linkDistances}))
-            .set("location", evt)
-        ;
-        this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change   
+        if (this.options.matrixObj) {
+            var distanceMatrix = this.options.matrixObj.distanceMatrix;
+            linkWrappers.forEach (function (linkWrapper) {
+                linkWrapper.distance = distanceMatrix[linkWrapper.x][linkWrapper.y];
+                linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
+            });
+            linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
+            var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
+            var linkDistances = linkWrappers.map (function (linkWrapper) { return linkWrapper.distanceFixed; });
+
+            this.model.get("tooltipModel")
+                .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (crossLinks.length - 1))
+                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance": linkDistances}))
+                .set("location", evt)
+            ;
+            this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
+        }
     },
         
     
@@ -507,7 +521,7 @@
 
             var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
             var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
-
+            
             for (var crossLink of filteredCrossLinks2) {
                 var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
                 if (self.filterVal === undefined || est >= self.filterVal) {
@@ -522,9 +536,11 @@
                         // 0-index these indices
                         fromResIndex--;
                         toResIndex--;
-
+                       
                         var fromDistArr = distanceMatrix[fromResIndex];
                         var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
+
+                        
                         if (highlightedCrossLinkIDs.has (crossLink.id)) {
                             ctx.fillStyle = self.options.highlightedColour;
                         }
@@ -578,10 +594,8 @@
     },
         
     getSeqLengthData: function () {
-        var distanceMatrix = this.options.matrixObj.distanceMatrix;
-        var seqLengthA = distanceMatrix ? distanceMatrix.length : 0;
-        var seqLengthB = distanceMatrix ? distanceMatrix[0].length : 0;
-        return {lengthA: seqLengthA, lengthB: seqLengthB};
+        var size = this.options.matrixObj ? this.options.matrixObj.size : [0, 0];
+        return {lengthA: size[0], lengthB: size[1]};
     },
     
     // called when things need repositioned, but not re-rendered from data

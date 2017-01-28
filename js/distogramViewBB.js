@@ -20,7 +20,7 @@
             CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
             
             var defaultOptions = {
-                xlabel: "Distance",
+                xlabel: "Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Random"],
                 scaleOthersTo: "Cross Links",
@@ -41,7 +41,7 @@
             mainDivSel.append("div").style("height", "40px")
                 .append("button")
                 .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text("Export Graphic");
+                .text(CLMSUI.utils.commonLabels.downloadImg+"SVG");
 
             var chartDiv = mainDivSel.append("div")
                 .attr("class", "panelInner distoDiv")
@@ -91,7 +91,10 @@
                 },
                 axis: {
                     x: {
-                        label: this.options.xlabel,
+                        label: {
+                            text: this.options.xlabel,
+                            position: "outer-right",
+                        },
                         //max: this.options.maxX,
                         padding: {
                           left: 0,
@@ -219,7 +222,7 @@
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX));
+            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (1 /*Math.ceil(extent[1])*/, this.options.maxX));
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
@@ -254,7 +257,6 @@
             var distArr = this.getRelevantCrossLinkDistances();
             //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((distArr.length * 100) || 10000, 100000));
-            //console.log ("randArr", randArr);
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)
