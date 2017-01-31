@@ -23,6 +23,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             //validation status
             A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
             //fdr
+            fdrThreshold: 0.05,
             interFDRCut: undefined,
             intraFDRCut: undefined,
             //navigation
@@ -74,7 +75,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 					return false;
 				}
 			}
-			
+
+
+			//temp
             var aaApart = +this.get("aaApart");
             if (!isNaN(aaApart)) {
                  //if not ambig && is selfLink
@@ -91,13 +94,20 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             }
             
             var pepLengthFilter = this.get("pepLength");
+            //~ return match.matchedPeptides[0].sequence.length > pepLengthFilter
+                //~ && match.matchedPeptides[1].sequence.length > pepLengthFilter;
             if (!isNaN(pepLengthFilter)) {
-                 //if not ambig && is selfLink
                 if (match.matchedPeptides[0].sequence.length <= pepLengthFilter || match.matchedPeptides[1].sequence.length <= pepLengthFilter) {
                     return false;
                 }
+                //~ var test = match.matchedPeptides[0].sequence.length > pepLengthFilter
+                //~ && match.matchedPeptides[1].sequence.length > pepLengthFilter;
+                //~ 
+				//~ if (test === false) {
+						//~ return false;
+					//~ }
             }
-            
+
             return true;
             
        },
@@ -118,8 +128,6 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (match.autovalidated && this.get("AUTO")) return true;
 			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
             return false;
-			
-
 		},
        
        navigationFilter: function (match) {
@@ -238,7 +246,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				return true;
 			}
         },
-        
+       /*
        filterLink: function (link) {
             if (link.meta && link.meta.meanMatchScore !== undefined) {
                 var fdr = link.meta.meanMatchScore;
@@ -246,7 +254,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
                 return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
             }
             return false;
-        }
+        }*/
     }),
 
     // I want MinigramBB to be model agnostic so I can re-use it in other places

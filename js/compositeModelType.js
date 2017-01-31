@@ -8,20 +8,32 @@
 			var filterModel = this.get("filterModel");
             var crossLinks = this.get("clmsModel").get("crossLinks").values();
 
-			//if its FDR based filtering, set all matches fdrPass att to false
+			// if its FDR based filtering,
+			// set all matches fdrPass att to false, then calc
 			if (filterModel && filterModel.get("fdrMode")) {
 				var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 				for (match of matches.values()){
 					match.fdrPass = false;
 				}
+				var result = CLMSUI.fdr(this.get("clmsModel").get("crossLinks"), {threshold: filterModel.get("fdrThreshold")});
+
+				filterModel.set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr }, {silent: true});
+				
 			}
 
             for (var crossLink of crossLinks) {
                 if (filterModel) {
 					crossLink.filteredMatches_pp = [];
-					
 					if (filterModel.get("fdrMode") === true) {
-						var pass = filterModel.filterLink (crossLink);
+						var pass;// = filterModel.filterLink (crossLink);
+						if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
+							var fdr = crossLink.meta.meanMatchScore;
+							var intra = CLMSUI.modelUtils.isIntraLink (crossLink);
+							var cut = intra ? result[1].fdr : result[0].fdr;
+							pass = fdr >= cut;
+							
+						}
+            
 						if (pass) {
 							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
 							crossLink.ambiguous = 
@@ -33,6 +45,9 @@
 								filteredMatch_pp.match.fdrPass = true;
 							}    
 						}
+						//~ else {
+							//~ alert("i just failed fdr check");
+						//~ }
 					} else {
 						crossLink.ambiguous = true;
 						crossLink.confirmedHomomultimer = false;
@@ -41,7 +56,8 @@
 							//~ console.log(filterModel.subsetFilter(match),
 										//~ filterModel.validationStatusFilter(match),
 										//~ filterModel.navigationFilter(match));
-							var result = filterModel.subsetFilter(match)
+							var result = match.is_decoy === false &&
+											filterModel.subsetFilter(match)
 											&& filterModel.validationStatusFilter(match)
 											&& filterModel.navigationFilter(match);
 							if (result === true){

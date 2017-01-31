@@ -617,16 +617,21 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
 
-
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",
         model: CLMSUI.compositeModelInst,
     });
 
-    new CLMSUI.utils.FDRViewBB ({
+    new CLMSUI.FDRViewBB ({
         el: "#fdrPanel",
-        displayEventName: "fdrShow",
+        //displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
+    });
+    
+    new CLMSUI.FDRSummaryViewBB ({
+        el: "#fdrSummaryPlaceholder",
+        //displayEventName: "fdrShow",
+        model: CLMSUI.compositeModelInst.get("filterModel"),
     });
 };

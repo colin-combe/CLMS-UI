@@ -3,13 +3,15 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.fdr = function (crossLinks, options) {
     
     var threshold = options.threshold;  // can be legitimately undefined to have no fdr   
-    
+    var peptideLength = 4;
     // Work out link score based on a function of the related match scores
     // Ignore matches that don't meet data subset filter
     var defaultScoreCalcFunc = function (crossLink) {      // default function is based on quadratic mean (rms)
         var filtered = crossLink.matches_pp
             .filter (function (match_pp) {
-                return CLMSUI.compositeModelInst.get("filterModel").subsetFilter(match);
+                return CLMSUI.compositeModelInst.get("filterModel").subsetFilter(match_pp.match);
+                //~ return match_pp.match.matchedPeptides[0].sequence.length > peptideLength
+                //~ && match_pp.match.matchedPeptides[1].sequence.length > peptideLength;
             })
         ;
         return Math.sqrt (d3.mean (filtered, function(match_pp) { return match_pp.match.score * match_pp.match.score; }) || 0);
@@ -37,19 +39,21 @@ CLMSUI.fdr = function (crossLinks, options) {
     
     // What kind of link is this, TT, DT or DD? (0, 1 or 2)
     function decoyClass (link) {
-        return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein && link.toProtein.is_decoy ? 1 : 0);
+        return (link.fromProtein.is_decoy ? 1 : 0) + (/*link.toProtein &&*/ link.toProtein.is_decoy ? 1 : 0);
     }
     
     // Loop through both groups and work out the fdr
     var fdrResult = linkArrs.map (function (linkArr, index) {
-        var fdr = 1, t = [0,0,0], i = 0, cutoffIndex = 0, runningFdr = [], fdrScoreCutoff = undefined;
+        var fdr = 1, t = [0,0,0,0], i = 0, cutoffIndex = 0, runningFdr = [], fdrScoreCutoff = undefined;
         
         if (linkArr.length && threshold !== undefined) {
             // first run, count tt, td, and dd
             linkArr.forEach (function (link) {
                 if (link.meta.meanMatchScore > 0) {
                     t[decoyClass(link)]++;
-                }
+                } else {
+					t[3]++;
+				}
             });
 
             console.log ("totals tt td dd", t, linkArr);

@@ -175,9 +175,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
 
-        var fdrElem =  mainDivSel.append ("div")
+		//following may not be best practice, its here to get the placeholder divs in the right place in the filter div (the grey bar at bottom)
+        mainDivSel.append ("div")
             .attr("class", "filterControlGroup")
             .attr("id", "fdrPanel")
+        ;
+		mainDivSel.append ("div")
+            .attr("class", "filterControlGroup")
+            .attr("id", "fdrSummaryPlaceholder")
         ;
 
         var navDivSel = mainDivSel.append ("div")
@@ -278,13 +283,64 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 });
 
 
+CLMSUI.FDRViewBB = Backbone.View.extend  ({
+    initialize: function () {
+        
+        var chartDiv = d3.select(this.el);
+        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic FDR Calculation</p><span></span></div>");
+        var self = this;
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
+        var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
+
+        chartDiv.select("span").selectAll("label.fixed").data(options)
+            .enter()
+            .append("label")
+            .classed ("horizontalFlow fixed", true)
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text(labelFunc)
+                .append("input")
+                    .attr("type", "radio")
+                    .attr("value", function(d) { return d; })
+                    .attr("name", "fdrPercent")
+                    .property("checked", function(d) { console.log("D!", d, d === 0.05); return d === 0.05; })
+                    .on ("click", function(d) {
+                        d3.select(self.el).select("input[type='number']").property("value", "");
+                        self.model.set("fdrThreshold", d);
+                    })
+        ;
+
+        
+        
+        chartDiv.select("span")
+            .append("label")
+            .attr("class", "horizontalFlow")
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text("Other %")
+                .append("input")
+                    .attr("type", "number")
+                    .attr("min", 0)
+                    .attr("max", 100)
+                    .attr("step", 1)
+                    .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                        d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
+                        self.model.set("fdrThreshold", (+this.value) / 100);
+                    })
+        ;
+
+        chartDiv.append("div").attr("class", "fdrResult");//.style("display", "none");
+        return this;
+    }
+});
+
 CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
         this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
-        this
-            .listenTo (this.model, "filteringDone", this.render)
+        this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
     },
@@ -295,4 +351,50 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         mainDivSel.text (this.template ({total: filteredCrossLinks.size}));
         return this;
     },
+});
+
+CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
+    events: {},
+
+    initialize: function () {
+        //this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
+		d3.select(this.el).append("p").classed("interFdrCutElem");
+        d3.select(this.el).append("p").classed("intraFdrCutElem");        
+        this.listenTo (this.model, "change", this.render)
+            .render()
+        ;
+    },
+
+    render: function () {
+        var mainDivSel = d3.select(this.el);
+        mainDivSel.select("interFdrCutElem").text(
+			"Inter cutoff for "+ this.model.get("fdrThreshold") +" is "
+			+ this.model.get("interFDRCut"));
+        mainDivSel.select("intraFdrCutElem").text(
+			"Inter cutoff for "+ this.model.get("fdrThreshold") +" is "
+			+ this.model.get("interFDRCut"));
+        return this;
+    },
+
+    
+       /* function doFDR (d) {
+            self.lastSetting = d;
+            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
+            chartDiv.select(".fdrResult")
+                //~ .style("display", "block")
+                .html("")
+                .selectAll("p").data(result)
+                    .enter()
+                    .append("p")
+
+            ;
+            //~ chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
+
+            // bit that communicates to rest of system
+            self.model.get("filterModel")
+                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
+            ;
+
+            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
+        } */
 });
