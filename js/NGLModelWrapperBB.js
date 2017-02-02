@@ -30,8 +30,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     },
     
     setupLinks: function (clmsModel) {
-        var crossLinks = clmsModel.get("crossLinks");
-        var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks); 
+        //~ var crossLinks = clmsModel.get("crossLinks");
+        var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks); 
         this.setLinkList (filteredCrossLinks);
         var distancesObj = this.makeDistances ();   
         

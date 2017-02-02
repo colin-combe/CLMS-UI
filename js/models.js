@@ -279,7 +279,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     BlosumModel: Backbone.Model.extend ({
         initialize: function() {
-            console.log ("Blosum model initialised", this);
+            //console.log ("Blosum model initialised", this);
         },
     }),
 

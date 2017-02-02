@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.fdr = function (crossLinks, options) {
+CLMSUI.fdr = function (crossLinksArr, options) {
     
     var threshold = options.threshold;  // can be legitimately undefined to have no fdr   
     var peptideLength = 4;
@@ -18,19 +18,21 @@ CLMSUI.fdr = function (crossLinks, options) {
     };
     var scoreCalcFunc = options.scoreCalcFunc || defaultScoreCalcFunc;
     
-    crossLinks.forEach (function (crossLink) {
+    var clCount = crossLinksArr.length;
+    for (var i = 0; i < clCount; ++i) {
+		var crossLink = crossLinksArr[i];
         crossLink.meta = crossLink.meta || {};
         crossLink.meta.meanMatchScore = scoreCalcFunc (crossLink);
-    });
+    };
     
     // Divide crosslinks into inter and intra-protein groups, and sort them by the scores just calculated
-    var clinkArr = Array.from (crossLinks.values());
     var linkArrs = [[],[]];
     var arrLabels = ["Inter", "Intra"];
-    clinkArr.forEach (function (crossLink) {
-        var intra = CLMSUI.modelUtils.isIntraLink (crossLink) ? 1 : 0;
+    for (var i = 0; i < clCount; ++i) {
+		var crossLink = crossLinksArr[i];
+		var intra = CLMSUI.modelUtils.isIntraLink (crossLink) ? 1 : 0;
         linkArrs[intra].push(crossLink);
-    });
+    };
     linkArrs.forEach (function (linkArr) { 
         linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; }); 
     });  // in ascending order (lowest first)
@@ -85,7 +87,7 @@ CLMSUI.fdr = function (crossLinks, options) {
             var lastLink = linkArr[cutoffIndex];
             fdrScoreCutoff = nonzero ? lastLink.meta.meanMatchScore : 0.001;
 
-            if (true) {
+            if (false) {
                 console.log ("post totals tt td dd (should be zero)", t);
                 console.log ("runningFdr", runningFdr);
                 console.log ("fdr of",threshold,"met or lower at index",cutoffIndex,"link",lastLink,"and fdr score", fdrScoreCutoff);

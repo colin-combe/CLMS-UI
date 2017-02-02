@@ -300,7 +300,7 @@ CLMSUI.modelUtils = {
         return randId;
     },
     
-    getFilteredNonDecoyCrossLinks: function (crossLinks) {
+/*    getFilteredNonDecoyCrossLinks: function (crossLinks) {
         var filteredCrossLinks = [];
         crossLinks.forEach (function (value) {
             if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
@@ -308,7 +308,7 @@ CLMSUI.modelUtils = {
             }
         });
         return filteredCrossLinks;
-    },
+    }, */
     
     isReverseProtein: function (prot1, prot2) {
         return ((prot1.name === "REV_"+prot2.name || "REV_"+prot1.name === prot2.name) && (prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy));

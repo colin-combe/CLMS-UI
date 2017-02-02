@@ -6,8 +6,9 @@
     CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend ({
         applyFilter: function () {
 			var filterModel = this.get("filterModel");
-            var crossLinks = this.get("clmsModel").get("crossLinks").values();
-
+            var crossLinksArr = Array.from(this.get("clmsModel").get("crossLinks").values());
+			var clCount = crossLinksArr.length;
+			
 			// if its FDR based filtering,
 			// set all matches fdrPass att to false, then calc
 			if (filterModel && filterModel.get("fdrMode")) {
@@ -15,14 +16,15 @@
 				for (match of matches.values()){
 					match.fdrPass = false;
 				}
-				var result = CLMSUI.fdr(this.get("clmsModel").get("crossLinks"), {threshold: filterModel.get("fdrThreshold")});
+				var result = CLMSUI.fdr(crossLinksArr, {threshold: filterModel.get("fdrThreshold")});
 
 				filterModel.set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr }, {silent: true});
 				
 			}
 
-            for (var crossLink of crossLinks) {
-                if (filterModel) {
+            for (var i = 0; i < clCount; ++i) {
+				var crossLink = crossLinksArr[i];
+				if (filterModel) {
 					crossLink.filteredMatches_pp = [];
 					if (filterModel.get("fdrMode") === true) {
 						var pass;// = filterModel.filterLink (crossLink);
@@ -77,30 +79,44 @@
 				}
             }
             
-            this.filteredCrossLinks = new Map;
- 
-            //~ if (!crossLinks) {
-            var crossLinks = this.get("clmsModel").get("crossLinks");
-            //~ }
-
-            crossLinks.forEach (function (value, key) {
-                if (!value.filteredMatches_pp
-						|| value.filteredMatches_pp.length > 0) {
-							this.filteredCrossLinks.set (key, value);
+            this.filteredCrossLinks = [];
+			this.filteredNotDecoyNotLinearCrossLinks = [];
+			for (var i = 0; i < clCount; ++i) {
+				var crossLink = crossLinksArr[i];
+				if (crossLink.filteredMatches_pp.length) {
+					this.filteredCrossLinks.push(crossLink);
+					if (!crossLink.fromProtein.is_decoy && crossLink.toProtein && !crossLink.toProtein.is_decoy) {
+						this.filteredNotDecoyNotLinearCrossLinks.push(crossLink);
+					}
 				}
-            }, this);
+            };
             
-            //foreach participant hide if no links
-            var participants = this.get("clmsModel").get("participants").values();
-            for (participant of participants) {
-				 //todo? tidy up to unify ways for accessing filtered non decoy links
-				 var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (participant.crossLinks);
-				 if (filteredCrossLinks.length > 0) {
+            var participantsArr = Array.from(this.get("clmsModel").get("participants").values());
+            var participantCount = participantsArr.length;           
+            
+            for (var p = 0; p < participantCount; ++p) {
+				 var participant = participantsArr[p]; 
+				 participant.filteredNotDecoyNotLinearCrossLinks = [];
+				 
+				 var partCls = participant.crossLinks;
+				 var partClCount = partCls.length;
+				 
+				 for (var pCl = 0; pCl < partClCount; ++pCl) {
+					var pCrossLink = partCls[pCl];
+					if (pCrossLink.filteredMatches_pp.length 
+							&& !pCrossLink.fromProtein.is_decoy 
+							&& pCrossLink.toProtein 
+							&& !pCrossLink.toProtein.is_decoy) {
+						participant.filteredNotDecoyNotLinearCrossLinks.push (pCrossLink);
+					}
+				}
+				
+				if (participant.filteredNotDecoyNotLinearCrossLinks) {
 					 participant.hidden = false;
-				 }
-				 else {
+				}
+				else {
 					 participant.hidden = true;
-				 }			 
+				}			 
 			}
 			
 			this.trigger ("filteringDone");

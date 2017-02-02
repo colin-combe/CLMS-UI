@@ -336,8 +336,8 @@
         },
 
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
-            var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+            //var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
             startPos = startPos || 0;
             endPos = endPos || 100000;
@@ -401,12 +401,12 @@
                 console.log ("re-rendering circular view");
 
                 var interactors = this.model.get("clmsModel").get("participants");
-                var crossLinks = this.model.get("clmsModel").get("crossLinks");
+                //var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
 
                 var filteredInteractors = this.filterInteractors (interactors);
-                var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 
                 // If only one protein hide some options, and make links go in middle
                 d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")

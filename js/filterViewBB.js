@@ -304,7 +304,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     .attr("type", "radio")
                     .attr("value", function(d) { return d; })
                     .attr("name", "fdrPercent")
-                    .property("checked", function(d) { console.log("D!", d, d === 0.05); return d === 0.05; })
+                    .property("checked", function(d) { return d === 0.05; })
                     .on ("click", function(d) {
                         d3.select(self.el).select("input[type='number']").property("value", "");
                         self.model.set("fdrThreshold", d);
