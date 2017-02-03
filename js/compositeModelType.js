@@ -13,8 +13,9 @@
 			// set all matches fdrPass att to false, then calc
 			if (filterModel && filterModel.get("fdrMode")) {
 				var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
-				for (match of matches.values()){
-					match.fdrPass = false;
+				var matchesLen = matches.length;
+				for (var m = 0; m < matchesLen; ++m){
+					matches[m].fdrPass = false;
 				}
 				var result = CLMSUI.fdr(crossLinksArr, {threshold: filterModel.get("fdrThreshold")});
 
@@ -111,7 +112,7 @@
 					}
 				}
 				
-				if (participant.filteredNotDecoyNotLinearCrossLinks) {
+				if (participant.filteredNotDecoyNotLinearCrossLinks.length > 0) {
 					 participant.hidden = false;
 				}
 				else {

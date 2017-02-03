@@ -7,16 +7,18 @@ CLMSUI.modelUtils = {
     
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
-        matchesArr.forEach (function(m) { 
-            arrs[m.is_decoy? 1 : 0].push (m.score);
-        });
+        var matchesLen = matchesArr.length;
+        for (var m = 0; m < matchesLen; ++m) { 
+			var match = matchesArr[m];
+            arrs[match.is_decoy? 1 : 0].push (match.score);
+        };
         return arrs;
     },
     
-    // lots of scores, what's the extent (min and max values)?
+   /* // lots of scores, what's the extent (min and max values)?
     getScoreExtent: function (matchesArr) {
         return d3.extent (Array.from(matchesArr.values()).map (function(d) { return d.score; }));
-    },
+    }, */
      
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
@@ -285,12 +287,12 @@ CLMSUI.modelUtils = {
         return pairings;
     },
     
-    aggregateCrossLinkFilteredMatches: function (xlinkarr) {
+ /*   aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
             return xlink.filteredMatches_pp;
         });
-        return [].concat.apply([], nestedArr);
-    },
+        return [].concat.apply([], nestedArr); //bad things happen for search inc decoys
+    }, */
     
     getRandomSearchId : function (clmsModel, match) {
         var searchId = match.searchId;

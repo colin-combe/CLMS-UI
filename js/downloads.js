@@ -68,7 +68,8 @@ function getMatchesCSV () {
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
     var matchCount = matches.length;
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    for (var match of matches.values()){
+    for (var m = 0; m < matchCount; ++m){
+		var match = matches[m];
         var result;
         if (filterModel.get("fdrMode") === true) {
 			result = match.fdrPass;

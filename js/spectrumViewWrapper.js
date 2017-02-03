@@ -157,14 +157,35 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
         this.listenTo (this.model, "change:selection", function (model, selection) {
-			var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
+			/* var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
 
             if (fMatches.length === 0) {
                 this.model.set ("lastSelectedMatch", {match: null, directSelection: false});
             } else {
                 fMatches.sort (function(a,b) { return b.match.score - a.match.score; });
                 this.model.set ("lastSelectedMatch", {match: fMatches[0].match, directSelection: false});
-            }
+            } */
+            
+            var highestScoringMatch = null
+            
+            var selectionLen = selection.length;
+            
+            if (selectionLen > 0) {
+				highestScoringMatch = selection[0].filteredMatches_pp[0];
+				
+				for (var sCl = 0; sCl < selectionLen; ++sCl) {
+					var filteredMatches_pp = selection[cSl].filteredMatches_pp;
+					var fmLen = filteredMatches_pp.length;
+					for (var fm = 0; fm < fmLen; ++fm) {
+						var match = filteredMatches_pp[fm];
+						if (match.score > hightestScoringMatch.score) {
+							highestScoringMatch = match;
+						}
+					}
+				}
+			}
+            this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
+
         });
 
         this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
@@ -225,7 +246,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);     
         
         var altModel = this.alternativesModel.get("clmsModel");
-        var keepDisplayNone = (altModel && altModel.get("matches").size === 1); // altModel check as sometime clmsModel isn't populated (undefined)
+        var keepDisplayNone = (altModel && altModel.get("matches").length === 1); // altModel check as sometime clmsModel isn't populated (undefined)
         
         var alts = d3.select("#alternatives");
         var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;

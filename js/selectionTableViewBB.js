@@ -241,11 +241,12 @@
                 .on("click", function(d) {
                     var mainModel = self.options.mainModel;
                     if (mainModel) {
-						if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
-							d3.select(".validationControls").style("display", "block");
-						} else {
-							d3.select(".validationControls").style("display", "none");
-                        }
+						//TODO: fix?
+						//~ if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
+							//~ d3.select(".validationControls").style("display", "block");
+						//~ } else {
+							//~ d3.select(".validationControls").style("display", "none");
+                        //~ }
 						mainModel.set ("lastSelectedMatch", {match: d, directSelection: true});
                     } else {
                     	d3.select(".validationControls").style("display", "block");

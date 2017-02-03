@@ -137,9 +137,12 @@ CLMSUI.init.modelsEssential = function (options) {
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
      // set original cutoff to be the extent of all scores (rounded up and down nicely)
-     cutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
-        return Math[i === 0 ? "floor" : "ceil"](ex);
-     }),
+     matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
+				Math.ceil(clmsModelInst.get("maxScore"))],
+     
+     //~ CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
+        //~ return Math[i === 0 ? "floor" : "ceil"](ex);
+     //~ }),
      scores: clmsModelInst.get("scores")
     });
 
@@ -351,7 +354,7 @@ CLMSUI.init.viewsEssential = function (options) {
                             .applyFilter()
                             .set ("lastSelectedMatch", {match: match, directSelection: true})
                         ;
-                        d3.select("#alternatives").style("display", altModel.get("matches").size === 1 ? "none" : "block");
+                        d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
                         self.alternativesModel.set("selection", allCrossLinks);
                         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
                     }
@@ -407,7 +410,7 @@ CLMSUI.init.viewsEssential = function (options) {
                     spectrumWrapper.alternativesModel.set("clmsModel", altModel);
                     spectrumWrapper.alternativesModel.applyFilter();
                     spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
-                    if (altModel.get("matches").size == 1) {
+                    if (altModel.get("matches").length == 1) {
                         d3.select("#alternatives").style("display", "none");
                         spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
                         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
