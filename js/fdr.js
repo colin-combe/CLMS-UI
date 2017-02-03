@@ -4,12 +4,13 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     
     var threshold = options.threshold;  // can be legitimately undefined to have no fdr   
     var peptideLength = 4;
+    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
     // Work out link score based on a function of the related match scores
     // Ignore matches that don't meet data subset filter
     var defaultScoreCalcFunc = function (crossLink) {      // default function is based on quadratic mean (rms)
         var filtered = crossLink.matches_pp
             .filter (function (match_pp) {
-                return CLMSUI.compositeModelInst.get("filterModel").subsetFilter(match_pp.match);
+                return filterModel.subsetFilter(match_pp.match);
                 //~ return match_pp.match.matchedPeptides[0].sequence.length > peptideLength
                 //~ && match_pp.match.matchedPeptides[1].sequence.length > peptideLength;
             })

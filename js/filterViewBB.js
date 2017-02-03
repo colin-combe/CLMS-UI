@@ -348,7 +348,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     render: function () {
         var mainDivSel = d3.select(this.el);
         var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//getFilteredCrossLinks();
-        mainDivSel.text (this.template ({total: filteredCrossLinks.length}));
+        mainDivSel.text ((this.template ({total: filteredCrossLinks.length})) + "(" + this.model.filteredCrossLinks.length + " inc. decoys)");//sorry, to tidy
         return this;
     },
 });

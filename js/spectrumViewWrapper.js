@@ -171,19 +171,20 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             var selectionLen = selection.length;
             
             if (selectionLen > 0) {
-				highestScoringMatch = selection[0].filteredMatches_pp[0];
+				highestScoringMatch = selection[0].filteredMatches_pp[0].match;
 				
 				for (var sCl = 0; sCl < selectionLen; ++sCl) {
-					var filteredMatches_pp = selection[cSl].filteredMatches_pp;
+					var filteredMatches_pp = selection[sCl].filteredMatches_pp;
 					var fmLen = filteredMatches_pp.length;
 					for (var fm = 0; fm < fmLen; ++fm) {
-						var match = filteredMatches_pp[fm];
-						if (match.score > hightestScoringMatch.score) {
+						var match = filteredMatches_pp[fm].match;
+						if (match.score > highestScoringMatch.score) {
 							highestScoringMatch = match;
 						}
 					}
 				}
 			}
+			
             this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
 
         });

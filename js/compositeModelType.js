@@ -38,7 +38,13 @@
 						}
             
 						if (pass) {
-							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
+							
+							crossLink.filteredMatches_pp = crossLink.matches_pp.filter(
+								function (value) {
+									filterModel.subsetFilter(value.match);
+								}
+							);
+
 							crossLink.ambiguous = 
 								!crossLink.filteredMatches_pp.some (function (matchAndPepPos) {
 									return matchAndPepPos.match.crossLinks.length === 1;
