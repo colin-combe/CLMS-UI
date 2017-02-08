@@ -22,6 +22,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             pepLength: 4,
             //validation status
             A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
+            decoys: false,
             //fdr
             fdrThreshold: 0.05,
             interFDRCut: undefined,

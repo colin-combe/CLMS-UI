@@ -65,7 +65,7 @@
 							//~ console.log(filterModel.subsetFilter(match),
 										//~ filterModel.validationStatusFilter(match),
 										//~ filterModel.navigationFilter(match));
-							var result = match.is_decoy === false &&
+							var result = /*match.is_decoy === false && */
 											filterModel.subsetFilter(match)
 											&& filterModel.validationStatusFilter(match)
 											&& filterModel.navigationFilter(match);

@@ -171,15 +171,17 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             var selectionLen = selection.length;
             
             if (selectionLen > 0) {
-				highestScoringMatch = selection[0].filteredMatches_pp[0].match;
-				
-				for (var sCl = 0; sCl < selectionLen; ++sCl) {
-					var filteredMatches_pp = selection[sCl].filteredMatches_pp;
-					var fmLen = filteredMatches_pp.length;
-					for (var fm = 0; fm < fmLen; ++fm) {
-						var match = filteredMatches_pp[fm].match;
-						if (match.score > highestScoringMatch.score) {
-							highestScoringMatch = match;
+				if (selection[0].filteredMatches_pp.length > 0) {
+					highestScoringMatch = selection[0].filteredMatches_pp[0].match;
+					
+					for (var sCl = 0; sCl < selectionLen; ++sCl) {
+						var filteredMatches_pp = selection[sCl].filteredMatches_pp;
+						var fmLen = filteredMatches_pp.length;
+						for (var fm = 0; fm < fmLen; ++fm) {
+							var match = filteredMatches_pp[fm].match;
+							if (match.score > highestScoringMatch.score) {
+								highestScoringMatch = match;
+							}
 						}
 					}
 				}
@@ -253,6 +255,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
         alts.attr("style", "width:"+w+"px;"+(keepDisplayNone ? " display: none;" : "")); //dont know why d3 style() aint working
         // mjg - i dunno why d3.style doesn't work either - i might replace later the layout of the wrapper with a flexbox based layout to see if that helps.
+        //cc - yes, probably better, theres old code of mine scattered around that should use flexbox also...
         // anyways at the moment replacing the entire style attribute wipes out display: none when single alt explanation so I've added the above bit of code.
         //alts.style("width", w+"px");
         return this;

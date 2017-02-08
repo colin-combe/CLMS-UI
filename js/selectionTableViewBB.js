@@ -76,7 +76,7 @@
                 //~ "protein2": function () { return false; },
                 //~ "pepPos1": function () { return false; },
                 //~ "pepPos2": function () { return false; },
-                "autovalidated": function () { return CLMS.model.autoValidatedFound; },
+                "autovalidated": function () { return CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");},
                 "validated": function () { return true;} //CLMS.model.manualValidatedFound; },
             };
 
