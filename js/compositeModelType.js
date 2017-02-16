@@ -66,9 +66,9 @@
 										//~ filterModel.validationStatusFilter(match),
 										//~ filterModel.navigationFilter(match));
 							var result = /*match.is_decoy === false && */
-											filterModel.subsetFilter(match)
-											&& filterModel.validationStatusFilter(match)
-											&& filterModel.navigationFilter(match);
+											filterModel.subsetFilter(match);
+											//~ && filterModel.validationStatusFilter(match)
+											//~ && filterModel.navigationFilter(match);
 							if (result === true){
 								crossLink.filteredMatches_pp.push(matchAndPepPos);
 								if (match.crossLinks.length === 1) {

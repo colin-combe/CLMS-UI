@@ -47,9 +47,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         subsetFilter: function (match) {
 			//linears? - if linear and linears not selected return false
             if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
-			//cross-links? - if xl and xls not selected return false
+           //cross-links? - if xl and xls not selected return false
             if (match.linkPos1 > 0 && this.get("crosslinks") == false) return false; 
-
+ 			
 			//ambigs? - if ambig's not selected and match is ambig return false
 			if (this.get("ambig") == false) {
 				if (match.isAmbig()) return false;
@@ -83,8 +83,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (!isNaN(aaApart)) {
                  //if not ambig && is selfLink
                 if (match.confirmedHomomultimer === false
-						&& match.matchedPeptides[0].prt.length == 1 && match.matchedPeptides[1].prt.length == 1
-                        && match.matchedPeptides[0].prt[0] == match.matchedPeptides[1].prt[0]) {
+						&& match.isAmbig() === false//match.matchedPeptides[0].prt.length == 1 && match.matchedPeptides[1].prt.length == 1
+                        && match.crossLinks[0].isSelfLink()){//match.matchedPeptides[0].prt[0] == match.matchedPeptides[1].prt[0]) {
 					var unambigCrossLink = match.crossLinks[0];
                     var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
 					if (calc < aaApart){
@@ -98,15 +98,10 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             //~ return match.matchedPeptides[0].sequence.length > pepLengthFilter
                 //~ && match.matchedPeptides[1].sequence.length > pepLengthFilter;
             if (!isNaN(pepLengthFilter)) {
-                if (match.matchedPeptides[0].sequence.length <= pepLengthFilter || match.matchedPeptides[1].sequence.length <= pepLengthFilter) {
+                if (match.matchedPeptides[0].sequence.length <= pepLengthFilter || 
+					(match.matchedPeptides[1] && match.matchedPeptides[1].sequence.length <= pepLengthFilter)) {
                     return false;
                 }
-                //~ var test = match.matchedPeptides[0].sequence.length > pepLengthFilter
-                //~ && match.matchedPeptides[1].sequence.length > pepLengthFilter;
-                //~ 
-				//~ if (test === false) {
-						//~ return false;
-					//~ }
             }
 
             return true;

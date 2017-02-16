@@ -102,7 +102,12 @@
                     "pepPos1": function(d) { return CLMSUI.utils.pepPosConcat (d, 0); },
                     "pepPos2": function(d) { return CLMSUI.utils.pepPosConcat (d, 1); },
                     "pepSeq1raw": function(d) { return d.matchedPeptides[0].seq_mods; },
-                    "pepSeq2raw": function(d) { return d.matchedPeptides[1].seq_mods; },
+                    "pepSeq2raw": function(d) { 
+						if (!d.matchedPeptides[1]) {
+							return "";
+						}
+						return d.matchedPeptides[1].seq_mods; 
+					},
                     "linkPos1": function(d) { return d.linkPos1; },
                     "linkPos2": function(d) { return d.linkPos2; },
                     "score": function (d) { return d.score; }

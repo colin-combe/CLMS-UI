@@ -3,11 +3,17 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.utils = {
     // return comma-separated list of protein names from array of protein ids
     proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
+		if (!d.matchedPeptides[matchedPeptideIndex]) {
+			return "";
+		}
         var pnames =  d.matchedPeptides[matchedPeptideIndex].prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;});
         return pnames.join(",");
     },
 
     pepPosConcat: function (d, matchedPeptideIndex) {
+        if (!d.matchedPeptides[matchedPeptideIndex]) {
+			return "";
+		}
         return d.matchedPeptides[matchedPeptideIndex].pos.join(", ");
     },
     
