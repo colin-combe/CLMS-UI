@@ -396,6 +396,9 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
+//seems like this somehow got duplicated?
+    
+/*
     spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
@@ -430,7 +433,7 @@ CLMSUI.init.viewsEssential = function (options) {
             //~ //this.model.clear();
         }
     });
-
+*/
         // Generate data export drop down
     new CLMSUI.DropDownMenuViewBB ({
         el: "#expDropdownPlaceholder",

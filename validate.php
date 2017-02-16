@@ -159,7 +159,7 @@ header('Content-type: text/html; charset=utf-8');
 										
 				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
 
-                //~ CLMSUI.vent.trigger ("spectrumShow", true);
+                //CLMSUI.vent.trigger ("spectrumShow", true);
                 
 				var allCrossLinks = Array.from(
 					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());

@@ -152,7 +152,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			//run name check
 			var runNameFilter = this.get("runName");
 			if (runNameFilter && 
-					match.runName.toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1){
+					match.runName().toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1){
 				return false;
 			}
 

@@ -9,8 +9,8 @@
 
 #spectrumControls label {
     display: inline-block;
-    padding-left: 1em;
-    padding-right: 1em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
 }
 
 #spectrumControls input {

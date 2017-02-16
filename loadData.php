@@ -92,7 +92,6 @@ echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\
 
 //Stored layouts
 if (count($searchId_randGroup) == 1) { // no saved layouts for aggregations at moment
-	//$firstSearchId = $searchId_randGroup[0]["id"];  // MJG. This just chucks an error and doesn't get used anywhere anyways
 	$layoutQuery = "SELECT t1.layout AS l "
 			. " FROM layouts AS t1 "
 			. " WHERE t1.search_id LIKE '" . $sid . "' "
@@ -201,7 +200,7 @@ else {
 			FROM matched_peptide mp WHERE ".$WHERE_matchedPeptide.") mp
 			ON sm.id = mp.match_id
 		INNER JOIN spectrum sp ON sm.spectrum_id = sp.id
-		ORDER BY score DESC, sm.id;";
+		ORDER BY score DESC, sm.id, mp.match_type;";
 }
 $startTime = microtime(true);
 $res = pg_query($query) or die('Query failed: ' . pg_last_error());

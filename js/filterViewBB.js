@@ -183,6 +183,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		mainDivSel.append ("div")
             .attr("class", "filterControlGroup")
             .attr("id", "fdrSummaryPlaceholder")
+            .style("display","none");
         ;
 
         var navDivSel = mainDivSel.append ("div")
