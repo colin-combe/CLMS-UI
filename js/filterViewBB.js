@@ -25,7 +25,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"FDR", "id":"fdrMode"},
             ],
             subsetToggles: [
-                {"label":"Decoy", "id":"decoys"},
                 {"label":"Linear", "id":"linears"},
                 {"label":"Cross-links", "id":"crosslinks"},
                 {"label":"Ambig.", "id":"ambig"},
@@ -41,7 +40,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
                 {"label":"Auto", "id":"AUTO"},
-                {"label":"Unval.", "id":"unval"}
+                {"label":"Unval.", "id":"unval"},
+                {"label":"Decoy", "id":"decoys"},              
             ],
             navigationFilters: [
                 {"label":"Peptide", "id":"pepSeq", "chars":7},

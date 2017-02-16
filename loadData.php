@@ -223,7 +223,7 @@ while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 			. '"pi":' . $peptideId . ','
 			. '"lp":'. $line["link_position"]. ','
 			. '"spec":' . $line["spectrum_id"] . ','
-			. '"sc":' . round($line["score"], 3) . ','
+			. '"sc":' . round($line["score"], 2) . ','
 			. '"si":' . $line["search_id"] . ','
 			. '"dc":"' . $line["is_decoy"] . '",';
 		$autoVal =  $line["autovalidated"];

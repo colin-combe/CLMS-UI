@@ -66,9 +66,14 @@
 										//~ filterModel.validationStatusFilter(match),
 										//~ filterModel.navigationFilter(match));
 							var result = /*match.is_decoy === false && */
-											filterModel.subsetFilter(match);
-											//~ && filterModel.validationStatusFilter(match)
-											//~ && filterModel.navigationFilter(match);
+											filterModel.subsetFilter(match)
+											&& filterModel.validationStatusFilter(match)
+											&& filterModel.navigationFilter(match);
+							var decoys = filterModel.get("decoys");
+							if (decoys === false && match.is_decoy === true){
+								result = false;
+							}
+							
 							if (result === true){
 								crossLink.filteredMatches_pp.push(matchAndPepPos);
 								if (match.crossLinks.length === 1) {
