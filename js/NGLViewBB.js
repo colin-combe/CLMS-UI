@@ -581,15 +581,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         // Hydrophobicity scheme but with red-blue colour scale
         var hscheme = function () {
-            var underScheme =  NGL.ColorMakerRegistry.getScheme ({scheme: "hydrophobicity", scale:"RdBu"});
+            var underScheme =  NGL.ColormakerRegistry.getScheme ({scheme: "hydrophobicity", scale:"RdBu"});
             
             this.atomColor = function (a) {
                 return underScheme.atomColor (a);
             };
         };
         
-        this.colorOptions.linkColourScheme = NGL.ColorMakerRegistry.addScheme (linkColourScheme, "xlink");
-        this.colorOptions.resHydroColourScheme = NGL.ColorMakerRegistry.addScheme (hscheme, "newHydro");
+        this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme (linkColourScheme, "xlink");
+        this.colorOptions.resHydroColourScheme = NGL.ColormakerRegistry.addScheme (hscheme, "newHydro");
         
         console.log ("this", this);
     },
