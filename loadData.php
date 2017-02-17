@@ -55,6 +55,11 @@ if (isset($_GET['spectrum'])) {
     $spectrum= (string) $_GET['spectrum'];
 }
 
+$lowestScore = 0;
+if (isset($_GET['lowestScore'])) {
+    $lowestScore= (float) $_GET['lowestScore'];
+}
+
 //keep the long identifier for this combination of searches
 echo '{"sid":"'.$sid.'",';
 
@@ -118,7 +123,7 @@ for ($i = 0; $i < count($searchId_randGroup); $i++) {
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
     $WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
 }
-$WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) ';
+$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND score >= '.$lowestScore.') ';
 $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
 
 if ($decoys == false){
