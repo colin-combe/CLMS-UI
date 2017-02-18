@@ -34,14 +34,12 @@
 							var intra = CLMSUI.modelUtils.isIntraLink (crossLink);
 							var cut = intra ? result[1].fdr : result[0].fdr;
 							pass = fdr >= cut;
-							
 						}
             
 						if (pass) {
-							
 							crossLink.filteredMatches_pp = crossLink.matches_pp.filter(
 								function (value) {
-									filterModel.subsetFilter(value.match);
+									return filterModel.subsetFilter(value.match);
 								}
 							);
 
