@@ -25,8 +25,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             decoys: false,
             //fdr
             fdrThreshold: 0.05,
-            interFDRCut: undefined,
-            intraFDRCut: undefined,
+            interFdrCut: undefined,
+            intraFdrCut: undefined,
             //navigation
             pepSeq: "",
             protNames: "",
@@ -247,7 +247,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (link.meta && link.meta.meanMatchScore !== undefined) {
                 var fdr = link.meta.meanMatchScore;
                 var intra = CLMSUI.modelUtils.isIntraLink (link);
-                return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
+                return fdr >= this.get (intra ? "intraFdrCut" : "interFdrCut");
             }
             return false;
         }*/

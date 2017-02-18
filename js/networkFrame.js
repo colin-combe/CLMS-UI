@@ -171,10 +171,10 @@ CLMSUI.init.modelsEssential = function (options) {
         this.applyFilter();
     });
 
-    CLMSUI.compositeModelInst.listenTo (filterModelInst, "change:fdrThreshold", function() {
+    /*CLMSUI.compositeModelInst.listenTo (filterModelInst, "change:fdrThreshold", function() {
 		alert("threshold Change");
         //this.applyFilter();
-    });
+    });*/
 
 };
 
@@ -643,6 +643,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     new CLMSUI.FDRSummaryViewBB ({
         el: "#fdrSummaryPlaceholder",
         //displayEventName: "fdrShow",
-        model: CLMSUI.compositeModelInst.get("filterModel"),
+        model: CLMSUI.compositeModelInst,
     });
 };

@@ -269,11 +269,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			d3.select("#matchScore").style("display","none");
 			d3.select("#navFilters").style("display","none");
 			d3.select("#fdrPanel").style("display","inline-block");
+			d3.select("#fdrSummaryPlaceholder").style("display","inline-block");
 		} else {
 			d3.select("#validationStatus").style("display","inline-block");
 			d3.select("#matchScore").style("display","inline-block");
 			d3.select("#navFilters").style("display","inline-block");
 			d3.select("#fdrPanel").style("display","none");
+			d3.select("#fdrSummaryPlaceholder").style("display","none");
 		}
 		this.model.set("fdrMode", fdrMode);
     },
@@ -289,7 +291,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
         
         var chartDiv = d3.select(this.el);
         // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic FDR Calculation</p><span></span></div>");
+        chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
         var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
@@ -331,7 +333,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     })
         ;
 
-        chartDiv.append("div").attr("class", "fdrResult");//.style("display", "none");
+        //chartDiv.append("div").attr("class", "fdrResult");//.style("display", "none");
         return this;
     }
 });
@@ -340,7 +342,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
+        this.template = _.template ("<%= total %> filtered crosslinks ( + <%= decoys %> decoys)");
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
@@ -349,7 +351,8 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     render: function () {
         var mainDivSel = d3.select(this.el);
         var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//getFilteredCrossLinks();
-        mainDivSel.text ((this.template ({total: filteredCrossLinks.length})) + "(" + this.model.filteredCrossLinks.length + " inc. decoys)");//sorry, to tidy
+        mainDivSel.text ((this.template ({total: filteredCrossLinks.length,
+				decoys: this.model.filteredCrossLinks.length - filteredCrossLinks.length})));
         return this;
     },
 });
@@ -359,21 +362,30 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
 
     initialize: function () {
         //this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
-		d3.select(this.el).append("p").classed("interFdrCutElem");
-        d3.select(this.el).append("p").classed("intraFdrCutElem");        
-        this.listenTo (this.model, "change", this.render)
+		d3.select(this.el).append("p").attr("id", "interFdrCutElem");
+        d3.select(this.el).append("p").attr("id","intraFdrCutElem");        
+        this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
     },
 
     render: function () {
         var mainDivSel = d3.select(this.el);
-        mainDivSel.select("interFdrCutElem").text(
-			"Inter cutoff for "+ this.model.get("fdrThreshold") +" is "
-			+ this.model.get("interFDRCut"));
-        mainDivSel.select("intraFdrCutElem").text(
-			"Inter cutoff for "+ this.model.get("fdrThreshold") +" is "
-			+ this.model.get("interFDRCut"));
+        var filterModel = this.model.get("filterModel");
+
+		var interCut = filterModel.get("interFdrCut");
+		if (interCut) { interCut = interCut.toFixed(2); }
+        var intraCut = filterModel.get("intraFdrCut");
+		if (intraCut) { intraCut = intraCut.toFixed(2); }
+        
+        var text = "Inter cutoff for "+ filterModel.get("fdrThreshold") +" is "
+			+ interCut;
+			console.log(text); 
+        var sel = d3.select("#interFdrCutElem");
+        sel.text(text);
+        d3.select("#intraFdrCutElem").text(
+			"Intra cutoff for "+ filterModel.get("fdrThreshold") +" is "
+			+ intraCut);
         return this;
     },
 

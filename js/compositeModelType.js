@@ -19,7 +19,7 @@
 				}
 				var result = CLMSUI.fdr(crossLinksArr, {threshold: filterModel.get("fdrThreshold")});
 
-				filterModel.set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr }, {silent: true});
+				filterModel.set({"interFdrCut": result[0].fdr, "intraFdrCut": result[1].fdr }, {silent: true});
 				
 			}
 
@@ -88,9 +88,12 @@
 					crossLink.filteredMatches_pp = crossLink.matches_pp;
 				}
             }
-            
+
+            //HI MARTIN - I'm caching things in these arrays,
+            // its maybe not a very nice design wise, lets look at again 
             this.filteredCrossLinks = [];
 			this.filteredNotDecoyNotLinearCrossLinks = [];
+			
 			for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];
 				if (crossLink.filteredMatches_pp.length) {
