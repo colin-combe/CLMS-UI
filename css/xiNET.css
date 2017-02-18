@@ -8,11 +8,10 @@
     pointer-events: auto;
 }
 
-.marquee {
-    fill-opacity:0.2;
-    stroke:#000;
-    stroke-dasharray:2,4;
-    vector-effect:non-scaling-stroke; /* not for FF */
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 /*you need this to stop horrible looking flickering of text as you drag*/

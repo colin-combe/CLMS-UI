@@ -7,16 +7,18 @@ CLMSUI.modelUtils = {
     
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
-        matchesArr.forEach (function(m) { 
-            arrs[m.is_decoy? 1 : 0].push (m.score);
-        });
+        var matchesLen = matchesArr.length;
+        for (var m = 0; m < matchesLen; ++m) { 
+			var match = matchesArr[m];
+            arrs[match.is_decoy? 1 : 0].push (match.score);
+        };
         return arrs;
     },
     
-    // lots of scores, what's the extent (min and max values)?
+   /* // lots of scores, what's the extent (min and max values)?
     getScoreExtent: function (matchesArr) {
         return d3.extent (Array.from(matchesArr.values()).map (function(d) { return d.score; }));
-    },
+    }, */
      
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
@@ -285,12 +287,12 @@ CLMSUI.modelUtils = {
         return pairings;
     },
     
-    aggregateCrossLinkFilteredMatches: function (xlinkarr) {
+ /*   aggregateCrossLinkFilteredMatches: function (xlinkarr) {
         var nestedArr = xlinkarr.map (function (xlink) {
             return xlink.filteredMatches_pp;
         });
-        return [].concat.apply([], nestedArr);
-    },
+        return [].concat.apply([], nestedArr); //bad things happen for search inc decoys
+    }, */
     
     getRandomSearchId : function (clmsModel, match) {
         var searchId = match.searchId;
@@ -300,7 +302,7 @@ CLMSUI.modelUtils = {
         return randId;
     },
     
-    getFilteredNonDecoyCrossLinks: function (crossLinks) {
+/*    getFilteredNonDecoyCrossLinks: function (crossLinks) {
         var filteredCrossLinks = [];
         crossLinks.forEach (function (value) {
             if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
@@ -308,14 +310,14 @@ CLMSUI.modelUtils = {
             }
         });
         return filteredCrossLinks;
-    },
+    }, */
     
     isReverseProtein: function (prot1, prot2) {
         return ((prot1.name === "REV_"+prot2.name || "REV_"+prot1.name === prot2.name) && (prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy));
     },
     
     isIntraLink: function (crossLink) {
-         return ((crossLink.toProtein.id === crossLink.fromProtein.id) || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein));
+         return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein)));
     },
     
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {

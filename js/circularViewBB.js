@@ -271,10 +271,10 @@
             };
 
             // initial Order
-            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
+            //this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
             // return order as is
-            //this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("participants").values()))
-            //    .map(function(p) { return p.id; });
+            this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("participants").values()))
+                .map(function(p) { return p.id; });
 
             var alignCall = 0;
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
@@ -336,8 +336,8 @@
         },
 
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
-            var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+            //var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
             startPos = startPos || 0;
             endPos = endPos || 100000;
@@ -401,12 +401,12 @@
                 console.log ("re-rendering circular view");
 
                 var interactors = this.model.get("clmsModel").get("participants");
-                var crossLinks = this.model.get("clmsModel").get("crossLinks");
+                //var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
 
                 var filteredInteractors = this.filterInteractors (interactors);
-                var filteredCrossLinks = CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 
                 // If only one protein hide some options, and make links go in middle
                 d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")

@@ -1,3 +1,37 @@
+#filterPlaceholder {
+    display: inline-flex;
+}
+
+.filterControlGroup {
+	vertical-align:top;
+    display: inline-block;
+    border-left: 1px solid #bbb;
+    border-right: 1px solid #bbb;
+    padding: 0em 0.5em;
+    margin-top:auto;
+    margin-bottom:auto;
+    margin: 0em 0.3em;
+    height: 65px;
+}
+
+.sideOn {
+/*
+    -ms-transform:rotate(270deg) translate(-25px, 0);  IE 9 
+    -moz-transform:rotate(270deg)translate(-25px, 0); /* Firefox */
+/*
+    -webkit-transform:rotate(270deg) translate(-25px, 0); /* Safari and Chrome */
+
+/*
+    -o-transform:rotate(270deg) translate(-25px, 0); /* Opera */
+
+/*
+    transform:rotate(270deg) translate(-25px, 0);
+*/
+  
+display: inline-block;
+
+}
+
 input.filterTypeText {
     margin-right: 5px;
 }
@@ -21,7 +55,42 @@ div.textFilters:not(:first-child), div.toggles:not(:first-child), div.numberFilt
     margin-left: 0.5em;
 }
 
+.scoreSlider  {
+    display: inline-block;
+/*
+    border-left: 1px solid #bbb;
+    border-right: 1px solid #bbb;
+    padding: 0em 0.5em;
+    margin: 0em 0.5em;
+*/
+}
+/*
+.scoreSlider p {
+ }
+*/
+.cutoffLabel {
+   display: inline-block;
+/*
+   min-width: 3em;
+*/
+}
+.scoreSlider .cutoffLabel.vmin {
+    text-align: right;
+}
+.scoreSlider .cutoffLabel input {
+    width: 4em;
+    color: black;
+}
+.sliderInput {
+    background: none;
+    position: relative;
+    border: none;
+    margin-top:5px;
+    display: inline-block;
+}
+
 #filterReportPlaceholder {
     margin: 0 0.3em;
-    line-height: 1.1em;
+    line-height: 1.1em; 
+    display: inline-flex;
 }

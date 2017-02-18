@@ -64,25 +64,28 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","PepPos1","PepSeq1","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","AutoVal","Val","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein1","PepPos1","matchedPeptides[0].sequence","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","AutoVal","Val","Search","RunName","ScanNumber"\r\n';
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
     var matchCount = matches.length;
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    for (var match of matches.values()){
+    for (var m = 0; m < matchCount; ++m){
+		var match = matches[m];
         var result;
-        if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
+        if (filterModel.get("fdrMode") === true) {
 			result = match.fdrPass;
 		} else {
-			result = filterModel.filter(match);
-		}
+			result = filterModel.subsetFilter(match)
+						&& filterModel.validationStatusFilter(match)
+						&& filterModel.navigationFilter(match);
+							}
         if (result === true){
-            csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, "protein1", CLMSUI.compositeModelInst.get("clmsModel"))
-                + '","' + CLMSUI.utils.arrayConcat(match, "pepPos1") + '","'
-                + match.pepSeq1 + '","' + match.linkPos1 + '","'
-                + CLMSUI.utils.proteinConcat(match, "protein2", CLMSUI.compositeModelInst.get("clmsModel")) + '","' + CLMSUI.utils.arrayConcat(match, "pepPos2") + '","'
-                + match.pepSeq2 + '","' + match.linkPos2 + '","'
+            csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
+                + '","' + CLMSUI.utils.pepPosConcat(match, 0) + '","'
+                + match.matchedPeptides[0].sequence + '","' + match.linkPos1 + '","'
+                + CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) + '","' + CLMSUI.utils.pepPosConcat(match, 1) + '","'
+                + match.matchedPeptides[1].sequence + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.autovalidated + '","' + match.validated + '","'
-                + match.searchId + '","' + match.runName + '","' + match.scanNumber + '"\r\n';
+                + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '"\r\n';
         }
     }
     return csv;

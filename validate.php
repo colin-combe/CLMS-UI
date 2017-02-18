@@ -72,7 +72,6 @@ header('Content-type: text/html; charset=utf-8');
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
 
 
@@ -83,6 +82,7 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./js/modelUtils.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
+        <script type="text/javascript" src="./js/fdr.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
@@ -159,9 +159,11 @@ header('Content-type: text/html; charset=utf-8');
 										
 				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
 
+                //CLMSUI.vent.trigger ("spectrumShow", true);
+                
 				var allCrossLinks = Array.from(
 					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
-					CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
+				CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
 
 				var resize = function(event) {
 					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);

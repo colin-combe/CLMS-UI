@@ -74,7 +74,6 @@
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/AnnotatedRegion.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
 
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
@@ -156,7 +155,7 @@
             </div>
 
             <div class="controls">
-                <span id="filterPlaceholder"></span>
+                <div id="filterPlaceholder"></div>
                 <div id="filterReportPlaceholder"></div>
             </div>
         </div><!-- MAIN -->

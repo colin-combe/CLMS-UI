@@ -2,13 +2,19 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.utils = {
     // return comma-separated list of protein names from array of protein ids
-    proteinConcat: function (d, field, clmsModel) {
-        var pnames =  d[field].map (function(pid) {return clmsModel.get("participants").get(pid).name;});
+    proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
+		if (!d.matchedPeptides[matchedPeptideIndex]) {
+			return "";
+		}
+        var pnames =  d.matchedPeptides[matchedPeptideIndex].prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;});
         return pnames.join(",");
     },
 
-    arrayConcat: function (d, field) {
-        return d[field].join(", ");
+    pepPosConcat: function (d, matchedPeptideIndex) {
+        if (!d.matchedPeptides[matchedPeptideIndex]) {
+			return "";
+		}
+        return d.matchedPeptides[matchedPeptideIndex].pos.join(", ");
     },
     
     commonLabels: {
@@ -435,85 +441,6 @@ CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
         return this;
     }
 });
-
-
-CLMSUI.utils.FDRViewBB = CLMSUI.utils.BaseFrameView.extend ({
-    initialize: function () {
-        CLMSUI.utils.FDRViewBB.__super__.initialize.apply (this, arguments);
-
-        var chartDiv = d3.select(this.el).append("div")
-            .attr("class", "panelInner")
-        ;
-        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        chartDiv.html ("<fieldset><legend>Basic FDR Calculation</legend><span></span></fieldset>");
-        var self = this;
-        var options = [0.01, 0.05, 0.1, 0.2, 0.5, undefined];
-        var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
-
-        function doFDR (d) {
-            self.lastSetting = d;
-            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
-            chartDiv.select(".fdrResult")
-                .style("display", "block")
-                .html("")
-                .selectAll("p").data(result)
-                    .enter()
-                    .append("p")
-                    .text(function(d) {
-                        var saneSigFigs = d3.format(".2f")(d.fdr);  // don't have more than 2 decimal places
-                        return d.label+" cutoff for "+labelFunc(self.lastSetting)+" is "+(d.thresholdMet ? ">="+saneSigFigs : ">"+saneSigFigs+" (Rate not met)");
-                    })
-            ;
-            chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
-
-            // bit that communicates to rest of system
-            self.model.get("filterModel")
-                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
-            ;
-
-            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
-        }
-
-        chartDiv.select("span").selectAll("label.fixed").data(options)
-            .enter()
-            .append("label")
-            .classed ("horizontalFlow fixed", true)
-                .append ("span")
-                .attr ("class", "noBreak")
-                .text(labelFunc)
-                .append("input")
-                    .attr("type", "radio")
-                    .attr("value", function(d) { return d; })
-                    .attr("name", "fdrPercent")
-                    .on ("click", function(d) {
-                        d3.select(self.el).select("input[type='number']").property("value", "");
-                        doFDR (d);
-                    })
-        ;
-        
-        chartDiv.select("span")
-            .append("label")
-            .attr("class", "horizontalFlow")
-                .append ("span")
-                .attr ("class", "noBreak")
-                .text("Other %")
-                .append("input")
-                    .attr("type", "number")
-                    .attr("min", 0)
-                    .attr("max", 100)
-                    .attr("step", 1)
-                    .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
-                        d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
-                        doFDR ((+this.value) / 100);
-                    })
-        ;
-
-        chartDiv.append("button").attr("class", "fdrBoost btn btn-1").text("Boosting").property("disabled", true);
-        chartDiv.append("div").attr("class", "fdrResult").style("display", "none");
-        return this;
-    }
-});
-
 
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);

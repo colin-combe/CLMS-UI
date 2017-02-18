@@ -11,59 +11,63 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     FilterModel: Backbone.Model.extend ({
         defaults: {
-            "A": true, "B": true, "C": true, "Q": true, "unval": true, 
-            "AUTO": true,
-            "linears": true,
-            "crosslinks": true,
-            "decoys": false,
-            "pepSeq": "",
-            "protNames": "",
-            "charge": "",
-            "runName": "",
-            "scanNumber": "",            
-            "selfLinks": true,
-            "ambig": true,
-            interFDRCut: undefined,
-            intraFDRCut: undefined,
-            "seqSep": "",
+			manualMode: true,
+			fdrMode: false,
+			//subset
+            linears: true,
+            crosslinks: true,
+            selfLinks: true,
+            ambig: true,
+            aaApart: 10,
+            pepLength: 4,
+            //validation status
+            A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
+            decoys: false,
+            //fdr
+            fdrThreshold: 0.05,
+            interFdrCut: undefined,
+            intraFdrCut: undefined,
+            //navigation
+            pepSeq: "",
+            protNames: "",
+            charge: "",
+            runName: "",
+            scanNumber: "",   
         },
 
         initialize: function () {
             // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
-            if (!this.get("cutoff")) {
-                this.set ("cutoff", [0,100]);
+            if (!this.get("matchScoreCutoff")) {
+                this.set ("matchScoreCutoff", [0,100]);
             }
             // scoreExtent used to restrain text input values
-            this.scoreExtent = this.get("cutoff").slice(0);
+            this.scoreExtent = this.get("matchScoreCutoff").slice(0);
         },
 
-        filter: function (match) {
+        subsetFilter: function (match) {
 			//linears? - if linear and linears not selected return false
             if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
-			//cross-links? - if xl and xls not selected return false
+           //cross-links? - if xl and xls not selected return false
             if (match.linkPos1 > 0 && this.get("crosslinks") == false) return false; 
-
-			//decoys? - if decoy and decoys not selected return false
-            if (match.is_decoy && this.get("decoys")  == false) return false; 
-
+ 			
 			//ambigs? - if ambig's not selected and match is ambig return false
 			if (this.get("ambig") == false) {
-				if (match.pepPos1.length > 1 || match.pepPos2.length > 1) return false;
+				if (match.isAmbig()) return false;
 			}
 
 			//self-links? - if self links's not selected and match is self link return false
 			// possible an ambiguous self link will still get displayed
 			if (this.get("selfLinks") == false) {
 				var isSelfLink = true;
-				var p1 = match.protein1[0];
-				for (var i = 1; i < match.protein1.length; i++) {
-					if (match.protein1[i] != p1){
+				var p1 = match.matchedPeptides[0].prt[0];
+				for (var i = 1; i < match.matchedPeptides[0].prt.length; i++) {
+					if (match.matchedPeptides[0].prt[i] != p1){
 						 isSelfLink = false;
 						 break;
 					 }
 				}
-				for (var i = 0; i < match.protein2.length; i++) {
-					if (match.protein2[i] != p1){
+				for (var i = 0; i < match.matchedPeptides[1].prt.length; i++) {
+					if (match.matchedPeptides[1].prt[i] != p1){
 						isSelfLink = false;
 						break;
 					}
@@ -73,11 +77,57 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				}
 			}
 
+
+			//temp
+            var aaApart = +this.get("aaApart");
+            if (!isNaN(aaApart)) {
+                 //if not ambig && is selfLink
+                if (match.confirmedHomomultimer === false
+						&& match.isAmbig() === false//match.matchedPeptides[0].prt.length == 1 && match.matchedPeptides[1].prt.length == 1
+                        && match.crossLinks[0].isSelfLink()){//match.matchedPeptides[0].prt[0] == match.matchedPeptides[1].prt[0]) {
+					var unambigCrossLink = match.crossLinks[0];
+                    var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
+					if (calc < aaApart){
+						return false;
+						
+					}
+				}
+            }
+            
+            var pepLengthFilter = this.get("pepLength");
+            //~ return match.matchedPeptides[0].sequence.length > pepLengthFilter
+                //~ && match.matchedPeptides[1].sequence.length > pepLengthFilter;
+            if (!isNaN(pepLengthFilter)) {
+                if (match.matchedPeptides[0].sequence.length <= pepLengthFilter || 
+					(match.matchedPeptides[1] && match.matchedPeptides[1].sequence.length <= pepLengthFilter)) {
+                    return false;
+                }
+            }
+
+            return true;
+            
+       },
+       
+       validationStatusFilter: function (match){
 			// if fail score cut off, return false;
-            if (match.score < this.get("cutoff")[0] || match.score > this.get("cutoff")[1]){
+            if (match.score < this.get("matchScoreCutoff")[0] || match.score > this.get("matchScoreCutoff")[1]){
 				return false;
-			}
+			}        
 			
+            var vChar = match.validated;
+            if (vChar == 'R') return false;
+            if (vChar == 'A' && this.get("A")) return true;
+            if (vChar == 'B' && this.get("B")) return true;
+            if (vChar == 'C' && this.get("C")) return true;
+            if (vChar == '?' && this.get("Q")) return true;
+            
+            if (match.autovalidated && this.get("AUTO")) return true;
+			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
+            return false;
+		},
+       
+       navigationFilter: function (match) {
+      	
 			//peptide seq check
 			if (seqCheck(this.get("pepSeq")) == false) {
 				return false;
@@ -97,7 +147,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			//run name check
 			var runNameFilter = this.get("runName");
 			if (runNameFilter && 
-					match.runName.toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1){
+					match.runName().toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1){
 				return false;
 			}
 
@@ -109,30 +159,11 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				return false;
 			}
 
+			//end of filtering check
+			return true;
 
-            var seqSepFilter = this.get("seqSep");
-            if (!isNaN(seqSepFilter)) {
-                 //if not ambig && is selfLink
-                if (match.protein1.length == 1 && match.protein2
-                        && match.protein1[0] == match.protein2[0]) {
-                    var unambigCrossLink = match.crossLinks[0];
-                    if ((unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < seqSepFilter){
-                        return false;
-                    }
-                }
-            }
-
-            var vChar = match.validated;
-            if (vChar == 'R') return false;
-            if (vChar == 'A' && this.get("A")) return true;
-            if (vChar == 'B' && this.get("B")) return true;
-            if (vChar == 'C' && this.get("C")) return true;
-            if (vChar == '?' && this.get("Q")) return true;
-            
-            if (match.autovalidated && this.get("AUTO")) return true;
-			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
-            return false;
-            
+			//util functions used in nav filter check:
+          
             //peptide seq check function
 			function seqCheck(searchString) {
 				if (searchString) {
@@ -211,15 +242,15 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				return true;
 			}
         },
-        
-        filterLink: function (link) {
+       /*
+       filterLink: function (link) {
             if (link.meta && link.meta.meanMatchScore !== undefined) {
                 var fdr = link.meta.meanMatchScore;
                 var intra = CLMSUI.modelUtils.isIntraLink (link);
-                return fdr >= this.get (intra ? "intraFDRCut" : "interFDRCut");
+                return fdr >= this.get (intra ? "intraFdrCut" : "interFdrCut");
             }
             return false;
-        }
+        }*/
     }),
 
     // I want MinigramBB to be model agnostic so I can re-use it in other places
@@ -244,22 +275,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
     BlosumModel: Backbone.Model.extend ({
         initialize: function() {
-            console.log ("Blosum model initialised", this);
-        },
-    }),
-
-
-    TestModel: Backbone.Model.extend ({
-        defaults : {
-            prime: "animal",
-            //secondaries: ["blee", "whee"],
-            tertiary: 36,
-        },
-
-        initialize: function () {
-            // http://stackoverflow.com/questions/6433795/backbone-js-handling-of-attributes-that-are-arrays
-            // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
-            this.set ("secondaries", ["blee", "whee"]);
+            //console.log ("Blosum model initialised", this);
         },
     }),
 

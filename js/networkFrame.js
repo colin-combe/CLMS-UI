@@ -24,8 +24,9 @@ _.extend (CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about this... - cc
-    console.log ("BOTH SYNCS DONE :-)");
-    CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
+    console.log ("DATA LOADED AND WINDOW LOADED");
+	
+	CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
 
     //init annotation types
     var annotationTypes = [];
@@ -53,16 +54,9 @@ var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about thi
     annotationTypes = annotationTypes.concat(Array.from(uniprotFeatureTypes.values()));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
-
-	//martin - got questions about init, at moment i have following commented out - cc
-	//~ allDataAndWindowLoaded();
-	//~ });
-	//~ 
-	//~ // function runs only when sequences and blosums have been loaded (i.e. allDataLoaded has run), AND when window is loaded
-	//~ var allDataAndWindowLoaded = _.after (1, function () {
-	
-    console.log ("DATA LOADED AND WINDOW LOADED");
+    
     CLMSUI.init.viewsThatNeedAsyncData();
+    
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
     ByRei_dynDiv.init.main();
@@ -143,9 +137,12 @@ CLMSUI.init.modelsEssential = function (options) {
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
      // set original cutoff to be the extent of all scores (rounded up and down nicely)
-     cutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
-        return Math[i === 0 ? "floor" : "ceil"](ex);
-     }),
+     matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
+				Math.ceil(clmsModelInst.get("maxScore"))],
+     
+     //~ CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
+        //~ return Math[i === 0 ? "floor" : "ceil"](ex);
+     //~ }),
      scores: clmsModelInst.get("scores")
     });
 
@@ -170,15 +167,21 @@ CLMSUI.init.modelsEssential = function (options) {
     // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
     // the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
+		console.log("filterChange");
         this.applyFilter();
     });
+
+    /*CLMSUI.compositeModelInst.listenTo (filterModelInst, "change:fdrThreshold", function() {
+		alert("threshold Change");
+        //this.applyFilter();
+    });*/
 
 };
 
 CLMSUI.init.views = function () {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "fdrPanel", "pdbPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -201,7 +204,7 @@ CLMSUI.init.views = function () {
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
-        {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
+        //~ {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
@@ -273,6 +276,10 @@ CLMSUI.init.viewsEssential = function (options) {
         model: CLMSUI.compositeModelInst,
     });
 
+    if (CLMSUI.compositeModelInst.get("clmsModel").get("decoysPresent") === false) {
+		d3.select("#filterModeDiv").style("display","none");
+	}
+
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
     miniDistModelInst.data = function() {
         return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];
@@ -280,7 +287,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
-        this.set ("cutoff", [model.get("domainStart"), model.get("domainEnd")]);
+        this.set ("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 
     new CLMSUI.MinigramViewBB ({
@@ -292,13 +299,13 @@ CLMSUI.init.viewsEssential = function (options) {
             //scaleOthersTo: "Matches",
             xlabel: "Score",
             ylabel: "Count",
-            height: 50,
+            height: 65,
             colors: {"Matches":"blue", "Decoys":"red"}
         }
     })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
         .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
-        .listenTo (filterModel, "change:cutoff", function (filterModel, newCutoff) {
+        .listenTo (filterModel, "change:matchScoreCutoff", function (filterModel, newCutoff) {
             this.model.set ({domainStart: newCutoff[0], domainEnd: newCutoff[1]});
             //console.log ("cutoff changed");
         })
@@ -335,7 +342,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "./loadData.php?sid="
                         + this.model.get("clmsModel").get("sid")
-                        + "&unval=1&decoys=0&linears=1&spectrum="  + match.spectrumId;
+                        + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
                 var self = this;
                 d3.json (url, function(error, json) {
                     if (error) {
@@ -352,7 +359,7 @@ CLMSUI.init.viewsEssential = function (options) {
                             .applyFilter()
                             .set ("lastSelectedMatch", {match: match, directSelection: true})
                         ;
-                        d3.select("#alternatives").style("display", altModel.get("matches").size === 1 ? "none" : "block");
+                        d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
                         self.alternativesModel.set("selection", allCrossLinks);
                         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
                     }
@@ -389,6 +396,9 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
+//seems like this somehow got duplicated?
+    
+/*
     spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
@@ -408,7 +418,7 @@ CLMSUI.init.viewsEssential = function (options) {
                     spectrumWrapper.alternativesModel.set("clmsModel", altModel);
                     spectrumWrapper.alternativesModel.applyFilter();
                     spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
-                    if (altModel.get("matches").size == 1) {
+                    if (altModel.get("matches").length == 1) {
                         d3.select("#alternatives").style("display", "none");
                         spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
                         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
@@ -423,7 +433,7 @@ CLMSUI.init.viewsEssential = function (options) {
             //~ //this.model.clear();
         }
     });
-
+*/
         // Generate data export drop down
     new CLMSUI.DropDownMenuViewBB ({
         el: "#expDropdownPlaceholder",
@@ -618,16 +628,21 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
 
-
     new CLMSUI.ProteinInfoViewBB ({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",
         model: CLMSUI.compositeModelInst,
     });
 
-    new CLMSUI.utils.FDRViewBB ({
+    new CLMSUI.FDRViewBB ({
         el: "#fdrPanel",
-        displayEventName: "fdrShow",
+        //displayEventName: "fdrShow",
+        model: CLMSUI.compositeModelInst.get("filterModel"),
+    });
+    
+    new CLMSUI.FDRSummaryViewBB ({
+        el: "#fdrSummaryPlaceholder",
+        //displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
     });
 };

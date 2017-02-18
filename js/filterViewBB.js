@@ -10,28 +10,40 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     tagName: "span",
     className: "filterGroup",
     events: {
+        "change input.modeToggle": "modeChanged",
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
-        "click input.filterSpecialToggle": "filterSpecial",
-        "change input.filterSeqSep": "filterSeqSep"
+        "click input.subsetToggleFilterToggle": "subsetToggleFilter",
+        "keyup input.subsetNumberFilter": "subsetNumberFilter",
+        "mouseup input.subsetNumberFilter": "subsetNumberFilter",
     },
 
     initialize: function (viewOptions) {
         var defaultOptions = {
-            toggles: [
-                {"label":"Decoy", "id":"decoys", special: true},
-                {"label":"Linear", "id":"linears", special: true},
-                {"label":"Cross-links", "id":"crosslinks", special: true},
-                {"label":"Ambig.", "id":"ambig", special: true},
-                {"label":"Self", "id":"selfLinks", special: true},
+            modes: [
+                {"label":"Manual", "id":"manualMode"},
+                {"label":"FDR", "id":"fdrMode"},
+            ],
+            subsetToggles: [
+                {"label":"Linear", "id":"linears"},
+                {"label":"Cross-links", "id":"crosslinks"},
+                {"label":"Ambig.", "id":"ambig"},
+                {"label":"Self", "id":"selfLinks"},
+            ],
+            subsetNumberFilters: [
+                {"label":"AA apart", "id":"aaApart", min: 0, max: 999},
+                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99},
+            ],
+            validationStatusToggles: [
                 {"label":"A", "id":"A"},
                 {"label":"B", "id":"B"},
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
                 {"label":"Auto", "id":"AUTO"},
-                {"label":"Unval.", "id":"unval"}
+                {"label":"Unval.", "id":"unval"},
+                {"label":"Decoy", "id":"decoys"},              
             ],
-            textFilters: [
+            navigationFilters: [
                 {"label":"Peptide", "id":"pepSeq", "chars":7},
                 {"label":"Protein", "id":"protNames", "chars":7},
                 {"label":"Charge", "id":"charge", "chars":1},
@@ -45,48 +57,103 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
-        
-        var toggleElems = mainDivSel.selectAll("div.toggles")
-            .data(this.options.toggles, function(d) { return d.id; })
+
+        var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup")
+									.attr ("id", "filterModeDiv");
+        //~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
+        var modeElems = modeDivSel.selectAll("div.modeToggles")
+            .data(this.options.modes, function(d) { return d.id; })
             .enter()
             .append ("div")
             .attr ("class", "toggles")
             .attr("id", function(d) { return "toggles_" + d.id; })
             .append ("label")
         ;
-        
-        toggleElems.append ("span")
+        modeElems.append ("span")
             .text (function(d) { return d.label; })
         ;
-        
-        toggleElems.append ("input")
+        modeElems.append ("input")
             .attr ("id", function(d) { return d.id; })
-            .attr ("class", function(d) { return d.special ? "filterSpecialToggle" : "filterTypeToggle"; })
+            .attr ("class", "modeToggle")
+            .attr ("name", "modeSelect")
+            .attr ("type", "radio")
+            .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+
+
+		var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+        var subsetToggles = dataSubsetDivSel.selectAll("div.subsetToggles")
+            .data(this.options.subsetToggles, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "toggles subsetToggles")
+            .attr("id", function(d) { return "toggles_" + d.id; })
+            .append ("label")
+        ;
+        subsetToggles.append ("span")
+            .text (function(d) { return d.label; })
+        ;
+        subsetToggles.append ("input")
+            .attr ("id", function(d) { return d.id; })
+            .attr ("class", "subsetToggleFilterToggle")
             .attr ("type", "checkbox")
             .property ("checked", function(d) { return self.model.get(d.id); })
         ;
-        
-        
-        var seqSepElem = mainDivSel.append ("div")
-            .attr("class", "numberFilters")
+		
+		
+        var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
+            .data(this.options.subsetNumberFilters, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "toggles subsetNumberFilterDiv")
+            .attr("id", function(d) { return "toggles_" + d.id; })
             .append ("label")
         ;
-        
-        seqSepElem.append("span")
-            .text ("Min.seq.sep.")
+        subsetNumberFilters.append ("span")
+            .text (function(d) { return d.label; })
         ;
-        
-        seqSepElem.append ("input")
-            .attr ({id: "seqSepFilter", class: "filterSeqSep", type: "number", min: 0, max: 999})
+        subsetNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        subsetNumberFilters.append ("input")
+            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number", 
+						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+            .property ("value", function(d) { return self.model.get(d.id); })
         ;
 
-        var sliderSection = mainDivSel.append ("div").attr("class", "scoreSlider");
+
+		var validationDivSel = mainDivSel.append("div")
+								.attr ("class", "filterControlGroup")
+								.attr ("id", "validationStatus");
+        var validationElems = validationDivSel.selectAll("div.validationToggles")
+            .data(this.options.validationStatusToggles, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "toggles validationToggles")
+            .attr("id", function(d) { return "toggles_" + d.id; })
+            .append ("label")
+        ;
+
+        validationElems.append ("span")
+            .text (function(d) { return d.label; })
+        ;
+
+        validationElems.append ("input")
+            .attr ("id", function(d) { return d.id; })
+            .attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
+            .attr ("type", "checkbox")
+            .property ("checked", function(d) { return self.model.get(d.id); })
+        ;
+
+		var cutoffDivSel = mainDivSel.append ("div")
+								.attr("class", "filterControlGroup")
+								.attr("id", "matchScore");
+		//~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+
+        var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<div><span>Score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
+        var tpl = _.template ("<div><span>Match score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
-
-
-        mainDivSel.selectAll("p.cutoffLabel")
+		sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
+        sliderSection.selectAll("p.cutoffLabel")
             .append("input")
             .attr({
                 type: "number",
@@ -97,29 +164,44 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 //console.log ("model", self.model);
                 var val = +this.value;
                 var isMinInput = d3.select(this.parentNode).classed("vmin");
-                var cutoff = self.model.get("cutoff");
+                var cutoff = self.model.get("matchScoreCutoff");
                 var scoreExtent = self.model.scoreExtent;
                 // take new values, along with score extents, sort them and discard extremes for new cutoff settings
                 var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val, scoreExtent[0], scoreExtent[1]]
                     .sort(function(a,b) { return a - b;})
                     .slice (1,3)
                 ;
-                self.model.set("cutoff", newVals);
+                self.model.set("matchScoreCutoff", newVals);
             })
         ;
-        
-        var textFilters = mainDivSel.selectAll("div.textFilters")
-            .data(this.options.textFilters, function(d) { return d.id; })
+
+		//following may not be best practice, its here to get the placeholder divs in the right place in the filter div (the grey bar at bottom)
+        mainDivSel.append ("div")
+            .attr("class", "filterControlGroup")
+            .attr("id", "fdrPanel")
+        ;
+		mainDivSel.append ("div")
+            .attr("class", "filterControlGroup")
+            .attr("id", "fdrSummaryPlaceholder")
+            .style("display","none");
+        ;
+
+        var navDivSel = mainDivSel.append ("div")
+							.attr("class", "filterControlGroup")
+							.attr("id", "navFilters")
+		;
+		//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
+
+		var textFilters = navDivSel.selectAll("div.textFilters")
+            .data(this.options.navigationFilters, function(d) { return d.id; })
             .enter()
             .append("div")
             .attr("class", "textFilters")
             .append ("label")
         ;
-        
         textFilters.append("span")
             .text (function(d) { return d.label; })
         ;
-        
         textFilters.append ("input")
             .attr ("id", function(d) { return d.id; })
             .attr ("class", "filterTypeText")
@@ -128,23 +210,15 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
 
-        sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
-
         this.displayEventName = viewOptions.displayEventName;
 
-        this.listenTo (this.model, "change:cutoff", function(model, val) {
+        this.listenTo (this.model, "change:matchScoreCutoff", function(model, val) {
             //console.log ("cutoff", val);
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
-        
-        this.listenTo (this.model, "change:interFDRCut change:intraFDRCut", function (model) {
-            var hide = (model.get("intraFDRCut") !== undefined) || (model.get("interFDRCut") !== undefined);
-            d3.select(this.el)
-                .style("opacity", hide ? 0.2 : null)
-                .style("pointer-events", hide ? "none" : null)
-            ;    
-        });
+
+        this.modeChanged();
     },
 
     filter: function (evt) {
@@ -162,52 +236,178 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.model.set (id, target.value);
     },
 
-    filterSpecial: function (evt) {
-        console.log ("this filterBB filterSpecial", evt);
+    subsetToggleFilter: function (evt) {
+        console.log ("subsetToggleFilter", evt);
         var target = evt.target;
         var id = target.id;
+        if (id == "selfLinks"){
+			if (target.checked) {
+				d3.select("#aaApart").attr("disabled", null);
+			} else {
+				d3.select("#aaApart").attr("disabled", "disabled");
+			}
+		}
         this.model.set (id, target.checked);
     },
 
     sliderDecimalPlaces: 2,
 
-    filterSeqSep: function (evt) {
-        console.log ("this filterBB filterSeqSep", evt);
-        var target = evt.target;
-        console.log(">>seqSep", target.value);
-        this.model.set("seqSep", target.value);
+    subsetNumberFilter: function (evt) {
+		var target = evt.target;
+        var id = target.id;
+        var value = target.value;
+        if (this.model.get (id) != value) {
+			console.log ("subsetNumberFilter:", id, value);
+			this.model.set (id, value);
+		}
     },
 
+    modeChanged: function () {
+		var fdrMode = d3.select("#fdrMode").node().checked;
+		if (fdrMode) {
+			d3.select("#validationStatus").style("display","none");
+			d3.select("#matchScore").style("display","none");
+			d3.select("#navFilters").style("display","none");
+			d3.select("#fdrPanel").style("display","inline-block");
+			d3.select("#fdrSummaryPlaceholder").style("display","inline-block");
+		} else {
+			d3.select("#validationStatus").style("display","inline-block");
+			d3.select("#matchScore").style("display","inline-block");
+			d3.select("#navFilters").style("display","inline-block");
+			d3.select("#fdrPanel").style("display","none");
+			d3.select("#fdrSummaryPlaceholder").style("display","none");
+		}
+		this.model.set("fdrMode", fdrMode);
+    },
 
     render: function () {
         return this;
-    },
-
-    // removes view
-    // not really needed unless we want to do something extra on top of the prototype remove function
-    remove: function () {
-        // this line destroys the containing backbone view and it's events
-        Backbone.View.prototype.remove.call(this);
     }
-
 });
 
+
+CLMSUI.FDRViewBB = Backbone.View.extend  ({
+    initialize: function () {
+        
+        var chartDiv = d3.select(this.el);
+        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
+        var self = this;
+        var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
+        var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
+
+        chartDiv.select("span").selectAll("label.fixed").data(options)
+            .enter()
+            .append("label")
+            .classed ("horizontalFlow fixed", true)
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text(labelFunc)
+                .append("input")
+                    .attr("type", "radio")
+                    .attr("value", function(d) { return d; })
+                    .attr("name", "fdrPercent")
+                    .property("checked", function(d) { return d === 0.05; })
+                    .on ("click", function(d) {
+                        d3.select(self.el).select("input[type='number']").property("value", "");
+                        self.model.set("fdrThreshold", d);
+                    })
+        ;
+
+        
+        
+        chartDiv.select("span")
+            .append("label")
+            .attr("class", "horizontalFlow")
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text("Other %")
+                .append("input")
+                    .attr("type", "number")
+                    .attr("min", 0)
+                    .attr("max", 100)
+                    .attr("step", 1)
+                    .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                        d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
+                        self.model.set("fdrThreshold", (+this.value) / 100);
+                    })
+        ;
+
+        //chartDiv.append("div").attr("class", "fdrResult");//.style("display", "none");
+        return this;
+    }
+});
 
 CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
-        this
-            .listenTo (this.model, "filteringDone", this.render)
+        this.template = _.template ("<%= total %> filtered crosslinks ( + <%= decoys %> decoys)");
+        this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
     },
 
     render: function () {
         var mainDivSel = d3.select(this.el);
-        var filteredCrossLinks = this.model.getFilteredCrossLinks();
-        mainDivSel.text (this.template ({total: filteredCrossLinks.size}));
+        var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//getFilteredCrossLinks();
+        mainDivSel.text ((this.template ({total: filteredCrossLinks.length,
+				decoys: this.model.filteredCrossLinks.length - filteredCrossLinks.length})));
         return this;
     },
+});
+
+CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
+    events: {},
+
+    initialize: function () {
+        //this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
+		d3.select(this.el).append("p").attr("id", "interFdrCutElem");
+        d3.select(this.el).append("p").attr("id","intraFdrCutElem");        
+        this.listenTo (this.model, "filteringDone", this.render)
+            .render()
+        ;
+    },
+
+    render: function () {
+        var mainDivSel = d3.select(this.el);
+        var filterModel = this.model.get("filterModel");
+
+		var interCut = filterModel.get("interFdrCut");
+		if (interCut) { interCut = interCut.toFixed(2); }
+        var intraCut = filterModel.get("intraFdrCut");
+		if (intraCut) { intraCut = intraCut.toFixed(2); }
+        
+        var text = "Inter cutoff for "+ filterModel.get("fdrThreshold") +" is "
+			+ interCut;
+			console.log(text); 
+        var sel = d3.select("#interFdrCutElem");
+        sel.text(text);
+        d3.select("#intraFdrCutElem").text(
+			"Intra cutoff for "+ filterModel.get("fdrThreshold") +" is "
+			+ intraCut);
+        return this;
+    },
+
+    
+       /* function doFDR (d) {
+            self.lastSetting = d;
+            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
+            chartDiv.select(".fdrResult")
+                //~ .style("display", "block")
+                .html("")
+                .selectAll("p").data(result)
+                    .enter()
+                    .append("p")
+
+            ;
+            //~ chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
+
+            // bit that communicates to rest of system
+            self.model.get("filterModel")
+                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
+            ;
+
+            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
+        } */
 });

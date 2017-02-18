@@ -6,24 +6,43 @@
     CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend ({
         applyFilter: function () {
 			var filterModel = this.get("filterModel");
-            var crossLinks = this.get("clmsModel").get("crossLinks").values();
-
-			//if its FDR based filtering, set all matches fdrPass att to false
-			if (filterModel && (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut"))) {
+            var crossLinksArr = Array.from(this.get("clmsModel").get("crossLinks").values());
+			var clCount = crossLinksArr.length;
+			
+			// if its FDR based filtering,
+			// set all matches fdrPass att to false, then calc
+			if (filterModel && filterModel.get("fdrMode")) {
 				var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
-				for (match of matches.values()){
-					match.fdrPass = false;
+				var matchesLen = matches.length;
+				for (var m = 0; m < matchesLen; ++m){
+					matches[m].fdrPass = false;
 				}
+				var result = CLMSUI.fdr(crossLinksArr, {threshold: filterModel.get("fdrThreshold")});
+
+				filterModel.set({"interFdrCut": result[0].fdr, "intraFdrCut": result[1].fdr }, {silent: true});
+				
 			}
 
-            for (var crossLink of crossLinks) {
-                if (filterModel) {
+            for (var i = 0; i < clCount; ++i) {
+				var crossLink = crossLinksArr[i];
+				if (filterModel) {
 					crossLink.filteredMatches_pp = [];
-					
-					if (filterModel.get("intraFDRCut") || filterModel.get("interFDRCut")) {
-						var pass = filterModel.filterLink (crossLink);
+					if (filterModel.get("fdrMode") === true) {
+						var pass;// = filterModel.filterLink (crossLink);
+						if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
+							var fdr = crossLink.meta.meanMatchScore;
+							var intra = CLMSUI.modelUtils.isIntraLink (crossLink);
+							var cut = intra ? result[1].fdr : result[0].fdr;
+							pass = fdr >= cut;
+						}
+            
 						if (pass) {
-							crossLink.filteredMatches_pp = crossLink.matches_pp.slice(0);
+							crossLink.filteredMatches_pp = crossLink.matches_pp.filter(
+								function (value) {
+									return filterModel.subsetFilter(value.match);
+								}
+							);
+
 							crossLink.ambiguous = 
 								!crossLink.filteredMatches_pp.some (function (matchAndPepPos) {
 									return matchAndPepPos.match.crossLinks.length === 1;
@@ -33,12 +52,26 @@
 								filteredMatch_pp.match.fdrPass = true;
 							}    
 						}
+						//~ else {
+							//~ alert("i just failed fdr check");
+						//~ }
 					} else {
 						crossLink.ambiguous = true;
 						crossLink.confirmedHomomultimer = false;
 						for (var matchAndPepPos of crossLink.matches_pp) {	
 							var match = matchAndPepPos.match;
-							var result = filterModel.filter(match);
+							//~ console.log(filterModel.subsetFilter(match),
+										//~ filterModel.validationStatusFilter(match),
+										//~ filterModel.navigationFilter(match));
+							var result = /*match.is_decoy === false && */
+											filterModel.subsetFilter(match)
+											&& filterModel.validationStatusFilter(match)
+											&& filterModel.navigationFilter(match);
+							var decoys = filterModel.get("decoys");
+							if (decoys === false && match.is_decoy === true){
+								result = false;
+							}
+							
 							if (result === true){
 								crossLink.filteredMatches_pp.push(matchAndPepPos);
 								if (match.crossLinks.length === 1) {
@@ -55,34 +88,63 @@
 					crossLink.filteredMatches_pp = crossLink.matches_pp;
 				}
             }
-            
-            //foreach participant hide if no links
-            var participants = this.get("clmsModel").get("participants").values();
 
-            this.trigger ("filteringDone");
+            //HI MARTIN - I'm caching things in these arrays,
+            // its maybe not a very nice design wise, lets look at again 
+            this.filteredCrossLinks = [];
+			this.filteredNotDecoyNotLinearCrossLinks = [];
+			
+			for (var i = 0; i < clCount; ++i) {
+				var crossLink = crossLinksArr[i];
+				if (crossLink.filteredMatches_pp.length) {
+					this.filteredCrossLinks.push(crossLink);
+					if (!crossLink.fromProtein.is_decoy && crossLink.toProtein && !crossLink.toProtein.is_decoy) {
+						this.filteredNotDecoyNotLinearCrossLinks.push(crossLink);
+					}
+				}
+            };
+            
+            var participantsArr = Array.from(this.get("clmsModel").get("participants").values());
+            var participantCount = participantsArr.length;           
+            
+            for (var p = 0; p < participantCount; ++p) {
+				 var participant = participantsArr[p]; 
+				 participant.filteredNotDecoyNotLinearCrossLinks = [];
+				 
+				 var partCls = participant.crossLinks;
+				 var partClCount = partCls.length;
+				 
+				 for (var pCl = 0; pCl < partClCount; ++pCl) {
+					var pCrossLink = partCls[pCl];
+					if (pCrossLink.filteredMatches_pp.length 
+							&& !pCrossLink.fromProtein.is_decoy 
+							&& pCrossLink.toProtein 
+							&& !pCrossLink.toProtein.is_decoy) {
+						participant.filteredNotDecoyNotLinearCrossLinks.push (pCrossLink);
+					}
+				}
+				
+				if (participant.filteredNotDecoyNotLinearCrossLinks.length > 0) {
+					 participant.hidden = false;
+				}
+				else {
+					 participant.hidden = true;
+				}			 
+			}
+			
+			this.trigger ("filteringDone");
+            this.trigger ("hiddenChanged");
+                        
             return this;
         },
 
         getFilteredCrossLinks: function (crossLinks) {
-            //console.log ("crosslinks", crossLinks);
-            var result = new Map;
-            
-            if (!crossLinks) {
-                crossLinks = this.get("clmsModel").get("crossLinks");
-            }
-
-            crossLinks.forEach (function (value, key) {
-                if (!value.filteredMatches_pp
-						|| value.filteredMatches_pp.length > 0) {
-							result.set (key, value);
-				}
-            }, this);
-
-            return result;
-
-            //return crossLinks.filter (function(cLink) {
-            //    return cLink.filteredMatches_pp.length > 0;
-            //}); 
+			
+			/*
+			 * store results and return that, see above
+			 * */
+			
+            return this.filteredCrossLinks;
         },
         
         collateMatchRegions: function (crossLinks) {
@@ -91,8 +153,8 @@
                 crossLink.filteredMatches_pp.forEach (function (matchAndPepPos) {
                     console.log ("match", match);
                     var smatch = matchAndPepPos.match;
-                    var prot1 = smatch.protein1[0];
-                    var prot2 = smatch.protein2[0];
+                    var prot1 = smatch.matchedPeptides[0].prt[0];
+                    var prot2 = smatch.matchedPeptides[1].prt[0];
                     prots[prot1] = prots[prot1] || [];
                     prots[prot2] = prots[prot2] || [];
 
