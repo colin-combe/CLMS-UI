@@ -80,18 +80,22 @@ CLMSUI.fdr = function (crossLinksArr, options) {
                 i++;
                 if (fdr <= threshold && cutoffIndex === 0) {
                     cutoffIndex = i;
-                    console.log ("cutoff totals tt td dd", t, link);
+                    console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
                 }
             });
 
+            if (cutoffIndex === 0) {    // if cutoff was never met
+                cutoffIndex = linkArr.length;   // then set cutoffindex to last index in array
+            }
+            
             cutoffIndex = Math.max (cutoffIndex - 1, 0);
             var lastLink = linkArr[cutoffIndex];
             fdrScoreCutoff = nonzero ? lastLink.meta.meanMatchScore : 0.001;
 
             if (false) {
-                console.log ("post totals tt td dd (should be zero)", t);
-                console.log ("runningFdr", runningFdr);
-                console.log ("fdr of",threshold,"met or lower at index",cutoffIndex,"link",lastLink,"and fdr score", fdrScoreCutoff);
+                console.log (arrLabels[index]+" post totals tt td dd (should be zero)", t);
+                console.log ("runningFdr", runningFdr, "final fdr", fdr);
+                console.log (fdr, "fdr of",threshold,"met or lower at index",cutoffIndex,"link",lastLink,"and fdr score", fdrScoreCutoff);
             }
         }
 

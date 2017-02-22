@@ -19,7 +19,10 @@
 				}
 				var result = CLMSUI.fdr(crossLinksArr, {threshold: filterModel.get("fdrThreshold")});
 
-				filterModel.set({"interFdrCut": result[0].fdr, "intraFdrCut": result[1].fdr }, {silent: true});
+				filterModel.set({
+                    "interFdrCut": result[0].thresholdMet ? result[0].fdr : undefined, // undefined what threshold score should be if all links fail fdr
+                    "intraFdrCut": result[1].thresholdMet ? result[1].fdr : undefined 
+                }, {silent: true});
 				
 			}
 
