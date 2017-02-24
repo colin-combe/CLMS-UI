@@ -304,6 +304,7 @@
     grabNeighbourhoodLinks: function (x, y) {
         var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
         var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
+        var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
         var proteinIDs = this.getCurrentProteinIDs();
         var alignIDs = this.getAlignIDs (proteinIDs);
         var alignColl = this.model.get("alignColl");
@@ -312,7 +313,7 @@
             var toResIndex = alignColl.getAlignedIndex (y + 1, proteinIDs[1].proteinID, true, alignIDs[1]);
             return {convX: fromResIndex, convY: toResIndex, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
         };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinks, x, y, 2);
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2);
         neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkWrapper) {
             var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkWrapper.crossLink);
             return (this.filterVal === undefined || est >= this.filterVal);
@@ -514,7 +515,7 @@
             var alignColl = this.model.get("alignColl");
             // only consider crosslinks between the two proteins (often the same one) represented by the two axes
             var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap).values();
+            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);//.values();
             var filteredCrossLinks2 = Array.from(filteredCrossLinks).filter (function (xlink) {
                 return (xlink.toProtein.id === proteinIDs[0].proteinID && xlink.fromProtein.id === proteinIDs[1].proteinID) || (xlink.toProtein.id === proteinIDs[1].proteinID && xlink.fromProtein.id === proteinIDs[0].proteinID);    
             });
