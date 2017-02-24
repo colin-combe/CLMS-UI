@@ -20,7 +20,7 @@
             CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
             
             var defaultOptions = {
-                xlabel: "Distance (Å)",
+                xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Random"],
                 scaleOthersTo: "Cross Links",
@@ -213,9 +213,8 @@
         getRelevantCrossLinkDistances: function () {
             var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
             //var interactorMap = this.model.get("clmsModel").get("participants");
-            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
-            //console.log ("fcl", filteredCrossLinks);          
-            return this.model.getCrossLinkDistances2 (filteredCrossLinks.values());    
+            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);   
+            return this.model.getCrossLinkDistances2 (filteredCrossLinks/*.values()*/);    
         },
         
         aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry) {
