@@ -29,6 +29,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Cross-links", "id":"crosslinks"},
                 {"label":"Ambig.", "id":"ambig"},
                 {"label":"Self", "id":"selfLinks"},
+                {"label":"Between", "id":"betweenLinks"},
             ],
             subsetNumberFilters: [
                 {"label":"AA apart", "id":"aaApart", min: 0, max: 999},
