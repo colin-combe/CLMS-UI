@@ -17,6 +17,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             linears: true,
             crosslinks: true,
             selfLinks: true,
+            betweenLinks: true,
             ambig: true,
             aaApart: 10,
             pepLength: 4,
@@ -57,7 +58,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
 			//self-links? - if self links's not selected and match is self link return false
 			// possible an ambiguous self link will still get displayed
-			if (this.get("selfLinks") == false) {
+            var hideSelfLinks = this.get("selfLinks") == false;
+            var hideBetweenLinks = this.get("betweenLinks") == false;
+			if (hideSelfLinks || hideBetweenLinks) {
 				var isSelfLink = true;
 				var p1 = match.matchedPeptides[0].prt[0];
 				for (var i = 1; i < match.matchedPeptides[0].prt.length; i++) {
@@ -72,10 +75,11 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 						break;
 					}
 				}
-				if (isSelfLink) {
+				if ((isSelfLink && hideSelfLinks) || (!isSelfLink && hideBetweenLinks)) {
 					return false;
 				}
 			}
+            
 
 
 			//temp
