@@ -9,6 +9,10 @@
     display: table-row;
 }
 
+.buttonPanel > p {
+    display: inline-block;
+}
+
 /* Can't do this margin in buttonPanel directly as it's a table-row display type */
 .buttonPanel button {
     margin-bottom: 0.4em;

@@ -150,6 +150,8 @@
                 },
                 intraOutside: true,
                 showResLabels: true,
+                sort: "best",
+                sortDir: 1,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -168,20 +170,24 @@
                     })
                 )
             ;
+            
             var buttonData = [
                 {label: CLMSUI.utils.commonLabels.downloadImg+"SVG", class:"downloadButton", type: "button"},
-                {label: "AutoLayout", class: "niceButton", type: "button"},
                 {label: "Flip Self Links", class: "flipIntraButton", type: "button"},
                 {label: "Show Residue Labels If Few", class: "showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
             ];
-            mainDivSel.select("div.buttonPanel").selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
+            
+            var buttonPanel = mainDivSel.select("div.buttonPanel");
+            
+            buttonPanel.selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
                 .enter()
                 .append("button")
                 .text(function(d) { return d.label; })
                 .attr("class", function(d) { return d.class; })
                 .classed("btn btn-1 btn-1a", true)
             ;
-            mainDivSel.select("div.buttonPanel").selectAll("label").data(buttonData.filter(function(bd) { return bd.type === "checkbox"; }))		
+            
+            buttonPanel.selectAll("label").data(buttonData.filter(function(bd) { return bd.type === "checkbox"; }))		
                 .enter()		
                 .append ("label")		
                 .attr ("class", "btn")		
@@ -194,6 +200,69 @@
                         .attr("class", function(d) { return d.class; })		
                         .property ("checked", function(d) { return d.optionValue; })		
             ;
+            
+            // DROPDOWN STARTS
+            // Various view options set up, then put in a dropdown menu
+            var toggleButtonData = [
+                {klass: "circRadio", text: "Alphabetical", id: "alpha", type: "radio", group: "sort"},
+                {klass: "circRadio", text: "Size", id: "size", type: "radio", group: "sort"},
+                {klass: "circRadio", text: "Link Crossings", id: "best", type: "radio", group: "sort"},
+            ];
+            toggleButtonData.forEach (function (d) {
+                d.initialState = this.options.sort === d.id;
+                d.func = function () {
+                    self.options.sort = d.id;
+                    self.reOrder();
+                };
+            }, this);
+            toggleButtonData.push (
+                {label: "ReLayout", class: "niceButton", type: "button"}
+            );
+            
+            var viewOpts = buttonPanel.selectAll("span.buttonPlaceholder").data(toggleButtonData)
+                .enter()
+                .append ("span")
+                .attr ("id", function(d) { return self.el.id + d.id; })
+                .attr ("class", "buttonPlaceholder")
+                    .append ("label")
+                    .attr ("class", "btn")
+            ;
+            
+            var cbInputs = viewOpts.filter(function(d) { return d.type !== "button"; });
+            cbInputs
+                .append("input")
+                .attr("type", function(d) { return d.type || "checkbox"})
+                .attr("name", function(d) { return d.group; })
+                .attr("class", function(d) { return d.klass; })
+                .property ("checked", function(d) { return d.initialState; })
+            ;
+            
+            cbInputs.append("span")
+                .text(function(d) { return d.text || d.label; })
+            ;
+            
+            viewOpts.filter(function(d) { return d.type === "button"; })
+                .append("button")
+                .text(function(d) { return d.label; })
+                .attr("class", function(d) { return d.class; })
+                .classed("btn btn-1 btn-1a", true)
+            ;
+            
+
+            
+            var optid = this.el.id+"Options";
+            buttonPanel.append("p").attr("id", optid);
+            new CLMSUI.DropDownMenuViewBB ({
+                el: "#"+optid,
+                model: CLMSUI.compositeModelInst.get("clmsModel"),
+                myOptions: {
+                    title: "Order Proteins ▼",
+                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    closeOnClick: false,
+                }
+            });
+            
+            // DROPDOWN ENDS
 
             var degToRad = Math.PI / 180;
 
@@ -294,7 +363,22 @@
         },
 
         reOrder: function () {
-            this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
+            this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
+            var prots = Array.from (this.model.get("clmsModel").get("participants").values());
+            var proteinSort = function (field) {
+                var numberSort = !isNaN(prots[0][field]);
+                var sortDir = this.options.sortDir;
+                prots.sort (function (a, b) {
+                    return (numberSort ? (+a[field]) - (+b[field]) : a[field].localeCompare(b[field])) * sortDir;
+                });
+                return prots.map (function(p) { return p.id; });
+            };
+            var sortFuncs = {
+                best: function () { return CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants")); },
+                size: function() { return proteinSort.call (this, "size"); },
+                alpha: function() { return proteinSort.call (this, "name"); },
+            }
+            this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : prots.map (function(p) { return p.id; });
             this.render();
         },
 
