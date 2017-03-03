@@ -898,6 +898,8 @@
             this.render();
             return this;
         },
+        
+        identifier: "CircularView",
 
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)

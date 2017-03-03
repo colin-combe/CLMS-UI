@@ -246,6 +246,48 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				return true;
 			}
         },
+        
+        stateString: function () {
+            var fields = [];
+            var zeroFormat = d3.format (".4f");
+            var zeroFormatFields = d3.set(["intraFdrCut", "interFdrCut", "scores"]);
+            if (this.get("fdrMode")) {
+                fields = ["fdrMode", "fdrThreshold", "interFdrCut", "intraFdrCut", "ambig", "betweenLinks", "selfLinks", "aaApart", "pepLength"];
+            } else {
+                var fieldSet = d3.set (d3.keys (this.attributes));
+                var antiFields = ["fdrThreshold", "interFdrCut", "intraFdrCut", "fdrMode"];
+                antiFields.forEach (function (af) { fieldSet.remove (af); });
+                fields = fieldSet.values();
+            }
+            fields = fields.filter (function (field) {
+                var val = this.get(field);
+                return !(val === "" || val === false || val === undefined);    
+            }, this);
+            //console.log ("fields", fields);
+            
+            var strValue = function (field, val) {
+                if (val === true) {
+                    return "";
+                }
+                if (zeroFormatFields.has(field) && !isNaN(val)) {
+                    return zeroFormat(val);
+                }
+                if ($.isArray (val)) {
+                    var arrayStr = val.map (function (elem) {
+                        return strValue (field, elem); 
+                    });
+                    return arrayStr.join("¦");
+                }
+                return val;
+            };
+            
+            var strParts = fields.map (function(field) {
+                var val = this.get(field);
+                return field + (val === true ? "" : "=" + strValue (field, val));
+            }, this);
+            return strParts.join("-");
+        },
+        
        /*
        filterLink: function (link) {
             if (link.meta && link.meta.meanMatchScore !== undefined) {

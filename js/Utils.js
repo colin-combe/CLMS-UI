@@ -262,6 +262,17 @@ CLMSUI.utils = {
              }
          }
      }),
+    
+    makeImgFilename: function () {
+        var filterStr = CLMSUI.compositeModelInst.get("filterModel").stateString();
+        var searches = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
+        var searchKeys = searches.map (function (search) { return search[0]; }); // just the keys
+        var searchStr = searchKeys.join("-");
+        var fileStr = searchStr+"-filter="+filterStr;
+        fileStr = fileStr.substring(0, 200);
+        console.log ("fileStr", fileStr);
+        return fileStr;
+    },
 
     BaseFrameView: Backbone.View.extend ({
 
@@ -313,7 +324,9 @@ CLMSUI.utils = {
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
             console.log ("xml", svgXML);
-            download (svgXML, 'application/svg', "view.svg");
+            
+            download (svgXML, 'application/svg', this.identifier+CLMSUI.utils.makeImgFilename()+".svg");
+            //download (svgXML, 'application/svg', "view.svg");
         },
 
         hideView: function () {

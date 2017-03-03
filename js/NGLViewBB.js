@@ -228,7 +228,7 @@
                     trim: true, // https://github.com/arose/ngl/issues/188
                     transparent: true
                 }).then( function( blob ){
-                    NGL.download( blob, "screenshot.png" );
+                    NGL.download( blob, "NGL3D"+CLMSUI.utils.makeImgFilename()+".png" );
                 });
             }
         },

@@ -90,22 +90,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         //console.log ("model", self.model);
                         var d3sel = d3.select(this);
                         var idArray = self.splitDataAttr (d3sel, "data-linkids");
+                        console.log ("idarry", idArray);
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         var posData = self.splitDataAttr (d3sel, "data-pos", "_");
                         var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
-                        /*
-                        var ttinfo = crossLinks.map (function (xlink) {
-                            var fromId = xlink.fromProtein.id+"_"+xlink.fromResidue;
-                            if (fromId === pos) {
-                                return [xlink.toProtein.name, xlink.toResidue,
-									xlink.filteredMatches_pp.length];
-                            } else {
-                                return [xlink.fromProtein.name, xlink.fromResidue,
-									xlink.filteredMatches_pp.length];
-                            }
-                        });
-                        ttinfo.unshift (["Protein", "Pos", "Matches"]);
-                        */
                         self.model.get("tooltipModel")
                             .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (interactor, +posData[1]))
                             .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))
@@ -155,11 +143,14 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             return ids ? ids.split(splitChar || ",") : [];
         },
     
-        getCrossLinksFromIDs: function (linkIDs, filter) {
+        getCrossLinksFromIDs: function (linkIDs, filter) {           
+            linkIDs = d3.set(linkIDs).values(); // strips out duplicates
+            
             var allLinks = this.model.get("clmsModel").get("crossLinks");
             var crossLinks = linkIDs.map (function(linkId) {
                  return allLinks.get(linkId);   
             });
+
             if (filter){
                 crossLinks = crossLinks.filter (function (xlink) {
                     return xlink.filteredMatches_pp.length > 0;    
