@@ -106,6 +106,7 @@
               "click .niceButton": "reOrder",
               "click .flipIntraButton": "flipIntra",
               "click .showResLabelsButton": "showResLabelsIfRoom",
+              "click .hideLinkless": "flipLinklessVisibility",
           });
         },
 
@@ -152,6 +153,7 @@
                 showResLabels: true,
                 sort: "best",
                 sortDir: 1,
+                hideLinkless: false,
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -172,82 +174,36 @@
             ;
             
             var buttonData = [
-                {label: CLMSUI.utils.commonLabels.downloadImg+"SVG", class:"downloadButton", type: "button"},
-                {label: "Flip Self Links", class: "flipIntraButton", type: "button"},
-                {label: "Show Residue Labels If Few", class: "showResLabelsButton", type: "checkbox", optionValue: this.options.showResLabels, title: "Depends on space"},
+                {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
+                {class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
+                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: true},
             ];
             
             var buttonPanel = mainDivSel.select("div.buttonPanel");
-            
-            buttonPanel.selectAll("button").data(buttonData.filter(function(bd) { return bd.type === "button"; }))
-                .enter()
-                .append("button")
-                .text(function(d) { return d.label; })
-                .attr("class", function(d) { return d.class; })
-                .classed("btn btn-1 btn-1a", true)
-            ;
-            
-            buttonPanel.selectAll("label").data(buttonData.filter(function(bd) { return bd.type === "checkbox"; }))		
-                .enter()		
-                .append ("label")		
-                .attr ("class", "btn")		
-                    .append ("span")		
-                    .attr("class", "noBreak")		
-                    .text(function(d) { return d.label; })		
-                    .attr ("title", function(d) { return d.title; })		
-                    .append("input")		
-                        .attr("type", "checkbox")		
-                        .attr("class", function(d) { return d.class; })		
-                        .property ("checked", function(d) { return d.optionValue; })		
-            ;
+            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, buttonData);
+
             
             // DROPDOWN STARTS
             // Various view options set up, then put in a dropdown menu
             var toggleButtonData = [
-                {klass: "circRadio", text: "Alphabetical", id: "alpha", type: "radio", group: "sort"},
-                {klass: "circRadio", text: "Size", id: "size", type: "radio", group: "sort"},
-                {klass: "circRadio", text: "Link Crossings", id: "best", type: "radio", group: "sort"},
+                {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio", group: "sort"},
+                {class: "circRadio", label: "Size", id: "size", type: "radio", group: "sort"},
+                {class: "circRadio", label: "Link Crossings", id: "best", type: "radio", group: "sort"},
+                {class: "niceButton", label: "ReLayout", id: "nice", type: "button"},
+                {class: "hideLinkless", label: "Hide Linkless Proteins", id: "hideLinkless", type: "checkbox", inputFirst: true, initialState: this.options.hideLinkless}
             ];
-            toggleButtonData.forEach (function (d) {
-                d.initialState = this.options.sort === d.id;
-                d.func = function () {
-                    self.options.sort = d.id;
-                    self.reOrder();
-                };
-            }, this);
-            toggleButtonData.push (
-                {label: "ReLayout", class: "niceButton", type: "button"}
-            );
-            
-            var viewOpts = buttonPanel.selectAll("span.buttonPlaceholder").data(toggleButtonData)
-                .enter()
-                .append ("span")
-                .attr ("id", function(d) { return self.el.id + d.id; })
-                .attr ("class", "buttonPlaceholder")
-                    .append ("label")
-                    .attr ("class", "btn")
+            toggleButtonData
+                .filter (function(d) { return d.type === "radio"; })
+                .forEach (function (d) {
+                    d.initialState = this.options.sort === d.id;
+                    d.inputFirst = true;
+                    d.func = function () {
+                        self.options.sort = d.id;
+                        self.reOrder();
+                    };
+                }, this)
             ;
-            
-            var cbInputs = viewOpts.filter(function(d) { return d.type !== "button"; });
-            cbInputs
-                .append("input")
-                .attr("type", function(d) { return d.type || "checkbox"})
-                .attr("name", function(d) { return d.group; })
-                .attr("class", function(d) { return d.klass; })
-                .property ("checked", function(d) { return d.initialState; })
-            ;
-            
-            cbInputs.append("span")
-                .text(function(d) { return d.text || d.label; })
-            ;
-            
-            viewOpts.filter(function(d) { return d.type === "button"; })
-                .append("button")
-                .text(function(d) { return d.label; })
-                .attr("class", function(d) { return d.class; })
-                .classed("btn btn-1 btn-1a", true)
-            ;
-            
+            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, toggleButtonData);
 
             
             var optid = this.el.id+"Options";
@@ -261,6 +217,7 @@
                     closeOnClick: false,
                 }
             });
+            
             
             // DROPDOWN ENDS
 
@@ -348,7 +305,13 @@
             var alignCall = 0;
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
             // listen to custom filteringDone event from model
-            this.listenTo (this.model, "filteringDone", function () { renderPartial (["links"]); });
+            this.listenTo (this.model, "filteringDone", function () {
+                if (self.options.hideLinkless) {
+                    self.render();
+                } else {
+                    renderPartial (["links"]);
+                }   
+            });
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
@@ -363,6 +326,7 @@
         },
 
         reOrder: function () {
+            console.log ("this", this, this.options);
             this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
             var prots = Array.from (this.model.get("clmsModel").get("participants").values());
             var proteinSort = function (field) {
@@ -377,7 +341,7 @@
                 best: function () { return CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants")); },
                 size: function() { return proteinSort.call (this, "size"); },
                 alpha: function() { return proteinSort.call (this, "name"); },
-            }
+            };
             this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : prots.map (function(p) { return p.id; });
             this.render();
         },
@@ -390,6 +354,11 @@
         showResLabelsIfRoom: function () {		
             this.options.showResLabels = !this.options.showResLabels;		
             this.render();		
+        },
+        
+        flipLinklessVisibility : function () {
+            this.options.hideLinkless = !this.options.hideLinkless;
+            this.render();
         },
 
         idFunc: function (d) { return d.id; },
@@ -457,8 +426,9 @@
 
         filterInteractors: function (interactors) {
             var filteredInteractors = [];
+            var hideLinkless = this.options.hideLinkless;
             interactors.forEach (function (value) {
-                if (!value.is_decoy) {
+                if (!value.is_decoy && (!hideLinkless || !value.hidden)) {
                     filteredInteractors.push (value);
                 }
             });
@@ -490,10 +460,10 @@
                 //console.log ("model", this.model);
 
                 var filteredInteractors = this.filterInteractors (interactors);
-                var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 
                 // If only one protein hide some options, and make links go in middle
-                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton")
+                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton,#"+this.el.id+"Options")
                     .style("display", (filteredInteractors.length < 2) ? "none" : null)
                 ;
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }

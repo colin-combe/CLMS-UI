@@ -522,7 +522,7 @@ label.horizontalFlow input[type=radio], label.horizontalFlow input[type=checkbox
 /* <label class='horizontalFlow'><span class='noBreak'>stuff you dont want split over multiple lines</span></label><more labels n spans...>
 
 /* span.noBreak asks for no line-breaks internally */
-span.noBreak {
+.noBreak {
     white-space: nowrap;
 }
 

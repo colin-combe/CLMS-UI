@@ -1,6 +1,16 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
+     events: function() {
+          var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
+          if(_.isFunction(parentEvents)){
+              parentEvents = parentEvents();
+          }
+          return _.extend({},parentEvents,{
+              "change input[type='color']": "changeColour",
+          });
+    },
+    
     initialize: function (viewOptions) {
         CLMSUI.KeyViewBB.__super__.initialize.apply (this, arguments);
         
@@ -112,6 +122,18 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         return this;
     },
     
+    changeColour: function (evt) {
+        var newValue = evt.target.value;
+        var rowData = d3.select(evt.target.parentNode.parentNode).datum();
+        var i = rowData[2];
+        var colourAssign = this.model.get("linkColourAssignment");
+        if (colourAssign) {
+            var colScale = colourAssign.get("colScale");
+            colScale.range()[i] = newValue;
+            this.model.trigger ("currentColourModelChanged", colourAssign, colScale.domain());
+        }
+    },
+    
     render: function () {
         var colourSection =[{
             header: "Link Colour Scheme",
@@ -120,7 +142,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
-            //colourAssign.init();
+            // colourAssign.init();
             // var colScale = colourAssign.colScale;
             var colScale = colourAssign.get("colScale");
             //console.log ("domain", colScale.domain(), "range", colScale.range(), "labels d", colourAssign.get("labels").domain(), "labels r", colourAssign.get("labels").range());
@@ -130,7 +152,10 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             });
             */
             colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
-                return ["<span class='colourSwatch' style='background-color:"+colScale.range()[i]+"'></span>", val];
+                var rgbCol = colScale.range()[i];
+                var rgbHex = d3.rgb(rgbCol).toString();
+                var span = /*"<span class='colourSwatch' style='background-color:"+rgbCol+"'></span>"+*/"<input type='color' value='"+rgbHex+"'/>";
+                return [span, val, i];
             });
 
             var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
@@ -140,9 +165,12 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             rowSel.exit().remove();
             rowSel.enter().append("tr");
 
-            var cellSel = rowSel.selectAll("td").data(function(d) { return d; });
-            cellSel.enter().append("td");
-            cellSel.html (function(d) { return d; });
+            var cellSel = rowSel.selectAll("td").data(function(d) { return d.slice(0,2); });
+            cellSel
+                .enter()
+                .append("td")
+                .html (function(d) { return d; })
+            ;
         }
         
         return this;

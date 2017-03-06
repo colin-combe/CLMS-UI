@@ -37,3 +37,7 @@
     padding-left: 0;
     margin-left: 0;
 }
+
+.dropdown LI label.btn {
+    padding-left: 0;
+}

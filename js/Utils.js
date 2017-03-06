@@ -263,6 +263,56 @@ CLMSUI.utils = {
          }
      }),
     
+    // Routine assumes on click methods are added via backbone definitions
+    // buttonData array of objects of type:
+    // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button", 
+    // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
+    makeBackboneButtons: function (targetDiv, baseID, buttonData) {      
+        targetDiv.selectAll("button")
+            .data (buttonData.filter(function(bd) { return bd.type === "button"; }), function(d) { return d.id; })
+            .enter()
+            .append("button")
+                .text (function(d) { return d.label; })
+                .attr ("class", function(d) { return d.class; })
+                .classed ("btn btn-1 btn-1a", true)
+                .attr("id", function(d) { return baseID + d.id; })
+        ;
+            
+        var cboxes = targetDiv.selectAll("label")
+            .data (buttonData.filter(function(bd) { return bd.type === "checkbox" || bd.type === "radio"; }), function(d) { return d.id; })		
+            .enter()		
+            .append ("label")		
+                .attr ("class", "btn noBreak")
+                .attr ("title", function(d) { return d.title; })
+                .attr ("id", function(d) { return baseID + d.id; })
+        ;
+        
+        cboxes
+            .filter (function(d) { return !d.inputFirst; })
+            .append ("span")		
+                .style ("white-space", function(d) { return d.noBreak ? "nowrap" : "normal"; })
+                .text (function(d) { return d.label; })		
+        ;
+        
+        cboxes.append ("input")		
+            .attr("type", function(d) { return d.type; })		
+            .attr("class", function(d) { return d.class; })		
+            .property ("checked", function(d) { return d.initialState; })
+            .each (function(d) {
+                if (d.group) {
+                    d3.select(this).attr("name", d.group);
+                }
+            })
+        ;
+        
+        cboxes
+            .filter (function(d) { return d.inputFirst; })
+            .append ("span")		
+                .style ("white-space", function(d) { return d.noBreak ? "nowrap" : "normal"; })
+                .text (function(d) { return d.label; })		
+        ;
+    },
+    
     makeImgFilename: function () {
         var filterStr = CLMSUI.compositeModelInst.get("filterModel").stateString();
         var searches = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
