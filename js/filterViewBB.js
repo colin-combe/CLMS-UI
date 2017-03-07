@@ -147,13 +147,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		var cutoffDivSel = mainDivSel.append ("div")
 								.attr("class", "filterControlGroup")
 								.attr("id", "matchScore");
-		//~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+		      //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
 
         var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
         var tpl = _.template ("<div><span>Match score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
-		sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
+		      sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
         sliderSection.selectAll("p.cutoffLabel")
             .append("input")
             .attr({

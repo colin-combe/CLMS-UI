@@ -136,14 +136,16 @@ CLMSUI.init.modelsEssential = function (options) {
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-     // set original cutoff to be the extent of all scores (rounded up and down nicely)
-     matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
-				Math.ceil(clmsModelInst.get("maxScore"))],
-     
-     //~ CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("matches")).map (function(ex,i) {
-        //~ return Math[i === 0 ? "floor" : "ceil"](ex);
-     //~ }),
-     scores: clmsModelInst.get("scores")
+        
+        matchScoreCutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("rawMatches")).map (function(ex,i) {
+            return Math[i === 0 ? "floor" : "ceil"](ex);
+        }),
+        // BUG: clmsModelInst doesn't have min or max scores
+         // set original cutoff to be the extent of all scores (rounded up and down nicely)
+        // matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
+        //Math.ceil(clmsModelInst.get("maxScore"))],
+
+         scores: clmsModelInst.get("scores")
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
