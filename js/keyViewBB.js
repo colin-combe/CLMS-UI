@@ -18,12 +18,11 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
         
         var topDiv = d3.select(this.el).append("div")
-            .attr("class", "panelInner")
+            .attr("class", "panelInner keyPanel")
             .html("<h1 class='infoHeader'>Xi Legend</h1><div class='panelInner'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
         ;       
         var chartDiv = topDiv.select(".panelInner");
 
-        
         var svgs = {
             clinkp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
             ambigp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous'/>",
@@ -123,13 +122,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     },
     
     changeColour: function (evt) {
-        var newValue = evt.target.value;
-        var rowData = d3.select(evt.target.parentNode.parentNode).datum();
-        var i = rowData[2];
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
+            var newValue = evt.target.value;
+            var rowData = d3.select(evt.target.parentNode.parentNode).datum();
+            var i = rowData[rowData.length - 1];
             var colScale = colourAssign.get("colScale");
             colScale.range()[i] = newValue;
+            // fire 'change to colour model' event
             this.model.trigger ("currentColourModelChanged", colourAssign, colScale.domain());
         }
     },
@@ -142,26 +142,21 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
-            // colourAssign.init();
-            // var colScale = colourAssign.colScale;
             var colScale = colourAssign.get("colScale");
-            //console.log ("domain", colScale.domain(), "range", colScale.range(), "labels d", colourAssign.get("labels").domain(), "labels r", colourAssign.get("labels").range());
-            /*
-            colourSection[0].rows = colScale.domain().map (function (val) {
-                return ["<span class='colourSwatch' style='background-color:"+colScale(val)+"'></span>", colourAssign.get("labels")(val)];
-            });
-            */
+
             colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
                 var rgbCol = colScale.range()[i];
                 var rgbHex = d3.rgb(rgbCol).toString();
-                var span = /*"<span class='colourSwatch' style='background-color:"+rgbCol+"'></span>"+*/"<input type='color' value='"+rgbHex+"'/>";
+                var span = /*"<span class='colourSwatch' style='background-color:"+rgbCol+"'></span>"+*/"<input type='color' value='"+rgbHex+"' title='Press to change colour'/>";
                 return [span, val, i];
             });
 
             var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
             updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.get("title"); });
 
-            var rowSel = updateSection.select("tbody").selectAll("tr").data(function(d) { return d.rows; });
+            var rowSel = updateSection.select("tbody").selectAll("tr")
+                .data(function(d) { return d.rows; }, function (d) { return d.join(","); }) // key function = all fields joined
+            ;
             rowSel.exit().remove();
             rowSel.enter().append("tr");
 

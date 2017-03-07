@@ -54,42 +54,42 @@ changes there are automatically reflected in the legend
 }
 
 /* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */
-#keyPanel .panelInner .panelInner {
+.keyPanel.panelInner .panelInner {
     overflow-y: auto;
 }
 
-#keyPanel > .panelInner > h1 {
+.keyPanel > .panelInner > h1 {
     height: 1.7em;
 }
 
-#keyPanel > .panelInner > img {
+.keyPanel > .panelInner > img {
     margin-top: 0.5em;
     height: 63px
 }
 
-#keyPanel > .panelInner > .panelInner {
+.keyPanel.panelInner > .panelInner {
     height: calc(100% - 2.2em - 63px);
 }
 
-#keyPanel tr {
+.keyPanel tr {
     line-height: 1.3em;
     border-bottom: 1px solid #eee;
 }
 
-#keyPanel tbody {
+.keyPanel tbody {
     border-top: 1px solid #bbb;
 }
 
-#keyPanel section:not(:first-of-type) table {
+.keyPanel section:not(:first-of-type) table {
     display: none;
 }
 
-#keyPanel h2 {
+.keyPanel h2 {
     width: 100%;
     cursor: pointer;
 }
 
-#keyPanel h2 svg {
+.keyPanel h2 svg {
     margin-right: 1em;
     width: 16px;
     height: 16px;
@@ -102,4 +102,8 @@ changes there are automatically reflected in the legend
     width: 5em;
     display: inline-block;
     vertical-align: middle;
+}
+
+.keyPanel input[type='color'] {
+    cursor: pointer;
 }
