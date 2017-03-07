@@ -15,10 +15,10 @@ CLMSUI.modelUtils = {
         return arrs;
     },
     
-   /* // lots of scores, what's the extent (min and max values)?
+   // lots of scores, what's the extent (min and max values)?
     getScoreExtent: function (matchesArr) {
-        return d3.extent (Array.from(matchesArr.values()).map (function(d) { return d.score; }));
-    }, */
+        return d3.extent (matchesArr, function(d) { return d.sc; });
+    },
      
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
