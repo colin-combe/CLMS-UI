@@ -203,7 +203,7 @@ CLMSUI.init.views = function () {
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
         //~ {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
     ];
     checkBoxData.forEach (function (cbdata) {

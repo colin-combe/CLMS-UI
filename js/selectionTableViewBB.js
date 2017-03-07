@@ -49,7 +49,7 @@
                 "ambiguity": "Ambiguity",
                 "protein1": "Protein 1",
                 "pepPos1": "Pep Pos",
-                "matchedPeptides[0].seq_mods": "Pep 1 Sequence",
+                "pepSeq1raw": "Pep 1 Sequence",
                 "linkPos1": "Link Pos",
                 "protein2": "Protein 2",
                 "pepPos2": "Pep Pos",
@@ -66,7 +66,7 @@
 
             this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge"]);
             this.colSectionStarts = d3.set (["protein2", "score"]);
-            this.monospacedColumns = d3.set (["matchedPeptides[0].seq_mods", "pepSeq2raw"]);
+            this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
             this.maxWidthColumns = d3.set (["protein1", "protein2"]);
 
             // entries commented out until a replacement is found for xlv
@@ -88,6 +88,7 @@
             );
 
             var self = this;
+            var zeroPadder = d3.format(".2f");
             this.cellFuncs = {
                     "id": function (d) { return d.id; },
                     "ambiguity": function (d) { return d.matchedPeptides[0].prt.length *
@@ -110,10 +111,9 @@
 					},
                     "linkPos1": function(d) { return d.linkPos1; },
                     "linkPos2": function(d) { return d.linkPos2; },
-                    "score": function (d) { return d.score; }
+                    "score": function (d) { return zeroPadder (d.score); }
             };
 
-            var self = this;
             this.page = 1;
             this.pageSize = 50;
             var pager = d3.select(this.el).select(".pager");
