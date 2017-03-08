@@ -542,6 +542,14 @@
 
             return this;
         },
+        
+        addOrGetGroupLayer : function (g, layerClass) {
+            var groupLayer = g.select("g."+layerClass);
+            if (groupLayer.empty()) {
+                groupLayer = g.append("g").attr("class", layerClass);
+            }
+            return groupLayer;
+        },
 
         drawLinks: function (g, links) {
 
@@ -552,12 +560,9 @@
 
 
             // draw thick, invisible links (used for highlighting and mouse event capture)
-            var ghostLayer = g.select("g.ghostLayer");
-            if (ghostLayer.empty()) {
-                ghostLayer = g.append("g").attr("class", "ghostLayer");
-            }
-
+            var ghostLayer = this.addOrGetGroupLayer (g, "ghostLayer");
             var ghostLinkJoin = ghostLayer.selectAll(".circleGhostLink").data(links, self.idFunc);
+            
             ghostLinkJoin.exit().remove();
             ghostLinkJoin.enter()
                 .append("path")
@@ -584,10 +589,7 @@
             ;
 
             // draw thin links
-            var thinLayer = g.select("g.thinLayer");
-            if (thinLayer.empty()) {
-                thinLayer = g.append("g").attr("class", "thinLayer");
-            }
+            var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
             var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
             //var hasNew = linkJoin.enter().size() > 0;
             linkJoin.exit().remove();
@@ -604,7 +606,9 @@
 
         drawNodes: function (g, nodes) {
             var self = this;
-            var nodeJoin = g.selectAll(".circleNode").data(nodes, self.idFunc);
+            
+            var nodeLayer = this.addOrGetGroupLayer (g, "nodeLayer");
+            var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
 
             nodeJoin.exit().remove();
 
@@ -669,7 +673,8 @@
                 });
             };
 
-            var groupTickJoin = g.selectAll("g.tickGroups")
+            var tickLayer = this.addOrGetGroupLayer (g, "tickLayer");
+            var groupTickJoin = tickLayer.selectAll("g.tickGroups")
                 .data(nodes, self.idFunc)
             ;
 
@@ -749,14 +754,11 @@
             ;
             
             // add labels to layer, to ensure they 'float' above feature elements added directly to g
-            var nodeLabelLayer = g.select("g.nodeLabelLayer");
-            if (nodeLabelLayer.empty()) {
-                nodeLabelLayer = g.append("g").attr("class", "nodeLabelLayer");
-            }
-
+            var nodeLabelLayer = this.addOrGetGroupLayer (g, "nodeLabelLayer");
             var textJoin = nodeLabelLayer.selectAll("text.circularNodeLabel")
                 .data (tNodes, self.idFunc)
             ;
+            
             textJoin.exit().remove();
             textJoin.enter()
                 .append("text")
@@ -778,11 +780,7 @@
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
             });
             
-            var featureLayer = g.select("g.featureLayer");
-            if (featureLayer.empty()) {
-                featureLayer = g.append("g").attr("class", "featureLayer");
-            }
-            
+            var featureLayer = this.addOrGetGroupLayer (g, "featureLayer");
             var featureJoin = featureLayer.selectAll(".circleFeature").data(features, self.idFunc);
 
             featureJoin.exit().remove();
@@ -831,11 +829,7 @@
             });
             var degToRad = Math.PI / 180;
             
-            var letterLayer = g.select("g.letterLayer");
-            if (letterLayer.empty()) {
-                letterLayer = g.append("g").attr("class", "letterLayer");
-            }
-            
+            var letterLayer = this.addOrGetGroupLayer (g, "letterLayer");           
             var resJoin = letterLayer.selectAll(".residueLetter").data(resMap.entries(), function(d) { return d.key; });
             
             resJoin.exit().remove();
