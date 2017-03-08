@@ -345,7 +345,7 @@ if (sizeof($peptideIds) === 0) {
 	}
 
 	$query = "SELECT ".$proteinIdField." AS id,
-			CASE WHEN name IS NULL OR name = '' OR name = 'REV_' THEN accession_number
+			CASE WHEN name IS NULL OR name = '' OR name = 'REV_' OR name = 'RAN_' THEN accession_number
 			ELSE name END AS name,
 			description, accession_number, sequence, is_decoy
 			FROM protein WHERE ".$proteinIdField." IN ('".implode(array_keys($proteinIds), "','")."')";

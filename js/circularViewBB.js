@@ -447,16 +447,15 @@
 
         render: function (options) {
 
-            console.log ("render args", arguments);
+            //console.log ("render args", arguments);
             var changed = options ? options.changed : undefined;
 
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-
-                console.log ("re-rendering circular view");
+                //console.log ("re-rendering circular view");
 
                 var interactors = this.model.get("clmsModel").get("participants");
                 //var crossLinks = this.model.get("clmsModel").get("crossLinks");
-                console.log ("interactorOrder", this.interactorOrder);
+                //console.log ("interactorOrder", this.interactorOrder);
                 //console.log ("model", this.model);
 
                 var filteredInteractors = this.filterInteractors (interactors);
@@ -855,11 +854,6 @@
                 })
             ;
 
-            return this;
-        },
-
-        relayout: function () {
-            this.render();
             return this;
         },
         

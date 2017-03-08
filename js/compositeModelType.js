@@ -6,13 +6,14 @@
     CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend ({
         applyFilter: function () {
 			var filterModel = this.get("filterModel");
-            var crossLinksArr = Array.from(this.get("clmsModel").get("crossLinks").values());
+            var clmsModel = this.get("clmsModel");
+            var crossLinksArr = Array.from(clmsModel.get("crossLinks").values());
 			var clCount = crossLinksArr.length;
 			
 			// if its FDR based filtering,
 			// set all matches fdrPass att to false, then calc
 			if (filterModel && filterModel.get("fdrMode")) {
-				var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
+				var matches = clmsModel.get("matches");
 				var matchesLen = matches.length;
 				for (var m = 0; m < matchesLen; ++m){
 					matches[m].fdrPass = false;
@@ -34,7 +35,7 @@
 						var pass;// = filterModel.filterLink (crossLink);
 						if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
 							var fdr = crossLink.meta.meanMatchScore;
-							var intra = CLMSUI.modelUtils.isIntraLink (crossLink);
+							var intra = clmsModel.isIntraLink (crossLink);
 							var cut = intra ? result[1].fdr : result[0].fdr;
 							pass = fdr >= cut;
 						}
@@ -107,7 +108,7 @@
 				}
             };
             
-            var participantsArr = Array.from(this.get("clmsModel").get("participants").values());
+            var participantsArr = Array.from(clmsModel.get("participants").values());
             var participantCount = participantsArr.length;           
             
             for (var p = 0; p < participantCount; ++p) {

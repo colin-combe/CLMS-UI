@@ -246,9 +246,8 @@ CLMSUI.modelUtils = {
     /* Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query 
     the pdb web services or it's offline. 
     */
-    matchSequencesToProteins: function (sequenceObjs, proteins, extractFunc) {
+    matchSequencesToProteins: function (protAlignCollection, sequenceObjs, proteins, extractFunc) {
         proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
-        var protAlignCollection = CLMSUI.compositeModelInst.get("alignColl");
         var matchMatrix = {};
         proteins.forEach (function (prot) {
             //console.log ("prot", prot);
@@ -312,12 +311,55 @@ CLMSUI.modelUtils = {
         return filteredCrossLinks;
     }, */
     
-    isReverseProtein: function (prot1, prot2) {
-        return ((prot1.name === "REV_"+prot2.name || "REV_"+prot1.name === prot2.name) && (prot1.accession === "REV_"+prot2.accession || "REV_"+prot1.accession === prot2.accession) && (prot1.is_decoy ^ prot2.is_decoy));
+    addDecoyProtProtMap: function (clmsBBModel, prefixes) {
+        prefixes = prefixes || ["REV_", "RAN_"];
+        var prots = clmsBBModel.get("proteins");
+        var nameMap = d3.map ();
+        var accessionMap = d3.map ();
+        prots.forEach (function (prot) {
+            nameMap.set (prot.name, prot.id);
+            accessionMap.set (prot.accession, prot.id);
+        });
+        var decoyToRealMap = d3.map ();
+        var decoys = prots.filter(function (p) { return p.is_decoy; });
+        decoys.forEach (function (decoyProt) {
+            prefixes.forEach (function (pre) {
+                var realProtIDByName = nameMap.get (decoyProt.name.substring(pre.length));
+                var realProtIDByAccession = accessionMap.get (decoyProt.accession.substring(pre.length));
+                if (realProtIDByName && realProtIDByAccession) {
+                    decoyToRealMap.set (decoyProt.id, realProtIDByName);
+                }
+            });  
+        });
+        
+        clmsBBModel.decoyToRealProteinMap = decoyToRealMap;
+        clmsBBModel.isIntraLink = function (crossLink) {
+            return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isDecoyRealProteinPair (crossLink.toProtein, crossLink.fromProtein, clmsBBModel.decoyToRealProteinMap)));
+        };
     },
     
-    isIntraLink: function (crossLink) {
-         return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isReverseProtein (crossLink.toProtein, crossLink.fromProtein)));
+    isDecoyRealProteinPair: function (prot1, prot2, decoyToRealProteinMap) {
+        //if (prot2.id == "2750049" && prot1.id == "2750053") {
+        //    console.log ("rev rabit link", prot1, prot2);
+        //}
+        var p1decoy = prot1.is_decoy;
+        if (p1decoy === prot2.is_decoy) {   // won't be real+decoy pair if both are real or both are fake  
+            return false;
+        }
+        var decoy = p1decoy ? prot1 : prot2;
+        var real = p1decoy ? prot2 : prot1;
+        return decoyToRealProteinMap.get(decoy.id) === real.id;
+        
+        /*
+        var a = decoyToRealProteinMap.get(decoy.id) === real.id;
+        var b =  (decoy.name === "REV_"+real.name && decoy.accession === "REV_"+real.accession) || (decoy.name === "RAN_"+real.name && decoy.accession === "RAN_"+real.accession);  
+        
+        if (a !== b) {
+            console.log ("prottt", prot1, prot2);
+        }
+        
+        return a;
+        */
     },
     
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {

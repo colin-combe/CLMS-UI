@@ -66,7 +66,8 @@ CLMSUI.utils = {
 
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
-        var height = zeptoElem.height() > 0;
+        //console.log ("zepto", zeptoElem);
+        var height = /*zeptoElem[0].offsetHeight; //true; */ zeptoElem.height() > 0;
         var visibility = zeptoElem.css('visibility') != 'hidden';
         var display = zeptoElem.css('display') != 'none';
         return (display && visibility && height);

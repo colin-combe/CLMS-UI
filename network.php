@@ -179,24 +179,27 @@
 
             var success = function (text) {
                 spinner.stop(); // stop spinner on request returning
-                var json = JSON.parse (text);
-                CLMSUI.init.models (json);
+                try {
+                    var json = JSON.parse (text);
+                    CLMSUI.init.models (json);
+                    
+                    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+                    document.title = Array.from(searches.keys()).join();
 
-                var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-                document.title = Array.from(searches.keys()).join();
+                    CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
+                        { direction: "vertical", sizes: [80,20], minSize: [200,10] }
+                    );
+                    //CLMSUI.split.collapse(1);
 
-                CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                    { direction: "vertical", sizes: [80,20], minSize: [200,10] }
-                );
-                //CLMSUI.split.collapse(1);
+                    CLMSUI.init.views();
 
-                CLMSUI.init.views();
-
-                allDataLoaded ();
+                    allDataLoaded ();
+                } catch (err) {
+                    console.error ("Error", err, text.substring(0,1000));
+                }
             };
 
             var url = "./loadData.php" + window.location.search;
-
 
 
             d3.text (url, function (error, text) {
@@ -204,7 +207,6 @@
                     success (text);
                 }
             });
-
 
     //]]>
     </script>

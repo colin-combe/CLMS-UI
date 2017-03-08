@@ -134,6 +134,7 @@ CLMSUI.init.modelsEssential = function (options) {
         "No cross-links detected for this search.<br>Please return to the search history page."
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+    CLMSUI.modelUtils.addDecoyProtProtMap (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         
