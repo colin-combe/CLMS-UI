@@ -67,10 +67,8 @@ CLMSUI.utils = {
     // http://stackoverflow.com/questions/10066630/how-to-check-if-element-is-visible-in-zepto
     isZeptoDOMElemVisible : function (zeptoElem) {   // could be a jquery-ref'ed elem as well
         //console.log ("zepto", zeptoElem);
-        var height = /*zeptoElem[0].offsetHeight; //true; */ zeptoElem.height() > 0;
-        var visibility = zeptoElem.css('visibility') != 'hidden';
-        var display = zeptoElem.css('display') != 'none';
-        return (display && visibility && height);
+        var display = zeptoElem.css('display') !== 'none';
+        return display && (zeptoElem.css('visibility') !== 'hidden') && (zeptoElem.height() > 0);
     },
 
     // try .layerX / .layerY first as .offsetX / .offsetY is wrong in firefox
@@ -604,3 +602,29 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 
     dataJoin.selectAll("h2").each (setArrow);
 };
+
+CLMSUI.utils.c3mods = function () {
+    var c3guts = c3.chart.internal.fn;
+    var c3funcs = c3.chart.fn;
+    
+    c3guts.redrawMirror = c3guts.redraw;
+    c3funcs.enableRedraw = function (enable, immediate) {
+        c3guts.enableRedrawFlag = enable;
+         console.log ("YO REDA", c3guts.enableRedrawFlag, this);
+        if (immediate) {
+            console.log ("YOOOO", c3guts.enableRedrawFlag, this);
+            //c3guts.redraw.call (this);
+        }
+    }
+    
+    c3guts.redraw = function (options, transitions) {
+        console.log ("this", this);
+        var c3guts = c3.chart.internal.fn;
+        this.accumulatedOptions = $.extend({}, this.accumulatedOptions, options || {});
+        if (c3guts.enableRedrawFlag) {
+            this.redrawMirror (this.accumulatedOptions, transitions);
+            this.accumulatedOptions = {};
+        } 
+        console.log ("accum", c3guts.enableRedrawFlag, this.accumulatedOptions);
+    }
+}

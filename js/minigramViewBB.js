@@ -34,6 +34,11 @@
 
             // Generate the C3 Chart
             var bid = "#" + chartDiv.attr("id");
+            
+            //if (!c3.chart.fn.enableRedraw) {    // try to reduce intermediate redraws
+            //    CLMSUI.utils.c3mods();
+            //}
+            //c3.chart.fn.enableRedraw(false);
 
             this.chart = c3.generate({
                 bindto: bid,
@@ -166,6 +171,10 @@
             this.chart.load({
                 columns: countArrays
             });
+            
+            //c3.chart.fn.enableRedraw(true, true);
+            //console.log (this.chart);
+            //this.chart.internal.redraw ();
 
             // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
             var internal = this.chart.internal;
