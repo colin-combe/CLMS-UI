@@ -185,7 +185,8 @@
                         });
                     }
                     else {  // without access to pdb codes have to match comparing all proteins against all chains
-                        var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (nglSequences2, interactorArr,
+                        var protAlignCollection = self.model.get("alignColl");
+                        var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
                             function(sObj) { return sObj.data; }
                         );
                         sequenceMapsAvailable (pdbUniProtMap);
