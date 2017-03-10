@@ -222,10 +222,14 @@
         
         getAlignmentSearchRange: function (proteinID, sequenceID) {
             var protAlignModel = this.get (proteinID);
-            var arr = protAlignModel.getCompSequence(sequenceID).convertToRef;
-            var first = _.find (arr, function(item) { return item > 0; });
-            var last = _.findLastIndex (arr, function (item) { return item > 0; });
-            return [first + 1, (last > 0 ? arr[last] + 1 : undefined)];
+            if (protAlignModel) {
+                var arr = protAlignModel.getCompSequence(sequenceID).convertToRef;
+                var first = _.find (arr, function(item) { return item > 0; });
+                var last = _.findLastIndex (arr, function (item) { return item > 0; });
+                return [first + 1, (last > 0 ? arr[last] + 1 : undefined)];
+            } else {
+                return [undefined, undefined];
+            }
         },
     });
     

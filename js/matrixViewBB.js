@@ -252,16 +252,17 @@
         var chainIDs = this.options.matrixObj ? [this.options.matrixObj.chain1, this.options.matrixObj.chain2] : [null, null];
         return chainIDs.map (function (ci) { 
             ci = ci ? + ci : ci;    // make sure ci becomes a number, unless it's null/undefined
-            return {chainID: ci, proteinID: this.getProteinID (ci), labelText: this.getLabelText (ci)};
+            return {chainID: ci, proteinID: this.getDataFromChainID(ci).proteinID, labelText: this.getLabelText (ci)};
         }, this);
     },
         
     getLabelText: function (chainID) {
         if (chainID != null) {
-            var distancesObj = this.model.get("clmsModel").get("distancesObj");
-            var proteinID = this.getProteinID (chainID);
-            var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID);
-            var proteinName = this.model.get("clmsModel").get("participants").get(proteinID).name;
+            var data = this.getDataFromChainID (chainID);
+            var proteinID = data.proteinID;
+            var chainName = data.chainName;
+            var protein = this.model.get("clmsModel").get("participants").get(proteinID);
+            var proteinName = protein ? protein.name : undefined;
             var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
             proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
             return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";
@@ -269,9 +270,13 @@
         return "No Chain";
     },
         
-    getProteinID: function (chainID) {
+    
+    getDataFromChainID : function (chainID) {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        return CLMSUI.modelUtils.getProteinFromChainIndex (distancesObj.chainMap, chainID);
+        return {
+            proteinID: CLMSUI.modelUtils.getProteinFromChainIndex (distancesObj.chainMap, chainID),
+            chainName: CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID),
+        };
     },
         
     getAlignIDs: function (proteinIDsObj) {
@@ -602,7 +607,7 @@
     // called when things need repositioned, but not re-rendered from data
     resize: function () {
         
-        console.log ("matrix resize")
+        console.log ("matrix resize");
         var sizeData = this.getSizeData(); 
         var minDim = sizeData.minDim;
         var deltaz = this.last ? (minDim / this.last) : 1;

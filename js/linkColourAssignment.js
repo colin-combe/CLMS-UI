@@ -54,15 +54,16 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
          var groupCount = groups.size;
         var colScale;
 
+        var multiGroupColour = "#202020";
         if (groupCount < 6) {
-            var colArr = ["grey"].concat(colorbrewer.Dark2[5]);
+            var colArr = [multiGroupColour].concat(colorbrewer.Dark2[5]);
             colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
         } else if (groupCount < 11) {
-            var colArr = ["grey"].concat(colorbrewer.Paired[10]);
+            var colArr = [multiGroupColour].concat(colorbrewer.Paired[10]);
             colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
         } else { // more than 10 groups, not really feasible to find colour scale that works
                 //a d3.scale that always returns gray?
-            colScale = d3.scale.linear().domain([-1,0]).range(["grey", "#448866"]).clamp(true);
+            colScale = d3.scale.linear().domain([-1,0]).range([multiGroupColour, "#448866"]).clamp(true);
             labelRange = ["Multiple Group", "Single Group"];
         }
         this.set("colScale", colScale);
