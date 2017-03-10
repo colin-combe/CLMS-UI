@@ -70,6 +70,9 @@
                 .text (function(d) { return d.label; })
             ;
             
+            
+            var messageBar = wrapperPanel.append("div").attr("class", "nglMessagebar");
+            
             this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white"});
             console.log ("STAGE", this.stage);
             // populate 3D network viewer if hard-coded pdb id present
@@ -154,6 +157,7 @@
                                 });
                                 mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                             });
+                            map = map.filter (function (mapping) { return mapping.id !== "none"; });
                             callback (map);
                         }
                     } 
@@ -194,35 +198,43 @@
                 
                     // bit to continue onto after ngl protein chain to clms protein matching has been done
                     function sequenceMapsAvailable (sequenceMap) {
-                        self.chainMap = {};
-                        sequenceMap.forEach (function (pMatch) {
-                            pMatch.data = pMatch.seqObj.data;
-                            pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
-                            self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
-                            self.chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
-                            pMatch.otherAlignSettings = {semiLocal: true};
-                        });
-                        console.log ("chainmap", self.chainMap, "stage", self.stage, "\nhas sequences", sequenceMap);
                         
-                        if (self.model.get("stageModel")) {
-                             self.model.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
+                        if (sequenceMap && sequenceMap.length) {
+                            var slen = sequenceMap.length;
+                            d3.select(self.el).select(".nglMessagebar").text(slen+" sequence"+(slen > 1 ? "s": "")+" mapped between this search and the loaded pdb file.");
+                            self.chainMap = {};
+                            sequenceMap.forEach (function (pMatch) {
+                                pMatch.data = pMatch.seqObj.data;
+                                pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
+                                self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
+                                self.chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
+                                pMatch.otherAlignSettings = {semiLocal: true};
+                            });
+                            console.log ("chainmap", self.chainMap, "stage", self.stage, "\nhas sequences", sequenceMap);
+
+                            if (self.model.get("stageModel")) {
+                                 self.model.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
+                            }
+                            self.model.trigger ("3dsync", sequenceMap);
+                            // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
+
+                            // Make a new model and set of data ready for the ngl viewer
+                            var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
+                            crosslinkData.set({
+                                structureComp: structureComp, 
+                                chainMap: self.chainMap, 
+                                pdbBaseSeqID: pdbInfo.baseSeqId, 
+                                masterModel: self.model,
+                            });
+                            self.model.set ("stageModel", crosslinkData);
+                            // important that the new model is set first ^^^ before we setupLinks() on the model
+                            // otherwise the listener in the 3d viewer is still pointing to the old model when the
+                            // changed:linklist event is received. (i.e. it broke the other way round)
+                            crosslinkData.setupLinks (self.model.get("clmsModel"));
                         }
-                        self.model.trigger ("3dsync", sequenceMap);
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
-                    
-                        // Make a new model and set of data ready for the ngl viewer
-                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
-                        crosslinkData.set({
-                            structureComp: structureComp, 
-                            chainMap: self.chainMap, 
-                            pdbBaseSeqID: pdbInfo.baseSeqId, 
-                            masterModel: self.model,
-                        });
-                        self.model.set ("stageModel", crosslinkData);
-                        // important that the new model is set first ^^^ before we setupLinks() on the model
-                        // otherwise the listener in the 3d viewer is still pointing to the old model when the
-                        // changed:linklist event is received. (i.e. it broke the other way round)
-                        crosslinkData.setupLinks (self.model.get("clmsModel"));                   
+                        else {
+                            d3.select(self.el).select(".nglMessagebar").text("No sequences mapped between this search and the loaded pdb file. Please check the pdb file is correct.");
+                        }
                     }
                 })
             ;  
