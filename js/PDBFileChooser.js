@@ -60,7 +60,7 @@
             ;
             
             var pushButtonData = [
-                {klass: "pdbWindowButton", label: "Show Possible External PDBs"},
+                {klass: "pdbWindowButton", label: "Show Possible PDBs @ RCSB.Org"},
             ];
             
             toolbar.selectAll("button").data(pushButtonData)
@@ -71,7 +71,7 @@
             ;
             
             
-            var messageBar = wrapperPanel.append("div").attr("class", "nglMessagebar");
+            wrapperPanel.append("div").attr("class", "nglMessagebar");
             
             this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white"});
             console.log ("STAGE", this.stage);
@@ -233,7 +233,7 @@
                             crosslinkData.setupLinks (self.model.get("clmsModel"));
                         }
                         else {
-                            d3.select(self.el).select(".nglMessagebar").text("No sequences mapped between this search and the loaded pdb file. Please check the pdb file is correct.");
+                            d3.select(self.el).select(".nglMessagebar").text("No sequences matches found between this search and the loaded pdb file. Please check the pdb file is correct.");
                         }
                     }
                 })
