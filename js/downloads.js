@@ -106,7 +106,7 @@ function getLinksCSV(){
 
     var crossLinks = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
-    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances2 (crossLinks, true);
+    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances2 (crossLinks, {includeUndefineds: true});
     
     crossLinks.forEach (function (residueLink, i) {
         var filteredMatchesAndPepPos = residueLink.filteredMatches_pp;

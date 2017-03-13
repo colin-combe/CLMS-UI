@@ -231,28 +231,42 @@
             console.log ("map", this.get("selectedProtein"));
         },
         
-        getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection) {
+        getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, calcDecoyProteinDistances) {
             // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
             distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
-            protAlignCollection = protAlignCollection || this.get("alignColl");   
-            return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, false) : undefined;
+            protAlignCollection = protAlignCollection || this.get("alignColl");  
+            var options = {average: false};
+            if (calcDecoyProteinDistances) {
+                if (xlink.fromProtein.is_decoy) {
+                    options.realFromPid = this.get("clmsModel").getRealProteinID (xlink.fromProtein.id);
+                }
+                if (xlink.toProtein.is_decoy) {
+                    options.realToPid = this.get("clmsModel").getRealProteinID (xlink.toProtein.id);
+                }
+            }
+            
+            return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, options) : undefined;
         },
         
         // includeUndefineds to true to preserve indexing of returned distances to input crosslinks
-        getCrossLinkDistances2: function (crossLinks, includeUndefineds) {
+        getCrossLinkDistances2: function (crossLinks, options) {
+            options = options || {};
+            var includeUndefineds = options.includeUndefineds || false;
+            var calcDecoyProteinDistances = options.calcDecoyProteinDistances || false;
+            
             var distArr = [];
             var distModel = this.get("clmsModel").get("distancesObj");
             var protAlignCollection = this.get ("alignColl");
             for (var crossLink of crossLinks) {
-                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, protAlignCollection);
+                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, protAlignCollection, calcDecoyProteinDistances);
                 if (dist != null) {
-                    distArr.push(+dist); // + is to stop it being a string
+                    distArr.push (+dist); // + is to stop it being a string
                 }
                 else if (includeUndefineds) {
                     distArr.push (undefined);
                 }
             }
-            console.log ("distArr", distArr);
+            //console.log ("distArr", distArr);
 
             return distArr;
         }, 

@@ -333,6 +333,9 @@ CLMSUI.modelUtils = {
         });
         
         clmsBBModel.decoyToRealProteinMap = decoyToRealMap;
+        clmsBBModel.getRealProteinID = function (decoyProteinID) {
+            return clmsBBModel.decoyToRealProteinMap.get (decoyProteinID);
+        };
         clmsBBModel.isIntraLink = function (crossLink) {
             return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isDecoyRealProteinPair (crossLink.toProtein, crossLink.fromProtein, clmsBBModel.decoyToRealProteinMap)));
         };

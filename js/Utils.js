@@ -615,7 +615,7 @@ CLMSUI.utils.c3mods = function () {
             console.log ("YOOOO", c3guts.enableRedrawFlag, this);
             //c3guts.redraw.call (this);
         }
-    }
+    };
     
     c3guts.redraw = function (options, transitions) {
         console.log ("this", this);
@@ -626,5 +626,5 @@ CLMSUI.utils.c3mods = function () {
             this.accumulatedOptions = {};
         } 
         console.log ("accum", c3guts.enableRedrawFlag, this.accumulatedOptions);
-    }
-}
+    };
+};
