@@ -238,7 +238,8 @@
             return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, false) : undefined;
         },
         
-        getCrossLinkDistances2: function (crossLinks) {
+        // includeUndefineds to true to preserve indexing of returned distances to input crosslinks
+        getCrossLinkDistances2: function (crossLinks, includeUndefineds) {
             var distArr = [];
             var distModel = this.get("clmsModel").get("distancesObj");
             var protAlignCollection = this.get ("alignColl");
@@ -246,6 +247,9 @@
                 var dist = this.getSingleCrosslinkDistance (crossLink, distModel, protAlignCollection);
                 if (dist != null) {
                     distArr.push(+dist); // + is to stop it being a string
+                }
+                else if (includeUndefineds) {
+                    distArr.push (undefined);
                 }
             }
             console.log ("distArr", distArr);
