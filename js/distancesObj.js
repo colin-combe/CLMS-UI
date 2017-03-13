@@ -121,7 +121,7 @@ CLMSUI.DistancesObj.prototype = {
         var isSymmetric = this.isSymmetricMatrix (matrixValue);
         
         var row, col;
-        var orig = cellIndex;
+        //var orig = cellIndex;
         cellIndex -= matrixIndex ? matEndPoints[matrixIndex - 1] : 0;
         if (isSymmetric) {
             row = Math.floor(-0.5 + Math.sqrt(0.25 + 2 * cellIndex));

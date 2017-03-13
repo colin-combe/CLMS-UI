@@ -92,7 +92,7 @@ function getMatchesCSV () {
 }
 
 function getLinksCSV(){
-    var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val","LinkFDR"';
+    var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val","LinkFDR","3D_Distance"';
 
     var searchIds = [];
     var i = 0;
@@ -104,45 +104,48 @@ function getLinksCSV(){
 
     csv += '\r\n';
 
-    var crossLinks = CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values();
-    for (residueLink of crossLinks){
+    var crossLinks = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+    crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
+    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances2 (crossLinks);
+    
+    crossLinks.forEach (function (residueLink, i) {
         var filteredMatchesAndPepPos = residueLink.filteredMatches_pp;
-        if (filteredMatchesAndPepPos.length > 0){
-            csv += '"' + mostReadableId(residueLink.fromProtein) + '","'
-                + residueLink.fromResidue + '","' + residueLink.fromProtein.sequence[residueLink.fromResidue - 1] + '","'
-                + mostReadableId(residueLink.toProtein) + '","'
-                + residueLink.toResidue + '","';
-            if (residueLink.toProtein && residueLink.toResidue) {
-                csv += residueLink.toProtein.sequence[residueLink.toResidue - 1];
-            }
-
-            var highestScore = null;
-            var searchesFound = new Array (searchIds.length);
-            var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
-            var linkAutovalidated = false;
-            var validationStats = []
-            for (matchAndPepPos of filteredMatchesAndPepPos) {
-                var match = matchAndPepPos.match;
-                if (highestScore == null || match.score > highestScore) {
-                    highestScore = match.score.toFixed(4);
-                }
-                if (match.autovalidated == true) {linkAutovalidated = true;}
-                validationStats.push(match.validated);
-                var si = searchIds.indexOf(match.searchId + "");
-                searchesFound[si] = "X";
-            }
-            csv += '","' + highestScore;
-            csv +=  '","' + linkAutovalidated;
-            csv +=  '","' + validationStats.toString();
-            csv += '","' + (residueLink.meta ? residueLink.meta.fdr : undefined);
-
-            for (var s = 0; s < searchIds.length; s++){
-                csv +=  '","';
-                if (searchesFound[s] === "X") csv += "X";
-            }
-            csv += '"\r\n';
+        csv += '"' + mostReadableId(residueLink.fromProtein) + '","'
+            + residueLink.fromResidue + '","' + residueLink.fromProtein.sequence[residueLink.fromResidue - 1] + '","'
+            + mostReadableId(residueLink.toProtein) + '","'
+            + residueLink.toResidue + '","';
+        if (residueLink.toProtein && residueLink.toResidue) {
+            csv += residueLink.toProtein.sequence[residueLink.toResidue - 1];
         }
-    }
+
+        var highestScore = null;
+        var searchesFound = new Array (searchIds.length);
+        var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
+        var linkAutovalidated = false;
+        var validationStats = []
+        for (matchAndPepPos of filteredMatchesAndPepPos) {
+            var match = matchAndPepPos.match;
+            if (highestScore == null || match.score > highestScore) {
+                highestScore = match.score.toFixed(4);
+            }
+            if (match.autovalidated === true) {linkAutovalidated = true;}
+            validationStats.push(match.validated);
+            var si = searchIds.indexOf(match.searchId + "");
+            searchesFound[si] = "X";
+        }
+        csv += '","' + highestScore;
+        csv +=  '","' + linkAutovalidated;
+        csv +=  '","' + validationStats.toString();
+        csv += '","' + (residueLink.meta ? residueLink.meta.fdr : undefined);
+        csv += '","' + (physicalDistances[i] ? physicalDistances[i].toFixed(2) : undefined);
+
+        for (var s = 0; s < searchIds.length; s++){
+            csv +=  '","';
+            if (searchesFound[s] === "X") csv += "X";
+        }
+
+        csv += '"\r\n';
+    }, this);
     return csv;
 }
 

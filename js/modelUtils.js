@@ -469,11 +469,11 @@ CLMSUI.modelUtils = {
     },
     
     // If distances matrix not fully populated
-    get3DDistance: function (compModel, res1, res2, chain1, chain2) {
+    get3DDistance: function (compModel, res1Index, res2Index, chain1, chain2) {
         if (compModel) {
             var stageModel = compModel.get("stageModel");
             if (stageModel) {
-                return stageModel.getSingleDistanceBetween2Residues (res1, res2, chain1, chain2);
+                return stageModel.getSingleDistanceBetween2Residues (res1Index, res2Index, chain1, chain2);
             }
         }
         return 0;
