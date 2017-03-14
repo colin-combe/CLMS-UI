@@ -22,8 +22,8 @@
             var defaultOptions = {
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
-                seriesNames: ["Cross Links", "Random"],
-                scaleOthersTo: "Cross Links",
+                seriesNames: ["Cross Links", "Decoys", "Random"],
+                scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
                 maxX: 90
             };
@@ -59,14 +59,15 @@
                     columns: columnsAsNamesOnly,
                     type: 'bar',
                     colors: {
-                        Random: "#aaa"
+                        Random: "#888",
+                        Decoys: "#d44",
                     },
                     color: function (colour, d) {
                         var rm = self.colourScaleModel;
-                        if (rm && d.id && d.id !== "Random") {
+                        if (rm && d.id && d.id === "Cross Links") {
                             return rm.get("colScale")(d.x);
                         }
-                        else if (rm && !d.id && d !== "Random") {
+                        else if (rm && !d.id && d === "Cross Links") {
                             return rm.get("colScale").range()[2];
                         }
                         return colour;
@@ -167,11 +168,14 @@
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 console.log ("re rendering distogram");
 
-                var distArr = this.getRelevantCrossLinkDistances();
-                //console.log ("distArr", distArr);
+                var series = this.getRelevantCrossLinkDistances();
+                var seriesLengths = series.map (function(d) { return d.length; });
+                //console.log ("series", series);
 
-                var series = [distArr, []];
-                var seriesLengths = [distArr.length, this.randArrLength];  // we want to scale random distribution to unfiltered crosslink dataset size
+                // Add data and placeholders for random data
+                series.push ([]);
+                seriesLengths.push (this.randArrLength);  // we want to scale random distribution to unfiltered crosslink dataset size
+                
                 var removeCatchAllCategory = true;
                 //console.log ("seriesLengths", seriesLengths);
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory);
@@ -214,7 +218,20 @@
             var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
             //var interactorMap = this.model.get("clmsModel").get("participants");
             var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);   
-            return this.model.getCrossLinkDistances2 (filteredCrossLinks/*.values()*/);    
+            function decoyClass (link) {
+                return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
+            }
+            var links = [[],[]];
+            filteredCrossLinks.forEach (function (xlink) {
+                var dval = decoyClass (xlink);
+                links [dval > 0 ? 1 : 0].push (xlink);
+            });
+            //console.log ("links", links);
+            
+            return [
+                this.model.getCrossLinkDistances2 (links[0]/*filteredCrossLinks*//*.values()*/),
+                this.model.getCrossLinkDistances2 (links[1], {includeUndefineds: false, calcDecoyProteinDistances: true}),
+            ];
         },
         
         aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry) {
@@ -225,19 +242,23 @@
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
-            
-            var sIndex = this.options.seriesNames.indexOf (this.options.scaleOthersTo);
-            var targetLength = sIndex >= 0 ? seriesLengths[sIndex] : 1; 
 
             var countArrays = series.map (function (aseries, i) {
                 var aseriesName = this.options.seriesNames[i];
+                var rescaleToSeries = this.options.scaleOthersTo[aseriesName];
+                var rescaleLength = 1;
+                if (rescaleToSeries) {
+                    var rsIndex = this.options.seriesNames.indexOf (rescaleToSeries);
+                    rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1; 
+                }
+                
                 var binnedData = precalcedDistributions[aseriesName]
                     ? precalcedDistributions[aseriesName]
                     : d3.layout.histogram().bins(thresholds)(aseries)
                 ;
                 console.log (aseriesName, "binnedData", binnedData);
 
-                var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
+                var scale = rescaleToSeries ? rescaleLength / (seriesLengths[i] || rescaleLength) : 1;
                 return binnedData.map (function (nestedArr) {
                     return nestedArr.y * scale;
                 });
@@ -253,9 +274,11 @@
         },
 
         recalcRandomBinning: function () {
+            // need to calc getRelevant as we want random to be proportionate to links that have 3d distances
             var distArr = this.getRelevantCrossLinkDistances();
             //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
-            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((distArr.length * 100) || 10000, 100000));
+            var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
+            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((linkCount * 100) || 10000, 100000));
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)
@@ -280,5 +303,7 @@
             CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
             // this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
             this.chart = this.chart.destroy();
-        }
+        },
+        
+        identifier: "Distogram",
     });

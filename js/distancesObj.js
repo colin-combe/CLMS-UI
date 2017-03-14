@@ -38,11 +38,13 @@ CLMSUI.DistancesObj.prototype = {
     },
     
     
-    getXLinkDistance: function (xlink, alignCollBB, average) {
+    getXLinkDistance: function (xlink, alignCollBB, options) {
+        options = options || {};
+        var average = options.average || false;
         var chainMap = this.chainMap;
         var matrices = this.matrices;
-        var pid1 = xlink.fromProtein.id;
-        var pid2 = xlink.toProtein.id;
+        var pid1 = options.realFromPid || xlink.fromProtein.id; // use pids if passed in by options as first choice
+        var pid2 = options.realToPid || xlink.toProtein.id; // (intended as replacements for decoy protein ids)
         var chains1 = chainMap[pid1];
         var chains2 = chainMap[pid2];
         var minDist;

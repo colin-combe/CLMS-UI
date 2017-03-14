@@ -64,7 +64,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","PepPos1","matchedPeptides[0].sequence","LinkPos1","Protein2","PepPos2","PepSeq2","LinkPos2","Score","AutoVal","Val","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
     var matchCount = matches.length;
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
@@ -79,10 +79,15 @@ function getMatchesCSV () {
 						&& filterModel.navigationFilter(match);
 							}
         if (result === true){
+            var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
+            var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
             csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
-                + '","' + CLMSUI.utils.pepPosConcat(match, 0) + '","'
+                + '","' + (+pp1 + match.linkPos1 - 1)
+                + '","' + pp1 + '","'
                 + match.matchedPeptides[0].sequence + '","' + match.linkPos1 + '","'
-                + CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) + '","' + CLMSUI.utils.pepPosConcat(match, 1) + '","'
+                + CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel"))
+                + '","' + (+pp2 + match.linkPos2 - 1)
+                + '","' + pp2 + '","'
                 + match.matchedPeptides[1].sequence + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.autovalidated + '","' + match.validated + '","'
                 + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '"\r\n';
@@ -91,38 +96,43 @@ function getMatchesCSV () {
     return csv;
 }
 
-function getLinksCSV(){
-    var csv = '"Protein1","LinkPos1","LinkedRes1","Protein2","LinkPos2","LinkedRes2","HighestScore","AutoVal","Val","LinkFDR","3D_Distance"';
 
-    var searchIds = [];
+function getLinksCSV(){
+    var validatedTypes = ["A", "B", "C", "?", "R"];
+    
+    var csv = '"Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance"';
+    
+
+    var searchIds = {};
     var i = 0;
     for (id of CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys()) {
         csv += ',"Search_'+ id +'"';
         searchIds[i] = id;
         i++;
     }
+    console.log ("searchIds", searchIds);
 
     csv += '\r\n';
 
     var crossLinks = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
-    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances2 (crossLinks, true);
+    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances2 (crossLinks, {includeUndefineds: true});
     
-    crossLinks.forEach (function (residueLink, i) {
-        var filteredMatchesAndPepPos = residueLink.filteredMatches_pp;
-        csv += '"' + mostReadableId(residueLink.fromProtein) + '","'
-            + residueLink.fromResidue + '","' + residueLink.fromProtein.sequence[residueLink.fromResidue - 1] + '","'
-            + mostReadableId(residueLink.toProtein) + '","'
-            + residueLink.toResidue + '","';
-        if (residueLink.toProtein && residueLink.toResidue) {
-            csv += residueLink.toProtein.sequence[residueLink.toResidue - 1];
+    crossLinks.forEach (function (crossLink, i) {
+        var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
+        csv += '"' + mostReadableId(crossLink.fromProtein) + '","'
+            + crossLink.fromResidue + '","' + crossLink.fromProtein.sequence[crossLink.fromResidue - 1] + '","'
+            + mostReadableId(crossLink.toProtein) + '","'
+            + crossLink.toResidue + '","';
+        if (crossLink.toProtein && crossLink.toResidue) {
+            csv += crossLink.toProtein.sequence[crossLink.toResidue - 1];
         }
 
         var highestScore = null;
-        var searchesFound = new Array (searchIds.length);
+        var searchesFound = {};
         var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
         var linkAutovalidated = false;
-        var validationStats = []
+        var validationStats = [];
         for (matchAndPepPos of filteredMatchesAndPepPos) {
             var match = matchAndPepPos.match;
             if (highestScore == null || match.score > highestScore) {
@@ -130,18 +140,19 @@ function getLinksCSV(){
             }
             if (match.autovalidated === true) {linkAutovalidated = true;}
             validationStats.push(match.validated);
-            var si = searchIds.indexOf(match.searchId + "");
-            searchesFound[si] = "X";
+            searchesFound[match.searchId] = true;
         }
+        console.log ("sf", searchesFound);
         csv += '","' + highestScore;
-        csv +=  '","' + linkAutovalidated;
+        csv += '","' + filteredMatchCount;
+        csv += '","' + linkAutovalidated;
         csv +=  '","' + validationStats.toString();
-        csv += '","' + (residueLink.meta ? residueLink.meta.fdr : undefined);
+        csv += '","' + (crossLink.meta ? crossLink.meta.fdr : undefined);
         csv += '","' + (physicalDistances[i] ? physicalDistances[i].toFixed(2) : undefined);
 
         for (var s = 0; s < searchIds.length; s++){
             csv +=  '","';
-            if (searchesFound[s] === "X") csv += "X";
+            if (searchesFound[searchIds[s]]) csv += "X";
         }
 
         csv += '"\r\n';
