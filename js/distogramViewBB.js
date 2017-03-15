@@ -22,7 +22,7 @@
             var defaultOptions = {
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
-                seriesNames: ["Cross Links", "Decoys", "Random"],
+                seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
                 maxX: 90
@@ -55,12 +55,11 @@
             this.chart = c3.generate({
                 bindto: bid,
                 data: {
-                    //x: 'x',
                     columns: columnsAsNamesOnly,
                     type: 'bar',
                     colors: {
                         Random: "#888",
-                        Decoys: "#d44",
+                        "Decoys (TD-DD)": "#d44",
                     },
                     color: function (colour, d) {
                         var rm = self.colourScaleModel;
@@ -168,6 +167,7 @@
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 console.log ("re rendering distogram");
 
+                var TT = 0, TD = 1, DD = 2;
                 var series = this.getRelevantCrossLinkDistances();
                 var seriesLengths = series.map (function(d) { return d.length; });
                 //console.log ("series", series);
@@ -176,9 +176,21 @@
                 series.push ([]);
                 seriesLengths.push (this.randArrLength);  // we want to scale random distribution to unfiltered crosslink dataset size
                 
-                var removeCatchAllCategory = true;
+                // Add DD Decoys as temporary series for aggregation
+                var seriesNames = this.options.seriesNames.slice();  // copy series names
+                seriesNames.splice (DD, 0, "Decoys (DD)");
+                
                 //console.log ("seriesLengths", seriesLengths);
-                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory);
+                var removeCatchAllCategory = true;
+                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
+                
+                //console.log ("ca", countArrays, countArrays[DD]);
+                // Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
+                countArrays[TD].forEach (function (v, i) {
+                    countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts  
+                });
+                countArrays.splice (DD,1);   // remove DD
+                //console.log ("ca2", countArrays);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
@@ -216,25 +228,24 @@
         
         getRelevantCrossLinkDistances: function () {
             var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-            //var interactorMap = this.model.get("clmsModel").get("participants");
             var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);   
             function decoyClass (link) {
                 return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
             }
-            var links = [[],[]];
+            var links = [[],[],[]];
             filteredCrossLinks.forEach (function (xlink) {
-                var dval = decoyClass (xlink);
-                links [dval > 0 ? 1 : 0].push (xlink);
+                links [decoyClass (xlink)].push (xlink);
             });
             //console.log ("links", links);
             
             return [
-                this.model.getCrossLinkDistances2 (links[0]/*filteredCrossLinks*//*.values()*/),
-                this.model.getCrossLinkDistances2 (links[1], {includeUndefineds: false, calcDecoyProteinDistances: true}),
+                this.model.getCrossLinkDistances2 (links[0]/*filteredCrossLinks*//*.values()*/),    // TT
+                this.model.getCrossLinkDistances2 (links[1], {includeUndefineds: false, calcDecoyProteinDistances: true}),  // TD
+                this.model.getCrossLinkDistances2 (links[2], {includeUndefineds: false, calcDecoyProteinDistances: true}),  // DD
             ];
         },
         
-        aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry) {
+        aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
@@ -244,11 +255,11 @@
             }
 
             var countArrays = series.map (function (aseries, i) {
-                var aseriesName = this.options.seriesNames[i];
+                var aseriesName = seriesNames[i];
                 var rescaleToSeries = this.options.scaleOthersTo[aseriesName];
                 var rescaleLength = 1;
                 if (rescaleToSeries) {
-                    var rsIndex = this.options.seriesNames.indexOf (rescaleToSeries);
+                    var rsIndex = seriesNames.indexOf (rescaleToSeries);
                     rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1; 
                 }
                 
@@ -256,7 +267,7 @@
                     ? precalcedDistributions[aseriesName]
                     : d3.layout.histogram().bins(thresholds)(aseries)
                 ;
-                console.log (aseriesName, "binnedData", binnedData);
+                //console.log (aseriesName, "binnedData", binnedData);
 
                 var scale = rescaleToSeries ? rescaleLength / (seriesLengths[i] || rescaleLength) : 1;
                 return binnedData.map (function (nestedArr) {
@@ -272,9 +283,10 @@
 
             return countArrays;
         },
+        
 
         recalcRandomBinning: function () {
-            // need to calc getRelevant as we want random to be proportionate to links that have 3d distances
+            // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
             var distArr = this.getRelevantCrossLinkDistances();
             //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
