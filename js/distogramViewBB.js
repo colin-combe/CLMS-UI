@@ -184,15 +184,13 @@
                 var removeCatchAllCategory = true;
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
                 
-                console.log ("ca", countArrays, countArrays[DD]);
-                
+                //console.log ("ca", countArrays, countArrays[DD]);
                 // Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
                 countArrays[TD].forEach (function (v, i) {
                     countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts  
                 });
                 countArrays.splice (DD,1);   // remove DD
-                
-                console.log ("ca2", countArrays);
+                //console.log ("ca2", countArrays);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
@@ -238,7 +236,7 @@
             filteredCrossLinks.forEach (function (xlink) {
                 links [decoyClass (xlink)].push (xlink);
             });
-            console.log ("links", links);
+            //console.log ("links", links);
             
             return [
                 this.model.getCrossLinkDistances2 (links[0]/*filteredCrossLinks*//*.values()*/),    // TT
@@ -269,7 +267,7 @@
                     ? precalcedDistributions[aseriesName]
                     : d3.layout.histogram().bins(thresholds)(aseries)
                 ;
-                console.log (aseriesName, "binnedData", binnedData);
+                //console.log (aseriesName, "binnedData", binnedData);
 
                 var scale = rescaleToSeries ? rescaleLength / (seriesLengths[i] || rescaleLength) : 1;
                 return binnedData.map (function (nestedArr) {
