@@ -23,7 +23,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             pepLength: 4,
             //validation status
             A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
-            decoys: false,
+            decoys: true,
             //fdr
             fdrThreshold: 0.05,
             interFdrCut: undefined,
@@ -43,34 +43,39 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             }
             // scoreExtent used to restrain text input values
             this.scoreExtent = this.get("matchScoreCutoff").slice(0);
+            this.valMap = d3.map ();
+            this.valMap.set ("?", "Q");
         },
 
         subsetFilter: function (match) {
-			//linears? - if linear and linears not selected return false
-            if (match.linkPos1 == 0 && this.get("linears")  == false) return false; 
-           //cross-links? - if xl and xls not selected return false
-            if (match.linkPos1 > 0 && this.get("crosslinks") == false) return false; 
+			//linears? - if linear (linkPos === 0) and linears not selected return false
+            //cross-links? - if xl (linkPos > 0) and xls not selected return false
+            if (this.get (match.linkPos1 > 0 ? "crosslinks" : "linears") === false) {
+                return false;
+            }
  			
 			//ambigs? - if ambig's not selected and match is ambig return false
-			if (this.get("ambig") == false) {
-				if (match.isAmbig()) return false;
+			if (!this.get("ambig") && match.isAmbig()) {
+				return false;
 			}
 
 			//self-links? - if self links's not selected and match is self link return false
 			// possible an ambiguous self link will still get displayed
-            var hideSelfLinks = this.get("selfLinks") == false;
-            var hideBetweenLinks = this.get("betweenLinks") == false;
+            var hideSelfLinks = !this.get("selfLinks");
+            var hideBetweenLinks = !this.get("betweenLinks");
 			if (hideSelfLinks || hideBetweenLinks) {
 				var isSelfLink = true;
-				var p1 = match.matchedPeptides[0].prt[0];
-				for (var i = 1; i < match.matchedPeptides[0].prt.length; i++) {
-					if (match.matchedPeptides[0].prt[i] != p1){
+				var prots = match.matchedPeptides[0].prt;
+                var p1 = prots[0];
+				for (var i = 1; i < prots.length; i++) {
+					if (prots[i] != p1){
 						 isSelfLink = false;
 						 break;
 					 }
 				}
-				for (var i = 0; i < match.matchedPeptides[1].prt.length; i++) {
-					if (match.matchedPeptides[1].prt[i] != p1){
+                prots = match.matchedPeptides[1].prt;
+				for (var i = 0; i < prots.length; i++) {
+					if (prots[i] != p1){
 						isSelfLink = false;
 						break;
 					}
@@ -80,7 +85,6 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				}
 			}
             
-
 
 			//temp
             var aaApart = +this.get("aaApart");
@@ -93,7 +97,6 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
                     var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
 					if (calc < aaApart){
 						return false;
-						
 					}
 				}
             }
@@ -120,27 +123,31 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			
             var vChar = match.validated;
             if (vChar == 'R') return false;
+            if (this.get(vChar) || this.get(this.valMap.get(vChar))) return true;
+           /*
             if (vChar == 'A' && this.get("A")) return true;
             if (vChar == 'B' && this.get("B")) return true;
             if (vChar == 'C' && this.get("C")) return true;
             if (vChar == '?' && this.get("Q")) return true;
+            */
             
             if (match.autovalidated && this.get("AUTO")) return true;
-			if (match.autovalidated == false && !vChar && this.get("unval")) return true;
+			if (!match.autovalidated && !vChar && this.get("unval")) return true;
+           
             return false;
 		},
        
        navigationFilter: function (match) {
       	
 			//peptide seq check
-			if (seqCheck(this.get("pepSeq")) == false) {
+			if (seqCheck(this.get("pepSeq")) === false) {
 				return false;
-			};
+			}
 			
 			//protein name check
-			if (proteinNameCheck(this.get("protNames")) == false) {
+			if (proteinNameCheck(this.get("protNames")) === false) {
 				return false;
-			};
+			}
 			
 			//charge check
 			var chargeFilter = this.get("charge");

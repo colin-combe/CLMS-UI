@@ -156,7 +156,10 @@
 
             <div class="controls">
                 <div id="filterPlaceholder"></div>
-                <div id="filterReportPlaceholder"></div>
+                <div class="filterResultGroup">
+                    <div id="filterReportPlaceholder"></div>
+                    <div id="fdrSummaryPlaceholder"></div>
+                </div>        
             </div>
         </div><!-- MAIN -->
 

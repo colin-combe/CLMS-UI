@@ -189,15 +189,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr("class", "filterControlGroup")
             .attr("id", "fdrPanel")
         ;
-		mainDivSel.append ("div")
-            .attr("class", "filterControlGroup")
-            .attr("id", "fdrSummaryPlaceholder")
-            .style("display","none");
-        ;
 
         var navDivSel = mainDivSel.append ("div")
-							.attr("class", "filterControlGroup")
-							.attr("id", "navFilters")
+            .attr("class", "filterControlGroup")
+            .attr("id", "navFilters")
 		;
 		//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
 
@@ -226,6 +221,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
+        
+        mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
         this.modeChanged();
     },
@@ -263,7 +260,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     subsetNumberFilter: function (evt) {
 		var target = evt.target;
-        var id = target.id;
+        var id = target.id; 
         var value = target.value;
         if (this.model.get (id) != value) {
 			console.log ("subsetNumberFilter:", id, value);
@@ -288,7 +285,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
     initialize: function () {
         
         var chartDiv = d3.select(this.el);
-        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        //var tpl = _.template (("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
         chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
@@ -350,7 +347,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         var mainDivSel = d3.select(this.el);
         var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//getFilteredCrossLinks();
         mainDivSel.text ((this.template ({total: filteredCrossLinks.length,
-				decoys: this.model.filteredCrossLinks.length - filteredCrossLinks.length})));
+				decoys: this.model.getFilteredCrossLinks().length - filteredCrossLinks.length})));
         return this;
     },
 });
@@ -360,8 +357,8 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
 
     initialize: function () {
         //this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
-		d3.select(this.el).append("p").attr("id", "interFdrCutElem");
-        d3.select(this.el).append("p").attr("id","intraFdrCutElem");        
+		d3.select(this.el).append("p").attr("class", "interFdrCutElem");
+        d3.select(this.el).append("p").attr("class", "intraFdrCutElem");        
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
@@ -370,42 +367,15 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
     render: function () {
         var mainDivSel = d3.select(this.el);
         var filterModel = this.model.get("filterModel");
+        var threshold = filterModel.get("fdrThreshold");
 
 		var interCut = filterModel.get("interFdrCut");
 		if (interCut) { interCut = interCut.toFixed(2); }
         var intraCut = filterModel.get("intraFdrCut");
 		if (intraCut) { intraCut = intraCut.toFixed(2); }
         
-        var text = "Inter cutoff for "+ filterModel.get("fdrThreshold") +" is "
-			+ interCut;
-			console.log(text); 
-        var sel = d3.select("#interFdrCutElem");
-        sel.text(text);
-        d3.select("#intraFdrCutElem").text(
-			"Intra cutoff for "+ filterModel.get("fdrThreshold") +" is "
-			+ intraCut);
+        mainDivSel.select(".interFdrCutElem").text("Between cutoff for "+ threshold +" is " + interCut);
+        mainDivSel.select(".intraFdrCutElem").text("Within cutoff for "+ threshold +" is " + intraCut);
         return this;
     },
-
-    
-       /* function doFDR (d) {
-            self.lastSetting = d;
-            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
-            chartDiv.select(".fdrResult")
-                //~ .style("display", "block")
-                .html("")
-                .selectAll("p").data(result)
-                    .enter()
-                    .append("p")
-
-            ;
-            //~ chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
-
-            // bit that communicates to rest of system
-            self.model.get("filterModel")
-                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
-            ;
-
-            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
-        } */
 });

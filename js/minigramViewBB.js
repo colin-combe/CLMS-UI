@@ -140,7 +140,7 @@
             
             this.listenTo (this.model, "change", this.redrawBrush);
 
-            this.relayout();
+            //this.relayout();
             this.render();
 
             return this;
@@ -180,6 +180,8 @@
             var internal = this.chart.internal;
             var halfBarW = internal.getBarW (internal.subXAxis, 1) / 2;
             d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+            
+            d3.select(this.el).select(".c3-brush").attr("clip-path", "");
 
             //console.log ("data", distArr, binnedData);
             return this;
@@ -234,10 +236,11 @@
         relayout: function () {
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
-            //d3.select(this.el).select(".c3").style("max-height", "none");
+            //d3.select(this.el).select(".c3").style("max-height", this.options.height+"px");
             // kill brush clip so we can see brush arrows at chart extremeties
             d3.select(this.el).select(".c3-brush").attr("clip-path", "");
 
+            console.log ("hello", this);
             this.chart.resize();
             return this;
         },

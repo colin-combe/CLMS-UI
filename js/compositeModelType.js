@@ -97,16 +97,28 @@
             // its maybe not a very nice design wise, lets look at again 
             this.filteredCrossLinks = [];
 			this.filteredNotDecoyNotLinearCrossLinks = [];
+            this.filteredXLinks = {all: [], targets: [], linears: [], decoys: []};
 			
 			for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];
 				if (crossLink.filteredMatches_pp.length) {
 					this.filteredCrossLinks.push(crossLink);
+                    this.filteredXLinks.all.push(crossLink);
 					if (!crossLink.fromProtein.is_decoy && crossLink.toProtein && !crossLink.toProtein.is_decoy) {
 						this.filteredNotDecoyNotLinearCrossLinks.push(crossLink);
-					}
+                        this.filteredXLinks.targets.push(crossLink);
+					} 
+                    else {
+                        if (!crossLink.toProtein) {
+                            this.filteredXLinks.linears.push(crossLink);
+                        }
+                        if (crossLink.fromProtein.is_decoy || crossLink.toProtein.is_decoy) {
+                            this.filteredXLinks.decoys.push(crossLink);
+                        }
+                    }
 				}
-            };
+            }
+            console.log ("xlinks", this.filteredXLinks);
             
             var participantsArr = Array.from(clmsModel.get("participants").values());
             var participantCount = participantsArr.length;           
