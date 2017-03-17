@@ -274,7 +274,7 @@
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
                 //~ var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 var stageModel = this.model.get("stageModel");
-                var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                var filteredCrossLinks = this.model.getFilteredCrossLinks();
                 var self = this;
                 var filterFunc = function (linkList) {
                     if (self.options.shortestLinksOnly) {

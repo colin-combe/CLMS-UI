@@ -337,17 +337,18 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("<%= total %> filtered crosslinks ( + <%= decoys %> decoys)");
+        this.template = _.template ("<%= total %> filtered crosslinks<span> ( + <%= decoys %> decoys)</span>");
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
     },
 
     render: function () {
-        var mainDivSel = d3.select(this.el);
-        var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//getFilteredCrossLinks();
-        mainDivSel.text ((this.template ({total: filteredCrossLinks.length,
-				decoys: this.model.getFilteredCrossLinks().length - filteredCrossLinks.length})));
+        d3.select(this.el).html (this.template ({
+            total: this.model.getFilteredCrossLinks().length,
+            decoys: this.model.getFilteredCrossLinks("decoys").length
+        }));
+        d3.select(this.el).select("span").classed("decoysIrrelevant", !this.model.get("clmsModel").decoysLoaded());
         return this;
     },
 });

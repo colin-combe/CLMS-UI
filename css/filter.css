@@ -116,6 +116,7 @@ div.toggles:not(:last-child) {
     margin: 0 0.3em;
     line-height: 1.1em; 
     display: inline-flex;
+    white-space: pre;
 }
 
 .filterResultGroup {
@@ -124,4 +125,8 @@ div.toggles:not(:last-child) {
     bottom: 0;
     background: inherit;
     border-top: 1px solid #aaa;
+}
+
+.decoysIrrelevant {
+    display: none;
 }

@@ -307,8 +307,8 @@
     },
         
     grabNeighbourhoodLinks: function (x, y) {
-        var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
-        var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);
+        //var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
         var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
         var proteinIDs = this.getCurrentProteinIDs();
         var alignIDs = this.getAlignIDs (proteinIDs);
@@ -519,8 +519,8 @@
             var alignIDs = this.getAlignIDs (proteinIDs);
             var alignColl = this.model.get("alignColl");
             // only consider crosslinks between the two proteins (often the same one) represented by the two axes
-            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);//.values();
+            // var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+            var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
             var filteredCrossLinks2 = Array.from(filteredCrossLinks).filter (function (xlink) {
                 return (xlink.toProtein.id === proteinIDs[0].proteinID && xlink.fromProtein.id === proteinIDs[1].proteinID) || (xlink.toProtein.id === proteinIDs[1].proteinID && xlink.fromProtein.id === proteinIDs[0].proteinID);    
             });

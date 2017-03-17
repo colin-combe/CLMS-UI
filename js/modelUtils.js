@@ -301,16 +301,6 @@ CLMSUI.modelUtils = {
         return randId;
     },
     
-/*    getFilteredNonDecoyCrossLinks: function (crossLinks) {
-        var filteredCrossLinks = [];
-        crossLinks.forEach (function (value) {
-            if (value.filteredMatches_pp && value.filteredMatches_pp.length && !value.fromProtein.is_decoy && value.toProtein && !value.toProtein.is_decoy) {
-                filteredCrossLinks.push (value);
-            }
-        });
-        return filteredCrossLinks;
-    }, */
-    
     addDecoyProtProtMap: function (clmsBBModel, prefixes) {
         prefixes = prefixes || ["REV_", "RAN_"];
         var prots = clmsBBModel.get("proteins");
@@ -336,6 +326,7 @@ CLMSUI.modelUtils = {
         clmsBBModel.getRealProteinID = function (decoyProteinID) {
             return clmsBBModel.decoyToRealProteinMap.get (decoyProteinID);
         };
+        clmsBBModel.decoysLoaded = function () { return this.decoyToRealProteinMap.size() > 0; };
         clmsBBModel.isIntraLink = function (crossLink) {
             return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isDecoyRealProteinPair (crossLink.toProtein, crossLink.fromProtein, clmsBBModel.decoyToRealProteinMap)));
         };

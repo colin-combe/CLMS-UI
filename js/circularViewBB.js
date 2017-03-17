@@ -390,7 +390,7 @@
 
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
             //var crossLinks = this.model.get("clmsModel").get("crossLinks");
-            var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+            var filteredCrossLinks = this.model.getFilteredCrossLinks();//CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
             var anyPos = startPos == undefined && endPos == undefined;
             startPos = startPos || 0;
             endPos = endPos || 100000;
@@ -459,7 +459,7 @@
                 //console.log ("model", this.model);
 
                 var filteredInteractors = this.filterInteractors (interactors);
-                var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                var filteredCrossLinks = this.model.getFilteredCrossLinks();    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 
                 // If only one protein hide some options, and make links go in middle
                 d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton,#"+this.el.id+"Options")
