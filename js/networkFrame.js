@@ -356,6 +356,7 @@ CLMSUI.init.viewsEssential = function (options) {
                     } else {
                         console.log (json);
                         var altModel = new window.CLMS.model.SearchResultsModel (json);
+                        CLMSUI.modelUtils.addDecoyFunctions (altModel); // mjg. needed.
                         var allCrossLinks = Array.from(altModel.get("crossLinks").values());
                         // empty selection first
                         // (important or it will crash coz selection contains links to proteins not in clms model)
