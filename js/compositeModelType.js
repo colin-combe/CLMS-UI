@@ -110,7 +110,7 @@
                         if (!crossLink.toProtein) {
                             this.filteredXLinks.linears.push(crossLink);
                         }
-                        if (crossLink.fromProtein.is_decoy || crossLink.toProtein.is_decoy) {
+                        else if (crossLink.fromProtein.is_decoy || crossLink.toProtein.is_decoy) {
                             // is it a TD or DD decoy, stick it in the right sub-cache
                             var decoyLinkCache = (crossLink.fromProtein.is_decoy === crossLink.toProtein.is_decoy) ? "decoysDD" : "decoysTD";
                             this.filteredXLinks[decoyLinkCache].push(crossLink);
