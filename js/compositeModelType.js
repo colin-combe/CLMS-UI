@@ -107,12 +107,13 @@
                         this.filteredXLinks.targets.push(crossLink);
 					} 
                     else {
-                        if (!crossLink.toProtein) {
+                        var linear = !crossLink.toProtein;
+                        if (linear) {
                             this.filteredXLinks.linears.push(crossLink);
                         }
-                        else if (crossLink.fromProtein.is_decoy || crossLink.toProtein.is_decoy) {
+                        if (crossLink.fromProtein.is_decoy || (!linear && crossLink.toProtein.is_decoy)) {
                             // is it a TD or DD decoy, stick it in the right sub-cache
-                            var decoyLinkCache = (crossLink.fromProtein.is_decoy === crossLink.toProtein.is_decoy) ? "decoysDD" : "decoysTD";
+                            var decoyLinkCache = (linear || (crossLink.fromProtein.is_decoy === crossLink.toProtein.is_decoy)) ? "decoysDD" : "decoysTD";
                             this.filteredXLinks[decoyLinkCache].push(crossLink);
                         }
                     }
