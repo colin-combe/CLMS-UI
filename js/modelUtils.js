@@ -301,7 +301,8 @@ CLMSUI.modelUtils = {
         return randId;
     },
     
-    addDecoyProtProtMap: function (clmsBBModel, prefixes) {
+    addDecoyFunctions: function (clmsBBModel, prefixes) {
+        // Make map of reverse/random decoy proteins to real proteins
         prefixes = prefixes || ["REV_", "RAN_"];
         var prots = clmsBBModel.get("proteins");
         var nameMap = d3.map ();
@@ -324,36 +325,29 @@ CLMSUI.modelUtils = {
         
         clmsBBModel.decoyToRealProteinMap = decoyToRealMap;
         clmsBBModel.getRealProteinID = function (decoyProteinID) {
-            return clmsBBModel.decoyToRealProteinMap.get (decoyProteinID);
+            return this.decoyToRealProteinMap.get (decoyProteinID);
         };
-        clmsBBModel.decoysLoaded = function () { return this.decoyToRealProteinMap.size() > 0; };
+        clmsBBModel.areDecoysPresent = function () { return this.decoyToRealProteinMap.size() > 0; };
+        clmsBBModel.isMatchingProteinPair = function (prot1, prot2) {
+            if (prot1.id === prot2.id) { return true; }
+            var p1decoy = prot1.is_decoy;
+            if (p1decoy === prot2.is_decoy) {   // won't be matching real+decoy pair if both are real or both are decoys  
+                return false;
+            }
+            var decoy = p1decoy ? prot1 : prot2;
+            var real = p1decoy ? prot2 : prot1;
+            return this.getRealProteinID(decoy.id) === real.id;
+        };
+        clmsBBModel.isMatchingProteinPairFromIDs = function (prot1ID, prot2ID) {
+            if (prot1ID === prot2ID) { return true; }
+            var prot1 = this.get("participants").get(prot1ID);
+            var prot2 = this.get("participants").get(prot2ID);
+            return this.isMatchingProteinPair (prot1, prot2);
+        };
         clmsBBModel.isIntraLink = function (crossLink) {
-            return (crossLink.toProtein && (crossLink.toProtein.id === crossLink.fromProtein.id || CLMSUI.modelUtils.isDecoyRealProteinPair (crossLink.toProtein, crossLink.fromProtein, clmsBBModel.decoyToRealProteinMap)));
+            return (crossLink.toProtein && this.isMatchingProteinPair (crossLink.toProtein, crossLink.fromProtein));
         };
-    },
-    
-    isDecoyRealProteinPair: function (prot1, prot2, decoyToRealProteinMap) {
-        //if (prot2.id == "2750049" && prot1.id == "2750053") {
-        //    console.log ("rev rabit link", prot1, prot2);
-        //}
-        var p1decoy = prot1.is_decoy;
-        if (p1decoy === prot2.is_decoy) {   // won't be real+decoy pair if both are real or both are fake  
-            return false;
-        }
-        var decoy = p1decoy ? prot1 : prot2;
-        var real = p1decoy ? prot2 : prot1;
-        return decoyToRealProteinMap.get(decoy.id) === real.id;
-        
-        /*
-        var a = decoyToRealProteinMap.get(decoy.id) === real.id;
-        var b =  (decoy.name === "REV_"+real.name && decoy.accession === "REV_"+real.accession) || (decoy.name === "RAN_"+real.name && decoy.accession === "RAN_"+real.accession);  
-        
-        if (a !== b) {
-            console.log ("prottt", prot1, prot2);
-        }
-        
-        return a;
-        */
+        clmsBBModel.realProteinCount = prots.length - decoys.length;
     },
     
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
@@ -383,7 +377,7 @@ CLMSUI.modelUtils = {
         return ids;
     },
     
-    getPDBIDsForProteins: function (accessionIDs, success) {
+    getPDBIDsForProteins: function (accessionIDs, successFunc) {
         if (accessionIDs.length) {
             var xmlString = "<orgPdbQuery><queryType>org.pdb.query.simple.UpAccessionIdQuery</queryType>"
                 +"<description>PDB Query Using Uniprot IDs</description><accessionIdList>"
@@ -392,7 +386,7 @@ CLMSUI.modelUtils = {
             ;
             var encodedXmlString = encodeURIComponent (xmlString);
 
-            $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, success);
+            $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, successFunc);
         }
     },
     

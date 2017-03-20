@@ -47,7 +47,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             this.valMap.set ("?", "Q");
         },
 
-        subsetFilter: function (match) {
+        subsetFilter: function (match, matchingProteinPairFunc) {
+            matchingProteinPairFunc = matchingProteinPairFunc || function (p1, p2) { return p1 === p2; }; // naive default match
 			//linears? - if linear (linkPos === 0) and linears not selected return false
             //cross-links? - if xl (linkPos > 0) and xls not selected return false
             if (this.get (match.linkPos1 > 0 ? "crosslinks" : "linears") === false) {
@@ -68,14 +69,16 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				var prots = match.matchedPeptides[0].prt;
                 var p1 = prots[0];
 				for (var i = 1; i < prots.length; i++) {
-					if (prots[i] != p1){
+                    // not enough to match id's, one might be decoy protein, the other real
+					if (!matchingProteinPairFunc (prots[i], p1)) {
 						 isSelfLink = false;
 						 break;
 					 }
 				}
                 prots = match.matchedPeptides[1].prt;
 				for (var i = 0; i < prots.length; i++) {
-					if (prots[i] != p1){
+                    // not enough to match id's, one might be decoy protein, the other real
+					if (!matchingProteinPairFunc (prots[i], p1)) {
 						isSelfLink = false;
 						break;
 					}

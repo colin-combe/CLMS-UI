@@ -231,12 +231,13 @@
             function decoyClass (link) {
                 return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
             }
-            var links = [[],[],[]];
-            filteredCrossLinks.forEach (function (xlink) {
-                if (xlink.toProtein) {  // ignore linears
-                    links [decoyClass (xlink)].push (xlink);
-                }
-            });
+            //var links = [[],[],[]];
+            var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
+            //filteredCrossLinks.forEach (function (xlink) {
+            //    if (xlink.toProtein) {  // ignore linears
+            //        links [decoyClass (xlink)].push (xlink);
+            //    }
+            //});
             //console.log ("links", links);
             
             return [

@@ -134,7 +134,7 @@ CLMSUI.init.modelsEssential = function (options) {
         "No cross-links detected for this search.<br>Please return to the search history page."
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
-    CLMSUI.modelUtils.addDecoyProtProtMap (clmsModelInst);
+    CLMSUI.modelUtils.addDecoyFunctions (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         
@@ -271,7 +271,10 @@ CLMSUI.init.viewsEssential = function (options) {
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
     new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder",
-        model: filterModel
+        model: filterModel,
+        myOptions: {
+            hideSelfBetween: CLMSUI.compositeModelInst.get("clmsModel").realProteinCount < 2,
+        }
     });
     
     new CLMSUI.FilterSummaryViewBB ({

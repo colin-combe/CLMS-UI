@@ -65,16 +65,19 @@ function download(content, contentType, fileName) {
 
 function getMatchesCSV () {
     var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
-    var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
+    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+    var matches = clmsModel.get("matches");
     var matchCount = matches.length;
+    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
+
     for (var m = 0; m < matchCount; ++m){
 		var match = matches[m];
         var result;
         if (filterModel.get("fdrMode") === true) {
 			result = match.fdrPass;
 		} else {
-			result = filterModel.subsetFilter(match)
+			result = filterModel.subsetFilter (match, proteinMatchFunc)
 						&& filterModel.validationStatusFilter(match)
 						&& filterModel.navigationFilter(match);
 							}
