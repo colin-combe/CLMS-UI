@@ -104,7 +104,7 @@ div.toggles:not(:last-child) {
 }
 
 #fdrSummaryPlaceholder {
-    display: none;
+    display: inline-block;
 }
 
 #fdrSummaryPlaceholder p {
