@@ -20,6 +20,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     initialize: function (viewOptions) {
         var defaultOptions = {
+            hideSelfBetween: false,
             modes: [
                 {"label":"Manual", "id":"manualMode", tooltip: "Filter using crosslink metadata"},
                 {"label":"FDR", "id":"fdrMode", tooltip: "Filter using a False Discovery Rate cutoff"},
@@ -52,7 +53,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Scan", "id":"scanNumber", "chars":5}
             ],
         };
-        this.options = _.extend(defaultOptions, viewOptions.myOptions);
+        this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
 
         var self = this;
 
@@ -189,15 +190,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr("class", "filterControlGroup")
             .attr("id", "fdrPanel")
         ;
-		mainDivSel.append ("div")
-            .attr("class", "filterControlGroup")
-            .attr("id", "fdrSummaryPlaceholder")
-            .style("display","none");
-        ;
 
         var navDivSel = mainDivSel.append ("div")
-							.attr("class", "filterControlGroup")
-							.attr("id", "navFilters")
+            .attr("class", "filterControlGroup")
+            .attr("id", "navFilters")
 		;
 		//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
 
@@ -218,6 +214,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("size", function(d) { return d.chars; })
             //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
+        
+        // hide self / between link options if asked for (usually flag set when only 1 real protein)
+        if (this.options.hideSelfBetween) {
+            mainDivSel.selectAll(".subsetToggles")
+                .filter (function(d) { return d.id === "selfLinks" || d.id === "betweenLinks"; })
+                .style ("display", "none")
+            ;
+        }
 
         this.displayEventName = viewOptions.displayEventName;
 
@@ -226,6 +230,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
+        
+        mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
         this.modeChanged();
     },
@@ -250,11 +256,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         var target = evt.target;
         var id = target.id;
         if (id == "selfLinks"){
-			if (target.checked) {
-				d3.select("#aaApart").attr("disabled", null);
-			} else {
-				d3.select("#aaApart").attr("disabled", "disabled");
-			}
+			d3.select("#aaApart").attr("disabled", target.checked ? null : "disabled");
 		}
         this.model.set (id, target.checked);
     },
@@ -263,7 +265,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     subsetNumberFilter: function (evt) {
 		var target = evt.target;
-        var id = target.id;
+        var id = target.id; 
         var value = target.value;
         if (this.model.get (id) != value) {
 			console.log ("subsetNumberFilter:", id, value);
@@ -274,8 +276,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     modeChanged: function () {
 		var fdrMode = d3.select("#fdrMode").node().checked;
         d3.selectAll("#validationStatus,#matchScore,#navFilters").style("display", fdrMode ? "none" : "inline-block");
-        d3.selectAll("#fdrPanel,#fdrSummaryPlaceholder").style("display", fdrMode ? "inline-block" : "none");
-		this.model.set("fdrMode", fdrMode);
+        d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
+		this.model.set ("fdrMode", fdrMode);
     },
 
     render: function () {
@@ -288,7 +290,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
     initialize: function () {
         
         var chartDiv = d3.select(this.el);
-        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
+        //var tpl = _.template (("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
         chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
@@ -340,17 +342,20 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("<%= total %> filtered crosslinks ( + <%= decoys %> decoys)");
+        this.template = _.template ("Post-Filter: <%= targets %> Crosslinks<span> ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)</span>");
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
     },
 
     render: function () {
-        var mainDivSel = d3.select(this.el);
-        var filteredCrossLinks = this.model.filteredNotDecoyNotLinearCrossLinks;//getFilteredCrossLinks();
-        mainDivSel.text ((this.template ({total: filteredCrossLinks.length,
-				decoys: this.model.filteredCrossLinks.length - filteredCrossLinks.length})));
+        var commaFormat = d3.format(",");
+        d3.select(this.el).html (this.template ({
+            targets: commaFormat (this.model.getFilteredCrossLinks().length),
+            decoysTD: commaFormat (this.model.getFilteredCrossLinks("decoysTD").length),
+            decoysDD: commaFormat (this.model.getFilteredCrossLinks("decoysDD").length),
+        }));
+        d3.select(this.el).select("span").classed("decoysIrrelevant", !this.model.get("clmsModel").areDecoysPresent());
         return this;
     },
 });
@@ -359,53 +364,46 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        //this.template = _.template ("Currently showing <%= total %> filtered crosslinks");
-		d3.select(this.el).append("p").attr("id", "interFdrCutElem");
-        d3.select(this.el).append("p").attr("id","intraFdrCutElem");        
+        var fdrTypes = ["interFdrCut", "intraFdrCut"];
+        d3.select(this.el).selectAll("p").data(fdrTypes)
+            .enter()
+            .append("p")
+            .attr("class", function(d) { return d+"Elem"; })
+        ;
+ 
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
     },
 
     render: function () {
-        var mainDivSel = d3.select(this.el);
+        var fdrTypes = {"interFdrCut": "Between", "intraFdrCut": "Within"};
         var filterModel = this.model.get("filterModel");
-
-		var interCut = filterModel.get("interFdrCut");
-		if (interCut) { interCut = interCut.toFixed(2); }
-        var intraCut = filterModel.get("intraFdrCut");
-		if (intraCut) { intraCut = intraCut.toFixed(2); }
+        var threshold = filterModel.get("fdrThreshold");
+        var clmsModel = this.model.get("clmsModel");
+        var singleRealProtein = clmsModel.realProteinCount < 2;
+        var decoysPresent = clmsModel.areDecoysPresent();
         
-        var text = "Inter cutoff for "+ filterModel.get("fdrThreshold") +" is "
-			+ interCut;
-			console.log(text); 
-        var sel = d3.select("#interFdrCutElem");
-        sel.text(text);
-        d3.select("#intraFdrCutElem").text(
-			"Intra cutoff for "+ filterModel.get("fdrThreshold") +" is "
-			+ intraCut);
+        d3.select(this.el).selectAll("p")
+            .text (function(d) {
+                var cut = filterModel.get(d);
+                return "• "+fdrTypes[d]+" score cutoff for "+d3.format("%")(threshold)+" is "+(cut ? cut.toFixed(2) : cut);
+            })
+            // Hide between protein score if only 1 real protein (will always be an undefined score)
+            .style ("display", function(d) {
+                return d === "interFdrCut" && singleRealProtein ? "none" : null;
+            })
+        ;
+        
+        if (!filterModel.get("fdrMode")) {
+            var roughFDR = (this.model.getFilteredCrossLinks("decoysTD").length - this.model.getFilteredCrossLinks("decoysDD").length) / (this.model.getFilteredCrossLinks().length || 1);
+            d3.select(this.el).selectAll("p")
+                .text (function (d,i) {
+                    return i === 0 && decoysPresent ? "• Rough FDR Equivalent = "+d3.format("%")(roughFDR) : "";
+                })
+            ;
+        }
+        
         return this;
     },
-
-    
-       /* function doFDR (d) {
-            self.lastSetting = d;
-            var result = CLMSUI.fdr (self.model.get("clmsModel").get("crossLinks"), {threshold: d});
-            chartDiv.select(".fdrResult")
-                //~ .style("display", "block")
-                .html("")
-                .selectAll("p").data(result)
-                    .enter()
-                    .append("p")
-
-            ;
-            //~ chartDiv.select(".fdrBoost").classed("btn-1a", true).property("disabled", false);
-
-            // bit that communicates to rest of system
-            self.model.get("filterModel")
-                .set({"interFDRCut": result[0].fdr, "intraFDRCut": result[1].fdr })
-            ;
-
-            //console.log ("mm", self.model.get("filterModel"), result[0].fdr, result[1].fdr);
-        } */
 });

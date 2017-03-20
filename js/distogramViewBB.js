@@ -227,21 +227,23 @@
         },
         
         getRelevantCrossLinkDistances: function () {
-            var crossLinkMap = this.model.get("clmsModel").get("crossLinks");  // do values() after filtering in next line
-            var filteredCrossLinks = this.model.getFilteredCrossLinks (crossLinkMap);   
+            var filteredCrossLinks = this.model.getFilteredCrossLinks ("all");   
             function decoyClass (link) {
                 return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
             }
-            var links = [[],[],[]];
-            filteredCrossLinks.forEach (function (xlink) {
-                links [decoyClass (xlink)].push (xlink);
-            });
+            //var links = [[],[],[]];
+            var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
+            //filteredCrossLinks.forEach (function (xlink) {
+            //    if (xlink.toProtein) {  // ignore linears
+            //        links [decoyClass (xlink)].push (xlink);
+            //    }
+            //});
             //console.log ("links", links);
             
             return [
-                this.model.getCrossLinkDistances2 (links[0]/*filteredCrossLinks*//*.values()*/),    // TT
-                this.model.getCrossLinkDistances2 (links[1], {includeUndefineds: false, calcDecoyProteinDistances: true}),  // TD
-                this.model.getCrossLinkDistances2 (links[2], {includeUndefineds: false, calcDecoyProteinDistances: true}),  // DD
+                this.model.getCrossLinkDistances2 (links[0]),    // TT
+                this.model.getCrossLinkDistances2 (links[1], {calcDecoyProteinDistances: true}),  // TD
+                this.model.getCrossLinkDistances2 (links[2], {calcDecoyProteinDistances: true}),  // DD
             ];
         },
         

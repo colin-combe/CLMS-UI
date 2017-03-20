@@ -26,6 +26,8 @@
                 }, {silent: true});
 				
 			}
+            
+            var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
 
             for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];
@@ -43,7 +45,7 @@
 						if (pass) {
 							crossLink.filteredMatches_pp = crossLink.matches_pp.filter(
 								function (value) {
-									return filterModel.subsetFilter(value.match);
+									return filterModel.subsetFilter (value.match, proteinMatchFunc);
 								}
 							);
 
@@ -68,7 +70,7 @@
 										//~ filterModel.validationStatusFilter(match),
 										//~ filterModel.navigationFilter(match));
 							var result = /*match.is_decoy === false && */
-											filterModel.subsetFilter(match)
+											filterModel.subsetFilter (match, proteinMatchFunc)
 											&& filterModel.validationStatusFilter(match)
 											&& filterModel.navigationFilter(match);
 							var decoys = filterModel.get("decoys");
@@ -95,18 +97,29 @@
 
             //HI MARTIN - I'm caching things in these arrays,
             // its maybe not a very nice design wise, lets look at again 
-            this.filteredCrossLinks = [];
-			this.filteredNotDecoyNotLinearCrossLinks = [];
+            this.filteredXLinks = {all: [], targets: [], linears: [], decoysTD: [], decoysDD: []};
 			
 			for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];
 				if (crossLink.filteredMatches_pp.length) {
-					this.filteredCrossLinks.push(crossLink);
+                    this.filteredXLinks.all.push(crossLink);
 					if (!crossLink.fromProtein.is_decoy && crossLink.toProtein && !crossLink.toProtein.is_decoy) {
-						this.filteredNotDecoyNotLinearCrossLinks.push(crossLink);
-					}
+                        this.filteredXLinks.targets.push(crossLink);
+					} 
+                    else {
+                        if (!crossLink.toProtein) {
+                            this.filteredXLinks.linears.push(crossLink);
+                        }
+                        if (crossLink.fromProtein.is_decoy || crossLink.toProtein.is_decoy) {
+                            // is it a TD or DD decoy, stick it in the right sub-cache
+                            var decoyLinkCache = (crossLink.fromProtein.is_decoy === crossLink.toProtein.is_decoy) ? "decoysDD" : "decoysTD";
+                            this.filteredXLinks[decoyLinkCache].push(crossLink);
+                        }
+                    }
 				}
-            };
+            }
+            this.filteredNotDecoyNotLinearCrossLinks = this.filteredXLinks["targets"];  // temp till colin changes code in crosslinkviewer
+            //console.log ("xlinks", this.filteredXLinks);
             
             var participantsArr = Array.from(clmsModel.get("participants").values());
             var participantCount = participantsArr.length;           
@@ -142,13 +155,8 @@
             return this;
         },
 
-        getFilteredCrossLinks: function (crossLinks) {
-			
-			/*
-			 * store results and return that, see above
-			 * */
-			
-            return this.filteredCrossLinks;
+        getFilteredCrossLinks: function (type) {
+            return this.filteredXLinks[type || "targets"];
         },
         
         collateMatchRegions: function (crossLinks) {
