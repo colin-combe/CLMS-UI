@@ -152,6 +152,7 @@
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
             this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
+            this.listenTo (this.model, "currentColourModelChanged", this.relayout); // if range changes in current colour model
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -197,11 +198,11 @@
                 var maxY = d3.max(countArrays, function(array) {
                     return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array as it's dumping ground for everything over last value 
                 });
+                maxY = Math.max (maxY, 1);
                 //console.log ("maxY", maxY);
                 
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (this.options.seriesNames[i]); }, this);
-                
                 //console.log ("thresholds", thresholds);
                 var curMaxY = this.chart.axis.max().y;
                 // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
@@ -211,8 +212,9 @@
                     this.chart.axis.max({y: maxY});
                 }
 
+                //this.redrawColourRanges();
                 this.chart.load({
-                    columns: countArrays
+                    columns: countArrays,       
                 });
                 
                 // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
@@ -251,7 +253,8 @@
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (1 /*Math.ceil(extent[1])*/, this.options.maxX));
+            var thresholds = d3.range (d3.min ([0, Math.floor(extent[0])]), d3.max ([1 /*Math.ceil(extent[1])*/, this.options.maxX]));
+            //console.log ("thresholds", thresholds, extent);
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
@@ -269,7 +272,7 @@
                     ? precalcedDistributions[aseriesName]
                     : d3.layout.histogram().bins(thresholds)(aseries)
                 ;
-                //console.log (aseriesName, "binnedData", binnedData);
+                //console.log (aseriesName, "binnedData", aseries, binnedData);
 
                 var scale = rescaleToSeries ? rescaleLength / (seriesLengths[i] || rescaleLength) : 1;
                 return binnedData.map (function (nestedArr) {
@@ -307,8 +310,30 @@
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
             d3.select(this.el).select(".c3").style("max-height", "none");   
+            this.redrawColourRanges();
             this.chart.resize();
             return this;
+        },
+        
+        redrawColourRanges: function () {
+            var colModel = this.colourScaleModel;
+            var colScale = colModel.get("colScale");
+            var colLabels = colModel.get("labels");
+            var colDomain = colScale.domain();
+            console.log ("colModel", colModel);
+            this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
+            /*
+            this.chart.regions ([
+                {axis: 'x', end: colDomain[0], class: 'underLength'},
+                {axis: 'x', start: colDomain[0], end: colDomain[1], class: 'midLength'},
+                {axis: 'x', start: colDomain[1], class: 'overLength'},
+            ]);
+            d3.select(this.el).selectAll(".underLength").style("fill", colScale.range()[0]);
+            d3.select(this.el).selectAll(".midLength").style("fill", colScale.range()[1]);
+            d3.select(this.el).selectAll(".overLength").style("fill", colScale.range()[2]);
+            */
+            
+            return this;    
         },
 
         // removes view

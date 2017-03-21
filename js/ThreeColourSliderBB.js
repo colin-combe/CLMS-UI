@@ -122,6 +122,8 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         
         this.brushmove();
         
+        //this.listenTo (this.model, "currentColourModelChanged", this.relayout); // if range changes in current colour model
+        
         return this;
     },
     
