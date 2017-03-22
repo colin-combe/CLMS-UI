@@ -471,12 +471,6 @@ body, input, select, textarea {
     box-shadow: 10px 10px 5px 0px rgba(0,0,0,0.5);
 }
 
-.distoDiv {
-    background: rgba(224,224,255, 0.9);
-    position: relative;
-    height: calc(100% - 40px);
-}
-
 .dynTitle {
     position: relative;
     left: 30px;
@@ -593,8 +587,4 @@ A.btn {
     font-size: 0.75em;
     fill: #ddd;
     stroke: none;
-}
-
-.overLengthGridRule text {
-    transform: rotate(-90deg) translate(0,16px);
 }

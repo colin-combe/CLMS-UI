@@ -3904,7 +3904,7 @@
             d.sort(function(a, b){
                 var v1 = a ? a.value : null, v2 = b ? b.value : null;
                 return orderAsc ? v1 - v2 : v2 - v1;
-            });
+            });  
             */
         } else {
             var ids = $$.orderTargets($$.data.targets).map(function (i) {
