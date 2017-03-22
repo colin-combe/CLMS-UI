@@ -21,8 +21,8 @@ CLMSUI.utils.circleArrange = function (proteins) {
                 edgeIds.add (clink.id);
             }
         });
-        // MJG might not need to sort if nesting anyways - 21/03/2017
-        node.edges.sort (function (a,b) { return b.pos-a.pos; });
+        // MJG might not need to sort if nesting anyways - 21/03/2017 - update: yeah, we don't need to
+        //node.edges.sort (function (a,b) { return b.pos-a.pos; });
         node.total = node.edges.length;
         //console.log ("flat edges", node.edges);
         

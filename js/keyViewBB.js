@@ -129,8 +129,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var i = rowData[rowData.length - 1];
             var colScale = colourAssign.get("colScale");
             colScale.range()[i] = newValue;
-            // fire 'change to colour model' event
-            this.model.trigger ("currentColourModelChanged", colourAssign, colScale.domain());
+            // this will fire a change event for this colour model
+            colourAssign.setRange (colScale.range());
         }
     },
     

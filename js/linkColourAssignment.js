@@ -5,13 +5,20 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     defaults: {
         title: undefined,
     },
-    setDomain : function (twoValArr) {
-        this.get("colScale").domain(twoValArr);
-        this.trigger ("colourModelChanged", twoValArr);
+    setDomain : function (newDomain) {
+        this.get("colScale").domain(newDomain);
+        this.triggerColourModelChanged ({domain: newDomain});
+    },
+    setRange: function (newRange) {
+        this.get("colScale").range(newRange);
+        this.triggerColourModelChanged ({range: newRange});
+    },
+    triggerColourModelChanged: function (obj) {
+        this.trigger ("colourModelChanged", obj);
         if (this.collection) {
-            this.collection.trigger ("aColourModelChanged", this, twoValArr);
+            this.collection.trigger ("aColourModelChanged", this, obj);
         }
-    }
+    },
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
@@ -115,7 +122,6 @@ CLMSUI.linkColour.setupColourModels = function () {
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
         colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']),
-        //colScale: d3.scale.threshold().domain([0,1]).range(['#daa', '#ddd', '#aad']),
         title: "Distance",
     });
 

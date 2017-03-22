@@ -151,8 +151,7 @@
             }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // replacement for listening to rangeModel
-            this.listenTo (this.model, "currentColourModelChanged", this.relayout); // if range changes in current colour model
+            this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // have details (range, domain) of distance colour model changed?
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -320,7 +319,6 @@
             var colScale = colModel.get("colScale");
             var colLabels = colModel.get("labels");
             var colDomain = colScale.domain();
-            console.log ("colModel", colModel);
             this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
             /*
             this.chart.regions ([

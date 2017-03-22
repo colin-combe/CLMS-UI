@@ -126,7 +126,7 @@
             
             this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
             this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
-            this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally (distance model)
+            this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally
             this.listenTo (this.model, "change:selection", this.showSelected);
             this.listenTo (this.model, "change:highlights", this.showHighlighted);
             
