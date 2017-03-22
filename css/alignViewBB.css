@@ -46,7 +46,7 @@ DIV.tableWrapper TABLE {
 }
 
 DIV.tableWrapper TBODY TR:nth-child(2n+3) {
-    border-top: 2em solid #fff;
+    border-top: 1.3em solid #fff;
 }
 /*
 DIV.tableWrapper TBODY TR:nth-child(3n) TD {

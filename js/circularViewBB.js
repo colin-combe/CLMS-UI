@@ -857,6 +857,13 @@
             return this;
         },
         
+        relayout: function (descriptor) {
+            if (descriptor && descriptor.dragEnd) { // avoids doing two renders when view is being made visible
+                this.render();
+            }
+            return this;
+        },
+        
         identifier: "CircularView",
 
         // removes view

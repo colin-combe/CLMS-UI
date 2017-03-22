@@ -239,8 +239,6 @@
             //d3.select(this.el).select(".c3").style("max-height", this.options.height+"px");
             // kill brush clip so we can see brush arrows at chart extremeties
             d3.select(this.el).select(".c3-brush").attr("clip-path", "");
-
-            console.log ("hello", this);
             this.chart.resize();
             return this;
         },

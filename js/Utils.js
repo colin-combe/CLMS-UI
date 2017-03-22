@@ -347,7 +347,7 @@ CLMSUI.utils = {
             CLMSUI.utils.addDynDivScaffolding (mainDivSel, "Title");
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
-            var drag = d3.behavior.drag().on ("dragend", function() { self.relayout(); });
+            var drag = d3.behavior.drag().on ("dragend", function() { self.relayout({dragEnd: true}); });
             mainDivSel.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
                 .call (drag)
             ;
