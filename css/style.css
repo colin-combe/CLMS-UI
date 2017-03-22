@@ -594,3 +594,7 @@ A.btn {
     fill: #ddd;
     stroke: none;
 }
+
+.overLengthGridRule text {
+    transform: rotate(-90deg) translate(0,16px);
+}

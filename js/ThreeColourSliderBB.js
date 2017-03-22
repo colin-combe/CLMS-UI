@@ -76,21 +76,14 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 
         console.log ("this", this.model);
         // upper brush rectangles with colours from underlying scale
-        this.upperRange = svg.append("rect").attr("x", 0).attr("y", -10)
-            .attr("width", 50).attr("fill",this.model.get("colScale").range()[2]);
-        this.lowerRange = svg.append("rect").attr("x", 0)
-            .attr("width", 50).attr("fill",this.model.get("colScale").range()[0]);
+        this.upperRange = svg.append("rect").attr("x", 0).attr("y", -10).attr("width", 50);
+        this.lowerRange = svg.append("rect").attr("x", 0).attr("width", 50);
         this.textFormat = d3.format(".2f");
         
         var brushg = svg.append("g")
             .attr("class", "brush")
             .call(this.brush);
 
-        // brush extent rectangle given colour from underlying scale
-        brushg.select(".extent")
-            .style ("fill", this.model.get("colScale").range()[1])
-        ;
-        
         // triangle handles
         brushg.selectAll(".resize")
             .append("path")
@@ -120,15 +113,23 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         brushg.selectAll("rect")
             .attr("width", 50);
         
+        this.brushg = brushg;
+        
         this.brushmove();
+        
+        this.listenTo (this.model, "colourModelChanged", this.render); // if range  (or domain) changes in current colour model
         
         return this;
     },
     
     render: function () {
         var s = this.brush.extent();
-        this.upperRange.attr("height", this.y(s[1]) + 10);
-        this.lowerRange.attr("height", this.height - this.y(s[0])).attr("y", this.y(s[0]));
+
+        var colRange = this.model.get("colScale").range();
+        this.upperRange.attr("height", this.y(s[1]) + 10).style("fill", colRange[2]);
+        this.brushg.select(".extent").style ("fill", colRange[1]);
+        this.lowerRange.attr("height", this.height - this.y(s[0])).attr("y", this.y(s[0])).style("fill", colRange[0]);
+
         var self = this;
         d3.select(this.el).selectAll(".brushValueText")
             .text (function(d,i) { return self.textFormat(s[s.length - i - 1]); })
@@ -138,6 +139,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
     
     show: function (show) {
         d3.select(this.el).style("display", show ? null : "none");
+        if (show) { this.render(); }
         return this;
     },
 
@@ -145,15 +147,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 
 	brushmove: function () {
         var s = this.brush.extent();
-        this.render();
-	  
-		var scale = d3.scale.threshold()
-		  .domain([s[0], s[1]])
-		  .range(this.model.get("colScale").range())
-        ;
-        
-        this.model.setDomain ([s[0], s[1]]);
-        
+        this.model.setDomain ([s[0], s[1]]);    // this'll trigger a re-render due to the colourModelChanged listener above ^^^
         return this;     
 	},
 

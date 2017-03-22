@@ -46,7 +46,7 @@ DIV.tableWrapper TABLE {
 }
 
 DIV.tableWrapper TBODY TR:nth-child(2n+3) {
-    border-top: 2em solid #fff;
+    border-top: 1.3em solid #fff;
 }
 /*
 DIV.tableWrapper TBODY TR:nth-child(3n) TD {
@@ -98,7 +98,9 @@ DIV.checkHolder {
     border-bottom: 4px solid rgba(255,255,255,0.5);
     padding-bottom: 0;
     margin-bottom: 0;
-    line-height: 1.2em;
+    line-height: normal;
+    max-height: 10em;
+    overflow-y: auto;
 }
 
 /* allows breaking after a span but not in the label it contains */
