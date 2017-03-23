@@ -4,289 +4,308 @@
 //
 //		js/NGLViewBB.js
 
-    var CLMSUI = CLMSUI || {};
-    
-    CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
+var CLMSUI = CLMSUI || {};
 
-        events: function() {
-            var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
-            if (_.isFunction (parentEvents)) {
-                parentEvents = parentEvents();
+CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
+
+    events: function() {
+        var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
+        if (_.isFunction (parentEvents)) {
+            parentEvents = parentEvents();
+        }
+        return _.extend ({}, parentEvents, {
+            "click .centreButton": "centerView",
+            "click .downloadButton": "downloadImage",
+            "click .distanceLabelCB": "toggleLabels",
+            "click .selectedOnlyCB": "toggleNonSelectedLinks",
+            "click .showResiduesCB": "toggleResidues",
+            "click .shortestLinkCB": "toggleShortestLinksOnly",
+            "mousedown .panelInner": "checkCTRL",
+        });
+    },
+
+    // Intercept whether a click on the 3d view had the ctrl key depressed, share it with the 3d crosslink model
+    checkCTRL: function (evt) {
+        if (this.xlRepr) {
+            this.xlRepr.ctrlKey = evt.ctrlKey;
+        }
+    },
+
+    initialize: function (viewOptions) {
+        CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
+        var self = this;
+
+        var defaultOptions = {
+            labelVisible: false,
+            selectedOnly: false,
+            showResidues: true,
+            shortestLinksOnly: true,
+            defaultChainRep: "cartoon",
+        };
+        this.options = _.extend(defaultOptions, viewOptions.myOptions);
+
+        this.displayEventName = viewOptions.displayEventName;
+
+        // this.el is the dom element this should be getting added to, replaces targetDiv
+        var mainDivSel = d3.select(this.el);
+
+        var flexWrapperPanel = mainDivSel.append("div")
+            .attr ("class", "verticalFlexContainer")
+        ;
+
+        var buttonData = [
+            {label: CLMSUI.utils.commonLabels.downloadImg+"PNG", class:"downloadButton", type: "button", id: "download"},
+            {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre"},
+        ];
+
+        var toolbar = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar");
+        CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+
+
+        // Various view options set up, then put in a dropdown menu
+        var toggleButtonData = [
+            {initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel"},
+            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Only", id: "selectedOnly"},
+            {initialState: this.options.showResidues, class: "showResiduesCB", label: "Residues", id: "showResidues"},
+            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Link Option Only", id: "shortestOnly"},
+        ];
+        toggleButtonData
+            .forEach (function (d) {
+                d.type = "checkbox";
+                d.inputFirst = true;
+            }, this)
+        ;
+        CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
+
+        var optid = this.el.id+"Options";
+        toolbar.append("p").attr("id", optid);
+        new CLMSUI.DropDownMenuViewBB ({
+            el: "#"+optid,
+            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            myOptions: {
+                title: "Options ▼",
+                menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                closeOnClick: false,
             }
-            return _.extend ({}, parentEvents, {
-                "click .centreButton": "centerView",
-                "click .downloadButton": "downloadImage",
-                "click .distanceLabelCB": "toggleLabels",
-                "click .selectedOnlyCB": "toggleNonSelectedLinks",
-                "click .showResiduesCB": "toggleResidues",
-                "click .shortestLinkCB": "toggleShortestLinksOnly",
-                "mousedown .panelInner": "checkCTRL",
+        });
+
+
+        // Protein view type dropdown
+        var mainReps = NGL.RepresentationRegistry.names.slice().sort();
+        var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell"]);
+        mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
+        var repSection = toolbar
+            .append ("label")
+            .attr ("class", "btn")
+                .append ("span")
+                .attr("class", "noBreak")
+                .text ("Chain Representation")
+        ;
+        repSection.append("select")
+            .on ("change", function () {
+                if (self.xlRepr) {
+                    self.xlRepr.replaceChainRepresentation (d3.event.target.value);
+                }
+            })
+            .selectAll("option")
+            .data (mainReps)
+            .enter()
+            .append("option")
+            .text (function(d) { return d; })
+            .property ("selected", function(d) { return d === self.options.defaultChainRep; })
+        ;
+
+
+
+        this.chartDiv = flexWrapperPanel.append("div")
+            .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
+        ;
+
+        this.chartDiv.append("div").attr("class","overlayInfo").html("No PDB File Loaded"); 
+
+        this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
+        this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
+        this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally
+        this.listenTo (this.model, "change:selection", this.showSelected);
+        this.listenTo (this.model, "change:highlights", this.showHighlighted);
+
+        this.listenTo (this.model, "change:stageModel", function (model, newStageModel) {
+            // swap out stage models and listeners
+            var prevStageModel = model.previous("stageModel");
+            console.log ("STAGE MODEL CHANGED", arguments, this, prevStageModel);
+            if (prevStageModel) {
+                this.stopListening (prevStageModel);    // remove old stagemodel linklist change listener
+                prevStageModel.stopListening();
+            }
+            // set xlRepr to null on stage model change as it's now an overview of old data
+            // (it gets reset to a correct new value in repopulate() when distancesObj changes - eventlistener above)
+            // Plus keeping a value there would mean the listener below using it when a new linklist
+            // was generated for the first time (causing error)
+            //
+            // Sequence from pdbfilechooser.js is 
+            // 1. New stage model made 2. Stage model change event fired here - xlRepr set to null
+            // 3. New linklist data generated 4. linklist change event fired here (but no-op as xlRepr === null)
+            // 5. New distanceObj generated (making new xlRepr) 6. distanceObj change event fired here making new xlRepr
+            this.xlRepr = null; 
+            this.listenTo (newStageModel, "change:linkList", function (stageModel, newLinkList) {
+                if (this.xlRepr) {
+                    this.xlRepr._handleDataChange();
+                }
+            }); 
+            // First time distancesObj fires we should setup the display for a new data set
+            this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
+                console.log ("THIS", this);
+                this.repopulate();
             });
-        },
-        
-        // Intercept whether a click on the 3d view had the ctrl key depressed, share it with the 3d crosslink model
-        checkCTRL: function (evt) {
-            if (this.xlRepr) {
-                this.xlRepr.ctrlKey = evt.ctrlKey;
-            }
-        },
+        });
 
-        initialize: function (viewOptions) {
-            CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
-            var self = this;
-            
-            var defaultOptions = {
-                labelVisible: false,
-                selectedOnly: false,
-                showResidues: true,
-                shortestLinksOnly: true,
-                defaultChainRep: "cartoon",
-            };
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);
+    },
 
-            this.displayEventName = viewOptions.displayEventName;
+    repopulate: function () {
+        console.log ("REPOPULATE", this.model, this.model.get("stageModel"));
+        var pdbID = this.model.get("stageModel").get("pdbBaseSeqID");
+        var overText = "PDB File: " + (pdbID.length === 4 ?
+            "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID
+        );      
+        this.chartDiv.select("div.overlayInfo").html(overText);
 
-            // this.el is the dom element this should be getting added to, replaces targetDiv
-            var mainDivSel = d3.select(this.el);
+        this.xlRepr = new CLMSUI.CrosslinkRepresentation (
+            this.model.get("stageModel"),
+            {
+                defaultChainRep: this.options.defaultChainRep,
+                currentChainRep: undefined,
+                selectedColor: "lightgreen",
+                selectedLinksColor: "yellow",
+                sstrucColor: "gray",
+                displayedDistanceColor: "gray",
+                displayedDistanceVisible: this.options.labelVisible,
+            }
+        );
 
-            var flexWrapperPanel = mainDivSel.append("div")
-                .attr ("class", "verticalFlexContainer")
-            ;
-            
-            
-            var buttonData = [
-                {label: CLMSUI.utils.commonLabels.downloadImg+"PNG", class:"downloadButton", type: "button", id: "download"},
-                {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre"},
-            ];
-            
-            var toolbar = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar");
-            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+        console.log ("repr", this.xlRepr);
+    },
 
-			
-            // Various view options set up, then put in a dropdown menu
-            var toggleButtonData = [
-                {initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel"},
-                {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Only", id: "selectedOnly"},
-                {initialState: this.options.showResidues, class: "showResiduesCB", label: "Residues", id: "showResidues"},
-                {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Link Option Only", id: "shortestOnly"},
-            ];
-            toggleButtonData
-                .forEach (function (d) {
-                    d.type = "checkbox";
-                    d.inputFirst = true;
-                }, this)
-            ;
-            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
-            
-            var optid = this.el.id+"Options";
-            toolbar.append("p").attr("id", optid);
-            new CLMSUI.DropDownMenuViewBB ({
-                el: "#"+optid,
-                model: CLMSUI.compositeModelInst.get("clmsModel"),
-                myOptions: {
-                    title: "Options ▼",
-                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
-                    closeOnClick: false,
-                }
-            });
-		
-            
-            // Protein view type dropdown
-            var mainReps = NGL.RepresentationRegistry.names.slice().sort();
-            var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell"]);
-            mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
-            var repSection = toolbar
-                .append ("label")
-                .attr ("class", "btn")
-                    .append ("span")
-                    .attr("class", "noBreak")
-                    .text ("Chain Representation")
-            ;
-            repSection.append("select")
-                .on ("change", function () {
-                    if (self.xlRepr) {
-                        self.xlRepr.replaceChainRepresentation (d3.event.target.value);
-                    }
-                })
-                .selectAll("option")
-                .data (mainReps)
-                .enter()
-                .append("option")
-                .text (function(d) { return d; })
-                .property ("selected", function(d) { return d === self.options.defaultChainRep; })
-            ;
-            
-            
-            
-            this.chartDiv = flexWrapperPanel.append("div")
-                .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
-            ;
-            
-            this.chartDiv.append("div").attr("class","overlayInfo").html("No PDB File Loaded"); 
-            
-            this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
-            this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
-            this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally
-            this.listenTo (this.model, "change:selection", this.showSelected);
-            this.listenTo (this.model, "change:highlights", this.showHighlighted);
-            
-            this.listenTo (this.model, "change:stageModel", function (model, newStageModel) {
-                // swap out stage models and listeners
-                var prevStageModel = model.previous("stageModel");
-                console.log ("STAGE MODEL CHANGED", arguments, this, prevStageModel);
-                if (prevStageModel) {
-                    this.stopListening (prevStageModel);    // remove old stagemodel linklist change listener
-                    prevStageModel.stopListening();
-                }
-                // set xlRepr to null on stage model change as it's now an overview of old data
-                // (it gets reset to a correct new value in repopulate() when distancesObj changes - eventlistener above)
-                // Plus keeping a value there would mean the listener below using it when a new linklist
-                // was generated for the first time (causing error)
-                //
-                // Sequence from pdbfilechooser.js is 
-                // 1. New stage model made 2. Stage model change event fired here - xlRepr set to null
-                // 3. New linklist data generated 4. linklist change event fired here (but no-op as xlRepr === null)
-                // 5. New distanceObj generated (making new xlRepr) 6. distanceObj change event fired here making new xlRepr
-                this.xlRepr = null; 
-                this.listenTo (newStageModel, "change:linkList", function (stageModel, newLinkList) {
-                    if (this.xlRepr) {
-                        this.xlRepr._handleDataChange();
-                    }
-                }); 
-                // First time distancesObj fires we should setup the display for a new data set
-                this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
-                    console.log ("THIS", this);
-                    this.repopulate();
-                });
-            });
-             
-        },
-        
-        repopulate: function () {
-            console.log ("REPOPULATE", this.model, this.model.get("stageModel"));
-            var pdbID = this.model.get("stageModel").get("pdbBaseSeqID");
-            var overText = "PDB File: " + (pdbID.length === 4 ?
-                "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID
-            );      
-            this.chartDiv.select("div.overlayInfo").html(overText);
-            
-            this.xlRepr = new CLMSUI.CrosslinkRepresentation (
-                this.model.get("stageModel"),
-                {
-                    defaultChainRep: this.options.defaultChainRep,
-                    selectedColor: "lightgreen",
-                    selectedLinksColor: "yellow",
-                    sstrucColor: "gray",
-                    displayedDistanceColor: "gray",
-                    displayedDistanceVisible: this.options.labelVisible,
-                }
-            );
-            
-            console.log ("repr", this.xlRepr);
-        },
-
-        render: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                this.showFiltered();
-                console.log ("re rendering NGL view");
-            }
-            return this;
-        },
-
-        relayout: function () {
-            if (this.model.get("stageModel")) {
-                var stage = this.model.get("stageModel").get("structureComp").stage;
-                if (stage) {
-                    stage.handleResize();
-                }
-            }
-            return this;
-        },
-        
-        downloadImage: function () {
-            // https://github.com/arose/ngl/issues/33
-            if (this.model.get("stageModel")) {
-                this.model.get("stageModel").get("structureComp").stage.makeImage({
-                    factor: 4,  // make it big so it can be used for piccy
-                    antialias: true,
-                    trim: true, // https://github.com/arose/ngl/issues/188
-                    transparent: true
-                }).then( function( blob ){
-                    NGL.download( blob, "NGL3D"+CLMSUI.utils.makeImgFilename()+".png" );
-                });
-            }
-        },
-		
-        centerView: function () {
-            if (this.model.get("stageModel")) {
-                this.model.get("stageModel").get("structureComp").stage.centerView(true);
-            }
-            return this;
-        },
-        
-        toggleLabels: function (event) {
-            if (this.xlRepr) {
-                var chk = event.target.checked;
-                this.xlRepr.displayedDistanceVisible = chk;
-                this.xlRepr.linkRepr.setParameters ({labelVisible: chk});
-            }
-        },
-        
-        toggleResidues: function (event) {
-            if (this.xlRepr) {
-                this.xlRepr.resRepr.setVisibility (event.target.checked);
-            }
-        },
-        
-        toggleNonSelectedLinks: function (event) {
-            if (this.xlRepr) {
-                this.xlRepr.linkRepr.setVisibility (!event.target.checked);
-            }
-        },
-        
-        toggleShortestLinksOnly: function (event) {
-            this.options.shortestLinksOnly = event.target.checked;
-            //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
+    render: function () {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
             this.showFiltered();
-        },
-        
-        rerenderColours: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
-                // using update dodges setParameters not firing a redraw if param is the same
-                this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
-                this.xlRepr.linkRepr.viewer.requestRender();
+            console.log ("re rendering NGL view");
+        }
+        return this;
+    },
+
+    relayout: function () {
+        if (this.model.get("stageModel")) {
+            var stage = this.model.get("stageModel").get("structureComp").stage;
+            if (stage) {
+                stage.handleResize();
             }
-        },
-        
-        showHighlighted: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
-                this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
-            }
-        },
-        
-        showSelected: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
-                this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
-            }
-        },
-        
-        showFiltered: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
-                //~ var crossLinks = this.model.get("clmsModel").get("crossLinks");
-                var stageModel = this.model.get("stageModel");
-                var filteredCrossLinks = this.model.getFilteredCrossLinks();
-                var self = this;
-                var filterFunc = function (linkList) {
-                    if (self.options.shortestLinksOnly) {
-                        return self.model.get("clmsModel").get("distancesObj").getShortestLinks (linkList);
-                    }
-                    return linkList;
-                };
-                //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
-                stageModel.setLinkList (filteredCrossLinks, filterFunc);
-            }
-        },
-    });
+        }
+        return this;
+    },
+
+    downloadImage: function () {
+        // https://github.com/arose/ngl/issues/33
+        console.log ("NGL this", this);
+        if (this.model.get("stageModel")) {
+            var self = this;
+            this.model.get("stageModel").get("structureComp").stage.makeImage({
+                factor: 4,  // make it big so it can be used for piccy
+                antialias: true,
+                trim: true, // https://github.com/arose/ngl/issues/188
+                transparent: true
+            }).then( function( blob ){
+                NGL.download (blob, self.identifier+self.optionsToString()+"-PDB"+self.xlRepr.pdbBaseSeqID+"-"+CLMSUI.utils.makeImgFilename()+".png" );
+            });
+        }
+    },
+
+    centerView: function () {
+        if (this.model.get("stageModel")) {
+            this.model.get("stageModel").get("structureComp").stage.centerView(true);
+        }
+        return this;
+    },
+
+    toggleLabels: function (event) {
+        var bool = event.target.checked;
+        this.options.labelVisible = bool;
+        if (this.xlRepr) {
+            this.xlRepr.displayedDistanceVisible = bool;
+            this.xlRepr.linkRepr.setParameters ({labelVisible: bool});
+        }
+    },
+
+    toggleResidues: function (event) {
+        var bool = event.target.checked;
+        this.options.showResidues = bool;
+        if (this.xlRepr) {
+            this.xlRepr.resRepr.setVisibility (bool);
+        }
+    },
+
+    toggleNonSelectedLinks: function (event) {
+        var bool = event.target.checked;
+        this.options.selectedOnly = bool;
+        if (this.xlRepr) {
+            this.xlRepr.linkRepr.setVisibility (!bool);
+        }
+    },
+
+    toggleShortestLinksOnly: function (event) {
+        this.options.shortestLinksOnly = event.target.checked;
+        //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
+        this.showFiltered();
+    },
+
+    rerenderColours: function () {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+            // using update dodges setParameters not firing a redraw if param is the same
+            this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
+            this.xlRepr.linkRepr.viewer.requestRender();
+        }
+    },
+
+    showHighlighted: function () {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+            this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
+        }
+    },
+
+    showSelected: function () {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+            this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
+        }
+    },
+
+    showFiltered: function () {
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+            //~ var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var stageModel = this.model.get("stageModel");
+            var filteredCrossLinks = this.model.getFilteredCrossLinks();
+            var self = this;
+            var filterFunc = function (linkList) {
+                if (self.options.shortestLinksOnly) {
+                    return self.model.get("clmsModel").get("distancesObj").getShortestLinks (linkList);
+                }
+                return linkList;
+            };
+            //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
+            stageModel.setLinkList (filteredCrossLinks, filterFunc);
+        }
+    },
+
+    identifier: "NGL3D",
+    
+    optionsToString: function () {
+        var opts = [this.xlRepr.currentChainRep];
+        d3.entries(this.options).forEach (function (optionEntry) {
+            if (optionEntry.key !== "defaultChainRep" && (optionEntry.value === true || optionEntry.value === false)) {
+                opts.push (optionEntry.key.slice(0,8)+"="+optionEntry.value.toString().slice(0,1));
+            }    
+        });
+        return opts.join("-");
+    },
+});
 
 
 
@@ -415,6 +434,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         if (this.sstrucRepr) {
             this.structureComp.removeRepresentation (this.sstrucRepr);
         }
+        
+        this.currentChainRep = newType;
         
         this.sstrucRepr = this.structureComp.addRepresentation (newType, {
             //color: this.sstrucColor,

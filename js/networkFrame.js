@@ -137,7 +137,8 @@ CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.modelUtils.addDecoyFunctions (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-        
+        decoys: clmsModelInst.areDecoysPresent(),
+        betweenLinks: clmsModelInst.realProteinCount > 1,
         matchScoreCutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("rawMatches")).map (function(ex,i) {
             return Math[i === 0 ? "floor" : "ceil"](ex);
         }),

@@ -262,7 +262,14 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             var zeroFormat = d3.format (".4f");
             var zeroFormatFields = d3.set(["intraFdrCut", "interFdrCut", "scores"]);
             if (this.get("fdrMode")) {
-                fields = ["fdrMode", "fdrThreshold", "interFdrCut", "intraFdrCut", "ambig", "betweenLinks", "selfLinks", "aaApart", "pepLength"];
+                fields = ["fdrMode", "fdrThreshold", "ambig", "betweenLinks", "selfLinks", "aaApart", "pepLength"];
+                // no point listing inter/intra fdr cut if between/self links aren't active
+                if (this.get("betweenLinks")) {
+                    fields.splice (1, 0, "interFdrCut");
+                }
+                if (this.get("selfLinks")) {
+                    fields.splice (1, 0, "intraFdrCut");
+                }
             } else {
                 var fieldSet = d3.set (d3.keys (this.attributes));
                 var antiFields = ["fdrThreshold", "interFdrCut", "intraFdrCut", "fdrMode"];

@@ -453,7 +453,7 @@ CLMSUI.modelUtils = {
         var matchChains = allChains.filter (function (entry) {
             return entry.index === chainIndex;
         });
-        return matchChains[0].name;
+        return matchChains[0] ? matchChains[0].name : undefined;
     },
     
     // If distances matrix not fully populated

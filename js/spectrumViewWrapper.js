@@ -258,4 +258,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         //alts.style("width", w+"px");
         return this;
     },
+    
+    identifier: "Spectrum",
 });

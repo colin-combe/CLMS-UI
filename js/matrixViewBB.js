@@ -71,10 +71,10 @@
                 .attr("class", "noBreak")
                 .text("Select Chain Pairing")
                 .append("select")
-                    .attr("id", "chainSelect")
+                    .attr("id", mainDivSel.attr("id")+"chainSelect")
                     .on ("change", function () {
                         self
-                            .matrixChosen ($('#chainSelect').val())
+                            .matrixChosen ($('#'+mainDivSel.attr("id")+'chainSelect').val())
                             .render()
                         ;
                     })
@@ -187,7 +187,8 @@
             matrixOptionData.push ({text: "No Viable Pairs", key: null});
         }
         
-        var matrixOptions = d3.select(this.el).select("#chainSelect")
+        var mainDivSel = d3.select(this.el);
+        var matrixOptions = mainDivSel.select("#"+mainDivSel.attr("id")+"chainSelect")
             .selectAll("option")
             .data (matrixOptionData, function(d) { return distancesObj.pdbBaseSeqID + d.key; })
         ;
@@ -751,8 +752,9 @@
     And shove in an extra css rule after the style element's already been generated
     */
     downloadSVG2: function () {
-        var svgSel = d3.select(this.el).selectAll("svg");
-        var viewPort = d3.select(this.el).select(".viewport");
+        var mainDivSel = d3.select(this.el);
+        var svgSel = mainDivSel.selectAll("svg");
+        var viewPort = mainDivSel.select(".viewport");
         var svgArr = [svgSel.node()];
         var svgStrings = CLMSUI.svgUtils.capture (svgArr);
         var detachedSVG = svgStrings[0];
@@ -786,11 +788,22 @@
         var style = detachedSVGD3.select("style");
         style.text (style.text() + "\n" + extraRule);
         
+        var fileName = this.identifier+this.optionsToString()+"-"+CLMSUI.utils.makeImgFilename()+".svg";
         // Now convert the canvas and its data to the image element we just added and download the whole svg when done
         CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
-            download (svgXML, 'application/svg', "view.svg");
+            download (svgXML, 'application/svg', fileName);
         });
+    },
+        
+    identifier: "Matrix",
+        
+    optionsToString: function () {
+        var matrixObj = this.options.matrixObj;
+        return [+matrixObj.chain1, +matrixObj.chain2]
+            .map (function (chain) { return this.getLabelText(chain).replace(/\s+/g, ''); }, this)
+            .join("-")
+        ;
     },
 });
     

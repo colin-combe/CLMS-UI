@@ -49,11 +49,11 @@
             ;
 
             // Generate the C3 Chart
-            var bid = "#" + chartDiv.attr("id");
+            var chartID = "#" + chartDiv.attr("id");
             var columnsAsNamesOnly = this.options.seriesNames.map (function(sname) { return [sname]; });
 
             this.chart = c3.generate({
-                bindto: bid,
+                bindto: chartID,
                 data: {
                     columns: columnsAsNamesOnly,
                     type: 'bar',
@@ -96,9 +96,9 @@
                             position: "outer-right",
                         },
                         //max: this.options.maxX,
-                        padding: {
+                        padding: {  // padding of 1 ticks to right of chart to stop bars in last column getting clipped
                           left: 0,
-                          right: 0,
+                          right: 1,
                         },
                         tick: {
                             culling: {
@@ -355,4 +355,13 @@
         },
         
         identifier: "Distogram",
+        
+        optionsToString: function () {
+            var seriesIDs = this.chart.data().map (function (series) { return series.id; });
+            var hiddenIDsSet = d3.set (this.chart.internal.hiddenTargetIds);
+            seriesIDs = seriesIDs.filter (function (sid) {
+                return !hiddenIDsSet.has (sid);
+            });
+            return seriesIDs.join("-");    
+        },
     });
