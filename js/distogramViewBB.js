@@ -49,11 +49,11 @@
             ;
 
             // Generate the C3 Chart
-            var bid = "#" + chartDiv.attr("id");
+            var chartID = "#" + chartDiv.attr("id");
             var columnsAsNamesOnly = this.options.seriesNames.map (function(sname) { return [sname]; });
 
             this.chart = c3.generate({
-                bindto: bid,
+                bindto: chartID,
                 data: {
                     columns: columnsAsNamesOnly,
                     type: 'bar',
@@ -72,7 +72,7 @@
                         return colour;
                     },
                     selection: {
-                        enabled: true,
+                        enabled: false,
                         grouped: true,
                         multiple: true,
                         draggable: true
@@ -96,9 +96,14 @@
                             position: "outer-right",
                         },
                         //max: this.options.maxX,
-                        padding: {
+                        padding: {  // padding of 1 ticks to right of chart to stop bars in last column getting clipped
                           left: 0,
-                          right: 0,
+                          right: 1,
+                        },
+                        tick: {
+                            culling: {
+                                max: Math.floor (this.options.maxX / 10)
+                            }
                         }
                     },
                     y: {
@@ -141,8 +146,9 @@
                 },
                 title: {
                     text: this.options.chartTitle
-                }
+                },
             });
+            
             
             function distancesAvailable () {
                 console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
@@ -195,7 +201,7 @@
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
                 // if max y needs to be calculated across all series
                 var maxY = d3.max(countArrays, function(array) {
-                    return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array as it's dumping ground for everything over last value 
+                    return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array if not already removed as it's dumping ground for everything over last value 
                 });
                 maxY = Math.max (maxY, 1);
                 //console.log ("maxY", maxY);
@@ -210,6 +216,8 @@
                     console.log ("resetting axis max from", curMaxY, "to", maxY);
                     this.chart.axis.max({y: maxY});
                 }
+                
+                console.log ("countArrays", countArrays);
 
                 //this.redrawColourRanges();
                 this.chart.load({
@@ -228,18 +236,21 @@
         },
         
         getRelevantCrossLinkDistances: function () {
+            /*
             var filteredCrossLinks = this.model.getFilteredCrossLinks ("all");   
             function decoyClass (link) {
                 return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
             }
-            //var links = [[],[],[]];
+            var links = [[],[],[]];
+
+            filteredCrossLinks.forEach (function (xlink) {
+                if (xlink.toProtein) {  // ignore linears
+                    links [decoyClass (xlink)].push (xlink);
+                }
+            });
+            console.log ("links", links);
+            */
             var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
-            //filteredCrossLinks.forEach (function (xlink) {
-            //    if (xlink.toProtein) {  // ignore linears
-            //        links [decoyClass (xlink)].push (xlink);
-            //    }
-            //});
-            //console.log ("links", links);
             
             return [
                 this.model.getCrossLinkDistances2 (links[0]),    // TT
@@ -284,6 +295,7 @@
                     array.pop();
                 });
             }
+            //console.log ("countArrays", countArrays);
 
             return countArrays;
         },
@@ -343,4 +355,13 @@
         },
         
         identifier: "Distogram",
+        
+        optionsToString: function () {
+            var seriesIDs = this.chart.data().map (function (series) { return series.id; });
+            var hiddenIDsSet = d3.set (this.chart.internal.hiddenTargetIds);
+            seriesIDs = seriesIDs.filter (function (sid) {
+                return !hiddenIDsSet.has (sid);
+            });
+            return seriesIDs.join("-");    
+        },
     });

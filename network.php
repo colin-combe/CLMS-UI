@@ -46,6 +46,7 @@
         <link rel="stylesheet" href="./css/matrix.css">
         <link rel="stylesheet" href="./css/tooltip.css">
         <link rel="stylesheet" href="./css/c3.css">
+        <link rel="stylesheet" href="./css/distogram.css">
         <link rel="stylesheet" href="./css/minigram.css">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css">
         <link rel="stylesheet" href="./css/alignViewBB.css">

@@ -18,15 +18,18 @@
 
 function downloadMatches(){
     var csv = getMatchesCSV();
-    download(csv, 'text/csv', 'matches.csv');//+s.keys().toString());
+    var filename = CLMSUI.utils.makeLegalFileName ("matches-" + CLMSUI.utils.filterStateToString()) + ".csv";
+    download(csv, 'text/csv', filename);//+s.keys().toString());
 }
 function downloadLinks(){
     var csv = getLinksCSV();
-    download(csv, 'text/csv', 'links.csv');//+s.keys().toString());
+    var filename = CLMSUI.utils.makeLegalFileName ("links-" + CLMSUI.utils.filterStateToString()) + ".csv";
+    download(csv, 'text/csv', filename);//+s.keys().toString());
 }
 function downloadResidueCount(){
     var csv = getResidueCount();
-    download(csv, 'text/csv', 'residueCount.csv');//+s.keys().toString());
+    var filename = CLMSUI.utils.makeLegalFileName ("residueCount-" + CLMSUI.utils.filterStateToString()) + ".csv";
+    download(csv, 'text/csv', filename);//+s.keys().toString());
 }
 
 function download(content, contentType, fileName) {

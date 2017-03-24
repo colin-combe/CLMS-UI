@@ -1,0 +1,13 @@
+.distoDiv {
+    background: rgba(224,224,255, 0.9);
+    position: relative;
+    height: calc(100% - 40px);
+}
+
+.overLengthGridRule text {
+    transform: rotate(-90deg) translate(0,16px);
+}
+
+.distoDiv .c3-axis.c3-axis-x .tick:nth-of-type(10n+1) line {
+    transform: scaleY(1.2);
+}

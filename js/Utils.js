@@ -312,15 +312,21 @@ CLMSUI.utils = {
         ;
     },
     
-    makeImgFilename: function () {
+    filterStateToString: function () {
         var filterStr = CLMSUI.compositeModelInst.get("filterModel").stateString();
         var searches = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
         var searchKeys = searches.map (function (search) { return search[0]; }); // just the keys
-        var searchStr = searchKeys.join("-");
-        var fileStr = searchStr+"-filter="+filterStr;
-        fileStr = fileStr.substring(0, 200);
-        console.log ("fileStr", fileStr);
-        return fileStr;
+        var searchStr = "Search"+searchKeys.join("-");
+        var filterState = searchStr+"-filter="+filterStr;
+        filterState = filterState.substring(0, 200);
+        console.log ("filterState", filterState);
+        return filterState;
+    },
+    
+    makeLegalFileName: function (fileNameStr) {
+        var newStr = fileNameStr.replace (/[^a-zA-Z0-9-=&()¦_\\.]/g, ""); 
+        newStr = newStr.substring (0, 240);
+        return newStr;
     },
 
     BaseFrameView: Backbone.View.extend ({
@@ -374,7 +380,8 @@ CLMSUI.utils = {
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
             console.log ("xml", svgXML);
             
-            download (svgXML, 'application/svg', this.identifier+CLMSUI.utils.makeImgFilename()+".svg");
+            var fileName = this.filenameStateString().substring (0,240);
+            download (svgXML, 'application/svg', fileName+".svg");
             //download (svgXML, 'application/svg', "view.svg");
         },
 
@@ -438,7 +445,19 @@ CLMSUI.utils = {
 
             // this line destroys the containing backbone view and it's events
             Backbone.View.prototype.remove.call(this);
-        }
+        },
+        
+        identifier: "View",
+        
+        // return any relevant view states that can be used to label a screenshot etc
+        optionsToString: function () {
+            return "";
+        },
+        
+        // Returns a useful filename given the view and filters current states
+        filenameStateString: function () {
+            return CLMSUI.utils.makeLegalFileName (this.identifier+"-"+this.optionsToString()+"-"+CLMSUI.utils.filterStateToString());
+        },
     }),
 };
 
