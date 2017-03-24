@@ -269,14 +269,14 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             {label: "prot1", value: CLMSUI.utils.proteinConcat (match, 0, this.model.get("clmsModel"))},
             {label: "pep1", value: match.matchedPeptides[0].sequence},
             {label: "pos1", value: match.matchedPeptides[0].pos[0]},
-            {field: "linkPos1"},
+            {field: "lp1"},
         ];
         if (match.matchedPeptides[1]) {
             description.push (
                 {label: "prot2", value: CLMSUI.utils.proteinConcat (match, 1, this.model.get("clmsModel"))},
                 {label: "pep2", value: match.matchedPeptides[1].sequence},
                 {label: "pos2", value: match.matchedPeptides[1].pos[0]},
-                {field: "linkPos2"}
+                {field: "lp2"}
             );
         }
         description.push (

@@ -414,7 +414,14 @@
                 var out = intraOutside ? intra && !homom : homom;
                 var rad = out ? rad2 : rad1;
                 var bowRadius = out ? rad2 * bowOutMultiplier: 0;
-                return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) / 2, rad: bowRadius}, {ang: link.end, rad: rad}] };
+                
+                var a1 = Math.min (link.start, link.end);
+                var a2 = Math.max (link.start, link.end);
+                var midang = (a2 - a1 < 180) ? (a1 + a2) / 2 : ((a1 + a2 + 360) / 2) % 360;
+                console.log ("angs", link.start, link.end);
+                var coords = (a2 - a1 < 180) ? [{ang: link.start, rad: rad}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: rad}]
+                    : [{ang: link.start, rad: rad}, {ang: ((link.start+midang+360)/2)%360, rad: bowRadius}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: bowRadius}, {ang: link.end, rad: rad}];
+                return {id: link.id, coords: coords };
             }, this);
             return newLinks;
         },

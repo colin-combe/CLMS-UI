@@ -20,7 +20,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     initialize: function (viewOptions) {
         var defaultOptions = {
-            hideSelfBetween: false,
             modes: [
                 {"label":"Manual", "id":"manualMode", tooltip: "Filter using crosslink metadata"},
                 {"label":"FDR", "id":"fdrMode", tooltip: "Filter using a False Discovery Rate cutoff"},
@@ -46,11 +45,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy crosslinks"},              
             ],
             navigationFilters: [
-                {"label":"Peptide", "id":"pepSeq", "chars":7},
-                {"label":"Protein", "id":"protNames", "chars":7},
-                {"label":"Charge", "id":"charge", "chars":1},
-                {"label":"Run", "id":"runName","chars":5},
-                {"label":"Scan", "id":"scanNumber", "chars":5}
+                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to crosslinks involving a peptide containing this sequence"},
+                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to crosslinks involving a protein containing this text"},
+                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to crosslinks with this charge state"},
+                {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to crosslinks from this run index"},
+                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to crosslinks with matches with this (partial) scan number"}
             ],
         };
         this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
@@ -202,7 +201,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .enter()
             .append("div")
             .attr("class", "textFilters")
-            .append ("label")
+            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+            .append ("label") 
         ;
         textFilters.append("span")
             .text (function(d) { return d.label; })
@@ -212,17 +212,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("class", "filterTypeText")
             .attr ("type", "textbox")
             .attr ("size", function(d) { return d.chars; })
-            //~ .property ("checked", function(d) { return self.model.get(d.id); })
         ;
         
-        // hide self / between link options if asked for (usually flag set when only 1 real protein)
-        if (this.options.hideSelfBetween) {
-            mainDivSel.selectAll(".subsetToggles")
-                .filter (function(d) { return d.id === "selfLinks" || d.id === "betweenLinks"; })
+        // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
+        if (this.options.hide) {
+            var entries = d3.entries(this.options.hide);
+            var hideEntries = entries.filter (function (entry) { return entry.value; });
+            var hideEntrySet = d3.set (hideEntries.map (function (entry) { return entry.key; }));
+            mainDivSel.selectAll(".subsetToggles,.validationToggles,.textFilters")
+                .filter (function(d) { return hideEntrySet.has (d.id); })
                 .style ("display", "none")
             ;
         }
-
+        
         this.displayEventName = viewOptions.displayEventName;
 
         this.listenTo (this.model, "change:matchScoreCutoff", function(model, val) {
@@ -355,7 +357,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
             decoysTD: commaFormat (this.model.getFilteredCrossLinks("decoysTD").length),
             decoysDD: commaFormat (this.model.getFilteredCrossLinks("decoysDD").length),
         }));
-        d3.select(this.el).select("span").classed("decoysIrrelevant", !this.model.get("clmsModel").areDecoysPresent());
+        d3.select(this.el).select("span").classed("decoysIrrelevant", !this.model.get("clmsModel").get("decoysPresent"));
         return this;
     },
 });
@@ -382,7 +384,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
         var threshold = filterModel.get("fdrThreshold");
         var clmsModel = this.model.get("clmsModel");
         var singleRealProtein = clmsModel.realProteinCount < 2;
-        var decoysPresent = clmsModel.areDecoysPresent();
+        var decoysPresent = clmsModel.get("decoysPresent");
         
         d3.select(this.el).selectAll("p")
             .text (function(d) {
