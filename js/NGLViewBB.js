@@ -214,7 +214,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 trim: true, // https://github.com/arose/ngl/issues/188
                 transparent: true
             }).then( function( blob ){
-                NGL.download (blob, self.identifier+self.optionsToString()+"-PDB"+self.xlRepr.pdbBaseSeqID+"-"+CLMSUI.utils.makeImgFilename()+".png" );
+                NGL.download (blob, self.filenameStateString()+".png" );
             });
         }
     },
@@ -304,6 +304,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             }    
         });
         return opts.join("-");
+    },
+    
+    // Returns a useful filename given the view and filters current states
+    filenameStateString: function () {
+        return CLMSUI.utils.makeLegalFileName (this.identifier+this.optionsToString()+"-PDB"+this.xlRepr.pdbBaseSeqID+"-"+CLMSUI.utils.filterStateToString());
     },
 });
 

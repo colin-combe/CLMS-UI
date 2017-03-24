@@ -788,7 +788,7 @@
         var style = detachedSVGD3.select("style");
         style.text (style.text() + "\n" + extraRule);
         
-        var fileName = this.identifier+this.optionsToString()+"-"+CLMSUI.utils.makeImgFilename()+".svg";
+        var fileName = this.filenameStateString()+".svg";
         // Now convert the canvas and its data to the image element we just added and download the whole svg when done
         CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);

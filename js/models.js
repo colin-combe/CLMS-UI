@@ -64,7 +64,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			// possible an ambiguous self link will still get displayed
             var hideSelfLinks = !this.get("selfLinks");
             var hideBetweenLinks = !this.get("betweenLinks");
-			if (hideSelfLinks || hideBetweenLinks) {
+			if ((hideSelfLinks || hideBetweenLinks) && match.matchedPeptides.length > 1) {
 				var isSelfLink = true;
 				var prots = match.matchedPeptides[0].prt;
                 var p1 = prots[0];

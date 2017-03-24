@@ -260,4 +260,49 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     },
     
     identifier: "Spectrum",
+    
+    optionsToString: function () {
+        console.log ("this", this);
+        var match = this.primaryMatch;
+        var description = [
+            {field: "id"},
+            {label: "prot1", value: CLMSUI.utils.proteinConcat (match, 0, this.model.get("clmsModel"))},
+            {label: "pep1", value: match.matchedPeptides[0].sequence},
+            {label: "pos1", value: match.matchedPeptides[0].pos[0]},
+            {field: "linkPos1"},
+        ];
+        if (match.matchedPeptides[1]) {
+            description.push (
+                {label: "prot2", value: CLMSUI.utils.proteinConcat (match, 1, this.model.get("clmsModel"))},
+                {label: "pep2", value: match.matchedPeptides[1].sequence},
+                {label: "pos2", value: match.matchedPeptides[1].pos[0]},
+                {field: "linkPos2"}
+            );
+        }
+        description.push (
+            {field: "score"},
+            {field: "autovalidated", label: "Auto"},
+            {field: "validated", label: "Val"},
+            //["precursorCharge"],
+            {field: "searchId"},
+            {label:"run", value: match.runName()},
+            {field: "scanNumber"},
+            {field: "is_decoy", label:"Decoy"}
+        );
+        description.forEach (function (desc) {
+            if (!desc.value) {
+                desc.value = match [desc.field];
+                if (desc.value === undefined) { desc.value = "null"; }
+            }
+        });
+        //description.push(["crossLinks", match.crossLinks.map(function(xlink) { return xlink.id; }).join("&") ]);
+        var description1 = description.map (function (desc) { return (desc.label || desc.field)+"="+desc.value; });
+        var joinedDescription = description1.join ("-");
+        return joinedDescription;                        
+    },
+    
+    // Returns a useful filename given the view and filters current states
+    filenameStateString: function () {
+        return CLMSUI.utils.makeLegalFileName (this.identifier+"-"+this.optionsToString());
+    },
 });
