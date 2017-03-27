@@ -249,8 +249,17 @@
                 //~ .range(["#beb", "#ebb" , "#bbe"])
             //~ ;
 
+            // for internal circle paths
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")
+                .tension(0.45)
+                .radius(function(d) { return d.rad; })
+                .angle(function(d) { return d.ang * degToRad; })
+            ;
+            
+            // 'bundle' intersects circle when trying to draw curves around circumference of circle between widely separated points
+            this.outsideLine = d3.svg.line.radial()
+                .interpolate("basis")
                 .tension(0.45)
                 .radius(function(d) { return d.rad; })
                 .angle(function(d) { return d.ang * degToRad; })
@@ -326,7 +335,7 @@
         },
 
         reOrder: function () {
-            console.log ("this", this, this.options);
+            //console.log ("this", this, this.options);
             this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
             var prots = Array.from (this.model.get("clmsModel").get("participants").values());
             var proteinSort = function (field) {
@@ -405,7 +414,7 @@
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
             var intraOutside = this.options.intraOutside;
-            var bowOutMultiplier = 1.3 * (intraOutside ? 1.6 : 1);
+            var bowOutMultiplier = 1.2;
 
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
@@ -417,11 +426,25 @@
                 
                 var a1 = Math.min (link.start, link.end);
                 var a2 = Math.max (link.start, link.end);
-                var midang = (a2 - a1 < 180) ? (a1 + a2) / 2 : ((a1 + a2 + 360) / 2) % 360;
-                console.log ("angs", link.start, link.end);
-                var coords = (a2 - a1 < 180) ? [{ang: link.start, rad: rad}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: rad}]
-                    : [{ang: link.start, rad: rad}, {ang: ((link.start+midang+360)/2)%360, rad: bowRadius}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: bowRadius}, {ang: link.end, rad: rad}];
-                return {id: link.id, coords: coords };
+                var midang = (a1 + a2) / 2; //(a2 - a1 < 180) ? (a1 + a2) / 2 : ((a1 + a2 + 360) / 2) % 360; // mid-angle (bearing in mind it might be shorter to wrap round the circle)
+                var degSep = a2 - a1; // Math.min (a2 - a1, a1 + 360 - a2); // angle of separation
+                //console.log ("angs", link.start, link.end, degSep);
+                var coords;
+                if (out && degSep > 70) {
+                    coords = [{ang: link.start, rad: rad}, {ang: link.start, rad: bowRadius}];
+                    var holdPoints = Math.floor (degSep / 60) + 1;
+                    var deltaAng = (degSep % 60) / 2;
+                    var offsetAng = link.start + deltaAng;
+                    for (var n = 0; n < holdPoints; n++) {
+                        coords.push ({ang: (offsetAng + n * 60) % 360, rad: bowRadius * 1.167});
+                    }
+                    coords.push ({ang: link.end, rad: bowRadius}, {ang: link.end, rad: rad});
+                } else if (homom) {
+                    coords = [{ang: link.start, rad: rad}, {ang: (midang - 2) % 360, rad: bowRadius * 0.95}, {ang: (midang + 2) % 360, rad: bowRadius * 0.95}, {ang: link.end, rad: rad}];
+                } else {
+                    coords = [{ang: link.start, rad: rad}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: rad}];
+                }
+                return {id: link.id, coords: coords, outside: out};
             }, this);
             return newLinks;
         },
@@ -591,7 +614,7 @@
                     .call (self.showSelectedOnTheseElements, self)
             ;
             ghostLinkJoin
-                .attr("d", function(d) { return self.line(d.coords); })
+                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
             ;
 
             // draw thin links
@@ -604,7 +627,7 @@
                     .attr("class", "circleLink")
             ;
             linkJoin
-                .attr("d", function(d) { return self.line(d.coords); })
+                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
                 .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
                 .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
             ;
