@@ -485,35 +485,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-    /*
-    new CLMSUI.AnnotationTypesViewBB ({
-        el: "#annotationsDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("annotationTypes"),
-        myOptions: {
-            title: "Annotations",
-        }
-    });
-    */
-    /*
-    var annotationTypesUL = d3.select("#annotationsUL");
-    var lastCat;
-    CLMSUI.compositeModelInst.get("annotationTypes").each(function (annotationType) {
-		var cat = annotationType.get("category");
-		if (lastCat !== cat) {
-			if (lastCat) {
-				annotationTypesUL.append("hr");
-			}	
-			//~ annotationTypesUL.append("span").text(cat);			
-			lastCat = cat;
-		}
-		var annotationTypeLI = annotationTypesUL.append("li");
-        var cbView = new CLMSUI.AnnotationTypeViewBB ({
-			el: annotationTypeLI.node(),
-			model:annotationType
-		});
-    });  
-    */
-    
     
     // Make a drop down menu constructed from the annotations collection
     new CLMSUI.DropDownMenuViewBB ({
@@ -527,6 +498,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             toggleAttribute: "shown",
         }
     });
+    
+    var allAnnotModels = CLMSUI.compositeModelInst.get("annotationTypes").map (function (model) { return model; });
+    var colourCategories = [colorbrewer.YlGn[4], colorbrewer.OrRd[4], colorbrewer.RdBu[4], colorbrewer.PuBu[4]];
+    CLMSUI.domainColours.range();
+    d3.select("#annotationsDropdownPlaceholder").selectAll("li")
+        .insert ("span", ":first-child")
+        .attr ("class", "colourSwatchSquare")
+        .style ("background", function (d) { return CLMSUI.domainColours(d.id); })
+    ;
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",

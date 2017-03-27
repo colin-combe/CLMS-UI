@@ -40,7 +40,7 @@ svg.circularView {
 }
 
 .circleGhostLink:hover {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.5;
     stroke: #fdc086;
 }
 
@@ -49,7 +49,7 @@ svg.circularView {
 }
 
 .highlightedCircleLink {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.5;
     stroke: #fdc086;
 }
 

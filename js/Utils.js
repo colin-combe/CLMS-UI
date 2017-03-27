@@ -126,7 +126,7 @@ CLMSUI.utils = {
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
             if (!sel.attr("id")) {
-                sel.attr("id", this.options.id);
+                sel.attr("id", this.options.id.replace(/ /g, "_"));
             }
 
             var labs = sel.append("label")

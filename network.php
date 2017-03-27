@@ -100,7 +100,6 @@
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
         <script type="text/javascript" src="./js/minigramViewBB.js"></script>
-        <script type="text/javascript" src="./js/annotationTypesViewBB.js"></script>
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js"></script>

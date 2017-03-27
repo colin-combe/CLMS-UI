@@ -104,6 +104,14 @@ changes there are automatically reflected in the legend
     vertical-align: middle;
 }
 
+.colourSwatchSquare {
+    height: 0.8em;
+    width: 0.8em;
+    display: inline-block;
+    border-radius: 4px;
+    margin-left: 2px;
+}
+
 .keyPanel input[type='color'] {
     cursor: pointer;
 }

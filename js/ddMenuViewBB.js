@@ -41,7 +41,7 @@
                     //console.log ("model", model);
                     var cat = model.get(self.options.groupByAttribute);
                     var cbdata = ({
-                        id: (model.get(self.options.labelByAttribute)+"Placeholder").replace(/ /g, "_"),   // ids may not contain spaces 
+                        id: model.get("id") || (model.get(self.options.labelByAttribute)+"Placeholder"),   // ids may not contain spaces 
                         label: model.get(self.options.labelByAttribute),
                     });
                     if (adata.length && lastCat !== cat) {  // have to access last datum to say it's the last in its category
@@ -68,7 +68,7 @@
                 if (d.name) {
                     ind.text(d.name);
                 } else if (d.id) {
-                    var targetSel = d3.select("#"+d.id); 
+                    var targetSel = d3.select("#"+d.id.replace(/ /g, "_")); 
                     if (!targetSel.empty()) {
                         var targetNode = targetSel.node();
                         if (targetNode.parentElement) {

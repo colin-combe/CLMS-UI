@@ -76,7 +76,7 @@
                 fid++;
             });
         });
-        console.log ("CONV FEATURES", featureCoords);
+        //console.log ("CONV FEATURES", featureCoords);
 
         var linkCoords = [];
         linkArr.forEach (function (link) {
@@ -431,16 +431,19 @@
                 //console.log ("angs", link.start, link.end, degSep);
                 var coords;
                 if (out && degSep > 70) {
+                    var furtherBowRadius = bowRadius * (1 + (0.25 * ((degSep - 70) / 180)));
                     coords = [{ang: link.start, rad: rad}, {ang: link.start, rad: bowRadius}];
                     var holdPoints = Math.floor (degSep / 60) + 1;
                     var deltaAng = (degSep % 60) / 2;
                     var offsetAng = link.start + deltaAng;
                     for (var n = 0; n < holdPoints; n++) {
-                        coords.push ({ang: (offsetAng + n * 60) % 360, rad: bowRadius * 1.167});
+                        coords.push ({ang: (offsetAng + n * 60) % 360, rad: furtherBowRadius});
                     }
                     coords.push ({ang: link.end, rad: bowRadius}, {ang: link.end, rad: rad});
                 } else if (homom) {
-                    coords = [{ang: link.start, rad: rad}, {ang: (midang - 2) % 360, rad: bowRadius * 0.95}, {ang: (midang + 2) % 360, rad: bowRadius * 0.95}, {ang: link.end, rad: rad}];
+                    var homomBowRadius = out ? rad + this.options.tickWidth : rad * 0.65;
+                    var homomAngDelta = out ? 2 : 10;
+                    coords = [{ang: link.start, rad: rad}, {ang: (midang - homomAngDelta) % 360, rad: homomBowRadius}, {ang: (midang + homomAngDelta) % 360, rad: homomBowRadius}, {ang: link.end, rad: rad}];
                 } else {
                     coords = [{ang: link.start, rad: rad}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: rad}];
                 }
@@ -519,9 +522,9 @@
 
                 var svg = d3.select(this.el).select("svg");
                 this.radius = this.getMaxRadius (svg);
-                var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if lots of links on outside
+                var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if some links drawn on outside
                 var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
-                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
+                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth * 0.7)) / 100);
                 var textRadius = (tickRadius + innerNodeRadius) / 2;
 
                 var arcRadii = [
@@ -588,6 +591,21 @@
             var colourScheme = this.model.get("linkColourAssignment");
 
 
+                        // draw thin links
+            var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
+            var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
+            //var hasNew = linkJoin.enter().size() > 0;
+            linkJoin.exit().remove();
+            linkJoin.enter()
+                .append("path")
+                    .attr("class", "circleLink")
+            ;
+            linkJoin
+                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
+                .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
+                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
+            ;
+            
             // draw thick, invisible links (used for highlighting and mouse event capture)
             var ghostLayer = this.addOrGetGroupLayer (g, "ghostLayer");
             var ghostLinkJoin = ghostLayer.selectAll(".circleGhostLink").data(links, self.idFunc);
@@ -617,20 +635,7 @@
                 .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
             ;
 
-            // draw thin links
-            var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
-            var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
-            //var hasNew = linkJoin.enter().size() > 0;
-            linkJoin.exit().remove();
-            linkJoin.enter()
-                .append("path")
-                    .attr("class", "circleLink")
-            ;
-            linkJoin
-                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
-                .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
-                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
-            ;
+
         },
 
         drawNodes: function (g, nodes) {
@@ -804,6 +809,8 @@
 
         drawFeatures : function (g, features) {
             var self = this;
+            
+            // Sort so features are drawn biggest first, smallest last (trying to avoid small features being occluded)
             features.sort (function (a, b){
                 var diff = (b.end - b.start) - (a.end - a.start);
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
@@ -830,9 +837,11 @@
                         self.actionNodeLinks (d.nodeID, "selection", add, d.fstart, d.fend);
                     })
             ;
-
-
+            
+            //console.log ("FEATURES", features);
+            
             featureJoin
+                .order()
                 .attr("d", this.featureArc)
                 .style("fill", function(d) { return CLMSUI.domainColours(d.category + "-" + d.type); })
             ;
@@ -854,7 +863,7 @@
             links.forEach (function (link) {
                 var xlink = crossLinks.get (link.id);
                 resMap.set (xlink.fromProtein.id+"-"+xlink.fromResidue, {polar: link.coords[0], res: CLMSUI.modelUtils.getResidueType (xlink.fromProtein, xlink.fromResidue)});
-                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[2], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
+                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[link.coords.length - 1], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
             });
             var degToRad = Math.PI / 180;
             
