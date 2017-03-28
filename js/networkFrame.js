@@ -487,7 +487,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     
     // Make a drop down menu constructed from the annotations collection
-    new CLMSUI.DropDownMenuViewBB ({
+    new CLMSUI.AnnotationDropDownMenuViewBB ({
         el: "#annotationsDropdownPlaceholder",
         collection: CLMSUI.compositeModelInst.get("annotationTypes"),
         myOptions: {
@@ -499,14 +499,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         }
     });
     
-    var allAnnotModels = CLMSUI.compositeModelInst.get("annotationTypes").map (function (model) { return model; });
-    var colourCategories = [colorbrewer.YlGn[4], colorbrewer.OrRd[4], colorbrewer.RdBu[4], colorbrewer.PuBu[4]];
-    CLMSUI.domainColours.range();
-    d3.select("#annotationsDropdownPlaceholder").selectAll("li")
-        .insert ("span", ":first-child")
-        .attr ("class", "colourSwatchSquare")
-        .style ("background", function (d) { return CLMSUI.domainColours(d.id); })
-    ;
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",
