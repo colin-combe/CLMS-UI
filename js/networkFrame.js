@@ -653,4 +653,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         //displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst,
     });
+
+    //make sure things that should be hidden are hidden
+    CLMSUI.compositeModelInst.trigger ("hiddenChanged");
 };

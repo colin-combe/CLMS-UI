@@ -67,30 +67,95 @@ echo '{"sid":"'.$sid.'",';
 $id_rands = explode("," , $sid);
 $searchId_randGroup = [];
 for ($i = 0; $i < count($id_rands); $i++) {
-    $s = [];
+    //$s = [];
     $dashSeperated = explode("-" , $id_rands[$i]);
     $randId = implode('-' , array_slice($dashSeperated, 1 , 4));
     $id = $dashSeperated[0];
-    $res = pg_query("SELECT search.name, sequence_file.file_name"
-                ." FROM search, search_sequencedb, sequence_file "
-                ."WHERE search.id = search_sequencedb.search_id "
-                ."AND search_sequencedb.seqdb_id = sequence_file.id "
-                ."AND search.id = '".$id."';")
+    //~ $searchDataQuery = "SELECT search.name, sequence_file.file_name"
+                //~ ." FROM search, search_sequencedb, sequence_file "
+                //~ ."WHERE search.id = search_sequencedb.search_id "
+                //~ ."AND search_sequencedb.seqdb_id = sequence_file.id "
+                //~ ."AND search.id = '".$id."';";
+
+	$searchDataQuery = "SELECT s.id, s.name, s.private, s.submit_date, s.notes, s.random_id,
+
+(
+	SELECT json_agg(sf.*) FROM (
+     SELECT search_id, name, file_name, decoy_file, file_path, notes, upload_date,
+     user_name AS uploaded_by
+     FROM search_sequencedb
+     INNER JOIN sequence_file
+     ON search_sequencedb.seqdb_id = sequence_file.id
+     INNER JOIN users
+     ON sequence_file.uploadedby = users.id
+     WHERE search_sequencedb.search_id = s.id
+	) sf
+)
+AS sequence_files,
+
+(
+	SELECT json_agg(r.*)
+			
+	FROM search_acquisition sa
+
+	INNER JOIN (
+		SELECT acq_id, run_id,
+				run.name AS run_name,
+				run.file_path AS run_file_path,
+				acquisition.name AS acquisition_name,
+				users.user_name AS uploaded_by,
+				notes
+		FROM run
+		INNER JOIN acquisition ON run.acq_id = acquisition.id
+		INNER JOIN users ON acquisition.uploadedby = users.id
+		) r
+	ON sa.run_id = r.run_id AND sa.acq_id = r.acq_id
+	WHERE sa.search_id = s.id	
+  ) AS runs,
+
+
+(SELECT json_agg(e.*) FROM (
+     SELECT id, name, description FROM enzyme
+) e  WHERE ps.enzyme_chosen = e.id) AS enzymes,
+
+(SELECT json_agg(cm.*) FROM (
+     SELECT paramset_id, name, description, fixed FROM chosen_modification
+     INNER JOIN modification
+     ON chosen_modification.mod_id = modification.id
+) cm  WHERE cm.paramset_id = ps.id) AS modifications,
+
+(SELECT json_agg(cc.*) FROM (
+ SELECT paramset_id, name, mass, is_decoy, description FROM chosen_crosslinker
+ INNER JOIN crosslinker
+ ON chosen_crosslinker.crosslinker_id = crosslinker.id
+) cc  WHERE cc.paramset_id = ps.id) AS crosslinkers,
+
+(SELECT json_agg(cl.*) FROM (
+ SELECT paramset_id, name, lost_mass, description FROM chosen_losses
+ INNER JOIN loss
+ ON chosen_losses.loss_id = loss.id
+) cl  WHERE cl.paramset_id = ps.id) AS losses
+
+FROM search s
+INNER JOIN parameter_set ps ON s.paramset_id = ps.id 
+WHERE s.id = '".$id."';";
+	
+    $res = pg_query($searchDataQuery)
                 or die('Query failed: ' . pg_last_error());
     $line = pg_fetch_array($res, null, PGSQL_ASSOC);
     $name = $line['name'];
     $filename = $line['file_name'];
 
-    $s["id"] = $id;
-    $s["randId"] = $randId;
-    $s["name"] = $name;
-    $s["filename"] = $filename;
+    //~ $s["id"] = $id;
+    $line["randId"] = $randId;
+    //~ $s["name"] = $name;
+    //~ $s["filename"] = $filename;
     if (count($dashSeperated) == 6){
-        $s["group"] = $dashSeperated[5];
+        $line["group"] = $dashSeperated[5];
     } else {
-        $s["group"] = "'NA'";
+        $line["group"] = "'NA'";
     }
-    $searchId_randGroup[$id] = $s;
+    $searchId_randGroup[$id] = $line;
 }
 echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\n";
 
@@ -381,8 +446,11 @@ if (sizeof($peptideIds) === 0) {
 	$endTime = microtime(true);
 	//~ echo "\n/*page time: ".($endTime - $pageStartTime)."ms*/\n\n";
 }
+
 // Free resultset
 pg_free_result($res);
 // Closing connection
 pg_close($dbconn);
+
+
 ?>
