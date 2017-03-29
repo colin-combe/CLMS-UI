@@ -139,7 +139,7 @@
 <!--
                     <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
 -->
-                    <p id="linkColourDropdownPlaceholder"></p>
+                    <!-- <p id="linkColourDropdownPlaceholder"></p> -->
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>

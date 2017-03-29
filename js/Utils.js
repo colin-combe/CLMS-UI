@@ -351,6 +351,7 @@ CLMSUI.utils = {
 
             // Set up some html scaffolding in d3
             CLMSUI.utils.addDynDivScaffolding (mainDivSel, "Title");
+            mainDivSel.select(".dynTitle").text (this.identifier);
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
             var drag = d3.behavior.drag().on ("dragend", function() { self.relayout({dragEnd: true}); });
@@ -447,7 +448,7 @@ CLMSUI.utils = {
             Backbone.View.prototype.remove.call(this);
         },
         
-        identifier: "View",
+        identifier: "Base",
         
         // return any relevant view states that can be used to label a screenshot etc
         optionsToString: function () {
@@ -466,7 +467,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         var self = this;
         d3.select(this.el)
             .append("span")
-            .text("LINK-COLOURS:")
+            .text("Choose Link Colour Scheme ")
         ;
 
         d3.select(this.el)

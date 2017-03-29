@@ -247,4 +247,6 @@
         relayout: function () {
             return this;
         },
+        
+        identifier: "PDB File Chooser",
     });

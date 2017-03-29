@@ -115,3 +115,7 @@ changes there are automatically reflected in the legend
 .keyPanel input[type='color'] {
     cursor: pointer;
 }
+
+#linkColourDropdownPlaceholder {
+    margin-bottom: 0.4em;
+}

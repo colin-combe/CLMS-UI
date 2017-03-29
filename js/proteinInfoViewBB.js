@@ -197,5 +197,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             
             return iStr;        
         },
+    
+        identifier: "Selected Protein Info",
 });
             
