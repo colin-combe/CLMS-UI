@@ -258,8 +258,24 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         },
         
         stateString: function () {
+            // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
             var fields = [];
-            var zeroFormat = d3.format (".4f");
+            
+            // http://www.indiana.edu/~letrs/help-services/QuickGuides/oed-abbr.html
+            // https://www.allacronyms.com/
+            var abbvMap = {
+                intraFdrCut: "SELFCUT",
+                interFdrCut: "BTWNCUT",
+                fdrMode: "FDR",
+                manualMode: "MAN",
+                betweenLinks: "BTWN",
+                selfLinks: "SELF",
+                pepLength: "PEPLEN",
+                fdrThreshold: "THR",
+                matchScoreCutoff: "MATCHSCORES",
+                aaApart: "APART",
+                crosslinks: "XLINKS",
+            };
             var zeroFormatFields = d3.set(["intraFdrCut", "interFdrCut", "scores"]);
             if (this.get("fdrMode")) {
                 fields = ["fdrMode", "fdrThreshold", "ambig", "betweenLinks", "selfLinks", "aaApart", "pepLength"];
@@ -276,33 +292,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
                 antiFields.forEach (function (af) { fieldSet.remove (af); });
                 fields = fieldSet.values();
             }
-            fields = fields.filter (function (field) {
-                var val = this.get(field);
-                return !(val === "" || val === false || val === undefined);    
-            }, this);
-            //console.log ("fields", fields);
             
-            var strValue = function (field, val) {
-                if (val === true) {
-                    return "";
-                }
-                if (zeroFormatFields.has(field) && !isNaN(val)) {
-                    return zeroFormat(val);
-                }
-                if ($.isArray (val)) {
-                    var arrayStr = val.map (function (elem) {
-                        return strValue (field, elem); 
-                    });
-                    return arrayStr.join("¦");
-                }
-                return val;
-            };
-            
-            var strParts = fields.map (function(field) {
-                var val = this.get(field);
-                return field + (val === true ? "" : "=" + strValue (field, val));
-            }, this);
-            return strParts.join("-");
+            var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);
+            return str;
         },
         
        /*

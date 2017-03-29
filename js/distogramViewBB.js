@@ -362,6 +362,6 @@
             seriesIDs = seriesIDs.filter (function (sid) {
                 return !hiddenIDsSet.has (sid);
             });
-            return seriesIDs.join("-");    
+            return seriesIDs.join("-").toUpperCase();    
         },
     });

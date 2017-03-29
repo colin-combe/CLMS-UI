@@ -18,17 +18,17 @@
 
 function downloadMatches(){
     var csv = getMatchesCSV();
-    var filename = CLMSUI.utils.makeLegalFileName ("matches-" + CLMSUI.utils.filterStateToString()) + ".csv";
+    var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--matches--" + CLMSUI.utils.filterStateToString()) + ".csv";
     download(csv, 'text/csv', filename);//+s.keys().toString());
 }
 function downloadLinks(){
     var csv = getLinksCSV();
-    var filename = CLMSUI.utils.makeLegalFileName ("links-" + CLMSUI.utils.filterStateToString()) + ".csv";
+    var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--links--" + CLMSUI.utils.filterStateToString()) + ".csv";
     download(csv, 'text/csv', filename);//+s.keys().toString());
 }
 function downloadResidueCount(){
     var csv = getResidueCount();
-    var filename = CLMSUI.utils.makeLegalFileName ("residueCount-" + CLMSUI.utils.filterStateToString()) + ".csv";
+    var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--residueCount--" + CLMSUI.utils.filterStateToString()) + ".csv";
     download(csv, 'text/csv', filename);//+s.keys().toString());
 }
 

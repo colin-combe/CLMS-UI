@@ -903,10 +903,21 @@
             return this;
         },
         
-        identifier: "CircularView",
+        identifier: "Circular",
         
         optionsToString: function () {
-            return this.model.get("clmsModel").realProteinCount > 1 ? [this.options.sort].join("-") : "";
+            var abbvMap = {
+                showResLabels: "RESLBLS",
+                intraOutside: "SELFOUTER",
+                hideLinkless: "HIDEIFNOLINKS",
+            };
+            var fields = ["showResLabels"];   
+            if (this.model.get("clmsModel").realProteinCount > 1) {
+                fields.push ("intraOutside", "hideLinkLess", "sort");
+            }
+            
+            var str = CLMSUI.utils.objectStateToAbbvString (this.options, fields, d3.set(), abbvMap);
+            return str;
         },
 
         // removes view
