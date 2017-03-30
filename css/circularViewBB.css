@@ -9,7 +9,9 @@
     display: table-row;
 }
 
-.buttonPanel > p {
+/* Word-break demo https://jsfiddle.net/1yzLjbz9/ */
+/* Basically top elements are display: inline-block */
+.buttonPanel > * {
     display: inline-block;
 }
 

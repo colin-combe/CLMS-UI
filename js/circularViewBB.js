@@ -176,7 +176,7 @@
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
                 {class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
-                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: true},
+                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
             var buttonPanel = mainDivSel.select("div.buttonPanel");
