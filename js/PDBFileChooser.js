@@ -42,14 +42,14 @@
             toolbar.append("label")
                 .attr("class", "btn btn-1 btn-1a fakeButton")
                 .append("span")
-                    .attr("class", "noBreak")
+                    //.attr("class", "noBreak")
                     .text("Select Local PDB File")
                     .append("input")
                         .attr({type: "file", accept: ".txt,.cif,.pdb", class: "selectPdbButton"})
             ;
             
             toolbar.append("span")
-                .attr("class", "noBreak btn")
+                .attr("class", "btn")
                 .text("or Enter 4-character PDB Code")
                 .append("input")
                     .attr({
