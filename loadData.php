@@ -143,13 +143,7 @@ WHERE s.id = '".$id."';";
     $res = pg_query($searchDataQuery)
                 or die('Query failed: ' . pg_last_error());
     $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-    $name = $line['name'];
-    $filename = $line['file_name'];
-
-    //~ $s["id"] = $id;
-    $line["randId"] = $randId;
-    //~ $s["name"] = $name;
-    //~ $s["filename"] = $filename;
+    $line["randId"] = $randId; // todo, tidy
     if (count($dashSeperated) == 6){
         $line["group"] = $dashSeperated[5];
     } else {
