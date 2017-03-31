@@ -30,13 +30,28 @@ var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about thi
 
     //init annotation types
     var annotationTypes = [];
+
+    //add option for showing digestible residues
+	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+		category: "Residue",
+		type:"Digestible"}
+	);
+	annotationTypes.push(digestibleAnnotationType);
+
+    //add option for showing crosslinkable residues
+	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+		category: "Residue",
+		type:"Cross-linkable"}
+	);
+	annotationTypes.push(crosslinkableAnnotationType);
+
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
 		category: "Alignment",
 		type:"PDB aligned region"}
 	);
-
 	annotationTypes.push(alignedAnnotationType);
+
 	//get uniprot feature types
 	var uniprotFeatureTypes = new Map();     
     for (participant of CLMSUI.compositeModelInst.get("clmsModel").get("participants").values()){
