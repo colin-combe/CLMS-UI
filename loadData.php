@@ -143,6 +143,7 @@ WHERE s.id = '".$id."';";
     $res = pg_query($searchDataQuery)
                 or die('Query failed: ' . pg_last_error());
     $line = pg_fetch_array($res, null, PGSQL_ASSOC);
+   
     if (count($dashSeperated) == 6){
         $line["group"] = $dashSeperated[5];
     } else {
@@ -150,7 +151,15 @@ WHERE s.id = '".$id."';";
     }
     $searchId_randGroup[$id] = $line;
 }
-echo "\"searches\":" . json_encode($searchId_randGroup, JSON_PRETTY_PRINT) . ",\n";
+
+//problems with unwanted escaping / quote marks introduced by json_encode
+$temp = json_encode($searchId_randGroup);
+$temp = preg_replace("/\\\\n/", "", $temp);
+$temp = preg_replace("/\"\[/", "[", $temp);
+$temp = preg_replace("/\]\"/", "]", $temp);
+$temp = stripslashes($temp);
+
+echo "\"searches\":" . $temp . ",\n";
 
 
 //Stored layouts
