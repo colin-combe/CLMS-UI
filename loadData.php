@@ -143,7 +143,6 @@ WHERE s.id = '".$id."';";
     $res = pg_query($searchDataQuery)
                 or die('Query failed: ' . pg_last_error());
     $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-    $line["randId"] = $randId; // todo, tidy
     if (count($dashSeperated) == 6){
         $line["group"] = $dashSeperated[5];
     } else {
@@ -177,7 +176,7 @@ for ($i = 0; $i < count($searchId_randGroup); $i++) {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' OR ';
         $WHERE_matchedPeptide = $WHERE_matchedPeptide.' OR ';
     }
-    $randId = $search["randId"];
+    $randId = $search["random_id"];
     $id = $search["id"];
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
     $WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
