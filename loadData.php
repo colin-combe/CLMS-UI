@@ -259,11 +259,13 @@ else {
 			mp.match_id, mp.match_type, mp.peptide_id,
 			mp.link_position + 1 AS link_position, sm.spectrum_id,
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
-			sm.search_id, sm.precursor_charge, sm.is_decoy,
-			sp.scan_number, sp.source_id as source
+			sm.search_id, sm.is_decoy, sm.calc_mass,
+			sp.scan_number, sp.source_id as source, sp.precursor_charge,
+			sp.precursor_intensity, sp.precursor_mz 
 		FROM
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
-			sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id
+			sm.search_id, /*sm.precursor_charge,*/ sm.is_decoy, sm.spectrum_id,
+			sm.calc_mass
 			FROM spectrum_match sm INNER JOIN search s ON search_id = s.id
 			WHERE ".$WHERE_spectrumMatch.") sm
 		INNER JOIN
@@ -312,7 +314,10 @@ while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 		}
 		echo '"src":"' . $sourceId. '",'//"run" . '",'
 			. '"sn":' . $line["scan_number"]. ','
-			. '"pc":' . $line["precursor_charge"]
+			. '"pc_c":' . $line["precursor_charge"]. ','
+			. '"pc_i":' . round($line["precursor_intensity"], 3). ','
+			. '"pc_mz":' . round($line["precursor_mz"], 3). ','
+			. '"cm":' . round($line["calc_mass"], 3)
 			. "}";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		if ($line) {echo ",\n";}
