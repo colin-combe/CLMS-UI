@@ -529,7 +529,9 @@
             var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
             var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
             
-            for (var crossLink of filteredCrossLinks2) {
+            var filteredCrossLinks2Count = filteredCrossLinks2.length;
+            for (var fc2 = 0 ; fc2 < filteredCrossLinks2Count; fc2++) {
+				var crosslink = filteredCrossLink2[fc2];
                 var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
                 if (self.filterVal === undefined || est >= self.filterVal) {
                     var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;

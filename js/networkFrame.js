@@ -54,9 +54,15 @@ var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about thi
 
 	//get uniprot feature types
 	var uniprotFeatureTypes = new Map();     
-    for (participant of CLMSUI.compositeModelInst.get("clmsModel").get("participants").values()){
+	var participantArray = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("participants").values());
+	var participantCount = participantArray.length;
+    for (var p = 0; p < participantCount; p++){
+		var participant = participantArray[p];
         if (participant.uniprot) {
-			for (feature of participant.uniprot.features) {
+			var featureArray = Array.from(participant.uniprot.features);
+			var featureCount = featureArray.length;
+			for (var f = 0; f < featureCount; f++) {
+				var feature = featureArray[f];
 				var key = feature.category + "-" + feature.type;
 				if (uniprotFeatureTypes.has(key) === false){
 					var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);

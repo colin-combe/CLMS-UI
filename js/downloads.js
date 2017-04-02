@@ -138,8 +138,8 @@ function getLinksCSV(){
         var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
         var linkAutovalidated = false;
         var validationStats = [];
-        for (matchAndPepPos of filteredMatchesAndPepPos) {
-            var match = matchAndPepPos.match;
+        for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+            var match = filteredMatchesAndPepPos[fm_pp].match;
             if (highestScore == null || match.score > highestScore) {
                 highestScore = match.score.toFixed(4);
             }
@@ -174,8 +174,10 @@ function getResidueCount() {
     var residueCounts = d3.map();
     var residuePairCounts = d3.map();
 
-    var crossLinks = CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values();
-    for (residueLink of crossLinks){
+    var crossLinksArray = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+    var crossLinkCount = crossLinksArray.length;
+    for (var cl = 0; cl < crossLinkCount; cl++){
+		var residueLink = crossLinksArray[cl];
         if (residueLink.filteredMatches_pp.length > 0){
 
             var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];

@@ -181,9 +181,15 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             //peptide seq check function
 			function seqCheck(searchString) {
 				if (searchString) {
+					var matchedPeptides = match.matchedPeptides;
+					var matchedPepCount = matchedPeptides.length;
+					
 					var pepStrings = searchString.split('-');
-					if (pepStrings.length ==1) {
-						for (matchedPeptide of match.matchedPeptides) {
+					var pepStringsCount = pepStrings.length;
+					
+					if (pepStringsCount ==1) {
+						for (var mp = 0; mp < matchedPepCount; mp++) {
+							var matchedPeptide = matchedPeptides[mp];
 							if (matchedPeptide.sequence.indexOf(searchString.toUpperCase()) != -1
 								|| matchedPeptide.seq_mods.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
 								return true;
@@ -192,12 +198,16 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 						return false;
 					}
 					
-					var used = [], matchedPepCount = match.matchedPeptides.length;
-					for (pepString of pepStrings) {
+					var used = []; 
+					var pepStringCount = pepStrings.length;
+					//TODO: theres a problem here, order of search strings is affecting results
+					// (if one pep seq occurs in both peptides and the other in only one)
+					for (var ps = 0; ps < pepStringCount; ps++) {
+						var pepString = pepStrings[ps];
 						if (pepString){
 							var found = false;
 							for (var i = 0; i < matchedPepCount; i++){
-								var matchedPeptide = match.matchedPeptides[i];
+								var matchedPeptide = matchedPeptides[i];
 								if (found === false && typeof used[i] == 'undefined'){
 									if (matchedPeptide.sequence.indexOf(pepString.toUpperCase()) != -1
 									 || matchedPeptide.seq_mods.toLowerCase().indexOf(pepString.toLowerCase()) != -1) {
@@ -216,12 +226,19 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             //protein name check
 			function proteinNameCheck(searchString) {
 				if (searchString) {
+					var matchedPeptides = match.matchedPeptides;
+					var matchedPepCount = matchedPeptides.length
+					
 					var nameStrings = searchString.split('-');
-					if (nameStrings.length ==1) {
-						for (matchedPeptide of match.matchedPeptides) {
-							for (pid of matchedPeptide.prt) {
+					var nameStringCount = nameStrings.length;
+					
+					if (nameStringCount ==1) {
+						for (var mp = 0; mp < matchedPepCount; mp++) {
+							var pids = matchedPeptides[mp].prt;
+							var pidCount = pids.length;
+							for (var p = 0; p < pidCount; p++ ) {
 
-								var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pid);
+								var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pids[p]);
 								var toSearch = interactor.name + " " + interactor.description;
 								if (toSearch.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
 									return true;
@@ -232,15 +249,18 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 						return false;
 					}
 					
-					var used = [], matchedPepCount = match.matchedPeptides.length;
-					for (nameString of nameStrings) {
+					var used = [];
+					for (var ns = 0; ns < nameStringCount; ns++) {
+						var nameString  = nameStrings[ns];
 						if (nameString){
 							var found = false;
 							for (var i = 0; i < matchedPepCount; i++){
-								var matchedPeptide = match.matchedPeptides[i];
+								var matchedPeptide = matchedPeptides[i];
 								if (found === false && typeof used[i] == 'undefined'){
-									for (pid of matchedPeptide.prt) {
-										var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pid);
+									var pids = matchedPeptide.prt;
+									var pidCount = pids.length;
+									for (var p = 0; p < pidCount; p++ ) {
+										var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pids[p]);
 										var toSearch = interactor.name + " " + interactor.description;
 										if (toSearch.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
 											found = true;
