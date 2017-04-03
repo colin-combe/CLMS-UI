@@ -148,7 +148,7 @@
                     diffLabel:"Show differences only",
             }));       
             
-            //this.listenTo (this.model, "change:compAlignments", this.render);
+            //this.listenTo (this.model, "change:compAlignment", this.render);
             this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
                 this.render ({affectedModel: affectedModel});
             });
@@ -322,6 +322,8 @@
                         self.invokeTooltip (d, this);
                     })
             ;
+            
+            rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
             
             rowBind.select ("td > span")
                 .html (function(d,i) {

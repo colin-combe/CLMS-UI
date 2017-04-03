@@ -1,22 +1,11 @@
     var CLMSUI = CLMSUI || {};
     CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
+    // Model for one sequence pairing
     CLMSUI.BackboneModelTypes.SeqModel = Backbone.Model.extend ({
         defaults: {
             local: false,
             semiLocal: false,
-        },
-        
-        intialize: function () {
-            this.listenTo (this, "change", function() { 
-                console.log ("sm. something in align settings changed", this.changed); 
-                if (!("refAlignment" in this.changed) && !("compAlignment" in this.changed)) {
-                    console.log ("sm. and it's not the final results so lets runs align");
-                    this.align();
-                }
-            });
-            
-            return this;
         },
         
         align: function () {
@@ -37,15 +26,14 @@
             }; 
             
             //console.log ("align results", refResult, compResult);    
-            this
-                .set ("refAlignment", refResult)
-                .set ("compAlignment", compResult)
-            ;
+            // redundant looking alignStr variable is used so we can directly monitor changes in it with backbone rather than dig through compAlignment object
+            this.set ({refAlignment: refResult, compAlignment: compResult, alignStr: fullResult.fmt[0]});
             
             return this;
         },
     });
 
+    // Collection of multiple single sequence pairing models from above
     CLMSUI.BackboneModelTypes.SeqCollection = Backbone.Collection.extend ({
         model: CLMSUI.BackboneModelTypes.SeqModel,
         
@@ -60,6 +48,7 @@
         }
     });
 
+    // Model of sequence alignment settings for a protein (including the abopve collection as an attribute)
     CLMSUI.BackboneModelTypes.ProtAlignModel = Backbone.Model.extend ({
         // return defaults as result of a function means arrays aren't shared between model instances
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
@@ -81,6 +70,7 @@
         },
         
         initialize: function () {
+            // this is where changes to gap scores and blosum choices are picked up
             this.listenTo (this, "change", function() { 
                 //~ console.log ("something in per protein align settings changed so realign all prot seqs", this.changed); 
                 this.get("seqCollection").forEach (function (model) {
@@ -88,10 +78,10 @@
                 });
             });
             
-            this.listenTo (this.get("seqCollection"), "change:compAlignment", function (seqModel) {
-                //~ console.log ("collection catching one of its model's compAlignment changing", arguments);
-                this.collection.trigger ("oneCompAlignmentChanged", seqModel);
-            })
+            this.listenTo (this.get("seqCollection"), "change:alignStr", function (seqModel) {
+                //console.log ("collection catching one of its model's alignStr changing", arguments);
+                this.trigger ("nonTrivialAlignmentChange", seqModel); 
+            });
             
             return this;
         },
@@ -153,8 +143,17 @@
     });
     
     
+    // A collection of the above protein level models
     CLMSUI.BackboneModelTypes.ProtAlignCollection = Backbone.Collection.extend ({
         model: CLMSUI.BackboneModelTypes.ProtAlignModel,
+        
+        initialize: function () {
+             this.listenTo (this, "nonTrivialAlignmentChange", function () {
+                this.nonTrivialChange = true;
+            });
+        },
+        
+        nonTrivialChange: undefined,
          
         addSeq: function (modelId, seqId, seq, otherSettingsObj) {
             var model = this.get (modelId);
@@ -168,7 +167,11 @@
         },
         
         bulkAlignChangeFinished: function () {
-            this.trigger ("bulkAlignChange", true);
+            if (this.nonTrivialChange !== false) {
+                this.trigger ("bulkAlignChange", true);
+                console.log ("BULK ALIGN CHANGE");
+                this.nonTrivialChange = false;
+            }
         },
         
         // Moved here from NGLViewBB.js, convenience function to convert an index in a given align sequence in a given align model to the search sequence
