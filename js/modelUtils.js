@@ -327,7 +327,6 @@ CLMSUI.modelUtils = {
         clmsBBModel.getRealProteinID = function (decoyProteinID) {
             return this.decoyToRealProteinMap.get (decoyProteinID);
         };
-        clmsBBModel.areDecoysPresent = function () { return this.decoyToRealProteinMap.size() > 0; };
         clmsBBModel.isMatchingProteinPair = function (prot1, prot2) {
             if (prot1.id === prot2.id) { return true; }
             var p1decoy = prot1.is_decoy;
@@ -348,6 +347,15 @@ CLMSUI.modelUtils = {
             return (crossLink.toProtein && this.isMatchingProteinPair (crossLink.toProtein, crossLink.fromProtein));
         };
         clmsBBModel.realProteinCount = prots.length - decoys.length;
+        
+        var crosslinkArray = Array.from (clmsBBModel.get("crossLinks"));
+        clmsBBModel.set("ambiguousPresent", crosslinkArray.some (function (xlink) { return xlink.ambiguous; }));
+        clmsBBModel.set("unvalidatedPresent", clmsBBModel.get("matches").some (function (match) {
+            return !match.autovalidated && !match.validated;
+        }));
+        clmsBBModel.set("linearsPresent", clmsBBModel.get("matches").some (function (match) {
+            return match.linkPos1 === 0;
+        }));
     },
     
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {

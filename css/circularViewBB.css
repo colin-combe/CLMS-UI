@@ -9,7 +9,9 @@
     display: table-row;
 }
 
-.buttonPanel > p {
+/* Word-break demo https://jsfiddle.net/1yzLjbz9/ */
+/* Basically top elements are display: inline-block */
+.buttonPanel > * {
     display: inline-block;
 }
 
@@ -40,7 +42,7 @@ svg.circularView {
 }
 
 .circleGhostLink:hover {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.5;
     stroke: #fdc086;
 }
 
@@ -49,7 +51,7 @@ svg.circularView {
 }
 
 .highlightedCircleLink {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.5;
     stroke: #fdc086;
 }
 

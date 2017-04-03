@@ -158,11 +158,14 @@ CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.modelUtils.addDecoyFunctions (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
-        decoys: clmsModelInst.areDecoysPresent(),
+        decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: clmsModelInst.realProteinCount > 1,
+        AUTO: clmsModelInst.get("autoValidatedPresent"),
         matchScoreCutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("rawMatches")).map (function(ex,i) {
             return Math[i === 0 ? "floor" : "ceil"](ex);
         }),
+        ambig: clmsModelInst.get("ambiguousPresent"),
+        linears: clmsModelInst.get("linearsPresent"),
         // BUG: clmsModelInst doesn't have min or max scores
          // set original cutoff to be the extent of all scores (rounded up and down nicely)
         // matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
@@ -291,11 +294,20 @@ CLMSUI.init.views = function () {
 CLMSUI.init.viewsEssential = function (options) {
 
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
+    var singleRealProtein = CLMSUI.compositeModelInst.get("clmsModel").realProteinCount < 2;
     new CLMSUI.FilterViewBB ({
         el: "#filterPlaceholder",
         model: filterModel,
         myOptions: {
-            hideSelfBetween: CLMSUI.compositeModelInst.get("clmsModel").realProteinCount < 2,
+            hide: {
+                "selfLinks": singleRealProtein,
+                "betweenLinks": singleRealProtein,
+                "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
+                "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
+                "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
+                "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
+                "protNames": singleRealProtein,
+            }
         }
     });
     
@@ -494,38 +506,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-    /*
-    new CLMSUI.AnnotationTypesViewBB ({
-        el: "#annotationsDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("annotationTypes"),
-        myOptions: {
-            title: "Annotations",
-        }
-    });
-    */
-    /*
-    var annotationTypesUL = d3.select("#annotationsUL");
-    var lastCat;
-    CLMSUI.compositeModelInst.get("annotationTypes").each(function (annotationType) {
-		var cat = annotationType.get("category");
-		if (lastCat !== cat) {
-			if (lastCat) {
-				annotationTypesUL.append("hr");
-			}	
-			//~ annotationTypesUL.append("span").text(cat);			
-			lastCat = cat;
-		}
-		var annotationTypeLI = annotationTypesUL.append("li");
-        var cbView = new CLMSUI.AnnotationTypeViewBB ({
-			el: annotationTypeLI.node(),
-			model:annotationType
-		});
-    });  
-    */
-    
     
     // Make a drop down menu constructed from the annotations collection
-    new CLMSUI.DropDownMenuViewBB ({
+    new CLMSUI.AnnotationDropDownMenuViewBB ({
         el: "#annotationsDropdownPlaceholder",
         collection: CLMSUI.compositeModelInst.get("annotationTypes"),
         myOptions: {
@@ -536,6 +519,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             toggleAttribute: "shown",
         }
     });
+    
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",

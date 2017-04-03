@@ -18,7 +18,7 @@
                 labelByAttribute: "name",
                 toggleAttribute: "state",
             };
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             d3.select(this.el)
@@ -41,7 +41,7 @@
                     //console.log ("model", model);
                     var cat = model.get(self.options.groupByAttribute);
                     var cbdata = ({
-                        id: (model.get(self.options.labelByAttribute)+"Placeholder").replace(/ /g, "_"),   // ids may not contain spaces 
+                        id: model.get("id") || (model.get(self.options.labelByAttribute)+"Placeholder"),   // ids may not contain spaces 
                         label: model.get(self.options.labelByAttribute),
                     });
                     if (adata.length && lastCat !== cat) {  // have to access last datum to say it's the last in its category
@@ -68,7 +68,7 @@
                 if (d.name) {
                     ind.text(d.name);
                 } else if (d.id) {
-                    var targetSel = d3.select("#"+d.id); 
+                    var targetSel = d3.select("#"+d.id.replace(/ /g, "_")); 
                     if (!targetSel.empty()) {
                         var targetNode = targetSel.node();
                         if (targetNode.parentElement) {
@@ -139,3 +139,46 @@
             }
         },
     });
+
+
+    CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend ({
+        events: function() {
+            var parentEvents = CLMSUI.DropDownMenuViewBB.prototype.events;
+            if(_.isFunction (parentEvents)){
+                parentEvents = parentEvents();
+            }
+            return _.extend ({}, parentEvents, {
+                //"click li label": "showColour",
+            });
+        },
+
+        initialize: function () {
+            CLMSUI.AnnotationDropDownMenuViewBB.__super__.initialize.apply (this, arguments);
+            
+            //CLMSUI.domainColours.range(['#000000', '#e69f00', '#56b4e9', '#2b9f78', '#f0e442', '#0072b2', '#d55e00', '#cc79a7']);
+            d3.select("#annotationsDropdownPlaceholder").selectAll("li")
+                .insert ("span", ":first-child")
+                .attr ("class", "colourSwatchSquare")
+                .style ("background", "transparent")
+            ;
+            
+            // listen to a checkbox on one of this collection's models getting clicked and firing a change in the model
+            this.listenTo (this.collection, "change:shown", function (featureTypeModel, shown) { 
+                this.setColour (featureTypeModel, shown);
+            });
+        },
+        
+        setColour: function (featureTypeModel, shown) {
+            d3.select("#annotationsDropdownPlaceholder").selectAll("li")
+                .filter (function(d) { return d.id === featureTypeModel.id; })
+                .select(".colourSwatchSquare")
+                .style ("background", function (d) { 
+                    var col = CLMSUI.domainColours(d.id);
+                    var scale = d3.scale.linear().domain([0,1]);
+                    scale.range(["white", col]);
+                    return shown ? scale (0.5) : "transparent";
+                })
+            ;
+        },
+    });
+

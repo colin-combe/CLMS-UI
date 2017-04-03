@@ -19,10 +19,11 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "panelInner keyPanel")
-            .html("<h1 class='infoHeader'>Xi Legend</h1><div class='panelInner'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
-        ;       
+            .html("<div class='panelInner'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
+        ;           
+        topDiv.insert("p", ":first-child").attr("id", "linkColourDropdownPlaceholder");
+        
         var chartDiv = topDiv.select(".panelInner");
-
         var svgs = {
             clinkp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
             ambigp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous'/>",
@@ -48,22 +49,22 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 id: "proteinKey",
                 header: "Protein-protein level",
                 rows: [
-                    ["clinkp", "Cross-link"],
+                    ["clinkp", "Cross-link(s) between different proteins"],
                     ["ambigp", "Ambiguous"],
                     ["multip", "Multiple Linkage Sites"],
-                    ["selflinkp", "Self-link; possibly inter- or intra-molecular"],
-                    ["selflinkpc", "Self-link; includes confirmed inter-molecular"],
+                    ["selflinkp", "Self Link(s); could include links between two different molecules of same protein"],
+                    ["selflinkpc", "Self Link(s); definitely includes links between two different molecules of same protein"],
                 ]
             },
             {
                 id: "residueKey",
                 header: "Residue level",
                 rows: [
-                    ["clinkr", "Cross-link"],
+                    ["clinkr", "Cross-link between different proteins"],
                     ["ambigr", "Ambiguous"],
-                    ["selflinkr", "Self-link (inter- or intra-molecular)"],
-                    ["homom", "Inter-molecular self-link (homomultimeric link)"],
-                    ["selflinkinter", "Intra-molecular self link (e.g. from internally linked peptide)"],
+                    ["selflinkr", "Self Link in same protein (could link either same or two different molecules)"],
+                    ["homom", "Homomultimeric Self Link (definitely links two different molecules of same protein)"],
+                    ["selflinkinter", "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide)"],
                     ["linkmodpep", "Linker modified peptide (unfilled = ambiguous)"],
                     ["highlight", "Highlighted linked peptide"],
                 ]
@@ -92,9 +93,9 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var cols = {
-            intra: {isSelfLink: function () { return true;}, filteredMatches_pp: [],}, 
-            homom: {isSelfLink: function () { return true;}, filteredMatches_pp: [{match: {confirmedHomomultimer: true}}],}, 
-            inter: {isSelfLink: function () { return false;}, filteredMatches_pp: [],}
+            intra: {isSelfLink: function () { return true; }, filteredMatches_pp: [],}, 
+            homom: {isSelfLink: function () { return true; }, filteredMatches_pp: [{match: {confirmedHomomultimer: true}}],}, 
+            inter: {isSelfLink: function () { return false; }, filteredMatches_pp: [],}
         };
         d3.keys(cols).forEach (function(key) {
             cols[key].colour = colScheme.getColour(cols[key]);
@@ -169,5 +170,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         }
         
         return this;
-    }
+    },
+    
+    identifier: "Xi Legend",
 });

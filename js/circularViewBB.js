@@ -76,7 +76,7 @@
                 fid++;
             });
         });
-        console.log ("CONV FEATURES", featureCoords);
+        //console.log ("CONV FEATURES", featureCoords);
 
         var linkCoords = [];
         linkArr.forEach (function (link) {
@@ -176,7 +176,7 @@
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
                 {class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
-                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: true},
+                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
             var buttonPanel = mainDivSel.select("div.buttonPanel");
@@ -249,8 +249,17 @@
                 //~ .range(["#beb", "#ebb" , "#bbe"])
             //~ ;
 
+            // for internal circle paths
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")
+                .tension(0.45)
+                .radius(function(d) { return d.rad; })
+                .angle(function(d) { return d.ang * degToRad; })
+            ;
+            
+            // 'bundle' intersects circle when trying to draw curves around circumference of circle between widely separated points
+            this.outsideLine = d3.svg.line.radial()
+                .interpolate("basis")
                 .tension(0.45)
                 .radius(function(d) { return d.rad; })
                 .angle(function(d) { return d.ang * degToRad; })
@@ -326,7 +335,7 @@
         },
 
         reOrder: function () {
-            console.log ("this", this, this.options);
+            //console.log ("this", this, this.options);
             this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
             var prots = Array.from (this.model.get("clmsModel").get("participants").values());
             var proteinSort = function (field) {
@@ -405,7 +414,7 @@
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
             var intraOutside = this.options.intraOutside;
-            var bowOutMultiplier = 1.3 * (intraOutside ? 1.6 : 1);
+            var bowOutMultiplier = 1.2;
 
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
@@ -414,7 +423,31 @@
                 var out = intraOutside ? intra && !homom : homom;
                 var rad = out ? rad2 : rad1;
                 var bowRadius = out ? rad2 * bowOutMultiplier: 0;
-                return {id: link.id, coords: [{ang: link.start, rad: rad},{ang: (link.start + link.end) / 2, rad: bowRadius}, {ang: link.end, rad: rad}] };
+                
+                var a1 = Math.min (link.start, link.end);
+                var a2 = Math.max (link.start, link.end);
+                var midang = (a1 + a2) / 2; //(a2 - a1 < 180) ? (a1 + a2) / 2 : ((a1 + a2 + 360) / 2) % 360; // mid-angle (bearing in mind it might be shorter to wrap round the circle)
+                var degSep = a2 - a1; // Math.min (a2 - a1, a1 + 360 - a2); // angle of separation
+                //console.log ("angs", link.start, link.end, degSep);
+                var coords;
+                if (out && degSep > 70) {
+                    var furtherBowRadius = bowRadius * (1 + (0.25 * ((degSep - 70) / 180)));
+                    coords = [{ang: link.start, rad: rad}, {ang: link.start, rad: bowRadius}];
+                    var holdPoints = Math.floor (degSep / 60) + 1;
+                    var deltaAng = (degSep % 60) / 2;
+                    var offsetAng = link.start + deltaAng;
+                    for (var n = 0; n < holdPoints; n++) {
+                        coords.push ({ang: (offsetAng + n * 60) % 360, rad: furtherBowRadius});
+                    }
+                    coords.push ({ang: link.end, rad: bowRadius}, {ang: link.end, rad: rad});
+                } else if (homom) {
+                    var homomBowRadius = out ? rad + this.options.tickWidth : rad * 0.65;
+                    var homomAngDelta = out ? 2 : 10;
+                    coords = [{ang: link.start, rad: rad}, {ang: (midang - homomAngDelta) % 360, rad: homomBowRadius}, {ang: (midang + homomAngDelta) % 360, rad: homomBowRadius}, {ang: link.end, rad: rad}];
+                } else {
+                    coords = [{ang: link.start, rad: rad}, {ang: midang, rad: bowRadius}, {ang: link.end, rad: rad}];
+                }
+                return {id: link.id, coords: coords, outside: out};
             }, this);
             return newLinks;
         },
@@ -489,9 +522,9 @@
 
                 var svg = d3.select(this.el).select("svg");
                 this.radius = this.getMaxRadius (svg);
-                var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if lots of links on outside
+                var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if some links drawn on outside
                 var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
-                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth* 0.7)) / 100);
+                var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth * 0.7)) / 100);
                 var textRadius = (tickRadius + innerNodeRadius) / 2;
 
                 var arcRadii = [
@@ -558,6 +591,21 @@
             var colourScheme = this.model.get("linkColourAssignment");
 
 
+                        // draw thin links
+            var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
+            var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
+            //var hasNew = linkJoin.enter().size() > 0;
+            linkJoin.exit().remove();
+            linkJoin.enter()
+                .append("path")
+                    .attr("class", "circleLink")
+            ;
+            linkJoin
+                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
+                .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
+                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
+            ;
+            
             // draw thick, invisible links (used for highlighting and mouse event capture)
             var ghostLayer = this.addOrGetGroupLayer (g, "ghostLayer");
             var ghostLinkJoin = ghostLayer.selectAll(".circleGhostLink").data(links, self.idFunc);
@@ -584,23 +632,10 @@
                     .call (self.showSelectedOnTheseElements, self)
             ;
             ghostLinkJoin
-                .attr("d", function(d) { return self.line(d.coords); })
+                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
             ;
 
-            // draw thin links
-            var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
-            var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
-            //var hasNew = linkJoin.enter().size() > 0;
-            linkJoin.exit().remove();
-            linkJoin.enter()
-                .append("path")
-                    .attr("class", "circleLink")
-            ;
-            linkJoin
-                .attr("d", function(d) { return self.line(d.coords); })
-                .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
-                .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
-            ;
+
         },
 
         drawNodes: function (g, nodes) {
@@ -774,6 +809,8 @@
 
         drawFeatures : function (g, features) {
             var self = this;
+            
+            // Sort so features are drawn biggest first, smallest last (trying to avoid small features being occluded)
             features.sort (function (a, b){
                 var diff = (b.end - b.start) - (a.end - a.start);
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
@@ -800,9 +837,11 @@
                         self.actionNodeLinks (d.nodeID, "selection", add, d.fstart, d.fend);
                     })
             ;
-
-
+            
+            //console.log ("FEATURES", features);
+            
             featureJoin
+                .order()
                 .attr("d", this.featureArc)
                 .style("fill", function(d) { return CLMSUI.domainColours(d.category + "-" + d.type); })
             ;
@@ -824,7 +863,7 @@
             links.forEach (function (link) {
                 var xlink = crossLinks.get (link.id);
                 resMap.set (xlink.fromProtein.id+"-"+xlink.fromResidue, {polar: link.coords[0], res: CLMSUI.modelUtils.getResidueType (xlink.fromProtein, xlink.fromResidue)});
-                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[2], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
+                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[link.coords.length - 1], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
             });
             var degToRad = Math.PI / 180;
             
@@ -864,10 +903,21 @@
             return this;
         },
         
-        identifier: "CircularView",
+        identifier: "Circular",
         
         optionsToString: function () {
-            return this.model.get("clmsModel").realProteinCount > 1 ? [this.options.sort].join("-") : "";
+            var abbvMap = {
+                showResLabels: "RESLBLS",
+                intraOutside: "SELFOUTER",
+                hideLinkless: "HIDEIFNOLINKS",
+            };
+            var fields = ["showResLabels"];   
+            if (this.model.get("clmsModel").realProteinCount > 1) {
+                fields.push ("intraOutside", "hideLinkLess", "sort");
+            }
+            
+            var str = CLMSUI.utils.objectStateToAbbvString (this.options, fields, d3.set(), abbvMap);
+            return str;
         },
 
         // removes view

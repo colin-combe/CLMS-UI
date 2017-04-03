@@ -64,6 +64,14 @@
             .attr ("class", "downloadButton2 btn btn-1 btn-1a")
             .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
         ;
+        
+        var setSelectTitleString = function (d3SelectElem) {
+            var selElem = d3.select(d3.event.target);
+            selElem.attr("title", selElem.selectAll("option")
+                .filter(function() { return d3.select(this).property("selected"); })
+                .text()
+            );
+        }
     
         this.controlDiv.append("label")
             .attr("class", "btn")
@@ -77,6 +85,8 @@
                             .matrixChosen ($('#'+mainDivSel.attr("id")+'chainSelect').val())
                             .render()
                         ;
+                        var selElem = d3.select(d3.event.target);
+                        setSelectTitleString (selElem);
                     })
         ;
         
