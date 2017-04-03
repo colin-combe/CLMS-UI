@@ -42,7 +42,7 @@
                 "id","ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
                 "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score", 
                 "autovalidated", "validated", "group", "runName", "scanNumber", 
-                "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError",
+                "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError", //"precursorIntensity",
             ];
 
             this.headerLabels = {
@@ -68,9 +68,10 @@
                 "matchMZ": "Match M/Z",
                 "matchMass": "Match Mass",
                 "massError": "Mass Error",
+                //~ "precursorIntensity": "Intensity",
             };
 
-            this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError" ]);
+            this.numberColumns = d3.set (["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError", "precursorItensity", ]);
             this.colSectionStarts = d3.set (["protein1", "protein2", "score"]);//i added protein1 also - cc
             this.monospacedColumns = d3.set (["pepSeq1raw", "pepSeq2raw"]);
             this.maxWidthColumns = d3.set (["protein1", "protein2"]);
@@ -124,6 +125,7 @@
 					"matchMZ": function(d) { return d.matchMZ().toFixed(3); },
 					"matchMass": function(d) { return d.matchMass(); },
 					"massError": function(d) { return d.massError().toFixed(3); },
+            		//~ "precursorIntensity": function(d) { return d.precursorIntensity; },
             };
 
             this.page = 1;

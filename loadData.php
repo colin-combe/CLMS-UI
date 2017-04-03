@@ -261,7 +261,7 @@ else {
 			sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, sm.is_decoy, sm.calc_mass,
 			sp.scan_number, sp.source_id as source, sp.precursor_charge,
-			sp.precursor_intensity, sp.precursor_mz 
+			/*sp.precursor_intensity,*/ sp.precursor_mz 
 		FROM
 			(SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
 			sm.search_id, /*sm.precursor_charge,*/ sm.is_decoy, sm.spectrum_id,
@@ -315,7 +315,7 @@ while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 		echo '"src":"' . $sourceId. '",'//"run" . '",'
 			. '"sn":' . $line["scan_number"]. ','
 			. '"pc_c":' . $line["precursor_charge"]. ','
-			. '"pc_i":' . round($line["precursor_intensity"], 3). ','
+		//	. '"pc_i":' . round($line["precursor_intensity"], 3). ','
 			. '"pc_mz":' . round($line["precursor_mz"], 3). ','
 			. '"cm":' . round($line["calc_mass"], 3)
 			. "}";
