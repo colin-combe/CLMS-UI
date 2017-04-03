@@ -296,19 +296,23 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     identifier: "NGL3D",
     
-    optionsToString: function () {
-        var opts = [this.xlRepr.currentChainRep];
-        d3.entries(this.options).forEach (function (optionEntry) {
-            if (optionEntry.key !== "defaultChainRep" && (optionEntry.value === true || optionEntry.value === false)) {
-                opts.push (optionEntry.key.slice(0,8)+"="+optionEntry.value.toString().slice(0,1));
-            }    
-        });
-        return opts.join("-");
+    optionsToString: function () {  
+        var abbvMap = {
+            labelVisible: "LBLSVIS",
+            selectedOnly: "SELONLY",
+            showResidues: "RES",
+            shortestLinksOnly: "SHORTONLY",
+        };
+        var fields = ["rep", "labelVisible", "selectedOnly", "showResidues", "shortestLinksOnly"];
+        var optionsPlus = $.extend ({}, this.options);
+        optionsPlus.rep = this.xlRepr.currentChainRep;
+
+        return CLMSUI.utils.objectStateToAbbvString (optionsPlus, fields, d3.set(), abbvMap);
     },
     
     // Returns a useful filename given the view and filters current states
     filenameStateString: function () {
-        return CLMSUI.utils.makeLegalFileName (this.identifier+this.optionsToString()+"-PDB"+this.xlRepr.pdbBaseSeqID+"-"+CLMSUI.utils.filterStateToString());
+        return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString()+"--"+this.identifier+"-"+this.optionsToString()+"-PDB="+this.xlRepr.pdbBaseSeqID+"--"+CLMSUI.utils.filterStateToString());
     },
 });
 

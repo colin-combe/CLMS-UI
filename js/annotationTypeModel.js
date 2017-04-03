@@ -11,7 +11,7 @@ CLMSUI.BackboneModelTypes.AnnotationType = Backbone.Model.extend ({
     initialize: function (options) {
             var defaultOptions = {};
 			this.options = _.extend(defaultOptions, options);
-			this.set("id", options.category + "-" +  options.type);
+			this.set("id", options.category + "-" + options.type);
 			this.set("category", options.category);
  			this.set("type", options.type);
     },

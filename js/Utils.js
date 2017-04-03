@@ -126,7 +126,7 @@ CLMSUI.utils = {
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
             if (!sel.attr("id")) {
-                sel.attr("id", this.options.id);
+                sel.attr("id", this.options.id.replace(/ /g, "_"));
             }
 
             var labs = sel.append("label")
@@ -312,15 +312,48 @@ CLMSUI.utils = {
         ;
     },
     
+    objectStateToAbbvString: function (object, fields, zeroFormatFields, abbvMap) {
+        fields = fields.filter (function (field) {
+            var val = object.get ? object.get(field) || object[field] : object[field];
+            return !(val === "" || val === false || val === undefined);    
+        }, this);
+
+        //console.log ("fields", fields);
+        
+        var zeroFormat = d3.format (".4f");
+        var strValue = function (field, val) {
+            if (val === true) {
+                return "";
+            }
+            if (zeroFormatFields.has(field) && !isNaN(val)) {
+                return zeroFormat(val);
+            }
+            if ($.isArray (val)) {
+                var arrayStr = val.map (function (elem) {
+                    return strValue (field, elem); 
+                });
+                return arrayStr.join("-");
+            }
+            return val;
+        };
+
+        var strParts = fields.map (function(field) {
+            var val = object.get ? object.get(field) || object[field] : object[field];
+            return (abbvMap[field] || field.toUpperCase()) + (val === true ? "" : "=" + strValue (field, val));
+        }, this);
+        return strParts.join(".");    
+    },
+    
     filterStateToString: function () {
         var filterStr = CLMSUI.compositeModelInst.get("filterModel").stateString();
+        return filterStr.substring(0, 160);
+    },
+    
+    searchesToString: function () {
         var searches = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
         var searchKeys = searches.map (function (search) { return search[0]; }); // just the keys
-        var searchStr = "Search"+searchKeys.join("-");
-        var filterState = searchStr+"-filter="+filterStr;
-        filterState = filterState.substring(0, 200);
-        console.log ("filterState", filterState);
-        return filterState;
+        var searchStr = ("SRCH="+searchKeys.join("-")).substring(0, 40);
+        return searchStr;
     },
     
     makeLegalFileName: function (fileNameStr) {
@@ -351,6 +384,7 @@ CLMSUI.utils = {
 
             // Set up some html scaffolding in d3
             CLMSUI.utils.addDynDivScaffolding (mainDivSel, "Title");
+            mainDivSel.select(".dynTitle").text (this.identifier);
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
             var drag = d3.behavior.drag().on ("dragend", function() { self.relayout({dragEnd: true}); });
@@ -378,7 +412,7 @@ CLMSUI.utils = {
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
-            console.log ("xml", svgXML);
+            //console.log ("xml", svgXML);
             
             var fileName = this.filenameStateString().substring (0,240);
             download (svgXML, 'application/svg', fileName+".svg");
@@ -447,7 +481,7 @@ CLMSUI.utils = {
             Backbone.View.prototype.remove.call(this);
         },
         
-        identifier: "View",
+        identifier: "Base",
         
         // return any relevant view states that can be used to label a screenshot etc
         optionsToString: function () {
@@ -456,7 +490,7 @@ CLMSUI.utils = {
         
         // Returns a useful filename given the view and filters current states
         filenameStateString: function () {
-            return CLMSUI.utils.makeLegalFileName (this.identifier+"-"+this.optionsToString()+"-"+CLMSUI.utils.filterStateToString());
+            return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString()+"--"+this.identifier+"-"+this.optionsToString()+"--"+CLMSUI.utils.filterStateToString());
         },
     }),
 };
@@ -466,7 +500,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         var self = this;
         d3.select(this.el)
             .append("span")
-            .text("LINK-COLOURS:")
+            .text("Choose Link Colour Scheme ")
         ;
 
         d3.select(this.el)

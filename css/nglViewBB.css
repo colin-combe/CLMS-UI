@@ -33,8 +33,10 @@ label.btn input[type=file] {
 .fakeButton {
     display: inline-block;
     vertical-align: top;
-    height: 32px;
+    /*height: 32px;*/
     margin-bottom: 0.2em;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
 .nglToolbar:first-child {
@@ -50,6 +52,10 @@ label.btn input[type=file] {
     text-transform: capitalize;
 }
 
-.nglToolbar > p {
+.nglToolbar > * {
     display: inline-block;
+}
+
+.inputPDBCode {
+    margin-left: 0.5em;
 }

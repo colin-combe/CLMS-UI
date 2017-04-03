@@ -19,7 +19,7 @@
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
             var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
             holdingDiv.html (template ({
-                headerText: "Alignments - Select Protein Name for Details",
+                headerText: "Select Protein Name for Details",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
@@ -125,6 +125,8 @@
             }
             return this;
         },
+        
+        identifier: "Alignment View",
     });
     
     CLMSUI.ProtAlignViewBB = Backbone.View.extend ({
