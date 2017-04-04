@@ -121,10 +121,10 @@
                     "score": function (d) { return zeroPadder (d.score); },
                   
 					"expMZ": function(d) { return d.expMZ(); },
-					"expMass": function(d) { return d.expMass().toFixed(3); },
-					"matchMZ": function(d) { return d.matchMZ().toFixed(3); },
+					"expMass": function(d) { return d.expMass().toFixed(6); },
+					"matchMZ": function(d) { return d.matchMZ().toFixed(6); },
 					"matchMass": function(d) { return d.matchMass(); },
-					"massError": function(d) { return d.massError().toFixed(3); },
+					"massError": function(d) { return d.massError().toFixed(6); },
             		//~ "precursorIntensity": function(d) { return d.precursorIntensity; },
             };
 
