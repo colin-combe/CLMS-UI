@@ -67,7 +67,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","Exp m/z", "ExpMass", "Match m/z", "MatchMass", "MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var matches = clmsModel.get("matches");
     var matchCount = matches.length;
@@ -95,7 +95,9 @@ function getMatchesCSV () {
                 + '","' + (+pp2 + match.linkPos2 - 1)
                 + '","' + pp2 + '","'
                 + match.matchedPeptides[1].sequence + '","' + match.linkPos2 + '","'
-                + match.score + '","' + match.autovalidated + '","' + match.validated + '","'
+                + match.score + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","' 
+                + match.matchMZ() + '","' + match.matchMass() + '","' + match.massError() + '","' 
+                + match.autovalidated + '","' + match.validated + '","'
                 + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '"\r\n';
         }
     }
@@ -109,12 +111,9 @@ function getLinksCSV(){
     var csv = '"Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance"';
     
 
-    var searchIds = {};
-    var i = 0;
-    for (id of CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys()) {
-        csv += ',"Search_'+ id +'"';
-        searchIds[i] = id;
-        i++;
+    var searchIds = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys());
+    for (var i = 0; i < searchIds.length; i++ ) {
+        csv += ',"Search_'+searchIds[i] +'"';
     }
     console.log ("searchIds", searchIds);
 
@@ -135,18 +134,18 @@ function getLinksCSV(){
         }
 
         var highestScore = null;
-        var searchesFound = {};
+        var searchesFound = new Set();
         var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
         var linkAutovalidated = false;
         var validationStats = [];
-        for (matchAndPepPos of filteredMatchesAndPepPos) {
-            var match = matchAndPepPos.match;
+        for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+            var match = filteredMatchesAndPepPos[fm_pp].match;
             if (highestScore == null || match.score > highestScore) {
                 highestScore = match.score.toFixed(4);
             }
             if (match.autovalidated === true) {linkAutovalidated = true;}
             validationStats.push(match.validated);
-            searchesFound[match.searchId] = true;
+            searchesFound.add(match.searchId);
         }
         console.log ("sf", searchesFound);
         csv += '","' + highestScore;
@@ -158,7 +157,9 @@ function getLinksCSV(){
 
         for (var s = 0; s < searchIds.length; s++){
             csv +=  '","';
-            if (searchesFound[searchIds[s]]) csv += "X";
+            if (searchesFound.has(searchIds[s])){
+				csv += "X";
+			}
         }
 
         csv += '"\r\n';
@@ -173,16 +174,10 @@ function getResidueCount() {
     var residueCounts = d3.map();
     var residuePairCounts = d3.map();
 
-    //~ var pLinks = xlv.proteinLinks.values();
-    //~ var pLinkCount = pLinks.length;
-    //~ for (var pl = 0; pl < pLinkCount; pl++){
-        //~ var resLinks = pLinks[pl].residueLinks.values();
-        //~ var resLinkCount = resLinks.length;
-        //~ for (var rl =0; rl < resLinkCount; rl ++) {
-            //~ var residueLink = resLinks[rl];
-
-    var crossLinks = CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values();
-    for (residueLink of crossLinks){
+    var crossLinksArray = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+    var crossLinkCount = crossLinksArray.length;
+    for (var cl = 0; cl < crossLinkCount; cl++){
+		var residueLink = crossLinksArray[cl];
         if (residueLink.filteredMatches_pp.length > 0){
 
             var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];

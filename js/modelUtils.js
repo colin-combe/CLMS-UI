@@ -297,7 +297,7 @@ CLMSUI.modelUtils = {
         var searchId = match.searchId;
         var searchMap = clmsModel.get("searches");
         var searchData = searchMap.get(searchId);
-        var randId = searchData.randId;    
+        var randId = searchData.random_id;    
         return randId;
     },
     
