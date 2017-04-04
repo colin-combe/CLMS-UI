@@ -316,8 +316,8 @@ while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
 			. '"sn":' . $line["scan_number"]. ','
 			. '"pc_c":' . $line["precursor_charge"]. ','
 		//	. '"pc_i":' . round($line["precursor_intensity"], 3). ','
-			. '"pc_mz":' . round($line["precursor_mz"], 3). ','
-			. '"cm":' . round($line["calc_mass"], 3)
+			. '"pc_mz":' . round($line["precursor_mz"], 6). ','
+			. '"cm":' . round($line["calc_mass"], 6)
 			. "}";
 		$line = pg_fetch_array($res, null, PGSQL_ASSOC);
 		if ($line) {echo ",\n";}
