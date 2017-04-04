@@ -20,7 +20,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var self = this;
             var defaultOptions = {
                 fixedFontKeys: d3.set(["sequence", "seq"]),
-                removeTheseKeys: d3.set (["canonicalSeq", "seq_mods"]),
+                removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
                 expandTheseKeys: d3.set (["uniprotFeatures"]),
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -72,8 +72,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     });
                 };
                 
-                var cellFunc = function(d) { 
-                    d3.select(this).html (d.value);
+                var cellFunc = function(d,i) { 
+                    d3.select(this).html (i === 0 ? d.value.replace("_", " ") : d.value);
                 };
                 
                 var headerFunc = function(d) { return d.name.replace("_", " "); };

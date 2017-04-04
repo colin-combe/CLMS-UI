@@ -69,6 +69,7 @@
     color: red;
     background: white;
     cursor: pointer;
+    font-weight: bold;
 }
 
 .proteinInfoPanel .hit:hover, .proteinInfoPanel .hit.selected:hover {
@@ -79,6 +80,7 @@
     background: none;
     color: grey;
     pointer-events: none;
+    font-weight: bold;
     cursor: text;
 }
 
