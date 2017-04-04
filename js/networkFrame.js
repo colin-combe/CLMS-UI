@@ -33,14 +33,14 @@ var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about thi
 
     //add option for showing digestible residues
 	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-		category: "AT_Residue",
+		category: "AA",
 		type:"Digestible"}
 	);
 	annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
 	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-		category: "AT_Residue",
+		category: "AA",
 		type:"Cross-linkable"}
 	);
 	annotationTypes.push(crosslinkableAnnotationType);
