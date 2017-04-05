@@ -32,7 +32,7 @@ label.btn input[type=file] {
 
 .fakeButton {
     display: inline-block;
-    vertical-align: top;
+    /*vertical-align: top;*/
     /*height: 32px;*/
     margin-bottom: 0.2em;
     padding-top: 2px;

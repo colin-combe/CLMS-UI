@@ -155,6 +155,11 @@ CLMSUI.init.modelsEssential = function (options) {
         "No cross-links detected for this search.<br>Please return to the search history page."
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+    /*  Anonymiser for screen shots
+    clmsModelInst.get("proteins").forEach (function (prot, i) {
+        prot.name = "Protein "+(i+1);
+    });
+    */
     CLMSUI.modelUtils.addDecoyFunctions (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({

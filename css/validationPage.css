@@ -19,6 +19,7 @@
 #spectrumControls {
 	float:right;
 }
+
 #spectrumControlsTop {
 	background-color: #091D42;
 	display: inline-block;
@@ -27,11 +28,19 @@
 */
 }
 #spectrumControlsBottom {
+    background-color: #091D42;
 	display: inline-block;
 /*
 	margin-left: 10px;
 */
 }
+
+.pageHeader, div#spectrumControlsTop, div#spectrumControlsBottom {
+    height: 35px;
+    vertical-align: middle;
+    border-bottom: none;
+}
+
 .dynDiv_moveParentDiv{
 	display: none;
 }

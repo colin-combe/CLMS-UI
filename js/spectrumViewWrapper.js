@@ -22,20 +22,20 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<button class='downloadButton'>"
             +(CLMSUI.utils.commonLabels.downloadImg+"SVG")
             +"</button>"
-            +"<button id='reset'>Reset Zoom</button>"
             +"<button id='clearHighlights'>Clear Highlights</button>"
             +"</div>"
-            +"<div  id='spectrumControlsBottom'>"
+            +"<div id='spectrumControlsBottom'>"
             +"<label id='colorSelectorLabel'>Colour scheme:</label>"
             +"<select id='colorSelector'></select>"
             +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
+            +"<label class='movePeakLabels'>Move Labels<input id='moveLabels' type='checkbox'></label>"
             +"<label>Measure<input id='measuringTool' type='checkbox'></label>"
-            +"<label class='movePeakLabels' >Move Labels<input id='moveLabels' type='checkbox'></label>"
             +"<form id='setrange'><label>m/z Range:</label>"
-             +"<input type='text' id='xleft' size='7'>"
+             +"<input type='text' id='xleft' size='7'><span>to</span>"
              +"<input type='text' id='xright' size='7'>"
-             +"<input type='submit' value='set range'>"
+             +"<input type='submit' value='Set'>"
              +"<span id='range-error'></span>"
+            +"<button id='reset'>All</button>"
             +"</form>"
             +"</div>"
             +"</div>"
@@ -59,7 +59,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         d3.select("#"+myOptions.wrapperID)
-            .selectAll("button")
+            .selectAll("button,input[type='submit']")
             .classed ("btn btn-1 btn-1a", true)
         ;
 

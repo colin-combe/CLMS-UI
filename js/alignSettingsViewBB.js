@@ -39,7 +39,7 @@
             });
                  
             this
-                .listenTo (this.model, "change:compAlignments", this.render)
+                .listenTo (this.model, "change:compAlignment", this.render)
                 .render()
             ;
             
