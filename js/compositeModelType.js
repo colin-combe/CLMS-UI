@@ -54,8 +54,10 @@
 									return matchAndPepPos.match.crossLinks.length === 1;
 								})
 							;
-							for (filteredMatch_pp of crossLink.filteredMatches_pp) {
-								filteredMatch_pp.match.fdrPass = true;
+							var filteredMatches_pp = crossLink.filteredMatches_pp;
+							var filteredMatchCount = filteredMatches_pp.length;
+							for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+								filteredMatch_pp[fm].match.fdrPass = true;
 							}    
 						}
 						//~ else {
@@ -64,7 +66,10 @@
 					} else {
 						crossLink.ambiguous = true;
 						crossLink.confirmedHomomultimer = false;
-						for (var matchAndPepPos of crossLink.matches_pp) {	
+						var matches_pp = crossLink.matches_pp;
+						var matchCount = matches_pp.length;
+						for (var m = 0; m < matchCount; m++ ) {	
+							var matchAndPepPos = matches_pp[m];
 							var match = matchAndPepPos.match;
 							//~ console.log(filterModel.subsetFilter(match),
 										//~ filterModel.validationStatusFilter(match),
@@ -266,8 +271,9 @@
             var distArr = [];
             var distModel = this.get("clmsModel").get("distancesObj");
             var protAlignCollection = this.get ("alignColl");
-            for (var crossLink of crossLinks) {
-                var dist = this.getSingleCrosslinkDistance (crossLink, distModel, protAlignCollection, calcDecoyProteinDistances);
+            var clCount = crossLinks.length;
+            for (var cl = 0; cl < clCount; cl++) {
+                var dist = this.getSingleCrosslinkDistance (crossLinks[cl], distModel, protAlignCollection, calcDecoyProteinDistances);
                 if (dist != null) {
                     distArr.push (+dist); // + is to stop it being a string
                 }

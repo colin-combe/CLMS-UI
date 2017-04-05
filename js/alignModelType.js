@@ -206,7 +206,7 @@
                         var alignment = seqModel.get("compAlignment");
                         return {
                             begin: 1, 
-                            start: 1, 
+                            start: 1, //todo - why begin and start
                             end: alignment.convertToRef.length, 
                             name: alignment.label, 
                             protID: protID, 

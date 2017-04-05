@@ -42,8 +42,10 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         this.searchMap = options.searchMap;
         //put d3.scale for group colour assignment in compositeModel
         var groups = new Map();
-        for (var search of this.searchMap) {
-            var val = search[1];
+		var searchArray = Array.from(this.searchMap.values());
+		var searchCount = searchArray.length;
+        for (var s = 0; s < searchCount; s++) {
+            var val = searchArray[s];
             var arr = groups.get(val.group);
             if (!arr) {
                 arr = [];
@@ -54,7 +56,10 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
 
         var groupDomain = [undefined];
         var labelRange = ["Multiple Group"];
-        for (var group of groups) {
+        var groupArray = Array.from(groups.entries());
+        var groupCount = groupArray.length;
+        for (var g = 0; g < groupCount; g++) {
+			var group = groupArray[g];
             groupDomain.push (group[0]);
             labelRange.push ("Group "+group[0]+" ("+group[1].join(", ")+")");
         }
@@ -81,8 +86,10 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         // (only do once)
         //check if link uniquely belongs to one group
         var groupCheck = d3.set();
-        for (var match_pp of crossLink.filteredMatches_pp) {
-            var match = match_pp.match; 
+        var filteredMatchesAndPepPositions = crossLink.filteredMatches_pp;
+        var filteredMatches_ppCount = filteredMatchesAndPepPositions.length;
+        for (var fm_pp = 0; fm_pp < filteredMatches_ppCount; fm_pp++) {
+            var match = filteredMatchesAndPepPositions[fm_pp].match; 
             var group = this.searchMap.get(match.searchId).group; 	
             groupCheck.add(group);
         }
