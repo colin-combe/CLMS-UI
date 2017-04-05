@@ -541,7 +541,7 @@
             
             var filteredCrossLinks2Count = filteredCrossLinks2.length;
             for (var fc2 = 0 ; fc2 < filteredCrossLinks2Count; fc2++) {
-				var crosslink = filteredCrossLink2[fc2];
+				var crossLink = filteredCrossLinks2[fc2];
                 var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
                 if (self.filterVal === undefined || est >= self.filterVal) {
                     var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
