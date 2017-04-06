@@ -57,7 +57,7 @@
 							var filteredMatches_pp = crossLink.filteredMatches_pp;
 							var filteredMatchCount = filteredMatches_pp.length;
 							for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
-								filteredMatch_pp[fm].match.fdrPass = true;
+								filteredMatches_pp[fm_pp].match.fdrPass = true;
 							}    
 						}
 						//~ else {

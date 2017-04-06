@@ -182,6 +182,7 @@
 
             var success = function (text) {
                 spinner.stop(); // stop spinner on request returning
+
                 try {
                     var json = JSON.parse (text);
                     CLMSUI.init.models (json);
@@ -195,7 +196,6 @@
                     //CLMSUI.split.collapse(1);
 
                     CLMSUI.init.views();
-
                     allDataLoaded ();
                 } catch (err) {
                     console.error ("Error", err, text.substring(0,1000));

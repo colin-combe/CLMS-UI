@@ -40,6 +40,7 @@
 .CLMStooltip table {
     border-collapse: collapse;
     background: none;
+    word-wrap: break-word;
 }
 
 .CLMStooltip table tr:nth-child(2n) {
@@ -48,6 +49,7 @@
 
 .CLMStooltip table tr td {
     font-weight: bold;
+    max-width: 200px;  /* stop one column stealing all the space */
 }
 
 .CLMStooltip table tr td:first-child, .CLMStooltip table tr th:first-child {
