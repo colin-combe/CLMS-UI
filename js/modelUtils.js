@@ -304,7 +304,7 @@ CLMSUI.modelUtils = {
     addDecoyFunctions: function (clmsBBModel, prefixes) {
         // Make map of reverse/random decoy proteins to real proteins
         prefixes = prefixes || ["REV_", "RAN_"];
-        var prots = clmsBBModel.get("proteins");
+        var prots = Array.from(clmsBBModel.get("participants").values());
         var nameMap = d3.map ();
         var accessionMap = d3.map ();
         prots.forEach (function (prot) {

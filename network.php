@@ -184,7 +184,8 @@
                 spinner.stop(); // stop spinner on request returning
 
                 try {
-                    var json = JSON.parse (text);
+                    var json = {};
+                    if (text) { json = JSON.parse (text); }
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
