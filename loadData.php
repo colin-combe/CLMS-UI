@@ -185,7 +185,6 @@ for ($i = 0; $i < count($searchId_randGroup); $i++) {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' OR ';
         $WHERE_matchedPeptide = $WHERE_matchedPeptide.' OR ';
     }
-    $randId = $search["random_id"];
     $id = $search["id"];
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
     $WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
