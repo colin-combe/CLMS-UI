@@ -194,8 +194,7 @@
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
                         { direction: "vertical", sizes: [80,20], minSize: [200,10] }
                     );
-                    //CLMSUI.split.collapse(1);
-
+                    
                     CLMSUI.init.views();
                     allDataLoaded ();
                 } catch (err) {

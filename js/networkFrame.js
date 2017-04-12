@@ -23,7 +23,7 @@ CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about this... - cc
+var allDataLoaded = _.after (3, function() {
     console.log ("DATA LOADED AND WINDOW LOADED");
 	
 	CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
@@ -152,7 +152,7 @@ CLMSUI.init.modelsEssential = function (options) {
 
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
-        "No cross-links detected for this search.<br>Please return to the search history page."
+        "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
     clmsModelInst.parseJSON(options);
@@ -252,7 +252,7 @@ CLMSUI.init.views = function () {
     // Generate buttons for load dropdown
     var buttonData = [
         {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
-        {id: "csvUploadPlaceholder", label: "Links CSV", eventName:"uploadCSV"},
+        {id: "csvUploadPlaceholder", label: "CLMS CSV", eventName:"uploadCSV"},
     ];
     buttonData.forEach (function (bdata) {
         var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
@@ -297,7 +297,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 "selfLinks": singleRealProtein,
                 "betweenLinks": singleRealProtein,
                 "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
-                "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
+               // "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
                 "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
                 "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
                 "protNames": singleRealProtein,
@@ -613,8 +613,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
 	CLMSUI.compositeModelInst.listenTo(CLMSUI.vent, "uploadCSV", function(){
-                    alert("!");
-			    
+			d3.select("#clmsErrorBox").style("display", "none");
             //test 
             d3.text("../test.csv", function (csv) {
 					CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csv);

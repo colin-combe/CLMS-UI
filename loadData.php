@@ -152,6 +152,7 @@ if (count($_GET) > 0) {
         } else {
             $line["group"] = "'NA'";
         }
+        $line["random_id"] = $randId;
         $searchId_randGroup[$id] = $line;
     }
 
