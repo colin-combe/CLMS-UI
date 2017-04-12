@@ -312,7 +312,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 "selfLinks": singleRealProtein,
                 "betweenLinks": singleRealProtein,
                 "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
-                "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
+                //"ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
                 "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
                 "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
                 "protNames": singleRealProtein,
