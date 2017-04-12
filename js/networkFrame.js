@@ -156,7 +156,7 @@ CLMSUI.init.modelsEssential = function (options) {
     );
     var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
       
-    // Anonymiser for screen shots
+    // Anonymiser for screen shots / videos
     /*
     clmsModelInst.get("proteins").forEach (function (prot, i) {
         prot.name = "Protein "+(i+1);
