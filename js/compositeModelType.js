@@ -71,11 +71,7 @@
 						for (var m = 0; m < matchCount; m++ ) {	
 							var matchAndPepPos = matches_pp[m];
 							var match = matchAndPepPos.match;
-							//~ console.log(filterModel.subsetFilter(match),
-										//~ filterModel.validationStatusFilter(match),
-										//~ filterModel.navigationFilter(match));
-							var result = /*match.is_decoy === false && */
-											filterModel.subsetFilter (match, proteinMatchFunc)
+							var result = filterModel.subsetFilter (match, proteinMatchFunc)
 											&& filterModel.validationStatusFilter(match)
 											&& filterModel.navigationFilter(match);
 							var decoys = filterModel.get("decoys");

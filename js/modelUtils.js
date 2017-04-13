@@ -341,6 +341,7 @@ CLMSUI.modelUtils = {
         clmsBBModel.isIntraLink = function (crossLink) {
             return (crossLink.toProtein && this.isMatchingProteinPair (crossLink.toProtein, crossLink.fromProtein));
         };
+        //todo: this wont be updated when new data is added - all this stuff should move to CLMS-model I think - cc
         clmsBBModel.realProteinCount = prots.length - decoys.length;
         
         var crosslinkArray = Array.from (clmsBBModel.get("crossLinks"));

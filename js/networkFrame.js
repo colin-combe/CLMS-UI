@@ -165,7 +165,7 @@ CLMSUI.init.modelsEssential = function (options) {
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),
-        betweenLinks: clmsModelInst.realProteinCount > 1,
+        betweenLinks: true,//clmsModelInst.realProteinCount > 1,
         AUTO: clmsModelInst.get("autoValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
@@ -294,11 +294,12 @@ CLMSUI.init.viewsEssential = function (options) {
         model: filterModel,
         myOptions: {
             hide: {
-                "selfLinks": singleRealProtein,
-                "betweenLinks": singleRealProtein,
+				//todo: reinstate sensible hiding of controls, guess need listeners on these attributes
+                //~ "selfLinks": singleRealProtein,
+                //~ "betweenLinks": singleRealProtein,
                 "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
                 "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
-                "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
+                //~ "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
                 "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
                 "protNames": singleRealProtein,
             }
@@ -617,7 +618,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             //test 
             d3.text("../test.csv", function (csv) {
 					CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csv);
+					//CLMSUI.compositeModelInst.applyFilter();
 			});
+			
 	});
 
 

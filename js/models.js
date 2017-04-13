@@ -94,8 +94,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             if (!isNaN(aaApart)) {
                  //if not ambig && is selfLink
                 if (match.confirmedHomomultimer === false
-						&& match.isAmbig() === false//match.matchedPeptides[0].prt.length == 1 && match.matchedPeptides[1].prt.length == 1
-                        && match.crossLinks[0].isSelfLink()){//match.matchedPeptides[0].prt[0] == match.matchedPeptides[1].prt[0]) {
+						&& match.isAmbig() === false
+                        && match.crossLinks[0].isSelfLink()){
 					var unambigCrossLink = match.crossLinks[0];
                     var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
 					if (calc < aaApart){
@@ -104,12 +104,11 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				}
             }
             
-            var pepLengthFilter = this.get("pepLength");
-            //~ return match.matchedPeptides[0].sequence.length > pepLengthFilter
-                //~ && match.matchedPeptides[1].sequence.length > pepLengthFilter;
+            var pepLengthFilter = +this.get("pepLength");
             if (!isNaN(pepLengthFilter)) {
-                if (match.matchedPeptides[0].sequence.length <= pepLengthFilter || 
-					(match.matchedPeptides[1] && match.matchedPeptides[1].sequence.length <= pepLengthFilter)) {
+                if (match.matchedPeptides[0].sequence.length > 0 
+					&& (match.matchedPeptides[0].sequence.length <= pepLengthFilter || 
+					(match.matchedPeptides[1] && match.matchedPeptides[1].sequence.length <= pepLengthFilter))) {
                     return false;
                 }
             }
