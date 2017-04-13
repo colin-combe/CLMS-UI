@@ -344,7 +344,8 @@ CLMSUI.modelUtils = {
         clmsBBModel.realProteinCount = prots.length - decoys.length;
         
         var crosslinkArray = Array.from (clmsBBModel.get("crossLinks"));
-        clmsBBModel.set("ambiguousPresent", crosslinkArray.some (function (xlink) { return xlink.ambiguous; }));
+        //clms-model deals with ambiguousPresent now
+        //~ clmsBBModel.set("ambiguousPresent", crosslinkArray.some (function (xlink) { return xlink.ambiguous; }));
         clmsBBModel.set("unvalidatedPresent", clmsBBModel.get("matches").some (function (match) {
             return !match.autovalidated && !match.validated;
         }));
