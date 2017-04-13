@@ -401,7 +401,7 @@ body, input, select, textarea {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, /*#fdrPanel,*/ #pdbPanel {
+#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel {
     display:none;
     top:80px;
 }

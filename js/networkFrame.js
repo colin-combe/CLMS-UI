@@ -201,9 +201,10 @@ CLMSUI.init.modelsEssential = function (options) {
 };
 
 CLMSUI.init.views = function () {
+	//todo: if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -252,7 +253,7 @@ CLMSUI.init.views = function () {
     // Generate buttons for load dropdown
     var buttonData = [
         {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
-        {id: "csvUploadPlaceholder", label: "CLMS CSV", eventName:"uploadCSV"},
+        {id: "csvUploadPlaceholder", label: "CSV", eventName:"csvShow"},
     ];
     buttonData.forEach (function (bdata) {
         var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
@@ -437,7 +438,7 @@ CLMSUI.init.viewsEssential = function (options) {
             title: "Data-Export",
             menu: [
                 {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
+                {name: "Residues", func: downloadResidueCount}
             ]
         }
     });
@@ -590,6 +591,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#pdbPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "pdbShow",
+        myOptions: {
+            initialPdbCode: CLMSUI.firstPdbCode,
+        }
+    });
+    
+	new CLMSUI.CSVFileChooserBB ({
+        el: "#csvPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "csvShow",
         myOptions: {
             initialPdbCode: CLMSUI.firstPdbCode,
         }
