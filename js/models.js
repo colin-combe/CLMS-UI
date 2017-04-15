@@ -315,16 +315,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);
             return str;
         },
-        
-       /*
-       filterLink: function (link) {
-            if (link.meta && link.meta.meanMatchScore !== undefined) {
-                var fdr = link.meta.meanMatchScore;
-                var intra = CLMSUI.modelUtils.isIntraLink (link);
-                return fdr >= this.get (intra ? "intraFdrCut" : "interFdrCut");
-            }
-            return false;
-        }*/
+
     }),
 
     // I want MinigramBB to be model agnostic so I can re-use it in other places

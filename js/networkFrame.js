@@ -161,7 +161,6 @@ CLMSUI.init.modelsEssential = function (options) {
         prot.name = "Protein "+(i+1);
     });
     */
-    CLMSUI.modelUtils.addDecoyFunctions (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),
@@ -295,14 +294,17 @@ CLMSUI.init.viewsEssential = function (options) {
         model: filterModel,
         myOptions: {
             hide: {
-				//todo: reinstate sensible hiding of controls, guess need listeners on these attributes
-                //~ "selfLinks": singleRealProtein,
-                //~ "betweenLinks": singleRealProtein,
+				//todo: reinstate sensible hiding of controls, need listeners on these attributes
+                //temp hack - dont hide anything, data may change when csv uploaded
+                /*
+                "selfLinks": singleRealProtein,
+                "betweenLinks": singleRealProtein,
                 "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
                 "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
-                //~ "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
+                "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
                 "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
                 "protNames": singleRealProtein,
+                */
             }
         }
     });
@@ -384,7 +386,6 @@ CLMSUI.init.viewsEssential = function (options) {
                         var altModel = new window.CLMS.model.SearchResultsModel ();
                         altModel.parseJSON(json);
                         CLMSUI.modelUtils.addDecoyFunctions (altModel); // mjg. needed.
-                        var allCrossLinks = Array.from(altModel.get("crossLinks").values());
                         // empty selection first
                         // (important or it will crash coz selection contains links to proteins not in clms model)
                         self.alternativesModel

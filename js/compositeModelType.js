@@ -120,7 +120,6 @@
                     }
 				}
             }
-            this.filteredNotDecoyNotLinearCrossLinks = this.filteredXLinks["targets"];  // temp till colin changes code in crosslinkviewer
             //console.log ("xlinks", this.filteredXLinks);
             
             var participantsArr = Array.from(clmsModel.get("participants").values());
@@ -212,7 +211,32 @@
         },
 
         recurseAmbiguity: function (crossLink, crossLinkMap) {
-            var matches = crossLink.filteredMatches_pp;
+			// nature of data means it doesn't need to be recursive;
+			// only interested in alternative cross-links of ambiguous matches of this cross-link
+			// -- its because a match with a shorter version of the peptide must already be in the matches of the orignal cross-link
+			
+			// though end result is same (unless something that shouldn't be possible happens) 
+			// changed it not to be recursive
+			 
+			// todo: we might want to highlight smallest possible set of alternatives
+			// i.e. the least ambiguous alternative of the ambiguous alternatives,
+			// this would consistent with other parts of the interface,
+			// e.g. if a cross-link has both ambiguous and non-ambiguous matches it is considered not ambiguous
+			
+			var filteredMatchesAndPeptidePositions = this.crossLink.filteredMatches_pp;
+			var fm_ppCount = filteredMatchesAndPeptidePositions.length;
+			for (var fm_pp = 0; fm_pp <fm_ppCount; fm_pp++) {
+				var crossLinks = filteredMatchesAndPeptidePositions[fm_pp].match.crossLinks;
+				var clCount = crossLinks.length;
+				
+				for (var cl = 0; cl < clCount; cl++) {
+					var crossLink = crossLinks[cl];
+					crossLinkMap.set (crossLink.id, crossLink);
+				}
+			}
+			
+            /*//previous recursive function			
+	        var matches = crossLink.filteredMatches_pp;
             matches.forEach (function (match) {
                 var matchData = match.match;
                 if (matchData.isAmbig()) {
@@ -224,9 +248,11 @@
                     }, this);
                 }
             }, this);
+             */
         },
         
         //what type should selectedProtein be? Set? Array? Is a map needed?
+        // agree map's not needed, prob just Array - cc
         setSelectedProteins: function (idArr, add) {
             var map = add ? new Map (this.get("selectedProtein")) : new Map ();
             idArr.forEach (function (id) {
