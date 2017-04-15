@@ -15,7 +15,9 @@
             }
             return _.extend ({}, parentEvents, {
               //  "click .pdbWindowButton": "launchExternalPDBWindow",
-                "change .selectCsvButton": "selectCsvFile",
+                "change .selectCSVButton": "selectCsvFile",
+                "change .selectFASTAButton": "selectFastaFile",
+                "click .uploadButton": "uploadFiles",
               //  "keyup .inputPDBCode": "usePDBCode",
             });
         },
@@ -38,53 +40,71 @@
             
             var toolbar = wrapperPanel.append("div").attr("class", "csvToolbar");
             
-            toolbar.append("label")
-                .attr("class", "btn btn-1 btn-1a fakeButton")
-                .append("span")
+            toolbar.append("span").html("If you do not provide a FASTA file then your protein IDs <br> must be currently valid UniProt accession numbers.");
+            
+            var fileButtons = ["CSV", "FASTA"];
+            for (var b = 0; b < fileButtons.length; b ++){
+				var fileType = fileButtons[b];
+	            var csvDivSel = toolbar.append("div");
+            
+				
+                csvDivSel//.append("label").attr("class", "btn-1 btn-1a fakeButton")
+					.append("span")
                     //.attr("class", "noBreak")
-                    .text("Select Local CSV File")
+                    .text(fileType + ":")
                     .append("input")
-                        .attr({type: "file", accept: ".txt,.csv", class: "selectCsvButton"})
-            ;
-            toolbar.append("label")
-                .attr("class", "csvFileSelected")
-                .text("No CSV file selected")
-            ;
-             
-            toolbar.append("label")
-                .attr("class", "btn btn-1 btn-1a fakeButton")
-                .append("span")
-                    //.attr("class", "noBreak")
-                    .text("Select Local FASTA File")
-                    .append("input")
-                        .attr({type: "file", accept: ".fasta", class: "selectFastaButton"})
-            ;
-            toolbar.append("label")
-                .attr("class", "csvFileSelected")
-                .text("No CSV file selected")
-            ;
-             
-            toolbar.append("label")
+                        .attr({type: "file", accept: "." + fileType, class: "select" +  fileType + "Button"})
+				;
+							
+			}
+
+            toolbar.append("div").append("label")
                 .attr("class", "btn btn-1 btn-1a")
                 .append("span")
-                    //.attr("class", "noBreak")
+                   // .attr("class", "noBreak")
+                    .attr("class", "uploadButton")
                     .text("Upload")
-                    .append("btn")
+                    //~ .append("button")
                         .attr({class: "uploadButton"})
-                        .property("disabled")
+                        //~ .text("AAARRRR")
+                        //~ .property("disabled")
             ;
             
         },
 
-        
         selectCsvFile: function (evt) {
-            var self = this;
-            var fileObj = evt.target.files[0];
-            CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
-                var blob = new Blob ([pdbFileContents], {type : 'application/text'});
-                var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
-                //self.repopulate ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name});
-            });    
+            this.csvFileObj = evt.target.files[0];
+   
+        },
+                     
+        selectFastaFile: function (evt) {
+            this.fastaFileObj = evt.target.files[0];
+        },
+                
+        uploadFiles: function (evt) {
+			if (!this.csvFileObj) {
+				alert("no CSV file selected");
+			}
+			else {
+				CLMSUI.modelUtils.loadUserFile (this.csvFileObj, function (csvFileContents) {
+					//todo: if no fasta file check  all protein ids  valid uniprot accession
+					if (this.fastaFileObj) {
+						CLMSUI.modelUtils.loadUserFile (this.fastaFileObj, function (fastaFileContents) {
+							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fastaFileContents);
+							//~ this.csvFileObj = null;
+							//~ this.fastaFileObj = null;							
+						});
+					} else {
+						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents);
+						//~ this.csvFileObj = null;
+						//~ this.fastaFileObj = null;
+					} 	
+				});
+				
+				d3.select("#clmsErrorBox").style("display", "none");
+
+			}
+            
         },
         
         render: function () {

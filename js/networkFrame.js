@@ -623,17 +623,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-	CLMSUI.compositeModelInst.listenTo(CLMSUI.vent, "uploadCSV", function(){
-			d3.select("#clmsErrorBox").style("display", "none");
-            //test 
-            d3.text("../test.csv", function (csv) {
-					CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csv);
-					//CLMSUI.compositeModelInst.applyFilter();
-			});
-			
-	});
-
-
     //make sure things that should be hidden are hidden
     CLMSUI.compositeModelInst.trigger ("hiddenChanged");
 };

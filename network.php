@@ -59,6 +59,7 @@
         <link rel="stylesheet" href="./css/filter.css">
         <link rel="stylesheet" href="./css/nglViewBB.css">
         <link rel="stylesheet" href="./css/networkPage.css">
+		<link rel="stylesheet" href="./css/csvUpload.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
