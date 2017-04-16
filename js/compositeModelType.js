@@ -27,7 +27,7 @@
 				
 			}
             
-            var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs;
+            var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
 
             for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];

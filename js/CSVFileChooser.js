@@ -14,11 +14,9 @@
                 parentEvents = parentEvents();
             }
             return _.extend ({}, parentEvents, {
-              //  "click .pdbWindowButton": "launchExternalPDBWindow",
                 "change .selectCSVButton": "selectCsvFile",
                 "change .selectFASTAButton": "selectFastaFile",
                 "click .uploadButton": "uploadFiles",
-              //  "keyup .inputPDBCode": "usePDBCode",
             });
         },
 
@@ -48,9 +46,7 @@
 	            var csvDivSel = toolbar.append("div");
             
 				
-                csvDivSel//.append("label").attr("class", "btn-1 btn-1a fakeButton")
-					.append("span")
-                    //.attr("class", "noBreak")
+                csvDivSel.append("span")
                     .text(fileType + ":")
                     .append("input")
                         .attr({type: "file", accept: "." + fileType, class: "select" +  fileType + "Button"})
@@ -61,13 +57,9 @@
             toolbar.append("div").append("label")
                 .attr("class", "btn btn-1 btn-1a")
                 .append("span")
-                   // .attr("class", "noBreak")
-                    .attr("class", "uploadButton")
-                    .text("Upload")
-                    //~ .append("button")
-                        .attr({class: "uploadButton"})
-                        //~ .text("AAARRRR")
-                        //~ .property("disabled")
+                .attr("class", "uploadButton")
+                .text("Upload")
+                .attr({class: "uploadButton"})
             ;
             
         },
@@ -86,17 +78,22 @@
 				alert("no CSV file selected");
 			}
 			else {
+				var fileInfo = {name: this.csvFileObj.name,
+					size: this.csvFileObj.size,
+					modified: this.csvFileObj.lastModifiedDate.toString(),
+					//path: this.csvFileObj.webkitRelativePath,
+				};
 				CLMSUI.modelUtils.loadUserFile (this.csvFileObj, function (csvFileContents) {
 					//todo: if no fasta file check  all protein ids  valid uniprot accession
 					if (this.fastaFileObj) {
 						CLMSUI.modelUtils.loadUserFile (this.fastaFileObj, function (fastaFileContents) {
-							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fastaFileContents);
-							//~ this.csvFileObj = null;
+							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, this.csvFileObj, fastaFileContents);
+							this.csvFileObj = null;
 							//~ this.fastaFileObj = null;							
 						});
 					} else {
-						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents);
-						//~ this.csvFileObj = null;
+						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo);
+						this.csvFileObj = null;
 						//~ this.fastaFileObj = null;
 					} 	
 				});
