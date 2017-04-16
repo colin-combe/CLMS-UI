@@ -27,14 +27,15 @@
 				
 			}
             
-            var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
+            var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs;
 
             for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];
 				if (filterModel) {
 					crossLink.filteredMatches_pp = [];
 					if (filterModel.get("fdrMode") === true) {
-						var pass;// = filterModel.filterLink (crossLink);
+						// FDR mode
+						var pass;
 						if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
 							var fdr = crossLink.meta.meanMatchScore;
 							var intra = clmsModel.isIntraLink (crossLink);
@@ -63,7 +64,8 @@
 						//~ else {
 							//~ alert("i just failed fdr check");
 						//~ }
-					} else {
+					} else { 
+						//not FDR mode
 						crossLink.ambiguous = true;
 						crossLink.confirmedHomomultimer = false;
 						var matches_pp = crossLink.matches_pp;
@@ -91,13 +93,11 @@
 						}
 					}
 				}
-				else {
+				else { // no filter model, let everything thru
 					crossLink.filteredMatches_pp = crossLink.matches_pp;
 				}
             }
 
-            //HI MARTIN - I'm caching things in these arrays,
-            // its maybe not a very nice design wise, lets look at again 
             this.filteredXLinks = {all: [], targets: [], linears: [], decoysTD: [], decoysDD: []};
 			
 			for (var i = 0; i < clCount; ++i) {
@@ -122,9 +122,9 @@
             }
             //console.log ("xlinks", this.filteredXLinks);
             
+            //hiding linkless participants
             var participantsArr = Array.from(clmsModel.get("participants").values());
-            var participantCount = participantsArr.length;           
-            
+            var participantCount = participantsArr.length;                   
             for (var p = 0; p < participantCount; ++p) {
 				 var participant = participantsArr[p]; 
 				 participant.filteredNotDecoyNotLinearCrossLinks = [];
@@ -194,7 +194,7 @@
                 if (add) {
                     var existingCrossLinks = this.get (modelProperty);
                     crossLinks = crossLinks.concat (existingCrossLinks);
-                    console.log ("excl", existingCrossLinks);
+                    //console.log ("excl", existingCrossLinks);
                 }
                 var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
 

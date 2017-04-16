@@ -200,7 +200,7 @@ CLMSUI.init.modelsEssential = function (options) {
 };
 
 CLMSUI.init.views = function () {
-	//todo: if there is validated {
+	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
     var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel"];

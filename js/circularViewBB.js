@@ -331,6 +331,7 @@
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
+            this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             return this;
         },
 
