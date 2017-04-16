@@ -210,18 +210,16 @@
             }
         },
 
+		//not recursive
         recurseAmbiguity: function (crossLink, crossLinkMap) {
-			// nature of data means it doesn't need to be recursive;
-			// only interested in alternative cross-links of ambiguous matches of this cross-link
-			// -- its because a match with a shorter version of the peptide must already be in the matches of the orignal cross-link
-			
-			// though end result is same (unless something that shouldn't be possible happens) 
-			// changed it not to be recursive
+			// it doesn't need to be recursive;
+			// only interested in alternative cross-links for ambiguous matches of this cross-link
+			// -- its because a more ambiguous match, with a shorter version of the peptide, should already be in the matches of the orignal cross-link
 			 
 			// todo: we might want to highlight smallest possible set of alternatives
-			// i.e. the least ambiguous alternative of the ambiguous alternatives,
-			// this would consistent with other parts of the interface,
-			// e.g. if a cross-link has both ambiguous and non-ambiguous matches it is considered not ambiguous
+			// i.e. the alternative cross-links for the least ambiguous match,
+			// this would consistent with other parts of the interface
+			// e.g. if a cross-link has both ambiguous and non-ambiguous matches it is shown as not ambiguous
 			
 			var filteredMatchesAndPeptidePositions = this.crossLink.filteredMatches_pp;
 			var fm_ppCount = filteredMatchesAndPeptidePositions.length;
