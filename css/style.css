@@ -401,7 +401,7 @@ body, input, select, textarea {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel {
+#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #searchSummaryPanel {
     display:none;
     top:80px;
 }
@@ -409,6 +409,12 @@ body, input, select, textarea {
     left:10px;
     height: 25em;
     width: 30em;
+}
+
+#searchSummaryPanel{
+    left:10px;
+    width:600px;
+    height:600px;
 }
 
 #spectrumPanel{
@@ -444,18 +450,6 @@ body, input, select, textarea {
     left: 40px;
     width: 40em;
     height: 25em;
-}
-
-#fdrPanel {
-/*
-    left: 40px;
-*/
-/*
-    width: 900px;
-*/
-/*
-    height: 9em;
-*/
 }
 
 #clmsErrorBox {

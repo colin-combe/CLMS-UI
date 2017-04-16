@@ -60,6 +60,8 @@
         <link rel="stylesheet" href="./css/nglViewBB.css">
         <link rel="stylesheet" href="./css/networkPage.css">
 		<link rel="stylesheet" href="./css/csvUpload.css">
+		<link rel="stylesheet" href="./css/searchSummary.css">
+		<link rel="stylesheet" href="./css/jquery.jsonview.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -70,9 +72,16 @@
         <script type="text/javascript" src="./vendor/split.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
+<!--
         <script type="text/javascript" src="./vendor/zepto.js"></script>
-        <script type="text/javascript" src="./vendor/backbone.js"></script>
+-->
         <script type="text/javascript" src="./vendor/spin.js"></script>
+<!--
+        arrg, jquerys got in it, it for the json tree view, which we may not keep
+-->
+        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="./vendor/backbone.js"></script>
+		<script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
@@ -119,6 +128,7 @@
         <script type="text/javascript" src="./js/keyViewBB.js"></script>
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
+		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>

@@ -203,7 +203,7 @@ CLMSUI.init.views = function () {
 	//todo: if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -225,7 +225,8 @@ CLMSUI.init.views = function () {
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
+        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName:"searchesShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
@@ -455,6 +456,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
     
+    new CLMSUI.SearchSummaryViewBB ({
+        el: "#searchSummaryPanel",
+        displayEventName: "searchesShow",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+    });
+    
     /* 'cos circle listens to annotation model which is formed from uniprot async data */
     new CLMSUI.CircularViewBB ({
         el: "#circularPanel",
@@ -462,7 +469,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-    
+   
     // Make a drop down menu constructed from the annotations collection
     new CLMSUI.AnnotationDropDownMenuViewBB ({
         el: "#annotationsDropdownPlaceholder",
