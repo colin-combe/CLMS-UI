@@ -525,6 +525,10 @@
             var seqLengthB = seqLengths.lengthB - 1;
             var xStep = 1;//minDim / seqLengthA;
             var yStep = 1;//minDim / seqLengthB;
+            var linkWidth = 3;
+            var linkWidthOffset = (linkWidth - 1) / 2;
+            var xLinkWidth = linkWidth * xStep;
+            var yLinkWidth = linkWidth * yStep;
 
             var proteinIDs = this.getCurrentProteinIDs();
             var alignIDs = this.getAlignIDs (proteinIDs);
@@ -582,11 +586,11 @@
                         } else {
                             ctx.fillStyle = self.resLinkColours[3];
                         }
-                        ctx.fillRect (fromResIndex * xStep, (seqLengthB - toResIndex) * yStep , xStep, yStep);
+                        ctx.fillRect ((fromResIndex * xStep) - linkWidthOffset, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
 
                         // if same chunk of protein on both axes then show reverse link as well
                         if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
-                            ctx.fillRect (toResIndex * xStep, (seqLengthB - fromResIndex) * yStep , xStep, yStep);
+                            ctx.fillRect ((toResIndex * xStep) - linkWidthOffset, ((seqLengthB - fromResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
                         }
                     }
                 }
