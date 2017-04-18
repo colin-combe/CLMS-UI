@@ -454,8 +454,8 @@
         // have slightly different saturation/luminance for each colour so shows up in black & white
         var colourArray = cols.map (function(col, i) {
             col = d3.hsl(col);
-            col.s = 0.4 - (0.1 * i);
-            col.l = 0.85 - (0.1 * i);
+            col.s = 0.4;// - (0.1 * i);
+            col.l = 0.85;// - (0.1 * i);
             return col.rgb();
         });
         
@@ -504,17 +504,20 @@
             var canvasNode = this.canvas.node();
             var ctx = canvasNode.getContext("2d");
             ctx.strokeStyle = "#000";
-            ctx.lineWidth = 0.5;
+            ctx.lineWidth = 1;  // 0.5;
 
             var rangeDomain = this.colourScaleModel.get("colScale").domain();
             var min = rangeDomain[0];
             var max = rangeDomain[1];
             var rangeColours = this.colourScaleModel.get("colScale").range();
             this.resLinkColours = rangeColours.map (function (col, i) {
+                /*
                 col = d3.hsl(col);
                 col.s = 1 - (i * 0.1);
                 col.l = 0.4 - (i * 0.1);
                 return col.rgb();
+                */
+                return col;
             });
             this.resLinkColours.push ("#000");
 
@@ -563,8 +566,8 @@
                         var fromDistArr = distanceMatrix[fromResIndex];
                         var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
 
-                        
-                        if (highlightedCrossLinkIDs.has (crossLink.id)) {
+                        var high = highlightedCrossLinkIDs.has (crossLink.id);
+                        if (high) {
                             ctx.fillStyle = self.options.highlightedColour;
                         }
                         else if (selectedCrossLinkIDs.has (crossLink.id)) {
@@ -587,7 +590,9 @@
                             ctx.fillStyle = self.resLinkColours[3];
                         }
                         ctx.fillRect ((fromResIndex * xStep) - linkWidthOffset, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
-
+                        //if (high) {
+                        //     ctx.strokeRect ((fromResIndex * xStep) - linkWidthOffset + 0.5, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset + 0.5, xLinkWidth - 1, yLinkWidth - 1);
+                        //}
                         // if same chunk of protein on both axes then show reverse link as well
                         if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
                             ctx.fillRect ((toResIndex * xStep) - linkWidthOffset, ((seqLengthB - fromResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
