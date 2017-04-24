@@ -203,7 +203,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "rnaLikePanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -227,6 +227,7 @@ CLMSUI.init.views = function () {
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
         {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName:"searchesShow"},
+        {id: "rnaLikeChkBxPlaceholder", label: "2D RNA-like", eventName:"rnaLikeShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
@@ -466,6 +467,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     new CLMSUI.CircularViewBB ({
         el: "#circularPanel",
         displayEventName: "circularShow",
+        model: CLMSUI.compositeModelInst,
+    });
+    
+	new CLMSUI.RnaLikeViewBB ({
+        el: "#rnaLikePanel",
+        displayEventName: "rnaLikeShow",
         model: CLMSUI.compositeModelInst,
     });
 

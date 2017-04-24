@@ -401,7 +401,7 @@ body, input, select, textarea {
     padding-top:20px;
     padding-bottom:20px;
 }
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #searchSummaryPanel {
+#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #searchSummaryPanel, #rnaLikePanel {
     display:none;
     top:80px;
 }
@@ -451,6 +451,13 @@ body, input, select, textarea {
     width: 40em;
     height: 25em;
 }
+
+#rnaLikePanel{
+    left: 40px;
+    width:700px;
+    height:400px;
+}
+
 
 #clmsErrorBox {
     z-index: 3;

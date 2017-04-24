@@ -62,6 +62,11 @@
 		<link rel="stylesheet" href="./css/csvUpload.css">
 		<link rel="stylesheet" href="./css/searchSummary.css">
 		<link rel="stylesheet" href="./css/jquery.jsonview.css">
+		
+		<link type="text/css" rel="stylesheet" href="http://workmen.biojs.net/github/bene200/drawrnajs/master/style/bootstrap.css">
+		<link type="text/css" rel="stylesheet" href="http://workmen.biojs.net/github/bene200/drawrnajs/master/style/spectrum.css">
+		<link type="text/css" rel="stylesheet" href="http://workmen.biojs.net/github/bene200/drawrnajs/master/style/style.css">
+
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -82,6 +87,8 @@
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
 		<script type="text/javascript" src="./vendor/backbone.js"></script>
 		<script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
+	
+		<script src="https://wzrd.in/bundle/drawrnajs@1.2.6"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
@@ -129,6 +136,7 @@
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
 		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
+		<script type="text/javascript" src="./js/rnaLikeViewBB.js"></script>
 
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
