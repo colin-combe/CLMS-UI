@@ -429,7 +429,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+            var randId = CLMSUI.compositeModelInst.get("clmsModel").getRandomSearchId (match);
             CLMSUI.loadSpectra (match, randId, this.model);
         } else {
             this.model.clear();
