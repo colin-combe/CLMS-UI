@@ -221,15 +221,15 @@
 			// this would consistent with other parts of the interface
 			// e.g. if a cross-link has both ambiguous and non-ambiguous matches it is shown as not ambiguous
 			
-			var filteredMatchesAndPeptidePositions = this.crossLink.filteredMatches_pp;
+			var filteredMatchesAndPeptidePositions = crossLink.filteredMatches_pp;
 			var fm_ppCount = filteredMatchesAndPeptidePositions.length;
 			for (var fm_pp = 0; fm_pp <fm_ppCount; fm_pp++) {
 				var crossLinks = filteredMatchesAndPeptidePositions[fm_pp].match.crossLinks;
 				var clCount = crossLinks.length;
 				
 				for (var cl = 0; cl < clCount; cl++) {
-					var crossLink = crossLinks[cl];
-					crossLinkMap.set (crossLink.id, crossLink);
+					var mCrossLink = crossLinks[cl];
+					crossLinkMap.set (mCrossLink.id, mCrossLink);
 				}
 			}
 			
