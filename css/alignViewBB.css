@@ -30,7 +30,7 @@ DIV.tableWrapper TABLE TH:first-child {
 }
 
 DIV.tableWrapper TABLE TBODY TH:first-child {
-     position: fixed;
+     position: absolute;    /* 'fixed' caused overflow of container */
     overflow: hidden;
     text-overflow: ellipsis;
 }
