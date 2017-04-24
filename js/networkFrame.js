@@ -154,11 +154,15 @@ CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
         "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
     );
+
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
     clmsModelInst.parseJSON(options);
-    /*  Anonymiser for screen shots
+      
+    // Anonymiser for screen shots / videos
+    /*
     clmsModelInst.get("proteins").forEach (function (prot, i) {
         prot.name = "Protein "+(i+1);
+        prot.description = "Protein "+(i+1)+" Description"; 
     });
     */
 

@@ -221,7 +221,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     centerView: function () {
         if (this.model.get("stageModel")) {
-            this.model.get("stageModel").get("structureComp").stage.centerView(true);
+            this.model.get("stageModel").get("structureComp").stage.autoView(1000);
         }
         return this;
     },
@@ -486,8 +486,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "resEmph"
         });
 
-        this.stage.centerView (true);
-        //comp.centerView (true);   // this just seems to 'shrink' (zoom out) the view and not do anything useful
+        this.stage.autoView ();
     },
 
     _initLinkRepr: function() {
@@ -508,6 +507,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: labelSize,
             labelColor: this.displayedDistanceColor,
             labelVisible: this.displayedDistanceVisible,
+            labelUnit: "angstrom",
             scale: baseLinkScale,
             opacity: 1,
             name: "link",
@@ -520,6 +520,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: labelSize,
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
+            labelUnit: "angstrom",
             scale: baseLinkScale * 1.5,
             opacity: 0.6,
             name: "linkEmph",
@@ -532,6 +533,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelSize: labelSize,
             labelColor: this.selectedDistanceColor,
             labelVisible: this.selectedDistanceVisible,
+            labelUnit: "angstrom",
             scale: baseLinkScale * 1.8,
             opacity: 0.4,
             name: "linkHigh",
@@ -636,6 +638,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var bond = pickingData.bond;
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
         var add = (false || this.ctrlKey) && (pickType === 'selection');  // should selection add to current selection?
+        //console.log ("pickingData", pickingData);
 
         if (atom !== undefined && bond === undefined) {
             console.log ("picked atom", atom, atom.resno, atom.chainIndex);
@@ -672,21 +675,37 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             // this line worked with one distance rep, but not with two or more
             // var altBondStore = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
             
+            // match distanceRepresentation object by returning geometry buffer id from picking data and seeing 
+            // which distanceRepresentation has the same geometry buffer - hacky but not as hacky as before
+            var getBondStore = function (geom_id) {
+                var correctLinkRep = [this.linkRepr, this.linkEmphRepr, this.linkHighRepr].filter (function (linkRep) {
+                    return linkRep.repr.cylinderBuffer && linkRep.repr.cylinderBuffer.geometry.uuid === geom_id;
+                })[0];
+                //console.log ("crl", correctLinkRep);
+                return correctLinkRep.repr.dataList[0].bondStore;
+            };
+            /*
             var getBondStore = function (aLinkRepr) {
                 var dl = aLinkRepr.repr.dataList;
+                console.log ("dl", dl);
                 return dl.length ? dl[0].bondStore : {count : 0};
             };
-            
+            */
+            //console.log ("linkReps", this.linkRepr, this.linkEmphRepr, this.linkHighRepr);
+            var bstructure = bond.structure;
+            /*
             var curLinkBondStore = getBondStore (this.linkRepr);    // distance rep bondstore
             var selLinkBondStore = getBondStore (this.linkEmphRepr);    // selected rep bondstore
             var highLinkBondStore = getBondStore (this.linkHighRepr);    // selected rep bondstore
-            var bstructure = bond.structure;
             //console.log ("pp", pickingData.gid, bstructure.atomCount, selLinkBondStore, highLinkBondStore);
             var gid = pickingData.gid - bstructure.atomCount;
             // gids seemed to be assigned to bonds in reverse order by representation
             var altBondStore = (gid > highLinkBondStore.count + selLinkBondStore.count) ?
                 curLinkBondStore : (gid > highLinkBondStore.count ? selLinkBondStore : highLinkBondStore)
             ;
+            */
+            var altBondStore = getBondStore.call (this, pickingData.geom_id);
+            //console.log ("abs", altBondStore);
             
             var ai1 = altBondStore.atomIndex1 [bond.index];
             var ai2 = altBondStore.atomIndex2 [bond.index];
@@ -699,7 +718,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var c1 = rp1.chainIndex;
             var c2 = rp2.chainIndex;
 
-            // r1 and r2 are now correct and I can grab data through the existing crosslinkData interface
+            // rp1 and rp2 are now correct and I can grab data through the existing crosslinkData interface
             // console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
            // var residuesA = crosslinkData.findResidues (r1, bond.atom1.chainIndex);
             //var residuesB = crosslinkData.findResidues (r2, bond.atom2.chainIndex);
@@ -709,7 +728,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (pickType === "selection") {
                 var selectionSelection = this._getSelectionFromResidue (residuesA.concat(residuesB));
                 console.log ("seleSele", selectionSelection);
-                this.structureComp.centerView (true, selectionSelection);
+                this.structureComp.autoView (selectionSelection, 1000);
             }
 
             // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
