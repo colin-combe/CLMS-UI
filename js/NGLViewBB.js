@@ -41,6 +41,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             showResidues: true,
             shortestLinksOnly: true,
             defaultChainRep: "cartoon",
+            defaultResidueColourScheme: "uniform",
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -115,7 +116,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             .property ("selected", function(d) { return d === self.options.defaultChainRep; })
         ;
         
-        // Protein colour scheme dropdown
+        // Residue colour scheme dropdown
         /*
         var mainColours = d3.values (NGL.ColormakerRegistry.getSchemes());
         var ignore = d3.set(["volume"]);
@@ -125,20 +126,24 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr ("class", "btn")
                 .append ("span")
                 .attr("class", "noBreak")
-                .text ("Colouring")
+                .text ("Residue Colouring")
         ;
-        repSection.append("select")
+        colourSection.append("select")
             .on ("change", function () {
                 if (self.xlRepr) {
-                    self.xlRepr.replaceChainRepresentation (d3.event.target.value);
+                    console.log ("RESREPR", self.xlRepr.resRepr);
+                    var val = d3.event.target.value;
+                    console.log ("US", val);
+                    self.xlRepr.resRepr.setParameters ({colorScheme: val});
+                    self.xlRepr.sstrucRepr.setParameters ({colorScheme: val});
                 }
             })
             .selectAll("option")
-            .data (mainReps)
+            .data (mainColours)
             .enter()
             .append("option")
             .text (function(d) { return d; })
-            .property ("selected", function(d) { return d === self.options.defaultChainRep; })
+            .property ("selected", function(d) { return d === self.options.defaultResidueColourScheme; })
         ;
         */
 
@@ -476,7 +481,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             //color: this.sstrucColor,
             //colorScheme: "chainname",
             //colorScheme: "hydrophobicity",
-            //colorScheme: this.colorOptions.resHydroColourScheme,
+            //colorScheme: this.colorOptions.userResColourScheme,
             colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
             name: "sstruc",
             opacity: 0.67,
@@ -497,7 +502,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
-            colorScheme: this.colorOptions.resHydroColourScheme,
+            colorScheme: this.colorOptions.userResColourScheme,
             //colorScheme: "hydrophobicity",
             //colorScale: ["#44f", "#444"],
             scale: 0.6,
@@ -631,7 +636,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
         
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme (linkColourScheme, "xlink");
-        this.colorOptions.resHydroColourScheme = NGL.ColormakerRegistry.addScheme (hscheme, "newHydro");
+        this.colorOptions.userResColourScheme = NGL.ColormakerRegistry.addScheme (hscheme, "newHydro");
         
         console.log ("this", this);
     },
