@@ -81,6 +81,8 @@ var allDataLoaded = _.after (3, function() {
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
     ByRei_dynDiv.init.main();
+
+    CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 });
 
 CLMSUI.init = CLMSUI.init || {};
@@ -191,7 +193,8 @@ CLMSUI.init.modelsEssential = function (options) {
         groupColours: null // will be d3.scale for colouring by search/group
     });
 
-    CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
+	//moving this to end of allDataLoaded
+    //CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
     // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
     // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
@@ -390,7 +393,7 @@ CLMSUI.init.viewsEssential = function (options) {
                     } else {
                         var altModel = new window.CLMS.model.SearchResultsModel ();
                         altModel.parseJSON(json);
-                        CLMSUI.modelUtils.addDecoyFunctions (altModel); // mjg. needed.
+                        var allCrossLinks = Array.from(altModel.get("crossLinks").values());
                         // empty selection first
                         // (important or it will crash coz selection contains links to proteins not in clms model)
                         self.alternativesModel
@@ -429,7 +432,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = CLMSUI.compositeModelInst.get("clmsModel").getRandomSearchId (match);
+            var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
             CLMSUI.loadSpectra (match, randId, this.model);
         } else {
             this.model.clear();
