@@ -114,7 +114,33 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             .text (function(d) { return d; })
             .property ("selected", function(d) { return d === self.options.defaultChainRep; })
         ;
-
+        
+        // Protein colour scheme dropdown
+        /*
+        var mainColours = d3.values (NGL.ColormakerRegistry.getSchemes());
+        var ignore = d3.set(["volume"]);
+        mainColours = mainColours.filter (function (rep) { return ! ignore.has (rep);});
+        var colourSection = toolbar
+            .append ("label")
+            .attr ("class", "btn")
+                .append ("span")
+                .attr("class", "noBreak")
+                .text ("Colouring")
+        ;
+        repSection.append("select")
+            .on ("change", function () {
+                if (self.xlRepr) {
+                    self.xlRepr.replaceChainRepresentation (d3.event.target.value);
+                }
+            })
+            .selectAll("option")
+            .data (mainReps)
+            .enter()
+            .append("option")
+            .text (function(d) { return d; })
+            .property ("selected", function(d) { return d === self.options.defaultChainRep; })
+        ;
+        */
 
 
         this.chartDiv = flexWrapperPanel.append("div")
