@@ -14,11 +14,6 @@ CLMSUI.modelUtils = {
         };
         return arrs;
     },
-    
-   // lots of scores, what's the extent (min and max values)?
-    getScoreExtent: function (matchesArr) {
-        return d3.extent (matchesArr, function(d) { return d.sc; });
-    },
      
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
@@ -285,79 +280,7 @@ CLMSUI.modelUtils = {
         }
         return pairings;
     },
-    
- /*   aggregateCrossLinkFilteredMatches: function (xlinkarr) {
-        var nestedArr = xlinkarr.map (function (xlink) {
-            return xlink.filteredMatches_pp;
-        });
-        return [].concat.apply([], nestedArr); //bad things happen for search inc decoys
-    }, */
-    
-    getRandomSearchId : function (clmsModel, match) {
-        var searchId = match.searchId;
-        var searchMap = clmsModel.get("searches");
-        var searchData = searchMap.get(searchId);
-        var randId = searchData.random_id;    
-        return randId;
-    },
-    
-    addDecoyFunctions: function (clmsBBModel, prefixes) {
-        // Make map of reverse/random decoy proteins to real proteins
-        prefixes = prefixes || ["REV_", "RAN_"];
-        var prots = clmsBBModel.get("proteins");
-        var nameMap = d3.map ();
-        var accessionMap = d3.map ();
-        prots.forEach (function (prot) {
-            nameMap.set (prot.name, prot.id);
-            accessionMap.set (prot.accession, prot.id);
-        });
-        var decoyToRealMap = d3.map ();
-        var decoys = prots.filter(function (p) { return p.is_decoy; });
-        decoys.forEach (function (decoyProt) {
-            prefixes.forEach (function (pre) {
-                var realProtIDByName = nameMap.get (decoyProt.name.substring(pre.length));
-                var realProtIDByAccession = accessionMap.get (decoyProt.accession.substring(pre.length));
-                if (realProtIDByName && realProtIDByAccession) {
-                    decoyToRealMap.set (decoyProt.id, realProtIDByName);
-                }
-            });  
-        });
-        
-        clmsBBModel.decoyToRealProteinMap = decoyToRealMap;
-        clmsBBModel.getRealProteinID = function (decoyProteinID) {
-            return this.decoyToRealProteinMap.get (decoyProteinID);
-        };
-        clmsBBModel.isMatchingProteinPair = function (prot1, prot2) {
-            if (prot1.id === prot2.id) { return true; }
-            var p1decoy = prot1.is_decoy;
-            if (p1decoy === prot2.is_decoy) {   // won't be matching real+decoy pair if both are real or both are decoys  
-                return false;
-            }
-            var decoy = p1decoy ? prot1 : prot2;
-            var real = p1decoy ? prot2 : prot1;
-            return this.getRealProteinID(decoy.id) === real.id;
-        };
-        clmsBBModel.isMatchingProteinPairFromIDs = function (prot1ID, prot2ID) {
-            if (prot1ID === prot2ID) { return true; }
-            var prot1 = this.get("participants").get(prot1ID);
-            var prot2 = this.get("participants").get(prot2ID);
-            return this.isMatchingProteinPair (prot1, prot2);
-        };
-        clmsBBModel.isIntraLink = function (crossLink) {
-            return (crossLink.toProtein && this.isMatchingProteinPair (crossLink.toProtein, crossLink.fromProtein));
-        };
-        clmsBBModel.realProteinCount = prots.length - decoys.length;
-        
-        var crosslinkArray = Array.from (clmsBBModel.get("crossLinks"));
-        clmsBBModel.set("ambiguousPresent", crosslinkArray.some (function (xlink) { return xlink.ambiguous; }));
-        clmsBBModel.set("unvalidatedPresent", clmsBBModel.get("matches").some (function (match) {
-            return !match.autovalidated && !match.validated;
-        }));
-        clmsBBModel.set("linearsPresent", clmsBBModel.get("matches").some (function (match) {
-            return match.linkPos1 === 0;
-        }));
-    },
-    
+     
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
         return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
     },
