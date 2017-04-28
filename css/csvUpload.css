@@ -1,0 +1,13 @@
+#csvPanel {
+	left:750px;
+}
+/*
+#csvPanel > div.panelInner > div > label
+*/
+.csvToolbar .btn {
+	margin: 0px 0px 0px 0px;
+}
+
+.csvToolbar div {
+	margin: 10px 0px 2px 0px;
+}

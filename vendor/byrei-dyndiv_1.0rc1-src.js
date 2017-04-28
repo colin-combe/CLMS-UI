@@ -781,6 +781,9 @@ var ByRei_dynDiv = {
       var
        new_left = ByRei_dynDiv.cache.pos.left - (ByRei_dynDiv.cache.init.pos.left - ByRei_dynDiv.db(4)),
        new_top  = ByRei_dynDiv.cache.pos.top - (ByRei_dynDiv.cache.init.pos.top - ByRei_dynDiv.db(5));
+       
+       // hack to stop panel going behind top bar - cc
+       if (new_top < 39) {new_top = 39;}
 
       // Check for Div Limit
       if (ByRei_dynDiv.db(1)) {

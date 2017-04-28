@@ -23,7 +23,7 @@ CLMSUI.vent = {};
 _.extend (CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after (3, function() { //now 3 synchs? questions about this... - cc
+var allDataLoaded = _.after (3, function() {
     console.log ("DATA LOADED AND WINDOW LOADED");
 	
 	CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
@@ -152,36 +152,28 @@ CLMSUI.init.modelsEssential = function (options) {
 
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
-        "No cross-links detected for this search.<br>Please return to the search history page."
+        "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
     );
-    var clmsModelInst = new window.CLMS.model.SearchResultsModel (options);
+
+    var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
+    clmsModelInst.parseJSON(options);
       
     // Anonymiser for screen shots / videos
-    
     /*
     clmsModelInst.get("proteins").forEach (function (prot, i) {
         prot.name = "Protein "+(i+1);
         prot.description = "Protein "+(i+1)+" Description"; 
     });
     */
-    
-    CLMSUI.modelUtils.addDecoyFunctions (clmsModelInst);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),
-        betweenLinks: clmsModelInst.realProteinCount > 1,
+        betweenLinks: true,//clmsModelInst.realProteinCount > 1,
         AUTO: clmsModelInst.get("autoValidatedPresent"),
-        matchScoreCutoff: CLMSUI.modelUtils.getScoreExtent (clmsModelInst.get("rawMatches")).map (function(ex,i) {
-            return Math[i === 0 ? "floor" : "ceil"](ex);
-        }),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        // BUG: clmsModelInst doesn't have min or max scores
-         // set original cutoff to be the extent of all scores (rounded up and down nicely)
-        // matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
-        //Math.ceil(clmsModelInst.get("maxScore"))],
-
-         scores: clmsModelInst.get("scores")
+        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
+            Math.ceil(clmsModelInst.get("maxScore"))],
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
@@ -209,17 +201,13 @@ CLMSUI.init.modelsEssential = function (options) {
         this.applyFilter();
     });
 
-    /*CLMSUI.compositeModelInst.listenTo (filterModelInst, "change:fdrThreshold", function() {
-		alert("threshold Change");
-        //this.applyFilter();
-    });*/
-
 };
 
 CLMSUI.init.views = function () {
+	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -241,8 +229,8 @@ CLMSUI.init.views = function () {
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow"},
-        //~ {id: "fdrChkBxPlaceholder", label: "FDR Calc", eventName:"fdrShow"},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
+        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName:"searchesShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
@@ -269,6 +257,7 @@ CLMSUI.init.views = function () {
     // Generate buttons for load dropdown
     var buttonData = [
         {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
+        {id: "csvUploadPlaceholder", label: "CSV", eventName:"csvShow"},
     ];
     buttonData.forEach (function (bdata) {
         var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
@@ -310,13 +299,17 @@ CLMSUI.init.viewsEssential = function (options) {
         model: filterModel,
         myOptions: {
             hide: {
+				//todo: reinstate sensible hiding of controls, need listeners on these attributes
+                //temp hack - dont hide anything, data may change when csv uploaded
+                /*
                 "selfLinks": singleRealProtein,
                 "betweenLinks": singleRealProtein,
                 "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
-                //"ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
+                "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
                 "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
                 "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
                 "protNames": singleRealProtein,
+                */
             }
         }
     });
@@ -376,9 +369,6 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    //~ selectionViewer.setVisible (true);
-    // selectionViewer.render();
-
     var spectrumModel = new AnnotatedSpectrumModel();
 
     var spectrumWrapper = new SpectrumViewWrapper ({
@@ -398,10 +388,9 @@ CLMSUI.init.viewsEssential = function (options) {
                     if (error) {
                         console.log ("error", error, "for", url);
                     } else {
-                        console.log (json);
-                        var altModel = new window.CLMS.model.SearchResultsModel (json);
+                        var altModel = new window.CLMS.model.SearchResultsModel ();
+                        altModel.parseJSON(json);
                         CLMSUI.modelUtils.addDecoyFunctions (altModel); // mjg. needed.
-                        var allCrossLinks = Array.from(altModel.get("crossLinks").values());
                         // empty selection first
                         // (important or it will crash coz selection contains links to proteins not in clms model)
                         self.alternativesModel
@@ -440,52 +429,14 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = CLMSUI.modelUtils.getRandomSearchId (CLMSUI.compositeModelInst.get("clmsModel"), match);
+            var randId = CLMSUI.compositeModelInst.get("clmsModel").getRandomSearchId (match);
             CLMSUI.loadSpectra (match, randId, this.model);
         } else {
             this.model.clear();
         }
     });
 
-//seems like this somehow got duplicated?
-    
-/*
-    spectrumWrapper.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-        if (match) {
-            spectrumWrapper.primaryMatch = match; // the 'dynamic_rank = true' match
-            var url = "./loadData.php?sid="
-                    + CLMSUI.compositeModelInst.get("clmsModel").get("sid")
-                    + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
-            d3.json (url, function(error, json) {
-                if (error) {
-                    console.log ("error", error, "for", url);
-                } else {
-                    console.log(json);
-                    var altModel = new window.CLMS.model.SearchResultsModel (json);
-                    var allCrossLinks = Array.from(altModel.get("crossLinks").values());
-                    // empty selection first
-                    // (important or it will crash coz selection contains links to proteins not in clms model)
-                    spectrumWrapper.alternativesModel.set("selection", []);
-                    spectrumWrapper.alternativesModel.set("clmsModel", altModel);
-                    spectrumWrapper.alternativesModel.applyFilter();
-                    spectrumWrapper.alternativesModel.set ("lastSelectedMatch", {match: match, directSelection: true});
-                    if (altModel.get("matches").length == 1) {
-                        d3.select("#alternatives").style("display", "none");
-                        spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-                    } else {
-                        d3.select("#alternatives").style("display", "block");
-                        spectrumWrapper.alternativesModel.set("selection", allCrossLinks);
-                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-                    }
-                }
-            });
-        } else {
-            //~ //this.model.clear();
-        }
-    });
-*/
-        // Generate data export drop down
+    // Generate data export drop down
     new CLMSUI.DropDownMenuViewBB ({
         el: "#expDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
@@ -493,7 +444,7 @@ CLMSUI.init.viewsEssential = function (options) {
             title: "Data-Export",
             menu: [
                 {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount} /*, {name: "SVG", func: downloadSVG}*/
+                {name: "Residues", func: downloadResidueCount}
             ]
         }
     });
@@ -509,6 +460,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
     
+    new CLMSUI.SearchSummaryViewBB ({
+        el: "#searchSummaryPanel",
+        displayEventName: "searchesShow",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+    });
+    
     /* 'cos circle listens to annotation model which is formed from uniprot async data */
     new CLMSUI.CircularViewBB ({
         el: "#circularPanel",
@@ -516,7 +473,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-    
+   
     // Make a drop down menu constructed from the annotations collection
     new CLMSUI.AnnotationDropDownMenuViewBB ({
         el: "#annotationsDropdownPlaceholder",
@@ -646,6 +603,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#pdbPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "pdbShow",
+        myOptions: {
+            initialPdbCode: CLMSUI.firstPdbCode,
+        }
+    });
+    
+	new CLMSUI.CSVFileChooserBB ({
+        el: "#csvPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "csvShow",
         myOptions: {
             initialPdbCode: CLMSUI.firstPdbCode,
         }
