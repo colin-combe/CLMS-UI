@@ -330,11 +330,6 @@ if (count($_GET) > 0) {
     $endTime = microtime(true);
     //~ echo '/*php time: '.($endTime - $startTime)."ms\n\n";
 
-    $proteinIdField = "hp.protein_id";
-    if (count($searchId_randGroup) > 1) {
-        $proteinIdField = "p.accession_number";
-    }
-
     /*
      * SPECTRUM SOURCES
      */
@@ -362,7 +357,10 @@ if (count($_GET) > 0) {
         $endTime = microtime(true);
     }
 
-
+	$proteinIdField = "hp.protein_id";
+    if (count($searchId_randGroup) > 1) {
+        $proteinIdField = "p.accession_number";
+    }
 
     /*
      * PEPTIDES
@@ -373,15 +371,15 @@ if (count($_GET) > 0) {
     } else {
         $implodedPepIds = '('.implode(array_keys($peptideIds), ",").')';
         $query = "SELECT pep.id, (array_agg(pep.sequence))[1] as sequence,
-            array_agg(".$proteinIdField.") as proteins, array_agg(hp.peptide_position + 1) as positions
+            array_agg(".$proteinIdField.") as proteins, array_agg(hp.protein_id) as test, array_agg(hp.peptide_position + 1) as positions
             FROM (SELECT id, sequence FROM peptide WHERE id IN "
                     .$implodedPepIds.") pep
             INNER JOIN (SELECT peptide_id, protein_id, peptide_position
             FROM has_protein WHERE peptide_id IN "
                     .$implodedPepIds.") hp ON pep.id = hp.peptide_id ";
-        if (count($searchId_randGroup) > 1) {
+        //if (count($searchId_randGroup) > 1) {
             $query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
-        }
+        //}
         $query = $query."GROUP BY pep.id;";
         $startTime = microtime(true);
         $res = pg_query($query) or die('Query failed: ' . pg_last_error());
@@ -393,20 +391,24 @@ if (count($_GET) > 0) {
         while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
                 $proteins = $line["proteins"];
                 $proteinsArray = explode(",",substr($proteins, 1, strlen($proteins) - 2));
-                $c = count($proteinsArray);
-                foreach ($proteinsArray as $v) {
-                    $proteinIds[$v] = 1;
+                //$c = count($proteinsArray);
+                $dbProteinIds = $line["test"];
+                $dbProteinsArray = explode(",", substr($dbProteinIds, 1, strlen($dbProteinIds) - 2));
+                foreach ($dbProteinsArray as $v) {
+                    $dbIds[$v] = 1;
                 }
                 $positions = $line['positions'];
                 echo '{"id":' . $line["id"] . ','
                     . '"seq_mods":"' . $line["sequence"] . '",'
                     . '"prt":["' . implode($proteinsArray, '","') . '"],'
+                  //  . '"dbPrtIds":["' . implode($dbProteinsArray, '","') . '"],'
                     . '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']'
                     . "}";
                 $line = pg_fetch_array($res, null, PGSQL_ASSOC);
                 if ($line) {echo ",\n";}
                 }
         echo "\n],\n";
+       // echo "" .implode(array_keys($dbIds), "','");
         $endTime = microtime(true);
         //~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
 
@@ -420,11 +422,11 @@ if (count($_GET) > 0) {
             $proteinIdField = "accession_number";
         }
 
-        $query = "SELECT ".$proteinIdField." AS id,
+        $query = "SELECT ".$proteinIdField." AS id, protein.id as real_id, 
                 CASE WHEN name IS NULL OR name = '' OR name = 'REV_' OR name = 'RAN_' THEN accession_number
                 ELSE name END AS name,
                 description, accession_number, sequence, is_decoy
-                FROM protein WHERE ".$proteinIdField." IN ('".implode(array_keys($proteinIds), "','")."')";
+                FROM protein WHERE id IN ('".implode(array_keys($dbIds), "','")."')";
         $startTime = microtime(true);
         $res = pg_query($query) or die('Query failed: ' . pg_last_error());
         $endTime = microtime(true);
@@ -438,6 +440,7 @@ if (count($_GET) > 0) {
                 //~ echo '"' . $pId . '":{'
                 echo '{'
                     . '"id":"' . $pId . '",'
+                    . '"real_id":"' . $line["real_id"] . '",'
                     . '"name":"' . $line["name"] . '",'
                     . '"description":"' . $line["description"] . '",'
                     . '"accession":"' .$line["accession_number"]  . '",'
