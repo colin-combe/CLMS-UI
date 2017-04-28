@@ -193,8 +193,8 @@ CLMSUI.init.modelsEssential = function (options) {
         groupColours: null // will be d3.scale for colouring by search/group
     });
 
-	//moving this to end of allDataLoaded
-    //CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
+	//moving this to end of allDataLoaded - think validation page needs this, TODO, check
+    CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
     // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
     // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
