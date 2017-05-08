@@ -93,7 +93,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // Protein view type dropdown
         var mainReps = NGL.RepresentationRegistry.names.slice().sort();
-        var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell"]);
+        var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"]);
         mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
         var repSection = toolbar
             .append ("label")
@@ -117,35 +117,38 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         ;
         
         // Residue colour scheme dropdown
-        /*
-        var mainColours = d3.values (NGL.ColormakerRegistry.getSchemes());
-        var ignore = d3.set(["volume"]);
-        mainColours = mainColours.filter (function (rep) { return ! ignore.has (rep);});
+        
+        var mainColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
+        var ignore = d3.set(["volume", "geoquality", "moleculetype", "occupancy", "random", "sstruc", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
+        var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name"};
+        mainColourSchemes = mainColourSchemes.filter (function (rep) { return ! ignore.has (rep);});
         var colourSection = toolbar
             .append ("label")
             .attr ("class", "btn")
                 .append ("span")
                 .attr("class", "noBreak")
-                .text ("Residue Colouring")
+                .text ("Colour By")
         ;
         colourSection.append("select")
             .on ("change", function () {
                 if (self.xlRepr) {
-                    console.log ("RESREPR", self.xlRepr.resRepr);
-                    var val = d3.event.target.value;
-                    console.log ("US", val);
-                    self.xlRepr.resRepr.setParameters ({colorScheme: val});
-                    self.xlRepr.sstrucRepr.setParameters ({colorScheme: val});
+                    console.log ("val", d3.event.target.value, d3.event.target);
+                    var index = d3.event.target.selectedIndex;
+                    var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform"};
+                    console.log ("schemeObj", schemeObj);
+                    self.xlRepr.colorOptions.userResColourScheme = schemeObj.colorScheme;
+                    self.xlRepr.resRepr.setParameters (schemeObj);
+                    self.xlRepr.sstrucRepr.setParameters (schemeObj);
                 }
             })
             .selectAll("option")
-            .data (mainColours)
+            .data (mainColourSchemes)
             .enter()
             .append("option")
-            .text (function(d) { return d; })
+            .text (function(d) { return aliases[d] || d; })
             .property ("selected", function(d) { return d === self.options.defaultResidueColourScheme; })
         ;
-        */
+        
 
 
         this.chartDiv = flexWrapperPanel.append("div")
@@ -479,10 +482,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         this.sstrucRepr = this.structureComp.addRepresentation (newType, {
             //color: this.sstrucColor,
-            //colorScheme: "chainname",
             //colorScheme: "hydrophobicity",
-            //colorScheme: this.colorOptions.userResColourScheme,
-            colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
+            colorScheme: this.colorOptions.userResColourScheme,
+            //colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
             name: "sstruc",
             opacity: 0.67,
             side: "front",
@@ -614,8 +616,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 if (!origLinkId) {
                      origLinkId = self.origIds[b.atom2.resno+"-"+b.atom1.resno];
                 }
-                var link = self.crosslinkData.getModel().get("clmsModel").get("crossLinks").get(origLinkId);
-                var colRGBString = self.crosslinkData.getModel().get("linkColourAssignment").getColour(link);   // returns an 'rgb(r,g,b)' string
+                var model = self.crosslinkData.getModel();
+                var link = model.get("clmsModel").get("crossLinks").get(origLinkId);
+                var colRGBString = model.get("linkColourAssignment").getColour(link);   // returns an 'rgb(r,g,b)' string
                 var col24bit = colCache[colRGBString];
                 if (col24bit === undefined) {
                     var col3 = d3.rgb (colRGBString);
@@ -627,6 +630,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
         
         // Hydrophobicity scheme but with red-blue colour scale
+        /*
         var hscheme = function () {
             var underScheme =  NGL.ColormakerRegistry.getScheme ({scheme: "hydrophobicity", scale:"RdBu"});
             
@@ -634,9 +638,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 return underScheme.atomColor (a);
             };
         };
+        */
         
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme (linkColourScheme, "xlink");
-        this.colorOptions.userResColourScheme = NGL.ColormakerRegistry.addScheme (hscheme, "newHydro");
+        this.colorOptions.userResColourScheme = "uniform"; // NGL.ColormakerRegistry.getScheme ({scheme: "uniform"});
         
         console.log ("this", this);
     },
@@ -649,9 +654,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this._handlePicking (pickingData, "selection");   
     },
     
-    makeTooltipCoords: function (mouseCoord) {
-        var coff = $("#nglPanel canvas").offset();
-        return {pageX: coff.left + mouseCoord.x, pageY: coff.top + (coff.height - mouseCoord.y)}; // y is inverted in canvas
+    makeTooltipCoords: function (nglMouseCoord) {
+        var canv = $("#nglPanel canvas");
+        var coff = canv.offset();
+        return {pageX: coff.left + nglMouseCoord.x, pageY: coff.top + (canv.height() - nglMouseCoord.y)}; // y is inverted in canvas
     },
     
     getOriginalCrossLinks: function (nglCrossLinks) {
@@ -692,6 +698,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 
                 var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
                 var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
+                console.log ("pdd", pickingData.canvasPosition);
                 crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))
