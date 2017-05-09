@@ -532,14 +532,16 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
-        sequences.forEach (function (entry) {
-            this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
-        }, this);
-        // this triggers an event to say loads has changed in the alignment collection
-        // more efficient to listen to that then redraw/recalc for every seq addition
-        this.bulkAlignChangeFinished ();
+        if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
+            sequences.forEach (function (entry) {
+                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
+            }, this);
+            // this triggers an event to say loads has changed in the alignment collection
+            // more efficient to listen to that then redraw/recalc for every seq addition
+            this.bulkAlignChangeFinished ();
 
-        console.log ("3D sequences poked to collection", this);
+            console.log ("3D sequences poked to collection", this);
+        }
     });
 
     new CLMSUI.DistogramBB ({

@@ -76,8 +76,16 @@
             this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white"});
             console.log ("STAGE", this.stage);
             // populate 3D network viewer if hard-coded pdb id present
+            
+            this.listenTo (this.model, "3dsync", function (sequences) {
+                var count = sequences && sequences.length ? sequences.length : 0;
+                var msg = count ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
+                    : "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
+                mainDivSel.select(".nglMessagebar").text(msg);    
+            });
+            
             if (this.options.initialPdbCode) { 
-                this.repopulate ({pdbCode: this.options.initialPdbCode});
+                CLMSUI.modelUtils.repopulateNGL ({pdbCode: this.options.initialPdbCode, stage: this.stage, bbmodel: this.model});
             }
         },
         
@@ -110,7 +118,7 @@
             CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
                 var blob = new Blob ([pdbFileContents], {type : 'application/text'});
                 var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
-                self.repopulate ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name});
+                CLMSUI.modelUtils.repopulateNGL ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name, stage: self.stage, bbmodel: self.model});
             });    
         },
         
@@ -118,126 +126,9 @@
             if (evt.keyCode === 13) {   // when return key pressed
                 var pdbCode = evt.target.value;
                 if (pdbCode && pdbCode.length === 4) {
-                    this.repopulate ({pdbCode: pdbCode});
+                    CLMSUI.modelUtils.repopulateNGL ({pdbCode: pdbCode, stage: this.stage, bbmodel: this.model});
                 }
             }
-        },
-        
-        // Nice web-servicey way of doing ngl chain to clms protein matching
-        // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
-        // Therefore, current default is to use sequence matching to detect similarities
-        matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
-            $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
-                function (data, status, xhr) {                   
-                    if (status === "success") {
-                        var map = [];
-                        $(data).find("block").each (function(i,b) { 
-                            var segArr = $(this).find("segment[intObjectId]"); 
-                            for (var n = 0; n < segArr.length; n += 2) {
-                                var id1 = $(segArr[n]).attr("intObjectId");
-                                var id2 = $(segArr[n+1]).attr("intObjectId");
-                                var pdbis1 = _.includes(id1, ".") || id1.charAt(0) !== 'P';
-                                map.push (pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1});
-                            }
-                        });
-                        console.log ("map", map, nglSequences);
-                        if (callback) {
-                            var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
-                            
-                            map.forEach (function (mapping) {
-                                var dotIndex = mapping.pdb.indexOf(".");
-                                var chainName = dotIndex >= 0 ? mapping.pdb.slice(dotIndex + 1) : mapping.pdb.slice(-1);    // bug fix 27/01/17
-                                var matchSeqs = nglSequences.filter (function (seqObj) {
-                                    return seqObj.chainName === chainName;    
-                                });
-                                mapping.seqObj = matchSeqs[0]; 
-                                var matchingInteractors = interactors.filter (function(i) {
-                                    var minLength = Math.min (i.accession.length, mapping.uniprot.length);
-                                    return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
-                                });
-                                mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
-                            });
-                            map = map.filter (function (mapping) { return mapping.id !== "none"; });
-                            callback (map);
-                        }
-                    } 
-                }
-            ); 
-        },
-        
-        repopulate: function (pdbInfo) {
-            this.stage.removeAllComponents();   // necessary to remove old stuff so old sequences don't pop up in sequence finding
-            
-            pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
-            var self = this;
-            
-            var params = {};    // {sele: ":A"};    // show just 'A' chain
-            if (pdbInfo.ext) {
-                params.ext = pdbInfo.ext;
-            }
-            var uri = pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents;
-            this.stage.loadFile (uri, params)
-                .then (function (structureComp) {
-                    var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (self.stage);
-                    var interactorMap = self.model.get("clmsModel").get("participants");
-                    var interactorArr = Array.from (interactorMap.values());
-                    // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
-                    if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
-                        self.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-                            //console.log ("pdbUniProtMap", pdbUniProtMap);
-                            sequenceMapsAvailable (pdbUniProtMap);
-                        });
-                    }
-                    else {  // without access to pdb codes have to match comparing all proteins against all chains
-                        var protAlignCollection = self.model.get("alignColl");
-                        var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
-                            function(sObj) { return sObj.data; }
-                        );
-                        sequenceMapsAvailable (pdbUniProtMap);
-                    }
-                
-                    // bit to continue onto after ngl protein chain to clms protein matching has been done
-                    function sequenceMapsAvailable (sequenceMap) {
-                        
-                        if (sequenceMap && sequenceMap.length) {
-                            var slen = sequenceMap.length;
-                            d3.select(self.el).select(".nglMessagebar").text(slen+" sequence"+(slen > 1 ? "s": "")+" mapped between this search and the loaded pdb file.");
-                            self.chainMap = {};
-                            sequenceMap.forEach (function (pMatch) {
-                                pMatch.data = pMatch.seqObj.data;
-                                pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
-                                self.chainMap[pMatch.id] = self.chainMap[pMatch.id] || [];
-                                self.chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
-                                pMatch.otherAlignSettings = {semiLocal: true};
-                            });
-                            console.log ("chainmap", self.chainMap, "stage", self.stage, "\nhas sequences", sequenceMap);
-
-                            if (self.model.get("stageModel")) {
-                                 self.model.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
-                            }
-                            self.model.trigger ("3dsync", sequenceMap);
-                            // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
-
-                            // Make a new model and set of data ready for the ngl viewer
-                            var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
-                            crosslinkData.set({
-                                structureComp: structureComp, 
-                                chainMap: self.chainMap, 
-                                pdbBaseSeqID: pdbInfo.baseSeqId, 
-                                masterModel: self.model,
-                            });
-                            self.model.set ("stageModel", crosslinkData);
-                            // important that the new model is set first ^^^ before we setupLinks() on the model
-                            // otherwise the listener in the 3d viewer is still pointing to the old model when the
-                            // changed:linklist event is received. (i.e. it broke the other way round)
-                            crosslinkData.setupLinks (self.model.get("clmsModel"));
-                        }
-                        else {
-                            d3.select(self.el).select(".nglMessagebar").text("No sequences matches found between this search and the loaded pdb file. Please check the pdb file is correct.");
-                        }
-                    }
-                })
-            ;  
         },
 
         render: function () {

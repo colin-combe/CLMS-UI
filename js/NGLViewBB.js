@@ -41,7 +41,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             showResidues: true,
             shortestLinksOnly: true,
             defaultChainRep: "cartoon",
-            defaultResidueColourScheme: "uniform",
+            defaultColourScheme: "uniform",
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -134,9 +134,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 if (self.xlRepr) {
                     console.log ("val", d3.event.target.value, d3.event.target);
                     var index = d3.event.target.selectedIndex;
-                    var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform"};
-                    console.log ("schemeObj", schemeObj);
-                    self.xlRepr.colorOptions.userResColourScheme = schemeObj.colorScheme;
+                    var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: null};
+                    // made colorscale null to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)
+                    self.options.defaultColourScheme = schemeObj.colorScheme;
                     self.xlRepr.resRepr.setParameters (schemeObj);
                     self.xlRepr.sstrucRepr.setParameters (schemeObj);
                 }
@@ -146,7 +146,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             .enter()
             .append("option")
             .text (function(d) { return aliases[d] || d; })
-            .property ("selected", function(d) { return d === self.options.defaultResidueColourScheme; })
+            .property ("selected", function(d) { return d === self.options.defaultColourScheme; })
         ;
         
 
@@ -213,6 +213,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 sstrucColor: "gray",
                 displayedDistanceColor: "gray",
                 displayedDistanceVisible: this.options.labelVisible,
+                defaultColourScheme: this.options.defaultColourScheme,
             }
         );
 
@@ -355,6 +356,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
 
     var defaults = {
+        defaultColourScheme: "uniform",
         defaultChainRep: "cartoon",
         sstrucColor: "wheat",
         displayedDistanceColor: "grey",
@@ -390,7 +392,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.origIds = {};
         
         this.colorOptions = {};
-        this._initColorSchemes();
+        this._initColorSchemes ();
         this._initStructureRepr();
         this._initLinkRepr();
         this._initLabelRepr();
@@ -483,7 +485,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.sstrucRepr = this.structureComp.addRepresentation (newType, {
             //color: this.sstrucColor,
             //colorScheme: "hydrophobicity",
-            colorScheme: this.colorOptions.userResColourScheme,
+            colorScheme: this.defaultColourScheme,
             //colorScale: ["#e0e0ff", "lightgrey", "#e0e0ff", "lightgrey"],
             name: "sstruc",
             opacity: 0.67,
@@ -504,7 +506,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
-            colorScheme: this.colorOptions.userResColourScheme,
+            colorScheme: this.defaultColourScheme,
             //colorScheme: "hydrophobicity",
             //colorScale: ["#44f", "#444"],
             scale: 0.6,
@@ -601,7 +603,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
     },
 
-    _initColorSchemes: function() {
+    _initColorSchemes: function () {
         var self = this;
         
         var linkColourScheme = function () { 
@@ -641,9 +643,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         */
         
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme (linkColourScheme, "xlink");
-        this.colorOptions.userResColourScheme = "uniform"; // NGL.ColormakerRegistry.getScheme ({scheme: "uniform"});
-        
-        console.log ("this", this);
     },
 
     _highlightPicking: function (pickingData) {
@@ -888,11 +887,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var p = Object.assign( {}, params );
         allParams.resRepr.color = p.displayedResiduesColor || p.displayedColor;
         allParams.linkRepr.color = p.displayedLinksColor || p.displayedColor;
+        //allParams.linkRepr.colorScale = p.defaultColourScale;
+        //allParams.linkRepr.colorScheme = p.defaultColourScheme;
         allParams.resEmphRepr.color = p.selectedResiduesColor || p.selectedColor;
         allParams.linkEmphRepr.color = p.selectedLinksColor || p.selectedColor;
         allParams.linkHighRepr.color = p.highlightedLinksColor || p.highlightedColor;
 
         allParams.sstrucRepr.color = p.sstrucColor;
+        //allParams.sstrucRepr.colorScale = p.defaultColourScale;
+        //allParams.sstrucRepr.colorScheme = p.defaultColourScheme;
 
         allParams.linkRepr.labelColor = p.displayedDistanceColor;
         allParams.linkEmphRepr.labelColor = p.selectedDistanceColor;
@@ -914,6 +917,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             "selectedDistanceVisible": allParams.linkEmphRepr.labelVisible,
             "highlightedDistanceVisible": allParams.linkHighRepr.labelVisible,
             "defaultChainRep": params.defaultChainRep,
+            "defaultColourScheme": params.defaultColourScheme,
         };
         d3.entries(objProps).forEach (function (entry) {
             if (entry.value !== undefined) {
