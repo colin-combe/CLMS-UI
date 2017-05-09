@@ -254,8 +254,10 @@ CLMSUI.modelUtils = {
 
                 // bit to continue onto after ngl protein chain to clms protein matching has been done
                 function sequenceMapsAvailable (sequenceMap) {
+                    
+                    console.log ("seqmpa", sequenceMap);
 
-                    if (sequenceMap && sequenceMap.length) {
+                    //if (sequenceMap && sequenceMap.length) {
                         var chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
                             pMatch.data = pMatch.seqObj.data;
@@ -281,14 +283,24 @@ CLMSUI.modelUtils = {
                             masterModel: bbmodel,
                         });
                         bbmodel.set ("stageModel", crosslinkData);
-                        // important that the new model is set first ^^^ before we setupLinks() on the model
-                        // otherwise the listener in the 3d viewer is still pointing to the old model when the
+                        // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
+                        // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
                         crosslinkData.setupLinks (bbmodel.get("clmsModel"));
-                    }
+                    /*}
                     else {
                         bbmodel.trigger ("3dsync", null);
+                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
+                        crosslinkData.set({
+                            structureComp: structureComp, 
+                            chainMap: {}, 
+                            pdbBaseSeqID: pdbInfo.baseSeqId, 
+                            masterModel: bbmodel,
+                        });
+                        bbmodel.set ("stageModel", crosslinkData);
+                        crosslinkData.setupLinks (bbmodel.get("clmsModel"));
                     }
+                    */
                 }
             })
         ;  

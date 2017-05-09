@@ -856,9 +856,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     setHighlightedLinks: function (links) {
         var availableLinks = this._getAvailableLinks (this.filterByModelLinkArray (links, "highlights"));
-        this.linkHighRepr.setParameters ({
-            atomPair: this._getAtomPairsFromLinks (availableLinks),
-        });
+        if (this.linkHighRepr) {
+            this.linkHighRepr.setParameters ({
+                atomPair: this._getAtomPairsFromLinks (availableLinks),
+            });
+        }
     },
     
 

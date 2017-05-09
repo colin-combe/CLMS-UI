@@ -16,6 +16,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
        
         // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
+        // this is in case 3d stuff has been set up before main model (used to happen that pdb's were autoloaded for some searches)
         this.listenToOnce (this, "change:masterModel", function () {    // only do this once (should only happen once anyways but better safe than sorry)
             this.listenTo (this.getModel().get("alignColl"), "bulkAlignChange", function () {
                 console.log ("SET UP LINKS");
