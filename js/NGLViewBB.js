@@ -134,7 +134,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         colourSection.append("select")
             .on ("change", function () {
                 if (self.xlRepr) {
-                    //console.log ("val", d3.event.target.value, d3.event.target);
                     var index = d3.event.target.selectedIndex;
                     var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: null};
                     // made colorscale null to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)
@@ -191,7 +190,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             }); 
             // First time distancesObj fires we should setup the display for a new data set
             this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
-                console.log ("THIS", this);
                 this.repopulate();
             });
         });
@@ -218,6 +216,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 colourScheme: this.options.colourScheme,
             }
         );
+        
+        this.showFiltered();
 
         console.log ("repr", this.xlRepr);
     },
@@ -701,7 +701,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 
                 var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
                 var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
-                console.log ("pdd", pickingData.canvasPosition);
                 crosslinkData.getModel().get("tooltipModel")
                     .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))
