@@ -287,20 +287,6 @@ CLMSUI.modelUtils = {
                         // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
                         crosslinkData.setupLinks (bbmodel.get("clmsModel"));
-                    /*}
-                    else {
-                        bbmodel.trigger ("3dsync", null);
-                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
-                        crosslinkData.set({
-                            structureComp: structureComp, 
-                            chainMap: {}, 
-                            pdbBaseSeqID: pdbInfo.baseSeqId, 
-                            masterModel: bbmodel,
-                        });
-                        bbmodel.set ("stageModel", crosslinkData);
-                        crosslinkData.setupLinks (bbmodel.get("clmsModel"));
-                    }
-                    */
                 }
             })
         ;  

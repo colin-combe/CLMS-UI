@@ -138,6 +138,7 @@ CLMSUI.DistancesObj.prototype = {
         var distanceMatrix = matrixValue.distanceMatrix;
         var val = distanceMatrix[row] ? distanceMatrix[row][col] : undefined;
         if (val === undefined) {
+            //CLMSUI.vent.trigger ("request3DDistance", row, col, matrixValue.chain1, matrixValue.chain2);
             val = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, row, col, matrixValue.chain1, matrixValue.chain2);
             //console.log ("matrix", matrixValue, orig, cellIndex, matrixIndex, row, col, val);
         }
@@ -158,7 +159,7 @@ CLMSUI.DistancesObj.prototype = {
             tot += size[0] * (isSymmetric ? (size[1] - 1) / 2 : size[1]);
             return tot;
         }, this);
-        console.log ("matEndPoints", matEndPoints);
+        console.log ("matEndPoints", matEndPoints, matrixValues);
         
         if (size > tot) {   // use all distances as random background
             randDists = this.getFlattenedDistances ();

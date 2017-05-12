@@ -9,6 +9,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         pdbBaseSeqID: null,
         linkList: null,
         lastFilterFunc: null,
+        fullDistanceCalcCutoff: 100,
     },
     
     initialize: function () {
@@ -22,6 +23,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 console.log ("SET UP LINKS");
                 this.setupLinks (this.getModel().get("clmsModel"));
             });
+        });
+        
+        this.listenTo (CLMSUI.vent, "request3DDistance", function () {
+            console.log ("args", arguments, this);
         });
     },
     
@@ -230,6 +235,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return this._linkIdMap[link.linkId] === undefined ? false : true;
     },
     
+    // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
+    // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
+    // generally at CLMSUI.modelUtils.get3DDistance
     getDistances: function () {
         var resCount = 0;
         var viableChainIndices = [];
@@ -244,7 +252,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         
         console.log ("RESCOUNT", resCount, viableChainIndices);
         
-        return this.getChainDistances (viableChainIndices, resCount > 1500);
+        return this.getChainDistances (viableChainIndices, resCount > this.defaults.fullDistanceCalcCutoff);
     },
     
     getChainDistances: function (chainIndices, linksOnly) {
