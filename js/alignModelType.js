@@ -48,7 +48,7 @@
         }
     });
 
-    // Model of sequence alignment settings for a protein (including the abopve collection as an attribute)
+    // Model of sequence alignment settings for a protein (including the above collection as an attribute)
     CLMSUI.BackboneModelTypes.ProtAlignModel = Backbone.Model.extend ({
         // return defaults as result of a function means arrays aren't shared between model instances
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
@@ -140,6 +140,19 @@
             var compSeq = this.getCompSequence (seqName);
             return compSeq ? indices.map (function(i) { return compSeq.convertFromRef [i - 1] + 1; }) : undefined;
         },
+        
+        getSearchIndexOfFirstMatch: function (seqName) {
+            var compSeq = this.getCompSequence (seqName);
+            var cref = compSeq.convertToRef;
+            var val = undefined;
+            for (var n = 0; n < cref.length; n++) {
+                if (cref[n] >= 0) {
+                    val = cref[n];
+                    break;
+                }
+            }
+            return val;   
+        }
     });
     
     

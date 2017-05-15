@@ -285,6 +285,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return matrixMap;
     },
     
+    getChainLength: function (chainIndex) {
+        var chain = this.get("chainCAtomIndices")[chainIndex];
+        return chain ? chain.length : undefined;
+    },
+    
     notHomomultimeric: function (xlinkID, c1, c2) {
         var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
         return CLMSUI.modelUtils.not3DHomomultimeric (xlink, c1, c2);

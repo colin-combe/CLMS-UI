@@ -512,6 +512,44 @@ CLMSUI.modelUtils = {
             }
         }
         return 0;
+    },
+    
+    crosslinkerSpecificityPerLinker: function (searchArray) {
+        
+        var linkableResSets = {};
+        for (var s = 0; s < searchArray.length; s++) {
+            var search = searchArray[s];
+            var crosslinkers = search.crosslinkers;
+            var crosslinkerCount = crosslinkers.length;
+            
+            for (var cl = 0; cl < crosslinkerCount ; cl++) {
+                var crosslinkerDescription = crosslinkers[cl].description;
+                var crosslinkerName = crosslinkers[cl].name;
+                var linkedAARegex = /LINKEDAMINOACIDS:(.*?);/g;
+                var resSet = linkableResSets[crosslinkerName];
+                
+                if (!resSet) {
+                    resSet = {searchCount: 0, linkables: new Set(), name: crosslinkerName};
+                    linkableResSets[crosslinkerName] = resSet;
+                }
+                resSet.searchCount++;
+                
+                var result = null;
+                while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
+                    var resArray = result[1].split(',');
+                    var resCount = resArray.length;
+                    
+                    for (var r = 0; r < resCount; r++){
+                        var resRegex = /([A-Z])(.*)?/
+                        var resMatch = resRegex.exec(resArray[r]);
+                        if (resMatch) {
+                            resSet.linkables.add(resMatch[1]);
+                        }
+                    }
+                }
+            }
+        }
+        return linkableResSets;
     }
 };
 

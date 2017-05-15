@@ -12,7 +12,7 @@ CLMSUI.DistancesObj.prototype = {
     
     getShortestLinks: function (links) {
         links.forEach (function (link) {
-            link.distance = this.getLinkDistanceChainCoords (this.matrices, link.residueA.chainIndex, link.residueB.chainIndex, link.residueA.resindex, link.residueB.resindex);
+            link.distance = this.getXLinkDistanceFromChainCoords (this.matrices, link.residueA.chainIndex, link.residueB.chainIndex, link.residueA.resindex, link.residueB.resindex);
         }, this);
         
         var nestedLinks = d3.nest()
@@ -64,7 +64,7 @@ CLMSUI.DistancesObj.prototype = {
                         // align from 3d to search index. resindex is 0-indexed so +1 before querying
                         //console.log ("alignid", alignId1, alignId2, pid1, pid2);
                         if (resIndex1 >= 0 && resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, ind1, ind2)) {
-                            var dist = this.getLinkDistanceChainCoords (matrices, ind1, ind2, resIndex1, resIndex2);
+                            var dist = this.getXLinkDistanceFromChainCoords (matrices, ind1, ind2, resIndex1, resIndex2);
                             if (dist !== undefined) {
                                 if (average) {
                                     totalDist += dist;
@@ -82,7 +82,7 @@ CLMSUI.DistancesObj.prototype = {
         return average ? (distCount ? totalDist / distCount : undefined) : minDist;
     },
     
-    getLinkDistanceChainCoords: function (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2) {
+    getXLinkDistanceFromChainCoords: function (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2) {
         var dist;
         var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
         var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
@@ -149,9 +149,46 @@ CLMSUI.DistancesObj.prototype = {
         return matrixValue.isSymmetric;
     },
     
-    getRandomDistances: function (size) {
+    getRandomDistances: function (size, residueSets) {
+        residueSets = residueSets || {name: "all", searchCount: 1, linkables: new Set()};
+        var stots = d3.sum (residueSets, function (rdata) { return rdata.searchCount; });
+        console.log (residueSets, "STOTS", stots, this, this.matrices);
+        var perSearch = Math.ceil (size / stots);
+        
+        var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
+        var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+        var chainEntries = d3.entries(this.chainMap);
+        console.log ("SM", stageModel);
+        chainEntries.forEach (function (chainEntry) {
+            var protID = chainEntry.key;
+            chainEntry.value.forEach (function (chain) {
+                var alignID = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chain.name, chain.index);
+                var chainLength = stageModel.getChainLength (+chain.index);
+                console.log ("AA", protID, alignID, chainLength);
+                var resIndexFirst = alignCollBB.getAlignedIndex (1, protID, true, alignID, true) - 1; 
+                var resIndexLast = alignCollBB.getAlignedIndex (chainLength, protID, true, alignID, true) - 1; 
+                if (resIndexFirst < 0) { resIndexFirst = -resIndexFirst - 1; }
+                if (resIndexLast < 0) { resIndexLast = -resIndexLast - 1; }
+                console.log ("PPP", alignID, resIndexFirst, resIndexLast);
+                var protAlignModel = alignCollBB.get(protID);
+                var searchSeq = protAlignModel.get("refSeq");
+                var subSeq = searchSeq.substring(resIndexFirst, resIndexLast + 1);
+                console.log ("subseq", subSeq);
+            }, this);
+        }, this);
+        
+        
         var randDists = [];
         var tot = 0;
+        residueSets.forEach (function (rdata) {
+            var doRands = perSearch * rdata.searchCount;
+            var linkableResidues = rdata.linkables;
+            for (var n = 0; n < doRands; n++) {
+                
+            }
+            
+        });
+        
         var matrixValues = d3.values (this.matrices);
         var matEndPoints = matrixValues.map (function (matrixValue) {
             var isSymmetric = this.isSymmetricMatrix (matrixValue);
