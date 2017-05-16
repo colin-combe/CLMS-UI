@@ -349,6 +349,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return matrix;
     },
     
+    // resIndex1 and 2 are 0-indexed
     getSingleDistanceBetween2Residues: function (resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var struc = this.get("structureComp").structure;
         var ap1 = struc.getAtomProxy();

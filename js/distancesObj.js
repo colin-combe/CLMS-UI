@@ -82,6 +82,7 @@ CLMSUI.DistancesObj.prototype = {
         return average ? (distCount ? totalDist / distCount : undefined) : minDist;
     },
     
+    // resIndex1 and 2 are 0-based
     getXLinkDistanceFromChainCoords: function (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2) {
         var dist;
         var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
@@ -90,6 +91,11 @@ CLMSUI.DistancesObj.prototype = {
         if (distanceMatrix[minIndex]) {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
             dist = distanceMatrix[minIndex][maxIndex];
+            if (dist === undefined) {
+                dist = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, resIndex1, resIndex2, chainIndex1, chainIndex2);
+            }
+        } else {
+            dist = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, resIndex1, resIndex2, chainIndex1, chainIndex2);
         }
         //console.log ("dist", dist);
         return dist;
@@ -150,45 +156,71 @@ CLMSUI.DistancesObj.prototype = {
     },
     
     getRandomDistances: function (size, residueSets) {
-        residueSets = residueSets || {name: "all", searchCount: 1, linkables: new Set()};
-        var stots = d3.sum (residueSets, function (rdata) { return rdata.searchCount; });
+        residueSets = residueSets || {name: "all", searches: new Set(), linkables: new Set()};
+        var stots = d3.sum (residueSets, function (rdata) { return rdata.searches.size; });
         console.log (residueSets, "STOTS", stots, this, this.matrices);
         var perSearch = Math.ceil (size / stots);
         
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
-        var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        var chainEntries = d3.entries(this.chainMap);
-        console.log ("SM", stageModel);
-        chainEntries.forEach (function (chainEntry) {
+        var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+        var seqs = d3.entries(this.chainMap).map (function (chainEntry) {
             var protID = chainEntry.key;
-            chainEntry.value.forEach (function (chain) {
+            return chainEntry.value.map (function (chain) {
                 var alignID = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chain.name, chain.index);
-                var chainLength = stageModel.getChainLength (+chain.index);
-                console.log ("AA", protID, alignID, chainLength);
-                var resIndexFirst = alignCollBB.getAlignedIndex (1, protID, true, alignID, true) - 1; 
-                var resIndexLast = alignCollBB.getAlignedIndex (chainLength, protID, true, alignID, true) - 1; 
-                if (resIndexFirst < 0) { resIndexFirst = -resIndexFirst - 1; }
-                if (resIndexLast < 0) { resIndexLast = -resIndexLast - 1; }
-                console.log ("PPP", alignID, resIndexFirst, resIndexLast);
-                var protAlignModel = alignCollBB.get(protID);
-                var searchSeq = protAlignModel.get("refSeq");
-                var subSeq = searchSeq.substring(resIndexFirst, resIndexLast + 1);
-                console.log ("subseq", subSeq);
+                var range = alignCollBB.getSearchRangeIndexOfMatches (protID, alignID);
+                range.chainIndex = chain.index;
+                range.protID = protID;
+                range.alignID = alignID;
+                return range;
             }, this);
+        }, this);
+        seqs = d3.merge(seqs); // collapse nested arrays
+        console.log ("seqs", seqs);
+        
+        var randDists = [];
+        residueSets.forEach (function (rdata) {
+            var linkableResidues = rdata.linkables;
+            var all = linkableResidues.has ("*") || linkableResidues.size === 0;
+            var rmap = [];
+            seqs.forEach (function (seq) {
+                var subSeq = seq.subSeq;
+                for (var m = 0; m < subSeq.length; m++) {
+                    if (all || linkableResidues.has(subSeq[m])) {
+                        var searchIndex = seq.first + m;
+                        rmap.push ({searchIndex: searchIndex, 
+                                    chainIndex: seq.chainIndex, 
+                                    resIndex: alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, false) });
+                    }
+                }
+            });
+            console.log ("rmap", rmap, linkableResidues);
+            var resTot = rmap.length;
+                        
+            rdata.searches.forEach (function (searchID) {
+                var search = clmsModel.get("searches").get(searchID);      
+                console.log ("rr", searchID);
+
+                for (var n = 0; n < perSearch; n++) {
+                    var resFlatIndex1 = Math.floor (Math.random() * resTot);
+                    // don't pick same index twice
+                    var resFlatIndex2 = Math.floor (Math.random() * (resTot - 1));
+                    if (resFlatIndex2 >= resFlatIndex1) {
+                        resFlatIndex2++;
+                    }
+                    var res1 = rmap[resFlatIndex1];
+                    var res2 = rmap[resFlatIndex2];
+                    //console.log ("rr", resFlatIndex1, resFlatIndex2, res1, res2);
+                    // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
+                    randDists.push (this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1));
+                }
+            }, this)
         }, this);
         
         
+        // old way
+        /*
         var randDists = [];
         var tot = 0;
-        residueSets.forEach (function (rdata) {
-            var doRands = perSearch * rdata.searchCount;
-            var linkableResidues = rdata.linkables;
-            for (var n = 0; n < doRands; n++) {
-                
-            }
-            
-        });
-        
         var matrixValues = d3.values (this.matrices);
         var matEndPoints = matrixValues.map (function (matrixValue) {
             var isSymmetric = this.isSymmetricMatrix (matrixValue);
@@ -206,6 +238,7 @@ CLMSUI.DistancesObj.prototype = {
                 randDists.push (this.getMatCellFromIndex (cellIndex, matEndPoints, matrixValues));
             }
         }
+        */
         
         console.log ("RANDOM", randDists);
         return randDists;

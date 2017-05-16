@@ -529,10 +529,10 @@ CLMSUI.modelUtils = {
                 var resSet = linkableResSets[crosslinkerName];
                 
                 if (!resSet) {
-                    resSet = {searchCount: 0, linkables: new Set(), name: crosslinkerName};
+                    resSet = {searches: new Set(), linkables: new Set(), name: crosslinkerName};
                     linkableResSets[crosslinkerName] = resSet;
                 }
-                resSet.searchCount++;
+                resSet.searches.add (search.id);
                 
                 var result = null;
                 while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
