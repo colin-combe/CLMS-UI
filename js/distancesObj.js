@@ -188,17 +188,20 @@ CLMSUI.DistancesObj.prototype = {
                     if (all || linkableResidues.has(subSeq[m])) {
                         var searchIndex = seq.first + m;
                         rmap.push ({searchIndex: searchIndex, 
-                                    chainIndex: seq.chainIndex, 
+                                    chainIndex: seq.chainIndex,
+                                    protID: seq.protID,
                                     resIndex: alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, false) });
                     }
                 }
             });
             console.log ("rmap", rmap, linkableResidues);
-            var resTot = rmap.length;
                         
             rdata.searches.forEach (function (searchID) {
-                var search = clmsModel.get("searches").get(searchID);      
-                console.log ("rr", searchID);
+                var search = clmsModel.get("searches").get(searchID);
+                var protIDs = search.participantIDSet;
+                var srmap = (clmsModel.get("searches").size > 1) ? rmap.filter (function(res) { return protIDs.has (res.protID); }) : rmap;
+                var resTot = srmap.length;
+                console.log ("rr", searchID, resTot);
 
                 for (var n = 0; n < perSearch; n++) {
                     var resFlatIndex1 = Math.floor (Math.random() * resTot);
@@ -207,8 +210,8 @@ CLMSUI.DistancesObj.prototype = {
                     if (resFlatIndex2 >= resFlatIndex1) {
                         resFlatIndex2++;
                     }
-                    var res1 = rmap[resFlatIndex1];
-                    var res2 = rmap[resFlatIndex2];
+                    var res1 = srmap[resFlatIndex1];
+                    var res2 = srmap[resFlatIndex2];
                     //console.log ("rr", resFlatIndex1, resFlatIndex2, res1, res2);
                     // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                     randDists.push (this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1));

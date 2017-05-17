@@ -198,6 +198,7 @@
                 try {
                     var json = {};
                     if (text) { json = JSON.parse (text); }
+                    //console.log ("JSON", json);
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
@@ -210,7 +211,7 @@
                     CLMSUI.init.views();
                     allDataLoaded ();
                 } catch (err) {
-                    console.error ("Error", err, text.substring(0,1000));
+                    console.error ("Error", err, text.substring(0, 1000));
                 }
             };
 
