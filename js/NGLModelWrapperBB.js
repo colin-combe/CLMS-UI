@@ -372,9 +372,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             chainIndices.forEach (function (ci) {
                 chainProxy.index = ci;
                 var atomIndices = chainCAtomIndices[ci] = [];
+                // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
                 chainProxy.eachResidue (function (rp) {
+                    // console.log ("rp resno", rp, rp.resno, rp.backboneStartAtomIndex, rp.backboneEndAtomIndex);
                     var ai = self._getAtomIndexFromResidue (rp.resno, chainProxy, sele);
-                    atomIndices.push (ai);
+                    atomIndices.push (ai);        
                 });
             }, this);
         }
@@ -404,7 +406,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 var ai = this.get("structureComp").structure.getAtomIndices (sele);
                 aIndex = ai[0];
                 if (aIndex === undefined) {
-                    console.log ("undefined sele", sele.string, aIndex);
+                    console.log ("undefined sele", sele.string, aIndex, ai);
                 }
                 this.residueToAtomIndexMap[key] = aIndex;
             }

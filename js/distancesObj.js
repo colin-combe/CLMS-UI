@@ -88,12 +88,9 @@ CLMSUI.DistancesObj.prototype = {
         var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
         var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
         //console.log ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
-        if (distanceMatrix[minIndex]) {
+        if (distanceMatrix[minIndex] && distanceMatrix[minIndex][resIndex2]) {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
             dist = distanceMatrix[minIndex][maxIndex];
-            if (dist === undefined) {
-                dist = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, resIndex1, resIndex2, chainIndex1, chainIndex2);
-            }
         } else {
             dist = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, resIndex1, resIndex2, chainIndex1, chainIndex2);
         }
@@ -161,6 +158,8 @@ CLMSUI.DistancesObj.prototype = {
         console.log (residueSets, "STOTS", stots, this, this.matrices);
         var perSearch = Math.ceil (size / stots);
         
+        // Collect together sequence data that is available to do random 3d distances on, by mapping
+        // the 3d sequences to the search sequences, and taking those sub-portions of the search sequence
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
         var seqs = d3.entries(this.chainMap).map (function (chainEntry) {
@@ -178,43 +177,56 @@ CLMSUI.DistancesObj.prototype = {
         console.log ("seqs", seqs);
         
         var randDists = [];
+        // For each crosslinker...
         residueSets.forEach (function (rdata) {
+            // Make one or two lists of residues that could map to each end of the crosslinker.
+            // If the crosslinker is not heterobifunctional we only do one as it'll be the same at both ends.
             var linkableResidues = rdata.linkables;
-            var all = linkableResidues.has ("*") || linkableResidues.size === 0;
-            var rmap = [];
-            seqs.forEach (function (seq) {
-                var subSeq = seq.subSeq;
-                for (var m = 0; m < subSeq.length; m++) {
-                    if (all || linkableResidues.has(subSeq[m])) {
-                        var searchIndex = seq.first + m;
-                        rmap.push ({searchIndex: searchIndex, 
+            var rmap = [[],[]];
+            for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
+                var all = linkableResidues[n].has ("*") || linkableResidues[n].size === 0;
+                seqs.forEach (function (seq) {
+                    var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
+                    for (var m = 0; m < filteredSubSeqIndices.length; m++) {
+                        var searchIndex = seq.first + filteredSubSeqIndices[m];
+                        rmap[n].push ({searchIndex: searchIndex, 
                                     chainIndex: seq.chainIndex,
                                     protID: seq.protID,
                                     resIndex: alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, false) });
                     }
-                }
-            });
+                });
+            }
             console.log ("rmap", rmap, linkableResidues);
-                        
+                    
+            // Now loop through the searches that use this crosslinker...
             rdata.searches.forEach (function (searchID) {
                 var search = clmsModel.get("searches").get(searchID);
                 var protIDs = search.participantIDSet;
-                var srmap = (clmsModel.get("searches").size > 1) ? rmap.filter (function(res) { return protIDs.has (res.protID); }) : rmap;
-                var resTot = srmap.length;
-                console.log ("rr", searchID, resTot);
+                // Filter residue lists down to residues that were in this search's proteins
+                var srmap = rmap.map (function (dirMap) { 
+                    return (clmsModel.get("searches").size > 1) ? dirMap.filter (function(res) { return protIDs.has (res.protID); }) : dirMap; 
+                });
+                // If crosslinker is homobifunctional then copy a second residue list same as the first
+                if (!rdata.heterobi) {
+                    srmap[1] = srmap[0];
+                }
+                console.log ("rr", searchID, srmap);
 
-                for (var n = 0; n < perSearch; n++) {
-                    var resFlatIndex1 = Math.floor (Math.random() * resTot);
-                    // don't pick same index twice
-                    var resFlatIndex2 = Math.floor (Math.random() * (resTot - 1));
-                    if (resFlatIndex2 >= resFlatIndex1) {
-                        resFlatIndex2++;
+                // Now pick lots of random pairings from the remaining residues, one for each end of the crosslinker,
+                // so one from each residue list
+                if (srmap[0].length) {  // can't do this if no actual residues left
+                    for (var n = 0; n < perSearch; n++) {
+                        var resFlatIndex1 = Math.floor (Math.random() * srmap[0].length);
+                        var resFlatIndex2 = Math.floor (Math.random() * srmap[1].length);
+                        var res1 = srmap[0][resFlatIndex1];
+                        var res2 = srmap[1][resFlatIndex2];
+                        //console.log ("rr", resFlatIndex1, resFlatIndex2, res1, res2);
+                        // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
+                        var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
+                        if (!isNaN(dist)) {
+                            randDists.push (dist);
+                        }
                     }
-                    var res1 = srmap[resFlatIndex1];
-                    var res2 = srmap[resFlatIndex2];
-                    //console.log ("rr", resFlatIndex1, resFlatIndex2, res1, res2);
-                    // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-                    randDists.push (this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1));
                 }
             }, this)
         }, this);

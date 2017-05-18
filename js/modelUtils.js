@@ -525,32 +525,52 @@ CLMSUI.modelUtils = {
             for (var cl = 0; cl < crosslinkerCount ; cl++) {
                 var crosslinkerDescription = crosslinkers[cl].description;
                 var crosslinkerName = crosslinkers[cl].name;
-                var linkedAARegex = /LINKEDAMINOACIDS:(.*?);/g;
+                var linkedAARegex = /LINKEDAMINOACIDS:(.*?)(?:;|$)/g;   // capture both sets if > 1 set
+                console.log ("cld", crosslinkerDescription);
                 var resSet = linkableResSets[crosslinkerName];
                 
                 if (!resSet) {
-                    resSet = {searches: new Set(), linkables: new Set(), name: crosslinkerName};
+                    resSet = {searches: new Set(), linkables: [], name: crosslinkerName};
                     linkableResSets[crosslinkerName] = resSet;
                 }
                 resSet.searches.add (search.id);
                 
                 var result = null;
+                var i = 0;
                 while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
                     var resArray = result[1].split(',');
                     var resCount = resArray.length;
+                    
+                    if (!resSet.linkables[i]) {
+                        resSet.linkables[i] = new Set();
+                    }
                     
                     for (var r = 0; r < resCount; r++){
                         var resRegex = /([A-Z])(.*)?/
                         var resMatch = resRegex.exec(resArray[r]);
                         if (resMatch) {
-                            resSet.linkables.add(resMatch[1]);
+                            resSet.linkables[i].add(resMatch[1]);
                         }
                     }
+                    i++;
                 }
+                
+                resSet.heterobi = resSet.heterobi || (i > 1);
             }
         }
         return linkableResSets;
-    }
+    },
+    
+    // return indices of sequence whose letters match one in the residue set
+    filterSequenceByResidueSet: function (seq, residueSet, all) {
+        var rmap = [];
+        for (var m = 0; m < seq.length; m++) {
+            if (all || residueSet.has(seq[m])) {
+                rmap.push (m);
+            }
+        }
+        return rmap;
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);
