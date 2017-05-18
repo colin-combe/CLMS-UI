@@ -416,12 +416,10 @@ CLMSUI.init.viewsEssential = function (options) {
         })
     ;
 
-    var spectrumViewer = new SpectrumView ({
-        model: spectrumModel,
-        el:"#spectrumPanel",
-    });
-    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
-    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
+    var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});    
+    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"}); 
+    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"}); 
+    var errorIntensityPlot = new ErrorIntensityPlotView ({model: spectrumModel, el:"#spectrumPanel"}); 
 
     // Update spectrum view when external resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
