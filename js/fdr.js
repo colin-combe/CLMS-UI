@@ -40,7 +40,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
         linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; }); 
     });  // in ascending order (lowest first)
 
-    console.log ("linkArrs", linkArrs);
+    //console.log ("linkArrs", linkArrs);
     
     // What kind of link is this, TT, DT or DD? (0, 1 or 2)
     function decoyClass (link) {
@@ -61,7 +61,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
 				}
             });
 
-            console.log ("totals tt td dd", t, linkArr);
+            //console.log ("totals tt td dd", t, linkArr);
             var nonzero = d3.sum(t) > 0;
             var runningMin = Number.POSITIVE_INFINITY;
             
@@ -82,7 +82,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
                 i++;
                 if (fdr <= threshold && cutoffIndex === 0) {
                     cutoffIndex = i;
-                    console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
+                    //console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
                 }
             });
 

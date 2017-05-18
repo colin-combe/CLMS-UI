@@ -157,7 +157,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
         var tpl = _.template ("<div><span>Match score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
-		      sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
+		// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
         sliderSection.selectAll("p.cutoffLabel")
             .attr ("title", function (d) { 
                 var isMinInput = d3.select(this).classed("vmin");
@@ -239,7 +239,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 
     filter: function (evt) {
-        console.log ("this filterBB filter", evt);
+        //console.log ("this filterBB filter", evt);
         var target = evt.target;
         var id = target.id;
         console.log ("filter set", id, target.checked);

@@ -144,6 +144,12 @@
                         }
                     },           
                 },
+                subchart: {
+                    show: false,
+                    size: {
+                        height: 0
+                    },
+                },
                 title: {
                     text: this.options.chartTitle
                 },
@@ -228,6 +234,7 @@
                 var internal = this.chart.internal;
                 var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
                 d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+                d3.select(this.el)
 
                 //console.log ("data", distArr, binnedData);
             }

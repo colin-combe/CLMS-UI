@@ -34,7 +34,8 @@
 				if (filterModel) {
 					crossLink.filteredMatches_pp = [];
 					if (filterModel.get("fdrMode") === true) {
-						var pass;// = filterModel.filterLink (crossLink);
+						// FDR mode
+						var pass;
 						if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
 							var fdr = crossLink.meta.meanMatchScore;
 							var intra = clmsModel.isIntraLink (crossLink);
@@ -63,7 +64,8 @@
 						//~ else {
 							//~ alert("i just failed fdr check");
 						//~ }
-					} else {
+					} else { 
+						//not FDR mode
 						crossLink.ambiguous = true;
 						crossLink.confirmedHomomultimer = false;
 						var matches_pp = crossLink.matches_pp;
@@ -71,11 +73,7 @@
 						for (var m = 0; m < matchCount; m++ ) {	
 							var matchAndPepPos = matches_pp[m];
 							var match = matchAndPepPos.match;
-							//~ console.log(filterModel.subsetFilter(match),
-										//~ filterModel.validationStatusFilter(match),
-										//~ filterModel.navigationFilter(match));
-							var result = /*match.is_decoy === false && */
-											filterModel.subsetFilter (match, proteinMatchFunc)
+							var result = filterModel.subsetFilter (match, proteinMatchFunc)
 											&& filterModel.validationStatusFilter(match)
 											&& filterModel.navigationFilter(match);
 							var decoys = filterModel.get("decoys");
@@ -95,13 +93,11 @@
 						}
 					}
 				}
-				else {
+				else { // no filter model, let everything thru
 					crossLink.filteredMatches_pp = crossLink.matches_pp;
 				}
             }
 
-            //HI MARTIN - I'm caching things in these arrays,
-            // its maybe not a very nice design wise, lets look at again 
             this.filteredXLinks = {all: [], targets: [], linears: [], decoysTD: [], decoysDD: []};
 			
 			for (var i = 0; i < clCount; ++i) {
@@ -124,12 +120,11 @@
                     }
 				}
             }
-            this.filteredNotDecoyNotLinearCrossLinks = this.filteredXLinks["targets"];  // temp till colin changes code in crosslinkviewer
             //console.log ("xlinks", this.filteredXLinks);
             
+            //hiding linkless participants
             var participantsArr = Array.from(clmsModel.get("participants").values());
-            var participantCount = participantsArr.length;           
-            
+            var participantCount = participantsArr.length;                   
             for (var p = 0; p < participantCount; ++p) {
 				 var participant = participantsArr[p]; 
 				 participant.filteredNotDecoyNotLinearCrossLinks = [];
@@ -199,7 +194,7 @@
                 if (add) {
                     var existingCrossLinks = this.get (modelProperty);
                     crossLinks = crossLinks.concat (existingCrossLinks);
-                    console.log ("excl", existingCrossLinks);
+                    //console.log ("excl", existingCrossLinks);
                 }
                 var crossLinkMap = d3.map (crossLinks, function(d) { return d.id; });
 
@@ -215,8 +210,31 @@
             }
         },
 
+		//not recursive
         recurseAmbiguity: function (crossLink, crossLinkMap) {
-            var matches = crossLink.filteredMatches_pp;
+			// it doesn't need to be recursive;
+			// only interested in alternative cross-links for ambiguous matches of this cross-link
+			// -- its because a more ambiguous match, with a shorter version of the peptide, should already be in the matches of the orignal cross-link
+			 
+			// todo: we might want to highlight smallest possible set of alternatives
+			// i.e. the alternative cross-links for the least ambiguous match,
+			// this would consistent with other parts of the interface
+			// e.g. if a cross-link has both ambiguous and non-ambiguous matches it is shown as not ambiguous
+			
+			var filteredMatchesAndPeptidePositions = crossLink.filteredMatches_pp;
+			var fm_ppCount = filteredMatchesAndPeptidePositions.length;
+			for (var fm_pp = 0; fm_pp <fm_ppCount; fm_pp++) {
+				var crossLinks = filteredMatchesAndPeptidePositions[fm_pp].match.crossLinks;
+				var clCount = crossLinks.length;
+				
+				for (var cl = 0; cl < clCount; cl++) {
+					var mCrossLink = crossLinks[cl];
+					crossLinkMap.set (mCrossLink.id, mCrossLink);
+				}
+			}
+			
+            /*//previous recursive function			
+	        var matches = crossLink.filteredMatches_pp;
             matches.forEach (function (match) {
                 var matchData = match.match;
                 if (matchData.isAmbig()) {
@@ -228,9 +246,11 @@
                     }, this);
                 }
             }, this);
+             */
         },
         
         //what type should selectedProtein be? Set? Array? Is a map needed?
+        // agree map's not needed, prob just Array - cc
         setSelectedProteins: function (idArr, add) {
             var map = add ? new Map (this.get("selectedProtein")) : new Map ();
             idArr.forEach (function (id) {

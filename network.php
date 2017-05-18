@@ -59,6 +59,9 @@
         <link rel="stylesheet" href="./css/filter.css">
         <link rel="stylesheet" href="./css/nglViewBB.css">
         <link rel="stylesheet" href="./css/networkPage.css">
+		<link rel="stylesheet" href="./css/csvUpload.css">
+		<link rel="stylesheet" href="./css/searchSummary.css">
+		<link rel="stylesheet" href="./css/jquery.jsonview.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -69,9 +72,16 @@
         <script type="text/javascript" src="./vendor/split.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
+<!--
         <script type="text/javascript" src="./vendor/zepto.js"></script>
-        <script type="text/javascript" src="./vendor/backbone.js"></script>
+-->
         <script type="text/javascript" src="./vendor/spin.js"></script>
+<!--
+        arrg, jquerys got in it, it for the json tree view, which we may not keep
+-->
+        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="./vendor/backbone.js"></script>
+		<script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
@@ -103,6 +113,7 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
+        <script type="text/javascript" src="./js/CSVFileChooser.js"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
@@ -117,6 +128,7 @@
         <script type="text/javascript" src="./js/keyViewBB.js"></script>
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
+		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
@@ -185,7 +197,8 @@
                 spinner.stop(); // stop spinner on request returning
 
                 try {
-                    var json = JSON.parse (text);
+                    var json = {};
+                    if (text) { json = JSON.parse (text); }
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
@@ -194,8 +207,7 @@
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
                         { direction: "vertical", sizes: [80,20], minSize: [200,10] }
                     );
-                    //CLMSUI.split.collapse(1);
-
+                    
                     CLMSUI.init.views();
                     allDataLoaded ();
                 } catch (err) {

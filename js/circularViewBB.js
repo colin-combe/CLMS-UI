@@ -331,6 +331,7 @@
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
+            this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             return this;
         },
 
@@ -741,6 +742,7 @@
 
             newTicks.append("text")
                 .attr("x", 8)
+                .attr("y", 0)
                 .attr("dy", ".35em")
                 .text(function(d) { return d.label; })
             ;
@@ -750,7 +752,13 @@
                     return "rotate(" + (d.angle - 90) + ")" + "translate(" + radius + ",0)";
                 })
                 .select("text")
-                    .classed ("justifyTick", function(d) { return d.angle > 180; })
+                    //.classed ("justifyTick", function(d) { return d.angle > 180; })   // must wait for inkscape/illustrator to catch up with css3 so have to use following code instead
+                    .attr ("transform", function(d) {
+                        return d.angle > 180 ? "rotate(180) translate(-16 0)" : null;
+                    })
+                    .attr ("text-anchor", function(d) {
+                        return d.angle > 180 ? "end" : null;
+                    })
             ;
 
             return this;
