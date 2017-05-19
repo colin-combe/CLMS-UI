@@ -38,9 +38,10 @@
             
             var toolbar = wrapperPanel.append("div").attr("class", "csvToolbar");
             
-            toolbar.append("span").html("If you do not provide a FASTA file then your protein IDs <br> must be currently valid UniProt accession numbers.");
+           // toolbar.append("span").html("If you do not provide a FASTA file then your protein IDs <br> must be currently valid UniProt accession numbers.");
+            toolbar.append("span").html("Your protein IDs must be currently valid UniProt accession numbers.");
             
-            var fileButtons = ["CSV", "FASTA"];
+            var fileButtons = ["CSV"];//, "FASTA"];
             for (var b = 0; b < fileButtons.length; b ++){
 				var fileType = fileButtons[b];
 	            var csvDivSel = toolbar.append("div");
