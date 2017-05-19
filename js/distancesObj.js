@@ -155,7 +155,7 @@ CLMSUI.DistancesObj.prototype = {
     getRandomDistances: function (size, residueSets) {
         residueSets = residueSets || {name: "all", searches: new Set(), linkables: new Set()};
         var stots = d3.sum (residueSets, function (rdata) { return rdata.searches.size; });
-        console.log (residueSets, "STOTS", stots, this, this.matrices);
+        //console.log (residueSets, "STOTS", stots, this, this.matrices);
         var perSearch = Math.ceil (size / stots);
         
         // Collect together sequence data that is available to do random 3d distances on, by mapping
@@ -174,7 +174,7 @@ CLMSUI.DistancesObj.prototype = {
             }, this);
         }, this);
         seqs = d3.merge(seqs); // collapse nested arrays
-        console.log ("seqs", seqs);
+        //console.log ("seqs", seqs);
         
         var randDists = [];
         // For each crosslinker...
@@ -184,7 +184,7 @@ CLMSUI.DistancesObj.prototype = {
             var linkableResidues = rdata.linkables;
             var rmap = [[],[]];
             for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
-                var all = linkableResidues[n].has ("*") || linkableResidues[n].size === 0;
+                var all = linkableResidues[n].has ("*") || linkableResidues[n].has ("X") || linkableResidues[n].size === 0;
                 seqs.forEach (function (seq) {
                     var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
                     for (var m = 0; m < filteredSubSeqIndices.length; m++) {
@@ -196,7 +196,7 @@ CLMSUI.DistancesObj.prototype = {
                     }
                 });
             }
-            console.log ("rmap", rmap, linkableResidues);
+            //console.log ("rmap", rmap, linkableResidues);
                     
             // Now loop through the searches that use this crosslinker...
             rdata.searches.forEach (function (searchID) {
@@ -210,16 +210,27 @@ CLMSUI.DistancesObj.prototype = {
                 if (!rdata.heterobi) {
                     srmap[1] = srmap[0];
                 }
-                console.log ("rr", searchID, srmap);
+                //console.log ("rr", searchID, srmap);
 
                 // Now pick lots of random pairings from the remaining residues, one for each end of the crosslinker,
                 // so one from each residue list
-                if (srmap[0].length) {  // can't do this if no actual residues left
-                    for (var n = 0; n < perSearch; n++) {
+                var possibleLinks = srmap[0].length * srmap[1].length;
+                if (possibleLinks) {  // can't do this if no actual residues pairings left
+                    var hop = Math.max (1, possibleLinks / perSearch);
+                    console.log ("hop", hop, "possible link count", possibleLinks);
+                    for (var n = 0; n < possibleLinks; n += hop) {
+                        // this is Uniform
+                        var ni = Math.floor (n);
+                        var resFlatIndex1 = Math.floor (ni / srmap[0].length);
+                        var resFlatIndex2 = ni % srmap[1].length;
+                        /*
+                        // This is Random
                         var resFlatIndex1 = Math.floor (Math.random() * srmap[0].length);
                         var resFlatIndex2 = Math.floor (Math.random() * srmap[1].length);
+                        */
                         var res1 = srmap[0][resFlatIndex1];
                         var res2 = srmap[1][resFlatIndex2];
+                        
                         //console.log ("rr", resFlatIndex1, resFlatIndex2, res1, res2);
                         // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                         var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
@@ -228,7 +239,7 @@ CLMSUI.DistancesObj.prototype = {
                         }
                     }
                 }
-            }, this)
+            }, this);
         }, this);
         
         

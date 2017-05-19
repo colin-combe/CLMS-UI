@@ -242,6 +242,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var resCount = 0;
         var viableChainIndices = [];
         var self = this;
+        //console.log ("strcutcomp", this.get("structureComp").structure);
         this.get("structureComp").structure.eachChain (function (cp) {
             // Don't include chains which are tiny or ones we can't match to a protein
             if (cp.residueCount > 20 && CLMSUI.modelUtils.getProteinFromChainIndex (self.get("chainMap"), cp.index)) {

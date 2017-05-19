@@ -3904,7 +3904,8 @@
             d.sort(function(a, b){
                 var v1 = a ? a.value : null, v2 = b ? b.value : null;
                 return orderAsc ? v1 - v2 : v2 - v1;
-            });  
+            });
+    
             */
         } else {
             var ids = $$.orderTargets($$.data.targets).map(function (i) {
@@ -3929,7 +3930,7 @@
             }
     
             value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index, d);
-           // value = sanitise(valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index, d)); // mjg
+            value = sanitise(valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index, d));
             if (value !== undefined) {
                 // Skip elements when their name is set to null
                 if (d[i].name === null) { continue; }

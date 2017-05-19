@@ -141,8 +141,12 @@
                                 }
                             }
                             return v;
-                        }
-                    },           
+                        },
+                    },  
+                    contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                        var text = this.getTooltipContent (d, defaultTitleFormat, defaultValueFormat, color);
+                        return text.replace(/&lt;/g, '<').replace(/&gt;/g, '>'); // anti-sanitise
+                    },
                 },
                 subchart: {
                     show: false,

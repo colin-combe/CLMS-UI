@@ -240,7 +240,7 @@ CLMSUI.modelUtils = {
                 // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
                 if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
                     CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-                        //console.log ("pdbUniProtMap", pdbUniProtMap);
+                        //console.log ("pdb's pdbUniProtMap", pdbUniProtMap);
                         sequenceMapsAvailable (pdbUniProtMap);
                     });
                 }
@@ -249,6 +249,7 @@ CLMSUI.modelUtils = {
                     var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
                         function(sObj) { return sObj.data; }
                     );
+                    //console.log ("our pdbUniProtMap", pdbUniProtMap);
                     sequenceMapsAvailable (pdbUniProtMap);
                 }
 
@@ -256,7 +257,6 @@ CLMSUI.modelUtils = {
                 function sequenceMapsAvailable (sequenceMap) {
                     
                     console.log ("seqmpa", sequenceMap);
-
                     //if (sequenceMap && sequenceMap.length) {
                         var chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
@@ -319,21 +319,26 @@ CLMSUI.modelUtils = {
         $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
             function (data, status, xhr) {                   
                 if (status === "success") {
-                    var map = [];
+                    //console.log ("data", data);
+                    var map = d3.map();
                     $(data).find("block").each (function(i,b) { 
                         var segArr = $(this).find("segment[intObjectId]"); 
                         for (var n = 0; n < segArr.length; n += 2) {
                             var id1 = $(segArr[n]).attr("intObjectId");
                             var id2 = $(segArr[n+1]).attr("intObjectId");
                             var pdbis1 = _.includes(id1, ".") || id1.charAt(0) !== 'P';
-                            map.push (pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1});
+                            var unipdb = pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1};
+                            map.set (unipdb.pdb+"-"+unipdb.uniprot, unipdb);
                         }
                     });
-                    console.log ("map", map, nglSequences);
+                    // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I 
+                    var mapArr = map.values();
+                    //console.log ("map", map, mapArr, nglSequences);
+                    
                     if (callback) {
                         var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
 
-                        map.forEach (function (mapping) {
+                        mapArr.forEach (function (mapping) {
                             var dotIndex = mapping.pdb.indexOf(".");
                             var chainName = dotIndex >= 0 ? mapping.pdb.slice(dotIndex + 1) : mapping.pdb.slice(-1);    // bug fix 27/01/17
                             var matchSeqs = nglSequences.filter (function (seqObj) {
@@ -346,8 +351,8 @@ CLMSUI.modelUtils = {
                             });
                             mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                         });
-                        map = map.filter (function (mapping) { return mapping.id !== "none"; });
-                        callback (map);
+                        mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none"; });
+                        callback (mapArr);
                     }
                 } 
             }

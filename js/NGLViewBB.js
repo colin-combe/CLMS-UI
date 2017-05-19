@@ -121,8 +121,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Residue colour scheme dropdown
         
         var mainColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
-        var ignore = d3.set(["volume", "geoquality", "moleculetype", "occupancy", "random", "sstruc", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
-        var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name"};
+        var ignore = d3.set(["volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
+        var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
         mainColourSchemes = mainColourSchemes.filter (function (rep) { return ! ignore.has (rep);});
         var colourSection = toolbar
             .append ("label")
