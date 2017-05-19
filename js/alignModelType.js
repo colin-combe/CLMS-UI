@@ -48,7 +48,7 @@
         }
     });
 
-    // Model of sequence alignment settings for a protein (including the abopve collection as an attribute)
+    // Model of sequence alignment settings for a protein (including the above collection as an attribute)
     CLMSUI.BackboneModelTypes.ProtAlignModel = Backbone.Model.extend ({
         // return defaults as result of a function means arrays aren't shared between model instances
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
@@ -140,6 +140,18 @@
             var compSeq = this.getCompSequence (seqName);
             return compSeq ? indices.map (function(i) { return compSeq.convertFromRef [i - 1] + 1; }) : undefined;
         },
+        
+        // find the first and last residues in a sequence that map to existing residues in the search sequence (i.e aren't
+        // opening or trailing gaps), and return these coordinates in terms of the search sequence
+        getSearchRangeIndexOfMatches: function (seqName) {
+            var compSeq = this.getCompSequence (seqName);
+            var nonNegative = function (num) { return num >= 0; };
+            var first = compSeq ? _.find (compSeq.convertToRef, nonNegative) + 1 : undefined; 
+            var index = compSeq ? _.findLastIndex (compSeq.convertToRef, nonNegative) : -1;
+            var last = index >= 0 ? compSeq.convertToRef[index] + 1 : undefined;
+            var subSeq = first && last ? this.get("refSeq").substring (first - 1, last) : "";
+            return {first: first, last: last, subSeq: subSeq};
+        },
     });
     
     
@@ -196,6 +208,11 @@
             }
             
             return alignPos;    //this will be 1-indexed or null
+        },
+        
+        getSearchRangeIndexOfMatches: function (proteinID, sequenceID) {
+            var protAlignModel = this.get (proteinID);
+            return protAlignModel ? protAlignModel.getSearchRangeIndexOfMatches (sequenceID) : [undefined, undefined];
         },
         
         getAlignmentsAsFeatures: function (protID, includeCanonical) {

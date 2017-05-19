@@ -141,8 +141,12 @@
                                 }
                             }
                             return v;
-                        }
-                    },           
+                        },
+                    },  
+                    contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                        var text = this.getTooltipContent (d, defaultTitleFormat, defaultValueFormat, color);
+                        return text.replace(/&lt;/g, '<').replace(/&gt;/g, '>'); // anti-sanitise
+                    },
                 },
                 subchart: {
                     show: false,
@@ -313,7 +317,11 @@
             var distArr = this.getRelevantCrossLinkDistances();
             //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
-            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((linkCount * 100) || 10000, 100000));
+            console.log ("model", this.model);
+            var searchArray = Array.from (this.model.get("clmsModel").get("searches").values());
+            var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
+            console.log ("ress", residueSets);
+            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((linkCount * 100) || 10000, 100000), d3.values (residueSets));
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)

@@ -59,3 +59,49 @@
 .CLMStooltip table tr th {
     height: 1em;
 }
+
+.c3-tooltip-container {
+    z-index: 10;
+    border: 2px solid #444;
+    border-radius: 10px;
+    background: #add;
+    opacity: 0.9;
+    line-height: 1em;
+}
+
+table.c3-tooltip {
+    border: none;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+table.c3-tooltip tr {
+    border: none;
+}
+
+table.c3-tooltip tr:nth-child(2n) {
+    background: rgba(255,255,255,0.25);
+}
+
+table.c3-tooltip th {
+    padding: 2px 4px 4px 4px;
+    font-size: 12pt;
+    margin: 0px;
+    border-radius: 8px 8px 0px 0px;
+    color: #000;
+    background: #1c94c4;
+    height: 1em;
+}
+
+table.c3-tooltip td {
+    font-weight: bold;
+    padding: 1px 6px;
+    background-color: transparent;
+    color: #222;
+    font-size: 9pt;
+    border: none;
+}
+
+table.c3-tooltip tr:nth-child(2) td {
+    padding-top: 4px;
+}

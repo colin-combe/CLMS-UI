@@ -9,6 +9,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         pdbBaseSeqID: null,
         linkList: null,
         lastFilterFunc: null,
+        fullDistanceCalcCutoff: 1200,
     },
     
     initialize: function () {
@@ -16,11 +17,16 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
        
         // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
+        // this is in case 3d stuff has been set up before main model (used to happen that pdb's were autoloaded for some searches)
         this.listenToOnce (this, "change:masterModel", function () {    // only do this once (should only happen once anyways but better safe than sorry)
             this.listenTo (this.getModel().get("alignColl"), "bulkAlignChange", function () {
                 console.log ("SET UP LINKS");
                 this.setupLinks (this.getModel().get("clmsModel"));
             });
+        });
+        
+        this.listenTo (CLMSUI.vent, "request3DDistance", function () {
+            console.log ("args", arguments, this);
         });
     },
     
@@ -229,10 +235,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return this._linkIdMap[link.linkId] === undefined ? false : true;
     },
     
+    // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
+    // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
+    // generally at CLMSUI.modelUtils.get3DDistance
     getDistances: function () {
         var resCount = 0;
         var viableChainIndices = [];
         var self = this;
+        //console.log ("strcutcomp", this.get("structureComp").structure);
         this.get("structureComp").structure.eachChain (function (cp) {
             // Don't include chains which are tiny or ones we can't match to a protein
             if (cp.residueCount > 20 && CLMSUI.modelUtils.getProteinFromChainIndex (self.get("chainMap"), cp.index)) {
@@ -243,7 +253,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         
         console.log ("RESCOUNT", resCount, viableChainIndices);
         
-        return this.getChainDistances (viableChainIndices, resCount > 1500);
+        return this.getChainDistances (viableChainIndices, resCount > this.defaults.fullDistanceCalcCutoff);
     },
     
     getChainDistances: function (chainIndices, linksOnly) {
@@ -274,6 +284,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }, this);
         
         return matrixMap;
+    },
+    
+    getChainLength: function (chainIndex) {
+        var chain = this.get("chainCAtomIndices")[chainIndex];
+        return chain ? chain.length : undefined;
     },
     
     notHomomultimeric: function (xlinkID, c1, c2) {
@@ -335,6 +350,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return matrix;
     },
     
+    // resIndex1 and 2 are 0-indexed
     getSingleDistanceBetween2Residues: function (resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var struc = this.get("structureComp").structure;
         var ap1 = struc.getAtomProxy();
@@ -357,9 +373,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             chainIndices.forEach (function (ci) {
                 chainProxy.index = ci;
                 var atomIndices = chainCAtomIndices[ci] = [];
+                // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
                 chainProxy.eachResidue (function (rp) {
+                    // console.log ("rp resno", rp, rp.resno, rp.backboneStartAtomIndex, rp.backboneEndAtomIndex);
                     var ai = self._getAtomIndexFromResidue (rp.resno, chainProxy, sele);
-                    atomIndices.push (ai);
+                    atomIndices.push (ai);        
                 });
             }, this);
         }
@@ -389,7 +407,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 var ai = this.get("structureComp").structure.getAtomIndices (sele);
                 aIndex = ai[0];
                 if (aIndex === undefined) {
-                    console.log ("undefined sele", sele.string, aIndex);
+                    console.log ("undefined sele", sele.string, aIndex, ai);
                 }
                 this.residueToAtomIndexMap[key] = aIndex;
             }

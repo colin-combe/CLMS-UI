@@ -23,9 +23,8 @@
         var _options = _.extend(defaults, options);
 
         var totalLength = nodeArr.reduce (function (total, interactor) {
-            return total + interactor.size;
+            return total + (interactor.size || 1);  // for some reason, some people use an ambiguous protein with no size declared, which causes NaN's
         }, 0);
-
 
         var realRange = range[1] - range[0];
         var noOfGaps = nodeArr.length;
@@ -36,22 +35,18 @@
         var ratio = totalLength / (realRange - (_options.gap * noOfGaps));
         var dgap = _options.gap * ratio;
         totalLength += dgap * noOfGaps;
-
         var scale = d3.scale.linear().domain([0,totalLength]).range(range);
-
-
-        var nodeCoordMap = d3.map();
         var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
-
+        
+        var nodeCoordMap = d3.map();
         nodeArr.forEach (function (node) {
-            var size = node.size;
+            var size = node.size || 1;  // again size is sometimes not there for some artificial protein (usually an ambiguous placeholder)
             // start ... end goes from scale (0 ... size), 1 bigger than 1-indexed size
             nodeCoordMap.set (node.id, {id: node.id, name: node.name, rawStart: total, start: scale(total), end: scale(total + size), size: size});
             total += size + dgap;
             //console.log ("prot", nodeCoordMap.get(node.id));
         });
-
-
+        
         var featureCoords = [];
         var fid = 0;
         featureArrs.forEach (function (farr, i) {
@@ -331,7 +326,9 @@
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
-            this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
+            //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
+            this.reOrder();
+            
             return this;
         },
 
@@ -431,6 +428,7 @@
                 var degSep = a2 - a1; // Math.min (a2 - a1, a1 + 360 - a2); // angle of separation
                 //console.log ("angs", link.start, link.end, degSep);
                 var coords;
+
                 if (out && degSep > 70) {
                     var furtherBowRadius = bowRadius * (1 + (0.25 * ((degSep - 70) / 180)));
                     coords = [{ang: link.start, rad: rad}, {ang: link.start, rad: bowRadius}];
@@ -679,7 +677,7 @@
         drawNodeTicks: function (g, nodes, radius) {
             var self = this;
             var tot = nodes.reduce (function (total, node) {
-                return total + node.size;
+                return total + (node.size || 1);
             }, 0);
 
             var tickValGap = (tot / 360) * 5;

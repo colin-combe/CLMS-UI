@@ -219,6 +219,80 @@ CLMSUI.modelUtils = {
         "*": "*" ,
     },
     
+    
+    repopulateNGL: function (pdbInfo) {
+        pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
+        var params = {};    // {sele: ":A"};    // example: show just 'A' chain
+        if (pdbInfo.ext) {
+            params.ext = pdbInfo.ext;
+        }
+        var uri = pdbInfo.pdbCode ? "rcsb://"+pdbInfo.pdbCode : pdbInfo.pdbFileContents;
+        var stage = pdbInfo.stage;
+        var bbmodel = pdbInfo.bbmodel;
+        
+        stage.removeAllComponents();   // necessary to remove old stuff so old sequences don't pop up in sequence finding
+        
+        stage.loadFile (uri, params)
+            .then (function (structureComp) {
+                var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
+                var interactorMap = bbmodel.get("clmsModel").get("participants");
+                var interactorArr = Array.from (interactorMap.values());
+                // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
+                if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
+                    CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
+                        //console.log ("pdb's pdbUniProtMap", pdbUniProtMap);
+                        sequenceMapsAvailable (pdbUniProtMap);
+                    });
+                }
+                else {  // without access to pdb codes have to match comparing all proteins against all chains
+                    var protAlignCollection = bbmodel.get("alignColl");
+                    var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
+                        function(sObj) { return sObj.data; }
+                    );
+                    //console.log ("our pdbUniProtMap", pdbUniProtMap);
+                    sequenceMapsAvailable (pdbUniProtMap);
+                }
+
+                // bit to continue onto after ngl protein chain to clms protein matching has been done
+                function sequenceMapsAvailable (sequenceMap) {
+                    
+                    console.log ("seqmpa", sequenceMap);
+                    //if (sequenceMap && sequenceMap.length) {
+                        var chainMap = {};
+                        sequenceMap.forEach (function (pMatch) {
+                            pMatch.data = pMatch.seqObj.data;
+                            pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
+                            chainMap[pMatch.id] = chainMap[pMatch.id] || [];
+                            chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
+                            pMatch.otherAlignSettings = {semiLocal: true};
+                        });
+                        console.log ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
+
+                        if (bbmodel.get("stageModel")) {
+                             bbmodel.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
+                        }
+                        bbmodel.trigger ("3dsync", sequenceMap);
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
+
+                        // Make a new model and set of data ready for the ngl viewer
+                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
+                        crosslinkData.set({
+                            structureComp: structureComp, 
+                            chainMap: chainMap, 
+                            pdbBaseSeqID: pdbInfo.baseSeqId, 
+                            masterModel: bbmodel,
+                        });
+                        bbmodel.set ("stageModel", crosslinkData);
+                        // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
+                        // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
+                        // changed:linklist event is received. (i.e. it broke the other way round)
+                        crosslinkData.setupLinks (bbmodel.get("clmsModel"));
+                }
+            })
+        ;  
+    },
+
+    
     getSequencesFromNGLModelNew: function (stage) {
         var sequences = [];
         
@@ -236,6 +310,53 @@ CLMSUI.modelUtils = {
         });  
 
         return sequences;
+    },
+    
+    // Nice web-servicey way of doing ngl chain to clms protein matching
+    // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
+    // Therefore, current default is to use sequence matching to detect similarities
+    matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
+        $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
+            function (data, status, xhr) {                   
+                if (status === "success") {
+                    //console.log ("data", data);
+                    var map = d3.map();
+                    $(data).find("block").each (function(i,b) { 
+                        var segArr = $(this).find("segment[intObjectId]"); 
+                        for (var n = 0; n < segArr.length; n += 2) {
+                            var id1 = $(segArr[n]).attr("intObjectId");
+                            var id2 = $(segArr[n+1]).attr("intObjectId");
+                            var pdbis1 = _.includes(id1, ".") || id1.charAt(0) !== 'P';
+                            var unipdb = pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1};
+                            map.set (unipdb.pdb+"-"+unipdb.uniprot, unipdb);
+                        }
+                    });
+                    // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I 
+                    var mapArr = map.values();
+                    //console.log ("map", map, mapArr, nglSequences);
+                    
+                    if (callback) {
+                        var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
+
+                        mapArr.forEach (function (mapping) {
+                            var dotIndex = mapping.pdb.indexOf(".");
+                            var chainName = dotIndex >= 0 ? mapping.pdb.slice(dotIndex + 1) : mapping.pdb.slice(-1);    // bug fix 27/01/17
+                            var matchSeqs = nglSequences.filter (function (seqObj) {
+                                return seqObj.chainName === chainName;    
+                            });
+                            mapping.seqObj = matchSeqs[0]; 
+                            var matchingInteractors = interactors.filter (function(i) {
+                                var minLength = Math.min (i.accession.length, mapping.uniprot.length);
+                                return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
+                            });
+                            mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
+                        });
+                        mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none"; });
+                        callback (mapArr);
+                    }
+                } 
+            }
+        ); 
     },
     
     /* Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query 
@@ -396,7 +517,65 @@ CLMSUI.modelUtils = {
             }
         }
         return 0;
-    }
+    },
+    
+    crosslinkerSpecificityPerLinker: function (searchArray) {
+        
+        var linkableResSets = {};
+        for (var s = 0; s < searchArray.length; s++) {
+            var search = searchArray[s];
+            var crosslinkers = search.crosslinkers;
+            var crosslinkerCount = crosslinkers.length;
+            
+            for (var cl = 0; cl < crosslinkerCount ; cl++) {
+                var crosslinkerDescription = crosslinkers[cl].description;
+                var crosslinkerName = crosslinkers[cl].name;
+                var linkedAARegex = /LINKEDAMINOACIDS:(.*?)(?:;|$)/g;   // capture both sets if > 1 set
+                console.log ("cld", crosslinkerDescription);
+                var resSet = linkableResSets[crosslinkerName];
+                
+                if (!resSet) {
+                    resSet = {searches: new Set(), linkables: [], name: crosslinkerName};
+                    linkableResSets[crosslinkerName] = resSet;
+                }
+                resSet.searches.add (search.id);
+                
+                var result = null;
+                var i = 0;
+                while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
+                    var resArray = result[1].split(',');
+                    var resCount = resArray.length;
+                    
+                    if (!resSet.linkables[i]) {
+                        resSet.linkables[i] = new Set();
+                    }
+                    
+                    for (var r = 0; r < resCount; r++){
+                        var resRegex = /([A-Z])(.*)?/
+                        var resMatch = resRegex.exec(resArray[r]);
+                        if (resMatch) {
+                            resSet.linkables[i].add(resMatch[1]);
+                        }
+                    }
+                    i++;
+                }
+                
+                resSet.heterobi = resSet.heterobi || (i > 1);
+            }
+        }
+        return linkableResSets;
+    },
+    
+    // return indices of sequence whose letters match one in the residue set
+    filterSequenceByResidueSet: function (seq, residueSet, all) {
+        var rmap = [];
+        for (var m = 0; m < seq.length; m++) {
+            if (all || residueSet.has(seq[m])) {
+                rmap.push (m);
+            }
+        }
+        return rmap;
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

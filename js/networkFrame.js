@@ -159,14 +159,43 @@ CLMSUI.init.modelsEssential = function (options) {
 
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
     clmsModelInst.parseJSON(options);
-      
-    // Anonymiser for screen shots / videos
-    /*
-    clmsModelInst.get("proteins").forEach (function (prot, i) {
-        prot.name = "Protein "+(i+1);
-        prot.description = "Protein "+(i+1)+" Description"; 
+    
+    // some proteins have no size, i.e. ambiguous placeholders, and lack of size property is breaking things later on. MJG 17/05/17
+    clmsModelInst.get("participants").forEach (function (prot) {
+        prot.size = prot.size || 1;
     });
-    */
+      
+    // Anonymiser for screen shots / videos. MJG 17/05/17
+    var urlChunkSet = d3.set (window.location.search.split("&"));
+    if (urlChunkSet.has("anon")) {
+        var i = 0;
+        clmsModelInst.get("participants").forEach (function (prot) {
+            i++;
+            prot.name = "Protein "+i;
+            prot.description = "Protein "+i+" Description";
+        });
+    }
+    
+    
+    // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel
+    var pepMap = d3.map (options.peptides, function (peptide) { return peptide.id; });
+    var searchMap = {};
+    options.rawMatches.forEach (function (rawMatch) {
+        var prots = pepMap.get(rawMatch.pi).prt;
+        var searchToProts = searchMap[rawMatch.si];
+        if (!searchToProts) {
+            var newSet = d3.set();
+            searchMap[rawMatch.si] = newSet;
+            searchToProts = newSet;
+        }
+        prots.forEach (function (prot) {
+            searchToProts.add (prot);
+        });
+    });
+    clmsModelInst.get("searches").forEach (function (value, key) {
+       value.participantIDSet = searchMap[key]; 
+    });
+    //console.log ("smap", searchMap);
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),
@@ -530,14 +559,16 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
-        sequences.forEach (function (entry) {
-            this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
-        }, this);
-        // this triggers an event to say loads has changed in the alignment collection
-        // more efficient to listen to that then redraw/recalc for every seq addition
-        this.bulkAlignChangeFinished ();
+        if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
+            sequences.forEach (function (entry) {
+                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
+            }, this);
+            // this triggers an event to say loads has changed in the alignment collection
+            // more efficient to listen to that then redraw/recalc for every seq addition
+            this.bulkAlignChangeFinished ();
 
-        console.log ("3D sequences poked to collection", this);
+            console.log ("3D sequences poked to collection", this);
+        }
     });
 
     new CLMSUI.DistogramBB ({
