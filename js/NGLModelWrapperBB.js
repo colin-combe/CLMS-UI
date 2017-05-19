@@ -9,7 +9,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         pdbBaseSeqID: null,
         linkList: null,
         lastFilterFunc: null,
-        fullDistanceCalcCutoff: 100,
+        fullDistanceCalcCutoff: 1200,
     },
     
     initialize: function () {
