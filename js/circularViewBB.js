@@ -498,11 +498,17 @@
                     .style("display", (filteredInteractors.length < 2) ? "none" : null)
                 ;
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
-
+                //console.log ("fi", filteredInteractors, interactors);
+                
                 // set interactors to same order as interactor order
                 //console.log ("ofi", filteredInteractors);
                 var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
                 filteredInteractors = [];
+                
+                // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
+                if (interactors.size !== this.interactorOrder.length) {    // interactors is map so size, interactorOrder is array so length
+                    this.reOrder();
+                }
                 this.interactorOrder.forEach (function (interactorId) {
                     if (fmap.has(interactorId)) {
                         filteredInteractors.push (fmap.get(interactorId));
