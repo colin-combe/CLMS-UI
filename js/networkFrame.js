@@ -180,6 +180,7 @@ CLMSUI.init.modelsEssential = function (options) {
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel
     var pepMap = d3.map (options.peptides, function (peptide) { return peptide.id; });
     var searchMap = {};
+    options.rawMatches = options.rawMatches || [];
     options.rawMatches.forEach (function (rawMatch) {
         var prots = pepMap.get(rawMatch.pi).prt;
         var searchToProts = searchMap[rawMatch.si];

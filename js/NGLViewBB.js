@@ -296,7 +296,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     rerenderColours: function () {
         if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
-            // using update dodges setParameters not firing a redraw if param is the same
+            // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
             this.xlRepr.linkRepr.viewer.requestRender();
         }
@@ -813,11 +813,31 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     // fired when setLinkList called on representation's associated crosslinkData object
     _handleDataChange: function() {
+        this.setDisplayedProteins();
+        
         this.setDisplayedResidues (this.crosslinkData.getResidues());
         this.setSelectedResidues ([]);
 
         this.setDisplayedLinks (this.crosslinkData.getLinks());
         this.setSelectedLinks (this.crosslinkData.getLinks());
+    },
+    
+    setDisplayedProteins: function (proteins) {
+        /*
+        proteins = proteins || [];
+        console.log ("chainmap", this.chainMap, this, this.stage);
+        var cp = this.structureComp.structure.getChainProxy();
+        var chainSelection = proteins.map (function (prot) {
+            var protChains = this.chainMap[prot] || [];
+            return protChains.map (function (chainData) {
+                cp.index = chainData.index;
+                return ":"+cp.chainname+"/"+cp.modelIndex;
+            });
+        }, this);
+        var flatChainSelection = d3.merge (chainSelection);
+        console.log ("disp prot results", flatChainSelection, flatChainSelection.join(" or "));
+        */
+        //this.sstrucRepr.setSelection();
     },
 
     setDisplayedResidues: function (residues) {

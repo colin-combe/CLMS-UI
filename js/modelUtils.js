@@ -524,7 +524,7 @@ CLMSUI.modelUtils = {
         var linkableResSets = {};
         for (var s = 0; s < searchArray.length; s++) {
             var search = searchArray[s];
-            var crosslinkers = search.crosslinkers;
+            var crosslinkers = search.crosslinkers || [];
             var crosslinkerCount = crosslinkers.length;
             
             for (var cl = 0; cl < crosslinkerCount ; cl++) {
