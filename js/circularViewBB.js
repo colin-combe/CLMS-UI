@@ -707,7 +707,7 @@
                         angle: (((v-1) + 0.5) * k) + d.start, // v-1 cos we want 1 to be at the zero pos angle, +0.5 cos we want it to be a tick in the middle
                         // show label every labelCycle'th tick starting with first.
                         // Exceptions: Show label for last tick. Don't show for second last tick (unless that tick is the first). It looks nicer.
-                        label: (i % labelCycle && i < tlen - 1) || (i == tlen - 2 && i > 0) ? null : v,
+                        label: (i % labelCycle && i < tlen - 1) || (i === tlen - 2 && i > 0) ? "" : v,
                     };
                 });
             };
@@ -748,7 +748,6 @@
                 .attr("x", 8)
                 .attr("y", 0)
                 .attr("dy", ".35em")
-                .text(function(d) { return d.label; })
             ;
 
             indTickJoin
@@ -756,6 +755,7 @@
                     return "rotate(" + (d.angle - 90) + ")" + "translate(" + radius + ",0)";
                 })
                 .select("text")
+                    .text(function(d) { return d.label; })
                     //.classed ("justifyTick", function(d) { return d.angle > 180; })   // must wait for inkscape/illustrator to catch up with css3 so have to use following code instead
                     .attr ("transform", function(d) {
                         return d.angle > 180 ? "rotate(180) translate(-16 0)" : null;

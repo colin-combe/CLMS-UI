@@ -813,7 +813,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     // fired when setLinkList called on representation's associated crosslinkData object
     _handleDataChange: function() {
-        this.setDisplayedProteins();
+        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        console.log ("prots", prots);
+        this.setDisplayedProteins (prots);
         
         this.setDisplayedResidues (this.crosslinkData.getResidues());
         this.setSelectedResidues ([]);
@@ -823,7 +826,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     setDisplayedProteins: function (proteins) {
-        /*
         proteins = proteins || [];
         console.log ("chainmap", this.chainMap, this, this.stage);
         var cp = this.structureComp.structure.getChainProxy();
@@ -835,9 +837,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             });
         }, this);
         var flatChainSelection = d3.merge (chainSelection);
-        console.log ("disp prot results", flatChainSelection, flatChainSelection.join(" or "));
-        */
-        //this.sstrucRepr.setSelection();
+        var selectionString = flatChainSelection.join(" or ");
+        console.log ("disp prot results", proteins, flatChainSelection, selectionString);
+        
+        this.sstrucRepr.setSelection(selectionString);
+        this.labelRepr.setSelection(selectionString);
     },
 
     setDisplayedResidues: function (residues) {
