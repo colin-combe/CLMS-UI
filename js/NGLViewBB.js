@@ -497,6 +497,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             opacity: 0.67,
             side: "front",
         });
+        
+        this.defaultDisplayedProteins();
     },
 
     _initStructureRepr: function() {
@@ -815,17 +817,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     // fired when setLinkList called on representation's associated crosslinkData object
     _handleDataChange: function() {
-        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
-        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        var showAll = protMap.length === prots.length;
-        console.log ("prots", prots);
-        this.setDisplayedProteins (prots, showAll);
+        this.defaultDisplayedProteins();
         
         this.setDisplayedResidues (this.crosslinkData.getResidues());
         this.setSelectedResidues ([]);
 
         this.setDisplayedLinks (this.crosslinkData.getLinks());
         this.setSelectedLinks (this.crosslinkData.getLinks());
+    },
+    
+    defaultDisplayedProteins: function () {
+        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        var showAll = protMap.length === prots.length;
+        console.log ("prots", prots);
+        this.setDisplayedProteins (prots, showAll);
     },
     
     setDisplayedProteins: function (proteins, showAll) {
@@ -844,7 +850,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var flatChainSelection = d3.merge (chainSelection);
             selectionString = flatChainSelection.join(" or ");
         }
-        console.log ("disp prot results", proteins, flatChainSelection, selectionString);
+        //console.log ("disp prot results", proteins, flatChainSelection, selectionString);
         
         this.sstrucRepr.setSelection(selectionString);
         this.labelRepr.setSelection(selectionString);
