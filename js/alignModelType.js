@@ -165,6 +165,8 @@
             });
         },
         
+        comparator: "displayLabel",
+        
         nonTrivialChange: undefined,
          
         addSeq: function (modelId, seqId, seq, otherSettingsObj) {

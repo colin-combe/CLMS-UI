@@ -123,6 +123,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var mainColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
         var ignore = d3.set(["volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
         var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
+        var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         mainColourSchemes = mainColourSchemes.filter (function (rep) { return ! ignore.has (rep);});
         var colourSection = toolbar
             .append ("label")
@@ -141,6 +142,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     self.xlRepr.updateOptions (self.options, ["colourScheme"]);
                     self.xlRepr.resRepr.setParameters (schemeObj);
                     self.xlRepr.sstrucRepr.setParameters (schemeObj);
+                    self.xlRepr.labelRepr.setParameters (labellable.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
                 }
             })
             .selectAll("option")
@@ -813,7 +815,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     // fired when setLinkList called on representation's associated crosslinkData object
     _handleDataChange: function() {
-        this.setDisplayedProteins();
+        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        var showAll = protMap.length === prots.length;
+        console.log ("prots", prots);
+        this.setDisplayedProteins (prots, showAll);
         
         this.setDisplayedResidues (this.crosslinkData.getResidues());
         this.setSelectedResidues ([]);
@@ -822,22 +828,26 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.setSelectedLinks (this.crosslinkData.getLinks());
     },
     
-    setDisplayedProteins: function (proteins) {
-        /*
+    setDisplayedProteins: function (proteins, showAll) {
         proteins = proteins || [];
         console.log ("chainmap", this.chainMap, this, this.stage);
-        var cp = this.structureComp.structure.getChainProxy();
-        var chainSelection = proteins.map (function (prot) {
-            var protChains = this.chainMap[prot] || [];
-            return protChains.map (function (chainData) {
-                cp.index = chainData.index;
-                return ":"+cp.chainname+"/"+cp.modelIndex;
-            });
-        }, this);
-        var flatChainSelection = d3.merge (chainSelection);
-        console.log ("disp prot results", flatChainSelection, flatChainSelection.join(" or "));
-        */
-        //this.sstrucRepr.setSelection();
+        var selectionString = "";
+        if (!showAll) {
+            var cp = this.structureComp.structure.getChainProxy();
+            var chainSelection = proteins.map (function (prot) {
+                var protChains = this.chainMap[prot] || [];
+                return protChains.map (function (chainData) {
+                    cp.index = chainData.index;
+                    return ":"+cp.chainname+"/"+cp.modelIndex;
+                });
+            }, this);
+            var flatChainSelection = d3.merge (chainSelection);
+            selectionString = flatChainSelection.join(" or ");
+        }
+        console.log ("disp prot results", proteins, flatChainSelection, selectionString);
+        
+        this.sstrucRepr.setSelection(selectionString);
+        this.labelRepr.setSelection(selectionString);
     },
 
     setDisplayedResidues: function (residues) {

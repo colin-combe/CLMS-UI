@@ -1,6 +1,7 @@
     var CLMSUI = CLMSUI || {};
     
     CLMSUI.AlignCollectionViewBB = CLMSUI.utils.BaseFrameView.extend ({
+        
         events: function() {
           var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
           if (_.isFunction(parentEvents)){
@@ -8,6 +9,7 @@
           }
           return _.extend({
               "change input.alignRadio" : "radioClicked",
+              "mouseleave label": "clearTooltip",
           }, parentEvents, {});
         },
         
@@ -38,6 +40,10 @@
             
             var firstModel = this.collection.models[0];
             this.setFocusModel (firstModel);
+            
+            this.listenTo (this.collection, "bulkAlignChange", function () {
+                this.render();
+            });
             return this;
         },
         
@@ -48,15 +54,22 @@
             a.selectAll("*").remove();  // remove all elements underneath el
         },
         
+        clearTooltip: function () {
+            if (this.tooltipModel) {
+                this.tooltipModel.set ("contents", null);
+            }
+            return this;
+        },
+        
         render: function () {
-            console.log ("AlignCollView", this);
             var topElem = d3.select(this.el);
             var list = topElem.select("DIV.checkHolder");
-            var proteins = list.selectAll("span").data(this.collection.models, function(d) { return d.id; });
+            var proteins = list.selectAll("span.alignTab").data(this.collection.models, function(d) { return d.id; });
+            var self = this;
             
             proteins.exit().remove();
             
-            var pspans = proteins.enter().append("span");
+            var pspans = proteins.enter().append("span").attr("class", "alignTab");
             
             pspans.append("input")
                 .attr ("class", "alignRadio")
@@ -68,9 +81,29 @@
             ;
             
             pspans.append("label")
-                .text (function(d) { return d.get("displayLabel"); })
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
+                .on ("mouseover", function(d) {
+                    self.tooltipModel
+                        .set ("header", d.get("displayLabel"))
+                        .set("contents", [
+                            ["Aligned Sequences", d.get("seqCollection") ? d.get("seqCollection").length : 0],
+                            //[d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],
+                        ])
+                        .set("location", d3.event)
+                    ;
+                    self.tooltipModel.trigger ("change:location");
+                })
             ;
+            
+            // label count can change for existing protein
+            proteins.select("label")
+                .html (function(d) {
+                    var seqCount = d.get("seqCollection") ? d.get("seqCollection").length : 0;
+                    return d.get("displayLabel") + (seqCount ? "<span class='alignSeqCount'>"+seqCount+"</span>" : "");
+                })
+            ;
+            
+            proteins.order();
             
             return this;
         },
@@ -306,8 +339,13 @@
                 })
                 .on ("mouseenter", function(d) {
                     self.tooltipModel
-                        .set ("header", d.label+" Sequence")
-                        .set("contents", [["Search Length", nformat(d.convertFromRef.length)], [d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],])
+                        .set ("header", self.model.get("displayLabel"))
+                        .set("contents", [
+                            ["Align Sequence", d.label],
+                            ["Search Length", nformat(d.convertFromRef.length)], 
+                            [d.label+" Length", nformat(d.convertToRef.length)], 
+                            ["Align Score", scoreFormat(d.score)],
+                        ])
                         .set("location", d3.event)
                     ;
                     self.tooltipModel.trigger ("change:location");

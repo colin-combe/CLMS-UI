@@ -103,8 +103,8 @@ DIV.checkHolder {
     overflow-y: auto;
 }
 
-/* allows breaking after a span but not in the label it contains */
-DIV.checkHolder SPAN:after {
+/* allows breaking after a span tab but not in the label it contains */
+DIV.checkHolder SPAN.alignTab:after {
     content: ' ';
 }
 
@@ -147,4 +147,17 @@ DIV.alignSettings {
 
 .controlBlock input[type=number] {
     width: 3em;
+}
+
+.alignSeqCount {
+    color: #aaf;
+    font-size: 0.75em;
+}
+
+.alignSeqCount::before {
+    content: " ";
+}
+
+.alignSeqCount::after {
+    content: "";
 }
