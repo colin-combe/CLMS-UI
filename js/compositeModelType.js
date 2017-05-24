@@ -10,6 +10,7 @@
             var crossLinksArr = Array.from(clmsModel.get("crossLinks").values());
 			var clCount = crossLinksArr.length;
 			
+            filterModel.processTextFilters();   // saves doing stuff later on for every match
 			// if its FDR based filtering,
 			// set all matches fdrPass att to false, then calc
 			if (filterModel && filterModel.get("fdrMode")) {

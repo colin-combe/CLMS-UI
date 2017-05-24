@@ -81,7 +81,7 @@
                 var count = sequences && sequences.length ? sequences.length : 0;
                 var msg = count ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
                     : "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
-                mainDivSel.select(".nglMessagebar").text(msg);    
+                this.setStatusText(msg);    
             });
             
             if (this.options.initialPdbCode) { 
@@ -112,9 +112,14 @@
             }
         },
         
+        setStatusText : function (msg) {
+            d3.select(this.el).select(".nglMessagebar").text(msg);    
+        },
+        
         selectPDBFile: function (evt) {
             var self = this;
             var fileObj = evt.target.files[0];
+            this.setStatusText ("Please Wait...");
             CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
                 var blob = new Blob ([pdbFileContents], {type : 'application/text'});
                 var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
@@ -126,6 +131,7 @@
             if (evt.keyCode === 13) {   // when return key pressed
                 var pdbCode = evt.target.value;
                 if (pdbCode && pdbCode.length === 4) {
+                    this.setStatusText ("Please Wait...");
                     CLMSUI.modelUtils.repopulateNGL ({pdbCode: pdbCode, stage: this.stage, bbmodel: this.model});
                 }
             }

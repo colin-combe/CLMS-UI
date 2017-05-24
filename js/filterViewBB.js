@@ -46,7 +46,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             ],
             navigationFilters: [
                 {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to crosslinks involving a peptide containing this sequence"},
-                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to crosslinks involving a protein containing this text"},
+                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to crosslinks involving a protein containing this text. Separate with commas, join with hyphens i.e. RAT1-RAT2, RAT3"},
                 {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to crosslinks with this charge state"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to crosslinks from this run index"},
                 {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to crosslinks with matches with this (partial) scan number"}
