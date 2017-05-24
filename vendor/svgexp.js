@@ -130,7 +130,7 @@ CLMSUI.svgUtils = {
     
     doPruneInvisible: true,
     
-    pruneConditionSets: [{"display": "none"}, {"visibility": "hidden"}, {"opacity": "0"}, {"fill-opacity": "0", "stroke-opacity": "0"}, {"fill": "none", "stroke-opacity": "0"}],
+    pruneConditionSets: [{"display": "none"}, {"visibility": "hidden"}, {"opacity": "0"}, {"fill-opacity": "0", "stroke-opacity": "0"}, {"fill-opacity": "0", "stroke": "none"}, {"fill": "none", "stroke-opacity": "0"}],
     
     pruneInvisibleSubtrees: function (clonedElement, matchingOriginalElement) {
         if (CLMSUI.svgUtils.doPruneInvisible) {
