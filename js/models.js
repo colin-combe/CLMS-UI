@@ -45,6 +45,13 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             this.scoreExtent = this.get("matchScoreCutoff").slice(0);
             this.valMap = d3.map ();
             this.valMap.set ("?", "Q");
+            this.textSet = d3.map();
+        },
+        
+        processTextFilters: function () {
+            var protSplit1 = this.get("protNames").toLowerCase().split(",");  // split by commas
+            this.textSet.set("protNames", protSplit1.map (function (prot) { return prot.split("-"); }));    // split these in turn by hyphens
+            console.log ("textSet", this.textSet.get("protNames"));
         },
 
         subsetFilter: function (match, matchingProteinPairFunc) {
@@ -138,16 +145,115 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
            
             return false;
 		},
+        
+        proteinNameCheck: function (match, searchString) {
+            if (searchString) {
+                //protein name check
+                var stringPartArrays = this.textSet.get("protNames");
+                var participants = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
+                var matchedPeptides = match.matchedPeptides;
+                var matchedPepCount = matchedPeptides.length;
+
+                for (var spa = 0; spa < stringPartArrays.length; spa++) {
+                    var stringPartArr = stringPartArrays[spa];
+                    var used = [];
+                    var matchedProteins = 0;
+                    
+                    for (var ns = 0; ns < stringPartArr.length; ns++) {
+                        var nameString  = stringPartArr[ns];
+                        var found = false;
+                        
+                        for (var i = 0; i < matchedPepCount; i++){
+                            var matchedPeptide = matchedPeptides[i];
+                            if (found === false && typeof used[i] == 'undefined'){
+                                var pids = matchedPeptide.prt;
+                                var pidCount = pids.length;
+                                for (var p = 0; p < pidCount; p++ ) {
+                                    var interactor = participants.get(pids[p]);
+                                    var toSearch = interactor.name + " " + interactor.description;
+                                    if (toSearch.toLowerCase().indexOf(nameString) != -1) {
+                                        found = true;
+                                        used[i] = true; // so can't match two strings to same peptide e.g. "dog-cat" to protein associated with same peptide
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        // this string is found in one of the protein names/descriptors associated with one of the match's so far unused peptides, so increment a counter
+                        if (found) {
+                            matchedProteins++;
+                        }			
+                    }
+                    // if number of matched proteins equals number of part strings to be matched then match passes the filter
+                    //console.log ("fp", foundPeptides, stringPartArr.length, foundPeptides === stringPartArr.length);
+                    if (matchedProteins === stringPartArr.length) { return true; } 
+                }
+                // return false if reach end of loop (no true condition found)
+                return false;
+            }
+            // return true if no string to match against
+            return true;
+            
+            /*
+            if (searchString) {
+                var searchStringLower = searchString.toLowerCase();
+                
+
+                var nameStrings = searchString.split('-');
+                var nameStringCount = nameStrings.length;
+
+                if (nameStringCount ==1) {
+                    for (var mp = 0; mp < matchedPepCount; mp++) {
+                        var pids = matchedPeptides[mp].prt;
+                        var pidCount = pids.length;
+                        for (var p = 0; p < pidCount; p++ ) {
+
+                            var interactor = participants.get(pids[p]);
+                            var toSearch = interactor.name + " " + interactor.description;
+                            if (toSearch.toLowerCase().indexOf(searchStringLower) != -1) {
+                                return true;
+                            }
+
+                        }
+                    }
+                    return false;
+                }
+
+                var used = [];
+                for (var ns = 0; ns < nameStringCount; ns++) {
+                    var nameString  = nameStrings[ns];
+                    if (nameString){
+                        var found = false;
+                        for (var i = 0; i < matchedPepCount; i++){
+                            var matchedPeptide = matchedPeptides[i];
+                            if (found === false && typeof used[i] == 'undefined'){
+                                var pids = matchedPeptide.prt;
+                                var pidCount = pids.length;
+                                for (var p = 0; p < pidCount; p++ ) {
+                                    var interactor = participants.get(pids[p]);
+                                    var toSearch = interactor.name + " " + interactor.description;
+                                    if (toSearch.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
+                                        found = true;
+                                        used[i] = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (found === false) return false;					
+                    }
+                }
+            }
+            */
+        },
        
        navigationFilter: function (match) {
-      	
 			//peptide seq check
 			if (seqCheck(this.get("pepSeq")) === false) {
 				return false;
 			}
 			
 			//protein name check
-			if (proteinNameCheck(this.get("protNames")) === false) {
+			if (this.proteinNameCheck(match, this.get("protNames")) === false) {
 				return false;
 			}
 			
@@ -221,59 +327,6 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 				}
 				return true;
 			}            
-			
-            //protein name check
-			function proteinNameCheck(searchString) {
-				if (searchString) {
-					var matchedPeptides = match.matchedPeptides;
-					var matchedPepCount = matchedPeptides.length
-					
-					var nameStrings = searchString.split('-');
-					var nameStringCount = nameStrings.length;
-					
-					if (nameStringCount ==1) {
-						for (var mp = 0; mp < matchedPepCount; mp++) {
-							var pids = matchedPeptides[mp].prt;
-							var pidCount = pids.length;
-							for (var p = 0; p < pidCount; p++ ) {
-
-								var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pids[p]);
-								var toSearch = interactor.name + " " + interactor.description;
-								if (toSearch.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
-									return true;
-								}
-							
-							}
-						}
-						return false;
-					}
-					
-					var used = [];
-					for (var ns = 0; ns < nameStringCount; ns++) {
-						var nameString  = nameStrings[ns];
-						if (nameString){
-							var found = false;
-							for (var i = 0; i < matchedPepCount; i++){
-								var matchedPeptide = matchedPeptides[i];
-								if (found === false && typeof used[i] == 'undefined'){
-									var pids = matchedPeptide.prt;
-									var pidCount = pids.length;
-									for (var p = 0; p < pidCount; p++ ) {
-										var interactor = CLMSUI.compositeModelInst.get("clmsModel").get("participants").get(pids[p]);
-										var toSearch = interactor.name + " " + interactor.description;
-										if (toSearch.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
-											found = true;
-											used[i] = true;
-										}
-									}
-								}
-							}
-							if (found === false) return false;					
-						}
-					}
-				}
-				return true;
-			}
         },
         
         stateString: function () {
@@ -309,6 +362,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
                 var fieldSet = d3.set (d3.keys (this.attributes));
                 var antiFields = ["fdrThreshold", "interFdrCut", "intraFdrCut", "fdrMode"];
                 antiFields.forEach (function (af) { fieldSet.remove (af); });
+                if (this.get("matchScoreCutoff")[1] === Number.MAX_VALUE) {   // ignore matchscorecutoff if everything allowed
+                    fieldSet.remove ("matchScoreCutoff");
+                }
                 fields = fieldSet.values();
             }
             

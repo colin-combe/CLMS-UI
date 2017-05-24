@@ -853,7 +853,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         //console.log ("disp prot results", proteins, flatChainSelection, selectionString);
         
         this.sstrucRepr.setSelection(selectionString);
-        this.labelRepr.setSelection(selectionString);
+        if (this.labelRepr) {
+            this.labelRepr.setSelection(selectionString);
+        }
     },
 
     setDisplayedResidues: function (residues) {
