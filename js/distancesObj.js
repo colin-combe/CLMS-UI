@@ -162,6 +162,8 @@ CLMSUI.DistancesObj.prototype = {
         // the 3d sequences to the search sequences, and taking those sub-portions of the search sequence
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+        var peptideTerminalPositions = clmsModel.get("terminiPositions") || d3.map();
+        
         var seqs = d3.entries(this.chainMap).map (function (chainEntry) {
             var protID = chainEntry.key;
             return chainEntry.value.map (function (chain) {
@@ -174,7 +176,38 @@ CLMSUI.DistancesObj.prototype = {
             }, this);
         }, this);
         seqs = d3.merge(seqs); // collapse nested arrays
-        //console.log ("seqs", seqs);
+        console.log ("seqs", seqs);
+        
+        var seqsByProt = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(seqs), function (d) { return d.key; });
+        console.log ("spp", seqsByProt, peptideTerminalPositions);
+        var alignedTerminalIndices = {alignedntermList: [], alignedctermList: []};
+        peptideTerminalPositions.entries().forEach (function (protEntry) {
+            var protValue = protEntry.value;
+            var protKey = protEntry.key;
+            var seqValues = (seqsByProt.get(protKey) || {values: []}).values;
+            console.log ("sv", seqValues);
+            ["ctermList", "ntermList"].forEach (function (termType) {
+                protValue[termType].forEach (function (searchIndex) {
+                    var alignedPos = undefined;
+                    seqValues.forEach (function (seqValue) {
+                        if (searchIndex >= seqValue.first && searchIndex <= seqValue.last) {
+                            alignedPos = {
+                                searchIndex: searchIndex,
+                                resIndex: alignCollBB.getAlignedIndex (searchIndex, protKey, false, seqValue.alignID, false),
+                                chainIndex: seqValue.chainIndex,
+                                protID: seqValue.protID,
+                                resType: termType,
+                            };
+                        }    
+                    });
+                    if (alignedPos) {
+                        alignedTerminalIndices["aligned"+termType].push (alignedPos);
+                    }
+                });
+            }); 
+        });
+        console.log ("ptp", peptideTerminalPositions, alignedTerminalIndices);
+        
         
         var randDists = [];
         // For each crosslinker...
@@ -186,7 +219,8 @@ CLMSUI.DistancesObj.prototype = {
             for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
                 var all = linkableResidues[n].has ("*") || linkableResidues[n].has ("X") || linkableResidues[n].size === 0;
                 seqs.forEach (function (seq) {
-                    var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
+                    console.log ("seq", seq);
+                    var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], peptideTerminalPositions, all);
                     for (var m = 0; m < filteredSubSeqIndices.length; m++) {
                         var searchIndex = seq.first + filteredSubSeqIndices[m];
                         rmap[n].push ({searchIndex: searchIndex, 
@@ -195,8 +229,14 @@ CLMSUI.DistancesObj.prototype = {
                                     resIndex: alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, false) });
                     }
                 });
+                if (linkableResidues[n].has("CTERM")) {
+                    rmap[n].push.apply (rmap[n], alignedTerminalIndices.alignedctermList);
+                }
+                if (linkableResidues[n].has("NTERM")) {
+                    rmap[n].push.apply (rmap[n], alignedTerminalIndices.alignedntermList);
+                }
             }
-            //console.log ("rmap", rmap, linkableResidues);
+            console.log ("rmap", rmap, linkableResidues);
                     
             // Now loop through the searches that use this crosslinker...
             rdata.searches.forEach (function (searchID) {

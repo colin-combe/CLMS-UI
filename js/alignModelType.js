@@ -243,6 +243,7 @@
             return [];
         },
         
+        // is this same as getSearchRangeIndexOfMatches? Only used in matrix view.
         getAlignmentSearchRange: function (proteinID, sequenceID) {
             var protAlignModel = this.get (proteinID);
             if (protAlignModel) {
