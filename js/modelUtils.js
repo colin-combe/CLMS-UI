@@ -550,11 +550,11 @@ CLMSUI.modelUtils = {
                         resSet.linkables[i] = new Set();
                     }
                     
-                    for (var r = 0; r < resCount; r++){
-                        var resRegex = /([A-Z])(.*)?/
+                    for (var r = 0; r < resCount; r++) {
+                        var resRegex = /(cterm|nterm|[A-Z])(.*)?/i;
                         var resMatch = resRegex.exec(resArray[r]);
                         if (resMatch) {
-                            resSet.linkables[i].add(resMatch[1]);
+                            resSet.linkables[i].add(resMatch[1].toUpperCase());
                         }
                     }
                     i++;
@@ -576,6 +576,54 @@ CLMSUI.modelUtils = {
         }
         return rmap;
     },
+    
+    // Connect searches to proteins
+    getProteinSearchMap: function (peptideArray, rawMatchArray) {
+        var pepMap = d3.map (peptideArray, function (peptide) { return peptide.id; });
+        var searchMap = {};
+        rawMatchArray = rawMatchArray || [];
+        rawMatchArray.forEach (function (rawMatch) {
+            var prots = pepMap.get(rawMatch.pi).prt;
+            var searchToProts = searchMap[rawMatch.si];
+            if (!searchToProts) {
+                var newSet = d3.set();
+                searchMap[rawMatch.si] = newSet;
+                searchToProts = newSet;
+            }
+            prots.forEach (function (prot) {
+                searchToProts.add (prot);
+            });
+        });
+        return searchMap;
+    },
+        
+    // Calculate c- and n-term positions in a per-protein map, pass in an array of peptide from searchmodel
+    getTerminiPositions: function (peptideArray) {
+        var perProtMap = d3.map();
+        peptideArray.forEach (function (peptide) {
+            var seqlen = peptide.sequence.length;
+            for (var n = 0; n < peptide.pos.length; n++) {
+                var pos = peptide.pos[n];
+                var prot = peptide.prt[n];
+                var protSet = perProtMap.get(prot);
+                if (!protSet) {
+                    protSet = {"ntermSet": d3.set(), "ctermSet": d3.set()};
+                    perProtMap.set (prot, protSet);
+                }
+                protSet.ntermSet.add (pos);
+                protSet.ctermSet.add (pos + seqlen - 1);
+            }
+        });
+
+        perProtMap.values().forEach (function (termLists) {
+            termLists.ntermList = termLists.ntermSet.values().map(function (v) { return +v; });
+            termLists.ctermList = termLists.ctermSet.values().map(function (v) { return +v; });
+        });
+
+        return perProtMap;
+    },
+    
+    
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

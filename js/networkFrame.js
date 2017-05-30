@@ -177,26 +177,15 @@ CLMSUI.init.modelsEssential = function (options) {
     }
     
     
-    // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel
-    var pepMap = d3.map (options.peptides, function (peptide) { return peptide.id; });
-    var searchMap = {};
-    options.rawMatches = options.rawMatches || [];
-    options.rawMatches.forEach (function (rawMatch) {
-        var prots = pepMap.get(rawMatch.pi).prt;
-        var searchToProts = searchMap[rawMatch.si];
-        if (!searchToProts) {
-            var newSet = d3.set();
-            searchMap[rawMatch.si] = newSet;
-            searchToProts = newSet;
-        }
-        prots.forEach (function (prot) {
-            searchToProts.add (prot);
-        });
-    });
+    // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
+    var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
     clmsModelInst.get("searches").forEach (function (value, key) {
        value.participantIDSet = searchMap[key]; 
     });
     //console.log ("smap", searchMap);
+    
+    // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
+    clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),

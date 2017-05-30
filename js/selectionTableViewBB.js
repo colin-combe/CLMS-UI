@@ -95,7 +95,8 @@
             );
 
             var self = this;
-            var zeroPadder = d3.format(".2f");
+            var twoZeroPadder = d3.format(".2f");
+            var massZeroPadder = d3.format(".6f");
             this.cellFuncs = {
                     "id": function (d) { return d.id; },
                     "ambiguity": function (d) { return d.matchedPeptides[0].prt.length *
@@ -116,13 +117,13 @@
 					},
                     "linkPos1": function(d) { return d.linkPos1; },
                     "linkPos2": function(d) { return d.linkPos2; },
-                    "score": function (d) { return zeroPadder (d.score); },
+                    "score": function (d) { return twoZeroPadder (d.score); },
                   
-					"expMZ": function(d) { return d.expMZ(); },
-					"expMass": function(d) { return d.expMass().toFixed(6); },
-					"matchMZ": function(d) { return d.matchMZ().toFixed(6); },
-					"matchMass": function(d) { return d.matchMass(); },
-					"massError": function(d) { return d.massError().toFixed(6); },
+					"expMZ": function(d) { return massZeroPadder (d.expMZ()); },
+					"expMass": function(d) { return massZeroPadder (d.expMass()); },
+					"matchMZ": function(d) { return massZeroPadder (d.matchMZ()); },
+					"matchMass": function(d) { return massZeroPadder (d.matchMass()); },
+					"massError": function(d) { return massZeroPadder (d.massError()); },
             		//~ "precursorIntensity": function(d) { return d.precursorIntensity; },
             };
 

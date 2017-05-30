@@ -344,7 +344,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("Post-Filter: <%= targets %> Crosslinks<span> ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)</span>");
+        this.template = _.template ("Post-Filter: <strong><%= targets %></strong> Crosslinks<span> ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)</span>");
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;

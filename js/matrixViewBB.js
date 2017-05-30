@@ -303,7 +303,8 @@
         
     getChainResidueIndexRange: function (proteinID) {
         var alignIDs = this.getAlignIDs ([proteinID]);
-        return this.model.get("alignColl").getAlignmentSearchRange (proteinID.proteinID, alignIDs[0]);
+        var range = this.model.get("alignColl").getSearchRangeIndexOfMatches (proteinID.proteinID, alignIDs[0]);
+        return [range.first, range.last];
     },
         
     setStartPoint: function (evt) {
