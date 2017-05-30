@@ -199,7 +199,7 @@
                 try {
                     var json = {};
                     if (text) { json = JSON.parse (text); }
-                    console.log ("JSON", json);
+                    //console.log ("JSON", json);
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
