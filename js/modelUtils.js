@@ -597,7 +597,7 @@ CLMSUI.modelUtils = {
         return searchMap;
     },
         
-    // Calculate c- and n-term positions 
+    // Calculate c- and n-term positions in a per-protein map, pass in an array of peptide from searchmodel
     getTerminiPositions: function (peptideArray) {
         var perProtMap = d3.map();
         peptideArray.forEach (function (peptide) {
