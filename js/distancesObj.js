@@ -204,6 +204,7 @@ CLMSUI.DistancesObj.prototype = {
         
         var seqsByProt = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(seqs), function (d) { return d.key; });
         this.xilog ("spp", seqsByProt, peptideTerminalPositions);
+        /*
         var alignedTerminalIndices = {ntermList: [], ctermList: []};
         peptideTerminalPositions.entries().forEach (function (protEntry) {
             var protValue = protEntry.value;
@@ -231,6 +232,36 @@ CLMSUI.DistancesObj.prototype = {
                 });
             }); 
         }, this);
+        */
+        
+         var alignedTerminalIndices = {ntermList: [], ctermList: []};
+        // n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
+        seqsByProt.entries().forEach (function (protEntry) {
+            var protKey = protEntry.key;
+            var participant = clmsModel.get("participants").get(protKey);
+            var seqValues = protEntry.value.values;
+            var termTypes = ["ntermList", "ctermList"];
+            console.log ("seqv", seqValues, protEntry, participant);
+            [1, participant.size + 1].forEach (function (searchIndex, i) {
+                var alignedTerminalIndex = alignedTerminalIndices[termTypes[i]];
+                var alignedPos = undefined;
+                seqValues.forEach (function (seqValue) {
+                    if (searchIndex >= seqValue.first && searchIndex <= seqValue.last) {
+                        alignedPos = {
+                            searchIndex: searchIndex,
+                            resIndex: alignCollBB.getAlignedIndex (searchIndex, protKey, false, seqValue.alignID, false),
+                            chainIndex: seqValue.chainIndex,
+                            protID: seqValue.protID,
+                            resType: termTypes[i],
+                        };
+                    }    
+                });
+                if (alignedPos) {
+                    alignedTerminalIndex.push (alignedPos);
+                }
+            });
+        });
+        
         this.xilog ("ptp", peptideTerminalPositions, alignedTerminalIndices);
         
         
@@ -334,8 +365,6 @@ CLMSUI.DistancesObj.prototype = {
             }
         }
         */
-        
-        
         
         this.xilog ("RANDOM", randDists, "avg:", d3.sum(randDists) / (randDists.length || 1));
         this.xilog ("------ RANDOM DISTRIBUTION END ------");

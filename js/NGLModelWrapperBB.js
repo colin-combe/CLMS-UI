@@ -251,7 +251,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             }
         });
         
-        console.log ("RESCOUNT", resCount, viableChainIndices);
+        console.log ("getDistances RESCOUNT", resCount, viableChainIndices);
         
         return this.getChainDistances (viableChainIndices, resCount > this.defaults.fullDistanceCalcCutoff);
     },
@@ -260,7 +260,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var chainCAtomIndices = this.getCAtomsAllResidues (chainIndices);
         this.set ("chainCAtomIndices", chainCAtomIndices); // store for later
         
-        console.log ("residue atom indices", chainCAtomIndices);
+        console.log ("getChainDistances, residue atom indices", chainCAtomIndices);
         var keys = d3.keys (chainCAtomIndices);
         
         var matrixMap = {};
