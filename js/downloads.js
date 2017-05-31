@@ -108,9 +108,8 @@ function getMatchesCSV () {
 function getLinksCSV(){
     var validatedTypes = ["A", "B", "C", "?", "R"];
     
-    var csv = '"Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance"';
+    var csv = '"Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance","From Chain","ToChain"';
     
-
     var searchIds = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys());
     for (var i = 0; i < searchIds.length; i++ ) {
         csv += ',"Search_'+searchIds[i] +'"';
@@ -121,7 +120,9 @@ function getLinksCSV(){
 
     var crossLinks = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
-    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances2 (crossLinks, {includeUndefineds: true});
+    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true});
+    //console.log ("pd", physicalDistances);
+    var distance2dp = d3.format(".2f");
     
     crossLinks.forEach (function (crossLink, i) {
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
@@ -147,13 +148,16 @@ function getLinksCSV(){
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
-        console.log ("sf", searchesFound);
+        //console.log ("sf", searchesFound);
         csv += '","' + highestScore;
         csv += '","' + filteredMatchCount;
         csv += '","' + linkAutovalidated;
         csv +=  '","' + validationStats.toString();
         csv += '","' + (crossLink.meta ? crossLink.meta.fdr : undefined);
-        csv += '","' + (physicalDistances[i] ? physicalDistances[i].toFixed(2) : undefined);
+        var distExists = physicalDistances[i].distance;
+        csv += '","' + (distExists ? distance2dp (distExists) : undefined);
+        csv += '","' + (distExists ? physicalDistances[i].chainInfo.from : undefined);
+        csv += '","' + (distExists ? physicalDistances[i].chainInfo.to : undefined);
 
         for (var s = 0; s < searchIds.length; s++){
             csv +=  '","';

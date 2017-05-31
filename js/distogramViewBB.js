@@ -119,6 +119,11 @@
                 legend: {
                     //hide: this.options.seriesNames
                 },
+                grid: {
+                    lines: {
+                        front: false,   // stops overlong and short gridlines obscuring actual data
+                    },
+                },
                 padding: {
                     left: 40, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
                     right: 20,
@@ -264,9 +269,9 @@
             var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
             
             return [
-                this.model.getCrossLinkDistances2 (links[0]),    // TT
-                this.model.getCrossLinkDistances2 (links[1], {calcDecoyProteinDistances: true}),  // TD
-                this.model.getCrossLinkDistances2 (links[2], {calcDecoyProteinDistances: true}),  // DD
+                this.model.getCrossLinkDistances (links[0]),    // TT
+                this.model.getCrossLinkDistances (links[1], {calcDecoyProteinDistances: true}),  // TD
+                this.model.getCrossLinkDistances (links[2], {calcDecoyProteinDistances: true}),  // DD
             ];
         },
         
