@@ -137,11 +137,11 @@ tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
 body, html{
     background: #fff;
     height:100%;
-    -webkit-user-select: none;
+/*    -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: -moz-none;
     -o-user-select: none;
-    user-select: none;
+    user-select: none; */
 }
 body, input, select, textarea {
     Font-family: "Lato-Regular", Helvetica, Arial, sans-serif;
