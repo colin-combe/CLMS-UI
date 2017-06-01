@@ -251,7 +251,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             }
         });
         
-        console.log ("RESCOUNT", resCount, viableChainIndices);
+        console.log ("getDistances RESCOUNT", resCount, viableChainIndices);
         
         return this.getChainDistances (viableChainIndices, resCount > this.defaults.fullDistanceCalcCutoff);
     },
@@ -260,7 +260,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var chainCAtomIndices = this.getCAtomsAllResidues (chainIndices);
         this.set ("chainCAtomIndices", chainCAtomIndices); // store for later
         
-        console.log ("residue atom indices", chainCAtomIndices);
+        console.log ("getChainDistances, residue atom indices", chainCAtomIndices);
         var keys = d3.keys (chainCAtomIndices);
         
         var matrixMap = {};
@@ -399,11 +399,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         
         if (resno !== undefined) {
             var chainIndex = cproxy.index;
-            var key = resno + (chainIndex !== undefined ? ":" + chainIndex : "");
+            var key = resno + (chainIndex !== undefined ? ":" + chainIndex : "");   // chainIndex is unique across models
             aIndex = this.residueToAtomIndexMap [key];
             
             if (aIndex === undefined) {
-                sele.setString (this.makeResidueSelectionString (resno, cproxy));
+                sele.setString (this.makeResidueSelectionString (resno, cproxy), true); // true = doesn't fire unnecessary dispatch events in ngl
                 var ai = this.get("structureComp").structure.getAtomIndices (sele);
                 aIndex = ai[0];
                 if (aIndex === undefined) {

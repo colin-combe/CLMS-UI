@@ -20,6 +20,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
+            "click .showAllProteinsCB": "toggleShowAllProteins",
             "mousedown .panelInner": "checkCTRL",
         });
     },
@@ -42,6 +43,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             shortestLinksOnly: true,
             chainRep: "cartoon",
             colourScheme: "uniform",
+            showAllProteins: false,
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -66,9 +68,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
             {initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel"},
-            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Only", id: "selectedOnly"},
+            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Links Only", id: "selectedOnly"},
             {initialState: this.options.showResidues, class: "showResiduesCB", label: "Residues", id: "showResidues"},
             {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Link Option Only", id: "shortestOnly"},
+            {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins"},
         ];
         toggleButtonData
             .forEach (function (d) {
@@ -84,7 +87,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             el: "#"+optid,
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
-                title: "Options ▼",
+                title: "Show ▼",
                 menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
                 closeOnClick: false,
             }
@@ -216,12 +219,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 displayedLabelColor: "gray",
                 displayedLabelVisible: this.options.labelVisible,
                 colourScheme: this.options.colourScheme,
+                showAllProteins: this.options.showAllProteins,
             }
         );
         
         this.showFiltered();
-
-        console.log ("repr", this.xlRepr);
     },
 
     render: function () {
@@ -244,7 +246,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     downloadImage: function () {
         // https://github.com/arose/ngl/issues/33
-        console.log ("NGL this", this);
         if (this.model.get("stageModel")) {
             var self = this;
             this.model.get("stageModel").get("structureComp").stage.makeImage({
@@ -294,6 +295,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.options.shortestLinksOnly = event.target.checked;
         //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
         this.showFiltered();
+    },
+    
+    toggleShowAllProteins: function (event) {
+        var bool = event.target.checked;
+        this.options.showAllProteins = bool;
+        if (this.xlRepr) {
+            this.xlRepr.options.showAllProteins = bool;
+            this.xlRepr.defaultDisplayedProteins();
+        }
     },
 
     rerenderColours: function () {
@@ -446,16 +456,22 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         var sele;
 
+        // If no resnoList or is empty array make selection 'none'
         if (!resnoList || (Array.isArray (resnoList) && !resnoList.length)) {
             sele = "none";
         } else {
+            // if resnoList == 'all' replace it with array of all residues
             if (resnoList === "all") {
                 resnoList = this.crosslinkData.getResidues();
             }
-
+            
+            // if resnoList is single item, make it an array of the single item
             if (!Array.isArray (resnoList)) { resnoList = [resnoList]; }
+            
             var cp = this.structureComp.structure.getChainProxy();
             
+            // old way
+            /*
             var tmp = resnoList.map (function (r) {
                 cp.index = r.chainIndex;
                 var rsele = r.resno;
@@ -463,8 +479,56 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 if (cp.modelIndex !== undefined) { rsele += "/" + cp.modelIndex; }
                 return rsele;
             });
-
-            sele = "( " + tmp.join(" OR ") + " ) AND .CA";
+            
+            sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
+            */
+            
+            // new way (faster ngl interpretation for big selections!)
+            var modelTree = d3.map ();
+            var tmp = resnoList.map (function (r) {
+                cp.index = r.chainIndex;
+                
+                // Make a hierarchy of models --> chains --> residues to build a string from later
+                var modelBranch = modelTree.get(cp.modelIndex);
+                if (!modelBranch) {
+                    var a = new d3.map();
+                    modelTree.set (cp.modelIndex, a);
+                    modelBranch = a;
+                }
+                
+                var chainBranch = modelBranch.get(cp.chainname);
+                if (!chainBranch) {
+                    var a = new d3.set();
+                    modelBranch.set (cp.chainname, a);
+                    chainBranch = a;
+                }
+                
+                chainBranch.add (r.resno);
+            });    
+            //console.log ("MODELTREE", modelTree);
+            
+            // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
+            // every residue, group the relevant residues together and surround with a bracket
+            var modParts = modelTree.entries().map (function (modelEntry) {
+                var modelBranch = modelEntry.value;
+                var perChainResidues = modelBranch.entries().map (function (chainEntry) {
+                    var chainBranch = chainEntry.value;
+                    // selection syntax picks up ":123" as residue 123 in chain "empty name",
+                    // but ": AND 123" doesn't work. Shouldn't have many pdbs with empty chain names though.
+                    if (chainEntry.key) {
+                        return "( :"+chainEntry.key+" AND ("+chainBranch.values().join(" OR ")+") )";
+                    } else {
+                        var emptyChainNameRes = chainBranch.values().map (function (resVal) {
+                            return resVal+":";
+                        });
+                        return "( "+emptyChainNameRes.join(" OR ")+")";
+                    }
+                });
+                return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
+            });
+            
+            var sele = "(" + modParts.join(" OR ") +" ) AND .CA";
+            //console.log ("SELE", sele);
         }
 
         return sele;
@@ -475,8 +539,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var rp = comp.getResidueProxy();
         var sels = [];
         comp.eachChain (function (cp) {
-            rp.index = cp.residueOffset;
-            sels.push ({resno: rp.resno, chainIndex: cp.index});
+            if (cp.residueCount > 10) {
+                rp.index = cp.residueOffset;
+                sels.push ({resno: rp.resno, chainIndex: cp.index});
+            }
         });
         
         return this._getSelectionFromResidue (sels);
@@ -504,13 +570,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initStructureRepr: function() {
 
         var comp = this.structureComp;
-
-        console.log ("INIT STRUC", this, this.crosslinkData, this.crosslinkData.getResidues(), comp.structure.chainStore);
         var resSele = this._getSelectionFromResidue (this.crosslinkData.getResidues());
         var resEmphSele = this._getSelectionFromResidue ([]);
 
         this.replaceChainRepresentation (this.options.chainRep);
 
+        console.log ("before residue spacefill rep", performance.now());
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
@@ -520,6 +585,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: 0.6,
             name: "res"
         });
+        
+        console.log ("after residue spacefill rep", performance.now());
 
         this.resEmphRepr = comp.addRepresentation ("spacefill", {
             sele: resEmphSele,
@@ -830,15 +897,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
         var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
         var showAll = protMap.length === prots.length;
-        console.log ("prots", prots);
+        //console.log ("prots", prots, showAll);
         this.setDisplayedProteins (prots, showAll);
     },
     
     setDisplayedProteins: function (proteins, showAll) {
         proteins = proteins || [];
-        console.log ("chainmap", this.chainMap, this, this.stage);
+        //console.log ("chainmap", this.chainMap, this, this.stage);
         var selectionString = "";
-        if (!showAll) {
+        if (!showAll && !this.options.showAllProteins) {
             var cp = this.structureComp.structure.getChainProxy();
             var chainSelection = proteins.map (function (prot) {
                 var protChains = this.chainMap[prot] || [];
@@ -848,7 +915,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 });
             }, this);
             var flatChainSelection = d3.merge (chainSelection);
-            selectionString = flatChainSelection.join(" or ");
+            selectionString = flatChainSelection.length ? flatChainSelection.join(" or ") : "none";
         }
         //console.log ("disp prot results", proteins, flatChainSelection, selectionString);
         
@@ -859,6 +926,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     setDisplayedResidues: function (residues) {
+        console.log ("setdisplayed resiudes");
         var availableResidues = this._getAvailableResidues (residues);
         this.resRepr.setSelection (
             this._getSelectionFromResidue (availableResidues)
@@ -866,6 +934,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     setSelectedResidues: function (residues) {
+        console.log ("set selected residuees");
         var availableResidues = this._getAvailableResidues (residues);
         this.resEmphRepr.setSelection (
             this._getSelectionFromResidue (availableResidues)
