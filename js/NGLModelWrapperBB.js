@@ -399,11 +399,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         
         if (resno !== undefined) {
             var chainIndex = cproxy.index;
-            var key = resno + (chainIndex !== undefined ? ":" + chainIndex : "");
+            var key = resno + (chainIndex !== undefined ? ":" + chainIndex : "");   // chainIndex is unique across models
             aIndex = this.residueToAtomIndexMap [key];
             
             if (aIndex === undefined) {
-                sele.setString (this.makeResidueSelectionString (resno, cproxy));
+                sele.setString (this.makeResidueSelectionString (resno, cproxy), true); // true = doesn't fire unnecessary dispatch events in ngl
                 var ai = this.get("structureComp").structure.getAtomIndices (sele);
                 aIndex = ai[0];
                 if (aIndex === undefined) {
