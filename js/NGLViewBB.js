@@ -20,6 +20,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
+            "click .showAllProteinsCB": "toggleShowAllProteins",
             "mousedown .panelInner": "checkCTRL",
         });
     },
@@ -42,6 +43,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             shortestLinksOnly: true,
             chainRep: "cartoon",
             colourScheme: "uniform",
+            showAllProteins: false,
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -66,9 +68,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
             {initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel"},
-            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Only", id: "selectedOnly"},
+            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Links Only", id: "selectedOnly"},
             {initialState: this.options.showResidues, class: "showResiduesCB", label: "Residues", id: "showResidues"},
             {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Link Option Only", id: "shortestOnly"},
+            {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins"},
         ];
         toggleButtonData
             .forEach (function (d) {
@@ -84,7 +87,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             el: "#"+optid,
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
-                title: "Options ▼",
+                title: "Show ▼",
                 menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
                 closeOnClick: false,
             }
@@ -216,12 +219,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 displayedLabelColor: "gray",
                 displayedLabelVisible: this.options.labelVisible,
                 colourScheme: this.options.colourScheme,
+                showAllProteins: this.options.showAllProteins,
             }
         );
         
+         console.log ("Post new crosslinkrep", this.xlRepr, (new Date()).toLocaleTimeString());
+        
         this.showFiltered();
 
-        console.log ("repr", this.xlRepr);
+        console.log ("repr", this.xlRepr, (new Date()).toLocaleTimeString());
     },
 
     render: function () {
@@ -294,6 +300,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.options.shortestLinksOnly = event.target.checked;
         //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
         this.showFiltered();
+    },
+    
+    toggleShowAllProteins: function (event) {
+        var bool = event.target.checked;
+        this.options.showAllProteins = bool;
+        if (this.xlRepr) {
+            this.xlRepr.options.showAllProteins = bool;
+            this.xlRepr.defaultDisplayedProteins();
+        }
     },
 
     rerenderColours: function () {
@@ -401,8 +416,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.colorOptions = {};
         this._initColorSchemes ();
         this._initStructureRepr();
+        console.log ("done structure");
         this._initLinkRepr();
+        console.log ("done links");
         this._initLabelRepr();
+        console.log ("done labels");
     },
 
     _getAtomPairsFromLinks: function (linkList) {
@@ -511,6 +529,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.replaceChainRepresentation (this.options.chainRep);
 
+        console.log ("whee");
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
@@ -520,6 +539,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: 0.6,
             name: "res"
         });
+        
+        console.log ("whooo");
 
         this.resEmphRepr = comp.addRepresentation ("spacefill", {
             sele: resEmphSele,
@@ -530,6 +551,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         });
 
         this.stage.autoView ();
+        
+        console.log ("autoview");
     },
 
     _initLinkRepr: function() {
@@ -830,15 +853,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
         var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
         var showAll = protMap.length === prots.length;
-        console.log ("prots", prots);
+        //console.log ("prots", prots, showAll);
         this.setDisplayedProteins (prots, showAll);
     },
     
     setDisplayedProteins: function (proteins, showAll) {
         proteins = proteins || [];
-        console.log ("chainmap", this.chainMap, this, this.stage);
+        //console.log ("chainmap", this.chainMap, this, this.stage);
         var selectionString = "";
-        if (!showAll) {
+        if (!showAll && !this.options.showAllProteins) {
             var cp = this.structureComp.structure.getChainProxy();
             var chainSelection = proteins.map (function (prot) {
                 var protChains = this.chainMap[prot] || [];
@@ -848,7 +871,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 });
             }, this);
             var flatChainSelection = d3.merge (chainSelection);
-            selectionString = flatChainSelection.join(" or ");
+            selectionString = flatChainSelection.length ? flatChainSelection.join(" or ") : "none";
         }
         //console.log ("disp prot results", proteins, flatChainSelection, selectionString);
         

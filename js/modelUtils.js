@@ -298,8 +298,8 @@ CLMSUI.modelUtils = {
         
         stage.eachComponent (function (comp) {    
             comp.structure.eachChain (function (c) {
-                console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
                 if (c.residueCount > 10) {    // short chains are ions/water molecules, ignore
+                    console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
                     var resList = [];
                     c.eachResidue (function (r) {
                         resList.push (CLMSUI.modelUtils.amino3to1Map[r.resname] || "X");    

@@ -268,12 +268,12 @@
             console.log ("map", this.get("selectedProtein"));
         },
         
-        getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, calcDecoyProteinDistances) {
+        getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
             // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
             distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
             protAlignCollection = protAlignCollection || this.get("alignColl");  
-            var options = {average: false};
-            if (calcDecoyProteinDistances) {
+            options = options || {average: false};
+            if (options.calcDecoyProteinDistances) {
                 if (xlink.fromProtein.is_decoy) {
                     options.realFromPid = this.get("clmsModel").getRealProteinID (xlink.fromProtein.id);
                 }
@@ -286,19 +286,18 @@
         },
         
         // includeUndefineds to true to preserve indexing of returned distances to input crosslinks
-        getCrossLinkDistances2: function (crossLinks, options) {
+        getCrossLinkDistances: function (crossLinks, options) {
             options = options || {};
             var includeUndefineds = options.includeUndefineds || false;
-            var calcDecoyProteinDistances = options.calcDecoyProteinDistances || false;
             
             var distArr = [];
             var distModel = this.get("clmsModel").get("distancesObj");
             var protAlignCollection = this.get ("alignColl");
             var clCount = crossLinks.length;
             for (var cl = 0; cl < clCount; cl++) {
-                var dist = this.getSingleCrosslinkDistance (crossLinks[cl], distModel, protAlignCollection, calcDecoyProteinDistances);
+                var dist = this.getSingleCrosslinkDistance (crossLinks[cl], distModel, protAlignCollection, options);
                 if (dist != null) {
-                    distArr.push (+dist); // + is to stop it being a string
+                    distArr.push (options.returnChainInfo ? dist : +dist); // + is to stop it being a string
                 }
                 else if (includeUndefineds) {
                     distArr.push (undefined);
