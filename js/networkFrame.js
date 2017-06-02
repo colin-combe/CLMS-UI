@@ -185,7 +185,7 @@ CLMSUI.init.modelsEssential = function (options) {
     //console.log ("smap", searchMap);
     
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
-    clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
+    //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),
