@@ -481,7 +481,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             });
             
             sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
+            console.log ("sele", sele);
             */
+            
             
             // new way (faster ngl interpretation for big selections!)
             var modelTree = d3.map ();
@@ -504,7 +506,20 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 }
                 
                 chainBranch.add (r.resno);
-            });    
+                
+                // randomiser
+                /*
+                var rsele = Math.ceil (Math.random() * cp.residueCount);    // random for testing
+                chainBranch.add (rsele);
+                if (cp.chainname) { rsele += ":" + cp.chainname; }
+                if (cp.modelIndex !== undefined) { rsele += "/" + cp.modelIndex; }
+                return rsele;
+                */
+            });   
+            
+            //sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
+            //console.log ("sele", sele);
+            
             //console.log ("MODELTREE", modelTree);
             
             // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
@@ -527,8 +542,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
             });
             
-            var sele = "(" + modParts.join(" OR ") +" ) AND .CA";
-            //console.log ("SELE", sele);
+            sele = "(" + modParts.join(" OR ") +" ) AND .CA";
+            console.log ("SELE", sele);
         }
 
         return sele;
@@ -666,7 +681,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             }
         }, selectionObject);
         
-        
+        console.log ("LABEL SELE", selection);
         this.labelRepr = comp.addRepresentation ("label", {
             color: "#222",
             scale: 3.0,
@@ -675,7 +690,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             labelText: customText,
             name: "chainText",
         });
-        
     },
 
     _initColorSchemes: function () {

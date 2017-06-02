@@ -21,35 +21,35 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     initialize: function (viewOptions) {
         var defaultOptions = {
             modes: [
-                {"label":"Manual", "id":"manualMode", tooltip: "Filter using crosslink metadata"},
+                {"label":"Manual", "id":"manualMode", tooltip: "Filter using cross-link metadata"},
                 {"label":"FDR", "id":"fdrMode", tooltip: "Filter using a False Discovery Rate cutoff"},
             ],
             subsetToggles: [
                 {"label":"Linear", "id":"linears", tooltip: "Show linear peptides"},
-                {"label":"Cross-links", "id":"crosslinks", tooltip: "Show crosslinks"},
-                {"label":"Ambig.", "id":"ambig", tooltip: "Show ambiguous crosslinks"},
-                {"label":"Self", "id":"selfLinks", tooltip: "Show crosslinks between the same protein"},
-                {"label":"Between", "id":"betweenLinks", tooltip: "Show crosslinks between different proteins"},
+                {"label":"Cross-links", "id":"crosslinks", tooltip: "Show cross-links"},
+                {"label":"Ambig.", "id":"ambig", tooltip: "Show ambiguous cross-links"},
+                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
+                {"label":"Between", "id":"betweenLinks", tooltip: "Show cross-links between different proteins"},
             ],
             subsetNumberFilters: [
-                {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show crosslinks separated by at least N amino acids"},
-                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99, tooltip: "Only show crosslinks connecting peptides of at least N amino acids"},
+                {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids"},
+                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids"},
             ],
             validationStatusToggles: [
                 {"label":"A", "id":"A"},
                 {"label":"B", "id":"B"},
                 {"label":"C", "id":"C"},
                 {"label":"?", "id":"Q"},
-                {"label":"Auto", "id":"AUTO", tooltip: "Show autovalidated crosslinks"},
-                {"label":"Unval.", "id":"unval", tooltip: "Show unvalidated crosslinks"},
-                {"label":"Decoy", "id":"decoys", tooltip: "Show decoy crosslinks"},              
+                {"label":"Auto", "id":"AUTO", tooltip: "Show autovalidated cross-links"},
+                {"label":"Unval.", "id":"unval", tooltip: "Show unvalidated cross-links"},
+                {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},              
             ],
             navigationFilters: [
-                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to crosslinks involving a peptide containing this sequence"},
-                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to crosslinks involving a protein containing this text. Separate with commas, join with hyphens i.e. RAT1-RAT2, RAT3"},
-                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to crosslinks with this charge state"},
-                {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to crosslinks from this run index"},
-                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to crosslinks with matches with this (partial) scan number"}
+                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links involving a peptide containing this sequence"},
+                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein containing this text. Separate with commas, join with hyphens i.e. RAT1-RAT2, RAT3"},
+                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state"},
+                {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links from this run index"},
+                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number"}
             ],
         };
         this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
@@ -344,7 +344,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("Post-Filter: <strong><%= targets %></strong> Crosslinks<span> ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)</span>");
+        this.template = _.template ("Post-Filter: <strong><%= targets %></strong> Cross-links<span> ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)</span>");
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;

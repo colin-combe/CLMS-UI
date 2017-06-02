@@ -61,17 +61,21 @@ CLMSUI.DistancesObj.prototype = {
         var totalDist = 0;
         var distCount = 0;
 
+        // only calc distance if resIndex1 and resIndex2 return non-negative values
+        // might miss a few distances where the alignments could be matched quite closely i.e. for link A->C residue C could be matched to D here ABCD srch -> AB-D pdb
+        // but this way dodges a lot of zero length distances when alignments have big gaps in them i.e. ABCDEFGHIJKLMNOP srch -> A------------P pdb
+        // what positions would E and J be, what is the length between E and J?
         if (chains1 && chains2) {
             for (var n = 0; n < chains1.length; n++) {
                 var chainIndex1 = chains1[n].index;
                 var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chains1[n].name, chainIndex1);
-                var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1) - 1; 
+                var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1, true) - 1; 
                 
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var chainIndex2 = chains2[m].index;
                         var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chains2[m].name, chainIndex2);
-                        var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2) - 1; 
+                        var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; 
                         // align from 3d to search index. resindex is 0-indexed so -1 before querying
                         //this.xilog ("alignid", alignId1, alignId2, pid1, pid2);
                         

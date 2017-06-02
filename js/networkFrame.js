@@ -567,7 +567,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "distoShow",
         myOptions: {
-            chartTitle: "Cross-Link Distogram",
+            chartTitle: "Distogram",
             seriesName: "Actual"
         }
     });
