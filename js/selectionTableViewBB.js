@@ -269,7 +269,7 @@
                     } else {
                     	d3.select(".validationControls").style("display", "block");
                     }
-                    self.model.set ("lastSelectedMatch", {match: d, directSelection: true});
+                    self.model.trigger("change:lastSelectedMatch", self.model, {match: d, directSelection: true});
                 })
                 .classed ("spectrumShown2", function(d) {
                     var lsm = self.model.get("lastSelectedMatch");

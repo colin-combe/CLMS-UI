@@ -448,7 +448,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-        if (match && match.searchId != "CSV file") {
+        if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
             CLMSUI.loadSpectra (match, randId, this.model);
         } else {
