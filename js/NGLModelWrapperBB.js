@@ -365,6 +365,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     getCAtomsAllResidues : function (chainIndices) {
         var chainProxy = this.get("structureComp").structure.getChainProxy();
+        var atomProxy = this.get("structureComp").structure.getAtomProxy();
         var sele = new NGL.Selection();
         var chainCAtomIndices = {};
         var self = this;
@@ -380,24 +381,29 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 var chainResList = [];
                 chainProxy.eachResidue (function (rp) {
                     // console.log ("rp resno", rp, rp.resno, rp.backboneStartAtomIndex, rp.backboneEndAtomIndex);
-                    //chainResList.push ({resno: rp.resno, chainIndex: ci}); - new
-                    // old way
-                    var ai = self._getAtomIndexFromResidue (rp.resno, chainProxy, sele);
-                    atomIndices.push (ai);        
+                    chainResList.push ({resno: rp.resno, chainIndex: ci}); // - new  
                 });
                 
-                // The NEw Way - 3.52s vs 21.88s OLD
-                /*
-                var sel = this._getSelectionFromResidue (chainResList);
+                // The New Way - 3.52s vs 21.88s OLD
+                
+                var sel = this.getSelectionFromResidue (chainResList);
                 sele.setString (sel, true); // true = doesn't fire unnecessary dispatch events in ngl
                 var ai = this.get("structureComp").structure.getAtomIndices (sele);
-                ai.forEach (function (atomIndex, i) {
-                    var key = chainResList[i].resno + (ci !== undefined ? ":" + ci : "");   // chainIndex is unique across models
+                var resMap = [];
+                
+                // Building a resmap in one loop and then running through available residues in another loop because some (errored) residues don't have c-alpha atoms
+                // This shouldn't happen, but it does i.e. 5taf, so a 1-to-1 loop between residues and atomIndices wouldn't work in all cases
+                ai.forEach (function (atomIndex) {
+                    atomProxy.index = atomIndex;
+                    resMap[atomProxy.resno] = atomIndex;
+                }, this);
+
+                chainResList.forEach (function (chainRes) {
+                    var key = chainRes.resno + (ci !== undefined ? ":" + ci : "");   // chainIndex is unique across models
+                    var atomIndex = resMap[chainRes.resno];
                     this.residueToAtomIndexMap[key] = atomIndex;
                     atomIndices.push (atomIndex);
                 }, this);
-                */
-
             }, this);
         }
         
@@ -406,7 +412,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return chainCAtomIndices;
     },
     
-    _getSelectionFromResidue: function (resnoList) {
+    getSelectionFromResidue: function (resnoList) {
 
         var sele;
 
@@ -485,7 +491,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                     // selection syntax picks up ":123" as residue 123 in chain "empty name",
                     // but ": AND 123" doesn't work. Shouldn't have many pdbs with empty chain names though.
                     if (chainEntry.key) {
-                        return "( :"+chainEntry.key+" AND ("+chainBranch.values().join(" OR ")+") )";
+                        var vals = chainBranch.values();
+                        if (vals.length === 1) {
+                            return "( "+vals[0]+":"+chainEntry.key+" )";    // if single val, chain:resno is quicker
+                        } else {
+                            return "( :"+chainEntry.key+" AND ("+vals.join(" OR ")+") )";
+                        }
                     } else {
                         var emptyChainNameRes = chainBranch.values().map (function (resVal) {
                             return resVal+":";
