@@ -417,7 +417,7 @@ CLMSUI.modelUtils = {
         return [];
     },
     
-    getLegalAccessionIDs (interactorMap) {
+    getLegalAccessionIDs: function (interactorMap) {
         var ids = [];
         if (interactorMap) {
             ids = Array.from(interactorMap.values())
