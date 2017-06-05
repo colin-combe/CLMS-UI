@@ -534,7 +534,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return sele;
     },
     
-    getFirstResidueInEachChain () {
+    getFirstResidueInEachChain: function () {
         var comp = this.structureComp.structure;
         var rp = comp.getResidueProxy();
         var sels = [];
