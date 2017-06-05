@@ -269,7 +269,9 @@
                     } else {
                     	d3.select(".validationControls").style("display", "block");
                     }
-                    self.model.trigger("change:lastSelectedMatch", self.model, {match: d, directSelection: true});
+                    if (d.searchId != "CSV file") {
+						self.model.trigger("change:lastSelectedMatch", self.model, {match: d, directSelection: true});
+					}
                 })
                 .classed ("spectrumShown2", function(d) {
                     var lsm = self.model.get("lastSelectedMatch");
