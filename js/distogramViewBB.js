@@ -323,7 +323,7 @@
             //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
             console.log ("model", this.model);
-            var searchArray = Array.from (this.model.get("clmsModel").get("searches").values());
+            var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
             var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
             console.log ("ress", residueSets);
             var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((linkCount * 100) || 10000, 100000), d3.values (residueSets));

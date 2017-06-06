@@ -88,7 +88,7 @@
         // ..1...2...3...4...5...6...7...8...9...10.. - link positions set to 1-indexed link pos minus 0.5
         // 0...2...............5..................... - feature range [2..5] starts at node start -1 to node end to cover approporiate links
 
-        return { nodes: nodeCoordMap.values(), links: linkCoords, features: featureCoords};
+        return { nodes: CLMS.arrayFromMapValues(nodeCoordMap), links: linkCoords, features: featureCoords};
     };
 
     CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend ({
@@ -303,7 +303,7 @@
             // initial Order
             //this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
             // return order as is
-            this.interactorOrder =  (Array.from (this.model.get("clmsModel").get("participants").values()))
+            this.interactorOrder =  (CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")))
                 .map(function(p) { return p.id; });
 
             var alignCall = 0;
@@ -335,7 +335,7 @@
         reOrder: function () {
             //console.log ("this", this, this.options);
             this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
-            var prots = Array.from (this.model.get("clmsModel").get("participants").values());
+            var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
             var proteinSort = function (field) {
                 var numberSort = !isNaN(prots[0][field]);
                 var sortDir = this.options.sortDir;

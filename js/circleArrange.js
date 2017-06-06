@@ -37,7 +37,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
     
     
     function makeNodeEdgeLists (proteins) {
-        var map = Array.from(proteins.values()).map (function (protein) {
+        var map = CLMS.arrayFromMapValues(proteins).map (function (protein) {
             return makeNodeEdgeList (protein);
         });
         return map;
@@ -301,7 +301,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
         return order;
     }
     
-    var pArray = Array.from (proteins.values());
+    var pArray = CLMS.arrayFromMapValues(proteins);
     if (pArray.length < 2) {
         return (pArray.length === 1 ? [pArray[0].id] : []);
     }
