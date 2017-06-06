@@ -154,7 +154,12 @@ function getLinksCSV(){
         csv += '","' + linkAutovalidated;
         csv +=  '","' + validationStats.toString();
         csv += '","' + (crossLink.meta ? crossLink.meta.fdr : undefined);
-        var distExists = physicalDistances[i].distance;
+		var distExists; // = physicalDistances[i].distance;
+        if (physicalDistances[i]) {
+			distExists = physicalDistances[i].distance;
+		} else {
+			distExists = false;
+		}
         csv += '","' + (distExists ? distance2dp (distExists) : undefined);
         csv += '","' + (distExists ? physicalDistances[i].chainInfo.from : undefined);
         csv += '","' + (distExists ? physicalDistances[i].chainInfo.to : undefined);
