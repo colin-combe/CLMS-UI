@@ -451,19 +451,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this._getAtomPairsFromLinks (linkList);
     },
     
-    getFirstResidueInEachChain (chainIndexSet) {
+    getFirstAtomSelectionInEachChain (chainIndexSet) {
         var comp = this.structureComp.structure;
-        var rp = comp.getResidueProxy();
         var sels = [];
         comp.eachChain (function (cp) {
             // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
             if (cp.residueCount > 10 && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
-                rp.index = cp.residueOffset;
-                sels.push ({resno: rp.resno, chainIndex: cp.index});
+                sels.push (cp.atomOffset);
             }
         });
-        
-        return this.crosslinkData.getSelectionFromResidue (sels);
+        return "@"+sels.join(",");
     },
     
     replaceChainRepresentation: function (newType) {
@@ -571,8 +568,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     _initLabelRepr: function () {
         var comp = this.structureComp;
-        
-        var selection = this.getFirstResidueInEachChain ();
         var customText = {};
         var self = this;
         
@@ -585,11 +580,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             }
         });
         
-        console.log ("LABEL SELE", selection);
+        var atomSelection = this.getFirstAtomSelectionInEachChain ();
+        //console.log ("LABEL SELE", atomSelection);
         this.labelRepr = comp.addRepresentation ("label", {
             color: "#222",
             scale: 3.0,
-            sele: selection,
+            sele: atomSelection,
             labelType: "text",
             labelText: customText,
             name: "chainText",
@@ -818,8 +814,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
-                var labelSele = this.getFirstResidueInEachChain (d3.set(showableChains));
-                console.log ("LABEL SELE", labelSele);
+                var labelSele = this.getFirstAtomSelectionInEachChain (d3.set(showableChains.chainIndices));
+                //console.log ("LABEL SELE", labelSele);
                 this.labelRepr.setSelection (labelSele);
             }
         }
@@ -866,12 +862,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             selectionString = chainSelection.length ? chainSelection.join(" or ") : "none";
         }
         
+        //console.log ("CHAIN SELE", selectionString);
         return selectionString;
     },
     
 
     setDisplayedResidues: function (residues) {
-        console.log ("setdisplayed resiudes");
+        console.log ("setdisplayed residues");
         var availableResidues = this._getAvailableResidues (residues);
         this.resRepr.setSelection (
             this.crosslinkData.getSelectionFromResidue (availableResidues)
@@ -879,7 +876,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     setSelectedResidues: function (residues) {
-        console.log ("set selected residuees");
+        console.log ("set selected residues");
         var availableResidues = this._getAvailableResidues (residues);
         this.resEmphRepr.setSelection (
             this.crosslinkData.getSelectionFromResidue (availableResidues)
