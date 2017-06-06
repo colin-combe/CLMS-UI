@@ -812,7 +812,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var chainSele = this.getShowProteinNGLSelection (showableChains);
         console.log ("showable chains", showableChains, chainSele);
         if (!getSelectionOnly) {
+            console.log ("before structure filter", performance.now());
             this.sstrucRepr.setSelection (chainSele);
+            console.log ("after structure filter", performance.now());
             if (this.labelRepr) {
                 var labelSele = this.getFirstAtomSelectionInEachChain (d3.set(showableChains.chainIndices));
                 //console.log ("LABEL SELE", labelSele);
@@ -854,6 +856,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var chains = showableChains.chainIndices || [];
         
         if (!showAll) {
+            var chainList = chains.map (function (chainIndex) {
+                return {chainIndex: chainIndex};
+            });
+            var sele2 = this.crosslinkData.getSelectionFromResidue (chainList);
+            console.log ("selection2", sele2);
+            
+            
             var cp = this.structureComp.structure.getChainProxy();
             var chainSelection = chains.map (function (chainIndex) {
                 cp.index = chainIndex;

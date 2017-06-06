@@ -428,8 +428,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return chainCAtomIndices;
     },
     
-    getSelectionFromResidue: function (resnoList, allAtoms) {   // set allAtoms to true to not restrict selection to alpha carbon atoms
-
+    getSelectionFromResidue: function (resnoList, options) {   // set allAtoms to true to not restrict selection to alpha carbon atoms
+        // options are 
+        // allAtoms:true to not add on the AND .CA qualifier
+        // chainsOnly:true when the resnoList only has chainIndices defined and no res
+        var options = options || {};
         var sele;
 
         // If no resnoList or is empty array make selection 'none'
@@ -523,7 +526,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
             });
             
-            sele = "(" + modParts.join(" OR ") +" )" + (allAtoms ? "" : " AND .CA");
+            sele = "(" + modParts.join(" OR ") +" )" + (options.allAtoms ? "" : " AND .CA");
             console.log ("SELE", sele);
         }
 
