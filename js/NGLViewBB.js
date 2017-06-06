@@ -894,9 +894,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     defaultDisplayedProteins: function () {
-        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
-        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        var showAll = protMap.length === prots.length;
+        var protsAll = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
+        var prots = protsAll.filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        var showAll = protsAll.length === prots.length;
         //console.log ("prots", prots, showAll);
         this.setDisplayedProteins (prots, showAll);
     },

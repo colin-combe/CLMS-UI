@@ -28,7 +28,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend ({
     render: function () {
 		//d3.select(this.el).append("div");
         var searches = this.model.get("searches");
-        $(".searchSummaryDiv").JSONView(Array.from(searches.values()));
+        $(".searchSummaryDiv").JSONView(CLMS.arrayFromMapValues(searches));
         $('.searchSummaryDiv').JSONView('collapse', 2);
 
         

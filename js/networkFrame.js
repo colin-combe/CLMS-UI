@@ -54,7 +54,7 @@ var allDataLoaded = _.after (3, function() {
 
 	//get uniprot feature types
 	var uniprotFeatureTypes = new Map();     
-	var participantArray = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("participants").values());
+	var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
 	var participantCount = participantArray.length;
     for (var p = 0; p < participantCount; p++){
 		var participant = participantArray[p];
@@ -72,7 +72,7 @@ var allDataLoaded = _.after (3, function() {
 		}
     }
 	//add uniprot feature types
-    annotationTypes = annotationTypes.concat(Array.from(uniprotFeatureTypes.values()));
+    annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
     
@@ -412,7 +412,7 @@ CLMSUI.init.viewsEssential = function (options) {
                     } else {
                         var altModel = new window.CLMS.model.SearchResultsModel ();
                         altModel.parseJSON(json);
-                        var allCrossLinks = Array.from(altModel.get("crossLinks").values());
+                        var allCrossLinks = CLMS.arrayFromMapValues(altModel.get("crossLinks"));
                         // empty selection first
                         // (important or it will crash coz selection contains links to proteins not in clms model)
                         self.alternativesModel
