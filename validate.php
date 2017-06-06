@@ -151,8 +151,7 @@ header('Content-type: text/html; charset=utf-8');
 				CLMSUI.init.modelsEssential(json);
 
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-				document.title = Array.from(searches.keys()).join();
-					
+                document.title = "Validate " + CLMS.arrayFromMapKeys(searches).join();	
 				CLMSUI.split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
 						sizes: [60,40], minSize: [200,10],
 							onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
@@ -162,8 +161,8 @@ header('Content-type: text/html; charset=utf-8');
 
                 //CLMSUI.vent.trigger ("spectrumShow", true);
                 
-				var allCrossLinks = Array.from(
-					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+				var allCrossLinks = CLMS.arrayFromMapValues(
+					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
 				CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
 
 				var resize = function(event) {
