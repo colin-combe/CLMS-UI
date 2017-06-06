@@ -116,7 +116,6 @@ if (count($_GET) > 0) {
         WHERE sa.search_id = s.id
       ) AS runs,
 
-
     (SELECT json_agg(e.*) FROM (
          SELECT id, name, description FROM enzyme
     ) e  WHERE ps.enzyme_chosen = e.id) AS enzymes,
