@@ -56,14 +56,15 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
 
         var groupDomain = [undefined];
         var labelRange = ["Multiple Group"];
-        var groupArray = Array.from(groups.entries());
+        var groupArray = CLMS.arrayFromMapEntries(groups);
         var groupCount = groupArray.length;
         for (var g = 0; g < groupCount; g++) {
 			var group = groupArray[g];
             groupDomain.push (group[0]);
             labelRange.push ("Group "+group[0]+" ("+group[1].join(", ")+")");
         }
-         var groupCount = groups.size;
+
+        var groupCount = groups.size;
         var colScale;
 
         var multiGroupColour = "#202020";
