@@ -451,7 +451,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this._getAtomPairsFromLinks (linkList);
     },
     
-    getFirstAtomSelectionInEachChain (chainIndexSet) {
+    getFirstAtomSelectionInEachChain: function (chainIndexSet) {
         var comp = this.structureComp.structure;
         var sels = [];
         comp.eachChain (function (cp) {
