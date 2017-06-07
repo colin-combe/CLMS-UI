@@ -23,11 +23,13 @@
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
+                subSeriesNames: ["Short", "Good", "Overlong"],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
                 maxX: 90
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.options.groups = [this.options.subSeriesNames];
             this.colourScaleModel = viewOptions.colourScaleModel;
 
             this.precalcedDistributions = {};
@@ -48,28 +50,24 @@
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
             ;
 
-            // Generate the C3 Chart
-            var chartID = "#" + chartDiv.attr("id");
-            var columnsAsNamesOnly = this.options.seriesNames.map (function(sname) { return [sname]; });
+            // make 'empty' columns for all series and sub-series
+            var columnsAsNamesOnly = d3.merge([this.options.seriesNames, this.options.subSeriesNames]).map (function(sname) { return [sname]; });
 
+            var chartID = "#" + chartDiv.attr("id");
+            // Generate the C3 Chart
             this.chart = c3.generate({
                 bindto: chartID,
+                transition: {
+                    duration: 0,
+                },
                 data: {
                     columns: columnsAsNamesOnly,
                     type: 'bar',
+                    groups: this.options.groups || this.options.seriesNames,
                     colors: {
+                        "Cross Links": "#44d",
                         Random: "#888",
                         "Decoys (TD-DD)": "#d44",
-                    },
-                    color: function (colour, d) {
-                        var rm = self.colourScaleModel;
-                        if (rm && d.id && d.id === "Cross Links") {
-                            return rm.get("colScale")(d.x);
-                        }
-                        else if (rm && !d.id && d === "Cross Links") {
-                            return rm.get("colScale").range()[2];
-                        }
-                        return colour;
                     },
                     selection: {
                         enabled: false,
@@ -163,6 +161,7 @@
                     text: this.options.chartTitle
                 },
             });
+            this.chart.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
             
             
             function distancesAvailable () {
@@ -172,7 +171,7 @@
             }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", this.relayout); // have details (range, domain) of distance colour model changed?
+            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({"noRescale":true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -183,7 +182,9 @@
             return this;
         },
 
-        render: function () {
+        render: function (options) {
+            
+            options = options || {};
             
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 console.log ("re rendering distogram");
@@ -191,15 +192,27 @@
                 var TT = 0, TD = 1, DD = 2;
                 var series = this.getRelevantCrossLinkDistances();
                 var seriesLengths = series.map (function(d) { return d.length; });
-                var validDistances = series[TT].length;
-                //console.log ("series", series);
 
                 // Add data and placeholders for random data
                 series.push ([]);
                 seriesLengths.push (this.randArrLength);  // we want to scale random distribution to unfiltered crosslink dataset size
                 
+                // Add sub-series data
+                // split TT list into sublists for length
+                var colModel = this.colourScaleModel;
+                var colDomain = colModel.get("colScale").domain();
+                var splitSeries = [[],[],[]];
+                series[TT].forEach (function (val) {
+                    var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
+                    splitSeries[cat].push (val);
+                });
+                for (var n = 0; n < splitSeries.length; n++) {
+                    series.push (splitSeries[n]);
+                    seriesLengths.push (splitSeries[n].length);
+                }
+               
                 // Add DD Decoys as temporary series for aggregation
-                var seriesNames = this.options.seriesNames.slice();  // copy series names
+                var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
                 seriesNames.splice (DD, 0, "Decoys (DD)");
                 
                 //console.log ("seriesLengths", seriesLengths);
@@ -211,7 +224,8 @@
                 countArrays[TD].forEach (function (v, i) {
                     countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts  
                 });
-                countArrays.splice (DD,1);   // remove DD
+                countArrays.splice (DD,1);   // remove DD, its purpose is done
+                seriesNames.splice (DD,1);
                 //console.log ("ca2", countArrays);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
@@ -223,7 +237,7 @@
                 //console.log ("maxY", maxY);
                 
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
-                countArrays.forEach (function (countArray,i) { countArray.unshift (this.options.seriesNames[i]); }, this);
+                countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
                 //console.log ("thresholds", thresholds);
                 var curMaxY = this.chart.axis.max().y;
                 // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
@@ -233,26 +247,60 @@
                     this.chart.axis.max({y: maxY});
                 }
                 
-                console.log ("countArrays", countArrays);
+                //console.log ("countArrays", countArrays);
 
-                //this.redrawColourRanges();
-                this.chart.load({
-                    columns: countArrays,       
-                });
+                var colMap = this.getSeriesColours();
                 
-                // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
-                var internal = this.chart.internal;
-                var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
-                d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+                // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
+                var tempHandle = c3.chart.internal.fn.redraw;
+                c3.chart.internal.fn.redraw = function () {};
+                if (options.noRescale) {
+                    this.chart.load({
+                        columns: countArrays,
+                        colors: colMap,
+                    });
+                    c3.chart.internal.fn.redraw = tempHandle;
+                    tempHandle.call (this.chart.internal, {withLegend: true});
+                } else {
+                    c3.chart.internal.fn.redraw = tempHandle;
+                    this.chart.load({
+                        columns: countArrays,
+                        colors: colMap,
+                    });
+                }
                 
-                // reset title
-                var commaed = d3.format(",");
-                d3.select(this.el).select(".c3-title").text (this.options.chartTitle +": "+commaed(validDistances)+" Cross-Links");
-                internal.redrawTitle();
-
+                this
+                    .makeBarsSitBetweenTicks()
+                    .makeChartTitle(splitSeries)
+                ;
                 //console.log ("data", distArr, binnedData);
             }
 
+            return this;
+        },
+        
+        // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
+        makeBarsSitBetweenTicks: function () {
+            var internal = this.chart.internal;
+            var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
+            d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+            return this;
+        },
+        
+        // reset title
+        makeChartTitle: function (splitSeries) {
+            var commaed = d3.format(",");
+            var linkReport = splitSeries.map (function (split) { return split.length; });
+            var total = d3.sum (linkReport);
+            var linkReportStr = linkReport.map (function (count, i) {
+                return commaed(count)+" "+this.options.subSeriesNames[i];
+            }, this);
+            
+            var titleText = this.options.chartTitle +": "+commaed(total)+" Cross-Links - "+linkReportStr.join(", ");
+            
+            d3.select(this.el).select(".c3-title").text (titleText);
+            this.chart.internal.redrawTitle();
+            
             return this;
         },
         
@@ -297,6 +345,7 @@
                 if (rescaleToSeries) {
                     var rsIndex = seriesNames.indexOf (rescaleToSeries);
                     rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1; 
+                    //console.log ("rescale", aseriesName, rescaleToSeries, seriesNames, rsIndex, seriesLengths);
                 }
                 
                 var binnedData = precalcedDistributions[aseriesName]
@@ -316,7 +365,6 @@
                     array.pop();
                 });
             }
-            //console.log ("countArrays", countArrays);
 
             return countArrays;
         },
@@ -346,29 +394,30 @@
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
             d3.select(this.el).select(".c3").style("max-height", "none");   
-            this.redrawColourRanges();
+            //this.redrawColourRanges();
             this.chart.resize();
+            this.makeBarsSitBetweenTicks ();
             return this;
         },
         
-        redrawColourRanges: function () {
+        getSeriesColours: function () {
             var colModel = this.colourScaleModel;
             var colScale = colModel.get("colScale");
             var colLabels = colModel.get("labels");
             var colDomain = colScale.domain();
-            this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
             /*
-            this.chart.regions ([
-                {axis: 'x', end: colDomain[0], class: 'underLength'},
-                {axis: 'x', start: colDomain[0], end: colDomain[1], class: 'midLength'},
-                {axis: 'x', start: colDomain[1], class: 'overLength'},
-            ]);
-            d3.select(this.el).selectAll(".underLength").style("fill", colScale.range()[0]);
-            d3.select(this.el).selectAll(".midLength").style("fill", colScale.range()[1]);
-            d3.select(this.el).selectAll(".overLength").style("fill", colScale.range()[2]);
+            this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
             */
             
-            return this;    
+            var colRange = colScale.range();
+            var colMap = {};
+            this.options.subSeriesNames.forEach (function (subSeries, i) {
+                colMap[subSeries] = colRange[i];
+            });
+            return colMap;
+            
+            //this.chart.data.colors (colMap);
+            //return this;    
         },
 
         // removes view

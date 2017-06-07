@@ -11,3 +11,7 @@
 .distoDiv .c3-axis.c3-axis-x .tick:nth-of-type(10n+1) line {
     transform: scaleY(1.2);
 }
+
+.distoDiv .c3-title {
+    font-size: 1.25em;
+}
