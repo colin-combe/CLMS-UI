@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.modelUtils = {
+CLMSUI.modelUtils = {   
     flattenMatchesOld: function (matchesArr) {
         return matchesArr.map (function(m) { return m.score; });    
     },
@@ -9,7 +9,7 @@ CLMSUI.modelUtils = {
         var arrs = [[],[]];
         var matchesLen = matchesArr.length;
         for (var m = 0; m < matchesLen; ++m) { 
-			var match = matchesArr[m];
+            var match = matchesArr[m];
             arrs[match.is_decoy? 1 : 0].push (match.score);
         };
         return arrs;
@@ -236,7 +236,7 @@ CLMSUI.modelUtils = {
             .then (function (structureComp) {
                 var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
                 var interactorMap = bbmodel.get("clmsModel").get("participants");
-                var interactorArr = Array.from (interactorMap.values());
+                var interactorArr = CLMS.arrayFromMapValues(interactorMap);
                 // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
                 if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
                     CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
@@ -332,7 +332,7 @@ CLMSUI.modelUtils = {
                         }
                     });
                     // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I 
-                    var mapArr = map.values();
+                    var mapArr = CLMS.arrayFromMapValues(map);
                     //console.log ("map", map, mapArr, nglSequences);
                     
                     if (callback) {
@@ -417,10 +417,10 @@ CLMSUI.modelUtils = {
         return [];
     },
     
-    getLegalAccessionIDs (interactorMap) {
+    getLegalAccessionIDs: function (interactorMap) {
         var ids = [];
         if (interactorMap) {
-            ids = Array.from(interactorMap.values())
+            ids = CLMS.arrayFromMapValues(interactorMap)
                 .filter (function (prot) { return !prot.is_decoy; })
                 .map (function(prot) { return prot.accession; })
                 .filter (function (accession) { return accession.match (CLMSUI.modelUtils.commonRegexes.uniprotAccession); })
@@ -463,7 +463,7 @@ CLMSUI.modelUtils = {
     },
     
     pickCommonPDB: function (interactors) {
-        var interactorVals = interactors.values();
+        var interactorVals = CLMS.arrayFromMapValues(interactors);
         var invPDBMap = {};
         var validAcc = null;
         
@@ -598,7 +598,7 @@ CLMSUI.modelUtils = {
     },
         
     // Calculate c- and n-term positions in a per-protein map, pass in an array of peptide from searchmodel
-    getTerminiPositions: function (peptideArray) {
+   /* getTerminiPositions: function (peptideArray) {
         var perProtMap = d3.map();
         peptideArray.forEach (function (peptide) {
             var seqlen = peptide.sequence.length;
@@ -621,7 +621,7 @@ CLMSUI.modelUtils = {
         });
 
         return perProtMap;
-    },
+    },*/
     
     
 };

@@ -7,7 +7,7 @@
         applyFilter: function () {
 			var filterModel = this.get("filterModel");
             var clmsModel = this.get("clmsModel");
-            var crossLinksArr = Array.from(clmsModel.get("crossLinks").values());
+            var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
 			var clCount = crossLinksArr.length;
 			
             if (filterModel) {
@@ -126,7 +126,7 @@
             //console.log ("xlinks", this.filteredXLinks);
             
             //hiding linkless participants
-            var participantsArr = Array.from(clmsModel.get("participants").values());
+            var participantsArr = CLMS.arrayFromMapValues(clmsModel.get("participants"));
             var participantCount = participantsArr.length;                   
             for (var p = 0; p < participantCount; ++p) {
 				 var participant = participantsArr[p]; 
@@ -208,7 +208,7 @@
                         }
                     }, this);
                 }
-                var dedupedCrossLinks = crossLinkMap.values();
+                var dedupedCrossLinks = CLMS.arrayFromMapValues(crossLinkMap);
                 this.set (modelProperty, dedupedCrossLinks);
             }
         },

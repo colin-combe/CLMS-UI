@@ -42,7 +42,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         this.searchMap = options.searchMap;
         //put d3.scale for group colour assignment in compositeModel
         var groups = new Map();
-		var searchArray = Array.from(this.searchMap.values());
+		var searchArray = CLMS.arrayFromMapValues(this.searchMap);
 		var searchCount = searchArray.length;
         for (var s = 0; s < searchCount; s++) {
             var val = searchArray[s];
@@ -56,14 +56,15 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
 
         var groupDomain = [undefined];
         var labelRange = ["Multiple Group"];
-        var groupArray = Array.from(groups.entries());
+        var groupArray = CLMS.arrayFromMapEntries(groups);
         var groupCount = groupArray.length;
         for (var g = 0; g < groupCount; g++) {
 			var group = groupArray[g];
             groupDomain.push (group[0]);
             labelRange.push ("Group "+group[0]+" ("+group[1].join(", ")+")");
         }
-         var groupCount = groups.size;
+
+        var groupCount = groups.size;
         var colScale;
 
         var multiGroupColour = "#202020";
@@ -95,7 +96,8 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         }
         var scale = this.get("colScale");
         // choose value or right unknown value (linear scales don't do undefined)
-        var value = (groupCheck.values().length === 1 ? groupCheck.values()[0] : (scale.domain()[0] === -1 ? -1 : undefined));
+        var groupCheckArr = CLMS.arrayFromMapValues(groupCheck); 
+        var value = (groupCheckArr.length === 1 ? groupCheckArr[0] : (scale.domain()[0] === -1 ? -1 : undefined));
         return scale (value);		
     },
 });

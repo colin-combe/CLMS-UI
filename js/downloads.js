@@ -118,7 +118,7 @@ function getLinksCSV(){
 
     csv += '\r\n';
 
-    var crossLinks = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+    var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
     var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true});
     //console.log ("pd", physicalDistances);
@@ -154,7 +154,12 @@ function getLinksCSV(){
         csv += '","' + linkAutovalidated;
         csv +=  '","' + validationStats.toString();
         csv += '","' + (crossLink.meta ? crossLink.meta.fdr : undefined);
-        var distExists = physicalDistances[i].distance;
+		var distExists; // = physicalDistances[i].distance;
+        if (physicalDistances[i]) {
+			distExists = physicalDistances[i].distance;
+		} else {
+			distExists = false;
+		}
         csv += '","' + (distExists ? distance2dp (distExists) : undefined);
         csv += '","' + (distExists ? physicalDistances[i].chainInfo.from : undefined);
         csv += '","' + (distExists ? physicalDistances[i].chainInfo.to : undefined);
@@ -178,7 +183,7 @@ function getResidueCount() {
     var residueCounts = d3.map();
     var residuePairCounts = d3.map();
 
-    var crossLinksArray = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values());
+    var crossLinksArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
     var crossLinkCount = crossLinksArray.length;
     for (var cl = 0; cl < crossLinkCount; cl++){
 		var residueLink = crossLinksArray[cl];

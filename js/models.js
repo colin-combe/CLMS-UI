@@ -365,7 +365,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
                 if (this.get("matchScoreCutoff")[1] === Number.MAX_VALUE) {   // ignore matchscorecutoff if everything allowed
                     fieldSet.remove ("matchScoreCutoff");
                 }
-                fields = fieldSet.values();
+                fields = CLMS.arrayFromMapValues(fieldSet);
             }
             
             var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);

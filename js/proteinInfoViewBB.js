@@ -50,7 +50,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             console.log ("prot info render called");
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 var dataSource = this.model.get("selectedProtein");
-                var prots = dataSource ? Array.from (dataSource.values()) : [];
+                var prots = dataSource ? CLMS.arrayFromMapValues(dataSource) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
                 

@@ -198,12 +198,12 @@
 
                 try {
                     var json = {};
-                    if (text) { json = JSON.parse (text); }
+                    if (text) { json = JSON.parse (text);}
                     //console.log ("JSON", json);
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-                    document.title = Array.from(searches.keys()).join();
+                    document.title = CLMS.arrayFromMapKeys(searches).join();
 
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
                         { direction: "vertical", sizes: [80,20], minSize: [200,10] }
