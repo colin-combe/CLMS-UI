@@ -191,6 +191,7 @@
                 var TT = 0, TD = 1, DD = 2;
                 var series = this.getRelevantCrossLinkDistances();
                 var seriesLengths = series.map (function(d) { return d.length; });
+                var validDistances = series[TT].length;
                 //console.log ("series", series);
 
                 // Add data and placeholders for random data
@@ -243,7 +244,11 @@
                 var internal = this.chart.internal;
                 var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
                 d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
-                d3.select(this.el)
+                
+                // reset title
+                var commaed = d3.format(",");
+                d3.select(this.el).select(".c3-title").text (this.options.chartTitle +": "+commaed(validDistances)+" Cross-Links");
+                internal.redrawTitle();
 
                 //console.log ("data", distArr, binnedData);
             }

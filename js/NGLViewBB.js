@@ -450,102 +450,17 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var linkList = this.crosslinkData.getLinks (residue);
         return this._getAtomPairsFromLinks (linkList);
     },
-
-
-    _getSelectionFromResidue: function (resnoList) {
-
-        var sele;
-
-        // If no resnoList or is empty array make selection 'none'
-        if (!resnoList || (Array.isArray (resnoList) && !resnoList.length)) {
-            sele = "none";
-        } else {
-            // if resnoList == 'all' replace it with array of all residues
-            if (resnoList === "all") {
-                resnoList = this.crosslinkData.getResidues();
-            }
-            
-            // if resnoList is single item, make it an array of the single item
-            if (!Array.isArray (resnoList)) { resnoList = [resnoList]; }
-            
-            var cp = this.structureComp.structure.getChainProxy();
-            
-            // old way
-            /*
-            var tmp = resnoList.map (function (r) {
-                cp.index = r.chainIndex;
-                var rsele = r.resno;
-                if (cp.chainname) { rsele += ":" + cp.chainname; }
-                if (cp.modelIndex !== undefined) { rsele += "/" + cp.modelIndex; }
-                return rsele;
-            });
-            
-            sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
-            */
-            
-            // new way (faster ngl interpretation for big selections!)
-            var modelTree = d3.map ();
-            var tmp = resnoList.map (function (r) {
-                cp.index = r.chainIndex;
-                
-                // Make a hierarchy of models --> chains --> residues to build a string from later
-                var modelBranch = modelTree.get(cp.modelIndex);
-                if (!modelBranch) {
-                    var a = new d3.map();
-                    modelTree.set (cp.modelIndex, a);
-                    modelBranch = a;
-                }
-                
-                var chainBranch = modelBranch.get(cp.chainname);
-                if (!chainBranch) {
-                    var a = new d3.set();
-                    modelBranch.set (cp.chainname, a);
-                    chainBranch = a;
-                }
-                
-                chainBranch.add (r.resno);
-            });    
-            //console.log ("MODELTREE", modelTree);
-            
-            // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
-            // every residue, group the relevant residues together and surround with a bracket
-            var modParts = modelTree.entries().map (function (modelEntry) {
-                var modelBranch = modelEntry.value;
-                var perChainResidues = modelBranch.entries().map (function (chainEntry) {
-                    var chainBranch = chainEntry.value;
-                    // selection syntax picks up ":123" as residue 123 in chain "empty name",
-                    // but ": AND 123" doesn't work. Shouldn't have many pdbs with empty chain names though.
-                    if (chainEntry.key) {
-                        return "( :"+chainEntry.key+" AND ("+chainBranch.values().join(" OR ")+") )";
-                    } else {
-                        var emptyChainNameRes = chainBranch.values().map (function (resVal) {
-                            return resVal+":";
-                        });
-                        return "( "+emptyChainNameRes.join(" OR ")+")";
-                    }
-                });
-                return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
-            });
-            
-            var sele = "(" + modParts.join(" OR ") +" ) AND .CA";
-            //console.log ("SELE", sele);
-        }
-
-        return sele;
-    },
     
-    getFirstResidueInEachChain: function () {
+    getFirstAtomSelectionInEachChain: function (chainIndexSet) {
         var comp = this.structureComp.structure;
-        var rp = comp.getResidueProxy();
         var sels = [];
         comp.eachChain (function (cp) {
-            if (cp.residueCount > 10) {
-                rp.index = cp.residueOffset;
-                sels.push ({resno: rp.resno, chainIndex: cp.index});
+            // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
+            if (cp.residueCount > 10 && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+                sels.push (cp.atomOffset);
             }
         });
-        
-        return this._getSelectionFromResidue (sels);
+        return "@"+sels.join(",");
     },
     
     replaceChainRepresentation: function (newType) {
@@ -555,6 +470,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         this.options.chainRep = newType;
         
+        var chainSelector = this.defaultDisplayedProteins (true);   // true means the selection isn't enforced, just returned
+        
         this.sstrucRepr = this.structureComp.addRepresentation (newType, {
             //color: this.sstrucColor,
             colorScheme: this.options.colourScheme,
@@ -562,20 +479,18 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "sstruc",
             opacity: 0.67,
             side: "front",
+            sele: chainSelector,
         });
-        
-        this.defaultDisplayedProteins();
     },
 
     _initStructureRepr: function() {
 
         var comp = this.structureComp;
-        var resSele = this._getSelectionFromResidue (this.crosslinkData.getResidues());
-        var resEmphSele = this._getSelectionFromResidue ([]);
+        var resSele = this.crosslinkData.getSelectionFromResidue (this.crosslinkData.getResidues());
+        var resEmphSele = this.crosslinkData.getSelectionFromResidue ([]);
 
         this.replaceChainRepresentation (this.options.chainRep);
 
-        console.log ("before residue spacefill rep", performance.now());
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
@@ -585,8 +500,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: 0.6,
             name: "res"
         });
-        
-        console.log ("after residue spacefill rep", performance.now());
 
         this.resEmphRepr = comp.addRepresentation ("spacefill", {
             sele: resEmphSele,
@@ -652,30 +565,36 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     _initLabelRepr: function () {
         var comp = this.structureComp;
-        
-        var selection = this.getFirstResidueInEachChain();
-        var selectionObject = new NGL.Selection(selection);
         var customText = {};
         var self = this;
-        comp.structure.eachAtom (function (atomProxy) {
-            var pid = CLMSUI.modelUtils.getProteinFromChainIndex (self.crosslinkData.get("chainMap"), atomProxy.chainIndex);
+        
+        var chainIndexToProteinMap = d3.map();
+        d3.entries(self.crosslinkData.get("chainMap")).forEach (function (cmapEntry) {
+            cmapEntry.value.forEach (function (chainData) {
+                 chainIndexToProteinMap.set (chainData.index, cmapEntry.key);                     
+            });
+        });
+        //console.log ("Chain Index to Protein Map", chainIndexToProteinMap);
+        
+        comp.structure.eachChain (function (chainProxy) {
+            var pid = chainIndexToProteinMap.get (chainProxy.index);
             if (pid) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
-                customText[atomProxy.index] = pname + ":" + atomProxy.chainname + "(" +atomProxy.chainIndex+ ")";
+                customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")";
             }
-        }, selectionObject);
+        });
         
-        
+        var atomSelection = this.getFirstAtomSelectionInEachChain ();
+        //console.log ("LABEL SELE", atomSelection);
         this.labelRepr = comp.addRepresentation ("label", {
             color: "#222",
             scale: 3.0,
-            sele: selection,
+            sele: atomSelection,
             labelType: "text",
             labelText: customText,
             name: "chainText",
         });
-        
     },
 
     _initColorSchemes: function () {
@@ -837,7 +756,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var residuesB = crosslinkData.findResidues (rp2.resno, c2);
             console.log ("res", ap1.residueIndex, ap2.residueIndex, c1, c2, residuesA, residuesB);
             if (pickType === "selection") {
-                var selectionSelection = this._getSelectionFromResidue (residuesA.concat(residuesB));
+                var selectionSelection = this.crosslinkData.getSelectionFromResidue (residuesA.concat(residuesB));
                 console.log ("seleSele", selectionSelection);
                 this.structureComp.autoView (selectionSelection, 1000);
             }
@@ -884,6 +803,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     // fired when setLinkList called on representation's associated crosslinkData object
     _handleDataChange: function() {
+        console.log ("HANDLE DATA CHANGE 3D");
         this.defaultDisplayedProteins();
         
         this.setDisplayedResidues (this.crosslinkData.getResidues());
@@ -893,51 +813,76 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.setSelectedLinks (this.crosslinkData.getLinks());
     },
     
-    defaultDisplayedProteins: function () {
-        var protsAll = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
-        var prots = protsAll.filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        var showAll = protsAll.length === prots.length;
-        //console.log ("prots", prots, showAll);
-        this.setDisplayedProteins (prots, showAll);
+    defaultDisplayedProteins: function (getSelectionOnly) {
+        var showableChains = this.getShowableChains();
+        var chainSele = this.getShowProteinNGLSelection (showableChains);
+        //console.log ("showable chains", showableChains, chainSele);
+        if (!getSelectionOnly) {
+            this.sstrucRepr.setSelection (chainSele);
+            if (this.labelRepr) {
+                var labelSele = this.getFirstAtomSelectionInEachChain (d3.set(showableChains.chainIndices));
+                //console.log ("LABEL SELE", labelSele);
+                this.labelRepr.setSelection (labelSele);
+            }
+        }
+        return chainSele;
     },
     
-    setDisplayedProteins: function (proteins, showAll) {
-        proteins = proteins || [];
-        //console.log ("chainmap", this.chainMap, this, this.stage);
-        var selectionString = "";
+    getShowableChains: function () {
+        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        var showAll = protMap.length === prots.length;
+        
+        var chainIndices;
         if (!showAll && !this.options.showAllProteins) {
-            var cp = this.structureComp.structure.getChainProxy();
-            var chainSelection = proteins.map (function (prot) {
+            chainIndices = prots.map (function (prot) {
                 var protChains = this.chainMap[prot] || [];
                 return protChains.map (function (chainData) {
-                    cp.index = chainData.index;
-                    return ":"+cp.chainname+"/"+cp.modelIndex;
+                    return chainData.index;
                 });
             }, this);
-            var flatChainSelection = d3.merge (chainSelection);
-            selectionString = flatChainSelection.length ? flatChainSelection.join(" or ") : "none";
+        } else {
+            chainIndices = d3.entries(this.chainMap).map (function (chainEntry) {
+                return chainEntry.value.map (function (chainDatum) {
+                    return chainDatum.index;
+                });
+            });
+            console.log ("CHAIN ALL", chainIndices);
         }
-        //console.log ("disp prot results", proteins, flatChainSelection, selectionString);
-        
-        this.sstrucRepr.setSelection(selectionString);
-        if (this.labelRepr) {
-            this.labelRepr.setSelection(selectionString);
-        }
+        chainIndices = d3.merge (chainIndices);
+        return {showAll: showAll, chainIndices: chainIndices};
     },
+    
+    getShowProteinNGLSelection: function (showableChains) {
+        var selectionString = "";
+        var showAll = showableChains.showAll || false;
+        var chains = showableChains.chainIndices || [];
+        
+        if (!showAll) {
+            var chainList = chains.map (function (chainIndex) {
+                return {chainIndex: chainIndex};
+            });
+            selectionString = this.crosslinkData.getSelectionFromResidue (chainList, {chainsOnly: true});
+        }
+        
+        //console.log ("CHAIN SELE", selectionString);
+        return selectionString;
+    },
+    
 
     setDisplayedResidues: function (residues) {
-        console.log ("setdisplayed resiudes");
+        console.log ("set displayed residues");
         var availableResidues = this._getAvailableResidues (residues);
         this.resRepr.setSelection (
-            this._getSelectionFromResidue (availableResidues)
+            this.crosslinkData.getSelectionFromResidue (availableResidues)
         );
     },
 
     setSelectedResidues: function (residues) {
-        console.log ("set selected residuees");
+        console.log ("set selected residues");
         var availableResidues = this._getAvailableResidues (residues);
         this.resEmphRepr.setSelection (
-            this._getSelectionFromResidue (availableResidues)
+            this.crosslinkData.getSelectionFromResidue (availableResidues)
         );
     },
 
@@ -961,7 +906,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkEmphRepr.setParameters ({
             atomPair: atomPairs,
         });
-        console.log ("ATOMPAIRS", atomPairs);
+        //console.log ("ATOMPAIRS", atomPairs);
     },
     
     setHighlightedLinks: function (links) {

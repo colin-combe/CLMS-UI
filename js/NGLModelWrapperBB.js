@@ -365,6 +365,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     
     getCAtomsAllResidues : function (chainIndices) {
         var chainProxy = this.get("structureComp").structure.getChainProxy();
+        var atomProxy = this.get("structureComp").structure.getAtomProxy();
         var sele = new NGL.Selection();
         var chainCAtomIndices = {};
         var self = this;
@@ -374,23 +375,154 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 chainProxy.index = ci;
                 var atomIndices = chainCAtomIndices[ci] = [];
                 // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
+                
+                //var chainResList = [];
+                var min, max;
                 chainProxy.eachResidue (function (rp) {
-                    // console.log ("rp resno", rp, rp.resno, rp.backboneStartAtomIndex, rp.backboneEndAtomIndex);
-                    var ai = self._getAtomIndexFromResidue (rp.resno, chainProxy, sele);
-                    atomIndices.push (ai);        
+                    var rno = rp.resno;
+                    if (!min || rno < min) {
+                        min = rno;
+                    }
+                    if (!max || rno > max) {
+                        max = rno;
+                    }
+                    //chainResList.push ({resno: rp.resno, chainIndex: ci}); // - new  
+                });
+                
+                // The New Way - 0.5s vs 21.88s OLD
+                var resMap = [];
+                
+                var sel = ":"+chainProxy.chainname+ "/"+chainProxy.modelIndex+" AND "+min+"-"+max+".CA";
+                sele.setString (sel, true); // true = doesn't fire unnecessary dispatch events in ngl
+                var ai = this.get("structureComp").structure.getAtomIndices (sele);
+                
+                /*
+                var sel2 = this.getSelectionFromResidue (chainResList);
+                sele.setString (sel2, true); // true = doesn't fire unnecessary dispatch events in ngl
+                var ai2 = this.get("structureComp").structure.getAtomIndices (sele);
+                
+                console.log ("CAC", sel, sel2, ai,ai2, ai.toString() === ai2.toString());
+                */
+                
+                // Building a resmap in one loop and then running through available residues in another loop because some (errored) residues don't have c-alpha atoms
+                // This shouldn't happen, but it does i.e. 5taf, so a 1-to-1 loop between residues and atomIndices wouldn't work in all cases
+                ai.forEach (function (atomIndex) {
+                    atomProxy.index = atomIndex;
+                    resMap[atomProxy.resno] = atomIndex;
+                }, this);
+
+                chainProxy.eachResidue (function (rp) {
+                    var key = rp.resno + (ci !== undefined ? ":" + ci : "");   // chainIndex is unique across models
+                    var atomIndex = resMap[rp.resno];
+                    self.residueToAtomIndexMap[key] = atomIndex;
+                    atomIndices.push (atomIndex);
                 });
             }, this);
         }
-        
-        console.log ("cac", chainCAtomIndices);
       
         return chainCAtomIndices;
     },
     
+    getSelectionFromResidue: function (resnoList, options) {   // set allAtoms to true to not restrict selection to alpha carbon atoms
+        // options are 
+        // allAtoms:true to not add on the AND .CA qualifier
+        // chainsOnly:true when the resnoList only has chainIndices defined and no res
+        options = options || {};
+        var sele;
+
+        // If no resnoList or is empty array make selection 'none'
+        if (!resnoList || (Array.isArray (resnoList) && !resnoList.length)) {
+            sele = "none";
+        } else {
+            // if resnoList == 'all' replace it with array of all residues
+            if (resnoList === "all") {
+                resnoList = this.crosslinkData.getResidues();
+            }
+            
+            // if resnoList is single item, make it an array of the single item
+            if (!Array.isArray (resnoList)) { resnoList = [resnoList]; }
+            
+            var cp = this.get("structureComp").structure.getChainProxy();
+                  
+            // new way (faster ngl interpretation for big selections!)
+            var modelTree = d3.map ();
+            var tmp = resnoList.map (function (r) {
+                cp.index = r.chainIndex;
+                
+                // Make a hierarchy of models --> chains --> residues to build a string from later
+                var modelBranch = modelTree.get(cp.modelIndex);
+                if (!modelBranch) {
+                    var a = new d3.map();
+                    modelTree.set (cp.modelIndex, a);
+                    modelBranch = a;
+                }
+                
+                var chainBranch = modelBranch.get(cp.chainname);
+                if (!chainBranch) {
+                    var a = new d3.set();
+                    modelBranch.set (cp.chainname, a);
+                    chainBranch = a;
+                }
+                
+                chainBranch.add (r.resno);
+                
+                // randomiser
+                /*
+                var rsele = Math.ceil (Math.random() * cp.residueCount);    // random for testing
+                chainBranch.add (rsele);
+                if (cp.chainname) { rsele += ":" + cp.chainname; }
+                if (cp.modelIndex !== undefined) { rsele += "/" + cp.modelIndex; }
+                return rsele;
+                */
+            });   
+            
+            //sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
+            //console.log ("sele", sele);  
+            //console.log ("MODELTREE", modelTree);
+            
+            // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
+            // every residue, group the relevant residues together and surround with a bracket
+            var modParts = modelTree.entries().map (function (modelEntry) {
+                var modelBranch = modelEntry.value;
+                var perChainResidues = modelBranch.entries().map (function (chainEntry) {
+                    var chainBranch = chainEntry.value;
+                    // selection syntax picks up ":123" as residue 123 in chain "empty name", but ": AND 123" doesn't work. 
+                    // Similarly ":/0 " works but "/0 AND :" doesn't.
+                    // Shouldn't have many pdbs with empty chain names though.
+                    if (chainEntry.key) {
+                        var vals = chainBranch.values();
+                        if (options.chainsOnly) {
+                            return ":"+chainEntry.key;
+                        } else if (vals.length === 1) {
+                            return "( "+vals[0]+":"+chainEntry.key+" )";    // if single val, chain:resno is quicker
+                        } else {
+                            return "( :"+chainEntry.key+" AND ("+vals.join(" OR ")+") )";
+                        }
+                    } else {
+                        if (options.chainsOnly) {
+                            return ":/" + modelEntry.key;
+                        }
+                        var emptyChainNameRes = chainBranch.values().map (function (resVal) {
+                            return resVal+":";
+                        });
+                        return "( "+emptyChainNameRes.join(" OR ")+" )";
+                    }
+                });
+                return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
+            });
+            
+            sele = "(" + modParts.join(" OR ") +" )" + (options.allAtoms || options.chainsOnly ? "" : " AND .CA");
+            console.log ("SELE", sele);
+        }
+
+        return sele;
+    },
+    
+    
     makeResidueSelectionString: function (resno, chainProxy) {
         var chainName = chainProxy.chainname;
         var modelIndex = chainProxy.modelIndex;
-        return resno + (chainName ? ":" + chainName : "") + (modelIndex !== undefined ? "/"+modelIndex : "") + " AND .CA";
+        return resno + (chainName ? ":" + chainName : "") + ".CA" + (modelIndex !== undefined ? "/"+modelIndex : ""); // + " AND .CA";
     },
     
     // used to generate a cache to speed up distance selections / calculations
