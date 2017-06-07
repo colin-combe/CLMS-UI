@@ -308,6 +308,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     rerenderColours: function () {
         if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+            console.log ("rerendering ngl");
             // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
             this.xlRepr.linkRepr.viewer.requestRender();
