@@ -370,8 +370,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var chainCAtomIndices = {};
         var self = this;
         
-        console.log ("cac before", performance.now(), chainProxy);
-        
         if (chainIndices) {
             chainIndices.forEach (function (ci) {
                 chainProxy.index = ci;
@@ -382,7 +380,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 var min, max;
                 chainProxy.eachResidue (function (rp) {
                     var rno = rp.resno;
-                    // console.log ("rp resno", rp, rp.resno, rp.backboneStartAtomIndex, rp.backboneEndAtomIndex);
                     if (!min || rno < min) {
                         min = rno;
                     }
@@ -422,8 +419,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 });
             }, this);
         }
-        
-        console.log ("cac", chainCAtomIndices, performance.now());
       
         return chainCAtomIndices;
     },
@@ -432,7 +427,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         // options are 
         // allAtoms:true to not add on the AND .CA qualifier
         // chainsOnly:true when the resnoList only has chainIndices defined and no res
-        var options = options || {};
+        options = options || {};
         var sele;
 
         // If no resnoList or is empty array make selection 'none'
@@ -448,22 +443,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             if (!Array.isArray (resnoList)) { resnoList = [resnoList]; }
             
             var cp = this.get("structureComp").structure.getChainProxy();
-            
-            // old way
-            /*
-            var tmp = resnoList.map (function (r) {
-                cp.index = r.chainIndex;
-                var rsele = r.resno;
-                if (cp.chainname) { rsele += ":" + cp.chainname; }
-                if (cp.modelIndex !== undefined) { rsele += "/" + cp.modelIndex; }
-                return rsele;
-            });
-            
-            sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
-            console.log ("sele", sele);
-            */
-            
-            
+                  
             // new way (faster ngl interpretation for big selections!)
             var modelTree = d3.map ();
             var tmp = resnoList.map (function (r) {
@@ -497,8 +477,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             });   
             
             //sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
-            //console.log ("sele", sele);
-            
+            //console.log ("sele", sele);  
             //console.log ("MODELTREE", modelTree);
             
             // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
@@ -507,26 +486,32 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 var modelBranch = modelEntry.value;
                 var perChainResidues = modelBranch.entries().map (function (chainEntry) {
                     var chainBranch = chainEntry.value;
-                    // selection syntax picks up ":123" as residue 123 in chain "empty name",
-                    // but ": AND 123" doesn't work. Shouldn't have many pdbs with empty chain names though.
+                    // selection syntax picks up ":123" as residue 123 in chain "empty name", but ": AND 123" doesn't work. 
+                    // Similarly ":/0 " works but "/0 AND :" doesn't.
+                    // Shouldn't have many pdbs with empty chain names though.
                     if (chainEntry.key) {
                         var vals = chainBranch.values();
-                        if (vals.length === 1) {
+                        if (options.chainsOnly) {
+                            return ":"+chainEntry.key;
+                        } else if (vals.length === 1) {
                             return "( "+vals[0]+":"+chainEntry.key+" )";    // if single val, chain:resno is quicker
                         } else {
                             return "( :"+chainEntry.key+" AND ("+vals.join(" OR ")+") )";
                         }
                     } else {
+                        if (options.chainsOnly) {
+                            return ":/" + modelEntry.key;
+                        }
                         var emptyChainNameRes = chainBranch.values().map (function (resVal) {
                             return resVal+":";
                         });
-                        return "( "+emptyChainNameRes.join(" OR ")+")";
+                        return "( "+emptyChainNameRes.join(" OR ")+" )";
                     }
                 });
                 return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
             });
             
-            sele = "(" + modParts.join(" OR ") +" )" + (options.allAtoms ? "" : " AND .CA");
+            sele = "(" + modParts.join(" OR ") +" )" + (options.allAtoms || options.chainsOnly ? "" : " AND .CA");
             console.log ("SELE", sele);
         }
 

@@ -470,7 +470,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         
         this.options.chainRep = newType;
         
-        var chainSelector = this.defaultDisplayedProteins(true);    // true means the selection isn't enforced, just returned
+        var chainSelector = this.defaultDisplayedProteins (true);   // true means the selection isn't enforced, just returned
         
         this.sstrucRepr = this.structureComp.addRepresentation (newType, {
             //color: this.sstrucColor,
@@ -491,7 +491,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.replaceChainRepresentation (this.options.chainRep);
 
-        console.log ("before residue spacefill rep", performance.now());
         this.resRepr = comp.addRepresentation ("spacefill", {
             sele: resSele,
             //color: this.displayedResiduesColor,
@@ -501,8 +500,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: 0.6,
             name: "res"
         });
-        
-        console.log ("after residue spacefill rep", performance.now());
 
         this.resEmphRepr = comp.addRepresentation ("spacefill", {
             sele: resEmphSele,
@@ -571,11 +568,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var customText = {};
         var self = this;
         
+        var chainIndexToProteinMap = d3.map();
+        d3.entries(self.crosslinkData.get("chainMap")).forEach (function (cmapEntry) {
+            cmapEntry.value.forEach (function (chainData) {
+                 chainIndexToProteinMap.set (chainData.index, cmapEntry.key);                     
+            });
+        });
+        //console.log ("Chain Index to Protein Map", chainIndexToProteinMap);
+        
         comp.structure.eachChain (function (chainProxy) {
-            var pid = CLMSUI.modelUtils.getProteinFromChainIndex (self.crosslinkData.get("chainMap"), chainProxy.index);
+            var pid = chainIndexToProteinMap.get (chainProxy.index);
             if (pid) {
-                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
-                 var pname = protein ? protein.name : "none";
+                var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
+                var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")";
             }
         });
@@ -798,6 +803,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     // fired when setLinkList called on representation's associated crosslinkData object
     _handleDataChange: function() {
+        console.log ("HANDLE DATA CHANGE 3D");
         this.defaultDisplayedProteins();
         
         this.setDisplayedResidues (this.crosslinkData.getResidues());
@@ -810,11 +816,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     defaultDisplayedProteins: function (getSelectionOnly) {
         var showableChains = this.getShowableChains();
         var chainSele = this.getShowProteinNGLSelection (showableChains);
-        console.log ("showable chains", showableChains, chainSele);
+        //console.log ("showable chains", showableChains, chainSele);
         if (!getSelectionOnly) {
-            console.log ("before structure filter", performance.now());
             this.sstrucRepr.setSelection (chainSele);
-            console.log ("after structure filter", performance.now());
             if (this.labelRepr) {
                 var labelSele = this.getFirstAtomSelectionInEachChain (d3.set(showableChains.chainIndices));
                 //console.log ("LABEL SELE", labelSele);
@@ -837,16 +841,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     return chainData.index;
                 });
             }, this);
-            chainIndices = d3.merge (chainIndices);
         } else {
             chainIndices = d3.entries(this.chainMap).map (function (chainEntry) {
                 return chainEntry.value.map (function (chainDatum) {
                     return chainDatum.index;
                 });
             });
-            chainIndices = d3.merge (chainIndices);
             console.log ("CHAIN ALL", chainIndices);
         }
+        chainIndices = d3.merge (chainIndices);
         return {showAll: showAll, chainIndices: chainIndices};
     },
     
@@ -859,16 +862,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var chainList = chains.map (function (chainIndex) {
                 return {chainIndex: chainIndex};
             });
-            var sele2 = this.crosslinkData.getSelectionFromResidue (chainList);
-            console.log ("selection2", sele2);
-            
-            
-            var cp = this.structureComp.structure.getChainProxy();
-            var chainSelection = chains.map (function (chainIndex) {
-                cp.index = chainIndex;
-                return ":"+cp.chainname+"/"+cp.modelIndex;
-            });
-            selectionString = chainSelection.length ? chainSelection.join(" or ") : "none";
+            selectionString = this.crosslinkData.getSelectionFromResidue (chainList, {chainsOnly: true});
         }
         
         //console.log ("CHAIN SELE", selectionString);
@@ -877,7 +871,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
 
     setDisplayedResidues: function (residues) {
-        console.log ("setdisplayed residues");
+        console.log ("set displayed residues");
         var availableResidues = this._getAvailableResidues (residues);
         this.resRepr.setSelection (
             this.crosslinkData.getSelectionFromResidue (availableResidues)
@@ -912,7 +906,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkEmphRepr.setParameters ({
             atomPair: atomPairs,
         });
-        console.log ("ATOMPAIRS", atomPairs);
+        //console.log ("ATOMPAIRS", atomPairs);
     },
     
     setHighlightedLinks: function (links) {
