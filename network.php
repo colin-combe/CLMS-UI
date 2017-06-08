@@ -188,9 +188,6 @@
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
-            //~ if (file_exists('../annotations.php')){
-                //~ include '../annotations.php';
-            //~ }
         ?>
 
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
@@ -201,7 +198,6 @@
                 try {
                     var json = {};
                     if (text) { json = JSON.parse (text);}
-                    //console.log ("JSON", json);
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
