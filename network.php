@@ -148,11 +148,13 @@
         <div id="main">
 
             <div class="page-header">
-                    <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-<!--
-                    <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
--->
-                    <!-- <p id="linkColourDropdownPlaceholder"></p> -->
+                    <i class="fa fa-home" 
+						onclick="window.location = '../history/history.html';" 
+						title="Return to search history / Login"></i>
+                    &nbsp;
+                    <i class="fa fa-github" 
+						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
+						title="GitHub issue tracker"></i>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>
