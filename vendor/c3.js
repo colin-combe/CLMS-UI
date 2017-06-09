@@ -3891,22 +3891,19 @@
             text, i, title, value, name, bgcolor,
             orderAsc = $$.isOrderAsc();
     
+        // no tooltip sort - mjg
+        /*
         if (config.data_groups.length === 0) {
-                        // mjg
-                /*  no sort
                 d.sort(function(a,b){
                     var av = a ? a.value : 0;
                     var bv = b ? b.value : 0;
                     return orderAsc ? av - bv : bv - av;
                 });  
-                */
-            /*
+                
             d.sort(function(a, b){
                 var v1 = a ? a.value : null, v2 = b ? b.value : null;
                 return orderAsc ? v1 - v2 : v2 - v1;
-            });
-    
-            */
+            })
         } else {
             var ids = $$.orderTargets($$.data.targets).map(function (i) {
                 return i.id;
@@ -3920,6 +3917,7 @@
                 return orderAsc ? v1 - v2 : v2 - v1;
             });
         }
+        */
     
         for (i = 0; i < d.length; i++) {
             if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }

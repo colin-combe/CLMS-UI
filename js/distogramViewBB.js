@@ -18,12 +18,12 @@
 
         initialize: function (viewOptions) {
             CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
-            
+
             var defaultOptions = {
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
-                subSeriesNames: ["Short", "Good", "Overlong"],
+                subSeriesNames: viewOptions.colourScaleModel ? viewOptions.colourScaleModel.get("labels").range() : ["Short", "Good", "Overlong"],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
                 maxX: 90
@@ -162,6 +162,9 @@
                 },
             });
             this.chart.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
+            if (! this.model.get("clmsModel").get("decoysPresent")) {   
+                this.chart.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
+            }
             
             
             function distancesAvailable () {
@@ -388,6 +391,7 @@
             this.randArrLength = randArr.length;
             this.precalcedDistributions = this.precalcedDistributions || {};
             this.precalcedDistributions["Random"] = binnedData;
+            console.log ("RANDOM", binnedData);
         },
 
         relayout: function () {

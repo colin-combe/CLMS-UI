@@ -283,12 +283,19 @@ CLMSUI.DistancesObj.prototype = {
                     var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
                     for (var m = 0; m < filteredSubSeqIndices.length; m++) {
                         var searchIndex = seq.first + filteredSubSeqIndices[m];
-                        rmap[n].push ({
-                            searchIndex: searchIndex, 
-                            chainIndex: seq.chainIndex,
-                            protID: seq.protID,
-                            resIndex: alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, false),
-                        });
+                        // assign if resiude has definite hit in sequence, but not if it's a gap (even a single-letter gap)
+                        // that's the same criteria we apply to saying a crosslink occurs in a pdb in the first place
+                        // Justification: mapping hits between aaaa----------aaa and bbb-------bbb will map to nearest residue and give lots of zero
+                        // length distances when the residue is a '-'
+                        var resIndex = alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, true);
+                        if (resIndex >= 0) {
+                            rmap[n].push ({
+                                searchIndex: searchIndex, 
+                                chainIndex: seq.chainIndex,
+                                protID: seq.protID,
+                                resIndex: resIndex,
+                            });
+                        }
                     }
                 }, this);
                 if (linkableResidues[n].has("CTERM")) {
@@ -335,6 +342,9 @@ CLMSUI.DistancesObj.prototype = {
                         var res1 = srmap[0][resFlatIndex1];
                         var res2 = srmap[1][resFlatIndex2];
                         
+                        if (res1.resIndex === res2.resIndex && res1.chainIndex === res2.chainIndex) {
+                            console.log ("same res", res1, res2, resFlatIndex1, resFlatIndex2, srmap[0], srmap[1]);
+                        }
                         //this.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                         // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                         var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
