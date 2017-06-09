@@ -63,13 +63,9 @@
 		<link rel="stylesheet" href="./css/searchSummary.css">
 		<link rel="stylesheet" href="./css/jquery.jsonview.css">
 
-		<!--[if lt IE 8]>
-		<script src="./vendor/a.ielt8.js"></script>
-		<![endif]-->
-		<!--[if IE 8]>
-		<script src="./vendor/a.ie8.js"></script>
-		<![endif]-->
+<!--
 		<script src="./vendor/a.js"></script>
+-->
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
