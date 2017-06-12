@@ -63,10 +63,6 @@
 		<link rel="stylesheet" href="./css/searchSummary.css">
 		<link rel="stylesheet" href="./css/jquery.jsonview.css">
 
-<!--
-		<script src="./vendor/a.js"></script>
--->
-
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
@@ -158,7 +154,7 @@
                     &nbsp;
                     <i class="fa fa-github" 
 						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
-						title="GitHub issue tracker"></i>
+						title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>

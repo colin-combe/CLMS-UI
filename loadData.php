@@ -315,12 +315,11 @@ if (count($_GET) > 0) {
             if (isset($rej)){
                 echo '"rj":"'.$rej.'"' . ',';
             }
-            echo '"src":"' . $sourceId. '",'//"run" . '",'
+            echo '"src":"' . $sourceId. '",'
                 . '"sn":' . $line["scan_number"]. ','
                 . '"pc_c":' . $line["precursor_charge"]. ','
-            //  . '"pc_i":' . round($line["precursor_intensity"], 3). ','
-                . '"pc_mz":' . round($line["precursor_mz"], 6). ','
-                . '"cm":' . round($line["calc_mass"], 6)
+                . '"pc_mz":' . $line["precursor_mz"] . ','
+                . '"cm":' . $line["calc_mass"]
                 . "}";
             $line = pg_fetch_array($res, null, PGSQL_ASSOC);
             if ($line) {echo ",\n";}
