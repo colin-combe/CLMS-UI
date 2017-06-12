@@ -830,7 +830,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     getShowableChains: function () {
-        var protMap = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        var protMap = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
         var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
         var showAll = protMap.length === prots.length;
         
