@@ -24,7 +24,6 @@
             CLMSUI.PDBFileChooserBB.__super__.initialize.apply (this, arguments);
             
             var defaultOptions = {
-                initialPdbCode: undefined,
             };
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
 
@@ -83,10 +82,6 @@
                     : "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
                 this.setStatusText(msg);    
             });
-            
-            if (this.options.initialPdbCode) { 
-                CLMSUI.modelUtils.repopulateNGL ({pdbCode: this.options.initialPdbCode, stage: this.stage, bbmodel: this.model});
-            }
         },
         
         
