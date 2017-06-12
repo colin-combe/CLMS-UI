@@ -174,7 +174,7 @@
             }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({"noRescale":true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
+            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({noRescale:true, recolourOnly: true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -242,40 +242,50 @@
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
                 //console.log ("thresholds", thresholds);
-                var curMaxY = this.chart.axis.max().y;
-                // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
-                // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
-                if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
-                    console.log ("resetting axis max from", curMaxY, "to", maxY);
-                    this.chart.axis.max({y: maxY});
-                }
+                
+                
                 
                 //console.log ("countArrays", countArrays);
 
                 var colMap = this.getSeriesColours();
                 
                 // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
+                var redoChart = function () {
+                    this.chart.load({
+                        columns: countArrays,
+                        colors: colMap,
+                    });
+                    this
+                        .makeBarsSitBetweenTicks()
+                        .makeChartTitle(splitSeries)
+                    ;
+                };
+                
                 var tempHandle = c3.chart.internal.fn.redraw;
                 c3.chart.internal.fn.redraw = function () {};
+
                 if (options.noRescale) {
-                    this.chart.load({
-                        columns: countArrays,
-                        colors: colMap,
+                    this.chart.internal.config.interaction_enabled = false; // don't recalc event rectangles, no need
+                    countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
+                        return arr[0] !== "Random";
                     });
+                    redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
                     tempHandle.call (this.chart.internal, {withLegend: true});
+                    this.chart.internal.config.interaction_enabled = true;  // reset interaction flag
                 } else {
+                    var curMaxY = this.chart.axis.max().y;
+                    // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
+                    // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
+                    if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
+                        console.log ("resetting axis max from", curMaxY, "to", maxY, "nrs", options.noRescale);
+                        this.chart.axis.max({y: maxY});
+                    }
+                    redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    this.chart.load({
-                        columns: countArrays,
-                        colors: colMap,
-                    });
+                    tempHandle.call (this.chart.internal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
                 }
-                
-                this
-                    .makeBarsSitBetweenTicks()
-                    .makeChartTitle(splitSeries)
-                ;
+                            
                 //console.log ("data", distArr, binnedData);
             }
 
@@ -302,7 +312,7 @@
             var titleText = this.options.chartTitle +": "+commaed(total)+" Cross-Links - "+linkReportStr.join(", ");
             
             d3.select(this.el).select(".c3-title").text (titleText);
-            this.chart.internal.redrawTitle();
+            //this.chart.internal.redrawTitle();
             
             return this;
         },
