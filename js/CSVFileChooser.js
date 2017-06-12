@@ -89,21 +89,22 @@
 				CLMSUI.modelUtils.loadUserFile (this.csvFileObj, function (csvFileContents) {
 					//todo: if no fasta file check  all protein ids  valid uniprot accession
 					if (this.fastaFileObj) {
-						spinner.stop(); // stop spinner on request returning
 						CLMSUI.modelUtils.loadUserFile (this.fastaFileObj, function (fastaFileContents) {
 							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, this.csvFileObj, fastaFileContents);
-							this.csvFileObj = null;
-							//~ this.fastaFileObj = null;							
+						spinner.stop(); // stop spinner on request returning
+						this.csvFileObj = null;
+						this.fastaFileObj = null;							
 						});
 					} else {
 						spinner.stop(); // stop spinner on request returning
 						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo);
+						spinner.stop(); // stop spinner on request returning
 						this.csvFileObj = null;
-						//~ this.fastaFileObj = null;
+						this.fastaFileObj = null;
 					} 	
 				});
 				
-			d3.select("#clmsErrorBox").style("display", "none");
+				d3.select("#clmsErrorBox").style("display", "none");
 
 			}
             
