@@ -361,7 +361,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         ap2.index = ci2[resIndex2];
         
         if (ap1.index === ap2.index) {
-            console.log ("same atom", chainIndex1, chainIndex2, resIndex1, resIndex2, this.get("chainCAtomIndices"));
+            //console.log ("same atom", chainIndex1, chainIndex2, resIndex1, resIndex2, this.get("chainCAtomIndices"));
         }
 
         return ap1.distanceTo(ap2);

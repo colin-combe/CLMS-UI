@@ -13,7 +13,9 @@
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{});
+          return _.extend({},parentEvents,{
+               "click .intraRandomButton": "reRandom",
+          });
         },
 
         initialize: function (viewOptions) {
@@ -26,6 +28,7 @@
                 subSeriesNames: viewOptions.colourScaleModel ? viewOptions.colourScaleModel.get("labels").range() : ["Short", "Good", "Overlong"],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
+                intraRandomOnly: false,
                 maxX: 90
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -40,13 +43,23 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
 
-            mainDivSel.append("div").style("height", "40px")
-                .append("button")
-                .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text(CLMSUI.utils.commonLabels.downloadImg+"SVG");
+            var template = _.template ("<DIV class='buttonPanel'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
+            mainDivSel.append("div")
+                .attr ("class", "verticalFlexContainer")
+                .html(
+                    template ({})
+                )
+            ;
+            
+            var buttonData = [
+                {class: "downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
+                {class: "intraRandomButton", label: "Self Randoms Only", type: "checkbox", id: "intraRandom", initialState: this.options.intraRandomOnly, title: "Show only random links between same protein", noBreak: false},
+            ];
+            
+            var buttonPanel = mainDivSel.select("div.buttonPanel");
+            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, buttonData);
 
-            var chartDiv = mainDivSel.append("div")
-                .attr("class", "panelInner distoDiv")
+            var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
             ;
 
@@ -171,6 +184,11 @@
                 console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
                 this.recalcRandomBinning();
                 this.render();
+                // hide random choice button if only 1 protein
+                var self = this;
+                d3.select(this.el).select("#distoPanelintraRandom")
+                    .style ("display", self.model.get("clmsModel").get("participants").size > 1 ? null : "none")
+                ;
             }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
@@ -247,10 +265,9 @@
                 
                 //console.log ("countArrays", countArrays);
 
-                var colMap = this.getSeriesColours();
                 
-                // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
                 var redoChart = function () {
+                    var colMap = this.getSeriesColours();
                     this.chart.load({
                         columns: countArrays,
                         colors: colMap,
@@ -261,18 +278,20 @@
                     ;
                 };
                 
+                 // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
                 var tempHandle = c3.chart.internal.fn.redraw;
                 c3.chart.internal.fn.redraw = function () {};
+                var chartInternal = this.chart.internal;
 
                 if (options.noRescale) {
-                    this.chart.internal.config.interaction_enabled = false; // don't recalc event rectangles, no need
+                    chartInternal.config.interaction_enabled = false; // don't recalc event rectangles, no need
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
                         return arr[0] !== "Random";
                     });
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (this.chart.internal, {withLegend: true});
-                    this.chart.internal.config.interaction_enabled = true;  // reset interaction flag
+                    tempHandle.call (chartInternal, {withLegend: true});
+                    chartInternal.config.interaction_enabled = true;  // reset interaction flag
                 } else {
                     var curMaxY = this.chart.axis.max().y;
                     // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
@@ -283,7 +302,7 @@
                     }
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (this.chart.internal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
+                    tempHandle.call (chartInternal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
                 }
                             
                 //console.log ("data", distArr, binnedData);
@@ -382,6 +401,12 @@
             return countArrays;
         },
         
+        reRandom: function () {
+            this.options.intraRandomOnly = !this.options.intraRandomOnly;
+            this.recalcRandomBinning();
+            this.render();
+        },
+        
 
         recalcRandomBinning: function () {
             // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
@@ -392,7 +417,11 @@
             var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
             var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
             console.log ("ress", residueSets);
-            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((linkCount * 100) || 10000, 100000), d3.values (residueSets));
+            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
+                Math.min ((linkCount * 100) || 10000, 100000), 
+                d3.values (residueSets),
+                {intraOnly: this.options.intraRandomOnly},
+            );
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)
@@ -407,7 +436,10 @@
         relayout: function () {
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
-            d3.select(this.el).select(".c3").style("max-height", "none");   
+            d3.select(this.el).select(".c3")
+                .style("max-height", "none")
+                .style ("position", null)
+            ;   
             //this.redrawColourRanges();
             this.chart.resize();
             this.makeBarsSitBetweenTicks ();
