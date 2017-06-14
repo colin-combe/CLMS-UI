@@ -1,8 +1,8 @@
-//		Backbone view and controller for NGL 3D viewer
+//		CSV and FASTA file chooser
 //
 //		Martin Graham, Colin Combe, Rappsilber Laboratory, Alex Rose, PDB
 //
-//		js/PDBFileChooser.js
+//		js/CSVFileChooser.js
 
     var CLMSUI = CLMSUI || {};
     
@@ -38,10 +38,9 @@
             
             var toolbar = wrapperPanel.append("div").attr("class", "csvToolbar");
             
-           // toolbar.append("span").html("If you do not provide a FASTA file then your protein IDs <br> must be currently valid UniProt accession numbers.");
-            toolbar.append("span").html("Your protein IDs must be currently valid UniProt accession numbers.");
+            toolbar.append("span").html("If you do not provide a FASTA file then your protein IDs <br> must be currently valid UniProt accession numbers.");
             
-            var fileButtons = ["CSV"];//, "FASTA"];
+            var fileButtons = ["CSV", "FASTA"];
             for (var b = 0; b < fileButtons.length; b ++){
 				var fileType = fileButtons[b];
 	            var csvDivSel = toolbar.append("div");
@@ -67,7 +66,6 @@
 
         selectCsvFile: function (evt) {
             this.csvFileObj = evt.target.files[0];
-   
         },
                      
         selectFastaFile: function (evt) {
@@ -85,22 +83,22 @@
 					//path: this.csvFileObj.webkitRelativePath,
 				};
 				var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
-				
+				var self = this;
 				CLMSUI.modelUtils.loadUserFile (this.csvFileObj, function (csvFileContents) {
 					//todo: if no fasta file check  all protein ids  valid uniprot accession
-					if (this.fastaFileObj) {
-						CLMSUI.modelUtils.loadUserFile (this.fastaFileObj, function (fastaFileContents) {
-							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, this.csvFileObj, fastaFileContents);
+					if (self.fastaFileObj) {
+						CLMSUI.modelUtils.loadUserFile (self.fastaFileObj, function (fastaFileContents) {
+							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo, fastaFileContents);
 						spinner.stop(); // stop spinner on request returning
-						this.csvFileObj = null;
-						this.fastaFileObj = null;							
+						self.csvFileObj = null;
+						self.fastaFileObj = null;							
 						});
 					} else {
 						spinner.stop(); // stop spinner on request returning
 						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo);
 						spinner.stop(); // stop spinner on request returning
-						this.csvFileObj = null;
-						this.fastaFileObj = null;
+						self.csvFileObj = null;
+						self.fastaFileObj = null;
 					} 	
 				});
 				
