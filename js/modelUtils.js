@@ -10,7 +10,7 @@ CLMSUI.modelUtils = {
         var matchesLen = matchesArr.length;
         for (var m = 0; m < matchesLen; ++m) { 
             var match = matchesArr[m];
-            arrs[match.is_decoy? 1 : 0].push (match.score);
+            arrs[match.isDecoy()? 1 : 0].push (match.score);
         };
         return arrs;
     },

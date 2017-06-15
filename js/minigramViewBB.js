@@ -139,7 +139,8 @@
             ;
             
             this.listenTo (this.model, "change", this.redrawBrush);
-
+            this.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render);
+            
             //this.relayout();
             this.render();
 
@@ -148,8 +149,9 @@
 
         render: function () {
             var self = this;
+            
             var dataSeries = this.model.data();
-
+            
             // aggregate data into bar chart friendly form
             var seriesLengths = dataSeries.map (function(s) { return s.length; });
             var countArrays = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
@@ -228,7 +230,7 @@
         },
         
         redrawBrush: function () {
-            if (!this.stopRebounds) {
+			if (!this.stopRebounds) {
                 this.brushRecalc();
             }
         },

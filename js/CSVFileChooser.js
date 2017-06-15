@@ -90,15 +90,15 @@
 						CLMSUI.modelUtils.loadUserFile (self.fastaFileObj, function (fastaFileContents) {
 							CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo, fastaFileContents);
 						spinner.stop(); // stop spinner on request returning
-						self.csvFileObj = null;
-						self.fastaFileObj = null;							
+						//~ self.csvFileObj = null;
+						//~ self.fastaFileObj = null;							
 						});
 					} else {
 						spinner.stop(); // stop spinner on request returning
 						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo);
 						spinner.stop(); // stop spinner on request returning
-						self.csvFileObj = null;
-						self.fastaFileObj = null;
+						//~ self.csvFileObj = null;
+						//~ self.fastaFileObj = null;
 					} 	
 				});
 				
