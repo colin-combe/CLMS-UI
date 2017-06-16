@@ -4,9 +4,9 @@ CLMSUI.Strings = {
     "strings": {
         "en": {
             "distogram": {
-                "within": "within",
-                "borderline": "borderline",
-                "overlong": "overlong",
+                "short": "Short",
+                "within": "Within Distance",
+                "overlong": "Overlong",
             },
         },
     },
