@@ -148,11 +148,13 @@
         <div id="main">
 
             <div class="page-header">
-                    <i class="fa fa-home" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-<!--
-                    <a href="./html/help.html" target="_blank" class="btn btn-1 btn-1a">Help</a>
--->
-                    <!-- <p id="linkColourDropdownPlaceholder"></p> -->
+                    <i class="fa fa-home" 
+						onclick="window.location = '../history/history.html';" 
+						title="Return to search history / Login"></i>
+                    &nbsp;
+                    <i class="fa fa-github" 
+						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
+						title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>
@@ -186,9 +188,6 @@
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
-            //~ if (file_exists('../annotations.php')){
-                //~ include '../annotations.php';
-            //~ }
         ?>
 
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
@@ -199,7 +198,6 @@
                 try {
                     var json = {};
                     if (text) { json = JSON.parse (text);}
-                    //console.log ("JSON", json);
                     CLMSUI.init.models (json);
                     
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");

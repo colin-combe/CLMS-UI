@@ -296,7 +296,6 @@ CLMSUI.init.views = function () {
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
-    CLMSUI.firstPdbCode = CLMSUI.modelUtils.pickCommonPDB (interactors);    // quick protein accession to pdb lookup for now
 
     new CLMSUI.ThreeColourSliderBB ({
         el: "#sliderDiv",
@@ -616,27 +615,18 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#nglPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "nglShow",
-        myOptions: {
-            initialPdbCode: CLMSUI.firstPdbCode,
-        }
     });
 
     new CLMSUI.PDBFileChooserBB ({
         el: "#pdbPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "pdbShow",
-        myOptions: {
-            initialPdbCode: CLMSUI.firstPdbCode,
-        }
     });
     
 	new CLMSUI.CSVFileChooserBB ({
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",
-        myOptions: {
-            initialPdbCode: CLMSUI.firstPdbCode,
-        }
     });
 
     new CLMSUI.ProteinInfoViewBB ({

@@ -232,6 +232,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
+        //todo: extend to update all attributes
+        this.listenTo (this.model, "change:unval", function(model, val) {
+			mainDivSel.select("#unval").property("checked", val);
+		});
         
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
