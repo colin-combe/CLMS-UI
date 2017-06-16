@@ -1,7 +1,7 @@
 .distoDiv {
     background: rgba(224,224,255, 0.9);
-    position: relative;
-    height: calc(100% - 40px);
+    display: table-row;
+    height: 100%;
 }
 
 .overLengthGridRule text {

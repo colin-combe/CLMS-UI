@@ -179,7 +179,9 @@ CLMSUI.DistancesObj.prototype = {
         return matrixValue.isSymmetric;
     },
     
-    getRandomDistances: function (size, residueSets) {
+    // options: intraOnly for no cross-protein random links
+    getRandomDistances: function (size, residueSets, options) {
+        options = options || {};
         residueSets = residueSets || {name: "all", searches: new Set(), linkables: new Set()};
         var stots = d3.sum (residueSets, function (rdata) { return rdata.searches.size; });
         this.xilog ("------ RANDOM DISTRIBUTION CALCS ------");
@@ -240,12 +242,14 @@ CLMSUI.DistancesObj.prototype = {
         
          var alignedTerminalIndices = {ntermList: [], ctermList: []};
         // n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
+        
+        // add protein terminals if within pdb chain ranges to alignedTerminalIndices array
         seqsByProt.entries().forEach (function (protEntry) {
             var protKey = protEntry.key;
             var participant = clmsModel.get("participants").get(protKey);
             var seqValues = protEntry.value.values;
             var termTypes = ["ntermList", "ctermList"];
-            console.log ("seqv", seqValues, protEntry, participant);
+
             [1, participant.size + 1].forEach (function (searchIndex, i) {
                 var alignedTerminalIndex = alignedTerminalIndices[termTypes[i]];
                 var alignedPos = undefined;
@@ -280,15 +284,29 @@ CLMSUI.DistancesObj.prototype = {
                 var all = linkableResidues[n].has ("*") || linkableResidues[n].has ("X") || linkableResidues[n].size === 0;
                 seqs.forEach (function (seq) {
                     this.xilog ("seq", seq);
+                    var protID = seq.protID;
                     var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
                     for (var m = 0; m < filteredSubSeqIndices.length; m++) {
                         var searchIndex = seq.first + filteredSubSeqIndices[m];
-                        rmap[n].push ({
-                            searchIndex: searchIndex, 
-                            chainIndex: seq.chainIndex,
-                            protID: seq.protID,
-                            resIndex: alignCollBB.getAlignedIndex (searchIndex, seq.protID, false, seq.alignID, false),
-                        });
+                        // assign if residue position has definite hit between search and pdb sequence, but not if it's a gap (even a single-letter gap).
+                        // That's the same criteria we apply to saying a crosslink occurs in a pdb in the first place
+                        // Justification: mapping hits between aaaa----------aaa and bbb-------bbb will map to nearest residue and give lots of zero
+                        // length distances when the residue is a '-'
+                        var resIndex = alignCollBB.getAlignedIndex (searchIndex, protID, false, seq.alignID, true);
+                        if (resIndex >= 0) {
+                            var datum = {
+                                searchIndex: searchIndex, 
+                                chainIndex: seq.chainIndex,
+                                protID: protID,
+                                resIndex: resIndex,
+                            };
+                            rmap[n].push (datum);
+                        }
+                        /* 
+                        else {
+                            console.log ("< 0", resIndex, searchIndex, seq.protID, seq.alignID);
+                        }
+                        */
                     }
                 }, this);
                 if (linkableResidues[n].has("CTERM")) {
@@ -304,42 +322,129 @@ CLMSUI.DistancesObj.prototype = {
             rdata.searches.forEach (function (searchID) {
                 var search = clmsModel.get("searches").get(searchID);
                 var protIDs = search.participantIDSet;
+                
                 // Filter residue lists down to residues that were in this search's proteins
                 var srmap = rmap.map (function (dirMap) { 
                     return (clmsModel.get("searches").size > 1) ? dirMap.filter (function(res) { return protIDs.has (res.protID); }) : dirMap; 
                 });
+
                 // If crosslinker is homobifunctional then copy a second residue list same as the first
                 if (!rdata.heterobi) {
                     srmap[1] = srmap[0];
                 }
                 this.xilog ("rr", searchID, srmap);
 
+                
                 // Now pick lots of pairings from the remaining residues, one for each end of the crosslinker,
                 // so one from each residue list
-                var possibleLinks = srmap[0].length * srmap[1].length;
-                if (possibleLinks) {  // can't do this if no actual residues pairings left
-                    var hop = Math.max (1, possibleLinks / perSearch);
-                    var maxRuns = Math.min (possibleLinks, perSearch);
-                    this.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
+                if (options.intraOnly) {   // if intra links only allowed
+                    // Convenience: Divide into list per protein for selecting intra-protein randoms only
+                    var srmapPerProt = [{},{}];
+                    srmap.forEach (function (dirMap, i) {
+                        var perProtMap = srmapPerProt[i];
+                        dirMap.forEach (function (res) {
+                            var protID = res.protID;
+                            var perProtList = perProtMap[protID];
+                            if (!perProtList) {
+                                perProtMap[protID] = [res];
+                            } else {
+                                perProtList.push (res);
+                            }
+                        })
+                    });
+                    if (!rdata.heterobi) {
+                        srmapPerProt[1] = srmapPerProt[0];
+                    }
+                    this.xilog ("intra", searchID, srmapPerProt);
                     
-                    for (var n = 0; n < maxRuns; n++) {
-                        // this is Uniform
-                        var ni = Math.floor (n * hop);
-                        var resFlatIndex1 = Math.floor (ni / srmap[1].length);
-                        var resFlatIndex2 = ni % srmap[1].length;
-                        /*
-                        // This is Random
-                        var resFlatIndex1 = Math.floor (Math.random() * srmap[0].length);
-                        var resFlatIndex2 = Math.floor (Math.random() * srmap[1].length);
-                        */
-                        var res1 = srmap[0][resFlatIndex1];
-                        var res2 = srmap[1][resFlatIndex2];
+                    // make a list of counts of possible intra-protein residue links
+                    var total = 0;
+                    var counts = d3.entries(srmapPerProt[0])
+                        // Filter out proteins with no suitable residues at the other end
+                        .filter (function (protEntry) {
+                            return srmapPerProt[1][protEntry.key];
+                        })
+                        // make the counts of lower and upper bounds
+                        .map (function (protEntry) {
+                            var key = protEntry.key;
+                            var resCount1 = protEntry.value.length;
+                            var resCount2 = srmapPerProt[1][key].length;
+                            var combos = resCount1 * resCount2;
+                            var val = {protID: key, lowerBound: total};
+                            total += combos;
+                            val.upperBound = total - 1;
+                            return val;
+                        })
+                    ;
+                    
+                    var possibleLinks = total;
+                    this.xilog ("counts", counts, total);
+                    
+                    if (possibleLinks) {  // can't do this if no actual residues pairings left
+                        var hop = Math.max (1, possibleLinks / perSearch);
+                        var maxRuns = Math.min (possibleLinks, perSearch);
+                        var bisectCount = d3.bisector(function(d) { return d.upperBound; }).left;
+                        this.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
                         
-                        //this.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
-                        // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-                        var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
-                        if (!isNaN(dist)) {
-                            randDists.push (dist);
+                        for (var n = 0; n < maxRuns; n++) {
+                            // This is Uniform
+                            var ni = Math.floor (n * hop);
+                            
+                            // Find the protein that corresponds to this index 'ni'
+                            var proteinIndex = bisectCount (counts, ni);
+                            // Then turn it into a residue pairing internal to that protein
+                            var count = counts[proteinIndex];
+                            var withinIndex = ni - count.lowerBound;
+                            var resList1 = srmapPerProt[0][count.protID];
+                            var resList2 = srmapPerProt[1][count.protID];
+                            var resIndex1 = Math.floor (withinIndex / resList2.length);
+                            var resIndex2 = withinIndex % resList2.length;
+                            var res1 = resList1[resIndex1];
+                            var res2 = resList2[resIndex2];
+                            if (!res1 || !res2) {
+                                this.xilog ("intra", ni, proteinIndex, withinIndex, resIndex1, resIndex2);
+                            }
+   
+                            //this.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
+                            // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
+                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
+                            if (!isNaN(dist)) {
+                                randDists.push (dist);
+                            }
+                        }
+                    }
+
+                } else {    // inter and intra links allowed (simpler)
+                    var possibleLinks = srmap[0].length * srmap[1].length;
+                    if (possibleLinks) {  // can't do this if no actual residues pairings left
+                        var hop = Math.max (1, possibleLinks / perSearch);
+                        var maxRuns = Math.min (possibleLinks, perSearch);
+                        this.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
+
+                        for (var n = 0; n < maxRuns; n++) {
+                            // This is Uniform
+                            var ni = Math.floor (n * hop);
+                            var resFlatIndex1 = Math.floor (ni / srmap[1].length);
+                            var resFlatIndex2 = ni % srmap[1].length;
+                            /*
+                            // This is Random
+                            var resFlatIndex1 = Math.floor (Math.random() * srmap[0].length);
+                            var resFlatIndex2 = Math.floor (Math.random() * srmap[1].length);
+                            */
+                            var res1 = srmap[0][resFlatIndex1];
+                            var res2 = srmap[1][resFlatIndex2];
+
+                            /*
+                            if (res1.resIndex === res2.resIndex && res1.chainIndex === res2.chainIndex) {
+                                console.log ("same res", res1, res2, resFlatIndex1, resFlatIndex2, srmap[0], srmap[1]);
+                            }
+                            */
+                            //this.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
+                            // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
+                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
+                            if (!isNaN(dist)) {
+                                randDists.push (dist);
+                            }
                         }
                     }
                 }

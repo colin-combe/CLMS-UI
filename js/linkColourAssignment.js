@@ -104,7 +104,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
 
 CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
-        this.set("labels", this.get("colScale").copy().range(["Short", "Average", "Overlong"]));
+        this.set("labels", this.get("colScale").copy().range(["Within Distance", "Borderline", "Overlong"]));
     },
     getDistance : function (crossLink) {
         return CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
