@@ -68,13 +68,15 @@ CLMSUI.DistancesObj.prototype = {
         if (chains1 && chains2) {
             for (var n = 0; n < chains1.length; n++) {
                 var chainIndex1 = chains1[n].index;
-                var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chains1[n].name, chainIndex1);
+                var chainName1 = chains1[n].name;
+                var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName1, chainIndex1);
                 var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1, true) - 1; 
                 
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var chainIndex2 = chains2[m].index;
-                        var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chains2[m].name, chainIndex2);
+                        var chainName2 = chains2[m].name;
+                        var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName2, chainIndex2);
                         var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; 
                         // align from 3d to search index. resindex is 0-indexed so -1 before querying
                         //this.xilog ("alignid", alignId1, alignId2, pid1, pid2);
@@ -86,14 +88,14 @@ CLMSUI.DistancesObj.prototype = {
                                     totalDist += dist;
                                     distCount++;
                                     if (returnChainInfo) {
-                                        chainInfo.from.push (chains1.name);
-                                        chainInfo.to.push (chains2.name);
+                                        chainInfo.from.push (chainName1);
+                                        chainInfo.to.push (chainName2);
                                     }
                                 } else if (dist < minDist || minDist === undefined) {
                                     minDist = dist;
                                     if (returnChainInfo) {
-                                        chainInfo.from = chains1[n].name;
-                                        chainInfo.to = chains2[m].name;
+                                        chainInfo.from = chainName1;
+                                        chainInfo.to = chainName2;
                                     }
                                 }
                             }
