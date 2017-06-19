@@ -125,61 +125,7 @@ CLMSUI.DistancesObj.prototype = {
         return dist;
     },
     
-    flattenDistanceMatrix: function (matrixValue) {
-        var isSymmetric = this.isSymmetricMatrix (matrixValue); // don't want to count distances in symmetric matrices twice
-        var distanceMatrix = matrixValue.distanceMatrix;
-        var distanceList = d3.values(distanceMatrix).map (function (row, i) {
-            if (row && isSymmetric) {
-                row = row.slice (0, Math.max (0, i)); // For future remembering if I change things: beware negative i, as negative value starts slice from end of array
-            }
-            return d3.values(row).filter (function(d) { return d && (d.length !== 0); });   // filter out nulls, undefineds, zeroes and empty arrays
-        });
-        return [].concat.apply([], distanceList);
-    },
-    
-    getFlattenedDistances: function () {
-        var matrixValues = d3.values (this.matrices);
-        var perMatrixDistances = matrixValues.map (function (matrixValue) {
-            return this.flattenDistanceMatrix (matrixValue);    
-        }, this);
-        this.xilog ("ad", perMatrixDistances);
-        return [].concat.apply([], perMatrixDistances);
-    },
-    
-    getMatCellFromIndex: function (cellIndex, matEndPoints, matValues) {
-        var matrixIndex = d3.bisectRight (matEndPoints, cellIndex);
-        var matrixValue = matValues[matrixIndex];
-        var size = matrixValue.size;
-        var isSymmetric = this.isSymmetricMatrix (matrixValue);
-        
-        var row, col;
-        //var orig = cellIndex;
-        cellIndex -= matrixIndex ? matEndPoints[matrixIndex - 1] : 0;
-        if (isSymmetric) {
-            row = Math.floor(-0.5 + Math.sqrt(0.25 + 2 * cellIndex));
-            var triangularNumber = row * (row + 1) / 2;
-            col = cellIndex - triangularNumber;
-            row++;  // [0,0] is not used (first residue distance to itself), first usable distance is [1,0] in symmetrix matrix
-        } else {
-            row = Math.floor (cellIndex / size[1]);
-            col = cellIndex - (row * size[1]);  
-        }
-        
-        var distanceMatrix = matrixValue.distanceMatrix;
-        var val = distanceMatrix[row] ? distanceMatrix[row][col] : undefined;
-        if (val === undefined) {
-            //CLMSUI.vent.trigger ("request3DDistance", row, col, matrixValue.chain1, matrixValue.chain2);
-            val = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, row, col, matrixValue.chain1, matrixValue.chain2);
-            //this.xilog ("matrix", matrixValue, orig, cellIndex, matrixIndex, row, col, val);
-        }
-        return val;
-    },
-    
-    isSymmetricMatrix: function (matrixValue) {
-        return matrixValue.isSymmetric;
-    },
-    
-    // options: intraOnly for no cross-protein random links
+    // options - intraOnly:true for no cross-protein random links
     getRandomDistances: function (size, residueSets, options) {
         options = options || {};
         residueSets = residueSets || {name: "all", searches: new Set(), linkables: new Set()};
@@ -240,10 +186,10 @@ CLMSUI.DistancesObj.prototype = {
         }, this);
         */
         
-         var alignedTerminalIndices = {ntermList: [], ctermList: []};
+         
         // n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
-        
         // add protein terminals if within pdb chain ranges to alignedTerminalIndices array
+        var alignedTerminalIndices = {ntermList: [], ctermList: []};
         seqsByProt.entries().forEach (function (protEntry) {
             var protKey = protEntry.key;
             var participant = clmsModel.get("participants").get(protKey);
@@ -323,7 +269,7 @@ CLMSUI.DistancesObj.prototype = {
                 var search = clmsModel.get("searches").get(searchID);
                 var protIDs = search.participantIDSet;
                 
-                // Filter residue lists down to residues that were in this search's proteins
+                // Filter residue lists down to those that were in this search's proteins
                 var srmap = rmap.map (function (dirMap) { 
                     return (clmsModel.get("searches").size > 1) ? dirMap.filter (function(res) { return protIDs.has (res.protID); }) : dirMap; 
                 });
@@ -342,6 +288,7 @@ CLMSUI.DistancesObj.prototype = {
                     var srmapPerProt = [{},{}];
                     srmap.forEach (function (dirMap, i) {
                         var perProtMap = srmapPerProt[i];
+                        
                         dirMap.forEach (function (res) {
                             var protID = res.protID;
                             var perProtList = perProtMap[protID];
@@ -350,7 +297,8 @@ CLMSUI.DistancesObj.prototype = {
                             } else {
                                 perProtList.push (res);
                             }
-                        })
+                        });
+                        //console.log ("dirMap", dirMap, perProtMap, d3.nest().key(function(d) { return d.protID; }).entries(dirMap));
                     });
                     if (!rdata.heterobi) {
                         srmapPerProt[1] = srmapPerProt[0];
@@ -450,30 +398,6 @@ CLMSUI.DistancesObj.prototype = {
                 }
             }, this);
         }, this);
-        
-        
-        // old way
-        /*
-        var randDists = [];
-        var tot = 0;
-        var matrixValues = d3.values (this.matrices);
-        var matEndPoints = matrixValues.map (function (matrixValue) {
-            var isSymmetric = this.isSymmetricMatrix (matrixValue);
-            var size = matrixValue.size;
-            tot += size[0] * (isSymmetric ? (size[1] - 1) / 2 : size[1]);
-            return tot;
-        }, this);
-        this.xilog ("matEndPoints", matEndPoints, matrixValues);
-        
-        if (size > tot) {   // use all distances as random background
-            randDists = this.getFlattenedDistances ();
-        } else {    // pick random distances randomly
-            for (var n = 0; n < size; n++) {
-                var cellIndex = Math.floor (Math.random () * tot);
-                randDists.push (this.getMatCellFromIndex (cellIndex, matEndPoints, matrixValues));
-            }
-        }
-        */
         
         this.xilog ("RANDOM", randDists, "avg:", d3.sum(randDists) / (randDists.length || 1));
         this.xilog ("------ RANDOM DISTRIBUTION END ------");

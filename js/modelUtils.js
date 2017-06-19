@@ -1,10 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.modelUtils = {   
-    flattenMatchesOld: function (matchesArr) {
-        return matchesArr.map (function(m) { return m.score; });    
-    },
-    
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
         var matchesLen = matchesArr.length;
