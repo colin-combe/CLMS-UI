@@ -13,19 +13,22 @@
           if(_.isFunction(parentEvents)){
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{});
+          return _.extend({},parentEvents,{
+               "click .intraRandomButton": "reRandom",
+          });
         },
 
         initialize: function (viewOptions) {
             CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
-            
+
             var defaultOptions = {
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
-                subSeriesNames: ["Short", "Good", "Overlong"],
+                subSeriesNames: viewOptions.colourScaleModel ? viewOptions.colourScaleModel.get("labels").range() : ["Short", "Good", "Overlong"],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
+                intraRandomOnly: false,
                 maxX: 90
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -40,13 +43,23 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
 
-            mainDivSel.append("div").style("height", "40px")
-                .append("button")
-                .attr("class", "btn btn-1 btn-1a downloadButton")
-                .text(CLMSUI.utils.commonLabels.downloadImg+"SVG");
+            var template = _.template ("<DIV class='buttonPanel'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
+            mainDivSel.append("div")
+                .attr ("class", "verticalFlexContainer")
+                .html(
+                    template ({})
+                )
+            ;
+            
+            var buttonData = [
+                {class: "downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
+                {class: "intraRandomButton", label: "Self Randoms Only", type: "checkbox", id: "intraRandom", initialState: this.options.intraRandomOnly, title: "Show only random links between same protein", noBreak: false},
+            ];
+            
+            var buttonPanel = mainDivSel.select("div.buttonPanel");
+            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, buttonData);
 
-            var chartDiv = mainDivSel.append("div")
-                .attr("class", "panelInner distoDiv")
+            var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
             ;
 
@@ -162,16 +175,24 @@
                 },
             });
             this.chart.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
+            if (! this.model.get("clmsModel").get("decoysPresent")) {   
+                this.chart.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
+            }
             
             
             function distancesAvailable () {
                 console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
                 this.recalcRandomBinning();
                 this.render();
+                // hide random choice button if only 1 protein
+                var self = this;
+                d3.select(this.el).select("#distoPanelintraRandom")
+                    .style ("display", self.model.get("clmsModel").get("participants").size > 1 ? null : "none")
+                ;
             }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({"noRescale":true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
+            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({noRescale:true, recolourOnly: true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -239,40 +260,51 @@
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
                 //console.log ("thresholds", thresholds);
-                var curMaxY = this.chart.axis.max().y;
-                // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
-                // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
-                if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
-                    console.log ("resetting axis max from", curMaxY, "to", maxY);
-                    this.chart.axis.max({y: maxY});
-                }
+                
+                
                 
                 //console.log ("countArrays", countArrays);
 
-                var colMap = this.getSeriesColours();
                 
-                // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
+                var redoChart = function () {
+                    var colMap = this.getSeriesColours();
+                    this.chart.load({
+                        columns: countArrays,
+                        colors: colMap,
+                    });
+                    this
+                        .makeBarsSitBetweenTicks()
+                        .makeChartTitle(splitSeries)
+                    ;
+                };
+                
+                 // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
                 var tempHandle = c3.chart.internal.fn.redraw;
                 c3.chart.internal.fn.redraw = function () {};
+                var chartInternal = this.chart.internal;
+
                 if (options.noRescale) {
-                    this.chart.load({
-                        columns: countArrays,
-                        colors: colMap,
+                    chartInternal.config.interaction_enabled = false; // don't recalc event rectangles, no need
+                    countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
+                        return arr[0] !== "Random";
                     });
+                    redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (this.chart.internal, {withLegend: true});
+                    tempHandle.call (chartInternal, {withLegend: true});
+                    chartInternal.config.interaction_enabled = true;  // reset interaction flag
                 } else {
+                    var curMaxY = this.chart.axis.max().y;
+                    // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
+                    // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
+                    if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
+                        console.log ("resetting axis max from", curMaxY, "to", maxY, "nrs", options.noRescale);
+                        this.chart.axis.max({y: maxY});
+                    }
+                    redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    this.chart.load({
-                        columns: countArrays,
-                        colors: colMap,
-                    });
+                    tempHandle.call (chartInternal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
                 }
-                
-                this
-                    .makeBarsSitBetweenTicks()
-                    .makeChartTitle(splitSeries)
-                ;
+                            
                 //console.log ("data", distArr, binnedData);
             }
 
@@ -299,7 +331,7 @@
             var titleText = this.options.chartTitle +": "+commaed(total)+" Cross-Links - "+linkReportStr.join(", ");
             
             d3.select(this.el).select(".c3-title").text (titleText);
-            this.chart.internal.redrawTitle();
+            //this.chart.internal.redrawTitle();
             
             return this;
         },
@@ -369,6 +401,12 @@
             return countArrays;
         },
         
+        reRandom: function () {
+            this.options.intraRandomOnly = !this.options.intraRandomOnly;
+            this.recalcRandomBinning();
+            this.render();
+        },
+        
 
         recalcRandomBinning: function () {
             // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
@@ -379,7 +417,11 @@
             var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
             var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
             console.log ("ress", residueSets);
-            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (Math.min ((linkCount * 100) || 10000, 100000), d3.values (residueSets));
+            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
+                Math.min ((linkCount * 100) || 10000, 100000), 
+                d3.values (residueSets),
+                {intraOnly: this.options.intraRandomOnly},
+            );
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()
                 .bins(thresholds)
@@ -388,12 +430,16 @@
             this.randArrLength = randArr.length;
             this.precalcedDistributions = this.precalcedDistributions || {};
             this.precalcedDistributions["Random"] = binnedData;
+            console.log ("RANDOM", binnedData);
         },
 
         relayout: function () {
             // fix c3 setting max-height to current height so it never gets bigger y-wise
             // See https://github.com/masayuki0812/c3/issues/1450
-            d3.select(this.el).select(".c3").style("max-height", "none");   
+            d3.select(this.el).select(".c3")
+                .style("max-height", "none")
+                .style ("position", null)
+            ;   
             //this.redrawColourRanges();
             this.chart.resize();
             this.makeBarsSitBetweenTicks ();
