@@ -90,11 +90,11 @@ function getMatchesCSV () {
             csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
                 + '","' + (+pp1 + match.linkPos1 - 1)
                 + '","' + pp1 + '","'
-                + match.matchedPeptides[0].sequence + '","' + match.linkPos1 + '","'
-                + CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel"))
+                + match.matchedPeptides[0].seq_mods + '","' + match.linkPos1 + '","'
+                + match.matchedPeptides[1]? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : ""
                 + '","' + (+pp2 + match.linkPos2 - 1)
                 + '","' + pp2 + '","'
-                + match.matchedPeptides[1].sequence + '","' + match.linkPos2 + '","'
+                + match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "" + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","' 
                 + match.matchMZ() + '","' + match.matchMass() + '","' + match.massError() + '","' 
                 + match.autovalidated + '","' + match.validated + '","'
@@ -128,7 +128,7 @@ function getLinksCSV(){
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
         csv += '"' + mostReadableId(crossLink.fromProtein) + '","'
             + crossLink.fromResidue + '","' + crossLink.fromProtein.sequence[crossLink.fromResidue - 1] + '","'
-            + mostReadableId(crossLink.toProtein) + '","'
+            + crossLink.toProtein? mostReadableId(crossLink.toProtein) : "" + '","'
             + crossLink.toResidue + '","';
         if (crossLink.toProtein && crossLink.toResidue) {
             csv += crossLink.toProtein.sequence[crossLink.toResidue - 1];
@@ -190,7 +190,7 @@ function getResidueCount() {
         if (residueLink.filteredMatches_pp.length > 0){
 
             var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
-            var linkedRes2 = residueLink.toProtein.sequence[residueLink.toResidue - 1];
+            var linkedRes2 = residueLink.toProtein? residueLink.toProtein.sequence[residueLink.toResidue - 1] : "";
             incrementCount(linkedRes1);
             incrementCount(linkedRes2);
 
