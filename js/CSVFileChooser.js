@@ -85,7 +85,7 @@
                 var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
                 var self = this;
                 CLMSUI.modelUtils.loadUserFile (this.csvFileObj, function (csvFileContents) {
-                    alert(self.csvFileObj.name);
+                    //alert(self.csvFileObj.name);
                     //todo: if no fasta file check  all protein ids  valid uniprot accession
                     if (self.fastaFileObj) {
                         CLMSUI.modelUtils.loadUserFile (self.fastaFileObj, function (fastaFileContents) {
