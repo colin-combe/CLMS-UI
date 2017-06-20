@@ -19,6 +19,10 @@
 
 .dropdown DIV LI .btn {
     font-size: inherit;
+    display: table-cell;
+    width: 100%; 
+    text-align: left;
+
 }
 
 .dropdown DIV LI:hover {
