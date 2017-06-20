@@ -506,7 +506,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         var addOptions = function (selectSel) {
             var optionSel = selectSel
                 .selectAll("option")
-                .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
+                .data (self.model.pluck("title"))   // this picks the title attribute from all models in BB collection, returned as array
             ;
             optionSel.exit().remove();
             optionSel.enter().append("option");
@@ -536,8 +536,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             });
         }
         
-        this.listenTo (this.model, "add", function () {
-            var self = this;
+        this.listenTo (this.model, "update", function () {
             d3.select(this.el).select("select#linkColourSelect").call (addOptions);
         });
 

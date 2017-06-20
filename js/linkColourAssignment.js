@@ -162,12 +162,26 @@ CLMSUI.linkColour.setupColourModels = function () {
         CLMSUI.linkColour.distanceColoursBB,
     ]);
     
+    // Just the group colour scale is replaced for this event
     CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
         console.log ("loading done");    
         console.log ("this", this);
         this.remove ("Group");
         CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
         this.add (CLMSUI.linkColour.groupColoursBB);
+    });
+    
+    // All colour scales with ids in metadataFields array are removed (if already extant) and added
+    CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metadataFields, crossLinks) {
+        var colMaps = metadataFields.map (function (field) {
+            return CLMSUI.linkColour.makeColourModel (field, field, crossLinks);
+        })
+        console.log ("link metadata parsing done", arguments);    
+        this.remove (metadataFields);
+        this.add (colMaps);
+        
+        var fieldSet = d3.set (metadataFields);
+        // WHAT TO DO WHEN REMOVED SCHEME IS CURRENT SCHEME?
     });
 };
 

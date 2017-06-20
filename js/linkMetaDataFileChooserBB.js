@@ -46,11 +46,9 @@
             
             wrapperPanel.append("div").attr("class", "messagebar");
             
-            this.listenTo (this.model, "csvLoaded", function (sequences) {
-                var count = sequences && sequences.length ? sequences.length : 0;
-                var msg = count ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
-                    : "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
-                this.setStatusText(msg);    
+            var self = this;
+            this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+                self.setStatusText (columns.length +" Link Attributes Parsed"); 
             });
         },
         
@@ -64,6 +62,8 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             this.setStatusText ("Please Wait...");
             CLMSUI.modelUtils.loadUserFile (fileObj, function (metaDataFileContents) {
+                var first = true;
+                var columns = [];
                 d3.csv.parse (metaDataFileContents, function (d) {
                     var linkID = d.linkID || d.LinkID;
                     var crossLinkEntry = crossLinks.get(linkID);
@@ -76,11 +76,19 @@
                                 meta[key] = d[key];
                             }
                         });
+                        if (first) {
+                            columns = d3.set(keys);
+                            columns.remove("linkID");
+                            columns.remove("LinkID")
+                            columns = columns.values();
+                            first = false;
+                        }
                         console.log ("cle", crossLinkEntry);
                     }
                 });
-                self.setStatusText (fileObj.name+" Parsing Complete");
-                self.model.trigger ("linkMetadataUpdated");
+                if (columns && columns.length > 0) {
+                    CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
+                }
             });    
         },
 
