@@ -91,10 +91,10 @@ function getMatchesCSV () {
                 + '","' + (+pp1 + match.linkPos1 - 1)
                 + '","' + pp1 + '","'
                 + match.matchedPeptides[0].seq_mods + '","' + match.linkPos1 + '","'
-                + match.matchedPeptides[1]? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : ""
+                + (match.matchedPeptides[1]? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : "")
                 + '","' + (+pp2 + match.linkPos2 - 1)
                 + '","' + pp2 + '","'
-                + match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "" + '","' + match.linkPos2 + '","'
+                + (match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "") + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","' 
                 + match.matchMZ() + '","' + match.matchMass() + '","' + match.massError() + '","' 
                 + match.autovalidated + '","' + match.validated + '","'
