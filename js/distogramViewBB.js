@@ -418,8 +418,8 @@
             console.log ("ress", residueSets);
             var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
                 Math.min ((linkCount * 100) || 10000, 100000), 
-                d3.values (residueSets),
-                {intraOnly: this.options.intraRandomOnly},
+                d3.values (residueSets), 
+                {intraOnly: this.options.intraRandomOnly}
             );
             var thresholds = d3.range(0, this.options.maxX);
             var binnedData = d3.layout.histogram()

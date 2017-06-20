@@ -502,6 +502,19 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             .append("span")
             .text("Choose Link Colour Scheme ")
         ;
+        
+        var addOptions = function (selectSel) {
+            var optionSel = selectSel
+                .selectAll("option")
+                .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
+            ;
+            optionSel.exit().remove();
+            optionSel.enter().append("option");
+            optionSel
+                .text (function (d) { return d; })
+                .order()
+            ;
+        };
 
         d3.select(this.el)
             .append("select")
@@ -513,11 +526,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
                     options.storeSelectedAt.model.set (options.storeSelectedAt.attr, colourModel);
                 }
             })
-            .selectAll("option")
-            .data(self.model.pluck("title"))    // this picks the title attribute from all models in BB collection, returned as array
-            .enter()
-            .append("option")
-                .text (function(d) { return d; })
+            .call (addOptions)
         ;
 
         if (options.storeSelectedAt) {
@@ -526,6 +535,11 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
                 this.setSelected (newColourModel);
             });
         }
+        
+        this.listenTo (this.model, "add", function () {
+            var self = this;
+            d3.select(this.el).select("select#linkColourSelect").call (addOptions);
+        });
 
         return this;
     },

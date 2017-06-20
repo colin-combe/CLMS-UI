@@ -115,23 +115,44 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 });
 
 
+CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
+    initialize: function () {
+        var length = this.get("colScale").domain().length;
+        this.set("labels", this.get("colScale").copy().range(length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]));
+    },
+    getValue : function (crossLink) {
+        return crossLink.meta ? crossLink.meta[this.get("field")] : undefined;
+    },
+    getColour: function (crossLink) {
+        return this.get("colScale")(this.getValue (crossLink));
+    },
+});
+
+
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
         colScale: d3.scale.ordinal().domain([0,1,2]).range([
             CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.homodimerLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()
         ]),
         title: "Default",
+        id: "Default"
     });
     
-    CLMSUI.linkColour.groupColoursBB = new CLMSUI.BackboneModelTypes.GroupColourModel ({
-        title: "Group",
-    }, {
-        searchMap: CLMSUI.compositeModelInst.get("clmsModel").get("searches"),
-    });
+    var makeGroupColourModel = function () {
+        return new CLMSUI.BackboneModelTypes.GroupColourModel ({
+            title: "Group",
+            id: "Group",
+        }, {
+            searchMap: CLMSUI.compositeModelInst.get("clmsModel").get("searches"),
+        });
+    };
+    
+    CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
         colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']),
         title: "Distance",
+        id: "Distance",
     });
 
     // add distanceColoursBB to this collection later if needed
@@ -140,4 +161,37 @@ CLMSUI.linkColour.setupColourModels = function () {
         CLMSUI.linkColour.groupColoursBB,
         CLMSUI.linkColour.distanceColoursBB,
     ]);
+    
+    CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
+        console.log ("loading done");    
+        console.log ("this", this);
+        this.remove ("Group");
+        CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
+        this.add (CLMSUI.linkColour.groupColoursBB);
+    });
+};
+
+CLMSUI.linkColour.makeColourModel = function (field, label, links) {
+    var linkArr = CLMS.arrayFromMapValues (links);
+    var extents = d3.extent (linkArr, function(link) { return link.meta ? link.meta[field] : undefined; });
+    if (extents[0] < 0 && extents[1] > 0) {
+        extents.splice (1, 0, 0);
+    }
+    var range = extents.length == 2 ? ["red", "blue"] : ["red", "white", "blue"];
+    
+    console.log ("extents", extents);
+    return new CLMSUI.BackboneModelTypes.MetaDataColourModel (
+        {
+            colScale: d3.scale.linear().domain(extents).range(range),
+            id: label,
+            title: label || field,
+            field: field,
+        },
+        links
+    );
+};
+
+
+CLMSUI.linkColour.addColourModel = function (colourModel) {
+    CLMSUI.linkColour.Collection.add (colourModel);
 };

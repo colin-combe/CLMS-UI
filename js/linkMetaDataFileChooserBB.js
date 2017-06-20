@@ -6,7 +6,7 @@
 
     var CLMSUI = CLMSUI || {};
     
-    CLMSUI.QuantFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
+    CLMSUI.LinkMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 
         events: function() {
             var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
@@ -14,13 +14,12 @@
                 parentEvents = parentEvents();
             }
             return _.extend ({}, parentEvents, {
-                "click .pdbWindowButton": "launchExternalQuantWindow",
-                "change .selectQuantButton": "selectQuantFile",
+                "change .selectMetaDataFileButton": "selectMetaDataFile",
             });
         },
 
         initialize: function (viewOptions) {
-            CLMSUI.QuantFileChooserBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.LinkMetaDataFileChooserBB.__super__.initialize.apply (this, arguments);
             
             var defaultOptions = {};
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
@@ -40,14 +39,12 @@
                 .attr("class", "btn btn-1 btn-1a fakeButton")
                 .append("span")
                     //.attr("class", "noBreak")
-                    .text("Select Quantification CSV File")
+                    .text("Select Link MetaData CSV File")
                     .append("input")
-                        .attr({type: "file", accept: ".csv", class: "selectQuantButton"})
+                        .attr({type: "file", accept: ".csv", class: "selectMetaDataFileButton"})
             ;
             
-            wrapperPanel.append("div").attr("class", "quantMessagebar");
-            
-            // populate 3D network viewer if hard-coded pdb id present
+            wrapperPanel.append("div").attr("class", "messagebar");
             
             this.listenTo (this.model, "csvLoaded", function (sequences) {
                 var count = sequences && sequences.length ? sequences.length : 0;
@@ -58,29 +55,31 @@
         },
         
         setStatusText : function (msg) {
-            d3.select(this.el).select(".nglMessagebar").text(msg);    
+            d3.select(this.el).select(".messagebar").text(msg);    
         },
         
-        selectQuantFile: function (evt) {
+        selectMetaDataFile: function (evt) {
             var self = this;
             var fileObj = evt.target.files[0];
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             this.setStatusText ("Please Wait...");
-            CLMSUI.modelUtils.loadUserFile (fileObj, function (quantFileContents) {
-                var data = d3.csv.parse (quantFileContents, function (d) {
-                    var linkID = d.linkID;
-                    console.log ("d", d);
+            CLMSUI.modelUtils.loadUserFile (fileObj, function (metaDataFileContents) {
+                d3.csv.parse (metaDataFileContents, function (d) {
+                    var linkID = d.linkID || d.LinkID;
                     var crossLinkEntry = crossLinks.get(linkID);
                     if (crossLinkEntry) {
                         crossLinkEntry.meta = crossLinkEntry.meta || {};
                         var meta = crossLinkEntry.meta;
                         var keys = d3.keys(d);
                         keys.forEach (function (key) {
-                            meta[key] = d[key];
+                            if (d[key]) {
+                                meta[key] = d[key];
+                            }
                         });
                         console.log ("cle", crossLinkEntry);
                     }
                 });
+                self.setStatusText (fileObj.name+" Parsing Complete");
                 self.model.trigger ("linkMetadataUpdated");
             });    
         },
@@ -93,5 +92,5 @@
             return this;
         },
         
-        identifier: "Quantification File Chooser",
+        identifier: "Link MetaData File Chooser",
     });

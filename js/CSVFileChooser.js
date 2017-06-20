@@ -98,6 +98,7 @@
 					} else {
 						spinner.stop(); // stop spinner on request returning
 						CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo);
+                        CLMSUI.vent.trigger ("csvLoadingDone");
 						this.csvFileObj = null;
 						//~ this.fastaFileObj = null;
 					} 	
