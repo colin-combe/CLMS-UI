@@ -128,7 +128,7 @@ function getLinksCSV(){
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
         csv += '"' + mostReadableId(crossLink.fromProtein) + '","'
             + crossLink.fromResidue + '","' + crossLink.fromProtein.sequence[crossLink.fromResidue - 1] + '","'
-            + crossLink.toProtein? mostReadableId(crossLink.toProtein) : "" + '","'
+            + (crossLink.toProtein ? mostReadableId(crossLink.toProtein) : "") + '","'
             + crossLink.toResidue + '","';
         if (crossLink.toProtein && crossLink.toResidue) {
             csv += crossLink.toProtein.sequence[crossLink.toResidue - 1];
