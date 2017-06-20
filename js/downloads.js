@@ -190,6 +190,7 @@ function getResidueCount() {
         if (residueLink.filteredMatches_pp.length > 0){
 
             var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
+            if (!linkedRes1) { linkedRes1 = ""}
             var linkedRes2 = residueLink.toProtein? residueLink.toProtein.sequence[residueLink.toResidue - 1] : "";
             incrementCount(linkedRes1);
             incrementCount(linkedRes2);
