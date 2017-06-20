@@ -108,6 +108,7 @@
                         return CLMSUI.utils.proteinConcat (d, 1, self.model.get("clmsModel"));
                     },
                     "runName": function(d) { return d.runName(); },
+                    "group": function(d) { return d.group(); },
                     "pepPos1": function(d) { return CLMSUI.utils.pepPosConcat (d, 0); },
                     "pepPos2": function(d) { return CLMSUI.utils.pepPosConcat (d, 1); },
                     "pepSeq1raw": function(d) { return d.matchedPeptides[0].seq_mods; },
@@ -269,7 +270,7 @@
                     } else {
                     	d3.select(".validationControls").style("display", "block");
                     }
-                    if (d.searchId != "CSV file") {
+                    if (d.src) { // if the src att is missing its from a csv file
 						self.model.trigger("change:lastSelectedMatch", self.model, {match: d, directSelection: true});
 					}
                 })

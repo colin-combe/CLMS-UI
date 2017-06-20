@@ -19,17 +19,17 @@
 function downloadMatches(){
     var csv = getMatchesCSV();
     var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--matches--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);//+s.keys().toString());
+    download(csv, 'text/csv', filename);
 }
 function downloadLinks(){
     var csv = getLinksCSV();
     var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--links--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);//+s.keys().toString());
+    download(csv, 'text/csv', filename);
 }
 function downloadResidueCount(){
     var csv = getResidueCount();
     var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--residueCount--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);//+s.keys().toString());
+    download(csv, 'text/csv', filename);
 }
 
 function download(content, contentType, fileName) {
@@ -67,7 +67,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","Exp m/z", "ExpMass", "Match m/z", "MatchMass", "MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein 1","SeqPos 1","PepPos 1","PepSeq 1","LinkPos 1","Protein 2","SeqPos 2","PepPos 2","PepSeq2","LinkPos 2","Score","Charge","Exp m/z","ExpMass","Match m/z","MatchMass","MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var matches = clmsModel.get("matches");
     var matchCount = matches.length;
@@ -83,7 +83,7 @@ function getMatchesCSV () {
 			result = filterModel.subsetFilter (match, proteinMatchFunc)
 						&& filterModel.validationStatusFilter(match)
 						&& filterModel.navigationFilter(match);
-							}
+		}
         if (result === true){
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
