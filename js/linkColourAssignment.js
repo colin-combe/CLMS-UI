@@ -13,12 +13,17 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
         this.get("colScale").range(newRange);
         this.triggerColourModelChanged ({range: newRange});
     },
+    getColour: function (crossLink) {
+        var val = this.getValue (crossLink);
+        return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
+    },
     triggerColourModelChanged: function (obj) {
         this.trigger ("colourModelChanged", obj);
         if (this.collection) {
             this.collection.trigger ("aColourModelChanged", this, obj);
         }
     },
+    undefinedColour: "#888",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
@@ -30,9 +35,10 @@ CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourM
     initialize: function () {
         this.set("labels", this.get("colScale").copy().range(["Self Link", "Homomultimer Link", "Between Protein Link"]));
     },
-    getColour: function (crossLink) {
-        return this.get("colScale")(crossLink.isSelfLink() || crossLink.toProtein === null ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2);
+    getValue: function (crossLink) {
+        return crossLink.isSelfLink() || crossLink.toProtein === null ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2;
     },
+
 });
 
 
@@ -106,11 +112,8 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
     initialize: function () {
         this.set("labels", this.get("colScale").copy().range(["Within Distance", "Borderline", "Overlong"]));
     },
-    getDistance : function (crossLink) {
+    getValue: function (crossLink) {
         return CLMSUI.compositeModelInst.getSingleCrosslinkDistance (crossLink);
-    },
-    getColour: function (crossLink) {
-        return this.get("colScale")(this.getDistance (crossLink));
     },
 });
 
@@ -118,13 +121,10 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
         var length = this.get("colScale").domain().length;
-        this.set("labels", this.get("colScale").copy().range(length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]));
+        this.set ("labels", this.get("colScale").copy().range(length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]));
     },
-    getValue : function (crossLink) {
+    getValue: function (crossLink) {
         return crossLink.meta ? crossLink.meta[this.get("field")] : undefined;
-    },
-    getColour: function (crossLink) {
-        return this.get("colScale")(this.getValue (crossLink));
     },
 });
 
@@ -162,36 +162,43 @@ CLMSUI.linkColour.setupColourModels = function () {
         CLMSUI.linkColour.distanceColoursBB,
     ]);
     
+    // If necessary, swap in newly added colour scale with same id as removed (but current) scale pointed to by linkColourAssignment
+    var replaceCurrentLinkColourAssignment  = function (collection) {
+        var currentColourModel = CLMSUI.compositeModelInst.get("linkColourAssignment");
+        if (!currentColourModel.collection) {
+            CLMSUI.compositeModelInst.set ("linkColourAssignment", collection.get(currentColourModel.get("id")));
+        }
+    };
+    
     // Just the group colour scale is replaced for this event
     CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
-        console.log ("loading done");    
-        console.log ("this", this);
         this.remove ("Group");
         CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
         this.add (CLMSUI.linkColour.groupColoursBB);
+        
+        replaceCurrentLinkColourAssignment (this);
     });
     
     // All colour scales with ids in metadataFields array are removed (if already extant) and added
     CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metadataFields, crossLinks) {
         var colMaps = metadataFields.map (function (field) {
             return CLMSUI.linkColour.makeColourModel (field, field, crossLinks);
-        })
-        console.log ("link metadata parsing done", arguments);    
+        });  
         this.remove (metadataFields);
         this.add (colMaps);
         
-        var fieldSet = d3.set (metadataFields);
-        // WHAT TO DO WHEN REMOVED SCHEME IS CURRENT SCHEME?
+        replaceCurrentLinkColourAssignment (this);
     });
 };
 
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var linkArr = CLMS.arrayFromMapValues (links);
     var extents = d3.extent (linkArr, function(link) { return link.meta ? link.meta[field] : undefined; });
+    var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
+        range.splice (1, 0, "white");
     }
-    var range = extents.length == 2 ? ["red", "blue"] : ["red", "white", "blue"];
     
     console.log ("extents", extents);
     return new CLMSUI.BackboneModelTypes.MetaDataColourModel (
@@ -203,9 +210,4 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
         },
         links
     );
-};
-
-
-CLMSUI.linkColour.addColourModel = function (colourModel) {
-    CLMSUI.linkColour.Collection.add (colourModel);
 };

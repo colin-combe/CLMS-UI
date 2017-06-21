@@ -54,11 +54,17 @@ CLMSUI.modelUtils = {
     
     makeTooltipContents: {
         link: function (xlink) {
-            return [
+            var info = [
                 ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
                 ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
                 ["Matches", xlink.filteredMatches_pp.length],
             ];
+            d3.entries(xlink.meta).forEach (function (entry) {
+                if (! _.isObject (entry.value)) {
+                    info.push ([entry.key, entry.value]);
+                }
+            });
+            return info;
         },
         
         interactor: function (interactor) {
@@ -583,7 +589,7 @@ CLMSUI.modelUtils = {
             }
         });
 
-        perProtMap.values().forEach (function (termLists) {
+        perProtMap.forEach (function (id, termLists) {
             termLists.ntermList = termLists.ntermSet.values().map(function (v) { return +v; });
             termLists.ctermList = termLists.ctermSet.values().map(function (v) { return +v; });
         });
@@ -591,6 +597,38 @@ CLMSUI.modelUtils = {
         return perProtMap;
     },*/
     
+    updateLinkMetadata: function (metaDataFileContents, clmsModel) {
+        var crossLinks = clmsModel.get("crossLinks");
+        var first = true;
+        var columns = [];
+        var dontStoreArray = ["linkID", "LinkID"];
+        var dontStoreSet = d3.set (dontStoreArray);
+        d3.csv.parse (metaDataFileContents, function (d) {
+            var linkID = d.linkID || d.LinkID;
+            var crossLinkEntry = crossLinks.get(linkID);
+            if (crossLinkEntry) {
+                crossLinkEntry.meta = crossLinkEntry.meta || {};
+                var meta = crossLinkEntry.meta;
+                var keys = d3.keys(d);
+                keys.forEach (function (key) {
+                    if (d[key] && !dontStoreSet.has(key)) {
+                        meta[key] = d[key];
+                    }
+                });
+                if (first) {
+                    columns = d3.set(keys);
+                    dontStoreArray.forEach (function (dont) {
+                        columns.remove (dont);
+                    });
+                    columns = columns.values();
+                    first = false;
+                }
+            }
+        });
+        if (columns && columns.length > 0) {
+            CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
+        }    
+    },
     
 };
 

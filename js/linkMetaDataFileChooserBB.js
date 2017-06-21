@@ -57,38 +57,11 @@
         },
         
         selectMetaDataFile: function (evt) {
-            var self = this;
             var fileObj = evt.target.files[0];
-            var crossLinks = this.model.get("clmsModel").get("crossLinks");
+            var clmsModel = this.model.get("clmsModel");
             this.setStatusText ("Please Wait...");
-            CLMSUI.modelUtils.loadUserFile (fileObj, function (metaDataFileContents) {
-                var first = true;
-                var columns = [];
-                d3.csv.parse (metaDataFileContents, function (d) {
-                    var linkID = d.linkID || d.LinkID;
-                    var crossLinkEntry = crossLinks.get(linkID);
-                    if (crossLinkEntry) {
-                        crossLinkEntry.meta = crossLinkEntry.meta || {};
-                        var meta = crossLinkEntry.meta;
-                        var keys = d3.keys(d);
-                        keys.forEach (function (key) {
-                            if (d[key]) {
-                                meta[key] = d[key];
-                            }
-                        });
-                        if (first) {
-                            columns = d3.set(keys);
-                            columns.remove("linkID");
-                            columns.remove("LinkID")
-                            columns = columns.values();
-                            first = false;
-                        }
-                        console.log ("cle", crossLinkEntry);
-                    }
-                });
-                if (columns && columns.length > 0) {
-                    CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
-                }
+            CLMSUI.modelUtils.loadUserFile (fileObj, function (fileContents) {
+                CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);
             });    
         },
 
