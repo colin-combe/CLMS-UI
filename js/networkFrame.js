@@ -229,7 +229,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -280,6 +280,7 @@ CLMSUI.init.views = function () {
     var buttonData = [
         {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
         {id: "csvUploadPlaceholder", label: "CSV", eventName:"csvShow"},
+        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName:"linkMetaShow"},
     ];
     buttonData.forEach (function (bdata) {
         var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
@@ -364,7 +365,7 @@ CLMSUI.init.viewsEssential = function (options) {
             xlabel: "Score",
             ylabel: "Count",
             height: 65,
-            colors: {"Matches":"blue", "Decoys":"red"}
+            colours: {"Matches":"blue", "Decoys":"red"}
         }
     })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
@@ -627,6 +628,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",
+    });
+    
+    new CLMSUI.LinkMetaDataFileChooserBB ({
+        el: "#linkMetaLoadPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "linkMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB ({

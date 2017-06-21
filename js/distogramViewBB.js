@@ -411,7 +411,6 @@
         recalcRandomBinning: function () {
             // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
             var distArr = this.getRelevantCrossLinkDistances();
-            //var randArr = this.model.get("clmsModel").get("distancesObj").getFlattenedDistances();
             var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
             console.log ("model", this.model);
             var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));

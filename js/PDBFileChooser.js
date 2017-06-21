@@ -70,7 +70,7 @@
             ;
             
             
-            wrapperPanel.append("div").attr("class", "nglMessagebar");
+            wrapperPanel.append("div").attr("class", "messagebar");
             
             this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white"});
             console.log ("STAGE", this.stage);
@@ -108,7 +108,7 @@
         },
         
         setStatusText : function (msg) {
-            d3.select(this.el).select(".nglMessagebar").text(msg);    
+            d3.select(this.el).select(".messagebar").text(msg);    
         },
         
         selectPDBFile: function (evt) {

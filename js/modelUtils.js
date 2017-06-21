@@ -1,10 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.modelUtils = {   
-    flattenMatchesOld: function (matchesArr) {
-        return matchesArr.map (function(m) { return m.score; });    
-    },
-    
     flattenMatches: function (matchesArr) {
         var arrs = [[],[]];
         var matchesLen = matchesArr.length;
@@ -58,11 +54,17 @@ CLMSUI.modelUtils = {
     
     makeTooltipContents: {
         link: function (xlink) {
-            return [
+            var info = [
                 ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
                 ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
                 ["Matches", xlink.filteredMatches_pp.length],
             ];
+            d3.entries(xlink.meta).forEach (function (entry) {
+                if (! _.isObject (entry.value)) {
+                    info.push ([entry.key, entry.value]);
+                }
+            });
+            return info;
         },
         
         interactor: function (interactor) {
@@ -168,6 +170,7 @@ CLMSUI.modelUtils = {
     commonRegexes: {
         uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
         pdbPattern: "[A-Z0-9]{4}",
+        hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
     },
     
     amino3to1Map: {
@@ -587,7 +590,7 @@ CLMSUI.modelUtils = {
             }
         });
 
-        perProtMap.values().forEach (function (termLists) {
+        perProtMap.forEach (function (id, termLists) {
             termLists.ntermList = termLists.ntermSet.values().map(function (v) { return +v; });
             termLists.ctermList = termLists.ctermSet.values().map(function (v) { return +v; });
         });
@@ -595,6 +598,63 @@ CLMSUI.modelUtils = {
         return perProtMap;
     },*/
     
+    updateLinkMetadata: function (metaDataFileContents, clmsModel) {
+        var crossLinks = clmsModel.get("crossLinks");
+        var protMap = d3.map();
+        clmsModel.get("participants").forEach (function (value, key) {
+            protMap.set (value.accession, key);
+            protMap.set (value.name, key);
+        });
+        var first = true;
+        var columns = [];
+        var dontStoreArray = ["linkID", "LinkID", "Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2"];
+        var dontStoreSet = d3.set (dontStoreArray);
+        d3.csv.parse (metaDataFileContents, function (d) {
+            var linkID = d.linkID || d.LinkID;
+            var crossLinkEntry = crossLinks.get(linkID);
+
+            // Maybe need to generate key from several columns
+            if (!crossLinkEntry) {
+                var parts1 = d["Protein 1"].split("|");
+                var parts2 = d["Protein 2"].split("|");
+                var pkey1, pkey2;
+                parts1.forEach (function (part) {
+                    pkey1 = pkey1 || protMap.get(part);
+                });
+                parts2.forEach (function (part) {
+                    pkey2 = pkey2 || protMap.get(part);
+                });
+                linkID = pkey1+"_"+d["SeqPos 1"]+"-"+pkey2+"_"+d["SeqPos 2"];
+                crossLinkEntry = crossLinks.get(linkID);
+            }
+            
+            if (crossLinkEntry) {
+                crossLinkEntry.meta = crossLinkEntry.meta || {};
+                var meta = crossLinkEntry.meta;
+                var keys = d3.keys(d);
+                keys.forEach (function (key) {
+                    var val = d[key];
+                    if (val && !dontStoreSet.has(key)) {
+                        if (!isNaN(val)) {
+                            val = +val;
+                        }
+                        meta[key] = val;
+                    }
+                });
+                if (first) {
+                    columns = d3.set(keys);
+                    dontStoreArray.forEach (function (dont) {
+                        columns.remove (dont);
+                    });
+                    columns = columns.values();
+                    first = false;
+                }
+            }
+        });
+        if (columns && columns.length > 0) {
+            CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
+        }    
+    },
     
 };
 

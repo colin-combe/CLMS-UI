@@ -48,7 +48,7 @@
                         [this.options.seriesName],
                     ],
                     type: 'bar',
-                    colors: this.options.colors || {
+                    colors: this.options.colours || {
                         actual: "#555",
                         random: "#aaa"
                     },

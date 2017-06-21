@@ -166,7 +166,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
             var map = d3.map (xlinks, function(d) { return d.id; });
             var endPoints = {};
-            map.values().forEach (function (xlink) {
+            map.forEach (function (id, xlink) { // saves calculating values() - map.values().forEach (function (xlink)
                 if (proteinId === xlink.fromProtein.id) {
                     var fromRes = xlink.fromResidue;
                     endPoints[fromRes] = endPoints[fromRes] || [];

@@ -118,6 +118,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         ;
             
         this.listenTo (this.model, "change:linkColourAssignment", this.render);
+        // update is only triggered once when adding/removing multiple models to/from a collection
+        this.listenTo (CLMSUI.linkColour.Collection, "update", this.render);
         
         return this;
     },
@@ -140,6 +142,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             header: "Link Colour Scheme",
             rows: []
         }];
+        
+        console.log ("RERENDER COLOUR KEYS");
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {

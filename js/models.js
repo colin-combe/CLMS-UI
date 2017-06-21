@@ -3,12 +3,6 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
 {
-    DistancesModel: Backbone.Model.extend({
-        flattenedDistances: function () {
-            //return CLMSUI.modelUtils.flattenDistanceMatrix (this.get("distances"));
-        }
-    }),
-
     FilterModel: Backbone.Model.extend ({
         defaults: {
 			manualMode: true,
