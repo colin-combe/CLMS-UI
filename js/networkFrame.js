@@ -365,7 +365,7 @@ CLMSUI.init.viewsEssential = function (options) {
             xlabel: "Score",
             ylabel: "Count",
             height: 65,
-            colors: {"Matches":"blue", "Decoys":"red"}
+            colours: {"Matches":"blue", "Decoys":"red"}
         }
     })
         // If the ClmsModel matches attribute changes then tell the mini histogram view

@@ -11,11 +11,12 @@
             this.holdDuration = 10000;
             this.fadeDuration = 200;
             this.mouseOffset = 60;
+            this.numberFormat = function (val) { return d3.round (val, 6); };
             
             this.listenTo (this.model, "change:location", this.setPosition); 
             this.listenTo (this.model, "change:contents change:header", this.render);                  
         },
-        render : function() {     
+        render: function() {     
             var contents = this.model.get("contents");
             if (contents === null) {
                 this.setToFade();
@@ -25,7 +26,6 @@
             var self = this;
             var tooltip = d3.select(this.el);
             tooltip.select("h2").text(this.model.get("header"));
-            
 
             var oned = $.isArray(contents);
             var twod = oned ? $.isArray(contents[0]) : false;
@@ -34,12 +34,18 @@
             if (twod) {
                 cstring="<table>";
                 var rtype = "th";
+                var headerCount = 0;
                 for (var n = 0; n < contents.length; n++) {
                     var row = contents[n];
+                    headerCount = headerCount || row.length;
                     var str = "";
+                    var colspan = "";
                     for (var m = 0; m < row.length; m++) {
-                        str += "<"+rtype+">"+row[m]+"</"+rtype+">";
-                      
+                        if (m === row.length - 1 && row.length < headerCount) {
+                            colspan = " COLSPAN=\"" + (headerCount - row.length + 1)+"\"";
+                        }
+                        var val = isNaN(row[m]) ? row[m] : this.numberFormat(row[m]);
+                        str += "<"+rtype+colspan+">"+val+"</"+rtype+">";
                     }
                     rtype = "td";
                     cstring += "<tr>" + str + "</tr>";

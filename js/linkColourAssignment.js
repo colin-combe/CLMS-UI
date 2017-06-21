@@ -120,8 +120,12 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 
 CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
-        var length = this.get("colScale").domain().length;
-        this.set ("labels", this.get("colScale").copy().range(length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]));
+        var domain = this.get("colScale").domain();
+        var labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]); 
+        domain.map (function (domVal, i) {
+            labels[i] += " (" + domVal + ")";
+        });
+        this.set ("labels", this.get("colScale").copy().range(labels));
     },
     getValue: function (crossLink) {
         return crossLink.meta ? crossLink.meta[this.get("field")] : undefined;
@@ -201,7 +205,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     }
     
     console.log ("extents", extents);
-    return new CLMSUI.BackboneModelTypes.MetaDataColourModel (
+    var newColourModel = new CLMSUI.BackboneModelTypes.MetaDataColourModel (
         {
             colScale: d3.scale.linear().domain(extents).range(range),
             id: label,
@@ -210,4 +214,16 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
         },
         links
     );
+    
+    var hexRegex = CLMSUI.modelUtils.commonRegexes.hexColour;
+    var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
+    if (dataIsColours) {
+        // if data is just a list of colours make this colour scale just return the value for getColour
+        newColourModel.getColour = function (crossLink) {
+            var val = this.getValue (crossLink);
+            return val !== undefined ? val : this.undefinedColour;
+        };
+    }
+    
+    return newColourModel;
 };
