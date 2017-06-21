@@ -19,17 +19,17 @@
 function downloadMatches(){
     var csv = getMatchesCSV();
     var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--matches--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);//+s.keys().toString());
+    download(csv, 'text/csv', filename);
 }
 function downloadLinks(){
     var csv = getLinksCSV();
     var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--links--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);//+s.keys().toString());
+    download(csv, 'text/csv', filename);
 }
 function downloadResidueCount(){
     var csv = getResidueCount();
     var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--residueCount--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);//+s.keys().toString());
+    download(csv, 'text/csv', filename);
 }
 
 function download(content, contentType, fileName) {
@@ -67,7 +67,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","Exp m/z", "ExpMass", "Match m/z", "MatchMass", "MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein 1","SeqPos 1","PepPos 1","PepSeq 1","LinkPos 1","Protein 2","SeqPos 2","PepPos 2","PepSeq2","LinkPos 2","Score","Charge","Exp m/z","ExpMass","Match m/z","MatchMass","MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var matches = clmsModel.get("matches");
     var matchCount = matches.length;
@@ -83,18 +83,18 @@ function getMatchesCSV () {
 			result = filterModel.subsetFilter (match, proteinMatchFunc)
 						&& filterModel.validationStatusFilter(match)
 						&& filterModel.navigationFilter(match);
-							}
+		}
         if (result === true){
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
             csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
                 + '","' + (+pp1 + match.linkPos1 - 1)
                 + '","' + pp1 + '","'
-                + match.matchedPeptides[0].sequence + '","' + match.linkPos1 + '","'
-                + CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel"))
+                + match.matchedPeptides[0].seq_mods + '","' + match.linkPos1 + '","'
+                + (match.matchedPeptides[1]? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : "")
                 + '","' + (+pp2 + match.linkPos2 - 1)
                 + '","' + pp2 + '","'
-                + match.matchedPeptides[1].sequence + '","' + match.linkPos2 + '","'
+                + (match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "") + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","' 
                 + match.matchMZ() + '","' + match.matchMass() + '","' + match.massError() + '","' 
                 + match.autovalidated + '","' + match.validated + '","'
@@ -128,7 +128,7 @@ function getLinksCSV(){
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
         csv += '"' + mostReadableId(crossLink.fromProtein) + '","'
             + crossLink.fromResidue + '","' + crossLink.fromProtein.sequence[crossLink.fromResidue - 1] + '","'
-            + mostReadableId(crossLink.toProtein) + '","'
+            + (crossLink.toProtein ? mostReadableId(crossLink.toProtein) : "") + '","'
             + crossLink.toResidue + '","';
         if (crossLink.toProtein && crossLink.toResidue) {
             csv += crossLink.toProtein.sequence[crossLink.toResidue - 1];
@@ -190,7 +190,8 @@ function getResidueCount() {
         if (residueLink.filteredMatches_pp.length > 0){
 
             var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
-            var linkedRes2 = residueLink.toProtein.sequence[residueLink.toResidue - 1];
+            if (!linkedRes1) { linkedRes1 = ""}
+            var linkedRes2 = residueLink.toProtein? residueLink.toProtein.sequence[residueLink.toResidue - 1] : "";
             incrementCount(linkedRes1);
             incrementCount(linkedRes2);
 

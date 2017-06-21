@@ -149,7 +149,7 @@
 					 participant.hidden = false;
 				}
 				else {
-					 participant.hidden = true;
+					participant.hidden = true;
 				}			 
 			}
 			
