@@ -166,19 +166,17 @@ if (count($_GET) > 0) {
 
 
     //Stored layouts
-    if (count($searchId_randGroup) == 1) { // no saved layouts for aggregations at moment
-        $layoutQuery = "SELECT t1.layout AS l "
-                . " FROM layouts AS t1 "
-                . " WHERE t1.search_id LIKE '" . $sid . "' "
-                . " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
-                . " WHERE t1.search_id LIKE '" . $sid . "' );";
+	$layoutQuery = "SELECT t1.layout AS l "
+			. " FROM layouts AS t1 "
+			. " WHERE t1.search_id LIKE '" . $sid . "' "
+			. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
+			. " WHERE t1.search_id LIKE '" . $sid . "' );";
 
-        $layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
-        while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-            echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
-        }
-    }
-
+	$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+	while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
+		echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
+	}
+    
     //load data -
     $WHERE_spectrumMatch = ' ( '; //WHERE clause for spectrumMatch table
     $WHERE_matchedPeptide = ' ( ';//WHERE clause for matchedPeptide table
