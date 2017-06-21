@@ -97,6 +97,7 @@
                     } else {
                         spinner.stop(); // stop spinner on request returning
                         CLMSUI.compositeModelInst.get("clmsModel").parseCSV(csvFileContents, fileInfo);
+                        CLMSUI.vent.trigger ("csvLoadingDone"); // tell the world we're done
                         spinner.stop(); // stop spinner on request returning
                         //~ self.csvFileObj = null;
                         //~ self.fastaFileObj = null;
