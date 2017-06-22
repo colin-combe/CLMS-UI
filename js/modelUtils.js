@@ -58,6 +58,7 @@ CLMSUI.modelUtils = {
                 ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
                 ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
                 ["Matches", xlink.filteredMatches_pp.length],
+                ["Highest Score", Math.max(xlink.filteredMatches_pp.map(function (m) {return m.match.score;}))]
             ];
             d3.entries(xlink.meta).forEach (function (entry) {
                 if (! _.isObject (entry.value)) {
