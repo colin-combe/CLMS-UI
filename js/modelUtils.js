@@ -301,7 +301,7 @@ CLMSUI.modelUtils = {
         
         stage.eachComponent (function (comp) {    
             comp.structure.eachChain (function (c) {
-                if (c.residueCount > 10) {    // short chains are ions/water molecules, ignore
+                if (CLMSUI.modelUtils.isViableChainLength (c)) {    // short chains are ions/water molecules, ignore
                     console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
                     var resList = [];
                     c.eachResidue (function (r) {
@@ -654,6 +654,10 @@ CLMSUI.modelUtils = {
         if (columns && columns.length > 0) {
             CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
         }    
+    },
+    
+    isViableChainLength: function (chainProxy) {
+        return chainProxy.residueCount > 10;
     },
     
 };

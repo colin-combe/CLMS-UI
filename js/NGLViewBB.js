@@ -457,7 +457,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var sels = [];
         comp.eachChain (function (cp) {
             // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (cp.residueCount > 10 && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+            if (CLMSUI.modelUtils.isViableChainLength(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
                 sels.push (cp.atomOffset);
             }
         });
