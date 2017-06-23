@@ -21,15 +21,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
-            "mousedown .panelInner": "checkCTRL",
         });
-    },
-
-    // Intercept whether a click on the 3d view had the ctrl key depressed, share it with the 3d crosslink model
-    checkCTRL: function (evt) {
-        if (this.xlRepr) {
-            this.xlRepr.ctrlKey = evt.ctrlKey;
-        }
     },
 
     initialize: function (viewOptions) {
@@ -124,7 +116,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Residue colour scheme dropdown
         
         var mainColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
-        var ignore = d3.set(["volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
+        ignore = d3.set(["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
         var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
         var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         mainColourSchemes = mainColourSchemes.filter (function (rep) { return ! ignore.has (rep);});
@@ -139,10 +131,39 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             .on ("change", function () {
                 if (self.xlRepr) {
                     var index = d3.event.target.selectedIndex;
-                    var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: null};
-                    // made colorscale null to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)
+                    var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: undefined, colorValue: 0x808080};
+                    // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
+                    
+                    if (schemeObj.colorScheme !== "uniform") {
+                        var structure = self.model.get("stageModel").get("structureComp").structure;
+                        var scheme = NGL.ColormakerRegistry.getScheme ({scheme: schemeObj.colorScheme, structure: structure});
+                        var newSchemeClass = function (params) {
+                            this.subScheme = scheme; //params.subScheme;
+                            this.grey = 0.6;
+
+                            this.atomColor = function (a) {
+                                var c = this.subScheme.atomColor (a);
+                                var notGrey = 1 - this.grey;
+                                var greyComp = 192 * this.grey;
+
+                                var cR = ((c & 0xff0000) >> 16);
+                                var cG = ((c & 0xff00) >> 8);
+                                var cB = (c & 0xff);
+
+                                cR = (cR * notGrey) + greyComp;
+                                cG = (cG * notGrey) + greyComp;
+                                cB = (cB * notGrey) + greyComp;
+
+                                return (cR << 16 | cG << 8 | cB);
+                            };
+                        };
+
+                        schemeObj.colorScheme = NGL.ColormakerRegistry.addScheme (newSchemeClass, "custom");
+                    }
+
                     self.options.colourScheme = schemeObj.colorScheme;
-                    self.xlRepr.updateOptions (self.options, ["colourScheme"]);
+                    self.xlRepr.updateOptions (self.options, ["colourScheme"]);   
+                    
                     self.xlRepr.resRepr.setParameters (schemeObj);
                     self.xlRepr.sstrucRepr.setParameters (schemeObj);
                     self.xlRepr.labelRepr.setParameters (labellable.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
@@ -257,6 +278,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 NGL.download (blob, self.filenameStateString()+".png" );
             });
         }
+        return this;
     },
 
     centerView: function () {
@@ -273,6 +295,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.xlRepr.options.displayedLabelVisible = bool;
             this.xlRepr.linkRepr.setParameters ({labelVisible: bool});
         }
+        return this;
     },
 
     toggleResidues: function (event) {
@@ -281,6 +304,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (this.xlRepr) {
             this.xlRepr.resRepr.setVisibility (bool);
         }
+        return this;
     },
 
     toggleNonSelectedLinks: function (event) {
@@ -289,12 +313,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (this.xlRepr) {
             this.xlRepr.linkRepr.setVisibility (!bool);
         }
+        return this;
     },
 
     toggleShortestLinksOnly: function (event) {
         this.options.shortestLinksOnly = event.target.checked;
         //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
         this.showFiltered();
+        return this;
     },
     
     toggleShowAllProteins: function (event) {
@@ -304,6 +330,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.xlRepr.options.showAllProteins = bool;
             this.xlRepr.defaultDisplayedProteins();
         }
+        return this;
     },
 
     rerenderColours: function () {
@@ -313,18 +340,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
             this.xlRepr.linkRepr.viewer.requestRender();
         }
+        return this;
     },
 
     showHighlighted: function () {
         if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
             this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
         }
+        return this;
     },
 
     showSelected: function () {
         if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
             this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
         }
+        return this;
     },
 
     showFiltered: function () {
@@ -342,6 +372,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
             stageModel.setLinkList (filteredCrossLinks, filterFunc);
         }
+        return this;
     },
 
     identifier: "NGL3D",
@@ -496,7 +527,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             sele: resSele,
             //color: this.displayedResiduesColor,
             colorScheme: this.options.colourScheme,
-            //colorScheme: "hydrophobicity",
             //colorScale: ["#44f", "#444"],
             scale: 0.6,
             name: "res"
@@ -665,121 +695,83 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
     _handlePicking: function (pickingData, pickType, doEmpty) {
         var crosslinkData = this.crosslinkData;
-        var atom = pickingData.atom;
-        var bond = pickingData.bond;
+        //console.log ("Picking Data", pickingData);
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
-        var add = (false || this.ctrlKey) && (pickType === 'selection');  // should selection add to current selection?
-        //console.log ("pickingData", pickingData);
-
-        if (atom !== undefined && bond === undefined) {
-            console.log ("picked atom", atom, atom.resno, atom.chainIndex);
-            var residues = crosslinkData.findResidues (atom.resno, atom.chainIndex);
-            if (residues) {
-                pdtrans.residue = residues[0];
-                
-                // this is to find the index of the residue in searchindex (crosslink) terms
-                // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
-                var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex (crosslinkData.get("chainMap"), pdtrans.residue.chainIndex);
-                var alignId = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
-                // align from 3d to search index. resindex is 0-indexed so +1 before querying
-                console.log ("alignid", alignId, proteinId);
-                var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex (pdtrans.residue.resindex + 1, proteinId, true, alignId); 
-                
-                pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
-                pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
-                console.log (pdtrans.residue, "links", pdtrans.links); 
-                console.log (crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
-                
-                var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
-                var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
-                crosslinkData.getModel().get("tooltipModel")
-                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
-                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))
-                    .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
-                ;
-                crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
-            }
-        } else if (bond !== undefined) {
-            // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
-            console.log ("picked bond", bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
-
-            // this line worked with one distance rep, but not with two or more
-            // var altBondStore = this.linkRepr.repr.dataList[0].bondStore; // distance rep bondstore
+        var add = (false || (pickingData && pickingData.ctrlKey)) && (pickType === 'selection');  // should selection add to current selection?
+        
+        if (pickingData) {
+            var atom = pickingData.atom;
+            var bond = pickingData.bond || pickingData.distance;    // pickingData.distance is now where picks are returned for crosslinks
             
-            // match distanceRepresentation object by returning geometry buffer id from picking data and seeing 
-            // which distanceRepresentation has the same geometry buffer - hacky but not as hacky as before
-            var getBondStore = function (geom_id) {
-                var correctLinkRep = [this.linkRepr, this.linkEmphRepr, this.linkHighRepr].filter (function (linkRep) {
-                    return linkRep.repr.cylinderBuffer && linkRep.repr.cylinderBuffer.geometry.uuid === geom_id;
-                })[0];
-                //console.log ("crl", correctLinkRep);
-                return correctLinkRep.repr.dataList[0].bondStore;
-            };
-            /*
-            var getBondStore = function (aLinkRepr) {
-                var dl = aLinkRepr.repr.dataList;
-                console.log ("dl", dl);
-                return dl.length ? dl[0].bondStore : {count : 0};
-            };
-            */
-            //console.log ("linkReps", this.linkRepr, this.linkEmphRepr, this.linkHighRepr);
-            var bstructure = bond.structure;
-            /*
-            var curLinkBondStore = getBondStore (this.linkRepr);    // distance rep bondstore
-            var selLinkBondStore = getBondStore (this.linkEmphRepr);    // selected rep bondstore
-            var highLinkBondStore = getBondStore (this.linkHighRepr);    // selected rep bondstore
-            //console.log ("pp", pickingData.gid, bstructure.atomCount, selLinkBondStore, highLinkBondStore);
-            var gid = pickingData.gid - bstructure.atomCount;
-            // gids seemed to be assigned to bonds in reverse order by representation
-            var altBondStore = (gid > highLinkBondStore.count + selLinkBondStore.count) ?
-                curLinkBondStore : (gid > highLinkBondStore.count ? selLinkBondStore : highLinkBondStore)
-            ;
-            */
-            var altBondStore = getBondStore.call (this, pickingData.geom_id);
-            //console.log ("abs", altBondStore);
-            
-            var ai1 = altBondStore.atomIndex1 [bond.index];
-            var ai2 = altBondStore.atomIndex2 [bond.index];
-            //console.log ("bondStores", pickingData.gid, bond.bondStore, curLinkBondStore, selLinkBondStore, this.linkRepr, this.linkEmphRepr);
-           
-            var ap1 = bstructure.getAtomProxy (ai1);
-            var ap2 = bstructure.getAtomProxy (ai2);
-            var rp1 = bstructure.getResidueProxy (ap1.residueIndex);
-            var rp2 = bstructure.getResidueProxy (ap2.residueIndex);
-            var c1 = rp1.chainIndex;
-            var c2 = rp2.chainIndex;
+            if (atom !== undefined && bond === undefined) {
+                console.log ("picked atom", atom, atom.resno, atom.chainIndex);
+                var residues = crosslinkData.findResidues (atom.resno, atom.chainIndex);
+                if (residues) {
+                    pdtrans.residue = residues[0];
 
-            // rp1 and rp2 are now correct and I can grab data through the existing crosslinkData interface
-            // console.log ("atom to resno's", aStore, ri1, ri2, r1, r2);
-           // var residuesA = crosslinkData.findResidues (r1, bond.atom1.chainIndex);
-            //var residuesB = crosslinkData.findResidues (r2, bond.atom2.chainIndex);
-            var residuesA = crosslinkData.findResidues (rp1.resno, c1);
-            var residuesB = crosslinkData.findResidues (rp2.resno, c2);
-            console.log ("res", ap1.residueIndex, ap2.residueIndex, c1, c2, residuesA, residuesB);
-            if (pickType === "selection") {
-                var selectionSelection = this.crosslinkData.getSelectionFromResidue (residuesA.concat(residuesB));
-                console.log ("seleSele", selectionSelection);
-                this.structureComp.autoView (selectionSelection, 1000);
-            }
+                    // this is to find the index of the residue in searchindex (crosslink) terms
+                    // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
+                    var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex (crosslinkData.get("chainMap"), pdtrans.residue.chainIndex);
+                    var alignId = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
+                    // align from 3d to search index. resindex is 0-indexed so +1 before querying
+                    //console.log ("alignid", alignId, proteinId);
+                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex (pdtrans.residue.resindex + 1, proteinId, true, alignId); 
 
-            // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
-            if (residuesA && residuesB) {
-                pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
-                pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
+                    pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
+                    pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
+                    //console.log (pdtrans.residue, "links", pdtrans.links); 
+                    //console.log (crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
+
+                    var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
+                    var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
+                    crosslinkData.getModel().get("tooltipModel")
+                        .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex))
+                        .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
+                    ;
+                    crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
+                }
+            } else if (bond !== undefined) {
+                // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
+                console.log ("picked bond", bond, bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
                 
-                crosslinkData.getModel().get("tooltipModel")
-                    .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
-                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0]))
-                    .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
-                ;
-                crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
+                var bstructure = bond.structure;
+                var ap1 = bstructure.getAtomProxy (bond.atomIndex1);    // (ai1)
+                var ap2 = bstructure.getAtomProxy (bond.atomIndex2);    // (ai2)
+                var rp1 = bstructure.getResidueProxy (ap1.residueIndex);
+                var rp2 = bstructure.getResidueProxy (ap2.residueIndex);
+                var c1 = rp1.chainIndex;
+                var c2 = rp2.chainIndex;
+                //console.log ("aaaa", rp1, rp2, c1, c2);
+
+                var residuesA = crosslinkData.findResidues (rp1.resno, c1);
+                var residuesB = crosslinkData.findResidues (rp2.resno, c2);
+                console.log ("res", ap1.residueIndex, ap2.residueIndex, c1, c2, residuesA, residuesB);
+                if (pickType === "selection") {
+                    var selectionSelection = this.crosslinkData.getSelectionFromResidue (residuesA.concat(residuesB));
+                    console.log ("seleSele", selectionSelection);
+                    this.structureComp.autoView (selectionSelection, 1000);
+                }
+
+                // console.log ("res", crosslinkData.getResidues(), crosslinkData.getLinks());
+                if (residuesA && residuesB) {
+                    pdtrans.links = crosslinkData.getSharedLinks (residuesA[0], residuesB[0]);       
+                    pdtrans.xlinks = this.getOriginalCrossLinks (pdtrans.links);
+
+                    crosslinkData.getModel().get("tooltipModel")
+                        .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0]))
+                        .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
+                    ;
+                    crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
+                }
             }
         }
         
         if (!pdtrans.links && doEmpty) {
             pdtrans.xlinks = [];
         }
-        console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
+        //console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
         
         crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, add);
     },
