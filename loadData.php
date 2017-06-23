@@ -353,10 +353,10 @@ if (count($_GET) > 0) {
         $endTime = microtime(true);
     }
 
-	$proteinIdField = "hp.protein_id";
-    if (count($searchId_randGroup) > 1) {
+	//~ $proteinIdField = "hp.protein_id";
+    //~ if (count($searchId_randGroup) > 1) {
         $proteinIdField = "p.accession_number";
-    }
+    //~ }
 
     /*
      * PEPTIDES
@@ -373,9 +373,7 @@ if (count($_GET) > 0) {
             INNER JOIN (SELECT peptide_id, protein_id, peptide_position
             FROM has_protein WHERE peptide_id IN "
                     .$implodedPepIds.") hp ON pep.id = hp.peptide_id ";
-        //if (count($searchId_randGroup) > 1) {
-            $query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
-        //}
+        $query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
         $query = $query."GROUP BY pep.id;";
         $startTime = microtime(true);
         $res = pg_query($query) or die('Query failed: ' . pg_last_error());
@@ -413,10 +411,10 @@ if (count($_GET) > 0) {
          * PROTEINS
          */
 
-        $proteinIdField = "id";
-        if (count($searchId_randGroup) > 1) {
+        //~ $proteinIdField = "id";
+        //~ if (count($searchId_randGroup) > 1) {
             $proteinIdField = "accession_number";
-        }
+        //~ }
 
         $query = "SELECT ".$proteinIdField." AS id, protein.id as real_id, 
                 CASE WHEN name IS NULL OR name = '' OR name = 'REV_' OR name = 'RAN_' THEN accession_number
