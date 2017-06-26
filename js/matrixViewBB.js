@@ -2,8 +2,6 @@
 //
 //		Colin Combe, Martin Graham
 //		Rappsilber Laboratory, 2015
-//
-//		graph/Matrix.js
     
     var CLMSUI = CLMSUI || {};
 
@@ -65,13 +63,13 @@
             .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
         ;
         
-        var setSelectTitleString = function (d3SelectElem) {
-            var selElem = d3.select(d3.event.target);
+        var setSelectTitleString = function () {
+            var selElem = d3.select (d3.event.target);
             selElem.attr("title", selElem.selectAll("option")
                 .filter(function() { return d3.select(this).property("selected"); })
                 .text()
             );
-        }
+        };
     
         this.controlDiv.append("label")
             .attr("class", "btn")
@@ -127,6 +125,10 @@
         this.vis = this.svg.append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         ;
+        
+        
+        // Add zoomable group element
+        this.zoomGroup = this.vis.append("g");
         
         
         // Axes setup
@@ -540,67 +542,96 @@
             // only consider crosslinks between the two proteins (often the same one) represented by the two axes
             // var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
-            var filteredCrossLinks2 = Array.from(filteredCrossLinks).filter (function (xlink) {
-                return (xlink.toProtein.id === proteinIDs[0].proteinID && xlink.fromProtein.id === proteinIDs[1].proteinID) || (xlink.toProtein.id === proteinIDs[1].proteinID && xlink.fromProtein.id === proteinIDs[0].proteinID);    
-            });
 
             var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
             var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
             
-            var filteredCrossLinks2Count = filteredCrossLinks2.length;
-            for (var fc2 = 0 ; fc2 < filteredCrossLinks2Count; fc2++) {
-				var crossLink = filteredCrossLinks2[fc2];
-                var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
-                if (self.filterVal === undefined || est >= self.filterVal) {
-                    var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
-                    var toDir = 1 - fromDir;
-                    // get index of residues within current matrix (chain v chain)
-                    var fromResIndex = alignColl.getAlignedIndex (crossLink.fromResidue, proteinIDs[fromDir].proteinID, false, alignIDs[fromDir]);
-                    var toResIndex = alignColl.getAlignedIndex (crossLink.toResidue, proteinIDs[toDir].proteinID, false, alignIDs[toDir]);
+            var fromToStore = [];
+            var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
+                if ((crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID)) {
+                    var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
+                    // only show those of given ester types if ester filter in place
+                    if (self.filterVal === undefined || est >= self.filterVal) {
+                        var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
+                        var toDir = 1 - fromDir;
+                        // get index of residues within current matrix (chain v chain)
+                        var fromResIndex = alignColl.getAlignedIndex (crossLink.fromResidue, proteinIDs[fromDir].proteinID, false, alignIDs[fromDir]);
+                        var toResIndex = alignColl.getAlignedIndex (crossLink.toResidue, proteinIDs[toDir].proteinID, false, alignIDs[toDir]);
 
-                    // show only those that map to the current matrix - i.e. combination of two chains
-                    if (fromResIndex !== null && toResIndex !== null) {
-                        // 0-index these indices
-                        fromResIndex--;
-                        toResIndex--;
-                       
-                        var fromDistArr = distanceMatrix[fromResIndex];
-                        var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
-
-                        var high = highlightedCrossLinkIDs.has (crossLink.id);
-                        if (high) {
-                            ctx.fillStyle = self.options.highlightedColour;
-                        }
-                        else if (selectedCrossLinkIDs.has (crossLink.id)) {
-                            ctx.fillStyle = self.options.selectedColour;
-                        }
-                        else if (dist) {
-                            if (dist < min) {
-                                ctx.fillStyle = self.resLinkColours[0];
-                                sasIn++;
-                            }
-                            else if (dist < max) {
-                                ctx.fillStyle = self.resLinkColours[1];
-                                sasMid++;
-                            }
-                            else {
-                                ctx.fillStyle = self.resLinkColours[2];
-                                sasOut++;
-                            }
-                        } else {
-                            ctx.fillStyle = self.resLinkColours[3];
-                        }
-                        ctx.fillRect ((fromResIndex * xStep) - linkWidthOffset, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
-                        //if (high) {
-                        //     ctx.strokeRect ((fromResIndex * xStep) - linkWidthOffset + 0.5, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset + 0.5, xLinkWidth - 1, yLinkWidth - 1);
-                        //}
-                        // if same chunk of protein on both axes then show reverse link as well
-                        if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
-                            ctx.fillRect ((toResIndex * xStep) - linkWidthOffset, ((seqLengthB - fromResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
+                        // show only those that map to the current matrix - i.e. combination of two chains
+                        if (fromResIndex !== null && toResIndex !== null) {
+                            // 0-index these indices and store them for use next (saves recalcualting them)
+                            fromToStore.push ([fromResIndex - 1, toResIndex - 1]);
+                            return true;
                         }
                     }
                 }
-            }
+                return false;
+            });
+            
+            
+            var linkSel = this.zoomGroup.selectAll("rect.crossLink").data(finalCrossLinks, function(d) { return d.id; });
+            linkSel.exit().remove();
+            linkSel.enter().append("rect")
+                .attr ("class", "crossLink")
+                .attr ("width", 1)
+                .attr ("height", 1)
+            ;
+            linkSel
+                .attr("x", function(d, i) { return fromToStore[i][0]; })
+                .attr("y", function(d, i) { return seqLengthB - fromToStore[i][1]; })
+                .style ("fill", function (d, i) {
+                    var high = highlightedCrossLinkIDs.has (d.id);
+                    if (high) { return self.options.highlightedColour; }
+                    if (selectedCrossLinkIDs.has (d.id)) {
+                        return self.options.selectedColour;
+                    } 
+                    var fromDistArr = distanceMatrix[fromToStore[i][0]];
+                    var dist = fromDistArr ? fromDistArr[fromToStore[i][1]] : undefined;
+                    return self.resLinkColours [dist ? (dist < min ? 0 : (dist < max ? 1 : 2)): 3];
+                })
+            ;
+                
+            
+            
+            finalCrossLinks.forEach (function (crossLink, i) {      
+                var fromResIndex = fromToStore[i][0];
+                var toResIndex = fromToStore[i][1];
+                var fromDistArr = distanceMatrix[fromResIndex];
+                var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
+
+                var high = highlightedCrossLinkIDs.has (crossLink.id);
+                if (high) {
+                    ctx.fillStyle = self.options.highlightedColour;
+                }
+                else if (selectedCrossLinkIDs.has (crossLink.id)) {
+                    ctx.fillStyle = self.options.selectedColour;
+                }
+                else if (dist) {
+                    if (dist < min) {
+                        ctx.fillStyle = self.resLinkColours[0];
+                        sasIn++;
+                    }
+                    else if (dist < max) {
+                        ctx.fillStyle = self.resLinkColours[1];
+                        sasMid++;
+                    }
+                    else {
+                        ctx.fillStyle = self.resLinkColours[2];
+                        sasOut++;
+                    }
+                } else {
+                    ctx.fillStyle = self.resLinkColours[3];
+                }
+                ctx.fillRect ((fromResIndex * xStep) - linkWidthOffset, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
+                //if (high) {
+                //     ctx.strokeRect ((fromResIndex * xStep) - linkWidthOffset + 0.5, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset + 0.5, xLinkWidth - 1, yLinkWidth - 1);
+                //}
+                // if same chunk of protein on both axes then show reverse link as well
+                if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
+                    ctx.fillRect ((toResIndex * xStep) - linkWidthOffset, ((seqLengthB - fromResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
+                }
+            });
         }
         
         //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
@@ -699,10 +730,11 @@
     // Used to do this just on resize, but rectangular areas mean labels often need re-centred on panning
     repositionLabels: function (sizeData) {
         // reposition labels
+        console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.right / 2, y: sizeData.bottom + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
-            {x: sizeData.right / 2, y: 0, rot: 0}
+            {x: sizeData.viewWidth / 2, y: sizeData.viewHeight + this.margin.bottom, rot: 0}, 
+            {x: -this.margin.left, y: sizeData.viewHeight / 2, rot: -90},
+            {x: sizeData.viewWidth / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
             .data (labelCoords)
@@ -737,16 +769,26 @@
            .style("transform", transformString)
         ;
         
-        // If bottom edge of canvas is higher up than bottom of viewport put the x axis benath it
+        this.zoomGroup
+            .style("-ms-transform", transformString)
+           .style("-moz-transform", transformString)
+           .style("-o-transform", transformString)
+           .style("-webkit-transform", transformString)
+           .style("transform", transformString)
+        ;
+        
+        // If bottom edge of canvas is higher up than bottom of viewport put the x axis beneath it
         var cvs = $(this.canvas.node());
         var viewport = cvs.parent();
+        sizeData.viewHeight = $.zepto ? viewport.height() : viewport.outerHeight(true);
+        sizeData.viewWidth = $.zepto ? viewport.width() : viewport.outerWidth(true);
         var bottom = Math.min (
             cvs.position().top + ($.zepto ? cvs.height() : cvs.outerHeight(true)), 
-            $.zepto ? viewport.height() : viewport.outerHeight(true)
+            sizeData.viewHeight
         );
         var right = Math.min (
             cvs.position().left + ($.zepto ? cvs.width() : cvs.outerWidth(true)), 
-            $.zepto ? viewport.width() : viewport.outerWidth(true)
+            sizeData.viewWidth
         );
         
         
@@ -757,7 +799,7 @@
         ;
         
         this.vis.select(".x")
-            .attr("transform", "translate(0," + bottom + ")")
+            .attr("transform", "translate(0," + sizeData.viewHeight + ")")
             .call(self.xAxis)
         ;
         
