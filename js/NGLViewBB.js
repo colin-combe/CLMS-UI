@@ -139,20 +139,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         var scheme = NGL.ColormakerRegistry.getScheme ({scheme: schemeObj.colorScheme, structure: structure});
                         var newSchemeClass = function (params) {
                             this.subScheme = scheme; //params.subScheme;
-                            this.grey = 0.6;
+                            this.greyness = 0.6;
 
                             this.atomColor = function (a) {
                                 var c = this.subScheme.atomColor (a);
-                                var notGrey = 1 - this.grey;
-                                var greyComp = 192 * this.grey;
+                                var notGrey = 1 - this.greyness;
+                                var greyComp = 176 * this.greyness;
 
-                                var cR = ((c & 0xff0000) >> 16);
-                                var cG = ((c & 0xff00) >> 8);
-                                var cB = (c & 0xff);
-
-                                cR = (cR * notGrey) + greyComp;
-                                cG = (cG * notGrey) + greyComp;
-                                cB = (cB * notGrey) + greyComp;
+                                var cR = (((c & 0xff0000) >> 16) * notGrey) + greyComp;
+                                var cG = (((c & 0xff00) >> 8) * notGrey) + greyComp;
+                                var cB = ((c & 0xff) * notGrey) + greyComp;
 
                                 return (cR << 16 | cG << 8 | cB);
                             };
