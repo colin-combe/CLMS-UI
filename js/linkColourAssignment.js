@@ -175,7 +175,8 @@ CLMSUI.linkColour.setupColourModels = function () {
     };
     
     // Just the group colour scale is replaced for this event
-    CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
+    //CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
+    CLMSUI.linkColour.Collection.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
         this.remove ("Group");
         CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
         this.add (CLMSUI.linkColour.groupColoursBB);
