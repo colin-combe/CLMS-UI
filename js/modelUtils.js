@@ -661,6 +661,30 @@ CLMSUI.modelUtils = {
         return chainProxy.residueCount > 10;
     },
     
+    crosslinkCountPerProteinPairing: function (crossLinkArr) {
+        var obj = {};
+        crossLinkArr.forEach (function (crossLink) {
+            var fromProtein = crossLink.fromProtein;
+            var toProtein = crossLink.toProtein;
+            var pid1 = fromProtein.id;
+            var pid2 = toProtein ? toProtein.id : "";
+            if (pid2) {
+                var key = pid1 + "-" + pid2;
+                if (!obj[key]) {
+                    obj[key] = {
+                        crossLinks:[], 
+                        fromProtein: fromProtein,
+                        toProtein: toProtein,
+                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                    };
+                }
+                var slot = obj[key].crossLinks;
+                slot.push (crossLink);
+            }
+        });
+        return obj;
+    },
+    
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);
