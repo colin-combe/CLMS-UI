@@ -121,14 +121,29 @@
         
         // SVG element
         this.svg = viewDiv.append("svg");
+        
+        // Defs
+        this.svg.append("defs")
+            .append("clipPath")
+            .attr ("id", "matrixClip")
+            .append("rect")
+                .attr ("x", 0)
+                .attr ("y", 0)
+                .attr ("width", 0)
+                .attr ("height", 0)
+        ;
 
         this.vis = this.svg.append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         ;
         
         
-        // Add zoomable group element
-        this.zoomGroup = this.vis.append("g");
+        // Add clippable and pan/zoomable viewport made of two group elements
+        this.clipGroup = this.vis.append("g")
+            .attr("class", "clipg")
+            .attr("clip-path", "url(#matrixClip)")
+        ;
+        this.zoomGroup = this.clipGroup.append("g");
         
         
         // Axes setup
@@ -166,7 +181,8 @@
          
         this.listenTo (this.model, "change:selection", this.renderCrossLinks);
         this.listenTo (this.model, "change:highlights", this.renderCrossLinks);
-        this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
+        //this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
+        this.listenTo (this.model, "filteringDone", this.renderCrossLinks);    // listen to custom filteringDone event from model - only need to update svg now, so only renderCrossLinks called
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); 
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
@@ -574,12 +590,12 @@
             linkSel.exit().remove();
             linkSel.enter().append("rect")
                 .attr ("class", "crossLink")
-                .attr ("width", 1)
-                .attr ("height", 1)
+                .attr ("width", xLinkWidth)
+                .attr ("height", yLinkWidth)
             ;
             linkSel
-                .attr("x", function(d, i) { return fromToStore[i][0]; })
-                .attr("y", function(d, i) { return seqLengthB - fromToStore[i][1]; })
+                .attr("x", function(d, i) { return fromToStore[i][0] - linkWidthOffset; })
+                .attr("y", function(d, i) { return (seqLengthB - fromToStore[i][1]) - linkWidthOffset; })
                 .style ("fill", function (d, i) {
                     var high = highlightedCrossLinkIDs.has (d.id);
                     if (high) { return self.options.highlightedColour; }
@@ -593,7 +609,7 @@
             ;
                 
             
-            
+            /*
             finalCrossLinks.forEach (function (crossLink, i) {      
                 var fromResIndex = fromToStore[i][0];
                 var toResIndex = fromToStore[i][1];
@@ -632,6 +648,7 @@
                     ctx.fillRect ((toResIndex * xStep) - linkWidthOffset, ((seqLengthB - fromResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
                 }
             });
+            */
         }
         
         //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
@@ -676,12 +693,21 @@
         var maxRatio = Math.max (widthRatio, heightRatio);
         var diffRatio = widthRatio / heightRatio;
         //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, maxRatio, diffRatio);
-        d3.select(this.el).select(".viewport")
+        
+        var viewPort = d3.select(this.el).select(".viewport");
+        viewPort
             .style("width",  minDim+"px")
             .style("height", minDim+"px")
             //.style("width",  sizeData.width+"px")
             //.style("height", sizeData.height+"px")
         ;
+        
+        d3.select(this.el).select("#matrixClip > rect")
+            .attr ("width", minDim)
+            .attr ("height", minDim)
+        ;
+        
+        
  
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
@@ -824,11 +850,13 @@
         var detachedSVG = svgStrings[0];
         var detachedSVGD3 = d3.select (detachedSVG);
         
+        /*
         // Add in a defs element to the nested svg. Important that it's the first child.
         var defs = detachedSVGD3.select("svg>defs");
         if (defs.empty()) {
             defs = detachedSVGD3.select("svg").insert("defs", ":first-child");
         }
+        
         // Add a rectangular clip to the defs that matches the viewport restriction (top/left not needed)
         defs.append("clipPath")
             .attr("id", "matrixClip")
@@ -838,13 +866,20 @@
                 .attr ("width", Number.parseInt (viewPort.style("width")))
                 .attr ("height", Number.parseInt (viewPort.style("height")))
         ;
-                   
+             
         // Add an image element to the nested svg, nested itself within a g element that references the above clippath ^^^
         var img = detachedSVGD3
-            .select("svg>g")
+            .select("svg g.clipg")
             .append ("g")
                 .attr("clip-path", "url(#matrixClip)")
                 .append ("svg:image")
+        ;
+        */
+        
+        // Add image to existing clip in svg
+        var img = detachedSVGD3
+            .select("svg g.clipg")
+            .insert ("svg:image", ":first-child")
         ;
         
         // Add a rule to stop the image being 'smoothed' (i.e. blurred)
