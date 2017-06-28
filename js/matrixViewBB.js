@@ -29,7 +29,8 @@
             xlabel: "Residue Index 1",
             ylabel: "Residue Index 2",
             chartTitle: "Cross-Link Matrix",
-            background: "white",
+            background: "#ccc",
+            chainBackground: "white",
             matrixObj: null,
             selectedColour: "#ff0",
             highlightedColour: "#f80",
@@ -200,10 +201,14 @@
         var totals = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinks);
         var entries = d3.entries (totals);
         
+        var nonEmptyEntries = entries.filter (function (entry) {
+            return entry.value.crossLinks.length;     
+        });
+        
         var mainDivSel = d3.select(this.el);
         var matrixOptions = mainDivSel.select("#"+mainDivSel.attr("id")+"chainSelect")
             .selectAll("option")
-            .data (entries, function(d) { return d.key; })
+            .data (nonEmptyEntries, function(d) { return d.key; })
         ;
         matrixOptions.exit().remove();
         matrixOptions
@@ -215,47 +220,10 @@
             .text (function(d) { return "["+d.value.crossLinks.length+"] "+d.value.label; })
         ;
         
-        return entries;
+        return nonEmptyEntries.length ? nonEmptyEntries : entries;
     },
         
     distancesChanged: function () {
-        /*
-        var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        console.log ("IN MATRIX DISTANCES CHANGED", distancesObj, this.model.get("clmsModel"));
-        
-        var usefulMatrices = d3.entries(distancesObj.matrices);
-        usefulMatrices = this.filterMatrixOptions (usefulMatrices, function (matrix) {
-            return matrix.value.distanceMatrix.some (function (row) {
-                return row.some (function (dist) { return dist > 0 && dist <= 35; });
-            });
-        });
-        console.log ("USEFUL", usefulMatrices);
-        var matrixOptionData = usefulMatrices.map (function (matrixEntry) {
-            return {
-                key: matrixEntry.key, 
-                text: [matrixEntry.value.chain1, matrixEntry.value.chain2].map (function(cid) { return this.getLabelText(+cid); }, this).join(" to "),
-            };
-        }, this);
-        
-        if (!matrixOptionData.length) {
-            matrixOptionData.push ({text: "No Viable Pairs", key: null});
-        }
-        
-        var mainDivSel = d3.select(this.el);
-        var matrixOptions = mainDivSel.select("#"+mainDivSel.attr("id")+"chainSelect")
-            .selectAll("option")
-            .data (matrixOptionData, function(d) { return distancesObj.pdbBaseSeqID + d.key; })
-        ;
-        matrixOptions.exit().remove();
-        matrixOptions
-            .enter()
-            .append("option")
-        ;
-        matrixOptions
-            .property ("value", function(d) { return d.key;})
-            .text (function(d) { return d.text; })
-        ;
-        */
         var entries = this.makeProteinPairingOptions();
         
         this
@@ -300,32 +268,6 @@
         ] : [null, null];
     },
         
-    /*
-    getLabelText: function (chainID) {
-        if (chainID != null) {
-            var data = this.getDataFromChainID (chainID);
-            var proteinID = data.proteinID;
-            var chainName = data.chainName;
-            var protein = this.model.get("clmsModel").get("participants").get(proteinID);
-            var proteinName = protein ? protein.name : undefined;
-            var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
-            proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
-            return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";
-        }
-        return "No Chain";
-    },
-    */
-    
-    /*
-    getDataFromChainID : function (chainID) {
-        var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        return {
-            proteinID: CLMSUI.modelUtils.getProteinFromChainIndex (distancesObj.chainMap, chainID),
-            chainName: CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID),
-        };
-    },
-    */
-        
     getChainsForProtein: function (proteinID) {
         return this.model.get("clmsModel").get("distancesObj").chainMap[proteinID];    
     },
@@ -333,23 +275,14 @@
     addAlignIDs: function (proteinIDsObj) {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         proteinIDsObj.forEach (function (pid) {
+            pid.alignID = null;
             if (pid.proteinID) {
                 var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, pid.chainID);
                 pid.alignID = CLMSUI.modelUtils.make3DAlignID (distancesObj.pdbBaseSeqID, chainName, pid.chainID);
-            } else {
-                pid.alignID = null;
             }
         }, this);
         return proteinIDsObj;
     },
-        
-    /*
-    getChainResidueIndexRange: function (proteinID) {
-        var alignIDs = this.addAlignIDs ([proteinID]);
-        var range = this.model.get("alignColl").getSearchRangeIndexOfMatches (proteinID.proteinID, alignIDs[0]);
-        return [range.first, range.last];
-    },
-    */
         
     setStartPoint: function (evt) {
         this.startPoint = {x: evt.clientX, y: evt.clientY};
@@ -367,12 +300,8 @@
         var filteredCrossLinks = this.model.getFilteredCrossLinks ();
         var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
         var proteinIDs = this.getCurrentProteinIDs();
-        var alignIDs = this.addAlignIDs (proteinIDs);
-        var alignColl = this.model.get("alignColl");
         var convFunc = function (x, y) {    // x and y are 0-indexed
-            var fromResIndex = alignColl.getAlignedIndex (x + 1, proteinIDs[0].proteinID, true, alignIDs[0]);
-            var toResIndex = alignColl.getAlignedIndex (y + 1, proteinIDs[1].proteinID, true, alignIDs[1]);
-            return {convX: fromResIndex, convY: toResIndex, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
+            return {convX: x, convY: y, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
         };
         var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2);
         neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkWrapper) {
@@ -405,7 +334,6 @@
         
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
-        
         this.model.set ("highlights", crossLinks);
     },
         
@@ -413,13 +341,18 @@
         return matrices.filter (filterFunc);
     },
         
+    getSingleLinkDistances: function (crossLink) {
+        var alignColl = this.model.get("alignColl");
+        return this.model.get("clmsModel").get("distancesObj").getXLinkDistance (crossLink, alignColl);
+    },
+        
     invokeTooltip : function (evt, linkWrappers) {
         if (this.options.matrixObj) {
-            var distanceMatrix = this.options.matrixObj.distanceMatrix;
+            //this.model.get("clmsModel").get("distancesObj").
             linkWrappers.forEach (function (linkWrapper) {
-                linkWrapper.distance = distanceMatrix[linkWrapper.x][linkWrapper.y];
+                linkWrapper.distance = this.getSingleLinkDistances (linkWrapper.crossLink);
                 linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
-            });
+            }, this);
             linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
             var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
             var linkDistances = linkWrappers.map (function (linkWrapper) { return linkWrapper.distanceFixed; });
@@ -516,7 +449,7 @@
             console.log ("PPP", proteinID, distancesObj.chainMap);
             var chainIDs = chains.map (function (chain) {
                 return {proteinID: pid, chainID: chain.index};
-            })
+            });
             return this.addAlignIDs (chainIDs);
         }, this);
         var alignColl = this.model.get("alignColl");
@@ -526,10 +459,7 @@
         CLMSUI.times = CLMSUI.times || [];
         var start = performance.now();
 
-        
         var pw = this.canvas.attr("width");
-        var canvasData = ctx.getImageData (0, 0, pw, this.canvas.attr("height"));
-        var cd = canvasData.data;
         
         var drawDistanceMatrix = function (matrixValue, alignInfo1, alignInfo2) {
             var distanceMatrix = matrixValue.distanceMatrix;
@@ -557,11 +487,28 @@
                     }
                 }
             }
-        }
+        };
+        
          
+        // draw backgrounds for chain areas
+        ctx.fillStyle = this.options.chainBackground;
+        alignInfo[0].forEach (function (alignInfo1) {
+            var range1 = alignColl.getSearchRangeIndexOfMatches (alignInfo1.proteinID, alignInfo1.alignID);
+            alignInfo[1].forEach (function (alignInfo2) {
+                var range2 = alignColl.getSearchRangeIndexOfMatches (alignInfo2.proteinID, alignInfo2.alignID);
+                console.log ("range1", range1, range2);
+                ctx.fillRect (range1.first - 1, (seqLengthB - (range2.last - 1)), range1.last - range1.first + 1, range2.last - range2.first + 1);
+            }, this);
+        }, this);
+        
+        var canvasData = ctx.getImageData (0, 0, pw, this.canvas.attr("height"));
+        var cd = canvasData.data;
+        
         alignInfo = alignInfo.map (function (ainfo) {
             return [ainfo[0]];
         });
+        
+        // draw actual content of chain areas
         alignInfo[0].forEach (function (alignInfo1) {
             var chainIndex1 = alignInfo1.chainID;
             alignInfo[1].forEach (function (alignInfo2) {
@@ -571,7 +518,7 @@
             }, this);
         }, this);
 
-        ctx.putImageData(canvasData, 0, 0);
+        ctx.putImageData (canvasData, 0, 0);
 
         var end = performance.now();
         CLMSUI.times.push (Math.round (end - start));
@@ -745,7 +692,7 @@
     // Used to do this just on resize, but rectangular areas mean labels often need re-centred on panning
     repositionLabels: function (sizeData) {
         // reposition labels
-        console.log ("SD", sizeData, this.margin);
+        //console.log ("SD", sizeData, this.margin);
         var labelCoords = [
             {x: sizeData.viewWidth / 2, y: sizeData.viewHeight + this.margin.bottom, rot: 0}, 
             {x: -this.margin.left, y: sizeData.viewHeight / 2, rot: -90},
@@ -829,39 +776,12 @@
     downloadSVG2: function () {
         var mainDivSel = d3.select(this.el);
         var svgSel = mainDivSel.selectAll("svg");
-        var viewPort = mainDivSel.select(".viewport");
         var svgArr = [svgSel.node()];
         var svgStrings = CLMSUI.svgUtils.capture (svgArr);
         var detachedSVG = svgStrings[0];
         var detachedSVGD3 = d3.select (detachedSVG);
         
-        /*
-        // Add in a defs element to the nested svg. Important that it's the first child.
-        var defs = detachedSVGD3.select("svg>defs");
-        if (defs.empty()) {
-            defs = detachedSVGD3.select("svg").insert("defs", ":first-child");
-        }
-        
-        // Add a rectangular clip to the defs that matches the viewport restriction (top/left not needed)
-        defs.append("clipPath")
-            .attr("id", "matrixClip")
-            .append("rect")
-                .attr ("x", 0)
-                .attr ("y", 0)
-                .attr ("width", Number.parseInt (viewPort.style("width")))
-                .attr ("height", Number.parseInt (viewPort.style("height")))
-        ;
-             
-        // Add an image element to the nested svg, nested itself within a g element that references the above clippath ^^^
-        var img = detachedSVGD3
-            .select("svg g.clipg")
-            .append ("g")
-                .attr("clip-path", "url(#matrixClip)")
-                .append ("svg:image")
-        ;
-        */
-        
-        // Add image to existing clip in svg
+        // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
         var img = detachedSVGD3
             .select("svg g.clipg")
             .insert ("svg:image", ":first-child")
