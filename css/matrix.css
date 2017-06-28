@@ -1,21 +1,21 @@
-#matrixPanel {
+.matrixView {
     display: none;
     left: 6em;
     top: 6em;
     width:500px;
     height:500px;
 }
-#matrixPanel svg {
+.matrixView svg {
     height: 100%;
     width: 100%;
     position: absolute;
     pointer-events: none;
 }
-#matrixPanel text {
+.matrixView text {
     text-anchor: middle;
 }
 
-#matrixPanel canvas {
+.matrixView canvas {
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
     image-rendering: pixelated;                 /* Opera 'n' Chrome */
@@ -27,19 +27,19 @@
 }
 
 /* For svg output */
-#matrixPanel image {
+.matrixView image {
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
     image-rendering: pixelated;                 /* Opera 'n' Chrome */
 }
 
-#matrixPanel .viewDiv {
+.matrixView .viewDiv {
     width: auto;
     height: 100%;
     /*margin-right: 15em;*/    /* should match width of button column below */
 }
 
-#matrixPanel .buttonColumn {
+.matrixView .buttonColumn {
     width: 15em;
     float: right;
     padding-left: 0.5em;
@@ -55,3 +55,6 @@
     position: absolute;
 }
 
+.matrixView .toolbar > * {
+    display: inline-block;
+}

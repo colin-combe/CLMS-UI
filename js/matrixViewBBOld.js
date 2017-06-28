@@ -883,7 +883,7 @@
         ;
         
         // Add a rule to stop the image being 'smoothed' (i.e. blurred)
-        var extraRule = "#matrixPanel image {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
+        var extraRule = ".matrixView image {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
         var style = detachedSVGD3.select("style");
         style.text (style.text() + "\n" + extraRule);
         
