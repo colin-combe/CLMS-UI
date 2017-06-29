@@ -348,7 +348,7 @@
             var toResIndex = alignColl.getAlignedIndex (y + 1, proteinIDs[1].proteinID, true, alignIDs[1]);
             return {convX: fromResIndex, convY: toResIndex, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
         };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2);
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2, false);
         neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkWrapper) {
             var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkWrapper.crossLink);
             return (this.filterVal === undefined || est >= this.filterVal);

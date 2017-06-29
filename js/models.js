@@ -393,6 +393,19 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             //console.log ("Blosum model initialised", this);
         },
     }),
+    
+    ChainBooleanModel: Backbone.Model.extend ({
+       initialize: function (modelOptions) {
+            var defaultOptions = {chainMap: {}};
+            this.options = _.extend (defaultOptions, modelOptions.myOptions);
+           
+            var chainValues = d3.values (this.options.chainMap);
+            chainValues = d3.merge (chainValues);    // flatten array
+            chainValues.forEach (function (chainValue) {
+                this.set (chainValue.index, true);      
+            }, this);
+       },
+    }),
 
 });
 

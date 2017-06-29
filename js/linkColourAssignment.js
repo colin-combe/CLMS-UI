@@ -138,7 +138,7 @@ CLMSUI.linkColour.setupColourModels = function () {
         colScale: d3.scale.ordinal().domain([0,1,2]).range([
             CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.homodimerLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()
         ]),
-        title: "Default",
+        title: "Cross-Link Type",
         id: "Default"
     });
     

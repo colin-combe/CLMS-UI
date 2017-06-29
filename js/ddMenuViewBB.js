@@ -19,14 +19,22 @@
                 toggleAttribute: "state",
             };
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
+            var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             d3.select(this.el)
                 .attr("class", "btn dropdown")
+                .call (function (sel) {
+                    if (self.options.classed) {
+                        sel.classed (self.options.classed, true);
+                    }   
+                })
                 .append("span")
                     .attr("class", "menuTitle")
                     .text(this.options.title)
             ;
+            
+            d3.select(this.el).append("div").append("ul");
             
             this.render();
             return this;
@@ -60,10 +68,13 @@
                 this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; });
             }
             
-            var choices = d3.select(this.el).append("div").append("ul").selectAll("li")
+            var choices = d3.select(this.el).select("div ul").selectAll("li")
                 .data (this.options.menu, function (d) { return d.name || d.id; })
             ;
-            choices.enter().append("li").each(function(d) {
+            
+            choices.exit().remove();
+            
+            choices.enter().append("li").each (function (d) {
                 var ind = d3.select(this);
                 if (d.name) {
                     ind.text(d.name);
@@ -74,7 +85,7 @@
                         if (targetNode.parentElement) {
                             targetNode.parentElement.removeChild (targetNode);
                         }
-                        ind.node().appendChild(targetNode);
+                        ind.node().appendChild (targetNode);
                     }
                 }
             }); 

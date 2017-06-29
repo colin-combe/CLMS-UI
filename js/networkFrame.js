@@ -246,10 +246,10 @@ CLMSUI.init.views = function () {
     var checkBoxData = [
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
         {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
         {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName:"searchesShow"},
@@ -260,7 +260,7 @@ CLMSUI.init.views = function () {
     });
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
-    var maybeViews = ["#nglChkBxPlaceholder", "#matrixChkBxPlaceholder", "#distoChkBxPlaceholder"];
+    var maybeViews = ["#nglChkBxPlaceholder", "#distoChkBxPlaceholder"];
     new CLMSUI.DropDownMenuViewBB ({
         el: "#viewDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
