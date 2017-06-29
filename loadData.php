@@ -353,10 +353,10 @@ if (count($_GET) > 0) {
         $endTime = microtime(true);
     }
 
-	//~ $proteinIdField = "hp.protein_id";
-    //~ if (count($searchId_randGroup) > 1) {
+	$proteinIdField = "hp.protein_id";
+    if (count($searchId_randGroup) > 1) {
         $proteinIdField = "p.accession_number";
-    //~ }
+    }
 
     /*
      * PEPTIDES
@@ -411,10 +411,10 @@ if (count($_GET) > 0) {
          * PROTEINS
          */
 
-        //~ $proteinIdField = "id";
-        //~ if (count($searchId_randGroup) > 1) {
+        $proteinIdField = "id";
+        if (count($searchId_randGroup) > 1) {
             $proteinIdField = "accession_number";
-        //~ }
+        }
 
         $query = "SELECT ".$proteinIdField." AS id, protein.id as real_id, 
                 CASE WHEN name IS NULL OR name = '' OR name = 'REV_' OR name = 'RAN_' THEN accession_number
