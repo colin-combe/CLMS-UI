@@ -281,10 +281,19 @@
         return this;
     },
         
+    // New PDB File in town
     distancesChanged: function () {
         d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns
+        var distanceObj = this.model.get("clmsModel").get("distancesObj");
+        if (distanceObj) {
+            var chainVals = d3.merge(d3.values(distanceObj.chainMap)).map(function(cd) { return cd.index; });
+            this.showChains = [
+                d3.set (chainVals),
+                d3.set (chainVals)
+            ];
+        }
         this
-            .makeChainOptions (this.options.matrixObj.fromProtein.id, this.options.matrixObj.toProtein.id)
+            .makeChainOptions (this.getCurrentProteinIDs())
             .render()
         ;
         return this;
@@ -307,54 +316,56 @@
             this.vis.selectAll("g.label text").data(protIDs)
                 .text (function(d) { return d.labelText; })
             ;
+            
+            this.makeChainOptions (protIDs);
         }
         
         return this;
     },
         
-    makeChainOptions: function (proteinID1, proteinID2) {
+    makeChainOptions: function (proteinIDs) {
         
-        var pids = [proteinID1, proteinID2];
         var self = this;
         
-        var clickFunc = function () {
+        var clickFunc = function (d3target) {
             var datum = this;
             var index = datum.index;
-            // NEED SOME WAY OF GETTING CHECKBOX STATE
-            console.log ("arguments", arguments, this);
+            var dropdownIndex = datum.dropdownIndex;
+            var checked = d3target.property("checked");
+            self.showChains[dropdownIndex][checked ? "add" : "remove"](index);
+            console.log ("SHOW CHAINS", self.showChains);
+            self.renderBackgroundMap();
         };
 
         this.chainDropdowns.forEach (function (dropdown, i) {
             var distanceObj = self.model.get("clmsModel").get("distancesObj");
             if (distanceObj) {
-                var pid = pids[i];
+                var pid = proteinIDs[i].proteinID;
                 var chainMap = distanceObj.chainMap;
-                var chains = chainMap[pid];
+                var chains = chainMap[pid] || [];
                 console.log ("chains", chains, pid);
 
-                dropdown.updateTitle ("Chains "+pid+" ▼");
+                dropdown.updateTitle ("Chains "+proteinIDs[i].labelText+" ▼");
                 var toggleButtonData = chains.map (function (chain, ii) {
                     return {
-                        initialState: true, 
+                        initialState: self.showChains[i].has(chain.index), 
                         class: "chainChoice", 
                         label: "Chain "+chain.name+":"+chain.index, 
                         id: chain.name+"-"+chain.index+"-"+pid,
-                        index: ii, 
+                        dropdownIndex: i,
+                        index: chain.index, 
+                        type: "checkbox",
+                        inputFirst: true,
+                        func: clickFunc,
                     };
                 });
-                toggleButtonData
-                    .forEach (function (d) {
-                        d.type = "checkbox";
-                        d.inputFirst = true;
-                        d.func = clickFunc;
-                    }, this)
-                ;
+
                 console.log ("toggleButtonData", toggleButtonData)
                 CLMSUI.utils.makeBackboneButtons (d3.select(dropdown.el), dropdown.el.id, toggleButtonData);
                 dropdown.options.menu = toggleButtonData.map (function(d) { return {id: dropdown.el.id + d.id, func: clickFunc}; });
                 dropdown.render();
             }
-        });
+        }, this);
 
         return this;
     },
@@ -550,14 +561,15 @@
             var seqLengthB = seqLengths.lengthB - 1;    
         
             var proteinIDs = this.getCurrentProteinIDs();
-            var alignInfo = proteinIDs.map (function (proteinID) {
+            var alignInfo = proteinIDs.map (function (proteinID, i) {
                 var pid = proteinID.proteinID;
                 var chains = distancesObj.chainMap[pid];
                 if (chains) {
                     console.log ("PPP", proteinID, distancesObj.chainMap);
-                    var chainIDs = chains.map (function (chain) {
-                        return {proteinID: pid, chainID: chain.index};
-                    });
+                    var chainIDs = chains
+                        .filter (function (chain) { return this.showChains[i].has (chain.index); }, this)
+                        .map (function (chain) { return {proteinID: pid, chainID: chain.index}; })
+                    ;
                     return this.addAlignIDs (chainIDs);
                 }
                 return [];
@@ -644,9 +656,11 @@
             var canvasData = ctx.getImageData (0, 0, pw, this.canvas.attr("height"));
             var cd = canvasData.data;
 
+            /*
             alignInfo = alignInfo.map (function (ainfo) {
                 return ainfo.length ? [ainfo[0]] : [];
             });
+            */
 
             // draw actual content of chain areas
             alignInfo[0].forEach (function (alignInfo1) {

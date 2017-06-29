@@ -80,10 +80,11 @@
         },
         
         render: function () {
-            var choices = d3.select(this.el).select("div ul").selectAll("li")
+            var listHolder = d3.select(this.el).select("div ul");
+            var choices = listHolder.selectAll("li")
                 .data (this.options.menu, function (d) { return d.name || d.id; })
             ;
-            
+            console.log ("choices", choices);
             choices.exit().remove();
             
             choices.enter().append("li").each (function (d) {
@@ -153,9 +154,8 @@
         
         menuSelection: function (evt) {  
             var d3target = d3.select (evt.target);
-            //console.log ("D£target", d3target, d3target.datum());
             if (d3target && d3target.datum() && d3target.datum().func) {
-                (d3target.datum().func)(); // as value holds function reference
+                (d3target.datum().func)(d3target); // as value holds function reference
             }
             
             if (this.options.closeOnClick) {

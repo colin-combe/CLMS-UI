@@ -267,7 +267,14 @@ CLMSUI.utils = {
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button", 
     // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
-    makeBackboneButtons: function (targetDiv, baseID, buttonData) {      
+    makeBackboneButtons: function (targetDiv, baseID, buttonData) { 
+        var makeID = function (d) { return baseID + d.id; };
+        
+        // Don't make buttons whose id already exists
+        buttonData = buttonData.filter (function (d) {
+            return d3.select("#"+makeID(d)).empty();   
+        });
+        
         targetDiv.selectAll("button.tempClass")  // .tempClass ensures existing buttons aren't picked up, only new ones created
             .data (buttonData.filter(function(bd) { return bd.type === "button"; }), function(d) { return d.id; })
             .enter()
@@ -275,7 +282,7 @@ CLMSUI.utils = {
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
                 .classed ("btn btn-1 btn-1a", true) // and we don't class .temop so these can't be picked up by a subsequent call to make backbonebuttons
-                .attr("id", function(d) { return baseID + d.id; })
+                .attr("id", makeID)
         ;
             
         var cboxes = targetDiv.selectAll("label.tempClass")
@@ -284,7 +291,7 @@ CLMSUI.utils = {
             .append ("label")		
                 .attr ("class", "btn noBreak")
                 .attr ("title", function(d) { return d.title; })
-                .attr ("id", function(d) { return baseID + d.id; })
+                .attr ("id", makeID)
         ;
         
         cboxes
