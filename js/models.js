@@ -50,6 +50,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
         subsetFilter: function (match, matchingProteinPairFunc) {
             matchingProteinPairFunc = matchingProteinPairFunc || function (p1, p2) { return p1 === p2; }; // naive default match
+						
 			//linears? - if linear (linkPos === 0) and linears not selected return false
             //cross-links? - if xl (linkPos > 0) and xls not selected return false
             if (this.get (match.linkPos1 > 0 ? "crosslinks" : "linears") === false) {
