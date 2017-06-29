@@ -95,27 +95,15 @@
         ;
         
         // Various view options set up, then put in a dropdown menu
-        ["prot1", "prot2"].forEach (function (prot) {
-            var toggleButtonData = [
-                {initialState: true, class: "chain1", label: "Chain 1", id: "chain1_"+prot},
-                {initialState: true, class: "chain2", label: "Chain 2", id: "chain2_"+prot},
-            ];
-            toggleButtonData
-                .forEach (function (d) {
-                    d.type = "checkbox";
-                    d.inputFirst = true;
-                }, this)
-            ;
-            CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, toggleButtonData);
-
+        this.chainDropdowns = ["prot1", "prot2"].map (function (prot) {
             var optid = this.el.id+"Options_"+prot;
             this.controlDiv.append("p").attr("id", optid);
-            new CLMSUI.DropDownMenuViewBB ({
+            return new CLMSUI.DropDownMenuViewBB ({
                 el: "#"+optid,
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Chain "+prot+" ▼",
-                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    menu: [], //toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
                     closeOnClick: false,
                     classed: "chainDropdown",
                 }
@@ -294,8 +282,9 @@
     },
         
     distancesChanged: function () {
+        d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns
         this
-            .makeChainOptions (this.options.matrixObj)
+            .makeChainOptions (this.options.matrixObj.fromProtein.id, this.options.matrixObj.toProtein.id)
             .render()
         ;
         return this;
@@ -324,7 +313,49 @@
     },
         
     makeChainOptions: function (proteinID1, proteinID2) {
-        d3.select(this.el).selectAll(".chainDropdown");
+        
+        var pids = [proteinID1, proteinID2];
+        var self = this;
+        
+        var clickFunc = function () {
+            var datum = this;
+            var index = datum.index;
+            // NEED SOME WAY OF GETTING CHECKBOX STATE
+            console.log ("arguments", arguments, this);
+        };
+
+        this.chainDropdowns.forEach (function (dropdown, i) {
+            var distanceObj = self.model.get("clmsModel").get("distancesObj");
+            if (distanceObj) {
+                var pid = pids[i];
+                var chainMap = distanceObj.chainMap;
+                var chains = chainMap[pid];
+                console.log ("chains", chains, pid);
+
+                dropdown.updateTitle ("Chains "+pid+" ▼");
+                var toggleButtonData = chains.map (function (chain, ii) {
+                    return {
+                        initialState: true, 
+                        class: "chainChoice", 
+                        label: "Chain "+chain.name+":"+chain.index, 
+                        id: chain.name+"-"+chain.index+"-"+pid,
+                        index: ii, 
+                    };
+                });
+                toggleButtonData
+                    .forEach (function (d) {
+                        d.type = "checkbox";
+                        d.inputFirst = true;
+                        d.func = clickFunc;
+                    }, this)
+                ;
+                console.log ("toggleButtonData", toggleButtonData)
+                CLMSUI.utils.makeBackboneButtons (d3.select(dropdown.el), dropdown.el.id, toggleButtonData);
+                dropdown.options.menu = toggleButtonData.map (function(d) { return {id: dropdown.el.id + d.id, func: clickFunc}; });
+                dropdown.render();
+            }
+        });
+
         return this;
     },
                

@@ -31,16 +31,25 @@
                 })
                 .append("span")
                     .attr("class", "menuTitle")
-                    .text(this.options.title)
             ;
             
             d3.select(this.el).append("div").append("ul");
             
-            this.render();
+            this
+                .updateTitle (this.options.title)
+                .update()
+                .render()
+            ;
             return this;
         },
         
-        render: function () {
+        updateTitle: function (newTitle) {
+            this.options.title = newTitle;
+            d3.select(this.el).select("span.menuTitle").text (this.options.title);
+            return this;
+        },
+        
+        update: function () {
             var self = this;
             if (this.collection) {
                 var lastCat = null;
@@ -66,8 +75,11 @@
                 }); 
                 
                 this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; });
-            }
-            
+            }  
+            return this;
+        },
+        
+        render: function () {
             var choices = d3.select(this.el).select("div ul").selectAll("li")
                 .data (this.options.menu, function (d) { return d.name || d.id; })
             ;
@@ -141,6 +153,7 @@
         
         menuSelection: function (evt) {  
             var d3target = d3.select (evt.target);
+            //console.log ("D£target", d3target, d3target.datum());
             if (d3target && d3target.datum() && d3target.datum().func) {
                 (d3target.datum().func)(); // as value holds function reference
             }

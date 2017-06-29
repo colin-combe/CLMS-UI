@@ -262,7 +262,8 @@ CLMSUI.utils = {
          }
      }),
     
-    // Routine assumes on click methods are added via backbone definitions
+    // Routine assumes on click methods are added via backbone definitions, though they could be added later with d3
+    // targetDiv is a d3 select element
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button", 
     // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
