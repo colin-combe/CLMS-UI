@@ -19,20 +19,37 @@
                 toggleAttribute: "state",
             };
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
+            var self = this;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             d3.select(this.el)
                 .attr("class", "btn dropdown")
+                .call (function (sel) {
+                    if (self.options.classed) {
+                        sel.classed (self.options.classed, true);
+                    }   
+                })
                 .append("span")
                     .attr("class", "menuTitle")
-                    .text(this.options.title)
             ;
             
-            this.render();
+            d3.select(this.el).append("div").append("ul");
+            
+            this
+                .updateTitle (this.options.title)
+                .update()
+                .render()
+            ;
             return this;
         },
         
-        render: function () {
+        updateTitle: function (newTitle) {
+            this.options.title = newTitle;
+            d3.select(this.el).select("span.menuTitle").text (this.options.title);
+            return this;
+        },
+        
+        update: function () {
             var self = this;
             if (this.collection) {
                 var lastCat = null;
@@ -58,12 +75,19 @@
                 }); 
                 
                 this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; });
-            }
-            
-            var choices = d3.select(this.el).append("div").append("ul").selectAll("li")
+            }  
+            return this;
+        },
+        
+        render: function () {
+            var listHolder = d3.select(this.el).select("div ul");
+            var choices = listHolder.selectAll("li")
                 .data (this.options.menu, function (d) { return d.name || d.id; })
             ;
-            choices.enter().append("li").each(function(d) {
+            
+            choices.exit().remove();
+            
+            choices.enter().append("li").each (function (d) {
                 var ind = d3.select(this);
                 if (d.name) {
                     ind.text(d.name);
@@ -74,7 +98,7 @@
                         if (targetNode.parentElement) {
                             targetNode.parentElement.removeChild (targetNode);
                         }
-                        ind.node().appendChild(targetNode);
+                        ind.node().appendChild (targetNode);
                     }
                 }
             }); 
@@ -131,7 +155,7 @@
         menuSelection: function (evt) {  
             var d3target = d3.select (evt.target);
             if (d3target && d3target.datum() && d3target.datum().func) {
-                (d3target.datum().func)(); // as value holds function reference
+                (d3target.datum().func)(d3target); // as value holds function reference
             }
             
             if (this.options.closeOnClick) {
