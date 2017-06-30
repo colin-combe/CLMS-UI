@@ -314,6 +314,8 @@
         return this;
     },
         
+        
+    // 3 chain set object wrapper routines
     makeNewChainShowSets: function () {
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
         if (distanceObj) {
@@ -334,6 +336,7 @@
         this.showChains[dropdownIndex][show ? "add" : "remove"](chainIndex);
         return this;
     },
+        
         
     makeChainOptions: function (proteinIDs) {
         
@@ -414,6 +417,9 @@
         return proteinIDsObj;
     },
         
+        
+    // Tooltip functions
+        
     setStartPoint: function (evt) {
         this.startPoint = {x: evt.clientX, y: evt.clientY};
     },
@@ -468,10 +474,6 @@
         this.model.set ("highlights", crossLinks);
     },
         
-    filterMatrixOptions: function (matrices, filterFunc) {
-        return matrices.filter (filterFunc);
-    },
-        
     getSingleLinkDistances: function (crossLink) {
         var alignColl = this.model.get("alignColl");
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
@@ -496,7 +498,7 @@
             this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
         }
     },
-        
+    // end of tooltip functions  
     
     zoomHandler: function (self) {
         var sizeData = this.getSizeData();
@@ -847,8 +849,8 @@
         // reposition labels
         //console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.viewWidth / 2, y: sizeData.viewHeight + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.viewHeight / 2, rot: -90},
+            {x: sizeData.viewWidth / 2, y: sizeData.bottom + this.margin.bottom, rot: 0}, 
+            {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
             {x: sizeData.viewWidth / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
@@ -894,14 +896,13 @@
         sizeData.viewHeight = $.zepto ? viewport.height() : viewport.outerHeight(true);
         sizeData.viewWidth = $.zepto ? viewport.width() : viewport.outerWidth(true);
         var bottom = Math.min (
-            cvs.position().top + ($.zepto ? cvs.height() : cvs.outerHeight(true)), 
+            cvs.position().top + (($.zepto ? cvs.height() : cvs.outerHeight(true)) * scale), 
             sizeData.viewHeight
         );
         var right = Math.min (
-            cvs.position().left + ($.zepto ? cvs.width() : cvs.outerWidth(true)), 
+            cvs.position().left + (($.zepto ? cvs.width() : cvs.outerWidth(true)) * scale), 
             sizeData.viewWidth
         );
-        
         
         // redraw axes
         this.vis.select(".y")
@@ -910,13 +911,16 @@
         ;
         
         this.vis.select(".x")
-            .attr("transform", "translate(0," + sizeData.viewHeight + ")")
+            //.attr("transform", "translate(0," + sizeData.viewHeight + ")")
+            .attr("transform", "translate(0," + bottom + ")")
             .call(self.xAxis)
         ;
         
         sizeData.bottom = bottom;
         sizeData.right = right;
         this.repositionLabels (sizeData);
+        
+        //console.log ("sizeData", sizeData);
         
         return this;
     },
