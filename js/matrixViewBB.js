@@ -103,7 +103,7 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Chain "+prot+" ▼",
-                    menu: [], //toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    menu: [],
                     closeOnClick: false,
                     classed: "chainDropdown",
                 }
@@ -284,15 +284,8 @@
     // New PDB File in town
     distancesChanged: function () {
         d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns
-        var distanceObj = this.model.get("clmsModel").get("distancesObj");
-        if (distanceObj) {
-            var chainVals = d3.merge(d3.values(distanceObj.chainMap)).map(function(cd) { return cd.index; });
-            this.showChains = [
-                d3.set (chainVals),
-                d3.set (chainVals)
-            ];
-        }
         this
+            .makeNewChainShowSets()
             .makeChainOptions (this.getCurrentProteinIDs())
             .render()
         ;
@@ -302,8 +295,6 @@
     matrixChosen: function (proteinPairValue) {
         if (proteinPairValue) {
             this.options.matrixObj = proteinPairValue;
-
-            console.log ("PPV", proteinPairValue);
 
             var seqLengths = this.getSeqLengthData();
             this.x.domain([1, seqLengths.lengthA + 1]);
@@ -323,6 +314,27 @@
         return this;
     },
         
+    makeNewChainShowSets: function () {
+        var distanceObj = this.model.get("clmsModel").get("distancesObj");
+        if (distanceObj) {
+            var chainVals = d3.merge(d3.values(distanceObj.chainMap)).map(function(cd) { return cd.index; });
+            this.showChains = [
+                d3.set (chainVals),
+                d3.set (chainVals)
+            ];
+        }
+        return this;
+    },
+        
+    chainMayShow: function (dropdownIndex, chainIndex) {
+        return this.showChains[dropdownIndex].has(chainIndex);    
+    },
+        
+    setChainShowState: function (dropdownIndex, chainIndex, show) {
+        this.showChains[dropdownIndex][show ? "add" : "remove"](chainIndex);
+        return this;
+    },
+        
     makeChainOptions: function (proteinIDs) {
         
         var self = this;
@@ -332,23 +344,25 @@
             var index = datum.index;
             var dropdownIndex = datum.dropdownIndex;
             var checked = d3target.property("checked");
-            self.showChains[dropdownIndex][checked ? "add" : "remove"](index);
-            console.log ("SHOW CHAINS", self.showChains);
-            self.renderBackgroundMap();
+            self
+                .setChainShowState (dropdownIndex, index, checked)
+                .renderBackgroundMap()
+            ;
         };
 
+        var axisOrientations = ["X", "Y"];
         this.chainDropdowns.forEach (function (dropdown, i) {
             var distanceObj = self.model.get("clmsModel").get("distancesObj");
             if (distanceObj) {
                 var pid = proteinIDs[i].proteinID;
                 var chainMap = distanceObj.chainMap;
                 var chains = chainMap[pid] || [];
-                console.log ("chains", chains, pid);
-
-                dropdown.updateTitle ("Chains "+proteinIDs[i].labelText+" ▼");
+                dropdown.updateTitle (axisOrientations[i]+": "+proteinIDs[i].labelText+" Chains ▼");
+                
+                // make button data for this protein and dropdown combination
                 var toggleButtonData = chains.map (function (chain, ii) {
                     return {
-                        initialState: self.showChains[i].has(chain.index), 
+                        initialState: self.chainMayShow (i, chain.index), 
                         class: "chainChoice", 
                         label: "Chain "+chain.name+":"+chain.index, 
                         id: chain.name+"-"+chain.index+"-"+pid,
@@ -359,10 +373,12 @@
                         func: clickFunc,
                     };
                 });
-
-                console.log ("toggleButtonData", toggleButtonData)
-                CLMSUI.utils.makeBackboneButtons (d3.select(dropdown.el), dropdown.el.id, toggleButtonData);
-                dropdown.options.menu = toggleButtonData.map (function(d) { return {id: dropdown.el.id + d.id, func: clickFunc}; });
+                
+                var dropEl = dropdown.el;
+                // make buttons for this protein and dropdown combination using the button data
+                CLMSUI.utils.makeBackboneButtons (d3.select(dropEl), dropEl.id, toggleButtonData);
+                // tell the dropdown that these buttons are the new menu and to rerender the dropdown menu with them
+                dropdown.options.menu = toggleButtonData.map (function(d) { return {id: dropEl.id + d.id, func: clickFunc}; });
                 dropdown.render();
             }
         }, this);
@@ -560,37 +576,39 @@
             var seqLengths = this.getSeqLengthData();
             var seqLengthB = seqLengths.lengthB - 1;    
         
+            // Get alignment info for chains in the two proteins, filtering to chains that are marked as showable
             var proteinIDs = this.getCurrentProteinIDs();
             var alignInfo = proteinIDs.map (function (proteinID, i) {
                 var pid = proteinID.proteinID;
                 var chains = distancesObj.chainMap[pid];
                 if (chains) {
-                    console.log ("PPP", proteinID, distancesObj.chainMap);
                     var chainIDs = chains
-                        .filter (function (chain) { return this.showChains[i].has (chain.index); }, this)
+                        .filter (function (chain) { return this.chainMayShow (i, chain.index); }, this)
                         .map (function (chain) { return {proteinID: pid, chainID: chain.index}; })
                     ;
                     return this.addAlignIDs (chainIDs);
                 }
                 return [];
             }, this);
-            var alignColl = this.model.get("alignColl");
-
-            console.log ("ALLL", alignInfo);
+            //console.log ("ALLL", alignInfo);
 
             CLMSUI.times = CLMSUI.times || [];
             var start = performance.now();
 
-            var pw = this.canvas.attr("width");
-
+            
+            // function to draw one matrix according to a pairing of two chains (called in loop later)
             var drawDistanceMatrix = function (matrixValue, alignInfo1, alignInfo2) {
+                var alignColl = this.model.get("alignColl");
                 var distanceMatrix = matrixValue.distanceMatrix;
+                var pw = this.canvas.attr("width");
 
+                // precalc some stuff that would get recalculatd a lot in the inner loop
                 var preCalcSearchIndices = d3.keys(distanceMatrix[0]).map (function (dIndex) {
                     return alignColl.getAlignedIndex (+dIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
                 });
-                console.log ("pcsi", preCalcSearchIndices, this);
+                //console.log ("pcsi", preCalcSearchIndices, this);
 
+                // draw chain values, aligned to search sequence
                 for (var i = 0; i < distanceMatrix.length; i++){
                     var row = distanceMatrix[i];
                     var searchIndex1 = alignColl.getAlignedIndex (i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
@@ -610,10 +628,9 @@
                 }
             };
 
-            // Find continuous blocks in chain when mapped to search sequence
-            var splitChain2 = function (alignInfo) {
+            // Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
+            var splitChain = function (alignInfo) {
                 var seq = this.model.get("alignColl").get(alignInfo.proteinID).getCompSequence(alignInfo.alignID);
-                //console.log ("seq", seq.convertToRef);
                 var index = seq.convertToRef;
                 var blocks = [];
                 var start = index[0];
@@ -628,21 +645,20 @@
             };
 
 
-            // draw backgrounds for chain areas
-            ctx.fillStyle = this.options.chainBackground;
+            // Work out blocks for each chain, using routine above
             var blockMap = {};
             d3.merge(alignInfo).forEach (function (alignDatum) {
-                blockMap[alignDatum.alignID] = splitChain2.call (this, alignDatum);    
+                blockMap[alignDatum.alignID] = splitChain.call (this, alignDatum);    
             }, this);
-            console.log ("blockMap", blockMap);
+            //console.log ("blockMap", blockMap);
 
-
+            // Draw backgrounds for each pairing of chains
+            ctx.fillStyle = this.options.chainBackground;
             alignInfo[0].forEach (function (alignInfo1) {
                 var blocks1 = blockMap[alignInfo1.alignID];
 
                 alignInfo[1].forEach (function (alignInfo2) {
                     var blocks2 = blockMap[alignInfo2.alignID];
-                    console.log ("range1", blocks1, blocks2);
 
                     blocks1.forEach (function (brange1) {
                         blocks2.forEach (function (brange2) {
@@ -653,16 +669,10 @@
                 }, this);
             }, this);
 
-            var canvasData = ctx.getImageData (0, 0, pw, this.canvas.attr("height"));
+            var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
             var cd = canvasData.data;
 
-            /*
-            alignInfo = alignInfo.map (function (ainfo) {
-                return ainfo.length ? [ainfo[0]] : [];
-            });
-            */
-
-            // draw actual content of chain areas
+            // draw actual content of chain pairings
             alignInfo[0].forEach (function (alignInfo1) {
                 var chainIndex1 = alignInfo1.chainID;
                 alignInfo[1].forEach (function (alignInfo2) {

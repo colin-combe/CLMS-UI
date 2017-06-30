@@ -84,7 +84,7 @@
             var choices = listHolder.selectAll("li")
                 .data (this.options.menu, function (d) { return d.name || d.id; })
             ;
-            console.log ("choices", choices);
+            
             choices.exit().remove();
             
             choices.enter().append("li").each (function (d) {
