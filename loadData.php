@@ -207,11 +207,10 @@ if (count($_GET) > 0) {
 
     if ($spectrum) {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND spectrum_id = ' . $spectrum . ' ';
-    } 
-    //hack
-    //~ else {
-        //~ $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
-    //~ }
+    }
+    else {
+        $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
+    }
 
     // MJG. 06/09/16. Changed query 'cos it crashed when using old db
     $isNewQuery = pg_query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'spectrum_source'");
@@ -355,10 +354,10 @@ if (count($_GET) > 0) {
         $endTime = microtime(true);
     }
 
-	//~ $proteinIdField = "hp.protein_id";
-    //~ if (count($searchId_randGroup) > 1) {
+	$proteinIdField = "hp.protein_id";
+    if (count($searchId_randGroup) > 1) {
         $proteinIdField = "p.accession_number";
-    //~ }
+    }
 
     /*
      * PEPTIDES
@@ -413,10 +412,10 @@ if (count($_GET) > 0) {
          * PROTEINS
          */
 
-        //~ $proteinIdField = "id";
-        //~ if (count($searchId_randGroup) > 1) {
+        $proteinIdField = "id";
+        if (count($searchId_randGroup) > 1) {
             $proteinIdField = "accession_number";
-        //~ }
+        }
 
         $query = "SELECT ".$proteinIdField." AS id, protein.id as real_id, 
                 CASE WHEN name IS NULL OR name = '' OR name = 'REV_' OR name = 'RAN_' THEN accession_number
