@@ -13,8 +13,8 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             selfLinks: true,
             betweenLinks: true,
             ambig: true,
-            aaApart: 10,
-            pepLength: 4,
+            aaApart: 0,
+            pepLength: 0,
             //validation status
             A: true, B: true, C: true, Q: true, unval: true, AUTO: true,
             decoys: true,
@@ -50,6 +50,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 
         subsetFilter: function (match, matchingProteinPairFunc) {
             matchingProteinPairFunc = matchingProteinPairFunc || function (p1, p2) { return p1 === p2; }; // naive default match
+						
 			//linears? - if linear (linkPos === 0) and linears not selected return false
             //cross-links? - if xl (linkPos > 0) and xls not selected return false
             if (this.get (match.linkPos1 > 0 ? "crosslinks" : "linears") === false) {
@@ -392,6 +393,19 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         initialize: function() {
             //console.log ("Blosum model initialised", this);
         },
+    }),
+    
+    ChainBooleanModel: Backbone.Model.extend ({
+       initialize: function (modelOptions) {
+            var defaultOptions = {chainMap: {}};
+            this.options = _.extend (defaultOptions, modelOptions.myOptions);
+           
+            var chainValues = d3.values (this.options.chainMap);
+            chainValues = d3.merge (chainValues);    // flatten array
+            chainValues.forEach (function (chainValue) {
+                this.set (chainValue.index, true);      
+            }, this);
+       },
     }),
 
 });

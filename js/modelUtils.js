@@ -143,7 +143,7 @@ CLMSUI.modelUtils = {
         linkList: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },   
     },
      
-    findResiduesInSquare : function (convFunc, crossLinkMap, cx, cy, side) {
+    findResiduesInSquare : function (convFunc, crossLinkMap, cx, cy, side, asymmetric) {
         var a = [];
         for (var n = cx - side; n <= cx + side; n++) {
             var convn = convFunc (n, 0).convX;
@@ -151,7 +151,9 @@ CLMSUI.modelUtils = {
                 for (var m = cy - side; m <= cy + side; m++) {
                     var conv = convFunc (n, m);
                     var convm = conv.convY;
-                    if (!isNaN(convm) && convm > 0) {
+                    var excludeasym = asymmetric && (conv.proteinX === conv.proteinY) && (convn > convm);
+                    
+                    if (!isNaN(convm) && convm > 0 && !excludeasym) {
                         var k = conv.proteinX+"_"+convn+"-"+conv.proteinY+"_"+convm;
                         var crossLink = crossLinkMap.get(k);
                         if (!crossLink && (conv.proteinX === conv.proteinY)) {
@@ -659,6 +661,30 @@ CLMSUI.modelUtils = {
     
     isViableChainLength: function (chainProxy) {
         return chainProxy.residueCount > 10;
+    },
+    
+    crosslinkCountPerProteinPairing: function (crossLinkArr) {
+        var obj = {};
+        crossLinkArr.forEach (function (crossLink) {
+            var fromProtein = crossLink.fromProtein;
+            var toProtein = crossLink.toProtein;
+            var pid1 = fromProtein.id;
+            var pid2 = toProtein ? toProtein.id : "";
+            if (pid2 && !fromProtein.is_decoy && !toProtein.is_decoy) {
+                var key = pid1 + "-" + pid2;
+                if (!obj[key]) {
+                    obj[key] = {
+                        crossLinks:[], 
+                        fromProtein: fromProtein,
+                        toProtein: toProtein,
+                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                    };
+                }
+                var slot = obj[key].crossLinks;
+                slot.push (crossLink);
+            }
+        });
+        return obj;
     },
     
 };

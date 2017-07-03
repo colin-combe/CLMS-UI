@@ -29,8 +29,7 @@
             xlabel: "Residue Index 1",
             ylabel: "Residue Index 2",
             chartTitle: "Cross-Link Matrix",
-            background: "#ccc",
-            chainBackground: "white",
+            background: "white",
             matrixObj: null,
             selectedColour: "#ff0",
             highlightedColour: "#f80",
@@ -51,13 +50,13 @@
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
         //avoids prob with 'save - web page complete'
-        var mainDivSel = d3.select(this.el).classed("matrixView", true); 
+        var mainDivSel = d3.select(this.el); 
         
         var flexWrapperPanel = mainDivSel.append("div")
             .attr ("class", "verticalFlexContainer")
         ;
         
-        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
+        this.controlDiv = flexWrapperPanel.append("div");
         
         this.controlDiv.append("button")
             .attr ("class", "downloadButton2 btn btn-1 btn-1a")
@@ -76,17 +75,12 @@
             .attr("class", "btn")
             .append ("span")
                 .attr("class", "noBreak")
-                .text("Select Protein Pairing")
+                .text("Select Chain Pairing")
                 .append("select")
                     .attr("id", mainDivSel.attr("id")+"chainSelect")
-                    .on ("change", function (d) {
-                        var value = this.value;
-                        var selectedDatum = d3.select(this).selectAll("option")
-                            .filter(function(d) { return d3.select(this).property("selected"); })
-                            .datum()
-                        ;
+                    .on ("change", function () {
                         self
-                            .matrixChosen (selectedDatum.value)
+                            .matrixChosen ($('#'+mainDivSel.attr("id")+'chainSelect').val())
                             .render()
                         ;
                         var selElem = d3.select(d3.event.target);
@@ -94,26 +88,6 @@
                     })
         ;
         
-        // Various view options set up, then put in a dropdown menu
-        this.chainDropdowns = ["prot1", "prot2"].map (function (prot) {
-            var optid = this.el.id+"Options_"+prot;
-            this.controlDiv.append("p").attr("id", optid);
-            return new CLMSUI.DropDownMenuViewBB ({
-                el: "#"+optid,
-                model: CLMSUI.compositeModelInst.get("clmsModel"),
-                myOptions: {
-                    title: "Chain "+prot+" ▼",
-                    menu: [],
-                    closeOnClick: false,
-                    classed: "chainDropdown",
-                }
-            });
-        }, this);
-        
-        // Hide chain choices at first
-        d3.select(this.el).selectAll(".chainDropdown").style("display", "none");
-        
-             
         var chartDiv = flexWrapperPanel.append("div")
             .attr("class", "panelInner")
             .attr ("flex-grow", 1)
@@ -177,13 +151,13 @@
         this.yAxis = d3.svg.axis().scale(this.y).orient("left");
         
         this.vis.append("g")
-			         .attr("class", "y axis")
-			         //.call(self.yAxis)
+			 .attr("class", "y axis")
+			 //.call(self.yAxis)
         ;
         
         this.vis.append("g")
-			         .attr("class", "x axis")
-			         //.call(self.xAxis)
+			 .attr("class", "x axis")
+			 //.call(self.xAxis)
         ;
         
         
@@ -209,19 +183,9 @@
         this.listenTo (this.model, "change:highlights", this.renderCrossLinks);
         //this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
         this.listenTo (this.model, "filteringDone", this.renderCrossLinks);    // listen to custom filteringDone event from model - only need to update svg now, so only renderCrossLinks called
-        this.listenTo (this.model, "currentColourModelChanged", this.renderCrossLinks);
-        this.listenTo (this.model, "change:linkColourAssignment", this.render);
-        this.listenTo (this.colourScaleModel, "colourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
+        this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); 
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
-        this.listenTo (this.model.get("clmsModel"), "change:matches", this.matchesChanged);  // New matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
-        
-        var entries = this.makeProteinPairingOptions();
-        var chosenPairing = entries && entries.length ? entries[0].value : undefined;
-        this
-            .matrixChosen (chosenPairing)
-            .render()
-        ;
     },
         
     relayout: function () {
@@ -229,27 +193,32 @@
         return this;
     },
         
-    esterFilter: function (crossLink) {
-        return (this.filterVal === undefined || CLMSUI.modelUtils.getEsterLinkType (crossLink) >= this.filterVal);
-    },
+    distancesChanged: function () {
+        var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        console.log ("IN MATRIX DISTANCES CHANGED", distancesObj, this.model.get("clmsModel"));
         
-    makeProteinPairingOptions: function () {
-        var crossLinks = CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks"));
-        var totals = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinks);
-        var entries = d3.entries (totals);
-        
-        var nonEmptyEntries = entries.filter (function (entry) {
-            return entry.value.crossLinks.length;     
+        var usefulMatrices = d3.entries(distancesObj.matrices);
+        usefulMatrices = this.filterMatrixOptions (usefulMatrices, function (matrix) {
+            return matrix.value.distanceMatrix.some (function (row) {
+                return row.some (function (dist) { return dist > 0 && dist <= 35; });
+            });
         });
+        console.log ("USEFUL", usefulMatrices);
+        var matrixOptionData = usefulMatrices.map (function (matrixEntry) {
+            return {
+                key: matrixEntry.key, 
+                text: [matrixEntry.value.chain1, matrixEntry.value.chain2].map (function(cid) { return this.getLabelText(+cid); }, this).join(" to "),
+            };
+        }, this);
         
-        nonEmptyEntries.sort (function (a,b) {
-            return b.value.crossLinks.length - a.value.crossLinks.length;    
-        });
+        if (!matrixOptionData.length) {
+            matrixOptionData.push ({text: "No Viable Pairs", key: null});
+        }
         
         var mainDivSel = d3.select(this.el);
         var matrixOptions = mainDivSel.select("#"+mainDivSel.attr("id")+"chainSelect")
             .selectAll("option")
-            .data (nonEmptyEntries, function(d) { return d.key; })
+            .data (matrixOptionData, function(d) { return distancesObj.pdbBaseSeqID + d.key; })
         ;
         matrixOptions.exit().remove();
         matrixOptions
@@ -258,160 +227,102 @@
         ;
         matrixOptions
             .property ("value", function(d) { return d.key;})
-            .text (function(d) { return "["+d.value.crossLinks.length+"] "+d.value.label; })
+            .text (function(d) { return d.text; })
         ;
         
-        return nonEmptyEntries.length ? nonEmptyEntries : entries;
-    },
-        
-    getCurrentPairing: function (pairing, onlyIfNoneSelected) {
-        var mainDivSel = d3.select(this.el);
-        var selected = mainDivSel.select("#"+mainDivSel.attr("id")+"chainSelect")
-            .selectAll("option")
-            .filter (function(d) { return d3.select(this).property("selected"); })
-        ;
-        return (selected.size() === 0 && onlyIfNoneSelected) ? pairing : selected.datum().value;
-    },
-         
-    matchesChanged: function () {
-        var entries = this.makeProteinPairingOptions();
-        var pairing = this.getCurrentPairing (entries[0], true);
-        this.matrixChosen (pairing);
-        this.render();
-        return this;
-    },
-        
-    // New PDB File in town
-    distancesChanged: function () {
-        d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns
         this
-            .makeNewChainShowSets()
-            .makeChainOptions (this.getCurrentProteinIDs())
+            .matrixChosen (matrixOptionData[0].key)
             .render()
         ;
+    },
+        
+    matrixChosen: function (key) {
+        var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        console.log ("DISTANCES OBJ", distancesObj);
+        this.options.matrixObj = distancesObj.matrices[key];
+        
+        var seqLengths = this.getSeqLengthData();
+        this.x.domain([0, seqLengths.lengthA]);
+        this.y.domain([seqLengths.lengthB, 0]);   
+        
+        console.log ("SEQ LEN", seqLengths);
+        
+        // Update x/y labels and axes tick formats
+        var protIDs = this.getCurrentProteinIDs(); 
+        var alignIDs = this.getAlignIDs (protIDs);
+        this.xAxis.tickFormat (this.curriedAlignedIndexAxisFormat (protIDs[0].proteinID, alignIDs[0], this, 0));
+        this.yAxis.tickFormat (this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this, 0));
+        this.vis.selectAll("g.label text").data(protIDs)
+            .text (function(d) { return d.labelText; })
+        ;
+        
         return this;
-    },
-        
-    matrixChosen: function (proteinPairValue) {
-        if (proteinPairValue) {
-            this.options.matrixObj = proteinPairValue;
-
-            var seqLengths = this.getSeqLengthData();
-            this.x.domain([1, seqLengths.lengthA + 1]);
-            this.y.domain([seqLengths.lengthB + 1, 1]);   
-
-            // Update x/y labels and axes tick formats
-            var protIDs = this.getCurrentProteinIDs(); 
-            this.xAxis.tickFormat (this.alignedIndexAxisFormat);
-            this.yAxis.tickFormat (this.alignedIndexAxisFormat);
-            this.vis.selectAll("g.label text").data(protIDs)
-                .text (function(d) { return d.labelText; })
-            ;
-            
-            this.makeChainOptions (protIDs);
-        }
-        
-        return this;
-    },
-        
-    makeNewChainShowSets: function () {
-        var distanceObj = this.model.get("clmsModel").get("distancesObj");
-        if (distanceObj) {
-            var chainVals = d3.merge(d3.values(distanceObj.chainMap)).map(function(cd) { return cd.index; });
-            this.showChains = [
-                d3.set (chainVals),
-                d3.set (chainVals)
-            ];
-        }
-        return this;
-    },
-        
-    chainMayShow: function (dropdownIndex, chainIndex) {
-        return this.showChains[dropdownIndex].has(chainIndex);    
-    },
-        
-    setChainShowState: function (dropdownIndex, chainIndex, show) {
-        this.showChains[dropdownIndex][show ? "add" : "remove"](chainIndex);
-        return this;
-    },
-        
-    makeChainOptions: function (proteinIDs) {
-        
-        var self = this;
-        
-        var clickFunc = function (d3target) {
-            var datum = this;
-            var index = datum.index;
-            var dropdownIndex = datum.dropdownIndex;
-            var checked = d3target.property("checked");
-            self
-                .setChainShowState (dropdownIndex, index, checked)
-                .renderBackgroundMap()
-            ;
-        };
-
-        var axisOrientations = ["X", "Y"];
-        this.chainDropdowns.forEach (function (dropdown, i) {
-            var distanceObj = self.model.get("clmsModel").get("distancesObj");
-            if (distanceObj) {
-                var pid = proteinIDs[i].proteinID;
-                var chainMap = distanceObj.chainMap;
-                var chains = chainMap[pid] || [];
-                dropdown.updateTitle (axisOrientations[i]+": "+proteinIDs[i].labelText+" Chains ▼");
-                
-                // make button data for this protein and dropdown combination
-                var toggleButtonData = chains.map (function (chain, ii) {
-                    return {
-                        initialState: self.chainMayShow (i, chain.index), 
-                        class: "chainChoice", 
-                        label: "Chain "+chain.name+":"+chain.index, 
-                        id: chain.name+"-"+chain.index+"-"+pid,
-                        dropdownIndex: i,
-                        index: chain.index, 
-                        type: "checkbox",
-                        inputFirst: true,
-                        func: clickFunc,
-                    };
-                });
-                
-                var dropEl = dropdown.el;
-                // make buttons for this protein and dropdown combination using the button data
-                CLMSUI.utils.makeBackboneButtons (d3.select(dropEl), dropEl.id, toggleButtonData);
-                // tell the dropdown that these buttons are the new menu and to rerender the dropdown menu with them
-                dropdown.options.menu = toggleButtonData.map (function(d) { return {id: dropEl.id + d.id, func: clickFunc}; });
-                dropdown.render();
-            }
-        }, this);
-
-        return this;
-    },
+    }, 
                
-    alignedIndexAxisFormat: function (searchIndex) {
-        return d3.format(",.0f")(searchIndex);
+    curriedAlignedIndexAxisFormat: function (proteinID, alignID, thisView, offset) {
+        return function (chainIndex) {
+            chainIndex += offset;
+            var alignColl = thisView.model.get("alignColl");
+            if (Math.floor(chainIndex) !== chainIndex) {    // don't do for non-integer values, return empty tick label instead
+                return "";
+            }
+            var searchIndex = alignColl.getAlignedIndex (chainIndex + 1, proteinID, true, alignID, true);
+            if (isNaN (searchIndex)) {
+                return "";
+            }
+            if (searchIndex < 0) {
+                return "><";
+            }
+            return d3.format(",.0f")(searchIndex);
+        };
     },
         
     getCurrentProteinIDs : function () {
-        var mObj = this.options.matrixObj;
-        return mObj ? [
-            {chainIDs: null, proteinID: mObj.fromProtein.id, labelText: mObj.fromProtein.name.replace("_", " ")}, 
-            {chainIDs: null, proteinID: mObj.toProtein.id, labelText: mObj.toProtein.name.replace("_", " ")}
-        ] : [null, null];
+        var chainIDs = this.options.matrixObj ? [this.options.matrixObj.chain1, this.options.matrixObj.chain2] : [null, null];
+        return chainIDs.map (function (ci) { 
+            ci = ci ? + ci : ci;    // make sure ci becomes a number, unless it's null/undefined
+            return {chainID: ci, proteinID: this.getDataFromChainID(ci).proteinID, labelText: this.getLabelText (ci)};
+        }, this);
     },
         
-    getChainsForProtein: function (proteinID) {
-        return this.model.get("clmsModel").get("distancesObj").chainMap[proteinID];    
+    getLabelText: function (chainID) {
+        if (chainID != null) {
+            var data = this.getDataFromChainID (chainID);
+            var proteinID = data.proteinID;
+            var chainName = data.chainName;
+            var protein = this.model.get("clmsModel").get("participants").get(proteinID);
+            var proteinName = protein ? protein.name : undefined;
+            var residueRange = this.getChainResidueIndexRange ({proteinID: proteinID, chainID: chainID});
+            proteinName = proteinName ? proteinName.replace("_", " ") : "Unknown Protein";
+            return proteinName+" "+residueRange[0]+"-"+residueRange[1]+" (Chain:"+chainName+" "+chainID+")";
+        }
+        return "No Chain";
     },
         
-    addAlignIDs: function (proteinIDsObj) {
+    
+    getDataFromChainID : function (chainID) {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        proteinIDsObj.forEach (function (pid) {
-            pid.alignID = null;
+        return {
+            proteinID: CLMSUI.modelUtils.getProteinFromChainIndex (distancesObj.chainMap, chainID),
+            chainName: CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, chainID),
+        };
+    },
+        
+    getAlignIDs: function (proteinIDsObj) {
+        var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        return proteinIDsObj.map (function (pid) {
             if (pid.proteinID) {
                 var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex (distancesObj.chainMap, pid.chainID);
-                pid.alignID = CLMSUI.modelUtils.make3DAlignID (distancesObj.pdbBaseSeqID, chainName, pid.chainID);
+                return CLMSUI.modelUtils.make3DAlignID (distancesObj.pdbBaseSeqID, chainName, pid.chainID);
             }
+            return null;
         }, this);
-        return proteinIDsObj;
+    },
+        
+    getChainResidueIndexRange: function (proteinID) {
+        var alignIDs = this.getAlignIDs ([proteinID]);
+        var range = this.model.get("alignColl").getSearchRangeIndexOfMatches (proteinID.proteinID, alignIDs[0]);
+        return [range.first, range.last];
     },
         
     setStartPoint: function (evt) {
@@ -430,16 +341,19 @@
         var filteredCrossLinks = this.model.getFilteredCrossLinks ();
         var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
         var proteinIDs = this.getCurrentProteinIDs();
+        var alignIDs = this.getAlignIDs (proteinIDs);
+        var alignColl = this.model.get("alignColl");
         var convFunc = function (x, y) {    // x and y are 0-indexed
-            return {
-                convX: x, 
-                convY: y, 
-                proteinX: proteinIDs[0] ? proteinIDs[0].proteinID : undefined, 
-                proteinY: proteinIDs[1] ? proteinIDs[1].proteinID : undefined,
-            };
+            var fromResIndex = alignColl.getAlignedIndex (x + 1, proteinIDs[0].proteinID, true, alignIDs[0]);
+            var toResIndex = alignColl.getAlignedIndex (y + 1, proteinIDs[1].proteinID, true, alignIDs[1]);
+            return {convX: fromResIndex, convY: toResIndex, proteinX: proteinIDs[0].proteinID, proteinY: proteinIDs[1].proteinID};
         };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2, true);
-        return neighbourhoodLinks.filter (function (nlink) { return this.esterFilter (nlink.crossLink); }, this);
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2, false);
+        neighbourhoodLinks = neighbourhoodLinks.filter (function (crossLinkWrapper) {
+            var est = CLMSUI.modelUtils.getEsterLinkType (crossLinkWrapper.crossLink);
+            return (this.filterVal === undefined || est >= this.filterVal);
+        }, this);
+        return neighbourhoodLinks;
     },
         
     selectNeighbourhood: function (evt) {
@@ -465,6 +379,7 @@
         
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
+        
         this.model.set ("highlights", crossLinks);
     },
         
@@ -472,18 +387,13 @@
         return matrices.filter (filterFunc);
     },
         
-    getSingleLinkDistances: function (crossLink) {
-        var alignColl = this.model.get("alignColl");
-        var distanceObj = this.model.get("clmsModel").get("distancesObj");
-        return distanceObj ? distanceObj.getXLinkDistance (crossLink, alignColl) : undefined;
-    },
-        
     invokeTooltip : function (evt, linkWrappers) {
         if (this.options.matrixObj) {
+            var distanceMatrix = this.options.matrixObj.distanceMatrix;
             linkWrappers.forEach (function (linkWrapper) {
-                linkWrapper.distance = this.getSingleLinkDistances (linkWrapper.crossLink);
+                linkWrapper.distance = distanceMatrix[linkWrapper.x][linkWrapper.y];
                 linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
-            }, this);
+            });
             linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
             var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
             var linkDistances = linkWrappers.map (function (linkWrapper) { return linkWrapper.distanceFixed; });
@@ -550,144 +460,57 @@
     },
         
     renderBackgroundMap: function () {
-        var distancesObj = this.model.get("clmsModel").get("distancesObj");
         var canvasNode = this.canvas.node();
         var ctx = canvasNode.getContext("2d");       
         ctx.fillStyle = this.options.background;
-        ctx.fillRect (0, 0, canvasNode.width, canvasNode.height);
+        ctx.fillRect(0, 0, canvasNode.width, canvasNode.height);
+
+        var rangeDomain = this.colourScaleModel.get("colScale").domain();
+        var min = rangeDomain[0];
+        var max = rangeDomain[1];
+        var rangeColours = this.colourScaleModel.get("colScale").range();
+        var cols = rangeColours;//.slice (1,3);
+        // have slightly different saturation/luminance for each colour so shows up in black & white
+        var colourArray = cols.map (function(col, i) {
+            col = d3.hsl(col);
+            col.s = 0.4;// - (0.1 * i);
+            col.l = 0.85;// - (0.1 * i);
+            return col.rgb();
+        });
         
-        // only render background if distances available
-        if (distancesObj) {
-            
-            var rangeDomain = this.colourScaleModel.get("colScale").domain();
-            var min = rangeDomain[0];
-            var max = rangeDomain[1];
-            var rangeColours = this.colourScaleModel.get("colScale").range();
-            var cols = rangeColours;//.slice (1,3);
-            // have slightly different saturation/luminance for each colour so shows up in black & white
-            var colourArray = cols.map (function(col, i) {
-                col = d3.hsl(col);
-                col.s = 0.4;// - (0.1 * i);
-                col.l = 0.85;// - (0.1 * i);
-                return col.rgb();
-            });
-
-            //var distanceMatrix = this.options.matrixObj.distanceMatrix;
-            var seqLengths = this.getSeqLengthData();
-            var seqLengthB = seqLengths.lengthB - 1;    
+        var distanceMatrix = this.options.matrixObj.distanceMatrix;
+        var seqLengths = this.getSeqLengthData();
+        var seqLengthB = seqLengths.lengthB - 1;
         
-            // Get alignment info for chains in the two proteins, filtering to chains that are marked as showable
-            var proteinIDs = this.getCurrentProteinIDs();
-            var alignInfo = proteinIDs.map (function (proteinID, i) {
-                var pid = proteinID.proteinID;
-                var chains = distancesObj.chainMap[pid];
-                if (chains) {
-                    var chainIDs = chains
-                        .filter (function (chain) { return this.chainMayShow (i, chain.index); }, this)
-                        .map (function (chain) { return {proteinID: pid, chainID: chain.index}; })
-                    ;
-                    return this.addAlignIDs (chainIDs);
-                }
-                return [];
-            }, this);
-            //console.log ("ALLL", alignInfo);
+        CLMSUI.times = CLMSUI.times || [];
+        var start = performance.now();
 
-            CLMSUI.times = CLMSUI.times || [];
-            var start = performance.now();
+        //if (sizeData.cx > 0) {
+            var pw = this.canvas.attr("width");
+            var canvasData = ctx.getImageData (0, 0, pw, this.canvas.attr("height"));
+            var cd = canvasData.data;
 
-            
-            // function to draw one matrix according to a pairing of two chains (called in loop later)
-            var drawDistanceMatrix = function (matrixValue, alignInfo1, alignInfo2) {
-                var alignColl = this.model.get("alignColl");
-                var distanceMatrix = matrixValue.distanceMatrix;
-                var pw = this.canvas.attr("width");
-
-                // precalc some stuff that would get recalculatd a lot in the inner loop
-                var preCalcSearchIndices = d3.keys(distanceMatrix[0]).map (function (dIndex) {
-                    return alignColl.getAlignedIndex (+dIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
-                });
-                //console.log ("pcsi", preCalcSearchIndices, this);
-
-                // draw chain values, aligned to search sequence
-                for (var i = 0; i < distanceMatrix.length; i++){
-                    var row = distanceMatrix[i];
-                    var searchIndex1 = alignColl.getAlignedIndex (i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
-                    if (row && searchIndex1 >= 0) {
-                        for (var j = 0, len = row.length; j < len; j++) {   // was seqLength     
-                            var distance = row[j];
-                            if (distance < max) {
-                                var searchIndex2 = preCalcSearchIndices[j];
-                                if (searchIndex2 > 0) {
-                                    var col = colourArray [distance > min ? 1 : 0];
-                                    this.drawPixel (cd, searchIndex1 + ((seqLengthB - searchIndex2) * pw), col.r, col.g, col.b, 255);
-                                    //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
-                                }
-                            }
+            for (var i = 0; i < distanceMatrix.length; i++){
+                var row = distanceMatrix[i];
+                if (row) {
+                    for (var j = 0, len = row.length; j < len; j++){   // was seqLength     
+                        var distance = row[j];
+                        if (distance < max) {
+                            var col = colourArray [distance > min ? 1 : 0];
+                            //var col = distance > min ? colourArray [1] : colourArray[0];
+                            this.drawPixel (cd, i + ((seqLengthB - j) * pw), col.r, col.g, col.b, 255);
+                            //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
                         }
                     }
                 }
-            };
+            }
 
-            // Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
-            var splitChain = function (alignInfo) {
-                var seq = this.model.get("alignColl").get(alignInfo.proteinID).getCompSequence(alignInfo.alignID);
-                var index = seq.convertToRef;
-                var blocks = [];
-                var start = index[0];
-                for (var n = 0; n < index.length - 1; n++) {
-                    if ((index[n+1] - index[n]) > 1) {  // if non-contiguous numbers
-                        blocks.push ({first: start + 1, last: index[n] + 1});
-                        start = index[n + 1];
-                    }
-                }
-                blocks.push ({first: start + 1, last: index [index.length - 1] + 1});
-                return blocks;
-            };
+            ctx.putImageData(canvasData, 0, 0);
+        //}
 
-
-            // Work out blocks for each chain, using routine above
-            var blockMap = {};
-            d3.merge(alignInfo).forEach (function (alignDatum) {
-                blockMap[alignDatum.alignID] = splitChain.call (this, alignDatum);    
-            }, this);
-            //console.log ("blockMap", blockMap);
-
-            // Draw backgrounds for each pairing of chains
-            ctx.fillStyle = this.options.chainBackground;
-            alignInfo[0].forEach (function (alignInfo1) {
-                var blocks1 = blockMap[alignInfo1.alignID];
-
-                alignInfo[1].forEach (function (alignInfo2) {
-                    var blocks2 = blockMap[alignInfo2.alignID];
-
-                    blocks1.forEach (function (brange1) {
-                        blocks2.forEach (function (brange2) {
-                            ctx.fillRect (brange1.first - 1, (seqLengthB - (brange2.last - 1)), brange1.last - brange1.first + 1, brange2.last - brange2.first + 1);
-                        }, this);
-                    }, this);
-
-                }, this);
-            }, this);
-
-            var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
-            var cd = canvasData.data;
-
-            // draw actual content of chain pairings
-            alignInfo[0].forEach (function (alignInfo1) {
-                var chainIndex1 = alignInfo1.chainID;
-                alignInfo[1].forEach (function (alignInfo2) {
-                    var chainIndex2 = alignInfo2.chainID;
-                    var distanceMatrixValue = distancesObj.matrices[chainIndex1+"-"+chainIndex2];
-                    drawDistanceMatrix.call (this, distanceMatrixValue, alignInfo1, alignInfo2);
-                }, this);
-            }, this);
-
-            ctx.putImageData (canvasData, 0, 0);
-
-            var end = performance.now();
-            CLMSUI.times.push (Math.round (end - start));
-            //console.log ("CLMSUI.times", CLMSUI.times);
-        }
+        var end = performance.now();
+        CLMSUI.times.push (Math.round (end - start));
+        //console.log ("CLMSUI.times", CLMSUI.times);
         return this;
     },
         
@@ -695,9 +518,31 @@
         
         var self = this;
         
-        if (this.options.matrixObj) {       
-            var colourScheme = this.model.get("linkColourAssignment");
-            
+        if (this.options.matrixObj) {
+        
+            var canvasNode = this.canvas.node();
+            var ctx = canvasNode.getContext("2d");
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 1;  // 0.5;
+
+            var rangeDomain = this.colourScaleModel.get("colScale").domain();
+            var min = rangeDomain[0];
+            var max = rangeDomain[1];
+            var rangeColours = this.colourScaleModel.get("colScale").range();
+            this.resLinkColours = rangeColours.map (function (col, i) {
+                /*
+                col = d3.hsl(col);
+                col.s = 1 - (i * 0.1);
+                col.l = 0.4 - (i * 0.1);
+                return col.rgb();
+                */
+                return col;
+            });
+            this.resLinkColours.push ("#000");
+
+            var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
+
+            var distanceMatrix = this.options.matrixObj.distanceMatrix;
             var seqLengths = this.getSeqLengthData();
             var seqLengthB = seqLengths.lengthB - 1;
             var xStep = 1;//minDim / seqLengthA;
@@ -708,17 +553,36 @@
             var yLinkWidth = linkWidth * yStep;
 
             var proteinIDs = this.getCurrentProteinIDs();
-
+            var alignIDs = this.getAlignIDs (proteinIDs);
+            var alignColl = this.model.get("alignColl");
+            // only consider crosslinks between the two proteins (often the same one) represented by the two axes
+            // var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
+
             var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
             var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
             
+            var fromToStore = [];
             var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
-                var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
-                return protOK && this.esterFilter (crossLink);
-            }, this);
-            var fromToStore = finalCrossLinks.map (function (crossLink) {
-                return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
+                if ((crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID)) {
+                    var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
+                    // only show those of given ester types if ester filter in place
+                    if (self.filterVal === undefined || est >= self.filterVal) {
+                        var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
+                        var toDir = 1 - fromDir;
+                        // get index of residues within current matrix (chain v chain)
+                        var fromResIndex = alignColl.getAlignedIndex (crossLink.fromResidue, proteinIDs[fromDir].proteinID, false, alignIDs[fromDir]);
+                        var toResIndex = alignColl.getAlignedIndex (crossLink.toResidue, proteinIDs[toDir].proteinID, false, alignIDs[toDir]);
+
+                        // show only those that map to the current matrix - i.e. combination of two chains
+                        if (fromResIndex !== null && toResIndex !== null) {
+                            // 0-index these indices and store them for use next (saves recalcualting them)
+                            fromToStore.push ([fromResIndex - 1, toResIndex - 1]);
+                            return true;
+                        }
+                    }
+                }
+                return false;
             });
             
             
@@ -737,12 +601,57 @@
                     if (high) { return self.options.highlightedColour; }
                     if (selectedCrossLinkIDs.has (d.id)) {
                         return self.options.selectedColour;
-                    }
-                    return colourScheme.getColour (d);
+                    } 
+                    var fromDistArr = distanceMatrix[fromToStore[i][0]];
+                    var dist = fromDistArr ? fromDistArr[fromToStore[i][1]] : undefined;
+                    return self.resLinkColours [dist ? (dist < min ? 0 : (dist < max ? 1 : 2)): 3];
                 })
             ;
+                
+            
+            /*
+            finalCrossLinks.forEach (function (crossLink, i) {      
+                var fromResIndex = fromToStore[i][0];
+                var toResIndex = fromToStore[i][1];
+                var fromDistArr = distanceMatrix[fromResIndex];
+                var dist = fromDistArr ? fromDistArr[toResIndex] : undefined;
+
+                var high = highlightedCrossLinkIDs.has (crossLink.id);
+                if (high) {
+                    ctx.fillStyle = self.options.highlightedColour;
+                }
+                else if (selectedCrossLinkIDs.has (crossLink.id)) {
+                    ctx.fillStyle = self.options.selectedColour;
+                }
+                else if (dist) {
+                    if (dist < min) {
+                        ctx.fillStyle = self.resLinkColours[0];
+                        sasIn++;
+                    }
+                    else if (dist < max) {
+                        ctx.fillStyle = self.resLinkColours[1];
+                        sasMid++;
+                    }
+                    else {
+                        ctx.fillStyle = self.resLinkColours[2];
+                        sasOut++;
+                    }
+                } else {
+                    ctx.fillStyle = self.resLinkColours[3];
+                }
+                ctx.fillRect ((fromResIndex * xStep) - linkWidthOffset, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
+                //if (high) {
+                //     ctx.strokeRect ((fromResIndex * xStep) - linkWidthOffset + 0.5, ((seqLengthB - toResIndex) * yStep) - linkWidthOffset + 0.5, xLinkWidth - 1, yLinkWidth - 1);
+                //}
+                // if same chunk of protein on both axes then show reverse link as well
+                if (proteinIDs[0].chainID === proteinIDs[1].chainID) {
+                    ctx.fillRect ((toResIndex * xStep) - linkWidthOffset, ((seqLengthB - fromResIndex) * yStep) - linkWidthOffset , xLinkWidth, yLinkWidth);
+                }
+            });
+            */
         }
         
+        //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
         return this;
     },
         
@@ -762,8 +671,7 @@
     },
         
     getSeqLengthData: function () {
-        var mObj = this.options.matrixObj;
-        var size = mObj ? [mObj.fromProtein.size, mObj.toProtein.size] : [0, 0];
+        var size = this.options.matrixObj ? this.options.matrixObj.size : [0, 0];
         return {lengthA: size[0], lengthB: size[1]};
     },
     
@@ -804,19 +712,22 @@
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
         this.x
-            .domain([1, sizeData.lengthA + 1])
+            .domain([0, sizeData.lengthA])
             .range([0, diffRatio > 1 ? minDim / diffRatio : minDim])
         ;
 
         // y-scale (inverted domain)
         this.y
-			 .domain([sizeData.lengthB + 1, 1])
+			 .domain([sizeData.lengthB, 0])
 			 .range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
         ;
         
         var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
+        //var tvalues = d3.range (1, sizeData.lengthA - 1).map (function (d) { return d + 0.5; });
+        //console.log ("TVALUES", tvalues);
+        //this.xAxis.tickValues(tvalues).outerTickSize(0);
         this.xAxis.ticks(approxTicks).outerTickSize(0);
-        this.yAxis.ticks (approxTicks).outerTickSize(0);     
+        this.yAxis.ticks (approxTicks).outerTickSize(0);
         
         // then store the current pan/zoom values
         var curt = this.zoomStatus.translate();
@@ -845,7 +756,7 @@
     // Used to do this just on resize, but rectangular areas mean labels often need re-centred on panning
     repositionLabels: function (sizeData) {
         // reposition labels
-        //console.log ("SD", sizeData, this.margin);
+        console.log ("SD", sizeData, this.margin);
         var labelCoords = [
             {x: sizeData.viewWidth / 2, y: sizeData.viewHeight + this.margin.bottom, rot: 0}, 
             {x: -this.margin.left, y: sizeData.viewHeight / 2, rot: -90},
@@ -858,6 +769,10 @@
             })
         ;
         return this;
+    },
+        
+    setAxisRange: function (scale) {
+        
     },
     
     // called when panning and zooming performed
@@ -929,12 +844,39 @@
     downloadSVG2: function () {
         var mainDivSel = d3.select(this.el);
         var svgSel = mainDivSel.selectAll("svg");
+        var viewPort = mainDivSel.select(".viewport");
         var svgArr = [svgSel.node()];
         var svgStrings = CLMSUI.svgUtils.capture (svgArr);
         var detachedSVG = svgStrings[0];
         var detachedSVGD3 = d3.select (detachedSVG);
         
-        // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
+        /*
+        // Add in a defs element to the nested svg. Important that it's the first child.
+        var defs = detachedSVGD3.select("svg>defs");
+        if (defs.empty()) {
+            defs = detachedSVGD3.select("svg").insert("defs", ":first-child");
+        }
+        
+        // Add a rectangular clip to the defs that matches the viewport restriction (top/left not needed)
+        defs.append("clipPath")
+            .attr("id", "matrixClip")
+            .append("rect")
+                .attr ("x", 0)
+                .attr ("y", 0)
+                .attr ("width", Number.parseInt (viewPort.style("width")))
+                .attr ("height", Number.parseInt (viewPort.style("height")))
+        ;
+             
+        // Add an image element to the nested svg, nested itself within a g element that references the above clippath ^^^
+        var img = detachedSVGD3
+            .select("svg g.clipg")
+            .append ("g")
+                .attr("clip-path", "url(#matrixClip)")
+                .append ("svg:image")
+        ;
+        */
+        
+        // Add image to existing clip in svg
         var img = detachedSVGD3
             .select("svg g.clipg")
             .insert ("svg:image", ":first-child")
@@ -949,7 +891,7 @@
         // Now convert the canvas and its data to the image element we just added and download the whole svg when done
         CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
-            download (svgXML, "application/svg", fileName);
+            download (svgXML, 'application/svg', fileName);
         });
     },
         
@@ -957,8 +899,8 @@
         
     optionsToString: function () {
         var matrixObj = this.options.matrixObj;
-        return [matrixObj.fromProtein, matrixObj.toProtein]
-            .map (function (protein) { return protein.name.replace("_", " "); })
+        return [+matrixObj.chain1, +matrixObj.chain2]
+            .map (function (chain) { return this.getLabelText(chain).replace(/\s+/g, ''); }, this)
             .join("-")
         ;
     },

@@ -262,28 +262,36 @@ CLMSUI.utils = {
          }
      }),
     
-    // Routine assumes on click methods are added via backbone definitions
+    // Routine assumes on click methods are added via backbone definitions, though they could be added later with d3
+    // targetDiv is a d3 select element
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button", 
     // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
-    makeBackboneButtons: function (targetDiv, baseID, buttonData) {      
-        targetDiv.selectAll("button")
+    makeBackboneButtons: function (targetDiv, baseID, buttonData) { 
+        var makeID = function (d) { return baseID + d.id; };
+        
+        // Don't make buttons whose id already exists
+        buttonData = buttonData.filter (function (d) {
+            return d3.select("#"+makeID(d)).empty();   
+        });
+        
+        targetDiv.selectAll("button.tempClass")  // .tempClass ensures existing buttons aren't picked up, only new ones created
             .data (buttonData.filter(function(bd) { return bd.type === "button"; }), function(d) { return d.id; })
             .enter()
             .append("button")
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
-                .classed ("btn btn-1 btn-1a", true)
-                .attr("id", function(d) { return baseID + d.id; })
+                .classed ("btn btn-1 btn-1a", true) // and we don't class .temop so these can't be picked up by a subsequent call to make backbonebuttons
+                .attr("id", makeID)
         ;
             
-        var cboxes = targetDiv.selectAll("label")
+        var cboxes = targetDiv.selectAll("label.tempClass")
             .data (buttonData.filter(function(bd) { return bd.type === "checkbox" || bd.type === "radio"; }), function(d) { return d.id; })		
             .enter()		
             .append ("label")		
                 .attr ("class", "btn noBreak")
                 .attr ("title", function(d) { return d.title; })
-                .attr ("id", function(d) { return baseID + d.id; })
+                .attr ("id", makeID)
         ;
         
         cboxes
