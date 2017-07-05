@@ -63,6 +63,13 @@ if (count($_GET) > 0) {
         $lowestScore= (float) $_GET['lowestScore'];
     }
 
+    $accAsId = 0;
+    if (isset($_GET['accAsId'])) {
+        if ($_GET['accAsId'] === '1' || $_GET['accAsId'] === '0')     {
+            $accAsId = (bool) $_GET['accAsId'];
+        }
+    }
+
     //keep the long identifier for this combination of searches
     echo '{"sid":"'.$sid.'",';
 
@@ -355,7 +362,7 @@ if (count($_GET) > 0) {
     }
 
 	$proteinIdField = "hp.protein_id";
-    if (count($searchId_randGroup) > 1) {
+    if (count($searchId_randGroup) > 1 || $accAsId) {
         $proteinIdField = "p.accession_number";
     }
 
@@ -413,7 +420,7 @@ if (count($_GET) > 0) {
          */
 
         $proteinIdField = "id";
-        if (count($searchId_randGroup) > 1) {
+        if (count($searchId_randGroup) > 1  || $accAsId) {
             $proteinIdField = "accession_number";
         }
 
