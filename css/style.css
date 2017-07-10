@@ -106,31 +106,15 @@ tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
 }
 
 /* fa */
-.fa-home{
+.fa-xi {
     font-size:1.5em;
-/*
-    vertical-align:middle;
-*/
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
     transition: all .3s;
     cursor:pointer;
+    padding: 0 1px;
 }
-.fa-home:hover {
-    color: #091D42;
-    background:white;
-}
-.fa-github{
-    font-size:1.5em;
-/*
-    vertical-align:middle;
-*/
-    -webkit-transition: all .3s;
-    -moz-transition: all .3s;
-    transition: all .3s;
-    cursor:pointer;
-}
-.fa-github:hover {
+.fa-xi:hover {
     color: #091D42;
     background:white;
 }
