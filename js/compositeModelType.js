@@ -256,10 +256,14 @@
         // agree map's not needed, prob just Array - cc
         setSelectedProteins: function (idArr, add) {
             var map = add ? new Map (this.get("selectedProtein")) : new Map ();
-            idArr.forEach (function (id) {
-                map.set (id, this.get("clmsModel").get("participants").get(id));    
-            }, this);
-            console.log ("map eq", map == this.get("selectedProtein"));
+            if (add && idArr.length == 1 && map.has(idArr[0])) {// if ctrl/shift click and already selected the remove
+				map.delete(idArr[0]);
+			} else {
+				idArr.forEach (function (id) {
+					map.set (id, this.get("clmsModel").get("participants").get(id));    
+				}, this);
+			}
+            //console.log ("map eq", map == this.get("selectedProtein"));
             // Currently (03/06/16) Maps/Sets don't trigger change functions even for new Objects
             // https://github.com/jashkenas/underscore/issues/2451
             // So need to force change event

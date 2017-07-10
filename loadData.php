@@ -63,6 +63,13 @@ if (count($_GET) > 0) {
         $lowestScore= (float) $_GET['lowestScore'];
     }
 
+    $accAsId = 0;
+    if (isset($_GET['accAsId'])) {
+        if ($_GET['accAsId'] === '1' || $_GET['accAsId'] === '0')     {
+            $accAsId = (bool) $_GET['accAsId'];
+        }
+    }
+
     //keep the long identifier for this combination of searches
     echo '{"sid":"'.$sid.'",';
 
@@ -207,7 +214,8 @@ if (count($_GET) > 0) {
 
     if ($spectrum) {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND spectrum_id = ' . $spectrum . ' ';
-    } else {
+    }
+    else {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
     }
 
@@ -354,7 +362,7 @@ if (count($_GET) > 0) {
     }
 
 	$proteinIdField = "hp.protein_id";
-    if (count($searchId_randGroup) > 1) {
+    if (count($searchId_randGroup) > 1 || $accAsId) {
         $proteinIdField = "p.accession_number";
     }
 
@@ -373,9 +381,7 @@ if (count($_GET) > 0) {
             INNER JOIN (SELECT peptide_id, protein_id, peptide_position
             FROM has_protein WHERE peptide_id IN "
                     .$implodedPepIds.") hp ON pep.id = hp.peptide_id ";
-        //if (count($searchId_randGroup) > 1) {
-            $query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
-        //}
+        $query = $query."INNER JOIN protein p ON hp.protein_id = p.id ";
         $query = $query."GROUP BY pep.id;";
         $startTime = microtime(true);
         $res = pg_query($query) or die('Query failed: ' . pg_last_error());
@@ -414,7 +420,7 @@ if (count($_GET) > 0) {
          */
 
         $proteinIdField = "id";
-        if (count($searchId_randGroup) > 1) {
+        if (count($searchId_randGroup) > 1  || $accAsId) {
             $proteinIdField = "accession_number";
         }
 

@@ -118,7 +118,7 @@
 					},
                     "linkPos1": function(d) { return d.linkPos1; },
                     "linkPos2": function(d) { return d.linkPos2; },
-                    "score": function (d) { return twoZeroPadder (d.score); },
+                    "score": function (d) { return d.score;}, //temp hack//twoZeroPadder (d.score); },
                   
 					"expMZ": function(d) { return massZeroPadder (d.expMZ()); },
 					"expMass": function(d) { return massZeroPadder (d.expMass()); },
