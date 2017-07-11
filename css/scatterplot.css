@@ -1,0 +1,60 @@
+.scatterplotView {
+    display: none;
+    left: 6em;
+    top: 6em;
+    width:500px;
+    height:500px;
+}
+.scatterplotView svg {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    pointer-events: none;
+}
+.scatterplotView text {
+    text-anchor: middle;
+}
+
+.scatterplotView canvas {
+    image-rendering: -moz-crisp-edges;          /* Firefox */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE */
+    image-rendering: pixelated;                 /* Opera 'n' Chrome */
+    -ms-transform-origin: 0 0;
+	-moz-transform-origin: 0 0;
+	-o-transform-origin: 0 0;
+	-webkit-transform-origin: 0 0;
+	transform-origin: 0 0;
+}
+
+/* For svg output */
+.scatterplotView image {
+    image-rendering: -moz-crisp-edges;          /* Firefox */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE */
+    image-rendering: pixelated;                 /* Opera 'n' Chrome */
+}
+
+.scatterplotView .viewDiv {
+    width: auto;
+    height: 100%;
+    /*margin-right: 15em;*/    /* should match width of button column below */
+}
+
+.scatterplotView .buttonColumn {
+    width: 15em;
+    float: right;
+    padding-left: 0.5em;
+    border-left: 1px solid grey;
+}
+
+.scatterplotHeader {
+    text-transform: uppercase;
+}
+
+.viewport {
+    overflow: hidden;
+    position: absolute;
+}
+
+.scatterplotView .toolbar > * {
+    display: inline-block;
+}

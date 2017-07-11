@@ -57,6 +57,7 @@
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
         <link rel="stylesheet" href="./css/filter.css">
+        <link rel="stylesheet" href="./css/scatterplot.css">
         <link rel="stylesheet" href="./css/nglViewBB.css">
         <link rel="stylesheet" href="./css/networkPage.css">
 		<link rel="stylesheet" href="./css/csvUpload.css">
@@ -127,6 +128,7 @@
         <script type="text/javascript" src="./js/validate.js"></script>
         <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
         <script type="text/javascript" src="./js/keyViewBB.js"></script>
+        <script type="text/javascript" src="./js/scatterplotViewBB.js"></script>
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
 		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>

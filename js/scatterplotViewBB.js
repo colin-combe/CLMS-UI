@@ -5,7 +5,7 @@
     
     var CLMSUI = CLMSUI || {};
 
-    CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend ({   
+    CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend ({   
         
     events: function() {
       var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
@@ -28,16 +28,16 @@
             ylabel: "Residue Index 2",
             chartTitle: "Cross-Link Data Scatterplot",
             background: "white",
-            matrixObj: null,
             selectedColour: "#ff0",
             highlightedColour: "#f80",
         };
         
         var scatterOptions = [
-            {func: function(c) { return c.filteredMatches_pp.length; }, label: "Match Count"},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.precursorCharge; }); }, label: "Precursor Charge"},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.score; }); }, label: "Match Score"},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.precursorCharge; }); }, label: "Precursor MZ" },
+            {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Match Count"},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Precursor Charge"},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score"},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Precursor MZ" },
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "calculated Mass" },
         ];
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -54,7 +54,7 @@
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
         //avoids prob with 'save - web page complete'
-        var mainDivSel = d3.select(this.el); 
+        var mainDivSel = d3.select(this.el).classed("scatterplotView", true); 
         
         var flexWrapperPanel = mainDivSel.append("div")
             .attr ("class", "verticalFlexContainer")
@@ -72,7 +72,7 @@
                         .datum()
                     ;
                     self
-                        .axisChosen (d, selectedDatum.func)
+                        .axisChosen ()
                         .render()
                     ;
                 })
@@ -111,25 +111,20 @@
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         ;
         
-        
-        // Add clippable and pan/zoomable viewport made of two group elements
-        this.clipGroup = this.vis.append("g")
-            .attr("class", "clipg")
-        ;
-        
+        this.scatg = this.vis.append("g");
         
         // Axes setup
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
         this.yAxis = d3.svg.axis().scale(this.y).orient("left");
         
         this.vis.append("g")
-			 .attr("class", "y axis")
-			 //.call(self.yAxis)
+            .attr("class", "y axis")
+            //.call(self.yAxis)
         ;
         
         this.vis.append("g")
-			 .attr("class", "x axis")
-			 //.call(self.xAxis)
+            .attr("class", "x axis")
+            //.call(self.xAxis)
         ;
         
         
@@ -159,33 +154,51 @@
     },
         
     relayout: function () {
-        this.resize();
+        this.render();
         return this;
     },
         
         
     getData: function (func) {
-        d3.selectAll("")  
+        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
+        var data = filteredCrossLinks.map (function (c) {
+            return func ? func (c) : [undefined];
+        });
+        return data;
+    },
+        
+    getAxisData: function (axisLetter) {
+        var funcMeta;
+        
+        var selects = this.controlDiv
+            .selectAll("select")
+                .filter(function(d) { return d === axisLetter; })
+                .selectAll("option")
+                .filter(function() { return d3.select(this).property("selected"); })
+                .each (function (d, i) {
+                    funcMeta = d;
+                })
+        ;     
+        
+        var data = this.getData (funcMeta ? funcMeta.func : undefined);
+        return {label: funcMeta ? funcMeta.label : "?", data: data};
     },
         
  
         
-    axisChosen: function (key) {
-        var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        console.log ("DISTANCES OBJ", distancesObj);
-        this.options.matrixObj = distancesObj.matrices[key];
+    axisChosen: function () { 
+        var datax = this.getAxisData ("X");
+        var datay = this.getAxisData ("Y");
         
-        var seqLengths = this.getSeqLengthData();
-        this.x.domain([0, seqLengths.lengthA]);
-        this.y.domain([seqLengths.lengthB, 0]);   
-        
-        console.log ("SEQ LEN", seqLengths);
+        var domX = d3.extent (d3.merge (datax.data));
+        var domY = d3.extent (d3.merge (datay.data));
+        console.log ("data", datax, datay, domX, domY);
+        this.x.domain (domX);
+        this.y.domain (domY);   
         
         // Update x/y labels and axes tick formats
-        //this.xAxis.tickFormat ("this.curriedAlignedIndexAxisFormat (protIDs[0].proteinID, alignIDs[0], this, 0)");
-        //this.yAxis.tickFormat (this.curriedAlignedIndexAxisFormat (protIDs[1].proteinID, alignIDs[1], this, 0));
-        this.vis.selectAll("g.label text").data(["X", "Y"])
-            .text (function(d) { return d.labelText; })
+        this.vis.selectAll("g.label text").data([datax, datay])
+            .text (function(d) { return d.label; })
         ;
         
         return this;
@@ -277,16 +290,18 @@
    
     
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.matrixObj) {
-            console.log ("MATRIX RENDER");
+        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            console.log ("SCATTERPLOT RENDER");
 
             // make underlying canvas big enough to hold 1 pixel per possible residue pair
             // it gets rescaled in the resize function to fit a particular size on the screen
+            /*
             var seqLengths = this.getSeqLengthData();
             this.canvas
                 .attr("width",  seqLengths.lengthA)
                 .attr("height", seqLengths.lengthB)
             ;
+            */
             this
                 .resize()
                 .renderCrossLinks ()
@@ -299,97 +314,64 @@
     renderCrossLinks: function () {
         
         var self = this;
-        
-        if (this.options.matrixObj) {
-        
-            var canvasNode = this.canvas.node();
-            var ctx = canvasNode.getContext("2d");
-            ctx.strokeStyle = "#000";
-            ctx.lineWidth = 1;  // 0.5;
+        var colourScheme = this.model.get("linkColourAssignment");
 
-            var rangeDomain = this.colourScaleModel.get("colScale").domain();
-            var min = rangeDomain[0];
-            var max = rangeDomain[1];
-            var rangeColours = this.colourScaleModel.get("colScale").range();
-            this.resLinkColours = rangeColours.map (function (col, i) {
-                /*
-                col = d3.hsl(col);
-                col.s = 1 - (i * 0.1);
-                col.l = 0.4 - (i * 0.1);
-                return col.rgb();
-                */
-                return col;
-            });
-            this.resLinkColours.push ("#000");
-
-            var sasIn = 0, sasMid = 0, sasOut = 0, eucIn = 0, eucMid = 0, eucOut = 0;
-
-            var distanceMatrix = this.options.matrixObj.distanceMatrix;
-            var seqLengths = this.getSeqLengthData();
-            var seqLengthB = seqLengths.lengthB - 1;
-            var xStep = 1;//minDim / seqLengthA;
-            var yStep = 1;//minDim / seqLengthB;
-            var linkWidth = 3;
-            var linkWidthOffset = (linkWidth - 1) / 2;
-            var xLinkWidth = linkWidth * xStep;
-            var yLinkWidth = linkWidth * yStep;
-
-            var proteinIDs = this.getCurrentProteinIDs();
-            var alignIDs = this.getAlignIDs (proteinIDs);
-            var alignColl = this.model.get("alignColl");
-            // only consider crosslinks between the two proteins (often the same one) represented by the two axes
-            // var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
-
             var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
             var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
-            
-            var fromToStore = [];
-            var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
-                if ((crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID)) {
-                    var est = CLMSUI.modelUtils.getEsterLinkType (crossLink);
-                    // only show those of given ester types if ester filter in place
-                    if (self.filterVal === undefined || est >= self.filterVal) {
-                        var fromDir = (crossLink.fromProtein.id === proteinIDs[0].proteinID) ? 0 : 1;
-                        var toDir = 1 - fromDir;
-                        // get index of residues within current matrix (chain v chain)
-                        var fromResIndex = alignColl.getAlignedIndex (crossLink.fromResidue, proteinIDs[fromDir].proteinID, false, alignIDs[fromDir]);
-                        var toResIndex = alignColl.getAlignedIndex (crossLink.toResidue, proteinIDs[toDir].proteinID, false, alignIDs[toDir]);
 
-                        // show only those that map to the current matrix - i.e. combination of two chains
-                        if (fromResIndex !== null && toResIndex !== null) {
-                            // 0-index these indices and store them for use next (saves recalcualting them)
-                            fromToStore.push ([fromResIndex - 1, toResIndex - 1]);
-                            return true;
-                        }
-                    }
+            var datax = this.getAxisData ("X");
+            var datay = this.getAxisData ("Y");
+        
+        
+        
+            var coords = datax.data.map (function (xd,i) {
+                var yd = datay.data[i];
+                if (xd.length === 1) {
+                    return yd.map (function (d) {
+                        return [xd[0], d];
+                    })
                 }
-                return false;
-            });
-            
-            
-            var linkSel = this.zoomGroup.selectAll("rect.crossLink").data(finalCrossLinks, function(d) { return d.id; });
-            linkSel.exit().remove();
-            linkSel.enter().append("rect")
-                .attr ("class", "crossLink")
-                .attr ("width", xLinkWidth)
-                .attr ("height", yLinkWidth)
-            ;
-            linkSel
-                .attr("x", function(d, i) { return fromToStore[i][0] - linkWidthOffset; })
-                .attr("y", function(d, i) { return (seqLengthB - fromToStore[i][1]) - linkWidthOffset; })
-                .style ("fill", function (d, i) {
-                    var high = highlightedCrossLinkIDs.has (d.id);
-                    if (high) { return self.options.highlightedColour; }
-                    if (selectedCrossLinkIDs.has (d.id)) {
-                        return self.options.selectedColour;
-                    } 
-                    var fromDistArr = distanceMatrix[fromToStore[i][0]];
-                    var dist = fromDistArr ? fromDistArr[fromToStore[i][1]] : undefined;
-                    return self.resLinkColours [dist ? (dist < min ? 0 : (dist < max ? 1 : 2)): 3];
+                if (yd.length === 1) {
+                    return xd.map (function (d) {
+                        return [d, yd[0]];
+                    })
+                }
+                return xd.map (function (d,i) {
+                    return [d, yd[i]];
                 })
+            });
+        
+            console.log ("coords", datax, datay, coords);
+
+            var linkSel = this.scatg.selectAll("g.crossLinkGroup").data (filteredCrossLinks, function(d) { return d.id; });
+            linkSel.exit().remove();
+            linkSel.enter().append("g")
+                .attr ("class", "crossLinkGroup")
             ;
-        }
+            linkSel.style ("fill", function (d) {
+                if (highlightedCrossLinkIDs.has (d.id)) { 
+                    return self.options.highlightedColour;
+                }
+                if (selectedCrossLinkIDs.has (d.id)) {
+                    return self.options.selectedColour;
+                } 
+                return colourScheme.getColour (d);
+            });
+        
+            var matchSel = linkSel.selectAll("rect.datapoint").data (function(d,i) { return coords[i]; });
+        
+            matchSel.exit().remove();
+            matchSel.enter().append("rect")
+                .attr ("class", "datapoint")
+                .attr ("width", 2)
+                .attr ("height", 2)
+            ;
+        
+            matchSel
+                .attr("x", function(d, i) { return self.x (d[0]); })
+                .attr("y", function(d, i) { return self.y (d[1]); })
+            ;
         
         //console.log("res sas", {in: sasIn, mid: sasMid, out: sasOut}, "euc", {in: eucIn, mid: eucMid, out: eucOut});
         return this;
@@ -405,85 +387,40 @@
         //its going to be square and fit in containing div
         var minDim = Math.min (width, height);
         
-        var sizeData = this.getSeqLengthData();
-        $.extend (sizeData, {cx: cx, cy: cy, width: width, height: height, minDim: minDim,});
-        return sizeData;
+        return {cx: cx, cy: cy, width: width, height: height, minDim: minDim,};
     },
     
     // called when things need repositioned, but not re-rendered from data
     resize: function () {
         
-        console.log ("matrix resize");
         var sizeData = this.getSizeData(); 
-        var minDim = sizeData.minDim;
-        var deltaz = this.last ? (minDim / this.last) : 1;
-        //console.log ("deltaz", deltaz);
-        this.last = minDim;
-        		
-        // fix viewport new size, previously used .attr, but then setting the size on the child canvas element expanded it, some style trumps attr thing
-        
-        var widthRatio = minDim / sizeData.lengthA;
-        var heightRatio = minDim / sizeData.lengthB;
-        var minRatio = Math.min (widthRatio, heightRatio);
-        var maxRatio = Math.max (widthRatio, heightRatio);
-        var diffRatio = widthRatio / heightRatio;
-        //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, maxRatio, diffRatio);
-        
-        var viewPort = d3.select(this.el).select(".viewport");
-        viewPort
-            .style("width",  minDim+"px")
-            .style("height", minDim+"px")
-            //.style("width",  sizeData.width+"px")
-            //.style("height", sizeData.height+"px")
-        ;
-        
-        d3.select(this.el).select("#matrixClip > rect")
-            .attr ("width", minDim)
-            .attr ("height", minDim)
-        ;
-        
-        
- 
-        // Need to rejig x/y scales and d3 translate coordinates if resizing
-        // set x/y scales to full domains and current size (range)
-        this.x
-            .domain([0, sizeData.lengthA])
-            .range([0, diffRatio > 1 ? minDim / diffRatio : minDim])
-        ;
+
+        this.vis
+            .style("width",  sizeData.width+"px")
+            .style("height", sizeData.height+"px")
+        ;      
+
+        this.x.range([0, sizeData.width]);
 
         // y-scale (inverted domain)
-        this.y
-			 .domain([sizeData.lengthB, 0])
-			 .range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
+        this.y.range([sizeData.height, 0]);
+
+        this.xAxis.ticks (Math.round (sizeData.width / 50)).outerTickSize(0);
+        this.yAxis.ticks (Math.round (sizeData.height / 50)).outerTickSize(0);
+        
+        var self = this;
+        
+        this.vis.select(".y")
+            .call(self.yAxis)
         ;
         
-        var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
-        //var tvalues = d3.range (1, sizeData.lengthA - 1).map (function (d) { return d + 0.5; });
-        //console.log ("TVALUES", tvalues);
-        //this.xAxis.tickValues(tvalues).outerTickSize(0);
-        this.xAxis.ticks(approxTicks).outerTickSize(0);
-        this.yAxis.ticks (approxTicks).outerTickSize(0);
+        this.vis.select(".x")
+            //.attr("transform", "translate(0," + sizeData.viewHeight + ")")
+            .attr("transform", "translate(0," + sizeData.height + ")")
+            .call(self.xAxis)
+        ;
         
-        // then store the current pan/zoom values
-        var curt = this.zoomStatus.translate();
-        var curs = this.zoomStatus.scale();
-        
-        // reset reference x and y scales in zoomStatus object to be x and y scales above
-        this.zoomStatus.x(this.x).y(this.y);
-
-        // modify translate coordinates by change (delta) in display size
-        curt[0] *= deltaz;
-        curt[1] *= deltaz;
-        // feed current pan/zoom values back into zoomStatus object
-        // (as setting .x and .y above resets them inside zoomStatus)
-        // this adjusts domains of x and y scales
-        this.zoomStatus.scale(curs).translate(curt);
-        
-        // Basically the point is to readjust the axes when the display space is resized, but preserving their current zoom/pan settings
-        // separately from the scaling due to the resizing
-        
-        // pan/zoom canvas
-        this.panZoom ();   
+        this.repositionLabels (sizeData);
         
         return this;
     },
@@ -493,9 +430,9 @@
         // reposition labels
         console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.viewWidth / 2, y: sizeData.viewHeight + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.viewHeight / 2, rot: -90},
-            {x: sizeData.viewWidth / 2, y: 0, rot: 0}
+            {x: sizeData.width / 2, y: sizeData.height + this.margin.bottom, rot: 0}, 
+            {x: -this.margin.left, y: sizeData.height / 2, rot: -90},
+            {x: sizeData.width / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
             .data (labelCoords)

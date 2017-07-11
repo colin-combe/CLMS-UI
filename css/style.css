@@ -521,7 +521,7 @@ span.noBreak select {
 }
 
 /* and then put spaces after labels to give a known place for content to break */
-label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before, .matrixView label.btn::before {
+label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before, .matrixView label.btn::before, .scatterplotView label.btn::before {
     content: " ";
 }
 

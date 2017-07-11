@@ -800,8 +800,6 @@
             .attr ("width", minDim)
             .attr ("height", minDim)
         ;
-        
-        
  
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
