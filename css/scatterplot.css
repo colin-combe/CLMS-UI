@@ -5,12 +5,13 @@
     width:500px;
     height:500px;
 }
+
 .scatterplotView svg {
     height: 100%;
     width: 100%;
     position: absolute;
-    pointer-events: none;
 }
+
 .scatterplotView text {
     text-anchor: middle;
 }
@@ -57,4 +58,8 @@
 
 .scatterplotView .toolbar > * {
     display: inline-block;
+}
+
+.scatterplotBackground {
+    fill: #ddd;
 }

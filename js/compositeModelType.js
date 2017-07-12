@@ -159,7 +159,7 @@
             return this;
         },
 
-        getFilteredCrossLinks: function (type) {
+        getFilteredCrossLinks: function (type) {    // if type of crosslinks not declared, make it 'targets' by default
             return this.filteredXLinks[type || "targets"];
         },
         
