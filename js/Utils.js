@@ -404,6 +404,7 @@ CLMSUI.utils = {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }
 
+
             return this;
         },
 

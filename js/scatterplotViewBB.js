@@ -48,7 +48,7 @@
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
             right:  20,
-            bottom: this.options.xlabel ? 35 : 25,
+            bottom: this.options.xlabel ? 40 : 25,
             left:   this.options.ylabel ? 70 : 50
         };
         
@@ -162,7 +162,38 @@
                 .text(function(d) { return d.text; })
                 .attr("dy", function(d) { return d.dy; })
         ;
-         
+        
+        // Brush
+        var brushEnded = function () {
+            var xData = self.getAxisData ("X", true).data;
+            var yData = self.getAxisData ("Y", true).data;
+            var filteredCrossLinks = self.model.getFilteredCrossLinks ();
+            var extent = self.brush.extent();
+            var selectLinks = filteredCrossLinks.filter (function (link, i) {
+                var xDatum = xData[i];
+                var yDatum = yData[i];
+                var bool = xDatum && xDatum.some (function (xd) {
+                    return xd >= extent[0][0] && xd <= extent[1][0];
+                });
+                bool = bool && yDatum && yDatum.some (function (yd) {
+                    return yd >= extent[0][1] && yd <= extent[1][1];
+                });
+                return bool;
+            });
+            
+            var add = d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey;
+            self.model.calcMatchingCrosslinks ("selection", selectLinks, true, add);
+        };
+        this.brush = d3.svg.brush()
+            .x(self.x)
+            .y(self.y)
+            .on("brushend", brushEnded)
+        ;
+        this.scatg.append("g")
+            .attr("class", "brush")
+            .call(self.brush)
+        ;
+        
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
         this.listenTo (this.model, "change:highlights", this.recolourCrossLinks);
@@ -185,9 +216,10 @@
         return this;
     },
         
-        
-    getData: function (func, filteredFlag) {
-        var crossLinks = filteredFlag ? this.model.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks"));
+    getData: function (func, filteredFlag, optionalLinks) {
+        var crossLinks = optionalLinks ? optionalLinks : 
+            (filteredFlag ? this.model.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
+        ;
         var data = crossLinks.map (function (c) {
             return func ? func (c) : [undefined];
         });
@@ -210,9 +242,9 @@
         return funcMeta;
     },
         
-    getAxisData: function (axisLetter, filteredFlag) {
+    getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
-        var data = this.getData (funcMeta ? funcMeta.func : undefined, filteredFlag);
+        var data = this.getData (funcMeta ? funcMeta.func : undefined, filteredFlag, optionalLinks);
         return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased};
     },
         
@@ -248,23 +280,10 @@
             .text (function(d) { return d.label; })
         ;
         
+        this.brush.clear();
+        
         return this;
     }, 
-        
-    selectNeighbourhood: function (evt) {
-        // To stop this being run after a drag, make sure click co-ords are with sqrt(X) pixels of original mousedown co-ords
-        this.startPoint = this.startPoint || {x: -10, y: -10};
-        var mouseMovement = Math.pow ((evt.clientX - this.startPoint.x), 2) + Math.pow ((evt.clientY - this.startPoint.y), 2);
-        this.startPoint = {x: -10, y: -10};
-        if (mouseMovement <= 0) {   // Zero tolerance
-            var xy = this.convertEvtToXY (evt);
-            var add = evt.ctrlKey || evt.shiftKey;  // should this be added to current selection?
-            var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
-            var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });   
-            this.model.calcMatchingCrosslinks ("selection", crossLinks, false, add);
-            //this.model.set ("selection", crossLinks);
-        }
-    },
         
     // Brush neighbourhood and invoke tooltip
     brushNeighbourhood: function (evt) {
@@ -285,8 +304,9 @@
                 axisLabels.push (d3.select(this).text());
             })
         ;
+        var commaFormat = d3.format(",");
         var vals = [this.x.invert(CLMSUI.utils.crossBrowserElementX(evt)), this.y.invert(CLMSUI.utils.crossBrowserElementY(evt))];
-        var niceVals = vals.map (function (v) { return d3.round (v); });
+        var niceVals = vals.map (function (v) { return commaFormat (d3.round (v)); });
         var tooltipData = axisLabels.map (function (axisLabel, i) {
             return [axisLabel, niceVals[i]];    
         });
@@ -330,26 +350,36 @@
             var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
             var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
             
-            var linkSel = this.scatg.selectAll("g.crossLinkGroup").data (filteredCrossLinks, function(d) { return d.id; });
+            var radixSortBuckets = [[],[],[]]; // 3 groups
+            filteredCrossLinks.forEach (function (link) {
+                var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
+                radixSortBuckets[bucketIndex].push (link);
+            });
+            filteredCrossLinks = d3.merge (radixSortBuckets);
+            
+            var linkSel = this.scatg.selectAll("g.crossLinkGroup")
+                .data (filteredCrossLinks, function(d) { return d.id; })
+                .order()
+            ;
             linkSel.exit().remove();
             linkSel.enter().append("g")
                 .attr ("class", "crossLinkGroup")
             ;
-            linkSel.style ("fill", function (d) {
-                if (highlightedCrossLinkIDs.has (d.id)) { 
-                    return self.options.highlightedColour;
-                }
-                if (selectedCrossLinkIDs.has (d.id)) {
-                    return self.options.selectedColour;
-                } 
-                return colourScheme.getColour (d);
+            linkSel.each (function (d) {
+                var high = highlightedCrossLinkIDs.has (d.id);
+                var selected = selectedCrossLinkIDs.has (d.id);
+                d3.select(this)
+                    .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
+                    .style ("stroke", high || selected ? "black" : null)
+                    .style ("stroke-opacity", high || selected ? 0.4 : null)
+                ;
             });
             
             
             if (!options.recolourOnly) {
                 var jitter = this.options.jitter;
-                var datax = this.getAxisData ("X", true);
-                var datay = this.getAxisData ("Y", true);
+                var datax = this.getAxisData ("X", true, filteredCrossLinks);
+                var datay = this.getAxisData ("Y", true, filteredCrossLinks);
 
                 var coords = datax.data.map (function (xd, i) {
                     var yd = datay.data[i];
@@ -374,15 +404,15 @@
                     return pairs;
                 });
 
-                console.log ("coords", datax, datay, coords);
+                //console.log ("coords", datax, datay, coords);
 
                 var matchSel = linkSel.selectAll("rect.datapoint").data (function(d,i) { return coords[i]; });
 
                 matchSel.exit().remove();
                 matchSel.enter().append("rect")
                     .attr ("class", "datapoint")
-                    .attr ("width", 2)
-                    .attr ("height", 2)
+                    .attr ("width", 3)
+                    .attr ("height", 3)
                 ;
 
                 matchSel
@@ -425,26 +455,30 @@
             .style("width",  sizeData.width+"px")
             .style("height", sizeData.height+"px")
         ;      
-        this.scatg.select("rect")
-            .style("width",  sizeData.width+"px")
-            .style("height", sizeData.height+"px")
+        this.scatg.select(".scatterplotBackground")
+            .attr("width",  sizeData.width)
+            .attr("height", sizeData.height)
         ;    
 
+        var extent = this.brush.extent(); // extent saved before x and y ranges updated
+        
         this.x.range([0, sizeData.width]);
         this.y.range([sizeData.height, 0]); // y-scale (inverted domain)
+        
+        // https://stackoverflow.com/questions/32720469/d3-updating-brushs-scale-doesnt-update-brush
+        this.brush.extent (extent); // old extent restored
+        this.scatg.select(".brush").call(this.brush);   // recall brush binding so background rect is resized and brush redrawn
 
         this.xAxis.ticks (Math.round (sizeData.width / 40)).outerTickSize(0);
         this.yAxis.ticks (Math.round (sizeData.height / 40)).outerTickSize(0);
         
-        var self = this;
-        
         this.vis.select(".y")
-            .call(self.yAxis)
+            .call(this.yAxis)
         ;
         
         this.vis.select(".x")
             .attr("transform", "translate(0," + sizeData.height + ")")
-            .call(self.xAxis)
+            .call(this.xAxis)
         ;
         
         this
@@ -459,7 +493,7 @@
     repositionLabels: function (sizeData) {
         // reposition labels
         var labelCoords = [
-            {x: sizeData.width / 2, y: sizeData.height + this.margin.bottom, rot: 0}, 
+            {x: sizeData.width / 2, y: sizeData.height + this.margin.bottom - 5, rot: 0}, 
             {x: -this.margin.left, y: sizeData.height / 2, rot: -90},
             {x: sizeData.width / 2, y: 0, rot: 0}
         ];

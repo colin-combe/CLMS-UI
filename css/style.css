@@ -584,3 +584,7 @@ A.btn {
     fill: #ddd;
     stroke: none;
 }
+
+.label {
+    text-shadow: 0 0 6px white;
+}

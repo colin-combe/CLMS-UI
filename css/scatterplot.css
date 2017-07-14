@@ -51,11 +51,6 @@
     text-transform: uppercase;
 }
 
-.viewport {
-    overflow: hidden;
-    position: absolute;
-}
-
 .scatterplotView .toolbar > * {
     display: inline-block;
 }
@@ -63,3 +58,17 @@
 .scatterplotBackground {
     fill: #ddd;
 }
+
+.scatterplotView .brush .extent {
+  fill-opacity: 0.2; 
+}
+
+/*
+.scatterplotView text {
+    fill: #888;
+}
+
+.scatterplotView .tick line, .scatterplotView .tick path {
+    stroke: #888;
+}
+*/

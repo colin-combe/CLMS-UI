@@ -41,8 +41,8 @@
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
             right:  20,
-            bottom: this.options.xlabel ? 45 : 25,
-            left:   this.options.ylabel ? 70 : 50
+            bottom: this.options.xlabel ? 40 : 25,
+            left:   this.options.ylabel ? 60 : 40
         };
         
         this.displayEventName = viewOptions.displayEventName;
@@ -723,8 +723,17 @@
                 return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
             });
             
-            
-            var linkSel = this.zoomGroup.selectAll("rect.crossLink").data(finalCrossLinks, function(d) { return d.id; });
+            var radixSortBuckets = [[],[],[]]; // 3 groups
+            finalCrossLinks.forEach (function (link) {
+                var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
+                radixSortBuckets[bucketIndex].push (link);
+            });
+            finalCrossLinks = d3.merge (radixSortBuckets);
+                       
+            var linkSel = this.zoomGroup.selectAll("rect.crossLink")
+                .data(finalCrossLinks, function(d) { return d.id; })
+                .order()
+            ;
             linkSel.exit().remove();
             linkSel.enter().append("rect")
                 .attr ("class", "crossLink")
@@ -734,13 +743,14 @@
             linkSel
                 .attr("x", function(d, i) { return fromToStore[i][0] - linkWidthOffset; })
                 .attr("y", function(d, i) { return (seqLengthB - fromToStore[i][1]) - linkWidthOffset; })
-                .style ("fill", function (d, i) {
+                .each (function (d) {
                     var high = highlightedCrossLinkIDs.has (d.id);
-                    if (high) { return self.options.highlightedColour; }
-                    if (selectedCrossLinkIDs.has (d.id)) {
-                        return self.options.selectedColour;
-                    }
-                    return colourScheme.getColour (d);
+                    var selected = selectedCrossLinkIDs.has (d.id);
+                    d3.select(this)
+                        .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
+                        .style ("stroke", high || selected ? "black" : null)
+                        .style ("stroke-opacity", high || selected ? 0.4 : null)
+                    ;
                 })
             ;
         }
@@ -847,7 +857,7 @@
         // reposition labels
         //console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.viewWidth / 2, y: sizeData.bottom + this.margin.bottom, rot: 0}, 
+            {x: sizeData.viewWidth / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
             {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
             {x: sizeData.viewWidth / 2, y: 0, rot: 0}
         ];
