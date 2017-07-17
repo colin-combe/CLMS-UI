@@ -162,11 +162,6 @@ CLMSUI.utils = {
         }
     }),
 
-    dpNumber: function (num, decimalPlaces, roundFunc) {
-        var powerOfTen = Math.pow (10, decimalPlaces);
-        return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
-    },
-
     niceRoundMap: {1: 1, 2: 2, 3: 3, 4: 5, 5: 5, 6: 10, 7: 10, 8: 10, 9: 10, 10: 10},
 
     niceRound: function (val) {
@@ -377,6 +372,7 @@ CLMSUI.utils = {
             // and dragend not supported by zepto, fallback to d3 instead (see later)
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
             "click .downloadButton": "downloadSVG",
+            "click .downloadButton2": "downloadSVGWithCanvas",
             "click .closeButton": "hideView",
             "click": "bringToTop",
         },
@@ -425,8 +421,44 @@ CLMSUI.utils = {
             
             var fileName = this.filenameStateString().substring (0,240);
             download (svgXML, 'application/svg', fileName+".svg");
-            //download (svgXML, 'application/svg', "view.svg");
         },
+
+        canvasImageParent: "svg",
+        
+        /**
+        Called when we need to change a canvas element to an image to add to a cloned svg element we download.
+        Needs canvasImageParent set to decide where to place it in an svg (e.g. for matrix we put it in a g with a clipPath)
+        And add an extra css rule after the style element's already been generated to try and stop the image anti-aliasing
+        */
+        downloadSVGWithCanvas: function () {
+            var mainDivSel = d3.select(this.el);
+            var svgSel = mainDivSel.selectAll("svg");
+            var svgArr = [svgSel.node()];
+            var svgStrings = CLMSUI.svgUtils.capture (svgArr);
+            var detachedSVG = svgStrings[0];
+            var detachedSVGD3 = d3.select (detachedSVG);
+            var self = this;
+
+            // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
+            var img = detachedSVGD3
+                .select(self.canvasImageParent)  // where to add image
+                .insert ("svg:image", ":first-child")
+            ;
+
+            // Add a rule to stop the image being anti-aliased (i.e. blurred)
+            img.attr("class", "sharpImage");
+            var extraRule = "image.sharpImage {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
+            var style = detachedSVGD3.select("style");
+            style.text (style.text() + "\n" + extraRule);
+
+            var fileName = this.filenameStateString()+".svg";
+            // Now convert the canvas and its data to the image element we just added and download the whole svg when done
+            CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
+                var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
+                download (svgXML, "application/svg", fileName);
+            });
+        },
+        
 
         hideView: function () {
             CLMSUI.vent.trigger (this.displayEventName, false);

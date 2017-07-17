@@ -14,6 +14,8 @@
       }
       return _.extend({},parentEvents,{
         "mousemove .scatterplotBackground": "doTooltip",
+        "mousemove .background": "doTooltip",
+        "mousemove .extent": "doTooltip",
         "click .jitter": "toggleJitter",
       });
     },
@@ -29,18 +31,19 @@
             chartTitle: "Cross-Link Data Scatterplot",
             selectedColour: "#ff0",
             highlightedColour: "#f80",
+            background: "#e0e0e0",
             jitter: true,
         };
         
         var scatterOptions = [
-            {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Match Count"},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score"},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Precursor MZ" },
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Precursor Charge"},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Calculated Mass" },
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Mass Error" },
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Smaller Peptide Length" },
-            {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Distance" },
+            {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Match Count", decimalPlaces: 0},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Precursor MZ", decimalPlaces: 4},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Precursor Charge", decimalPlaces: 0},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Calculated Mass", decimalPlaces: 4},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Mass Error", decimalPlaces: 4},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Smaller Peptide Length", decimalPlaces: 0},
+            {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Distance", decimalPlaces: 2},
         ];
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -67,7 +70,7 @@
         
         // Add download button
         var buttonData = [
-            {class: "downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
+            {class: "downloadButton2", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
@@ -106,12 +109,21 @@
         // Add the scatterplot and axes
         var chartDiv = flexWrapperPanel.append("div")
             .attr("class", "panelInner")
-            .attr ("flex-grow", 1)
+            .attr("flex-grow", 1)
             .style("position", "relative")
         ;      
         
         var viewDiv = chartDiv.append("div")
             .attr("class", "viewDiv")
+        ;
+        
+                
+        // Canvas
+        this.canvas = viewDiv.append("div")
+            .style("position", "absolute")
+            .style("transform", "translate(" + this.margin.left + "px," + this.margin.top + "px)")
+            .append ("canvas")  
+            .style("transform", "translate(0px,0px)")
         ;
        
         // Scales
@@ -124,11 +136,12 @@
         this.vis = this.svg.append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         ;
-        
+
         this.scatg = this.vis.append("g");
-        this.scatg.append("rect")
-            .attr ("class", "scatterplotBackground")
-        ;
+        //this.scatg.append("rect")
+        //    .attr ("class", "scatterplotBackground")
+        //;
+    
         
         // Axes setup
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
@@ -216,6 +229,10 @@
         return this;
     },
         
+    brushEnded: function () {
+                           
+    },
+        
     getData: function (func, filteredFlag, optionalLinks) {
         var crossLinks = optionalLinks ? optionalLinks : 
             (filteredFlag ? this.model.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
@@ -298,17 +315,14 @@
     },
         
     doTooltip: function (evt) {
-        var axisLabels = [];
-        d3.select(this.el).selectAll("g.label text.axis")
-            .each (function () {
-                axisLabels.push (d3.select(this).text());
-            })
-        ;
+        var axesData = ["X", "Y"].map (function (axisDir) {
+            return this.getSelectedOption (axisDir);    
+        }, this);
         var commaFormat = d3.format(",");
         var vals = [this.x.invert(CLMSUI.utils.crossBrowserElementX(evt)), this.y.invert(CLMSUI.utils.crossBrowserElementY(evt))];
-        var niceVals = vals.map (function (v) { return commaFormat (d3.round (v)); });
-        var tooltipData = axisLabels.map (function (axisLabel, i) {
-            return [axisLabel, niceVals[i]];    
+        var tooltipData = axesData.map (function (axisData, i) {
+            var val = commaFormat (d3.round (vals[i], axisData.decimalPlaces));
+            return [axisData.label, val];    
         });
         
          this.model.get("tooltipModel")
@@ -357,6 +371,34 @@
             });
             filteredCrossLinks = d3.merge (radixSortBuckets);
             
+            var makeCoords = function (datax, datay) {
+                return datax.data.map (function (xd, i) {
+                    var yd = datay.data[i];
+                    var pairs;
+                    if (xd.length === 1) {
+                        pairs = yd.map (function (d) {
+                            return [xd[0], d];
+                        });
+                    }
+                    else if (yd.length === 1) {
+                        pairs = xd.map (function (d) {
+                            return [d, yd[0]];
+                        });
+                    }
+                    else {
+                        pairs = xd.map (function (d,i) {
+                            return [d, yd[i]];
+                        });
+                    }
+                    
+                    // get rid of pairings where one of the values is undefined
+                    return pairs.filter (function (pair) {
+                        return pair[0] !== undefined && pair[1] !== undefined;
+                    });
+                });
+            };
+            
+            /*
             var linkSel = this.scatg.selectAll("g.crossLinkGroup")
                 .data (filteredCrossLinks, function(d) { return d.id; })
                 .order()
@@ -381,28 +423,7 @@
                 var datax = this.getAxisData ("X", true, filteredCrossLinks);
                 var datay = this.getAxisData ("Y", true, filteredCrossLinks);
 
-                var coords = datax.data.map (function (xd, i) {
-                    var yd = datay.data[i];
-                    var pairs;
-                    if (xd.length === 1) {
-                        pairs = yd.map (function (d) {
-                            return [xd[0], d];
-                        });
-                    }
-                    if (yd.length === 1) {
-                        pairs = xd.map (function (d) {
-                            return [d, yd[0]];
-                        });
-                    }
-                    pairs = xd.map (function (d,i) {
-                        return [d, yd[i]];
-                    });
-                    // get rid of pairings where one of the values is undefined
-                    pairs = pairs.filter (function (pair) {
-                        return pair[0] !== undefined && pair[1] !== undefined;
-                    });
-                    return pairs;
-                });
+                var coords = makeCoords (datax, datay);
 
                 //console.log ("coords", datax, datay, coords);
 
@@ -416,10 +437,56 @@
                 ;
 
                 matchSel
-                    .attr("x", function(d) { return self.x (d[0]) + (jitter ? (Math.random() - 0.5) * self.jitterRanges.x : 0); })
-                    .attr("y", function(d) { return self.y (d[1]) + (jitter ? (Math.random() - 0.5) * self.jitterRanges.y : 0); })
+                    .attr("x", function(d) { 
+                        var xr = Math.random() - 0.5;
+                        var z = (d[0] * d[1]) + d[0] + d[1];
+                        return self.x (d[0]) + (jitter ? xr * self.jitterRanges.x : 0); 
+                    })
+                    .attr("y", function(d) { 
+                        var yr = Math.random() - 0.5;
+                        return self.y (d[1]) + (jitter ? yr * self.jitterRanges.y : 0);
+                    })
                 ;
             }
+            */
+            
+            var canvasNode = this.canvas.node();
+            var ctx = canvasNode.getContext("2d");       
+            ctx.fillStyle = this.options.background;
+            ctx.fillRect (0, 0, canvasNode.width, canvasNode.height);
+            ctx.imageSmoothingEnabled = false;
+            
+            var datax = this.getAxisData ("X", true, filteredCrossLinks);
+            var datay = this.getAxisData ("Y", true, filteredCrossLinks);
+
+            var coords = makeCoords (datax, datay);
+            
+            filteredCrossLinks.forEach (function (link, i) {
+                var high = highlightedCrossLinkIDs.has (link.id);
+                var selected = selectedCrossLinkIDs.has (link.id);
+                var jitter = this.options.jitter;
+                ctx.fillStyle = high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                ctx.strokeStyle = high || selected ? "black" : null;
+                //.style ("stroke-opacity", high || selected ? 0.4 : null)
+                
+                // try to make jitter deterministic so points don't jump on filtering, recolouring etc
+                var xr = ((link.fromResidue % 10) / 10) - 0.45;
+                var yr = ((link.toResidue % 10) / 10) - 0.45;
+                
+                coords[i].forEach (function (coord) {
+                    //var xr = (Math.random() - 0.5);
+                    //var yr = (Math.random() - 0.5);
+                    var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0);
+                    var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0);
+                    x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
+                    y = Math.round (y);
+                    ctx.fillRect (x, y, 3, 3) ;
+                    if (high || selected) {
+                        ctx.strokeRect (x - 0.5, y - 0.5, 3, 3) ;
+                    }
+                });
+            }, this);
+            
         }
         return this;
     },
@@ -455,10 +522,16 @@
             .style("width",  sizeData.width+"px")
             .style("height", sizeData.height+"px")
         ;      
+        
         this.scatg.select(".scatterplotBackground")
             .attr("width",  sizeData.width)
             .attr("height", sizeData.height)
         ;    
+        
+        this.canvas
+            .attr("width",  sizeData.width)
+            .attr("height", sizeData.height)
+        ;
 
         var extent = this.brush.extent(); // extent saved before x and y ranges updated
         
@@ -505,8 +578,9 @@
         ;
         return this;
     },
-
         
+    canvasImageParent: "svg > g > g",   // where to put image made from canvas for downloading svg file
+  
     identifier: "Scatterplot",
         
     optionsToString: function () {

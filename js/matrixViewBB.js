@@ -16,7 +16,6 @@
         "mousemove canvas": "brushNeighbourhood",
         "mousedown canvas": "setStartPoint",
         "click canvas": "selectNeighbourhood",
-        "click .downloadButton2": "downloadSVG2",
       });
     },
 
@@ -932,38 +931,8 @@
         
         return this;
     },
-        
-    /**
-    Need to change the canvas element to an image and shove it in the detached svg element we download
-    Also needs a g element and a clipPath to act as a viewport
-    And shove in an extra css rule after the style element's already been generated
-    */
-    downloadSVG2: function () {
-        var mainDivSel = d3.select(this.el);
-        var svgSel = mainDivSel.selectAll("svg");
-        var svgArr = [svgSel.node()];
-        var svgStrings = CLMSUI.svgUtils.capture (svgArr);
-        var detachedSVG = svgStrings[0];
-        var detachedSVGD3 = d3.select (detachedSVG);
-        
-        // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
-        var img = detachedSVGD3
-            .select("svg g.clipg")
-            .insert ("svg:image", ":first-child")
-        ;
-        
-        // Add a rule to stop the image being 'smoothed' (i.e. blurred)
-        var extraRule = ".matrixView image {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
-        var style = detachedSVGD3.select("style");
-        style.text (style.text() + "\n" + extraRule);
-        
-        var fileName = this.filenameStateString()+".svg";
-        // Now convert the canvas and its data to the image element we just added and download the whole svg when done
-        CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
-            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
-            download (svgXML, "application/svg", fileName);
-        });
-    },
+    
+    canvasImageParent: "svg g.clipg",   // place image made from canvas into clipped element (so image doesn't exceed matrix size)
         
     identifier: "Matrix",
         
