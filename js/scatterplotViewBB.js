@@ -1,3 +1,4 @@
+/*jslint white: true, sloppy: true, vars: true*/
 //		a matrix viewer
 //
 //		Colin Combe, Martin Graham
@@ -142,7 +143,6 @@
         //this.scatg.append("rect")
         //    .attr ("class", "scatterplotBackground")
         //;
-    
         
         // Axes setup
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(d3.format(",d"));
@@ -270,7 +270,7 @@
     },
         
     getData: function (func, filteredFlag, optionalLinks) {
-        var crossLinks = optionalLinks ? optionalLinks : 
+        var crossLinks = optionalLinks || 
             (filteredFlag ? this.model.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
         ;
         var data = crossLinks.map (function (c) {
@@ -353,7 +353,12 @@
             return this.getSelectedOption (axisDir);    
         }, this);
         var commaFormat = d3.format(",");
-        var vals = [this.x.invert(CLMSUI.utils.crossBrowserElementX(evt)), this.y.invert(CLMSUI.utils.crossBrowserElementY(evt))];
+        var background = d3.select(this.el).select(".background").node();
+        var margin = this.options.chartMargin;
+        var vals = [
+            this.x.invert (CLMSUI.utils.crossBrowserElementX (evt, background) + margin),
+            this.y.invert (CLMSUI.utils.crossBrowserElementY (evt, background) + margin),
+        ];
         var tooltipData = axesData.map (function (axisData, i) {
             var val = commaFormat (d3.round (vals[i], axisData.decimalPlaces));
             return [axisData.label, val];    
