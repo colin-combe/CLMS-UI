@@ -33,6 +33,7 @@
             highlightedColour: "#f80",
             background: "#e0e0e0",
             jitter: true,
+            chartMargin: 10,
         };
         
         var scatterOptions = [
@@ -144,8 +145,8 @@
     
         
         // Axes setup
-        this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
-        this.yAxis = d3.svg.axis().scale(this.y).orient("left");
+        this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(d3.format(",d"));
+        this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(d3.format(",d"));
         
         this.vis.append("g")
             .attr("class", "y axis")
@@ -197,15 +198,50 @@
             var add = d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey;
             self.model.calcMatchingCrosslinks ("selection", selectLinks, true, add);
         };
+        var brushSnap = function () {
+            if (d3.event.sourceEvent.type === "brush") return;
+            var meta = ["X", "Y"].map (function (axisLetter) {
+                return self.getSelectedOption (axisLetter);
+            });
+            var selection = self.brush.extent();
+            var newSelection = selection.map (function (corner) {
+                return corner.map (function (v, axisIndex) { return d3.round (d3.round (v, 10), meta[axisIndex].decimalPlaces); }); 
+                // sometimes numbers like 3.5 get rounded to 3.499999999999996 in javascript
+                // then d3.round (3.49999999996, 0) returns 3, not what we want
+                // so doing d3.round (3.49999999996, 10) return 3.5, then d3.round (3.5, 0) returns 4 which is what we want
+            });
+            
+            var adjs = meta.map (function (m) {
+                return Math.pow (10, -m.decimalPlaces) / 2;
+            });
+            
+            var generousSelection = newSelection;/*.map (function (corner, i) {
+                var gCorner = corner.slice();
+                gCorner[0] += (adjs[0] * (i === 0 ? -1 : 1));
+                gCorner[1] += (adjs[1] * (i === 0 ? -1 : 1));
+                return gCorner;
+            });*/
+            
+            console.log ("d1", selection, newSelection, self.brush.extent(), d3.event);
+            console.log ("d1", selection[0][0], selection[1][0], "new", newSelection[0][0], newSelection[1][0], self.brush.extent());
+            self.brush.extent (generousSelection); 
+            self.scatg.select(".brush").call(self.brush);   // recall brush binding so background rect is resized and brush redrawn
+            ["n", "e"].forEach (function (orient, i) {
+                self.scatg.select(".resize."+orient+" text").text("["+newSelection[0][i]+" to "+newSelection[1][i]+"]");   // for brush extent labelling  
+            });  
+        };
         this.brush = d3.svg.brush()
             .x(self.x)
             .y(self.y)
+            .on("brush", brushSnap)
             .on("brushend", brushEnded)
         ;
         this.scatg.append("g")
             .attr("class", "brush")
             .call(self.brush)
         ;
+        self.scatg.select(".resize.n").append("text");
+        self.scatg.select(".resize.e").append("text");
         
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
@@ -269,28 +305,26 @@
         var datax = this.getAxisData ("X", false);
         var datay = this.getAxisData ("Y", false);
         
-        var domX = d3.extent (d3.merge (datax.data));
-        var domY = d3.extent (d3.merge (datay.data));
-        if (domY[0] === undefined) {
-            domY = [0, 0];
-        }
-        if (domX[0] === undefined) {
-            domX = [0, 0];
-        }
-        if (datax.zeroBased) {
-            domX[0] = Math.min (0, domX[0]);
-        }
-        if (datay.zeroBased) {
-            domY[0] = Math.min (0, domY[0]);
-        }
-        domX[0] -= 0.5;
-        domY[0] -= 0.5;
-        domX[1] += 0.5;
-        domY[1] += 0.5;
+        var directions = [
+            {dataDetails: datax, scale: this.x},
+            {dataDetails: datay, scale: this.y},
+        ];
         
+        directions.forEach (function (direction) {
+            var dom = d3.extent (d3.merge (direction.dataDetails.data));
+            if (dom[0] === undefined) {
+                dom = [0, 0];
+            }
+            if (direction.dataDetails.zeroBased) {
+                dom[0] = Math.min (0, dom[0]);
+            }
+            dom = dom.map (function (v, i) { return Math[i === 0 ? "floor": "ceil"](v); });
+            //var leeway = Math.ceil (Math.abs(dom[1] - dom[0]) / 10) / 2;
+            //dom[0] -= xLeeway; // 0.5;
+            //dom[1] += 0.5;
+            direction.scale.domain (dom);
+        }); 
         //console.log ("data", datax, datay, domX, domY);
-        this.x.domain (domX);
-        this.y.domain (domY);   
         
         // Update x/y labels and axes tick formats
         this.vis.selectAll("g.label text").data([datax, datay])
@@ -356,6 +390,8 @@
         if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
             
             options = options || {};
+            
+            var pointSize = 4;
             
             var self = this;
             var colourScheme = this.model.get("linkColourAssignment");
@@ -432,8 +468,8 @@
                 matchSel.exit().remove();
                 matchSel.enter().append("rect")
                     .attr ("class", "datapoint")
-                    .attr ("width", 3)
-                    .attr ("height", 3)
+                    .attr ("width", pointSize)
+                    .attr ("height", pointSize)
                 ;
 
                 matchSel
@@ -476,13 +512,13 @@
                 coords[i].forEach (function (coord) {
                     //var xr = (Math.random() - 0.5);
                     //var yr = (Math.random() - 0.5);
-                    var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0);
-                    var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0);
+                    var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
+                    var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - (pointSize / 2);
                     x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
                     y = Math.round (y);
-                    ctx.fillRect (x, y, 3, 3) ;
+                    ctx.fillRect (x, y, pointSize, pointSize) ;
                     if (high || selected) {
-                        ctx.strokeRect (x - 0.5, y - 0.5, 3, 3) ;
+                        ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize) ;
                     }
                 });
             }, this);
@@ -534,23 +570,25 @@
         ;
 
         var extent = this.brush.extent(); // extent saved before x and y ranges updated
+        var chartMargin = this.options.chartMargin;
         
-        this.x.range([0, sizeData.width]);
-        this.y.range([sizeData.height, 0]); // y-scale (inverted domain)
+        this.x.range([chartMargin, sizeData.width - chartMargin]);
+        this.y.range([sizeData.height - chartMargin, chartMargin]); // y-scale (inverted domain)
         
         // https://stackoverflow.com/questions/32720469/d3-updating-brushs-scale-doesnt-update-brush
         this.brush.extent (extent); // old extent restored
         this.scatg.select(".brush").call(this.brush);   // recall brush binding so background rect is resized and brush redrawn
 
-        this.xAxis.ticks (Math.round (sizeData.width / 40)).outerTickSize(0);
-        this.yAxis.ticks (Math.round (sizeData.height / 40)).outerTickSize(0);
+        this.xAxis.ticks (Math.round ((sizeData.width - (chartMargin * 2)) / 40)).outerTickSize(0);
+        this.yAxis.ticks (Math.round ((sizeData.height - (chartMargin * 2)) / 40)).outerTickSize(0);
         
         this.vis.select(".y")
+            .attr("transform", "translate(-1,0)")
             .call(this.yAxis)
         ;
         
         this.vis.select(".x")
-            .attr("transform", "translate(0," + sizeData.height + ")")
+            .attr("transform", "translate(0," + (sizeData.height) + ")")
             .call(this.xAxis)
         ;
         
@@ -590,7 +628,7 @@
                 axisLabels.push (d3.select(this).text());
             })
         ;
-        return axisLabels.join("_by_");
+        return (this.options.jitter ? "Jitter_" : "") + axisLabels.join("_by_");
     },
 });
     

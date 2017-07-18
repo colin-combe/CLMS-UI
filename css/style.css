@@ -297,7 +297,7 @@ body, input, select, textarea {
 .axis path, .axis line {
   fill: none;
   stroke: #000;
-  stroke-width: 1.2px;
+  stroke-width: 1px;
 }
 
 .brush .extent {
@@ -587,4 +587,8 @@ A.btn {
 
 .label {
     text-shadow: 0 0 6px white;
+}
+
+.axis {
+    shape-rendering: crispEdges;
 }

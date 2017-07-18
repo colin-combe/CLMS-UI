@@ -72,3 +72,12 @@
     stroke: #888;
 }
 */
+
+.scatterplotView .brush .resize text {
+    text-anchor: start;
+    font-size: 0.8em;
+}
+
+.scatterplotView .brush .resize.e text {
+    transform: rotate(90deg);
+}
