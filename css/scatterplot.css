@@ -51,10 +51,6 @@
     text-transform: uppercase;
 }
 
-.scatterplotView .toolbar > * {
-    display: inline-block;
-}
-
 .scatterplotBackground {
     fill: #ddd;
 }

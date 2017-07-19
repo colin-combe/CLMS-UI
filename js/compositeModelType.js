@@ -89,7 +89,8 @@
 								if (match.crossLinks.length === 1) {
 									crossLink.ambiguous = false;
 								}
-								if (match.confirmedHomomultimer === true) {
+                                // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
+								if (match.confirmedHomomultimer === true && crossLink.isSelfLink()) {
 									crossLink.confirmedHomomultimer = true;
 								}                       
 							}

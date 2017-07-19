@@ -355,7 +355,7 @@ var ByRei_dynDiv = {
   action: function() {
    if (!ByRei_dynDiv.cache.obj) {
        ByRei_dynDiv.set_eventListener(document, 'mousemove' , ByRei_dynDiv.on.move); // Add Event for MouseMove (scale, move, hide, show)
-       ByRei_dynDiv.set_eventListener(document, 'mouseup', ByRei_dynDiv.on.stop); // Stop all Events on MouseUP
+       ByRei_dynDiv.set_eventListener(document, 'mouseup', ByRei_dynDiv.on.stop, true); // Stop all Events on MouseUP, useCapture: true so we intercept this first
    }
   },
   /* Events when noAction will performance (mouse_down)*/
@@ -400,7 +400,7 @@ var ByRei_dynDiv = {
    // Normal Event Handling
    ByRei_dynDiv.db(2,false); // Active to Inactive
    ByRei_dynDiv.del_eventListener(document, 'mousemove' , ByRei_dynDiv.on.move); // Remove Event Listener Mouse Move
-   ByRei_dynDiv.del_eventListener(document, 'mouseup', ByRei_dynDiv.on.stop);     // Remove Event Listener Mouse Up
+   ByRei_dynDiv.del_eventListener(document, 'mouseup', ByRei_dynDiv.on.stop, true);     // Remove Event Listener Mouse Up
    //ByRei_dynDiv._style(ByRei_dynDiv.cache.obj,'zIndex', ByRei_dynDiv.cache.zIndex); // Reset zIndex to initial value  // killed by mjg, do this elsewhere backbone view
    if (ByRei_dynDiv.cache.last.obj !== ByRei_dynDiv.cache.obj) {ByRei_dynDiv.cache.last.obj = ByRei_dynDiv.cache.obj;} // Set Cache last Object
    if (ByRei_dynDiv.cache.last.elem !== ByRei_dynDiv.cache.elem) {ByRei_dynDiv.cache.last.elem = ByRei_dynDiv.cache.elem;} // Set Cache last Element
@@ -998,17 +998,18 @@ var ByRei_dynDiv = {
   }
  },
 
+    // mjg - added useCapture parameter to both functions, 19/07/17
  /* Remove Event Listener */
- del_eventListener: function(obj,event,func) {
+ del_eventListener: function(obj,event,func, useCapture) {
   if (obj && event && func) {
-   if (ByRei_dynDiv.cache.ie) {obj.detachEvent("on"+event, func);} else {obj.removeEventListener(event, func, false);}
+   if (ByRei_dynDiv.cache.ie) {obj.detachEvent("on"+event, func);} else {obj.removeEventListener(event, func, useCapture || false);}
   }
  },
 
  /* Add Event Listener */
- set_eventListener: function(obj,event,func) {
+ set_eventListener: function(obj,event,func, useCapture) {
   if (obj && event && func) {
-   if (ByRei_dynDiv.cache.ie) {return obj.attachEvent("on"+event, func);} else {return obj.addEventListener(event, func, false);}
+   if (ByRei_dynDiv.cache.ie) {return obj.attachEvent("on"+event, func);} else {return obj.addEventListener(event, func, useCapture || false);}
   }
  }
 

@@ -39,23 +39,6 @@ label.btn input[type=file] {
     padding-bottom: 2px;
 }
 
-.nglToolbar:first-child {
-    margin-bottom: 0.15em;
-    border-bottom: 1px solid rgba(0,0,0,0.5);
-}
-
-.nglToolbar button {
-    margin-bottom: 0.2em;
-}
-
-.nglToolbar span select {
-    text-transform: capitalize;
-}
-
-.nglToolbar > * {
-    display: inline-block;
-}
-
 .inputPDBCode {
     margin-left: 0.5em;
 }

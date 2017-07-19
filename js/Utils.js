@@ -276,7 +276,7 @@ CLMSUI.utils = {
             .append("button")
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
-                .classed ("btn btn-1 btn-1a", true) // and we don't class .temop so these can't be picked up by a subsequent call to make backbonebuttons
+                .classed ("btn btn-1 btn-1a", true) // and we don't class .temp so these can't be picked up by a subsequent call to make backbonebuttons
                 .attr("id", makeID)
         ;
             
@@ -616,17 +616,12 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
-        var tableIsHidden = (assocTable.style("display") == "none");
-        d3.select(this)
-            .style("background", tableIsHidden ? "none" : "#55a")
-            .select("svg")
-                .style("transform", "rotate("+(tableIsHidden ? 90 : 180)+"deg)")
-        ;
+        d3.select(this).classed ("tableShown", assocTable.style("display") !== "none");
     };
 
     var dataJoin = domid.selectAll("section").data(data, function(d) { return d.id; });
     dataJoin.exit().remove();
-    var newElems = dataJoin.enter().append("section");
+    var newElems = dataJoin.enter().append("section").attr("class", "sectionTable");
 
     var newHeaders = newElems.append("h2")
         .on ("click", function(d) {
@@ -641,7 +636,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     ;
     newHeaders.append("svg")
         .append("polygon")
-            .attr("points", "0,14 7,0 14,14")
+            .attr("points", "2,1 16,8 2,15")
     ;
     newHeaders.append("span").text(headerFunc);
 

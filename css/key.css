@@ -95,6 +95,7 @@ changes there are automatically reflected in the legend
     height: 16px;
     fill: white;
     stroke: white;
+    vertical-align: sub;
 }
 
 .colourSwatch {

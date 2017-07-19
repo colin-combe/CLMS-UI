@@ -304,7 +304,7 @@ body, input, select, textarea {
 }
 
 #bottomDiv {
-    background: rgba(9, 29, 66, 0.9);
+    /*background: rgba(9, 29, 66, 0.9);*/
     padding:0px 10px;
     position: relative; /* will overlay previous absolute divs i.e. distance slider */
 }
@@ -314,11 +314,14 @@ body, input, select, textarea {
 
 .dynDiv{
     padding:20px 10px;
-    background: rgba(9, 29, 66, 0.9);
+    /*background: rgba(9, 29, 66, 0.9);*/
     overflow: hidden;
-    color:#fff;
+    color:#091d42;
     position:fixed;
     pointer-events:all;
+    background: rgba(224,224,224,0.9);
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    border: 1px solid #888;
 /*
     height:400px;
 */
@@ -347,11 +350,39 @@ body, input, select, textarea {
  background-image:url("../images/br.png");
 }
 
+.dynDiv .btn-1 {
+    color: #091d42;
+    border-color: #091d42;
+}
+
+.fa-times-circle {
+    color: white;
+}
+
+/* window drop-down menus should have grey background */
+.dynDiv .dropdown DIV {
+    background: #ddd;
+}
+
+/* Buttons in window drop-down menus shouldn't have borders */
+.dynDiv .dropdown LI .btn-1 {
+    padding: 0.25em 1em;
+    border: none;
+}
+
+.dynDiv .dropdown LI .btn-1a:hover {
+    background: transparent;
+}
+
+.dynDiv label:hover {
+    background: white;
+}
+
 .panelInner{
     overflow: hidden;
     height:100%;
     width:100%;
-    color: #fff;
+    /*color: #fff;*/
     text-align: left;
     display:block;
 }
@@ -575,8 +606,8 @@ A.btn {
 }
 
 .btn:disabled {
-    color: gray;
-    border-color: gray;
+    color: #ccc;
+    border-color: #ccc;
 }
 
 .brushValueText {
@@ -585,10 +616,37 @@ A.btn {
     stroke: none;
 }
 
+/*
 .label {
     text-shadow: 0 0 6px white;
 }
+*/
 
 .axis {
     shape-rendering: crispEdges;
+}
+
+.sectionTable .tableShown {
+    background: #ccc;
+}
+
+.sectionTable .tableShown svg {
+    transform: rotate(90deg);
+}
+
+.toolbar:first-child {
+    margin-bottom: 0.15em;
+    border-bottom: 1px solid rgba(0,0,0,0.5);
+}
+
+.toolbar button {
+    margin-bottom: 0.2em;
+}
+
+.toolbar span select {
+    text-transform: capitalize;
+}
+
+.toolbar > * {
+    display: inline-block;
 }

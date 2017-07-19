@@ -32,7 +32,7 @@
             chartTitle: "Cross-Link Data Scatterplot",
             selectedColour: "#ff0",
             highlightedColour: "#f80",
-            background: "#e0e0e0",
+            background: "#eee",
             jitter: true,
             chartMargin: 10,
         };
@@ -68,7 +68,7 @@
             .attr ("class", "verticalFlexContainer")
         ;
         
-        this.controlDiv = flexWrapperPanel.append("div");
+        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
         
         // Add download button
         var buttonData = [
@@ -204,26 +204,46 @@
                 return self.getSelectedOption (axisLetter);
             });
             var selection = self.brush.extent();
-            var newSelection = selection.map (function (corner) {
+            
+            var oldSelection = selection;
+            /*
+            if (d3.event.mode === "move") {
+                var adjs = meta.map (function (m) {
+                    return Math.pow (10, -m.decimalPlaces) / 2;
+                });
+                
+                oldSelection = oldSelection.map (function (corner, i) {
+                    var gCorner = corner.slice();
+                    gCorner[0] -= (adjs[0] * (i === 0 ? -1 : 1));
+                    gCorner[1] -= (adjs[1] * (i === 0 ? -1 : 1));
+                    return gCorner;
+                });
+            }
+            */
+            var newSelection = oldSelection.map (function (corner) {
                 return corner.map (function (v, axisIndex) { return d3.round (d3.round (v, 10), meta[axisIndex].decimalPlaces); }); 
                 // sometimes numbers like 3.5 get rounded to 3.499999999999996 in javascript
                 // then d3.round (3.49999999996, 0) returns 3, not what we want
                 // so doing d3.round (3.49999999996, 10) return 3.5, then d3.round (3.5, 0) returns 4 which is what we want
             });
             
-            var adjs = meta.map (function (m) {
-                return Math.pow (10, -m.decimalPlaces) / 2;
-            });
+
             
-            var generousSelection = newSelection;/*.map (function (corner, i) {
-                var gCorner = corner.slice();
-                gCorner[0] += (adjs[0] * (i === 0 ? -1 : 1));
-                gCorner[1] += (adjs[1] * (i === 0 ? -1 : 1));
-                return gCorner;
-            });*/
-            
-            console.log ("d1", selection, newSelection, self.brush.extent(), d3.event);
-            console.log ("d1", selection[0][0], selection[1][0], "new", newSelection[0][0], newSelection[1][0], self.brush.extent());
+            var generousSelection = newSelection;
+            if (d3.event.mode !== "move") {
+                var adjs = meta.map (function (m) {
+                    return Math.pow (10, -m.decimalPlaces) / 2;
+                });
+
+                generousSelection = newSelection.map (function (corner, i) {
+                    var gCorner = corner.slice();
+                    gCorner[0] += (adjs[0] * (i === 0 ? -1 : 1));
+                    gCorner[1] += (adjs[1] * (i === 0 ? -1 : 1));
+                    return gCorner;
+                });
+            }
+
+            console.log ("d1", selection[0][0], selection[1][0], "new", newSelection[0][0], newSelection[1][0], "generous", generousSelection[0][0], generousSelection[1][0], self.brush.extent(), d3.event);
             self.brush.extent (generousSelection); 
             self.scatg.select(".brush").call(self.brush);   // recall brush binding so background rect is resized and brush redrawn
             ["n", "e"].forEach (function (orient, i) {

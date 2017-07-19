@@ -46,15 +46,7 @@
     border-left: 1px solid grey;
 }
 
-.matrixHeader {
-    text-transform: uppercase;
-}
-
 .viewport {
     overflow: hidden;
     position: absolute;
-}
-
-.matrixView .toolbar > * {
-    display: inline-block;
 }

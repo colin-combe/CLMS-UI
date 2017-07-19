@@ -47,7 +47,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             },
             {
                 id: "proteinKey",
-                header: "Protein-protein level",
+                header: "Protein-Protein Level",
                 rows: [
                     ["clinkp", "Cross-link(s) between different proteins"],
                     ["ambigp", "Ambiguous"],
@@ -58,7 +58,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             },
             {
                 id: "residueKey",
-                header: "Residue level",
+                header: "Residue Level",
                 rows: [
                     ["clinkr", "Cross-link between different proteins"],
                     ["ambigr", "Ambiguous"],

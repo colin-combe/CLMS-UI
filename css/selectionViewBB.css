@@ -16,6 +16,10 @@
     vertical-align: top;
 }
 
+.selectView THEAD {
+    background: #eee;
+}
+
 .selectView tbody tr:nth-child(odd) {
     background: #e8e8ff;
 }
@@ -75,17 +79,21 @@
     background: #afa;
 }
 
-.crossLinkTotal {
-    display: inline-block;
-	color:white;
+.selectView .controlBar {
+    background: #091d42;
+    color: white;
+    padding: 0.25em 0;
 }
 
-.pager {
-    display: inline-block;
-    padding:5px;
+.selectView .controlBar > span {
+    padding-left: 1em;
 }
 
-.buttonPressed{
+.pager input {
+    margin-left: 0.5em;
+}
+
+.buttonPressed {
     color: #091D42;
-    background: #fff;
+    background: white;
 }

@@ -157,10 +157,9 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV class='buttonPanel'></DIV><DIV class='panelInner circleDiv'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner circleDiv' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
-                .attr ("class", "panelInner")
-                .style ("display", "table")
+                .attr ("class", "verticalFlexContainer")
                 .html(
                     template ({
                         svgClass: "circularView",
@@ -174,8 +173,8 @@
                 {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
-            var buttonPanel = mainDivSel.select("div.buttonPanel");
-            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, buttonData);
+            var toolbar = mainDivSel.select("div.toolbar");
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
             
             // DROPDOWN STARTS
@@ -198,11 +197,11 @@
                     };
                 }, this)
             ;
-            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, toggleButtonData);
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
 
             
             var optid = this.el.id+"Options";
-            buttonPanel.append("p").attr("id", optid);
+            toolbar.append("p").attr("id", optid);
             new CLMSUI.DropDownMenuViewBB ({
                 el: "#"+optid,
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
@@ -425,21 +424,23 @@
                 var a1 = Math.min (link.start, link.end);
                 var a2 = Math.max (link.start, link.end);
                 var midang = (a1 + a2) / 2; //(a2 - a1 < 180) ? (a1 + a2) / 2 : ((a1 + a2 + 360) / 2) % 360; // mid-angle (bearing in mind it might be shorter to wrap round the circle)
-                var degSep = a2 - a1; // Math.min (a2 - a1, a1 + 360 - a2); // angle of separation
+                var degSep = a2 - a1; // Math.min (a2 - a1, a1 - a2 + 360); // angle of separation, 2nd one works for doing long outside links the other way round. See next comment.
                 //console.log ("angs", link.start, link.end, degSep);
                 var coords;
 
                 if (out && degSep > 70) {
+                    var controlPointAngleSep = 60;
+                    var counterClockwise = false; //(degSep === a1 - a2 + 360) ^ (link.start > link.end); // odd occassion when not intra and homom (is an error)
                     var furtherBowRadius = bowRadius * (1 + (0.25 * ((degSep - 70) / 180)));
                     coords = [{ang: link.start, rad: rad}, {ang: link.start, rad: bowRadius}];
-                    var holdPoints = Math.floor (degSep / 60) + 1;
-                    var deltaAng = (degSep % 60) / 2;
+                    var holdPoints = Math.floor (degSep / controlPointAngleSep) + 1;
+                    var deltaAng = (degSep % controlPointAngleSep) / 2;
                     var offsetAng = link.start + deltaAng;
                     for (var n = 0; n < holdPoints; n++) {
-                        coords.push ({ang: (offsetAng + n * 60) % 360, rad: furtherBowRadius});
+                        coords.push ({ang: ((offsetAng + (counterClockwise ? -n : n) * controlPointAngleSep) + 360) % 360, rad: furtherBowRadius});
                     }
                     coords.push ({ang: link.end, rad: bowRadius}, {ang: link.end, rad: rad});
-                } else if (homom) {
+                } else if (homom && intra) {
                     var homomBowRadius = out ? rad + this.options.tickWidth : rad * 0.65;
                     var homomAngDelta = out ? 2 : 10;
                     coords = [{ang: link.start, rad: rad}, {ang: (midang - homomAngDelta) % 360, rad: homomBowRadius}, {ang: (midang + homomAngDelta) % 360, rad: homomBowRadius}, {ang: link.end, rad: rad}];
@@ -494,9 +495,12 @@
                 var filteredCrossLinks = this.model.getFilteredCrossLinks();    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
                 
                 // If only one protein hide some options, and make links go in middle
-                d3.select(this.el).selectAll("button.niceButton,button.flipIntraButton,#"+this.el.id+"Options")
-                    .style("display", (filteredInteractors.length < 2) ? "none" : null)
+                // make it so menu stays if we've filtered down to one protein, rather than just one protein in the search
+                
+                d3.select(this.el).selectAll("button.flipIntraButton,#"+this.el.id+"Options")
+                    .style("display", (this.model.get("clmsModel").realProteinCount < 2) ? "none" : null)
                 ;
+                
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
                 //console.log ("fi", filteredInteractors, interactors);
                 
@@ -595,8 +599,7 @@
             //console.log ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
 
-
-                        // draw thin links
+            // draw thin links
             var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
             var linkJoin = thinLayer.selectAll(".circleLink").data(links, self.idFunc);
             //var hasNew = linkJoin.enter().size() > 0;
@@ -606,7 +609,9 @@
                     .attr("class", "circleLink")
             ;
             linkJoin
-                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
+                .attr("d", function(d) { 
+                    return (d.outside ? self.outsideLine : self.line)(d.coords); 
+                })
                 .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
                 .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
             ;
