@@ -35,6 +35,7 @@
             background: "#eee",
             jitter: true,
             chartMargin: 10,
+            pointSize: 4,
         };
         
         var scatterOptions = [
@@ -150,12 +151,10 @@
         
         this.vis.append("g")
             .attr("class", "y axis")
-            //.call(self.yAxis)
         ;
         
         this.vis.append("g")
             .attr("class", "x axis")
-            //.call(self.xAxis)
         ;
         
         
@@ -178,12 +177,12 @@
         ;
         
         // Brush
-        var brushEnded = function () {
+        var brushEnded = function (options) {
             var xData = self.getAxisData ("X", true).data;
             var yData = self.getAxisData ("Y", true).data;
             var filteredCrossLinks = self.model.getFilteredCrossLinks ();
             var extent = self.brush.extent();
-            var selectLinks = filteredCrossLinks.filter (function (link, i) {
+            var matchingLinks = filteredCrossLinks.filter (function (link, i) {
                 var xDatum = xData[i];
                 var yDatum = yData[i];
                 var bool = xDatum && xDatum.some (function (xd) {
@@ -195,8 +194,10 @@
                 return bool;
             });
             
-            var add = d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey;
-            self.model.calcMatchingCrosslinks ("selection", selectLinks, true, add);
+            var type = options && options.select ? "selection" : "highlights";
+            //console.log ("type", options, type);
+            var add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
+            self.model.calcMatchingCrosslinks (type, matchingLinks, true, add);
         };
         var brushSnap = function () {
             if (d3.event.sourceEvent.type === "brush") return;
@@ -205,54 +206,45 @@
             });
             var selection = self.brush.extent();
             
-            var oldSelection = selection;
-            /*
-            if (d3.event.mode === "move") {
-                var adjs = meta.map (function (m) {
-                    return Math.pow (10, -m.decimalPlaces) / 2;
-                });
-                
-                oldSelection = oldSelection.map (function (corner, i) {
+            var adjs = meta.map (function (m) {
+                return Math.pow (10, -m.decimalPlaces) / 2;
+            });
+            
+            var expandOrShrink = function (selection, shrink) {
+                var sign = shrink ? 1 : -1;
+                return selection.map (function (corner, i) {
                     var gCorner = corner.slice();
-                    gCorner[0] -= (adjs[0] * (i === 0 ? -1 : 1));
-                    gCorner[1] -= (adjs[1] * (i === 0 ? -1 : 1));
+                    gCorner[0] -= (adjs[0] * sign * (i === 0 ? -1 : 1));
+                    gCorner[1] -= (adjs[1] * sign * (i === 0 ? -1 : 1));
                     return gCorner;
                 });
             }
-            */
-            var newSelection = oldSelection.map (function (corner) {
+            
+            var shrunkSelection = expandOrShrink (selection, true);
+
+            var newSelection = shrunkSelection.map (function (corner) {
                 return corner.map (function (v, axisIndex) { return d3.round (d3.round (v, 10), meta[axisIndex].decimalPlaces); }); 
                 // sometimes numbers like 3.5 get rounded to 3.499999999999996 in javascript
                 // then d3.round (3.49999999996, 0) returns 3, not what we want
                 // so doing d3.round (3.49999999996, 10) return 3.5, then d3.round (3.5, 0) returns 4 which is what we want
             });
-            
 
+            var generousSelection = expandOrShrink (newSelection, false);
             
-            var generousSelection = newSelection;
-            if (d3.event.mode !== "move") {
-                var adjs = meta.map (function (m) {
-                    return Math.pow (10, -m.decimalPlaces) / 2;
-                });
-
-                generousSelection = newSelection.map (function (corner, i) {
-                    var gCorner = corner.slice();
-                    gCorner[0] += (adjs[0] * (i === 0 ? -1 : 1));
-                    gCorner[1] += (adjs[1] * (i === 0 ? -1 : 1));
-                    return gCorner;
+            //console.log ("d1", selection[0][0], selection[1][0], "old", shrunkSelection[0][0], shrunkSelection[1][0], "new", newSelection[0][0], newSelection[1][0], "generous", generousSelection[0][0], generousSelection[1][0], self.brush.extent(), d3.event);
+            
+            if (!_.isEqual (selection, generousSelection)) {
+                self.brush.extent (generousSelection); 
+                self.scatg.select(".brush").call(self.brush);   // recall brush binding so background rect is resized and brush redrawn
+                ["n", "e"].forEach (function (orient, i) {
+                    self.scatg.select(".resize."+orient+" text").text("["+newSelection[0][i]+" to "+newSelection[1][i]+"]");   // for brush extent labelling  
                 });
             }
-
-            console.log ("d1", selection[0][0], selection[1][0], "new", newSelection[0][0], newSelection[1][0], "generous", generousSelection[0][0], generousSelection[1][0], self.brush.extent(), d3.event);
-            self.brush.extent (generousSelection); 
-            self.scatg.select(".brush").call(self.brush);   // recall brush binding so background rect is resized and brush redrawn
-            ["n", "e"].forEach (function (orient, i) {
-                self.scatg.select(".resize."+orient+" text").text("["+newSelection[0][i]+" to "+newSelection[1][i]+"]");   // for brush extent labelling  
-            });  
         };
         this.brush = d3.svg.brush()
             .x(self.x)
             .y(self.y)
+            //.clamp ([false, false])
             .on("brush", brushSnap)
             .on("brushend", brushEnded)
         ;
@@ -260,8 +252,14 @@
             .attr("class", "brush")
             .call(self.brush)
         ;
-        self.scatg.select(".resize.n").append("text");
-        self.scatg.select(".resize.e").append("text");
+        this.scatg.select(".resize.n").append("text");
+        this.scatg.select(".resize.e").append("text");
+        this.scatg.select(".extent")
+            .on ("contextmenu", function () {
+                d3.event.preventDefault();
+                brushEnded ({select: true});
+            })
+        ;
         
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
@@ -351,22 +349,13 @@
             .text (function(d) { return d.label; })
         ;
         
+        if (!this.brush.empty()) {
+            this.model.calcMatchingCrosslinks ("highlights", [], false, false);
+        }
         this.brush.clear();
-        
+          
         return this;
     }, 
-        
-    // Brush neighbourhood and invoke tooltip
-    brushNeighbourhood: function (evt) {
-        var xy = this.convertEvtToXY (evt);
-        var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
-        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
-        
-        // invoke tooltip before setting highlights model change for quicker tooltip response
-        this.invokeTooltip (evt, linkWrappers);
-        
-        this.model.set ("highlights", crossLinks);
-    },
         
     doTooltip: function (evt) {
         var axesData = ["X", "Y"].map (function (axisDir) {
@@ -416,7 +405,7 @@
             
             options = options || {};
             
-            var pointSize = 4;
+            var pointSize = this.options.pointSize;
             
             var self = this;
             var colourScheme = this.model.get("linkColourAssignment");
