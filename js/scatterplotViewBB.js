@@ -39,14 +39,14 @@
         };
         
         var scatterOptions = [
-            {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Match Count", decimalPlaces: 0},
+            {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
             {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Precursor MZ", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Precursor Charge", decimalPlaces: 0},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Calculated Mass", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Mass Error", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Smaller Peptide Length", decimalPlaces: 0},
-            {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Distance", decimalPlaces: 2},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0},
+            {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cross-Link Distance", decimalPlaces: 2},
         ];
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -200,10 +200,8 @@
             self.model.calcMatchingCrosslinks (type, matchingLinks, true, add);
         };
         var brushSnap = function () {
-            if (d3.event.sourceEvent.type === "brush") return;
-            var meta = ["X", "Y"].map (function (axisLetter) {
-                return self.getSelectedOption (axisLetter);
-            });
+            if (d3.event.sourceEvent.type === "brush") { return; }
+            var meta = self.getBothAxesMetaData();
             var selection = self.brush.extent();
             
             var adjs = meta.map (function (m) {
@@ -218,7 +216,7 @@
                     gCorner[1] -= (adjs[1] * sign * (i === 0 ? -1 : 1));
                     return gCorner;
                 });
-            }
+            };
             
             var shrunkSelection = expandOrShrink (selection, true);
 
@@ -254,6 +252,17 @@
         ;
         this.scatg.select(".resize.n").append("text");
         this.scatg.select(".resize.e").append("text");
+        
+        this.scatg.select(".brush")
+            .on ("mouseover", function () {
+                self.scatg.select(".brush").selectAll("text").transition().duration(500).style("opacity", 1);
+            })
+            .on ("mouseout", function () {
+                self.scatg.select(".brush").selectAll("text").transition().duration(500).style("opacity", 0);
+            })
+        ;
+        
+        // select brushed elements on right-click
         this.scatg.select(".extent")
             .on ("contextmenu", function () {
                 d3.event.preventDefault();
@@ -319,6 +328,12 @@
         return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased};
     },
         
+    getBothAxesMetaData: function () {
+        return ["X", "Y"].map (function (axisLetter) {
+            return this.getSelectedOption (axisLetter);
+        }, this);    
+    },
+        
     axisChosen: function () { 
         var datax = this.getAxisData ("X", false);
         var datay = this.getAxisData ("Y", false);
@@ -358,9 +373,7 @@
     }, 
         
     doTooltip: function (evt) {
-        var axesData = ["X", "Y"].map (function (axisDir) {
-            return this.getSelectedOption (axisDir);    
-        }, this);
+        var axesMetaData = this.getBothAxesMetaData();
         var commaFormat = d3.format(",");
         var background = d3.select(this.el).select(".background").node();
         var margin = this.options.chartMargin;
@@ -368,9 +381,9 @@
             this.x.invert (CLMSUI.utils.crossBrowserElementX (evt, background) + margin),
             this.y.invert (CLMSUI.utils.crossBrowserElementY (evt, background) + margin),
         ];
-        var tooltipData = axesData.map (function (axisData, i) {
-            var val = commaFormat (d3.round (vals[i], axisData.decimalPlaces));
-            return [axisData.label, val];    
+        var tooltipData = axesMetaData.map (function (axisMetaData, i) {
+            var val = commaFormat (d3.round (vals[i], axisMetaData.decimalPlaces));
+            return [axisMetaData.label, val];    
         });
         
          this.model.get("tooltipModel")
@@ -442,9 +455,18 @@
                     }
                     
                     // get rid of pairings where one of the values is undefined
-                    return pairs.filter (function (pair) {
+                    pairs =  pairs.filter (function (pair) {
                         return pair[0] !== undefined && pair[1] !== undefined;
                     });
+                    
+                    pairs.sort (function (p1, p2) {
+                        var z = p1[0] - p2[0];
+                        if (!z) {
+                            z = p1[1] - p2[1];
+                        }
+                    });
+                    
+                    return pairs;
                 });
             };
             
@@ -522,6 +544,18 @@
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
                 var yr = ((link.toResidue % 10) / 10) - 0.45;
+                
+                if (high || selected) {
+                    ctx.beginPath();
+                    coords[i].forEach (function (coord) {
+                        var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0);
+                        var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0);
+                        x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
+                        y = Math.round (y);
+                        ctx[i === 0 ? "moveTo" : "lineTo"](x - 0.5, y - 0.5);
+                    });
+                    ctx.stroke();
+                }
                 
                 coords[i].forEach (function (coord) {
                     //var xr = (Math.random() - 0.5);
@@ -636,12 +670,20 @@
     identifier: "Scatterplot",
         
     optionsToString: function () {
-        var axisLabels = [];
-        d3.select(this.el).selectAll("g.label text.axis")
-            .each (function () {
-                axisLabels.push (d3.select(this).text());
-            })
-        ;
+        var meta = this.getBothAxesMetaData();
+        var axisLabels = meta.map (function (axis) { return axis.label; });
+        
+        if (!this.brush.empty()) {
+            var axisExtents = [];
+            d3.select(this.el).selectAll(".brush text")
+                .each (function () {
+                    axisExtents.push (d3.select(this).text());
+                })
+            ;
+            axisLabels = axisLabels.map (function (axisLabel, i) {
+                return axisLabel + "_("+axisExtents[i]+")";
+            });
+        }
         return (this.options.jitter ? "Jitter_" : "") + axisLabels.join("_by_");
     },
 });

@@ -574,37 +574,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     // This makes a matrix viewer
-    var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
+    new CLMSUI.DistanceMatrixViewBB ({
         el: "#matrixPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
     });
-
-
-    // This stuffs a basic filter view into the matrix view
-    var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
-    var matrixFilterEventName = "filterEster";
-    /*
-    matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
-    var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
-        el: "#matrixButtons",
-        myOptions: {
-            states: [0, 1, 2],
-            labels: ["Any to Any", "NHS to Any", "NHS to NHS"],
-            header: "NHS Ester Filter",
-            labelGroupFlow: "verticalFlow",
-            eventName: matrixFilterEventName
-        }
-    });
-    */
-
-    // the matrix view listens to the event the basic filter view generates and changes a variable on it
-    matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
-        this.filterVal = filterVal;
-        this.render();
-    });
-    CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
 
     // This is all done outside the matrix view itself as we may not always want a matrix view to have this
     // functionality. Plus the views don't know about each other now.

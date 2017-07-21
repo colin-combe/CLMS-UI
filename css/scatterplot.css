@@ -37,18 +37,6 @@
 .scatterplotView .viewDiv {
     width: auto;
     height: 100%;
-    /*margin-right: 15em;*/    /* should match width of button column below */
-}
-
-.scatterplotView .buttonColumn {
-    width: 15em;
-    float: right;
-    padding-left: 0.5em;
-    border-left: 1px solid grey;
-}
-
-.scatterplotHeader {
-    text-transform: uppercase;
 }
 
 .scatterplotBackground {
@@ -58,16 +46,6 @@
 .scatterplotView .brush .extent {
   fill-opacity: 0.2; 
 }
-
-/*
-.scatterplotView text {
-    fill: #888;
-}
-
-.scatterplotView .tick line, .scatterplotView .tick path {
-    stroke: #888;
-}
-*/
 
 .scatterplotView .brush .resize text {
     text-anchor: start;

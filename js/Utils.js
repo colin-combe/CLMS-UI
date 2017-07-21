@@ -596,21 +596,6 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     }
 });
 
-
-CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
-    initialize: function () {
-        CLMSUI.utils.KeyViewOldBB.__super__.initialize.apply (this, arguments);
-
-        var chartDiv = d3.select(this.el).append("div")
-            .attr("class", "panelInner")
-        ;
-        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        chartDiv.html ("<img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
-
-        return this;
-    }
-});
-
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);
 

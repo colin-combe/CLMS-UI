@@ -176,41 +176,15 @@ body, input, select, textarea {
     margin-right:10px;
 }
 
-/* history page */
-.tableContainer a {
-    color:#091D42;
-    text-decoration: underline;
-     -webkit-transition: all 200ms ease-in-out;
-       -moz-transition: all 200ms ease-in-out;
-       -ms-transition: all 200ms ease-in-out;
-       -o-transition: all 200ms ease-in-out;
-       transition: all 200ms ease-in-out;
-}
-.tableContainer a:hover {
-    color: #ffffff!important;
-    background-color: #091D42;
-}
-.clearChx{
-    background:#091D42;
-    width:70px;
-}
-.dynamic-table-filter{
-    margin:auto;
-}
-.aggregateCheckbox{
-    width:20px;
-}
 /* network page */
 #main {
     height:100vh;
     width:100vw;
-    /*display: table;*/
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-/
     overflow:hidden;
     /*z-index:-1;*/
 }
@@ -219,11 +193,6 @@ body, input, select, textarea {
     top: 0px;
     bottom: 65px;
     position: absolute;
-    
-    /*
-    display: table-row;
-    height: 100%;
-    */
     width: 100%;
     overflow: none;
 }
@@ -258,9 +227,6 @@ body, input, select, textarea {
 }
 .bar rect {
   fill: steelblue;
-/*
-  shape-rendering: crispEdges;
-*/
 }
 
 .bar text {
@@ -274,6 +240,8 @@ body, input, select, textarea {
     stroke-width:1.3px;
     stroke-linecap:round;
 }
+
+/* Colour Slider */
 
 #sliderDiv{
     height:70%;
@@ -378,11 +346,10 @@ body, input, select, textarea {
     background: white;
 }
 
-.panelInner{
+.panelInner {
     overflow: hidden;
     height:100%;
     width:100%;
-    /*color: #fff;*/
     text-align: left;
     display:block;
 }
@@ -391,15 +358,12 @@ body, input, select, textarea {
     font-weight: 400;
     color: #039;
     height: 30px;
-    /*#091D42;*/
-/*
-    padding: 10px 8px;
-    border: 0;
-*/
 }
+
 .panelInner thead td {
     color: #091D42;
 }
+
 .panelInner td, .helpPanel td {
     color: #777;
 }
@@ -424,14 +388,6 @@ body, input, select, textarea {
     user-select: none;
 }
 
-#defaultLinkKey{
-    background: white;
-}
-#logo{
-    display: block;
-    padding-top:20px;
-    padding-bottom:20px;
-}
 #keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #searchSummaryPanel {
     display:none;
     top:80px;
@@ -513,18 +469,6 @@ body, input, select, textarea {
     /*height:80px;*/
 }
 
-#colourSelect {
-    /*display: none;*/
-}
-
-#colourSelect span {
-    margin-right: 0.5em;
-}
-
-label.verticalFlow {
-    display: block;
-}
-
 label.horizontalFlow:not(:last-child) {
     display: inline;
     border-right: 1px solid grey;
@@ -585,24 +529,8 @@ A.btn {
   cursor: ns-resize;
 }
 
-.fdrResult {
-	display:inline-flex;
-    background: #55e;
-    border: 1px solid black;
-    padding: 0.2em 0.5em;
-    margin-top: 0.3em;
-    user-select: text;
-     -moz-user-select: text;
-     -ms-user-select: text;
-     -webkit-user-select: text;
-}
-
 .fdrCalculation {
     display: inline-block;
-}
-
-.fdrBoost {
-    display: none;
 }
 
 .btn:disabled {
@@ -615,12 +543,6 @@ A.btn {
     fill: #ddd;
     stroke: none;
 }
-
-/*
-.label {
-    text-shadow: 0 0 6px white;
-}
-*/
 
 .axis {
     shape-rendering: crispEdges;

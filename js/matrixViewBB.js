@@ -176,13 +176,13 @@
         this.yAxis = d3.svg.axis().scale(this.y).orient("left");
         
         this.vis.append("g")
-			         .attr("class", "y axis")
-			         //.call(self.yAxis)
+			 .attr("class", "y axis")
+			 //.call(self.yAxis)
         ;
         
         this.vis.append("g")
-			         .attr("class", "x axis")
-			         //.call(self.xAxis)
+			 .attr("class", "x axis")
+			 //.call(self.xAxis)
         ;
         
         
@@ -468,6 +468,7 @@
         var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
         var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
         
+        //consol
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
         this.model.set ("highlights", crossLinks);
@@ -718,9 +719,6 @@
                 var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
                 return protOK && this.esterFilter (crossLink);
             }, this);
-            var fromToStore = finalCrossLinks.map (function (crossLink) {
-                return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
-            });
             
             var radixSortBuckets = [[],[],[]]; // 3 groups
             finalCrossLinks.forEach (function (link) {
@@ -728,6 +726,9 @@
                 radixSortBuckets[bucketIndex].push (link);
             });
             finalCrossLinks = d3.merge (radixSortBuckets);
+            var fromToStore = finalCrossLinks.map (function (crossLink) {
+                return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
+            });
                        
             var linkSel = this.zoomGroup.selectAll("rect.crossLink")
                 .data(finalCrossLinks, function(d) { return d.id; })

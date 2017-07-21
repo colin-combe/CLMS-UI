@@ -5,12 +5,14 @@
     width:500px;
     height:500px;
 }
+
 .matrixView svg {
     height: 100%;
     width: 100%;
     position: absolute;
     pointer-events: none;
 }
+
 .matrixView text {
     text-anchor: middle;
 }
@@ -36,14 +38,6 @@
 .matrixView .viewDiv {
     width: auto;
     height: 100%;
-    /*margin-right: 15em;*/    /* should match width of button column below */
-}
-
-.matrixView .buttonColumn {
-    width: 15em;
-    float: right;
-    padding-left: 0.5em;
-    border-left: 1px solid grey;
 }
 
 .viewport {
