@@ -246,10 +246,13 @@
             .on("brush", brushSnap)
             .on("brushend", brushEnded)
         ;
+        // Restore when match selection is sorted out
+        /*
         this.scatg.append("g")
             .attr("class", "brush")
             .call(self.brush)
         ;
+        */
         this.scatg.select(".resize.n").append("text");
         this.scatg.select(".resize.e").append("text");
         
@@ -545,6 +548,7 @@
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
                 var yr = ((link.toResidue % 10) / 10) - 0.45;
                 
+                /*
                 if (high || selected) {
                     ctx.beginPath();
                     coords[i].forEach (function (coord) {
@@ -556,7 +560,7 @@
                     });
                     ctx.stroke();
                 }
-                
+                */
                 coords[i].forEach (function (coord) {
                     //var xr = (Math.random() - 0.5);
                     //var yr = (Math.random() - 0.5);
