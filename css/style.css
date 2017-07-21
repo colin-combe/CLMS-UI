@@ -268,9 +268,6 @@ body, input, select, textarea {
   stroke-width: 1px;
 }
 
-.brush .extent {
-}
-
 #bottomDiv {
     /*background: rgba(9, 29, 66, 0.9);*/
     padding:0px 10px;
@@ -501,12 +498,6 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 
 A.btn {
     text-decoration: none;
-}
-
-.righty {
-    float: right;
-    vertical-align: middle;
-    line-height: 20px;
 }
 
 /* For use with Split.js */
