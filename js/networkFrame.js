@@ -229,7 +229,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel"];
+    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -246,6 +246,7 @@ CLMSUI.init.views = function () {
     var checkBoxData = [
         {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
         {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
+        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName:"scatterplotShow"},
         {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
         {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
         {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
@@ -573,37 +574,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 
     // This makes a matrix viewer
-    var matrixViewer = new CLMSUI.DistanceMatrixViewBB ({
+    new CLMSUI.DistanceMatrixViewBB ({
         el: "#matrixPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
     });
-
-
-    // This stuffs a basic filter view into the matrix view
-    var matrixInner = d3.select(matrixViewer.el).select("div.panelInner");
-    var matrixFilterEventName = "filterEster";
-    /*
-    matrixInner.insert("div", ":first-child").attr("class", "buttonColumn").attr("id", "matrixButtons");
-    var matrixFilterView = new CLMSUI.utils.RadioButtonFilterViewBB ({
-        el: "#matrixButtons",
-        myOptions: {
-            states: [0, 1, 2],
-            labels: ["Any to Any", "NHS to Any", "NHS to NHS"],
-            header: "NHS Ester Filter",
-            labelGroupFlow: "verticalFlow",
-            eventName: matrixFilterEventName
-        }
-    });
-    */
-
-    // the matrix view listens to the event the basic filter view generates and changes a variable on it
-    matrixViewer.listenTo (CLMSUI.vent, matrixFilterEventName, function (filterVal) {
-        this.filterVal = filterVal;
-        this.render();
-    });
-    CLMSUI.vent.trigger (matrixFilterEventName, 0); // Transmit initial value to both filter and matrix. Makes sure radio buttons and display are synced
 
     // This is all done outside the matrix view itself as we may not always want a matrix view to have this
     // functionality. Plus the views don't know about each other now.
@@ -624,7 +600,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "pdbShow",
     });
     
-	new CLMSUI.CSVFileChooserBB ({
+    new CLMSUI.ScatterplotViewBB ({
+        el: "#scatterplotPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "scatterplotShow",
+    });
+    
+	   new CLMSUI.CSVFileChooserBB ({
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",

@@ -16,7 +16,6 @@
         "mousemove canvas": "brushNeighbourhood",
         "mousedown canvas": "setStartPoint",
         "click canvas": "selectNeighbourhood",
-        "click .downloadButton2": "downloadSVG2",
       });
     },
 
@@ -41,8 +40,8 @@
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
             right:  20,
-            bottom: this.options.xlabel ? 45 : 25,
-            left:   this.options.ylabel ? 70 : 50
+            bottom: this.options.xlabel ? 40 : 25,
+            left:   this.options.ylabel ? 60 : 40
         };
         
         this.displayEventName = viewOptions.displayEventName;
@@ -177,13 +176,13 @@
         this.yAxis = d3.svg.axis().scale(this.y).orient("left");
         
         this.vis.append("g")
-			         .attr("class", "y axis")
-			         //.call(self.yAxis)
+			 .attr("class", "y axis")
+			 //.call(self.yAxis)
         ;
         
         this.vis.append("g")
-			         .attr("class", "x axis")
-			         //.call(self.xAxis)
+			 .attr("class", "x axis")
+			 //.call(self.xAxis)
         ;
         
         
@@ -314,6 +313,8 @@
         return this;
     },
         
+        
+    // 3 chain set object wrapper routines
     makeNewChainShowSets: function () {
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
         if (distanceObj) {
@@ -334,6 +335,7 @@
         this.showChains[dropdownIndex][show ? "add" : "remove"](chainIndex);
         return this;
     },
+        
         
     makeChainOptions: function (proteinIDs) {
         
@@ -414,6 +416,9 @@
         return proteinIDsObj;
     },
         
+        
+    // Tooltip functions
+        
     setStartPoint: function (evt) {
         this.startPoint = {x: evt.clientX, y: evt.clientY};
     },
@@ -463,13 +468,10 @@
         var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
         var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
         
+        //consol
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
         this.model.set ("highlights", crossLinks);
-    },
-        
-    filterMatrixOptions: function (matrices, filterFunc) {
-        return matrices.filter (filterFunc);
     },
         
     getSingleLinkDistances: function (crossLink) {
@@ -496,7 +498,7 @@
             this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
         }
     },
-        
+    // end of tooltip functions  
     
     zoomHandler: function (self) {
         var sizeData = this.getSizeData();
@@ -717,12 +719,21 @@
                 var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
                 return protOK && this.esterFilter (crossLink);
             }, this);
+            
+            var radixSortBuckets = [[],[],[]]; // 3 groups
+            finalCrossLinks.forEach (function (link) {
+                var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
+                radixSortBuckets[bucketIndex].push (link);
+            });
+            finalCrossLinks = d3.merge (radixSortBuckets);
             var fromToStore = finalCrossLinks.map (function (crossLink) {
                 return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
             });
-            
-            
-            var linkSel = this.zoomGroup.selectAll("rect.crossLink").data(finalCrossLinks, function(d) { return d.id; });
+                       
+            var linkSel = this.zoomGroup.selectAll("rect.crossLink")
+                .data(finalCrossLinks, function(d) { return d.id; })
+                .order()
+            ;
             linkSel.exit().remove();
             linkSel.enter().append("rect")
                 .attr ("class", "crossLink")
@@ -732,13 +743,14 @@
             linkSel
                 .attr("x", function(d, i) { return fromToStore[i][0] - linkWidthOffset; })
                 .attr("y", function(d, i) { return (seqLengthB - fromToStore[i][1]) - linkWidthOffset; })
-                .style ("fill", function (d, i) {
+                .each (function (d) {
                     var high = highlightedCrossLinkIDs.has (d.id);
-                    if (high) { return self.options.highlightedColour; }
-                    if (selectedCrossLinkIDs.has (d.id)) {
-                        return self.options.selectedColour;
-                    }
-                    return colourScheme.getColour (d);
+                    var selected = selectedCrossLinkIDs.has (d.id);
+                    d3.select(this)
+                        .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
+                        .style ("stroke", high || selected ? "black" : null)
+                        .style ("stroke-opacity", high || selected ? 0.4 : null)
+                    ;
                 })
             ;
         }
@@ -798,8 +810,6 @@
             .attr ("width", minDim)
             .attr ("height", minDim)
         ;
-        
-        
  
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
@@ -847,8 +857,8 @@
         // reposition labels
         //console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.viewWidth / 2, y: sizeData.viewHeight + this.margin.bottom, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.viewHeight / 2, rot: -90},
+            {x: sizeData.viewWidth / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
+            {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
             {x: sizeData.viewWidth / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
@@ -894,14 +904,13 @@
         sizeData.viewHeight = $.zepto ? viewport.height() : viewport.outerHeight(true);
         sizeData.viewWidth = $.zepto ? viewport.width() : viewport.outerWidth(true);
         var bottom = Math.min (
-            cvs.position().top + ($.zepto ? cvs.height() : cvs.outerHeight(true)), 
+            cvs.position().top + (($.zepto ? cvs.height() : cvs.outerHeight(true)) * scale), 
             sizeData.viewHeight
         );
         var right = Math.min (
-            cvs.position().left + ($.zepto ? cvs.width() : cvs.outerWidth(true)), 
+            cvs.position().left + (($.zepto ? cvs.width() : cvs.outerWidth(true)) * scale), 
             sizeData.viewWidth
         );
-        
         
         // redraw axes
         this.vis.select(".y")
@@ -910,7 +919,8 @@
         ;
         
         this.vis.select(".x")
-            .attr("transform", "translate(0," + sizeData.viewHeight + ")")
+            //.attr("transform", "translate(0," + sizeData.viewHeight + ")")
+            .attr("transform", "translate(0," + bottom + ")")
             .call(self.xAxis)
         ;
         
@@ -918,40 +928,12 @@
         sizeData.right = right;
         this.repositionLabels (sizeData);
         
+        //console.log ("sizeData", sizeData);
+        
         return this;
     },
-        
-    /**
-    Need to change the canvas element to an image and shove it in the detached svg element we download
-    Also needs a g element and a clipPath to act as a viewport
-    And shove in an extra css rule after the style element's already been generated
-    */
-    downloadSVG2: function () {
-        var mainDivSel = d3.select(this.el);
-        var svgSel = mainDivSel.selectAll("svg");
-        var svgArr = [svgSel.node()];
-        var svgStrings = CLMSUI.svgUtils.capture (svgArr);
-        var detachedSVG = svgStrings[0];
-        var detachedSVGD3 = d3.select (detachedSVG);
-        
-        // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
-        var img = detachedSVGD3
-            .select("svg g.clipg")
-            .insert ("svg:image", ":first-child")
-        ;
-        
-        // Add a rule to stop the image being 'smoothed' (i.e. blurred)
-        var extraRule = ".matrixView image {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
-        var style = detachedSVGD3.select("style");
-        style.text (style.text() + "\n" + extraRule);
-        
-        var fileName = this.filenameStateString()+".svg";
-        // Now convert the canvas and its data to the image element we just added and download the whole svg when done
-        CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
-            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
-            download (svgXML, "application/svg", fileName);
-        });
-    },
+    
+    canvasImageParent: "svg g.clipg",   // place image made from canvas into clipped element (so image doesn't exceed matrix size)
         
     identifier: "Matrix",
         

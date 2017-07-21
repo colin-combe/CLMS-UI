@@ -22,7 +22,7 @@ DIV.tableWrapper TABLE TBODY {
 DIV.tableWrapper TABLE THEAD {
     display: block;
     margin: 0;
-    background: #eef;
+    background: #eee;
 }
 
 DIV.tableWrapper TABLE TH:first-child {
@@ -61,7 +61,7 @@ DIV.tableWrapper TD, DIV.tableWrapper TH {
 }
 
 DIV.tableWrapper TH {
-    background: #eef;
+    background: #eee;
 }
 
 DIV.tableWrapper THEAD TH {
@@ -124,10 +124,10 @@ DIV.checkHolder SPAN INPUT {
 }
 
 DIV.checkHolder SPAN INPUT:checked + label {
-    background: rgba(255,255,255,0.5);
+    background: white;
+    border: 1px solid #888;
+    color: #002;
 }
-
-
 
 DIV.alignSettings {
     padding-top: 0.5em;
@@ -150,7 +150,7 @@ DIV.alignSettings {
 }
 
 .alignSeqCount {
-    color: #aaf;
+    color: #99b;
     font-size: 0.75em;
 }
 

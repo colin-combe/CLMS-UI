@@ -106,31 +106,15 @@ tbody tr:hover td, tbody tr:hover td a, .spectrumShown{
 }
 
 /* fa */
-.fa-home{
+.fa-xi {
     font-size:1.5em;
-/*
-    vertical-align:middle;
-*/
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
     transition: all .3s;
     cursor:pointer;
+    padding: 0 1px;
 }
-.fa-home:hover {
-    color: #091D42;
-    background:white;
-}
-.fa-github{
-    font-size:1.5em;
-/*
-    vertical-align:middle;
-*/
-    -webkit-transition: all .3s;
-    -moz-transition: all .3s;
-    transition: all .3s;
-    cursor:pointer;
-}
-.fa-github:hover {
+.fa-xi:hover {
     color: #091D42;
     background:white;
 }
@@ -192,41 +176,15 @@ body, input, select, textarea {
     margin-right:10px;
 }
 
-/* history page */
-.tableContainer a {
-    color:#091D42;
-    text-decoration: underline;
-     -webkit-transition: all 200ms ease-in-out;
-       -moz-transition: all 200ms ease-in-out;
-       -ms-transition: all 200ms ease-in-out;
-       -o-transition: all 200ms ease-in-out;
-       transition: all 200ms ease-in-out;
-}
-.tableContainer a:hover {
-    color: #ffffff!important;
-    background-color: #091D42;
-}
-.clearChx{
-    background:#091D42;
-    width:70px;
-}
-.dynamic-table-filter{
-    margin:auto;
-}
-.aggregateCheckbox{
-    width:20px;
-}
 /* network page */
 #main {
     height:100vh;
     width:100vw;
-    /*display: table;*/
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-/
     overflow:hidden;
     /*z-index:-1;*/
 }
@@ -235,11 +193,6 @@ body, input, select, textarea {
     top: 0px;
     bottom: 65px;
     position: absolute;
-    
-    /*
-    display: table-row;
-    height: 100%;
-    */
     width: 100%;
     overflow: none;
 }
@@ -274,9 +227,6 @@ body, input, select, textarea {
 }
 .bar rect {
   fill: steelblue;
-/*
-  shape-rendering: crispEdges;
-*/
 }
 
 .bar text {
@@ -290,6 +240,8 @@ body, input, select, textarea {
     stroke-width:1.3px;
     stroke-linecap:round;
 }
+
+/* Colour Slider */
 
 #sliderDiv{
     height:70%;
@@ -313,14 +265,14 @@ body, input, select, textarea {
 .axis path, .axis line {
   fill: none;
   stroke: #000;
-  stroke-width: 1.2px;
+  stroke-width: 1px;
 }
 
 .brush .extent {
 }
 
 #bottomDiv {
-    background: rgba(9, 29, 66, 0.9);
+    /*background: rgba(9, 29, 66, 0.9);*/
     padding:0px 10px;
     position: relative; /* will overlay previous absolute divs i.e. distance slider */
 }
@@ -330,11 +282,14 @@ body, input, select, textarea {
 
 .dynDiv{
     padding:20px 10px;
-    background: rgba(9, 29, 66, 0.9);
+    /*background: rgba(9, 29, 66, 0.9);*/
     overflow: hidden;
-    color:#fff;
+    color:#091d42;
     position:fixed;
     pointer-events:all;
+    background: rgba(224,224,224,0.9);
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    border: 1px solid #888;
 /*
     height:400px;
 */
@@ -363,11 +318,38 @@ body, input, select, textarea {
  background-image:url("../images/br.png");
 }
 
-.panelInner{
+.dynDiv .btn-1 {
+    color: #091d42;
+    border-color: #091d42;
+}
+
+.fa-times-circle {
+    color: white;
+}
+
+/* window drop-down menus should have grey background */
+.dynDiv .dropdown DIV {
+    background: #ddd;
+}
+
+/* Buttons in window drop-down menus shouldn't have borders */
+.dynDiv .dropdown LI .btn-1 {
+    padding: 0.25em 1em;
+    border: none;
+}
+
+.dynDiv .dropdown LI .btn-1a:hover {
+    background: transparent;
+}
+
+.dynDiv label:hover {
+    background: white;
+}
+
+.panelInner {
     overflow: hidden;
     height:100%;
     width:100%;
-    color: #fff;
     text-align: left;
     display:block;
 }
@@ -376,15 +358,12 @@ body, input, select, textarea {
     font-weight: 400;
     color: #039;
     height: 30px;
-    /*#091D42;*/
-/*
-    padding: 10px 8px;
-    border: 0;
-*/
 }
+
 .panelInner thead td {
     color: #091D42;
 }
+
 .panelInner td, .helpPanel td {
     color: #777;
 }
@@ -409,14 +388,6 @@ body, input, select, textarea {
     user-select: none;
 }
 
-#defaultLinkKey{
-    background: white;
-}
-#logo{
-    display: block;
-    padding-top:20px;
-    padding-bottom:20px;
-}
 #keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #searchSummaryPanel {
     display:none;
     top:80px;
@@ -498,18 +469,6 @@ body, input, select, textarea {
     /*height:80px;*/
 }
 
-#colourSelect {
-    /*display: none;*/
-}
-
-#colourSelect span {
-    margin-right: 0.5em;
-}
-
-label.verticalFlow {
-    display: block;
-}
-
 label.horizontalFlow:not(:last-child) {
     display: inline;
     border-right: 1px solid grey;
@@ -537,7 +496,7 @@ span.noBreak select {
 }
 
 /* and then put spaces after labels to give a known place for content to break */
-label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before, .matrixView label.btn::before {
+label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before, .matrixView label.btn::before, .scatterplotView label.btn::before {
     content: " ";
 }
 
@@ -570,33 +529,46 @@ A.btn {
   cursor: ns-resize;
 }
 
-.fdrResult {
-	display:inline-flex;
-    background: #55e;
-    border: 1px solid black;
-    padding: 0.2em 0.5em;
-    margin-top: 0.3em;
-    user-select: text;
-     -moz-user-select: text;
-     -ms-user-select: text;
-     -webkit-user-select: text;
-}
-
 .fdrCalculation {
     display: inline-block;
 }
 
-.fdrBoost {
-    display: none;
-}
-
 .btn:disabled {
-    color: gray;
-    border-color: gray;
+    color: #ccc;
+    border-color: #ccc;
 }
 
 .brushValueText {
     font-size: 0.75em;
     fill: #ddd;
     stroke: none;
+}
+
+.axis {
+    shape-rendering: crispEdges;
+}
+
+.sectionTable .tableShown {
+    background: #ccc;
+}
+
+.sectionTable .tableShown svg {
+    transform: rotate(90deg);
+}
+
+.toolbar:first-child {
+    margin-bottom: 0.15em;
+    border-bottom: 1px solid rgba(0,0,0,0.5);
+}
+
+.toolbar button {
+    margin-bottom: 0.2em;
+}
+
+.toolbar span select {
+    text-transform: capitalize;
+}
+
+.toolbar > * {
+    display: inline-block;
 }

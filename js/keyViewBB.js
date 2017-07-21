@@ -18,8 +18,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
         
         var topDiv = d3.select(this.el).append("div")
-            .attr("class", "panelInner keyPanel")
-            .html("<div class='panelInner'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
+            .attr("class", "verticalFlexContainer keyPanel")
+            .html("<div class='panelInner' flex-grow='1'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
         ;           
         topDiv.insert("p", ":first-child").attr("id", "linkColourDropdownPlaceholder");
         
@@ -47,7 +47,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             },
             {
                 id: "proteinKey",
-                header: "Protein-protein level",
+                header: "Protein-Protein Level",
                 rows: [
                     ["clinkp", "Cross-link(s) between different proteins"],
                     ["ambigp", "Ambiguous"],
@@ -58,7 +58,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             },
             {
                 id: "residueKey",
-                header: "Residue level",
+                header: "Residue Level",
                 rows: [
                     ["clinkr", "Cross-link between different proteins"],
                     ["ambigr", "Ambiguous"],
@@ -152,7 +152,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
                 var rgbCol = colScale.range()[i];
                 var rgbHex = d3.rgb(rgbCol).toString();
-                var span = /*"<span class='colourSwatch' style='background-color:"+rgbCol+"'></span>"+*/"<input type='color' value='"+rgbHex+"' title='Press to change colour'/>";
+                var span = "<input type='color' value='"+rgbHex+"' title='Press to change colour'/>";
                 return [span, val, i];
             });
 

@@ -20,24 +20,6 @@
     padding-left: 0;
 }
 
-.sideOn {
-/*
-    -ms-transform:rotate(270deg) translate(-25px, 0);  IE 9 
-    -moz-transform:rotate(270deg)translate(-25px, 0); /* Firefox */
-/*
-    -webkit-transform:rotate(270deg) translate(-25px, 0); /* Safari and Chrome */
-
-/*
-    -o-transform:rotate(270deg) translate(-25px, 0); /* Opera */
-
-/*
-    transform:rotate(270deg) translate(-25px, 0);
-*/
-  
-display: inline-block;
-
-}
-
 input.filterTypeText {
     margin-right: 5px;
 }
@@ -94,13 +76,6 @@ div.toggles:not(:last-child) {
 .scoreSlider .cutoffLabel input {
     width: 4em;
     color: black;
-}
-.sliderInput {
-    background: none;
-    position: relative;
-    border: none;
-    margin-top:5px;
-    display: inline-block;
 }
 
 #fdrSummaryPlaceholder {

@@ -1,4 +1,4 @@
-.matrixView {
+.scatterplotView {
     display: none;
     left: 6em;
     top: 6em;
@@ -6,18 +6,17 @@
     height:500px;
 }
 
-.matrixView svg {
+.scatterplotView svg {
     height: 100%;
     width: 100%;
     position: absolute;
-    pointer-events: none;
 }
 
-.matrixView text {
+.scatterplotView text {
     text-anchor: middle;
 }
 
-.matrixView canvas {
+.scatterplotView canvas {
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
     image-rendering: pixelated;                 /* Opera 'n' Chrome */
@@ -29,18 +28,30 @@
 }
 
 /* For svg output */
-.matrixView image {
+.scatterplotView image {
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
     image-rendering: pixelated;                 /* Opera 'n' Chrome */
 }
 
-.matrixView .viewDiv {
+.scatterplotView .viewDiv {
     width: auto;
     height: 100%;
 }
 
-.viewport {
-    overflow: hidden;
-    position: absolute;
+.scatterplotBackground {
+    fill: #ddd;
+}
+
+.scatterplotView .brush .extent {
+  fill-opacity: 0.2; 
+}
+
+.scatterplotView .brush .resize text {
+    text-anchor: start;
+    font-size: 0.8em;
+}
+
+.scatterplotView .brush .resize.e text {
+    transform: rotate(90deg);
 }

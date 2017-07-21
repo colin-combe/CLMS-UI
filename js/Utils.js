@@ -162,11 +162,6 @@ CLMSUI.utils = {
         }
     }),
 
-    dpNumber: function (num, decimalPlaces, roundFunc) {
-        var powerOfTen = Math.pow (10, decimalPlaces);
-        return (roundFunc(num * powerOfTen) / powerOfTen).toFixed(decimalPlaces);
-    },
-
     niceRoundMap: {1: 1, 2: 2, 3: 3, 4: 5, 5: 5, 6: 10, 7: 10, 8: 10, 9: 10, 10: 10},
 
     niceRound: function (val) {
@@ -281,7 +276,7 @@ CLMSUI.utils = {
             .append("button")
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
-                .classed ("btn btn-1 btn-1a", true) // and we don't class .temop so these can't be picked up by a subsequent call to make backbonebuttons
+                .classed ("btn btn-1 btn-1a", true) // and we don't class .temp so these can't be picked up by a subsequent call to make backbonebuttons
                 .attr("id", makeID)
         ;
             
@@ -377,6 +372,7 @@ CLMSUI.utils = {
             // and dragend not supported by zepto, fallback to d3 instead (see later)
             // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
             "click .downloadButton": "downloadSVG",
+            "click .downloadButton2": "downloadSVGWithCanvas",
             "click .closeButton": "hideView",
             "click": "bringToTop",
         },
@@ -404,6 +400,7 @@ CLMSUI.utils = {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }
 
+
             return this;
         },
 
@@ -424,8 +421,44 @@ CLMSUI.utils = {
             
             var fileName = this.filenameStateString().substring (0,240);
             download (svgXML, 'application/svg', fileName+".svg");
-            //download (svgXML, 'application/svg', "view.svg");
         },
+
+        canvasImageParent: "svg",
+        
+        /**
+        Called when we need to change a canvas element to an image to add to a cloned svg element we download.
+        Needs canvasImageParent set to decide where to place it in an svg (e.g. for matrix we put it in a g with a clipPath)
+        And add an extra css rule after the style element's already been generated to try and stop the image anti-aliasing
+        */
+        downloadSVGWithCanvas: function () {
+            var mainDivSel = d3.select(this.el);
+            var svgSel = mainDivSel.selectAll("svg");
+            var svgArr = [svgSel.node()];
+            var svgStrings = CLMSUI.svgUtils.capture (svgArr);
+            var detachedSVG = svgStrings[0];
+            var detachedSVGD3 = d3.select (detachedSVG);
+            var self = this;
+
+            // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
+            var img = detachedSVGD3
+                .select(self.canvasImageParent)  // where to add image
+                .insert ("svg:image", ":first-child")
+            ;
+
+            // Add a rule to stop the image being anti-aliased (i.e. blurred)
+            img.attr("class", "sharpImage");
+            var extraRule = "image.sharpImage {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
+            var style = detachedSVGD3.select("style");
+            style.text (style.text() + "\n" + extraRule);
+
+            var fileName = this.filenameStateString()+".svg";
+            // Now convert the canvas and its data to the image element we just added and download the whole svg when done
+            CLMSUI.utils.convertCanvasToImage (this.canvas, img, function () {
+                var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), detachedSVG);
+                download (svgXML, "application/svg", fileName);
+            });
+        },
+        
 
         hideView: function () {
             CLMSUI.vent.trigger (this.displayEventName, false);
@@ -563,37 +596,17 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     }
 });
 
-
-CLMSUI.utils.KeyViewOldBB = CLMSUI.utils.BaseFrameView.extend ({
-    initialize: function () {
-        CLMSUI.utils.KeyViewOldBB.__super__.initialize.apply (this, arguments);
-
-        var chartDiv = d3.select(this.el).append("div")
-            .attr("class", "panelInner")
-        ;
-        // we don't replace the html of this.el as that ends up removing all the little re-sizing corners and the dragging bar div
-        chartDiv.html ("<img id='defaultLinkKey' src='./images/fig3_1.svg'><br><img id='logo' src='./images/logos/rappsilber-lab-small.png'>");
-
-        return this;
-    }
-});
-
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);
 
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
-        var tableIsHidden = (assocTable.style("display") == "none");
-        d3.select(this)
-            .style("background", tableIsHidden ? "none" : "#55a")
-            .select("svg")
-                .style("transform", "rotate("+(tableIsHidden ? 90 : 180)+"deg)")
-        ;
+        d3.select(this).classed ("tableShown", assocTable.style("display") !== "none");
     };
 
     var dataJoin = domid.selectAll("section").data(data, function(d) { return d.id; });
     dataJoin.exit().remove();
-    var newElems = dataJoin.enter().append("section");
+    var newElems = dataJoin.enter().append("section").attr("class", "sectionTable");
 
     var newHeaders = newElems.append("h2")
         .on ("click", function(d) {
@@ -608,7 +621,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     ;
     newHeaders.append("svg")
         .append("polygon")
-            .attr("points", "0,14 7,0 14,14")
+            .attr("points", "2,1 16,8 2,15")
     ;
     newHeaders.append("span").text(headerFunc);
 

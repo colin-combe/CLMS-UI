@@ -53,7 +53,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre"},
         ];
 
-        var toolbar = flexWrapperPanel.append("div").attr("class", "nglToolbar nglDataToolbar");
+        var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar");
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
 

@@ -7,7 +7,7 @@
         initialize: function (options) {
             this.options = options;
             var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
-            holdingDiv.html ("<DIV class='pager'></DIV><DIV class='crossLinkTotal'></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
+            holdingDiv.html ("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
             // redraw table on filter change if crosslinks selected (matches may have changed)
             this.listenTo (this.model, "filteringDone", function () {
@@ -132,20 +132,21 @@
             this.pageSize = 50;
             var pager = d3.select(this.el).select(".pager");
             if (!self.options.mainModel) {
-                pager.append("p").text("Page:").style ("display", "inline-block");
+                pager.append("span").text("Page:");
 
                 pager.append("input")
                     .attr ("type", "number" )
                     .attr ("min", "1" )
                     .attr ("max", "999" )
-                    //~ .attr ("class", "btn btn-1 btn-1a" )
                     .style ("display", "inline-block")
-                    .on ("change", function (d) {
-                            self.setPage(this.value);
+                    .on ("change", function () {
+                        self.setPage(this.value);
                     });
             } else {
-                pager.append("p").text("Alternative Explanations");
+                pager.append("span").text("Alternative Explanations");
             }
+            
+            d3.select(this.el).select(".controlBar").insert("span", ":first-child").text(this.identifier);
          },
 
         render: function () {
@@ -201,7 +202,7 @@
                 upper = selectedXLinkCount;
             }
             panelHeading.text(lower + " - " + upper + " of " +
-                selectedXLinkCount + " cross-link" + ((selectedXLinkCount != 1)? "s":""));
+                selectedXLinkCount + " Cross-Link" + ((selectedXLinkCount != 1)? "s":""));
             var tablePage = this.selectedXLinkArray.slice((this.page - 1) * this.pageSize,
                                                 this.page * this.pageSize);
             this.addRows (tablePage, this.filteredProps);
@@ -319,4 +320,6 @@
                 this.render();
             }
         },
+        
+        identifier: "Match Table",
     });

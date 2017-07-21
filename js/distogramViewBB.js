@@ -43,7 +43,7 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
 
-            var template = _.template ("<DIV class='buttonPanel'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
+            var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "verticalFlexContainer")
                 .html(
@@ -56,8 +56,8 @@
                 {class: "intraRandomButton", label: "Self Randoms Only", type: "checkbox", id: "intraRandom", initialState: this.options.intraRandomOnly, title: "Show only random links between same protein", noBreak: false},
             ];
             
-            var buttonPanel = mainDivSel.select("div.buttonPanel");
-            CLMSUI.utils.makeBackboneButtons (buttonPanel, self.el.id, buttonData);
+            var toolbar = mainDivSel.select("div.toolbar");
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
             var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")

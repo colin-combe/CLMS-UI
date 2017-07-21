@@ -20,8 +20,8 @@
      
 #spectrumControls form {
     display: inline-block;
-    border-left: 1px solid white;
-    border-right: 1px solid white;
+    border-left: 1px solid #091d42;
+    border-right: 1px solid #091d42;
 }
 
 #spectrumControls form > * {
@@ -70,4 +70,10 @@
 
 .scrollHolder {
     color: #888;
+}
+
+#spectrumControls .spectrumDisabled, #spectrumControls .spectrumDisabled:hover {
+    color: #ccc;
+    background: #eee;
+    border-color: #ccc;
 }

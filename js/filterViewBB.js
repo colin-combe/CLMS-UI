@@ -159,7 +159,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
 		// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
         sliderSection.selectAll("p.cutoffLabel")
-            .attr ("title", function (d) { 
+            .attr ("title", function () { 
                 var isMinInput = d3.select(this).classed("vmin");
                 return "Filter out matches with scores "+(isMinInput ? "less than": "greater than")+" X";
             })
@@ -339,7 +339,6 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     })
         ;
 
-        //chartDiv.append("div").attr("class", "fdrResult");//.style("display", "none");
         return this;
     }
 });

@@ -57,6 +57,7 @@
         <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
         <link rel="stylesheet" href="./css/key.css">
         <link rel="stylesheet" href="./css/filter.css">
+        <link rel="stylesheet" href="./css/scatterplot.css">
         <link rel="stylesheet" href="./css/nglViewBB.css">
         <link rel="stylesheet" href="./css/networkPage.css">
 		<link rel="stylesheet" href="./css/csvUpload.css">
@@ -127,6 +128,7 @@
         <script type="text/javascript" src="./js/validate.js"></script>
         <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
         <script type="text/javascript" src="./js/keyViewBB.js"></script>
+        <script type="text/javascript" src="./js/scatterplotViewBB.js"></script>
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
 		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
@@ -149,13 +151,15 @@
         <div id="main">
 
             <div class="page-header">
-                    <i class="fa fa-home" 
+                    <i class="fa fa-home fa-xi" 
 						onclick="window.location = '../history/history.html';" 
 						title="Return to search history / Login"></i>
-                    &nbsp;
-                    <i class="fa fa-github" 
+                    <i class="fa fa-github fa-xi" 
 						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
 						title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
+                    <i class="fa fa-question fa-xi" 
+						onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');" 
+						title="Xi Documentation"></i>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="loadDropdownPlaceholder"></p>

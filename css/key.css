@@ -54,21 +54,14 @@ changes there are automatically reflected in the legend
 }
 
 /* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */
-.keyPanel.panelInner .panelInner {
+.keyPanel.verticalFlexContainer .panelInner {
     overflow-y: auto;
 }
 
-.keyPanel > .panelInner > h1 {
-    height: 1.7em;
-}
-
-.keyPanel > .panelInner > img {
-    margin-top: 0.5em;
-    height: 63px
-}
-
-.keyPanel.panelInner > .panelInner {
-    height: calc(100% - 2.2em - 63px);
+.keyPanel img {
+    padding: 0.5em;
+    background: #091d42;
+    align-self: center;
 }
 
 .keyPanel tr {
@@ -95,13 +88,7 @@ changes there are automatically reflected in the legend
     height: 16px;
     fill: white;
     stroke: white;
-}
-
-.colourSwatch {
-    height: 3px;
-    width: 5em;
-    display: inline-block;
-    vertical-align: middle;
+    vertical-align: sub;
 }
 
 .colourSwatchSquare {

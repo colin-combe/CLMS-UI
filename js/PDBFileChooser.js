@@ -36,7 +36,7 @@
                 .attr ("class", "panelInner")
             ;
             
-            var toolbar = wrapperPanel.append("div").attr("class", "nglToolbar");
+            var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
             
             toolbar.append("label")
                 .attr("class", "btn btn-1 btn-1a fakeButton")

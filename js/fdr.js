@@ -26,7 +26,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
 		var crossLink = crossLinksArr[i];
         crossLink.meta = crossLink.meta || {};
         crossLink.meta.meanMatchScore = scoreCalcFunc (crossLink);
-    };
+    }
     
     // Divide crosslinks into inter and intra-protein groups, and sort them by the scores just calculated
     var linkArrs = [[],[]];
@@ -49,7 +49,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     
     // Loop through both groups and work out the fdr
     var fdrResult = linkArrs.map (function (linkArr, index) {
-        var fdr = 1, t = [0,0,0,0], i = 0, cutoffIndex = 0, runningFdr = [], fdrScoreCutoff = undefined;
+        var fdr = 1, t = [0,0,0,0], cutoffIndex = 0, runningFdr = [], fdrScoreCutoff;
         
         if (linkArr.length && threshold !== undefined) {
             // first run, count tt, td, and dd

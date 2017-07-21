@@ -36,7 +36,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
              +"<label for='lockZoom' title='Lock current zoom level' id='lock'>&#128275;</label>"
              +"<input type='submit' id='rangeSubmit' value='Set'>"
              +"<span id='range-error'></span>"
-            +"<button id='reset' title='reset to initial zoom level'>All</button>"
+            +"<button id='reset' title='Reset to initial zoom level'>All</button>"
             +"<input id='lockZoom' type='checkbox' style='visibility: hidden;'>"
             +"</form>"
             +"<button id='toggleView' title='Click to toggle view'>QC</button>"
@@ -203,9 +203,10 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     enableControls: function (state) {
         d3.select(this.el)
             .selectAll(".validationControls,#spectrumControls")
-            .style ("background", state ? null : "#888888")
+            //.style ("background", state ? null : "#888888")
             .selectAll("*")
             .property("disabled", !state)
+            .classed ("spectrumDisabled", !state)
         ;
     },
 
