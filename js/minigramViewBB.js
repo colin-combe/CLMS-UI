@@ -7,9 +7,7 @@
     var CLMSUI = CLMSUI || {};
 
     CLMSUI.MinigramViewBB = Backbone.View.extend ({
-        events: {
-            // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
-        },
+        events: {},
 
         initialize: function (viewOptions) {
             var defaultOptions = {

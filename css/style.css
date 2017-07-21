@@ -303,19 +303,18 @@ body, input, select, textarea {
     height:20px;
     background:#091D42;
     border:none;
-}
-.dynDiv_resizeDiv_tl {
- background-image:url("../images/tl.png");
+    background-image:url("../images/tl.png");
 }
 
+/* just need 1 background image and rotate it for corner orientations */
 .dynDiv_resizeDiv_tr {
- background-image:url("../images/tr.png");
+    transform: rotate(90deg);
 }
 .dynDiv_resizeDiv_bl {
- background-image:url("../images/bl.png");
+    transform: rotate(270deg);
 }
 .dynDiv_resizeDiv_br {
- background-image:url("../images/br.png");
+    transform: rotate(180deg);
 }
 
 .dynDiv .btn-1 {

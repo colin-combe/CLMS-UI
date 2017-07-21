@@ -387,7 +387,7 @@ CLMSUI.utils = {
             var mainDivSel = d3.select(this.el);
 
             // Set up some html scaffolding in d3
-            CLMSUI.utils.addDynDivScaffolding (mainDivSel, "Title");
+            CLMSUI.utils.addDynDivScaffolding (mainDivSel);
             mainDivSel.select(".dynTitle").text (this.identifier);
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
