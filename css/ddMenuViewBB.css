@@ -45,3 +45,10 @@
 .dropdown LI .btn {
     padding: 0;
 }
+
+.colourSwatchSquare {
+    height: 0.8em;
+    width: 0.8em;
+    display: inline-block;
+    margin-left: 2px;
+}

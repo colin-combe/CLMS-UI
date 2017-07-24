@@ -10,14 +10,6 @@ CLMSUI.DistancesObj.prototype = {
     
     constructor: CLMSUI.DistancesObj,
     
-    debug: false,
-    
-    xilog: function () {
-        if (this.debug && (typeof(console) !== 'undefined')) {
-            console.log.apply (console, arguments);
-        }
-    },
-    
     getShortestLinks: function (links) {
         links.forEach (function (link) {
             link.distance = this.getXLinkDistanceFromChainCoords (this.matrices, link.residueA.chainIndex, link.residueB.chainIndex, link.residueA.resindex, link.residueB.resindex);
@@ -40,7 +32,7 @@ CLMSUI.DistancesObj.prototype = {
             return group.values[0];
         });
         
-        this.xilog ("nestedLinks", links, nestedLinks, shortestLinks);
+        CLMSUI.utils.xilog ("nestedLinks", links, nestedLinks, shortestLinks);
         
         return shortestLinks;
     },
@@ -79,7 +71,7 @@ CLMSUI.DistancesObj.prototype = {
                         var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName2, chainIndex2);
                         var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; 
                         // align from 3d to search index. resindex is 0-indexed so -1 before querying
-                        //this.xilog ("alignid", alignId1, alignId2, pid1, pid2);
+                        //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
                         
                         if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, chainIndex1, chainIndex2)) {
                             var dist = this.getXLinkDistanceFromChainCoords (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2);
@@ -116,14 +108,14 @@ CLMSUI.DistancesObj.prototype = {
         var dist;
         var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
         var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
-        //this.xilog ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
+        //CLMSUI.utils.xilog ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
         if (distanceMatrix[minIndex] && distanceMatrix[minIndex][resIndex2]) {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
             dist = distanceMatrix[minIndex][maxIndex];
         } else {
             dist = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, resIndex1, resIndex2, chainIndex1, chainIndex2);
         }
-        //this.xilog ("dist", dist);
+        //CLMSUI.utils.xilog ("dist", dist);
         return dist;
     },
     
@@ -132,8 +124,8 @@ CLMSUI.DistancesObj.prototype = {
         options = options || {};
         residueSets = residueSets || {name: "all", searches: new Set(), linkables: new Set()};
         var stots = d3.sum (residueSets, function (rdata) { return rdata.searches.size; });
-        this.xilog ("------ RANDOM DISTRIBUTION CALCS ------");
-        this.xilog (residueSets, "STOTS", stots, this, this.matrices);
+        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION CALCS ------");
+        CLMSUI.utils.xilog (residueSets, "STOTS", stots, this, this.matrices);
         var perSearch = Math.ceil (size / stots);
         
         // Collect together sequence data that is available to do random 3d distances on, by mapping
@@ -154,17 +146,17 @@ CLMSUI.DistancesObj.prototype = {
             }, this);
         }, this);
         seqs = d3.merge(seqs); // collapse nested arrays
-        this.xilog ("seqs", seqs);
+        CLMSUI.utils.xilog ("seqs", seqs);
         
         var seqsByProt = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(seqs), function (d) { return d.key; });
-        this.xilog ("spp", seqsByProt, peptideTerminalPositions);
+        CLMSUI.utils.xilog ("spp", seqsByProt, peptideTerminalPositions);
         /*
         var alignedTerminalIndices = {ntermList: [], ctermList: []};
         peptideTerminalPositions.entries().forEach (function (protEntry) {
             var protValue = protEntry.value;
             var protKey = protEntry.key;
             var seqValues = (seqsByProt.get(protKey) || {values: []}).values;
-            this.xilog ("sv", seqValues);
+            CLMSUI.utils.xilog ("sv", seqValues);
             ["ctermList", "ntermList"].forEach (function (termType) {
                 var alignedTerminalIndex = alignedTerminalIndices[termType];
                 protValue[termType].forEach (function (searchIndex) {
@@ -218,7 +210,7 @@ CLMSUI.DistancesObj.prototype = {
             });
         });
         
-        this.xilog ("ptp", peptideTerminalPositions, alignedTerminalIndices);
+        CLMSUI.utils.xilog ("ptp", peptideTerminalPositions, alignedTerminalIndices);
         
         
         var randDists = [];
@@ -231,7 +223,7 @@ CLMSUI.DistancesObj.prototype = {
             for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
                 var all = linkableResidues[n].has ("*") || linkableResidues[n].has ("X") || linkableResidues[n].size === 0;
                 seqs.forEach (function (seq) {
-                    this.xilog ("seq", seq);
+                    CLMSUI.utils.xilog ("seq", seq);
                     var protID = seq.protID;
                     var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
                     for (var m = 0; m < filteredSubSeqIndices.length; m++) {
@@ -264,7 +256,7 @@ CLMSUI.DistancesObj.prototype = {
                     rmap[n].push.apply (rmap[n], alignedTerminalIndices.ntermList);
                 }
             }
-            this.xilog ("rmap", rmap, linkableResidues);
+            CLMSUI.utils.xilog ("rmap", rmap, linkableResidues);
                     
             // Now loop through the searches that use this crosslinker...
             rdata.searches.forEach (function (searchID) {
@@ -280,7 +272,7 @@ CLMSUI.DistancesObj.prototype = {
                 if (!rdata.heterobi) {
                     srmap[1] = srmap[0];
                 }
-                this.xilog ("rr", searchID, srmap);
+                CLMSUI.utils.xilog ("rr", searchID, srmap);
 
                 
                 // Now pick lots of pairings from the remaining residues, one for each end of the crosslinker,
@@ -305,7 +297,7 @@ CLMSUI.DistancesObj.prototype = {
                     if (!rdata.heterobi) {
                         srmapPerProt[1] = srmapPerProt[0];
                     }
-                    this.xilog ("intra", searchID, srmapPerProt);
+                    CLMSUI.utils.xilog ("intra", searchID, srmapPerProt);
                     
                     // make a list of counts of possible intra-protein residue links
                     var total = 0;
@@ -328,13 +320,13 @@ CLMSUI.DistancesObj.prototype = {
                     ;
                     
                     var possibleLinks = total;
-                    this.xilog ("counts", counts, total);
+                    CLMSUI.utils.xilog ("counts", counts, total);
                     
                     if (possibleLinks) {  // can't do this if no actual residues pairings left
                         var hop = Math.max (1, possibleLinks / perSearch);
                         var maxRuns = Math.min (possibleLinks, perSearch);
                         var bisectCount = d3.bisector(function(d) { return d.upperBound; }).left;
-                        this.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
+                        CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
                         
                         for (var n = 0; n < maxRuns; n++) {
                             // This is Uniform
@@ -352,10 +344,10 @@ CLMSUI.DistancesObj.prototype = {
                             var res1 = resList1[resIndex1];
                             var res2 = resList2[resIndex2];
                             if (!res1 || !res2) {
-                                this.xilog ("intra", ni, proteinIndex, withinIndex, resIndex1, resIndex2);
+                                CLMSUI.utils.xilog ("intra", ni, proteinIndex, withinIndex, resIndex1, resIndex2);
                             }
    
-                            //this.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
+                            //CLMSUI.utils.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                             // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                             var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
                             if (!isNaN(dist)) {
@@ -369,7 +361,7 @@ CLMSUI.DistancesObj.prototype = {
                     if (possibleLinks) {  // can't do this if no actual residues pairings left
                         var hop = Math.max (1, possibleLinks / perSearch);
                         var maxRuns = Math.min (possibleLinks, perSearch);
-                        this.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
+                        CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
 
                         for (var n = 0; n < maxRuns; n++) {
                             // This is Uniform
@@ -389,7 +381,7 @@ CLMSUI.DistancesObj.prototype = {
                                 console.log ("same res", res1, res2, resFlatIndex1, resFlatIndex2, srmap[0], srmap[1]);
                             }
                             */
-                            //this.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
+                            //CLMSUI.utils.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                             // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                             var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
                             if (!isNaN(dist)) {
@@ -401,8 +393,8 @@ CLMSUI.DistancesObj.prototype = {
             }, this);
         }, this);
         
-        this.xilog ("RANDOM", randDists, "avg:", d3.sum(randDists) / (randDists.length || 1));
-        this.xilog ("------ RANDOM DISTRIBUTION END ------");
+        CLMSUI.utils.xilog ("RANDOM", randDists, "avg:", d3.sum(randDists) / (randDists.length || 1));
+        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION END ------");
         return randDists;
     },
 };
