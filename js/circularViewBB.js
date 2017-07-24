@@ -315,8 +315,8 @@
                     renderPartial (["links"]);
                 }   
             });
-            this.listenTo (this.model, "change:selection", this.showSelected);
-            this.listenTo (this.model, "change:highlights", this.showHighlighted);
+            this.listenTo (this.model, "change:selection", function () { this.showAccented ("selection"); });
+            this.listenTo (this.model, "change:highlights", function () { this.showAccented ("highlights"); });
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
                 console.log (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
                 renderPartial (["features"]);
@@ -369,27 +369,18 @@
 
         idFunc: function (d) { return d.id; },
 
-        showSelected: function () {
-            this.showSelectedOnTheseElements (d3.select(this.el).selectAll(".circleGhostLink"), this);
+        showAccented: function (accentType) {
+            this.showAccentOnTheseElements (d3.select(this.el).selectAll(".circleGhostLink"), accentType);
             return this;
         },
 
-        showSelectedOnTheseElements: function (d3Selection, thisContext) {
-            var selectedIDs = thisContext.model.get("selection").map((function(xlink) { return xlink.id; }));
-            var idset = d3.set (selectedIDs);
-            d3Selection.classed ("selectedCircleLink", function(d) { return idset.has(d.id); });
-            return this;
-        },
-
-        showHighlighted: function () {
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                var highlights = this.model.get("highlights");
-                if (highlights) {
-                    var highlightedIDs = highlights.map((function(xlink) { return xlink.id; }));
-                    var idset = d3.set (highlightedIDs);
-                    var thickLinks = d3.select(this.el).selectAll(".circleGhostLink");
-                    thickLinks.classed ("highlightedCircleLink", function(d) { return idset.has(d.id); });
-                }
+        showAccentOnTheseElements: function (d3Selection, accentType) {
+            var accentedLinkList = this.model.get(accentType);
+            if (accentedLinkList) {
+                var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
+                var accentedLinkIDs = accentedLinkList.map(function(xlink) { return xlink.id; });
+                var idset = d3.set (accentedLinkIDs);
+                d3Selection.classed (linkType[accentType] || "link", function(d) { return idset.has(d.id); });
             }
             return this;
         },
@@ -627,8 +618,6 @@
                     .on ("mouseenter", function(d) {
                         self.linkTip (d);
                         self.model.calcMatchingCrosslinks ("highlights",  [crossLinks.get(d.id)], true, false);
-                        //self.model.set ("highlights", [crossLinks.get(d.id)]);
-                        //self.model.collateMatchRegions ([crossLinks.get(d.id)]);
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
@@ -637,15 +626,14 @@
                     .on ("click", function (d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.model.calcMatchingCrosslinks ("selection", [crossLinks.get(d.id)], false, add);
-                        //self.model.set ("selection", [crossLinks.get(d.id)]);
                     })
-                    .call (self.showSelectedOnTheseElements, self)
+                    .call (function () {
+                        self.showAccentOnTheseElements.call (self, this, "selection");
+                    })
             ;
             ghostLinkJoin
                 .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
             ;
-
-
         },
 
         drawNodes: function (g, nodes) {
