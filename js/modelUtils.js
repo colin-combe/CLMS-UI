@@ -695,6 +695,38 @@ CLMSUI.modelUtils = {
         return obj;
     },
     
+    // features should be pre-filtered to an individual protein and to an individual type
+    mergeContiguousFeatures: function (features) {
+        var sortedFeatures = features.sort (function (f1, f2) {
+            return +f1.begin - +f2.begin;
+        });
+        var mergedRanges = [], furthestEnd = -10, mergeBegin = -10;
+        sortedFeatures.forEach (function (f, i) {
+            var b = +f.begin;
+            var e = +f.end;
+            if (b > furthestEnd + 1) { // if a gap between beginning of this range and the maximum end value found so far
+                if (i) {    // if not the first feature (for which previous values are meaningless)
+                    mergedRanges.push ({begin: mergeBegin, end: furthestEnd});  // then add the merged range
+                }
+                mergeBegin = b; // and then set the beginning of a new merged range
+            }
+            furthestEnd = Math.max (furthestEnd, e);
+        });
+        if (furthestEnd >= 0) {
+            mergedRanges.push ({begin: mergeBegin, end: furthestEnd});  // add hanging range
+        }
+        
+        var merged = mergedRanges.length < features.length ?    // if merged ranges less than original feature count
+            mergedRanges.map (function (coords) { // make new features based on the new merged ranges
+                return $.extend ({}, features[0], coords); // features[0] is used to get other fields
+            })
+            : features  // otherwise just use origina;s
+        ;
+        //window.mergerxi = merged;
+        //console.log ("mergedFeatures", features, merged);
+        return merged;
+    },
+    
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

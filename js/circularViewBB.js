@@ -472,12 +472,14 @@
             
             if (featureFilterSet.has("Digestible")) {
                 var digestFeatures = this.model.get("clmsModel").getDigestibleResiduesAsFeatures (participant);
-                features = d3.merge ([digestFeatures, features]);
+                var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (digestFeatures);
+                features = d3.merge ([mergedFeatures, features]);
             }
             
             if (featureFilterSet.has("Cross-linkable")) {
                 var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures (participant);
-                features = d3.merge ([crossLinkableFeatures, features]);
+                var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (crossLinkableFeatures);
+                features = d3.merge ([mergedFeatures, features]);
             }
             
             CLMSUI.utils.xilog ("annots", annots, "f", features);
