@@ -1,5 +1,5 @@
 .searchSummaryDiv {
 	background:#ddd;
 	color:#888;
-	overflow:scroll;
+	overflow:auto;
 }

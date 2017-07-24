@@ -197,7 +197,7 @@
                 .filter (function(d) { return d.id === featureTypeModel.id; })
                 .select(".colourSwatchSquare")
                 .style ("background", function (d) { 
-                    var col = CLMSUI.domainColours(d.id);
+                    var col = CLMSUI.domainColours(d.id.toUpperCase());
                     var scale = d3.scale.linear().domain([0,1]);
                     scale.range(["white", col]);
                     return shown ? scale (0.5) : "transparent";

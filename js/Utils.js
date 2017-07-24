@@ -1,6 +1,15 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.utils = {
+    
+    debug: false,
+    
+    xilog: function () {
+        if (this.debug && (typeof(console) !== 'undefined')) {
+            console.log.apply (console, arguments);
+        }
+    },
+    
     // return comma-separated list of protein names from array of protein ids
     proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
 		if (!d.matchedPeptides[matchedPeptideIndex]) {
