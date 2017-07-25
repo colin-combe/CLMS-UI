@@ -491,13 +491,15 @@ CLMSUI.utils = {
                 sortArr.push ({z: +d3.select(this).style("z-index") || 0, selection: d3.select(this)}); 
             });
             // Sort that array by the z-index
-            sortArr.sort (function (a,b) {
-                return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
-            });
             // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
-            sortArr.forEach (function (sorted, i) {
-                sorted.selection.style ("z-index", i + 1);    
-            });
+            sortArr
+                .sort (function (a,b) {
+                    return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
+                })
+                .forEach (function (sorted, i) {
+                    sorted.selection.style ("z-index", i + 1);    
+                })
+            ;
             // Make the current window top of this pile
             d3.select(this.el).style("z-index", sortArr.length + 1);
             //console.log ("sortArr", sortArr);
@@ -665,25 +667,11 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     };
 
     var arrayExpandFunc = function (d, entries) {
-        var newEntries = [];
         var expandKeys = self.options.expandTheseKeys;
-        entries.forEach (function (entry) {
-            // this way makes a row in main table per array entry
-            /*
-            newEntries.push (entry);
-            if (expandKeys && expandKeys.has(entry.key)) {
-                var vals = d[entry.key];
-                vals.forEach (function (val, i) {
-                    newEntries.push ({key: i, value: d3.values(val).join(",\t") });
-                });
-            }
-            */
-            // this way makes a nested table in a row of the main table
-            if (expandKeys && expandKeys.has(entry.key)) {
-                newEntries.push ({key: entry.key, value: makeTable237 (d[entry.key])});
-            } else {
-                newEntries.push (entry);
-            }
+        var newEntries = entries.map (function (entry) {
+            return (expandKeys && expandKeys.has(entry.key)) ?
+                {key: entry.key, value: makeTable237 (d[entry.key])} : entry
+            ;
         });
         return newEntries;
     };

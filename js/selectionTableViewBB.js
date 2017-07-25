@@ -216,10 +216,7 @@
             // helper functions
             // return filtered matches from given crosslink
             var getMatches = function (xlink) {
-                var matches = xlink.filteredMatches_pp.map (function (m) {
-                    return m.match;
-                });
-                return matches;
+                return _.pluck (xlink.filteredMatches_pp, "match");
             };
 
             // make nice id string from cross link object

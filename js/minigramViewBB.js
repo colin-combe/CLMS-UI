@@ -151,7 +151,7 @@
             var dataSeries = this.model.data();
             
             // aggregate data into bar chart friendly form
-            var seriesLengths = dataSeries.map (function(s) { return s.length; });
+            var seriesLengths = _.pluck (dataSeries, "length");
             var countArrays = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
 
             var maxY = d3.max(countArrays[0]);  // max calced on real data only

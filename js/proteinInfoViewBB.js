@@ -118,9 +118,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             //console.log ("in prot info filter");
             if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
                 var selectedLinks = self.model.get("selection");
-                var selidset = d3.set (selectedLinks.map (function (xlink) { return xlink.id; }));
+                var selidset = d3.set (_.pluck (selectedLinks, "id"));
                 var highlightedLinks = self.model.get("highlights");
-                var highidset = d3.set (highlightedLinks.map (function (xlink) { return xlink.id; }));
+                var highidset = d3.set (_.pluck (highlightedLinks, "id"));
                 
                 d3.select(this.el).selectAll("span.hit")
                     .each (function() {
@@ -186,7 +186,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var last = 0;
             endPointEntries.forEach (function (ep) {
                 var pos = +ep.key;
-                var linkIds = ep.value.map (function(link) { return link.id; });
+                var linkIds = _.pluck (ep.value, "id");
                 strSegs.push (seq.slice(last, pos-1));
                 strSegs.push ("<span class='hit' data-pos='"+(proteinId+"_"+pos)+"' data-linkids='"+linkIds.join(",")+"'>"+seq.charAt(pos-1)+"</span>");
                 last = pos;

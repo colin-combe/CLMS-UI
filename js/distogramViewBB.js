@@ -212,7 +212,7 @@
 
                 var TT = 0, TD = 1, DD = 2;
                 var series = this.getRelevantCrossLinkDistances();
-                var seriesLengths = series.map (function(d) { return d.length; });
+                var seriesLengths = _.pluck (series, "length");
 
                 // Add data and placeholders for random data
                 series.push ([]);
@@ -322,7 +322,7 @@
         // reset title
         makeChartTitle: function (splitSeries) {
             var commaed = d3.format(",");
-            var linkReport = splitSeries.map (function (split) { return split.length; });
+            var linkReport = _.pluck (splitSeries, "length");
             var total = d3.sum (linkReport);
             var linkReportStr = linkReport.map (function (count, i) {
                 return commaed(count)+" "+this.options.subSeriesNames[i];
@@ -476,7 +476,7 @@
         identifier: "Distogram",
         
         optionsToString: function () {
-            var seriesIDs = this.chart.data().map (function (series) { return series.id; });
+            var seriesIDs = _.pluck (this.chart.data(), "id");
             var hiddenIDsSet = d3.set (this.chart.internal.hiddenTargetIds);
             seriesIDs = seriesIDs.filter (function (sid) {
                 return !hiddenIDsSet.has (sid);

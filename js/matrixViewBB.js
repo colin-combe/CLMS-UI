@@ -456,7 +456,7 @@
             var xy = this.convertEvtToXY (evt);
             var add = evt.ctrlKey || evt.shiftKey;  // should this be added to current selection?
             var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
-            var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });   
+            var crossLinks = _.pluck (linkWrappers, "crossLink");   
             this.model.calcMatchingCrosslinks ("selection", crossLinks, false, add);
             //this.model.set ("selection", crossLinks);
         }
@@ -466,9 +466,8 @@
     brushNeighbourhood: function (evt) {
         var xy = this.convertEvtToXY (evt);
         var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
-        var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
+        var crossLinks = _.pluck (linkWrappers, "crossLink");
         
-        //consol
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
         this.model.set ("highlights", crossLinks);
@@ -487,8 +486,8 @@
                 linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
             }, this);
             linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
-            var crossLinks = linkWrappers.map (function (linkWrapper) { return linkWrapper.crossLink; });
-            var linkDistances = linkWrappers.map (function (linkWrapper) { return linkWrapper.distanceFixed; });
+            var crossLinks = _.pluck (linkWrappers, "crossLink");
+            var linkDistances = _.pluck (linkWrappers, "distanceFixed");
 
             this.model.get("tooltipModel")
                 .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (crossLinks.length - 1))
@@ -712,8 +711,8 @@
             var proteinIDs = this.getCurrentProteinIDs();
 
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
-            var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
-            var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
+            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
+            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
             
             var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
                 var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);

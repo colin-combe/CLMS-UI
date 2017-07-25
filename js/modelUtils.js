@@ -691,11 +691,11 @@ CLMSUI.modelUtils = {
     
     // features should be pre-filtered to an individual protein and to an individual type
     mergeContiguousFeatures: function (features) {
-        var sortedFeatures = features.sort (function (f1, f2) {
+        features.sort (function (f1, f2) {
             return +f1.begin - +f2.begin;
         });
         var mergedRanges = [], furthestEnd = -10, mergeBegin = -10;
-        sortedFeatures.forEach (function (f, i) {
+        features.forEach (function (f, i) {
             var b = +f.begin;
             var e = +f.end;
             if (b > furthestEnd + 1) { // if a gap between beginning of this range and the maximum end value found so far

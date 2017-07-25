@@ -218,7 +218,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         if (this.options.hide) {
             var entries = d3.entries(this.options.hide);
             var hideEntries = entries.filter (function (entry) { return entry.value; });
-            var hideEntrySet = d3.set (hideEntries.map (function (entry) { return entry.key; }));
+            var hideEntrySet = d3.set (_.pluck (hideEntries, "key"));
             mainDivSel.selectAll(".subsetToggles,.validationToggles,.textFilters")
                 .filter (function(d) { return hideEntrySet.has (d.id); })
                 .style ("display", "none")

@@ -805,7 +805,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     defaultDisplayedProteins: function (getSelectionOnly) {
         var showableChains = this.getShowableChains();
         var chainSele = this.getShowProteinNGLSelection (showableChains);
-        //console.log ("showable chains", showableChains, chainSele);
+        console.log ("showable chains", showableChains, chainSele);
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
@@ -820,30 +820,25 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     getShowableChains: function () {
         var protMap = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
         var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        var showAll = protMap.length === prots.length;
         
         var chainIndices;
-        if (!showAll && !this.options.showAllProteins) {
+        if (protMap.length !== prots.length && !this.options.showAllProteins) {
             chainIndices = prots.map (function (prot) {
                 var protChains = this.chainMap[prot] || [];
-                return protChains.map (function (chainData) {
-                    return chainData.index;
-                });
+                return _.pluck (protChains, "index");
             }, this);
         } else {
             chainIndices = d3.entries(this.chainMap).map (function (chainEntry) {
-                return chainEntry.value.map (function (chainDatum) {
-                    return chainDatum.index;
-                });
+                return _.pluck (chainEntry.value, "index");
             });
-            console.log ("CHAIN ALL", chainIndices);
         }
         chainIndices = d3.merge (chainIndices);
-        return {showAll: showAll, chainIndices: chainIndices};
+        console.log ("SHOW CHAINS", chainIndices);
+        return {showAll: this.options.showAllProteins, chainIndices: chainIndices};
     },
     
     getShowProteinNGLSelection: function (showableChains) {
-        var selectionString = "";
+        var selectionString = "all";
         var showAll = showableChains.showAll || false;
         var chains = showableChains.chainIndices || [];
         
