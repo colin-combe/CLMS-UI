@@ -458,16 +458,19 @@
                     }
                     
                     // get rid of pairings where one of the values is undefined
-                    pairs =  pairs.filter (function (pair) {
+                    pairs = pairs.filter (function (pair) {
                         return pair[0] !== undefined && pair[1] !== undefined;
                     });
                     
+                    /*
                     pairs.sort (function (p1, p2) {
                         var z = p1[0] - p2[0];
                         if (!z) {
                             z = p1[1] - p2[1];
                         }
+                        return z;
                     });
+                    */
                     
                     return pairs;
                 });

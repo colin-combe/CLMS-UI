@@ -514,20 +514,22 @@
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
                 //CLMSUI.utils.xilog ("fi", filteredInteractors, interactors);
                 
-                // set interactors to same order as interactor order
-                //CLMSUI.utils.xilog ("ofi", filteredInteractors);
                 var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
-                filteredInteractors = [];
                 
                 // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
                 if (interactors.size !== this.interactorOrder.length) {    // interactors is map so size, interactorOrder is array so length
                     this.reOrder();
                 }
-                this.interactorOrder.forEach (function (interactorId) {
-                    if (fmap.has(interactorId)) {
-                        filteredInteractors.push (fmap.get(interactorId));
-                    }
-                });
+                
+                // reset filteredInteractors to same order as interactor order
+                filteredInteractors = this.interactorOrder
+                    .filter (function (interactorId) {
+                        return fmap.has (interactorId);
+                    })
+                    .map (function (interactorId) {
+                        return fmap.get (interactorId);
+                    })
+                ;
 
                 // After rearrange interactors, because filtered features depends on the interactor order
                 var alignColl = this.model.get("alignColl");

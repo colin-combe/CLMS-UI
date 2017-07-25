@@ -216,7 +216,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
         links
     );
     
-    var hexRegex = CLMSUI.modelUtils.commonRegexes.hexColour;
+    var hexRegex = CLMSUI.utils.commonRegexes.hexColour;
     var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     if (dataIsColours) {
         // if data is just a list of colours make this colour scale just return the value for getColour

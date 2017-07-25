@@ -10,20 +10,22 @@ CLMSUI.utils = {
         }
     },
     
+    commonRegexes: {
+        uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
+        pdbPattern: "[A-Z0-9]{4}",
+        hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
+    },
+    
     // return comma-separated list of protein names from array of protein ids
     proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
-		if (!d.matchedPeptides[matchedPeptideIndex]) {
-			return "";
-		}
-        var pnames =  d.matchedPeptides[matchedPeptideIndex].prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;});
+        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+        var pnames = mpeptides ? mpeptides.prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;}) : [];
         return pnames.join(",");
     },
 
     pepPosConcat: function (d, matchedPeptideIndex) {
-        if (!d.matchedPeptides[matchedPeptideIndex]) {
-			return "";
-		}
-        return d.matchedPeptides[matchedPeptideIndex].pos.join(", ");
+        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+        return mpeptides ? mpeptides.pos.join(", ") : "";
     },
     
     commonLabels: {
@@ -45,7 +47,9 @@ CLMSUI.utils = {
             .enter()
             .append("div")
                 .attr("class", function(d) { return d; } )  // make class the classname entry
+                .classed ("draggableCorner", true)
         ;
+            
         return fourCorners;
     },
 
@@ -185,12 +189,12 @@ CLMSUI.utils = {
     displayError: function (condition, message) {
         if (condition()) {
             var box = d3.select("#clmsErrorBox");
-            if (box.size() === 0) {
+            if (box.empty()) {
                 box = d3.select("body").append("div").attr("id", "clmsErrorBox");
             }
 
             box
-                .style("display", "block")
+                .style ("display", "block")
                 .html (message)
             ;
         }
@@ -379,7 +383,7 @@ CLMSUI.utils = {
         events: {
             // following line commented out, mouseup sometimes not called on element if pointer drifts outside element
             // and dragend not supported by zepto, fallback to d3 instead (see later)
-            // "mouseup .dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br": "relayout",    // do resize without dyn_div alter function
+            // "mouseup .draggableCorner": "relayout",    // do resize without dyn_div alter function
             "click .downloadButton": "downloadSVG",
             "click .downloadButton2": "downloadSVGWithCanvas",
             "click .closeButton": "hideView",
@@ -401,7 +405,7 @@ CLMSUI.utils = {
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
             var drag = d3.behavior.drag().on ("dragend", function() { self.relayout({dragEnd: true}); });
-            mainDivSel.selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br")
+            mainDivSel.selectAll(".draggableCorner")
                 .call (drag)
             ;
 
@@ -525,7 +529,7 @@ CLMSUI.utils = {
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy a c3 view just to be sure)
         remove: function () {
             // remove drag listener
-            d3.select(this.el).selectAll(".dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br").on(".drag", null);
+            d3.select(this.el).selectAll(".draggableCorner").on(".drag", null);
 
             // this line destroys the containing backbone view and it's events
             Backbone.View.prototype.remove.call(this);

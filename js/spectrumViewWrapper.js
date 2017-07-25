@@ -294,10 +294,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             {field: "is_decoy", label:"Decoy"}
         );
         description.forEach (function (desc) {
-            if (!desc.value) {
-                desc.value = match [desc.field];
-                if (desc.value === undefined) { desc.value = "null"; }
-            }
+            desc.value = desc.value || match[desc.field] || "null";
         });
         //description.push(["crossLinks", match.crossLinks.map(function(xlink) { return xlink.id; }).join("&") ]);
         var description1 = description.map (function (desc) { return (desc.label || desc.field)+"="+desc.value; });

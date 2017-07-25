@@ -100,7 +100,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         d3.keys(cols).forEach (function(key) {
             cols[key].colour = colScheme.getColour(cols[key]);
             //console.log ("key", key, cols[key]);
-        }, colScheme);
+        }/*, colScheme*/);
         
         chartDiv.selectAll("table").selectAll("path,line")
             .filter (function() {

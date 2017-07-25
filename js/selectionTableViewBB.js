@@ -95,7 +95,7 @@
             );
 
             var self = this;
-            var twoZeroPadder = d3.format(".2f");
+            //var twoZeroPadder = d3.format(".2f");
             var massZeroPadder = d3.format(".6f");
             this.cellFuncs = {
                     "id": function (d) { return d.id; },
@@ -187,16 +187,15 @@
             d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
         },
 
-        setPage : function(pg) {
-            if (pg < 1) {pg = 1;}
+        setPage : function (pg) {
             var pageCount = Math.floor(this.selectedXLinkArray.length / this.pageSize) + 1;
-            if (pg > pageCount) {pg = pageCount;}
+            pg = Math.max (Math.min (pg, pageCount), 1);
             this.page = pg;
             var input = d3.select(this.el).select(".pager>input");
             input.property("value", pg);
             var panelHeading = d3.select(this.el).select(".crossLinkTotal");
             var selectedXLinkCount = this.selectedXLinkArray.length;
-            var lower = (selectedXLinkCount == 0)? 0 : ((pg - 1) * this.pageSize) + 1;
+            var lower = (selectedXLinkCount === 0)? 0 : ((pg - 1) * this.pageSize) + 1;
             var upper = (pg * this.pageSize);
             if (upper > selectedXLinkCount) {
                 upper = selectedXLinkCount;
@@ -210,7 +209,7 @@
 
         addRows : function (selectedLinkArray, filteredProps) {
             var self = this;
-            var proteinMap = this.model.get("clmsModel").get("participants");
+            //var proteinMap = this.model.get("clmsModel").get("participants");
 
             var colspan = d3.select(this.el).select("THEAD").selectAll("TH").size();    // get number of TH elements in header for colspan purposes
 

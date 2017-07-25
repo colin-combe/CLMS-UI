@@ -204,7 +204,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         } else if (Array.isArray (link)) {
             var residues = [];
             link.forEach (function(l) {
-                residues.push (l.residueA, l.residueB);
+                residues.push (l.residueA, l.residueB); // push two values at once so don't use .map
             });
             return residues;
         } else {

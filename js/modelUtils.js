@@ -7,7 +7,7 @@ CLMSUI.modelUtils = {
         for (var m = 0; m < matchesLen; ++m) { 
             var match = matchesArr[m];
             arrs[match.isDecoy()? 1 : 0].push (match.score);
-        };
+        }
         return arrs;
     },
      
@@ -176,12 +176,6 @@ CLMSUI.modelUtils = {
             }
         }
         return a;
-    },
-    
-    commonRegexes: {
-        uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
-        pdbPattern: "[A-Z0-9]{4}",
-        hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
     },
     
     amino3to1Map: {
@@ -437,7 +431,7 @@ CLMSUI.modelUtils = {
             ids = CLMS.arrayFromMapValues(interactorMap)
                 .filter (function (prot) { return !prot.is_decoy; })
                 .map (function(prot) { return prot.accession; })
-                .filter (function (accession) { return accession.match (CLMSUI.modelUtils.commonRegexes.uniprotAccession); })
+                .filter (function (accession) { return accession.match (CLMSUI.utils.commonRegexes.uniprotAccession); })
             ;
         }
         return ids;
