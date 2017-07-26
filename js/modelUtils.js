@@ -502,14 +502,12 @@ CLMSUI.modelUtils = {
     crosslinkerSpecificityPerLinker: function (searchArray) {
         
         var linkableResSets = {};
-        for (var s = 0; s < searchArray.length; s++) {
-            var search = searchArray[s];
+        searchArray.forEach (function (search) {
             var crosslinkers = search.crosslinkers || [];
-            var crosslinkerCount = crosslinkers.length;
             
-            for (var cl = 0; cl < crosslinkerCount ; cl++) {
-                var crosslinkerDescription = crosslinkers[cl].description;
-                var crosslinkerName = crosslinkers[cl].name;
+            crosslinkers.forEach (function (crosslinker) {
+                var crosslinkerDescription = crosslinker.description;
+                var crosslinkerName = crosslinker.name;
                 var linkedAARegex = /LINKEDAMINOACIDS:(.*?)(?:;|$)/g;   // capture both sets if > 1 set
                 console.log ("cld", crosslinkerDescription);
                 var resSet = linkableResSets[crosslinkerName];
@@ -523,26 +521,25 @@ CLMSUI.modelUtils = {
                 var result = null;
                 var i = 0;
                 while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
-                    var resArray = result[1].split(',');
-                    var resCount = resArray.length;
-                    
                     if (!resSet.linkables[i]) {
                         resSet.linkables[i] = new Set();
                     }
                     
-                    for (var r = 0; r < resCount; r++) {
+                    var resArray = result[1].split(',');
+                    resArray.forEach (function (res) {
                         var resRegex = /(cterm|nterm|[A-Z])(.*)?/i;
-                        var resMatch = resRegex.exec(resArray[r]);
+                        var resMatch = resRegex.exec(res);
                         if (resMatch) {
                             resSet.linkables[i].add(resMatch[1].toUpperCase());
                         }
-                    }
+                    });
                     i++;
                 }
                 
                 resSet.heterobi = resSet.heterobi || (i > 1);
-            }
-        }
+            });
+        });
+        console.log ("CROSS", linkableResSets);
         return linkableResSets;
     },
     

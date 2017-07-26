@@ -29,13 +29,8 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     }
     
     // Divide crosslinks into inter and intra-protein groups, and sort them by the scores just calculated
-    var linkArrs = [[],[]];
     var arrLabels = ["Inter", "Intra"];
-    for (var i = 0; i < clCount; ++i) {
-		var crossLink = crossLinksArr[i];
-		var intra = clmsModel.isIntraLink (crossLink) ? 1 : 0;
-        linkArrs[intra].push(crossLink);
-    }
+    var linkArrs = _.partition (crossLinksArr, function (x) { return !clmsModel.isIntraLink (x); });
     linkArrs.forEach (function (linkArr) { 
         linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; }); 
     });  // in ascending order (lowest first)

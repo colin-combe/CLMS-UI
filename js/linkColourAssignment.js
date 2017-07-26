@@ -49,26 +49,22 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         //put d3.scale for group colour assignment in compositeModel
         var groups = new Map();
 		var searchArray = CLMS.arrayFromMapValues(this.searchMap);
-		var searchCount = searchArray.length;
-        for (var s = 0; s < searchCount; s++) {
-            var val = searchArray[s];
-            var arr = groups.get(val.group);
+        searchArray.forEach (function (search) {
+            var arr = groups.get(search.group);
             if (!arr) {
                 arr = [];
-                groups.set (val.group, arr);
+                groups.set (search.group, arr);
             }
-            arr.push (val.id);
-        }
+            arr.push (search.id);
+        });
 
         var groupDomain = [undefined];
         var labelRange = ["Multiple Group"];
         var groupArray = CLMS.arrayFromMapEntries(groups);
-        var groupCount = groupArray.length;
-        for (var g = 0; g < groupCount; g++) {
-			var group = groupArray[g];
+        groupArray.forEach (function (group) {
             groupDomain.push (group[0]);
             labelRange.push ("Group "+group[0]+" ("+group[1].join(", ")+")");
-        }
+        });
 
         var groupCount = groups.size;
         var colScale;

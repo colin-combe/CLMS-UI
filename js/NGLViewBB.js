@@ -87,9 +87,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         // Protein view type dropdown
-        var mainReps = NGL.RepresentationRegistry.names.slice().sort();
-        var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"]);
-        mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
+        var allReps = NGL.RepresentationRegistry.names.slice().sort();
+        var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"];
+        var mainReps = _.difference (allReps, ignoreReps);
         var repSection = toolbar
             .append ("label")
             .attr ("class", "btn")
@@ -115,11 +115,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         
         // Residue colour scheme dropdown
         
-        var mainColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
-        ignore = d3.set(["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
+        var allColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
+        var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"];
         var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
         var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
-        mainColourSchemes = mainColourSchemes.filter (function (rep) { return ! ignore.has (rep);});
+        var mainColourSchemes = _.difference (allColourSchemes, ignoreColourSchemes);
         var colourSection = toolbar
             .append ("label")
             .attr ("class", "btn")

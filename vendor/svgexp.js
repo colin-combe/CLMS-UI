@@ -178,7 +178,7 @@ CLMSUI.svgUtils = {
         var elemArr = [];
         while (elem.parentNode !== ownerDoc && elem.parentNode !== null) {
             elem = elem.parentNode;
-            elemArr.push ({id: elem.id, class: elem.className});
+            elemArr.push ({id: elem.id, class: elem.getAttribute("class") || ""});
         }
 
         // see if id or element class are referenced in any styles collected below the svg node

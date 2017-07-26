@@ -227,10 +227,10 @@
                     var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
                     splitSeries[cat].push (val);
                 });
-                for (var n = 0; n < splitSeries.length; n++) {
-                    series.push (splitSeries[n]);
-                    seriesLengths.push (splitSeries[n].length);
-                }
+                splitSeries.forEach (function (subSeries) {
+                    series.push (subSeries);
+                    seriesLengths.push (subSeries.length);
+                });
                
                 // Add DD Decoys as temporary series for aggregation
                 var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
@@ -476,11 +476,7 @@
         identifier: "Distogram",
         
         optionsToString: function () {
-            var seriesIDs = _.pluck (this.chart.data(), "id");
-            var hiddenIDsSet = d3.set (this.chart.internal.hiddenTargetIds);
-            seriesIDs = seriesIDs.filter (function (sid) {
-                return !hiddenIDsSet.has (sid);
-            });
+            var seriesIDs = _.pluck (this.chart.data.shown(), "id");
             return seriesIDs.join("-").toUpperCase();    
         },
     });
