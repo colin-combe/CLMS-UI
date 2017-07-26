@@ -295,7 +295,8 @@ body, input, select, textarea {
     height:20px;
     background:#091D42;
 }
-.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
+
+.draggableCorner {
     width:20px;
     height:20px;
     background:#091D42;

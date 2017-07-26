@@ -53,7 +53,7 @@
                 .append("input")
                     .attr({
                         type: "text", class: "inputPDBCode", maxlength: 4,
-                        pattern: CLMSUI.modelUtils.commonRegexes.pdbPattern, size: 4, title: "Four letter alphanumeric PDB code"
+                        pattern: CLMSUI.utils.commonRegexes.pdbPattern, size: 4, title: "Four letter alphanumeric PDB code"
                     })
                     .property ("required", true)
             ;

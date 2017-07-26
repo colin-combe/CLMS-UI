@@ -354,13 +354,12 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
                     fields.splice (1, 0, "intraFdrCut");
                 }
             } else {
-                var fieldSet = d3.set (d3.keys (this.attributes));
                 var antiFields = ["fdrThreshold", "interFdrCut", "intraFdrCut", "fdrMode"];
-                antiFields.forEach (function (af) { fieldSet.remove (af); });
                 if (this.get("matchScoreCutoff")[1] === Number.MAX_VALUE) {   // ignore matchscorecutoff if everything allowed
-                    fieldSet.remove ("matchScoreCutoff");
+                    antiFields.push ("matchScoreCutoff");
                 }
-                fields = CLMS.arrayFromMapValues(fieldSet);
+                fields = d3.keys(_.omit (this.attributes, antiFields));
+                //console.log ("filter fieldset", this.attributes, fields);
             }
             
             var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);

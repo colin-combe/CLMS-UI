@@ -427,8 +427,8 @@
             var colourScheme = this.model.get("linkColourAssignment");
 
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();
-            var selectedCrossLinkIDs = d3.set (this.model.get("selection").map (function(xlink) { return xlink.id; }));
-            var highlightedCrossLinkIDs = d3.set (this.model.get("highlights").map (function(xlink) { return xlink.id; }));
+            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
+            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
             
             var radixSortBuckets = [[],[],[]]; // 3 groups
             filteredCrossLinks.forEach (function (link) {
@@ -458,16 +458,19 @@
                     }
                     
                     // get rid of pairings where one of the values is undefined
-                    pairs =  pairs.filter (function (pair) {
+                    pairs = pairs.filter (function (pair) {
                         return pair[0] !== undefined && pair[1] !== undefined;
                     });
                     
+                    /*
                     pairs.sort (function (p1, p2) {
                         var z = p1[0] - p2[0];
                         if (!z) {
                             z = p1[1] - p2[1];
                         }
+                        return z;
                     });
+                    */
                     
                     return pairs;
                 });
@@ -675,7 +678,7 @@
         
     optionsToString: function () {
         var meta = this.getBothAxesMetaData();
-        var axisLabels = meta.map (function (axis) { return axis.label; });
+        var axisLabels = _.pluck (meta, "label");
         
         if (!this.brush.empty()) {
             var axisExtents = [];

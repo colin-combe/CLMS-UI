@@ -100,12 +100,9 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         d3.keys(cols).forEach (function(key) {
             cols[key].colour = colScheme.getColour(cols[key]);
             //console.log ("key", key, cols[key]);
-        }, colScheme);
+        }/*, colScheme*/);
         
-        chartDiv.selectAll("table").selectAll("path,line")
-            .filter (function() {
-                return d3.select(this).classed("dynColour");
-            })
+        chartDiv.selectAll("table").selectAll("path.dynColour,line.dynColour")
             .each (function() {
                 var d3Sel = d3.select(this);
                 var colType = d3Sel.classed("selfLink") ? (d3Sel.classed("homomultimer") ? "homom" : "intra") : "inter";

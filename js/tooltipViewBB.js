@@ -35,8 +35,7 @@
                 cstring="<table>";
                 var rtype = "th";
                 var headerCount = 0;
-                for (var n = 0; n < contents.length; n++) {
-                    var row = contents[n];
+                contents.forEach (function (row) {
                     headerCount = headerCount || row.length;
                     var str = "";
                     var colspan = "";
@@ -49,7 +48,7 @@
                     }
                     rtype = "td";
                     cstring += "<tr>" + str + "</tr>";
-                }
+                });
                 cstring += "</table>";
             } else if (oned) {
                 cstring="<ul>";

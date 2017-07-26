@@ -172,10 +172,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             var highestScore = Number.MIN_VALUE;
             var highestScoringMatch = null;
 
-            var selectionLen = selection.length;
-
-            for (var sCl = 0; sCl < selectionLen; ++sCl) {
-                var filteredMatches_pp = selection[sCl].filteredMatches_pp;
+            selection.forEach (function (selCrossLink) {
+                var filteredMatches_pp = selCrossLink.filteredMatches_pp;
                 //var fmLen = filteredMatches_pp.length;
                 //~ for (var fm = 0; fm < fmLen; ++fm) { //could kinda get rid of this loop, coz DB query orders by score
                 //ok, i'm doing that
@@ -186,7 +184,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                         highestScoringMatch = match;
                     }
                 }
-            }
+            });
 			//todo: why isn't following clearing spec viewer if match is null
             this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
 
@@ -294,10 +292,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             {field: "is_decoy", label:"Decoy"}
         );
         description.forEach (function (desc) {
-            if (!desc.value) {
-                desc.value = match [desc.field];
-                if (desc.value === undefined) { desc.value = "null"; }
-            }
+            desc.value = desc.value || match[desc.field] || "null";
         });
         //description.push(["crossLinks", match.crossLinks.map(function(xlink) { return xlink.id; }).join("&") ]);
         var description1 = description.map (function (desc) { return (desc.label || desc.field)+"="+desc.value; });

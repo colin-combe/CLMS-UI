@@ -300,11 +300,8 @@
                 ;
             };
 
-            // initial Order
-            //this.interactorOrder = CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants"));
             // return order as is
-            this.interactorOrder =  (CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")))
-                .map(function(p) { return p.id; });
+            this.interactorOrder = _.pluck (CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")), "id");
 
             var alignCall = 0;
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
@@ -342,14 +339,14 @@
                 prots.sort (function (a, b) {
                     return (numberSort ? (+a[field]) - (+b[field]) : a[field].localeCompare(b[field])) * sortDir;
                 });
-                return prots.map (function(p) { return p.id; });
+                return _.pluck (prots, "id");
             };
             var sortFuncs = {
                 best: function () { return CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants")); },
                 size: function() { return proteinSort.call (this, "size"); },
                 alpha: function() { return proteinSort.call (this, "name"); },
             };
-            this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : prots.map (function(p) { return p.id; });
+            this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : _.pluck (prots, "id");
             this.render();
         },
 
@@ -379,7 +376,7 @@
             var accentedLinkList = this.model.get(accentType);
             if (accentedLinkList) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
-                var accentedLinkIDs = accentedLinkList.map(function(xlink) { return xlink.id; });
+                var accentedLinkIDs = _.pluck (accentedLinkList, "id");
                 var idset = d3.set (accentedLinkIDs);
                 d3Selection.classed (linkType[accentType] || "link", function(d) { return idset.has(d.id); });
             }
@@ -514,20 +511,22 @@
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
                 //CLMSUI.utils.xilog ("fi", filteredInteractors, interactors);
                 
-                // set interactors to same order as interactor order
-                //CLMSUI.utils.xilog ("ofi", filteredInteractors);
                 var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
-                filteredInteractors = [];
                 
                 // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
                 if (interactors.size !== this.interactorOrder.length) {    // interactors is map so size, interactorOrder is array so length
                     this.reOrder();
                 }
-                this.interactorOrder.forEach (function (interactorId) {
-                    if (fmap.has(interactorId)) {
-                        filteredInteractors.push (fmap.get(interactorId));
-                    }
-                });
+                
+                // reset filteredInteractors to same order as interactor order
+                filteredInteractors = this.interactorOrder
+                    .filter (function (interactorId) {
+                        return fmap.has (interactorId);
+                    })
+                    .map (function (interactorId) {
+                        return fmap.get (interactorId);
+                    })
+                ;
 
                 // After rearrange interactors, because filtered features depends on the interactor order
                 var alignColl = this.model.get("alignColl");

@@ -7,7 +7,7 @@ CLMSUI.modelUtils = {
         for (var m = 0; m < matchesLen; ++m) { 
             var match = matchesArr[m];
             arrs[match.isDecoy()? 1 : 0].push (match.score);
-        };
+        }
         return arrs;
     },
      
@@ -176,12 +176,6 @@ CLMSUI.modelUtils = {
             }
         }
         return a;
-    },
-    
-    commonRegexes: {
-        uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
-        pdbPattern: "[A-Z0-9]{4}",
-        hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
     },
     
     amino3to1Map: {
@@ -437,7 +431,7 @@ CLMSUI.modelUtils = {
             ids = CLMS.arrayFromMapValues(interactorMap)
                 .filter (function (prot) { return !prot.is_decoy; })
                 .map (function(prot) { return prot.accession; })
-                .filter (function (accession) { return accession.match (CLMSUI.modelUtils.commonRegexes.uniprotAccession); })
+                .filter (function (accession) { return accession.match (CLMSUI.utils.commonRegexes.uniprotAccession); })
             ;
         }
         return ids;
@@ -508,14 +502,12 @@ CLMSUI.modelUtils = {
     crosslinkerSpecificityPerLinker: function (searchArray) {
         
         var linkableResSets = {};
-        for (var s = 0; s < searchArray.length; s++) {
-            var search = searchArray[s];
+        searchArray.forEach (function (search) {
             var crosslinkers = search.crosslinkers || [];
-            var crosslinkerCount = crosslinkers.length;
             
-            for (var cl = 0; cl < crosslinkerCount ; cl++) {
-                var crosslinkerDescription = crosslinkers[cl].description;
-                var crosslinkerName = crosslinkers[cl].name;
+            crosslinkers.forEach (function (crosslinker) {
+                var crosslinkerDescription = crosslinker.description;
+                var crosslinkerName = crosslinker.name;
                 var linkedAARegex = /LINKEDAMINOACIDS:(.*?)(?:;|$)/g;   // capture both sets if > 1 set
                 console.log ("cld", crosslinkerDescription);
                 var resSet = linkableResSets[crosslinkerName];
@@ -529,26 +521,25 @@ CLMSUI.modelUtils = {
                 var result = null;
                 var i = 0;
                 while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
-                    var resArray = result[1].split(',');
-                    var resCount = resArray.length;
-                    
                     if (!resSet.linkables[i]) {
                         resSet.linkables[i] = new Set();
                     }
                     
-                    for (var r = 0; r < resCount; r++) {
+                    var resArray = result[1].split(',');
+                    resArray.forEach (function (res) {
                         var resRegex = /(cterm|nterm|[A-Z])(.*)?/i;
-                        var resMatch = resRegex.exec(resArray[r]);
+                        var resMatch = resRegex.exec(res);
                         if (resMatch) {
                             resSet.linkables[i].add(resMatch[1].toUpperCase());
                         }
-                    }
+                    });
                     i++;
                 }
                 
                 resSet.heterobi = resSet.heterobi || (i > 1);
-            }
-        }
+            });
+        });
+        console.log ("CROSS", linkableResSets);
         return linkableResSets;
     },
     
@@ -697,11 +688,11 @@ CLMSUI.modelUtils = {
     
     // features should be pre-filtered to an individual protein and to an individual type
     mergeContiguousFeatures: function (features) {
-        var sortedFeatures = features.sort (function (f1, f2) {
+        features.sort (function (f1, f2) {
             return +f1.begin - +f2.begin;
         });
         var mergedRanges = [], furthestEnd = -10, mergeBegin = -10;
-        sortedFeatures.forEach (function (f, i) {
+        features.forEach (function (f, i) {
             var b = +f.begin;
             var e = +f.end;
             if (b > furthestEnd + 1) { // if a gap between beginning of this range and the maximum end value found so far

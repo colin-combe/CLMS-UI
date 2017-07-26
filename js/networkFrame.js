@@ -168,11 +168,9 @@ CLMSUI.init.modelsEssential = function (options) {
     // Anonymiser for screen shots / videos. MJG 17/05/17
     var urlChunkSet = d3.set (window.location.search.split("&"));
     if (urlChunkSet.has("anon")) {
-        var i = 0;
-        clmsModelInst.get("participants").forEach (function (prot) {
-            i++;
-            prot.name = "Protein "+i;
-            prot.description = "Protein "+i+" Description";
+        clmsModelInst.get("participants").forEach (function (prot, i) {
+            prot.name = "Protein "+(i+1);
+            prot.description = "Protein "+(i+1)+" Description";
         });
     }
     

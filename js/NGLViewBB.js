@@ -87,9 +87,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         // Protein view type dropdown
-        var mainReps = NGL.RepresentationRegistry.names.slice().sort();
-        var ignore = d3.set(["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"]);
-        mainReps = mainReps.filter (function (rep) { return ! ignore.has (rep);});
+        var allReps = NGL.RepresentationRegistry.names.slice().sort();
+        var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"];
+        var mainReps = _.difference (allReps, ignoreReps);
         var repSection = toolbar
             .append ("label")
             .attr ("class", "btn")
@@ -115,11 +115,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         
         // Residue colour scheme dropdown
         
-        var mainColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
-        ignore = d3.set(["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"]);
+        var allColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
+        var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"];
         var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
         var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
-        mainColourSchemes = mainColourSchemes.filter (function (rep) { return ! ignore.has (rep);});
+        var mainColourSchemes = _.difference (allColourSchemes, ignoreColourSchemes);
         var colourSection = toolbar
             .append ("label")
             .attr ("class", "btn")
@@ -805,7 +805,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     defaultDisplayedProteins: function (getSelectionOnly) {
         var showableChains = this.getShowableChains();
         var chainSele = this.getShowProteinNGLSelection (showableChains);
-        //console.log ("showable chains", showableChains, chainSele);
+        console.log ("showable chains", showableChains, chainSele);
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
@@ -820,30 +820,25 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     getShowableChains: function () {
         var protMap = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
         var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        var showAll = protMap.length === prots.length;
         
         var chainIndices;
-        if (!showAll && !this.options.showAllProteins) {
+        if (protMap.length !== prots.length && !this.options.showAllProteins) {
             chainIndices = prots.map (function (prot) {
                 var protChains = this.chainMap[prot] || [];
-                return protChains.map (function (chainData) {
-                    return chainData.index;
-                });
+                return _.pluck (protChains, "index");
             }, this);
         } else {
             chainIndices = d3.entries(this.chainMap).map (function (chainEntry) {
-                return chainEntry.value.map (function (chainDatum) {
-                    return chainDatum.index;
-                });
+                return _.pluck (chainEntry.value, "index");
             });
-            console.log ("CHAIN ALL", chainIndices);
         }
         chainIndices = d3.merge (chainIndices);
-        return {showAll: showAll, chainIndices: chainIndices};
+        console.log ("SHOW CHAINS", chainIndices);
+        return {showAll: this.options.showAllProteins, chainIndices: chainIndices};
     },
     
     getShowProteinNGLSelection: function (showableChains) {
-        var selectionString = "";
+        var selectionString = "all";
         var showAll = showableChains.showAll || false;
         var chains = showableChains.chainIndices || [];
         
