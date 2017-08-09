@@ -43,7 +43,7 @@
                         if (m === row.length - 1 && row.length < headerCount) {
                             colspan = " COLSPAN=\"" + (headerCount - row.length + 1)+"\"";
                         }
-                        var val = isNaN(row[m]) ? row[m] : this.numberFormat(row[m]);
+                        var val = isNaN(row[m]) ? row[m] : self.numberFormat(row[m]);
                         str += "<"+rtype+colspan+">"+val+"</"+rtype+">";
                     }
                     rtype = "td";
