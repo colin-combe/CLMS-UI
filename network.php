@@ -41,6 +41,7 @@
 
         <link rel="stylesheet" href="./css/reset.css" />
         <link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
+        <link rel="stylesheet" href="./css/common.css" />
         <link rel="stylesheet" href="./css/style.css" />
         <link rel="stylesheet" href="./css/xiNET.css">
         <link rel="stylesheet" href="./css/matrix.css">
