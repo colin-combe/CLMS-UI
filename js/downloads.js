@@ -67,7 +67,7 @@ function download(content, contentType, fileName) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein 1","SeqPos 1","PepPos 1","PepSeq 1","LinkPos 1","Protein 2","SeqPos 2","PepPos 2","PepSeq2","LinkPos 2","Score","Charge","Exp m/z","ExpMass","Match m/z","MatchMass","MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein 1","SeqPos 1","PepPos 1","PepSeq 1","LinkPos 1","Protein 2","SeqPos 2","PepPos 2","PepSeq 2","LinkPos 2","Score","Charge","Exp m/z","ExpMass","Match m/z","MatchMass","MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var matches = clmsModel.get("matches");
     var matchCount = matches.length;
