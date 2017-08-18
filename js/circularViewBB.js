@@ -98,7 +98,7 @@
               parentEvents = parentEvents();
           }
           return _.extend({},parentEvents,{
-              "click .niceButton": "reOrder",
+              "click .niceButton": "reOrderAndRender",
               "click .flipIntraButton": "flipIntra",
               "click .showResLabelsButton": "showResLabelsIfRoom",
               "click .hideLinkless": "flipLinklessVisibility",
@@ -194,7 +194,7 @@
                     d.inputFirst = true;
                     d.func = function () {
                         self.options.sort = d.id;
-                        self.reOrder();
+                        self.reOrderAndRender();
                     };
                 }, this)
             ;
@@ -324,7 +324,7 @@
             this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
-            this.reOrder();
+            this.reOrder().render();
             
             return this;
         },
@@ -332,7 +332,8 @@
         reOrder: function () {
             //CLMSUI.utils.xilog ("this", this, this.options);
             this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
-            var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
+            //var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
+            var prots = CLMS.arrayFromMapValues (this.filterInteractors (this.model.get("clmsModel").get("participants")));
             var proteinSort = function (field) {
                 var numberSort = !isNaN(prots[0][field]);
                 var sortDir = this.options.sortDir;
@@ -341,13 +342,18 @@
                 });
                 return _.pluck (prots, "id");
             };
+            var self = this;
             var sortFuncs = {
-                best: function () { return CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants")); },
+                best: function () { return CLMSUI.utils.circleArrange (self.filterInteractors (this.model.get("clmsModel").get("participants"))); },
                 size: function() { return proteinSort.call (this, "size"); },
                 alpha: function() { return proteinSort.call (this, "name"); },
             };
             this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : _.pluck (prots, "id");
-            this.render();
+            return this;
+        },
+        
+        reOrderAndRender: function () {
+            return this.reOrder().render();
         },
 
         flipIntra: function () {
