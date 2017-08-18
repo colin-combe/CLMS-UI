@@ -6,6 +6,7 @@ CLMSUI.utils.circleArrange = function (proteins) {
     function makeNodeEdgeList (protein) {
         var node = {id: protein.id, length: protein.size, edges:[]};
         var edgeIds = d3.set();
+
         protein.crossLinks.forEach (function (clink) {
             // must have active matches, no intra-protein links, no repeated edges
             if (clink.filteredMatches_pp.length > 0
