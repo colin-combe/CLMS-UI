@@ -162,23 +162,14 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
         // check for open-edge crossings on individual level
         // check for open-edge crossings in added protein too depending on direction added
         leastCrossingsEnd: function (order, node, interLinks, pMap) {
-
-            var returnMinOrder = function (crossings, orders) {
-                var order = orders[0];
-                var min = 1000;
-                for (var n = 0; n < crossings.length; n++) {
-                    if (crossings[n] < min) {
-                        min = crossings[n];
-                        order = orders[n];
-                    }
-                }
-                return order;
-            };
             
+            // make two orderings, one adding a node to start of existing list, another to the end
             var lcrossTest = [node].concat(order);
             var rcrossTest = order.concat(node);
             var orders = [lcrossTest, rcrossTest];
             //console.log ("l", lcrossTest, rcrossTest, node, order);
+            
+            // get ordering (either adding to start or end) which produces the least crossings in total
             var crossings = orders.map (function (run) {
                 var tot = 0;
                 var active = 0;
@@ -189,7 +180,7 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
                         var openCount = 0;
                         pos.values.forEach (function (edge) {
                             var enode = edge.otherNode;
-                            var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
+                            var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint to another node in current node set
                             if (isOpenEdge) {
                                 openCount++;
                             } else if (activeSet.has(edge.edgeId)) {
@@ -205,87 +196,104 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
                         //console.log ("pnode", pnode, "pos", pos, "curClosed", curClosed, "openCount", openCount, "tot", tot);
                     });    
                 });
-                return tot;
+                return {order: run, total: tot};
             });
 
-            order = returnMinOrder (crossings, orders);
-            //console.log ("leastCross", crossings);   
+            var minCrossing = _.min (crossings, function (c) { return c.total; });
+            order = minCrossing.total < 1000 ? minCrossing.order : orders[0];
+            //console.log ("leastCross", minCrossing, crossings);   
             return order;
         },
     };
 
 
     var shuffleAlternatives = {
-        leastCrossingsEnd2: function (order, node, interLinks, pMap, variations) {
+        randomShuffle: function (order, node, interLinks, pMap, variations) {
 
-            //console.log ("RUN", run);
+            // console.log ("RUN", run);
+            // count number of crossings given a full list of nodes
+            // Edges are arranged in order, per protein and then per position, and then run through in that order.
+            // openArr and openSet keep a running tally of unclosed edges (i.e. edges where one end has been encountered so far but not the other)
+            // If the end of an open edge is encountered then the number of crossings it must make to close is found through openArr
+            // i.e. if openArr is [E1, E3, E10, E15, E20] and the closing position of edge E3 is encountered next, 
+            // then the edges [E10, E15, E20] must in future cross through it to reach their end points, so totalCrossings is incremented by 3
             function countCrossing (run) {
                 var tot = 0;
-                var active = 0;
-                var activeSet = d3.set();
-                var activeArr = [];
+                var open = 0;
+                var openSet = d3.set();
+                var openArr = [];
 
                 run.forEach (function (pnode) {
                     //console.log ("NODE", pnode.id, pnode);
                     pnode.edges.forEach (function (pos) {
-                        var curActive = active;
-                        var openCount = 0;
-                        var l = activeArr.length;
-                        var removed = [];
+                        var curOpen = open;
+                        var freeCount = 0;
+                        var openEdgeCount = openArr.length;
+                        var justClosed = [];
                         pos.values.forEach (function (edge) {
-                            if (activeSet.has(edge.edgeId)) {
-                                //activeSet.remove (edge.edgeId);
-                                active--;
-                                curActive--;
-                                removed.push (activeArr.indexOf(edge.edgeId)); 
+                            // if encountering closing position of an open edge
+                            if (openSet.has(edge.edgeId)) {
+                                // reduce open totals, add to justClosed array
+                                open--;
+                                curOpen--;
+                                justClosed.push (openArr.indexOf(edge.edgeId)); 
                             }
                         });
-                        var remLen = removed.length;
-                        if (remLen) {
-                            removed.sort (function(a,b) { return a - b; }); // grr, default is to sort numbers alphabetically
+                        
+                        // If closing edges encountered, work out the crossings they incur
+                        var closedLen = justClosed.length;
+                        if (closedLen) {
+                            justClosed.sort (function(a,b) { return a - b; }); // grr, default is to sort numbers alphabetically
                             //console.log ("removed", removed, activeArr);
-                            for (var n = remLen ; --n >= 0;) {
-                                var rpos = removed[n];
-                                var ropen = ((l - rpos) - (remLen - n));
-                                tot += ropen;
-                                //console.log ("r", l-rpos, l, rpos, ropen, activeArr, activeArr.length, tot);   
-                                activeArr.splice(rpos, 1);
+                            for (var n = closedLen ; --n >= 0;) {
+                                var cpos = justClosed[n];
+                                // openEdgeCount - cpos = number of intervening edges between start of current edge and its end point (which is now)
+                                // closedLen - n = number of edges that have also closed at this exact same point: we don't count them as crossings
+                                var cutsThrough = (openEdgeCount - cpos) - (closedLen - n);
+                                tot += cutsThrough;
+                                //console.log ("total inc'ed", l-cpos, l, cpos, cutsThrough, openArr, tot);   
+                                openArr.splice(cpos, 1);    // remove closed edge from open edge array
                             }
                             //console.log ("postremoved", activeArr);
                         }
 
+                        // remove or add edges from open edge array / sets as applicable
                         pos.values.forEach (function (edge) {
                             var enode = edge.otherNode;
-                            var isOpenEdge = !(enode === node.id || pMap[enode]); // is edge that has unlinked endpoint in current node set
-                            if (isOpenEdge) {
-                                openCount++;
-                            } else if (activeSet.has(edge.edgeId)) {
-                                activeSet.remove (edge.edgeId);
+                            var isFreeEdge = !(enode === node.id || pMap[enode]); // SHOULDN'T HAPPEN NOW PMAP IS FULL SET OF NODES.
+                            if (isFreeEdge) {
+                                freeCount++;
+                            } else if (openSet.has(edge.edgeId)) {
+                                openSet.remove (edge.edgeId);
                             } else {
-                                activeSet.add (edge.edgeId);
-                                activeArr.push (edge.edgeId);
-                                active++;
+                                openSet.add (edge.edgeId);
+                                openArr.push (edge.edgeId);
+                                open++;
                             }
                         });
 
-                        tot += (curActive * openCount); // use curActive so we don't include links opened at same pos as crossings
-                        //console.log ("pnode", pnode, "pos", pos, "curActive", curActive, "activeArr", activeArr, "openCount", openCount, "tot", tot);
+                        tot += (curOpen * freeCount); // use curActive so we don't include links opened at same pos as crossings
+                        //console.log ("shuffle. pnode", pnode, "pos", pos, "curOpen", curOpen, "openArr", openArr, "freeCount", freeCount, "tot", tot);
                     });    
                 });
                 return tot;
             }
 
             // Random shuffle
-            function shuffle () {
+            function swapRandomPair () {
                 var newOrder = order.slice(0);
                 var n = Math.floor ((Math.random() * order.length));
-                var m = Math.floor ((Math.random() * order.length));
+                var m = Math.floor ((Math.random() * (order.length - 1)));
+                if (m >= n) { m++; }
                 var temp = newOrder[n];
                 newOrder[n] = newOrder[m];
                 newOrder[m] = temp;
                 return newOrder;
             }
 
+            // try and improve the ordering by randomly swapping pairs of nodes and recalculating the number of crossings
+            // If crossings less than the previous value then keep the new ordering as the basis for the next swap
+            // Prone to local minima and not reproducible but searching full space is prohibitive (20 nodes = 20! combinations)
             var min = 100000;
             var shuffledOrder = order;
             for (var n = 0; n < variations && min > 0; n++) {
@@ -294,7 +302,7 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
                     min = crossings;
                     order = shuffledOrder;
                 }
-                shuffledOrder = shuffle(order);
+                shuffledOrder = swapRandomPair (order);
                 //console.log (crossings, shuffledOrder, "cur | min", min, order);
             }
 
@@ -310,19 +318,17 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
         interLinks.sort (function(a,b) {
             return b.total - a.total;
         });
-        
-        console.log (this);
           
         for (var n = 0; n < interLinks.length; n++) {
             // pick the next node to add to the previously added nodes
             var choice = nextNodeAlternatives[options.crossingMethod] (interLinks, pMap);
 
             // pick which end of the list of previously added nodes to add this next node to
-            order = endingAlternatives["leastCrossingsEnd"](order, choice.node, interLinks, pMap);
+            order = endingAlternatives[options.endType](order, choice.node, interLinks, pMap);
             pMap[choice.node.id] = true;
         }
         
-        order = shuffleAlternatives["leastCrossingsEnd2"](order, {id: null}, interLinks, pMap, 50);
+        order = shuffleAlternatives[options.shuffleType](order, {id: null}, interLinks, pMap, 50);
         return order;
     }
     
@@ -333,8 +339,8 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
     
     
     var interLinks = makeNodeEdgeLists (proteins);
-    var defaults = {crossingMethod: "inwardConn", endType: "leastCrossingsEnd"};
-    var combinedOptions = $.extend ({}, defaults, options || {});
+    var defaults = {crossingMethod: "inwardConn", endType: "leastCrossingsEnd", shuffleType: "randomShuffle"};
+    var combinedOptions = _.extend ({}, defaults, options || {});
     
     return sort(interLinks, combinedOptions).map(function(node) { return node.id; });
 };
