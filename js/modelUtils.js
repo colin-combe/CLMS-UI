@@ -389,6 +389,25 @@ CLMSUI.modelUtils = {
         return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
     },
     
+    // call with alignmentCollection as this context through .call
+    addNewSequencesToAlignment : function (clmsModel) {
+        clmsModel.get("participants").forEach (function (entry) {
+            //console.log ("entry", entry);
+            if (!entry.is_decoy) {
+                this.add ([{
+                    "id": entry.id,
+                    "displayLabel": entry.name.replace("_", " "),
+                    "refID": "Search",
+                    "refSeq": entry.sequence,
+                }]);
+                if (entry.uniprot){
+					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence);
+				}
+                //~ console.log ("alignColl", this);
+            }
+        }, this);
+    },
+    
     matrixPairings: function (matrix, sequenceObjs) {
         var keys = d3.keys(matrix);
         var pairings = [];

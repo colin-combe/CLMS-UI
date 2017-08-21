@@ -77,3 +77,7 @@
     background: #eee;
     border-color: #ccc;
 }
+
+.CLMSUIspectrumWrapper input[type='submit'] {
+    display: none;
+}

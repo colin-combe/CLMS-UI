@@ -169,7 +169,7 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
             var orders = [lcrossTest, rcrossTest];
             //console.log ("l", lcrossTest, rcrossTest, node, order);
             
-            // get ordering (either adding to start or end) which produces the least crossings in total
+            // get ordering (either adding to start or end) which produces the least extra crossings
             var crossings = orders.map (function (run) {
                 var tot = 0;
                 var active = 0;
@@ -214,7 +214,7 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
             // count number of crossings given a full list of nodes
             // Edges are arranged in order, per protein and then per position, and then run through in that order.
             // openArr and openSet keep a running tally of unclosed edges (i.e. edges where one end has been encountered so far but not the other)
-            // If the end of an open edge is encountered then the number of crossings it must make to close is found through openArr
+            // If the closing point of an open edge is encountered then the number of crossings it must make to close is found through openArr
             // i.e. if openArr is [E1, E3, E10, E15, E20] and the closing position of edge E3 is encountered next, 
             // then the edges [E10, E15, E20] must in future cross through it to reach their end points, so totalCrossings is incremented by 3
             function countCrossing (run) {
@@ -336,7 +336,6 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
     if (pArray.length < 2) {
         return (pArray.length === 1 ? [pArray[0].id] : []);
     }
-    
     
     var interLinks = makeNodeEdgeLists (proteins);
     var defaults = {crossingMethod: "inwardConn", endType: "leastCrossingsEnd", shuffleType: "randomShuffle"};
