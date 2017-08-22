@@ -242,22 +242,14 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         },
        
        navigationFilter: function (match) {
-			//peptide seq check
-			if (seqCheck(this.get("pepSeq")) === false) {
-				return false;
-			}
-			
-			//protein name check
-			if (this.proteinNameCheck(match, this.get("protNames")) === false) {
-				return false;
-			}
-			
-			//charge check
+           // Arranged so cheaper checks are done first
+           
+            //charge check
 			var chargeFilter = this.get("charge");
-			if (chargeFilter && match.precursorCharge != chargeFilter){
+			if (chargeFilter && match.precursorCharge != chargeFilter) {
 				return false;
 			}
-
+			
 			//run name check
 			var runNameFilter = this.get("runName");
 			if (runNameFilter && 
@@ -270,6 +262,17 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			if (scanNumberFilter && 
 					match.scanNumber.toString().toLowerCase()
 						.indexOf(scanNumberFilter.toLowerCase()) == -1){
+				return false;
+			}
+           
+            //protein name check
+			if (this.proteinNameCheck(match, this.get("protNames")) === false) {
+				return false;
+			}
+
+           
+           	//peptide seq check
+			if (seqCheck(this.get("pepSeq")) === false) {
 				return false;
 			}
 

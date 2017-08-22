@@ -32,6 +32,11 @@
             
             var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
 
+            var a = performance.now();
+            
+            //var pdata = new Parallel (crossLinksArr); 
+            //console.log (pdata.data);
+            
             for (var i = 0; i < clCount; ++i) {
 				var crossLink = crossLinksArr[i];
 				if (filterModel) {
@@ -79,8 +84,8 @@
 							var result = filterModel.subsetFilter (match, proteinMatchFunc)
 											&& filterModel.validationStatusFilter(match)
 											&& filterModel.navigationFilter(match);
-							var decoys = filterModel.get("decoys");
-							if (decoys === false && match.is_decoy === true){
+
+							if (!filterModel.get("decoys") && match.is_decoy){
 								result = false;
 							}
 							
@@ -102,6 +107,9 @@
 				}
             }
 
+            var b = performance.now();
+            //console.log ("filtering time", (b-a), "ms");
+            
             this.filteredXLinks = {all: [], targets: [], linears: [], decoysTD: [], decoysDD: []};
 			
 			for (var i = 0; i < clCount; ++i) {

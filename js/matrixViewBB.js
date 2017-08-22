@@ -669,6 +669,8 @@
 
                 }, this);
             }, this);
+            
+            var mid = performance.now();
 
             var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
             var cd = canvasData.data;
@@ -686,7 +688,7 @@
             ctx.putImageData (canvasData, 0, 0);
 
             var end = performance.now();
-            CLMSUI.times.push (Math.round (end - start));
+            CLMSUI.times.push (Math.round (end - mid));
             //console.log ("CLMSUI.times", CLMSUI.times);
         }
         return this;
