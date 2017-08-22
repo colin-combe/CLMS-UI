@@ -413,13 +413,14 @@ CLMSUI.modelUtils = {
         var pairings = [];
         for (var n = 0; n < sequenceObjs.length; n++) {
             var max = {key: undefined, seqObj: undefined, score: 40};
+            var seqObj = sequenceObjs[n];
             keys.forEach (function (key) {
                 var score = matrix[key][n];
                 //console.log ("s", n, score, score / sequenceObjs[n].data.length);
-                if (score > max.score && (score / sequenceObjs[n].data.length) > 1) {
+                if (score > max.score && (score / seqObj.data.length) > 1) {
                     max.score = score;
                     max.key = key;
-                    max.seqObj = sequenceObjs[n];
+                    max.seqObj = seqObj;
                 }
             });
             if (max.key) {

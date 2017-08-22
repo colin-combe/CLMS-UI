@@ -97,3 +97,8 @@
     color: #091D42;
     background: white;
 }
+
+/* stop firefox making massive number box */
+.selectView input[type='number'] {
+    max-width: 3.5em;
+}
