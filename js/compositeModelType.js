@@ -36,8 +36,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
 
-        var a = performance.now();
-
         function filterCrossLink (crossLink) {
             crossLink.filteredMatches_pp = [];
             if (filterModel.get("fdrMode") === true) {
@@ -102,24 +100,49 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
         
         /*
-        var para = new Parallel (crossLinksArr.slice()); 
+        var allMatches = this.get("clmsModel").get("matches");
+        var matchModelMap = d3.map();
+        allMatches.forEach (function (match) {
+            //console.log ("mart", match, match.containingModel);
+            var modelId = match.containingModel.cid;
+            if (!matchModelMap.has(modelId)) {
+                matchModelMap.set (modelId, match.containingModel);
+            }
+            match.containingModel = modelId;
+        });
+        
+        
+        var c = performance.now();
+        
+        var para = new Parallel (crossLinksArr.slice(), {env: {filterModel: filterModel}}); 
         console.log ("PARD", para.data);
         para.require(filterCrossLink).map (function (datum) {
-                var crossLink = datum;
-                //if (filterModel) {
-                //    filterCrossLink (crossLink);
-                //} else { // no filter model, let everything thru
-                    //crossLink.filteredMatches_pp = crossLink.matches_pp;
-                //}
+            var crossLink = datum;
+            console.log ("glo", global.env);
+            //console.log ("yo", crossLink.id, crossLink.filteredMatches_pp.length);
+            if (global.env.filterModel) {
+                console.log ("blurrr");
+                filterCrossLink (crossLink);
+            } else { // no filter model, let everything thru
+                crossLink.filteredMatches_pp = crossLink.matches_pp;
+            }
+            console.log ("yo 2", crossLink.filteredMatches_pp.length);
             return datum;
         }).then(function (data) {
-            console.log("PARALLEL RES", data) // logs sdrawrof
-            
+            console.log("PARALLEL RES", data); // logs sdrawrof
+            allMatches.forEach (function (match) {
+                var modelId = match.containingModel;
+                match.containingModel = matchModelMap.get(modelId);
+            });
+            var d = performance.now();
+            console.log ("par filtering time", (d-c), "ms");
             //this.trigger("filteringDone");
             //this.trigger("hiddenChanged");
         });
         */
-
+        
+        
+        var a = performance.now();
         
         for (var i = 0; i < clCount; ++i) {
             var crossLink = crossLinksArr[i];
@@ -131,7 +154,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
 
         var b = performance.now();
-        //console.log ("filtering time", (b-a), "ms");
+        console.log ("ser filtering time", (b-a), "ms");
 
         
         this.filteredXLinks = {
