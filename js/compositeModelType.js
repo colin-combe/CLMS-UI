@@ -7,6 +7,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var clmsModel = this.get("clmsModel");
         var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
         var clCount = crossLinksArr.length;
+        var result;
 
         if (filterModel) {
             filterModel.processTextFilters(); // saves doing stuff later on for every match
@@ -19,8 +20,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             for (var m = 0; m < matchesLen; ++m) {
                 matches[m].fdrPass = false;
             }
-            var result = CLMSUI.fdr(crossLinksArr, {
-                threshold: filterModel.get("fdrThreshold")
+            result = CLMSUI.fdr(crossLinksArr, {
+                threshold: filterModel.get("fdrThreshold"),
+                filterLinears: true,
             });
 
             filterModel.set({
@@ -36,7 +38,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         var a = performance.now();
 
-        function filterCrossLink(crossLink) {
+        function filterCrossLink (crossLink) {
             crossLink.filteredMatches_pp = [];
             if (filterModel.get("fdrMode") === true) {
                 // FDR mode
@@ -76,21 +78,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 for (var m = 0; m < matchCount; m++) {
                     var matchAndPepPos = matches_pp[m];
                     var match = matchAndPepPos.match;
-                    var result = filterModel.subsetFilter(match, proteinMatchFunc) &&
+                    var pass = filterModel.subsetFilter(match, proteinMatchFunc) &&
                         filterModel.validationStatusFilter(match) &&
-                        filterModel.navigationFilter(match);
+                        filterModel.navigationFilter(match)
+                    ;
 
-                    if (!filterModel.get("decoys") && match.is_decoy) {
-                        result = false;
+                    if (match.is_decoy && !filterModel.get("decoys")) {
+                        pass = false;
                     }
 
-                    if (result === true) {
+                    if (pass) {
                         crossLink.filteredMatches_pp.push(matchAndPepPos);
                         if (match.crossLinks.length === 1) {
                             crossLink.ambiguous = false;
                         }
                         // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
-                        if (match.confirmedHomomultimer === true && crossLink.isSelfLink()) {
+                        if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
                             crossLink.confirmedHomomultimer = true;
                         }
                     }
@@ -146,7 +149,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 if (!crossLink.fromProtein.is_decoy && crossLink.toProtein && !crossLink.toProtein.is_decoy) {
                     this.filteredXLinks.targets.push(crossLink);
                 } else {
-                    var linear = !crossLink.toProtein;
+                    var linear = CLMSUI.modelUtils.isLinearLink (crossLink);
                     if (linear) {
                         this.filteredXLinks.linears.push(crossLink);
                     }

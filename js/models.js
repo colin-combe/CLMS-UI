@@ -45,20 +45,24 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
         processTextFilters: function () {
             var protSplit1 = this.get("protNames").toLowerCase().split(",");  // split by commas
             this.textSet.set("protNames", protSplit1.map (function (prot) { return prot.split("-"); }));    // split these in turn by hyphens
-            console.log ("textSet", this.textSet.get("protNames"));
+            //console.log ("textSet", this.textSet.get("protNames"));
         },
+        
+        naiveProteinMatch: function (p1, p2) { return p1 === p2; },
 
         subsetFilter: function (match, matchingProteinPairFunc) {
-            matchingProteinPairFunc = matchingProteinPairFunc || function (p1, p2) { return p1 === p2; }; // naive default match
+            matchingProteinPairFunc = matchingProteinPairFunc || this.naiveProteinMatch; // naive default match
+            var linear = CLMSUI.modelUtils.isLinearMatch (match);
+            var ambig = match.isAmbig();
 						
 			//linears? - if linear (linkPos === 0) and linears not selected return false
             //cross-links? - if xl (linkPos > 0) and xls not selected return false
-            if (this.get (match.linkPos1 > 0 ? "crosslinks" : "linears") === false) {
+            if (this.get (linear ? "linears" : "crosslinks") === false) {
                 return false;
             }
  			
 			//ambigs? - if ambig's not selected and match is ambig return false
-			if (!this.get("ambig") && match.isAmbig()) {
+			if (ambig && !this.get("ambig")) {
 				return false;
 			}
 
@@ -66,7 +70,7 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			// possible an ambiguous self link will still get displayed
             var hideSelfLinks = !this.get("selfLinks");
             var hideBetweenLinks = !this.get("betweenLinks");
-			if ((hideSelfLinks || hideBetweenLinks) && match.linkPos1 > 0) {
+			if ((hideSelfLinks || hideBetweenLinks) && !linear) { // we don't test linears here
 				var isSelfLink = true;
 				var prots = match.matchedPeptides[0].prt;
                 var p1 = prots[0];
@@ -94,10 +98,9 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
 			//temp
             var aaApart = +this.get("aaApart");
             if (!isNaN(aaApart)) {
-                 //if not ambig && is selfLink
-                if (match.confirmedHomomultimer === false
-						&& match.isAmbig() === false
-                        && match.crossLinks[0].isSelfLink()){
+                // if not homomultimer and not ambig and is a selfLink
+                if (!match.confirmedHomomultimer && !ambig && match.crossLinks[0].isSelfLink()) {   
+                    // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
 					var unambigCrossLink = match.crossLinks[0];
                     var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
 					if (calc < aaApart){
@@ -107,16 +110,15 @@ CLMSUI.BackboneModelTypes = _.extend (CLMSUI.BackboneModelTypes || {},
             }
             
             var pepLengthFilter = +this.get("pepLength");
-            if (!isNaN(pepLengthFilter)) {
-                if (match.matchedPeptides[0].sequence.length > 0 
-					&& (match.matchedPeptides[0].sequence.length <= pepLengthFilter || 
-					(match.matchedPeptides[1] && match.matchedPeptides[1].sequence.length <= pepLengthFilter))) {
+            if (!isNaN (pepLengthFilter)) {
+                var seq1length = match.matchedPeptides[0].sequence.length;
+                if (seq1length > 0 && (seq1length <= pepLengthFilter || 
+					(!linear && match.matchedPeptides[1].sequence.length <= pepLengthFilter))) {
                     return false;
                 }
             }
 
             return true;
-            
        },
        
        validationStatusFilter: function (match){

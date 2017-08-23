@@ -7967,11 +7967,13 @@ c3_chart_internal_fn.initTitle = function () {
 // MJG - make redrawTitle compute rect once and use in xForTitle and yForTitle to save possible extra computation
 c3_chart_internal_fn.redrawTitle = function () {
     var $$ = this;
-    var textRect = $$.getTextRect($$.title.node().textContent, $$.CLASS.title, $$.title.node());
-    
-    $$.title
-          .attr("x", $$.xForTitle.bind($$, textRect))
-          .attr("y", $$.yForTitle.bind($$, textRect));
+    if ($$.title.node().textContent) { // MJG - don't waste time repositioning title if empty
+        var textRect = $$.getTextRect($$.title.node().textContent, $$.CLASS.title, $$.title.node());
+
+        $$.title
+              .attr("x", $$.xForTitle.bind($$, textRect))
+              .attr("y", $$.yForTitle.bind($$, textRect));
+    }
 };
 c3_chart_internal_fn.xForTitle = function (preComputed) {
     var $$ = this, config = $$.config, position = config.title_position || 'left', x;
