@@ -199,7 +199,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 var pCrossLink = partCls[pCl];
                 if (pCrossLink.filteredMatches_pp.length &&
                     !pCrossLink.isDecoyLink() &&
-                    !pCrossLink.isLinear()) {
+                    !pCrossLink.isLinearLink()) {
                     participant.filteredNotDecoyNotLinearCrossLinks.push(pCrossLink);
                 }
             }
