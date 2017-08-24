@@ -685,12 +685,12 @@ CLMSUI.modelUtils = {
     crosslinkCountPerProteinPairing: function (crossLinkArr) {
         var obj = {};
         crossLinkArr.forEach (function (crossLink) {
-            var fromProtein = crossLink.fromProtein;
-            var toProtein = crossLink.toProtein;
-            var pid1 = fromProtein.id;
-            var pid2 = toProtein ? toProtein.id : "";
-            if (pid2 && !fromProtein.is_decoy && !toProtein.is_decoy) {
-                var key = pid1 + "-" + pid2;
+
+            // only show non-decoys, non-linears as we're only interested in real links with two ends
+            if (!crossLink.isLinearLink() && !crossLink.isDecoyLink()) {
+                var fromProtein = crossLink.fromProtein;
+                var toProtein = crossLink.toProtein;
+                var key = fromProtein.id + "-" + toProtein.id;
                 if (!obj[key]) {
                     obj[key] = {
                         crossLinks:[], 
