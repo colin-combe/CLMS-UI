@@ -736,17 +736,7 @@ CLMSUI.modelUtils = {
         //window.mergerxi = merged;
         //console.log ("mergedFeatures", features, merged);
         return merged;
-    },
-    
-    // can replace these next two functions when clmsmodel changes are accepted
-    isLinearLink: function (crossLink) {
-        return !crossLink.toProtein;
-    },
-    
-    isLinearMatch: function (match) {
-        return match.linkPos1 === 0;    
-    },
-    
+    }, 
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

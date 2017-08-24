@@ -177,8 +177,8 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: clmsModelInst.get("autoValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
-            Math.ceil(clmsModelInst.get("maxScore"))],
+        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE, 
+            Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();

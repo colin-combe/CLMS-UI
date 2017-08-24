@@ -351,7 +351,11 @@
             });
             console.log ("links", links);
             */
-            var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
+            var links = [
+                this.model.getFilteredCrossLinks (), 
+                this.model.getFilteredCrossLinks ("decoysTD"), 
+                this.model.getFilteredCrossLinks ("decoysDD")
+            ];
             
             return [
                 this.model.getCrossLinkDistances (links[0]),    // TT

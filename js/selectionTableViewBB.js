@@ -226,8 +226,8 @@
             // make nice id string from cross link object
             var niceCrossLinkName = function (crosslink /*, i */) {
                 return /*(i+1)+". "+*/"Matches for "+crosslink.fromProtein.name+", "
-                    + (crosslink.toProtein? (crosslink.fromResidue+" --- "
-                    +  crosslink.toProtein.name+", "+crosslink.toResidue) : "linear peptides");
+                    + (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue+" --- "
+                    +  crosslink.toProtein.name+", "+crosslink.toResidue));
             };
 
             // table building starts here

@@ -29,7 +29,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     
     // filter out linears
     if (options.filterLinears) {
-        crossLinksArr = crossLinksArr.filter (function (link) { return !CLMSUI.modelUtils.isLinearLink (link); });
+        crossLinksArr = crossLinksArr.filter (function (link) { return !link.isLinearLink(); });
     }
     
     // Divide crosslinks into inter and intra-protein groups, and sort them by the scores just calculated

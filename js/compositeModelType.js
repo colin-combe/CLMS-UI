@@ -78,6 +78,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     var match = matchAndPepPos.match;
                     var pass = filterModel.subsetFilter(match, proteinMatchFunc) &&
                         filterModel.validationStatusFilter(match) &&
+                        filterModel.scoreFilter(match) &&
                         filterModel.navigationFilter(match)
                     ;
 
@@ -169,22 +170,20 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             var crossLink = crossLinksArr[i];
             if (crossLink.filteredMatches_pp.length) {
                 this.filteredXLinks.all.push(crossLink);
-                if (!crossLink.fromProtein.is_decoy && crossLink.toProtein && !crossLink.toProtein.is_decoy) {
+                var linear = crossLink.isLinearLink();
+                if (linear) {
+                    this.filteredXLinks.linears.push(crossLink);
+                }
+                if (!crossLink.isDecoyLink() /*&& !linear*/) {
                     this.filteredXLinks.targets.push(crossLink);
                 } else {
-                    var linear = CLMSUI.modelUtils.isLinearLink (crossLink);
-                    if (linear) {
-                        this.filteredXLinks.linears.push(crossLink);
-                    }
-                    if (crossLink.fromProtein.is_decoy || (!linear && crossLink.toProtein.is_decoy)) {
-                        // is it a TD or DD decoy, stick it in the right sub-cache
-                        var decoyLinkCache = (linear || (crossLink.fromProtein.is_decoy === crossLink.toProtein.is_decoy)) ? "decoysDD" : "decoysTD";
-                        this.filteredXLinks[decoyLinkCache].push(crossLink);
-                    }
+                    // is it a TD or DD decoy, stick it in the right sub-cache
+                    var decoyLinkCache = crossLink.fromProtein.is_decoy && !linear && crossLink.toProtein.is_decoy ? "decoysDD" : "decoysTD";
+                    this.filteredXLinks[decoyLinkCache].push(crossLink);
                 }
             }
         }
-        //console.log ("xlinks", this.filteredXLinks);
+        console.log ("xlinks", this.filteredXLinks);
 
         //hiding linkless participants
         var participantsArr = CLMS.arrayFromMapValues(clmsModel.get("participants"));
@@ -199,18 +198,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             for (var pCl = 0; pCl < partClCount; ++pCl) {
                 var pCrossLink = partCls[pCl];
                 if (pCrossLink.filteredMatches_pp.length &&
-                    !pCrossLink.fromProtein.is_decoy &&
-                    pCrossLink.toProtein &&
-                    !pCrossLink.toProtein.is_decoy) {
+                    !pCrossLink.isDecoyLink() &&
+                    !pCrossLink.isLinear()) {
                     participant.filteredNotDecoyNotLinearCrossLinks.push(pCrossLink);
                 }
             }
 
-            if (participant.filteredNotDecoyNotLinearCrossLinks.length > 0) {
-                participant.hidden = false;
-            } else {
-                participant.hidden = true;
-            }
+            participant.hidden = (participant.filteredNotDecoyNotLinearCrossLinks.length === 0);
         }
 
         this.trigger("filteringDone");

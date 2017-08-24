@@ -36,7 +36,7 @@ CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourM
         this.set("labels", this.get("colScale").copy().range(["Self Link", "Homomultimer Link", "Between Protein Link"]));
     },
     getValue: function (crossLink) {
-        return crossLink.isSelfLink() || crossLink.toProtein === null ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2;
+        return crossLink.isSelfLink() || crossLink.isLinearLink() ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2;
     },
 
 });

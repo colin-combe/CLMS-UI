@@ -11,7 +11,7 @@ CLMSUI.utils.circleArrange = function (proteins, options) {
             protein.crossLinks.forEach (function (clink) {
                 // must have active matches, no intra-protein links, no repeated edges
                 if (clink.filteredMatches_pp.length > 0
-                    && clink.toProtein // added this check to account for linears (they have no toProtein)
+                    && !clink.isLinearLink() // added this check to account for linears (they have no toProtein)
                     && clink.fromProtein.id !== clink.toProtein.id && !edgeIds.has(clink.id)) {
                     var isFromId = clink.fromProtein.id === protein.id;
                     node.edges.push ({
