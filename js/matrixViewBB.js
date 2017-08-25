@@ -531,7 +531,7 @@
     },
     
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.matrixObj) {
+        if (this.options.matrixObj && this.isVisible()) {
             console.log ("MATRIX RENDER");
 
             // make underlying canvas big enough to hold 1 pixel per possible residue pair
@@ -544,7 +544,7 @@
             this
                 .resize()
                 .renderBackgroundMap ()
-                .renderCrossLinks ()
+                .renderCrossLinks ({isVisible: true})
             ;
         }
         return this;
@@ -669,6 +669,8 @@
 
                 }, this);
             }, this);
+            
+            var mid = performance.now();
 
             var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
             var cd = canvasData.data;
@@ -686,72 +688,74 @@
             ctx.putImageData (canvasData, 0, 0);
 
             var end = performance.now();
-            CLMSUI.times.push (Math.round (end - start));
+            CLMSUI.times.push (Math.round (end - mid));
             //console.log ("CLMSUI.times", CLMSUI.times);
         }
         return this;
     },
         
-    renderCrossLinks: function () {
+    renderCrossLinks: function (options) {
         
-        var self = this;
-        
-        if (this.options.matrixObj) {       
-            var colourScheme = this.model.get("linkColourAssignment");
-            
-            var seqLengths = this.getSeqLengthData();
-            var seqLengthB = seqLengths.lengthB - 1;
-            var xStep = 1;//minDim / seqLengthA;
-            var yStep = 1;//minDim / seqLengthB;
-            var linkWidth = 3;
-            var linkWidthOffset = (linkWidth - 1) / 2;
-            var xLinkWidth = linkWidth * xStep;
-            var yLinkWidth = linkWidth * yStep;
+        if ((options && options.isVisible) || (this.options.matrixObj && this.isVisible())) {
+            var self = this;
 
-            var proteinIDs = this.getCurrentProteinIDs();
+            if (this.options.matrixObj) {       
+                var colourScheme = this.model.get("linkColourAssignment");
 
-            var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
-            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
-            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
-            
-            var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
-                var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
-                return protOK && this.esterFilter (crossLink);
-            }, this);
-            
-            var radixSortBuckets = [[],[],[]]; // 3 groups
-            finalCrossLinks.forEach (function (link) {
-                var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
-                radixSortBuckets[bucketIndex].push (link);
-            });
-            finalCrossLinks = d3.merge (radixSortBuckets);
-            var fromToStore = finalCrossLinks.map (function (crossLink) {
-                return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
-            });
-                       
-            var linkSel = this.zoomGroup.selectAll("rect.crossLink")
-                .data(finalCrossLinks, function(d) { return d.id; })
-                .order()
-            ;
-            linkSel.exit().remove();
-            linkSel.enter().append("rect")
-                .attr ("class", "crossLink")
-                .attr ("width", xLinkWidth)
-                .attr ("height", yLinkWidth)
-            ;
-            linkSel
-                .attr("x", function(d, i) { return fromToStore[i][0] - linkWidthOffset; })
-                .attr("y", function(d, i) { return (seqLengthB - fromToStore[i][1]) - linkWidthOffset; })
-                .each (function (d) {
-                    var high = highlightedCrossLinkIDs.has (d.id);
-                    var selected = selectedCrossLinkIDs.has (d.id);
-                    d3.select(this)
-                        .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
-                        .style ("stroke", high || selected ? "black" : null)
-                        .style ("stroke-opacity", high || selected ? 0.4 : null)
-                    ;
-                })
-            ;
+                var seqLengths = this.getSeqLengthData();
+                var seqLengthB = seqLengths.lengthB - 1;
+                var xStep = 1;//minDim / seqLengthA;
+                var yStep = 1;//minDim / seqLengthB;
+                var linkWidth = 3;
+                var linkWidthOffset = (linkWidth - 1) / 2;
+                var xLinkWidth = linkWidth * xStep;
+                var yLinkWidth = linkWidth * yStep;
+
+                var proteinIDs = this.getCurrentProteinIDs();
+
+                var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
+                var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
+                var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
+
+                var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
+                    var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
+                    return protOK && this.esterFilter (crossLink);
+                }, this);
+
+                var radixSortBuckets = [[],[],[]]; // 3 groups
+                finalCrossLinks.forEach (function (link) {
+                    var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
+                    radixSortBuckets[bucketIndex].push (link);
+                });
+                finalCrossLinks = d3.merge (radixSortBuckets);
+                var fromToStore = finalCrossLinks.map (function (crossLink) {
+                    return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
+                });
+
+                var linkSel = this.zoomGroup.selectAll("rect.crossLink")
+                    .data(finalCrossLinks, function(d) { return d.id; })
+                    .order()
+                ;
+                linkSel.exit().remove();
+                linkSel.enter().append("rect")
+                    .attr ("class", "crossLink")
+                    .attr ("width", xLinkWidth)
+                    .attr ("height", yLinkWidth)
+                ;
+                linkSel
+                    .attr("x", function(d, i) { return fromToStore[i][0] - linkWidthOffset; })
+                    .attr("y", function(d, i) { return (seqLengthB - fromToStore[i][1]) - linkWidthOffset; })
+                    .each (function (d) {
+                        var high = highlightedCrossLinkIDs.has (d.id);
+                        var selected = selectedCrossLinkIDs.has (d.id);
+                        d3.select(this)
+                            .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
+                            .style ("stroke", high || selected ? "black" : null)
+                            .style ("stroke-opacity", high || selected ? 0.4 : null)
+                        ;
+                    })
+                ;
+            }
         }
         
         return this;

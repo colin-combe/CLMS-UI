@@ -82,6 +82,7 @@ function getMatchesCSV () {
 		} else {
 			result = filterModel.subsetFilter (match, proteinMatchFunc)
 						&& filterModel.validationStatusFilter(match)
+      && filterModel.scoreFilter(match)
 						&& filterModel.navigationFilter(match);
 		}
         if (result === true){
@@ -125,12 +126,13 @@ function getLinksCSV(){
     var distance2dp = d3.format(".2f");
     
     crossLinks.forEach (function (crossLink, i) {
+        var linear = crossLink.isLinearLink();
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
         csv += '"' + mostReadableId(crossLink.fromProtein) + '","'
             + crossLink.fromResidue + '","' + crossLink.fromProtein.sequence[crossLink.fromResidue - 1] + '","'
-            + (crossLink.toProtein ? mostReadableId(crossLink.toProtein) : "") + '","'
+            + (linear ? "" : mostReadableId(crossLink.toProtein)) + '","'
             + crossLink.toResidue + '","';
-        if (crossLink.toProtein && crossLink.toResidue) {
+        if (!linear && crossLink.toResidue) {
             csv += crossLink.toProtein.sequence[crossLink.toResidue - 1];
         }
 
@@ -191,7 +193,7 @@ function getResidueCount() {
 
             var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
             if (!linkedRes1) { linkedRes1 = ""}
-            var linkedRes2 = residueLink.toProtein? residueLink.toProtein.sequence[residueLink.toResidue - 1] : "";
+            var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
             incrementCount(linkedRes1);
             incrementCount(linkedRes2);
 

@@ -496,7 +496,7 @@
             //CLMSUI.utils.xilog ("render args", arguments);
             var changed = options ? options.changed : undefined;
 
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 //CLMSUI.utils.xilog ("re-rendering circular view");
 
                 var interactors = this.model.get("clmsModel").get("participants");
@@ -613,6 +613,8 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             //CLMSUI.utils.xilog ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
+            
+            var lineCopy = {};  // make cache as linkJoin and ghostLinkJoin will have same 'd' paths for the same link
 
             // draw thin links
             var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
@@ -625,7 +627,9 @@
             ;
             linkJoin
                 .attr("d", function(d) { 
-                    return (d.outside ? self.outsideLine : self.line)(d.coords); 
+                    var path = (d.outside ? self.outsideLine : self.line)(d.coords); 
+                    lineCopy[d.id] = path;
+                    return path;
                 })
                 .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
                 .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
@@ -656,7 +660,10 @@
                     })
             ;
             ghostLinkJoin
-                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
+                .attr("d", function(d) { 
+                    var path = lineCopy[d.id] || (d.outside ? self.outsideLine : self.line)(d.coords);
+                    return path;
+                })
             ;
         },
 

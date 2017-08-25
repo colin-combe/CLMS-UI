@@ -54,6 +54,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         d3.select(this.el)
+            .classed ("CLMSUIspectrumWrapper", true)
             .append("div")
             .attr("id", myOptions.wrapperID)
             // http://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space?rq=1

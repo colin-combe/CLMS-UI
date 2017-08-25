@@ -95,22 +95,8 @@ CLMSUI.init.models = function (options) {
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
 
-        clmsModel.get("participants").forEach (function (entry) {
-            //console.log ("entry", entry);
-            if (!entry.is_decoy) {
-                this.add ([{
-                    "id": entry.id,
-                    "displayLabel": entry.name.replace("_", " "),
-                    "refID": "Search",
-                    "refSeq": entry.sequence,
-                }]);
-                if (entry.uniprot){
-					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence, {});
-				}
-                //~ console.log ("alignColl", this);
-            }
-        }, this);
-
+        CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, clmsModel);
+        
         allDataLoaded();
 
         console.log ("ASYNC. uniprot sequences poked to collection", this);
@@ -191,8 +177,8 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: clmsModelInst.get("autoValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")), 
-            Math.ceil(clmsModelInst.get("maxScore"))],
+        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE, 
+            Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
@@ -547,6 +533,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
+    // this listener adds new sequences obtained from pdb files to existing alignment sequence models
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
             sequences.forEach (function (entry) {
@@ -559,6 +546,18 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             console.log ("3D sequences poked to collection", this);
         }
     });
+    
+    // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
+    // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
+     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
+        CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, CLMSUI.compositeModelInst.get("clmsModel"));
+        // this triggers an event to say loads has changed in the alignment collection
+        // more efficient to listen to that then redraw/recalc for every seq addition
+        this.bulkAlignChangeFinished ();
+
+        console.log ("CSV sequences poked to collection", this);
+    });
+
 
     new CLMSUI.DistogramBB ({
         el: "#distoPanel",

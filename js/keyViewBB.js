@@ -92,10 +92,11 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc);
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
+        var notLinear = function () { return false; };
         var cols = {
-            intra: {isSelfLink: function () { return true; }, filteredMatches_pp: [],}, 
-            homom: {isSelfLink: function () { return true; }, filteredMatches_pp: [{match: {confirmedHomomultimer: true}}],}, 
-            inter: {isSelfLink: function () { return false; }, filteredMatches_pp: [],}
+            intra: {isSelfLink: function () { return true; }, isLinearLink: notLinear, filteredMatches_pp: [],}, 
+            homom: {isSelfLink: function () { return true; }, isLinearLink: notLinear, filteredMatches_pp: [{match: {confirmedHomomultimer: true}}],}, 
+            inter: {isSelfLink: function () { return false; }, isLinearLink: notLinear, filteredMatches_pp: [],}
         };
         d3.keys(cols).forEach (function(key) {
             cols[key].colour = colScheme.getColour(cols[key]);

@@ -48,7 +48,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         render: function () {
             // only render if visible
             console.log ("prot info render called");
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 var dataSource = this.model.get("selectedProtein");
                 var prots = dataSource ? CLMS.arrayFromMapValues(dataSource) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
@@ -116,7 +116,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         showState: function () {
             var self = this;
             //console.log ("in prot info filter");
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 var selectedLinks = self.model.get("selection");
                 var selidset = d3.set (_.pluck (selectedLinks, "id"));
                 var highlightedLinks = self.model.get("highlights");
@@ -162,7 +162,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         makeInteractiveSeqString: function (protein, seq, xlinks, filterDecoys) {
             var proteinId = protein.id;
             if (filterDecoys) {
-                xlinks = xlinks.filter (function(xlink) { return !xlink.fromProtein.is_decoy && !xlink.toProtein.is_decoy; });
+                xlinks = xlinks.filter (function(xlink) { return !xlink.isDecoyLink(); });
             }
             var map = d3.map (xlinks, function(d) { return d.id; });
             var endPoints = {};
@@ -173,7 +173,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     endPoints[fromRes].push (xlink);
                 }
                 //added check for no toProtein (for linears)
-                if (xlink.toProtein && proteinId === xlink.toProtein.id) { 
+                if (!xlink.isLinearLink() && xlink.isSelfLink()) { 
                     var toRes = xlink.toResidue;
                     endPoints[toRes] = endPoints[toRes] || [];
                     endPoints[toRes].push (xlink);

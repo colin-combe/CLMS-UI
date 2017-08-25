@@ -399,11 +399,11 @@
         
 
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (this.isVisible()) {
             console.log ("SCATTERPLOT RENDER");
             this
                 .resize()
-                .renderCrossLinks ()
+                .renderCrossLinks ({isVisible: true})
             ;
         }
         return this;
@@ -417,9 +417,9 @@
         
 
     renderCrossLinks: function (options) {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-            
-            options = options || {};
+        options = options || {};
+        
+        if (options.isVisible || this.isVisible()) {
             
             var pointSize = this.options.pointSize;
             

@@ -139,8 +139,11 @@
                     .attr ("min", "1" )
                     .attr ("max", "999" )
                     .style ("display", "inline-block")
-                    .on ("change", function () {
-                        self.setPage(this.value);
+                    .on ("input", function () {
+                        // this check stops deleting final character resetting page to 1 all the time
+                        if (d3.event.inputType !== "deleteContentBackward" && this.value) { // "deleteContentBackward" is chrome specific
+                            self.setPage(this.value);
+                        }
                     });
             } else {
                 pager.append("span").text("Alternative Explanations");
@@ -205,6 +208,7 @@
             var tablePage = this.selectedXLinkArray.slice((this.page - 1) * this.pageSize,
                                                 this.page * this.pageSize);
             this.addRows (tablePage, this.filteredProps);
+            console.log ("PAGE SET");
         },
 
         addRows : function (selectedLinkArray, filteredProps) {
@@ -220,10 +224,10 @@
             };
 
             // make nice id string from cross link object
-            var niceCrossLinkName = function (crosslink, i) {
+            var niceCrossLinkName = function (crosslink /*, i */) {
                 return /*(i+1)+". "+*/"Matches for "+crosslink.fromProtein.name+", "
-                    + (crosslink.toProtein? (crosslink.fromResidue+" --- "
-                    +  crosslink.toProtein.name+", "+crosslink.toResidue) : "linear peptides");
+                    + (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue+" --- "
+                    +  crosslink.toProtein.name+", "+crosslink.toResidue));
             };
 
             // table building starts here
@@ -240,6 +244,8 @@
                     .attr ("colspan", colspan)
             ;
             xlinkTBodyJoin.order(); // reorder existing dom elements so they are in same order as data (selectedLinkArray)
+            
+            // all tbody
             xlinkTBodyJoin
                 .select("TR")
                     .select("TD")

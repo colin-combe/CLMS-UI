@@ -207,7 +207,7 @@
             
             options = options || {};
             
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
@@ -351,7 +351,11 @@
             });
             console.log ("links", links);
             */
-            var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
+            var links = [
+                this.model.getFilteredCrossLinks (), 
+                this.model.getFilteredCrossLinks ("decoysTD"), 
+                this.model.getFilteredCrossLinks ("decoysDD")
+            ];
             
             return [
                 this.model.getCrossLinkDistances (links[0]),    // TT
