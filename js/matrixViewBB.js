@@ -531,7 +531,7 @@
     },
     
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.matrixObj) {
+        if (this.options.matrixObj && this.isVisible()) {
             console.log ("MATRIX RENDER");
 
             // make underlying canvas big enough to hold 1 pixel per possible residue pair
@@ -696,7 +696,7 @@
         
     renderCrossLinks: function (options) {
         
-        if ((options && options.isVisible) || (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.options.matrixObj)) {
+        if ((options && options.isVisible) || (this.options.matrixObj && this.isVisible())) {
             var self = this;
 
             if (this.options.matrixObj) {       

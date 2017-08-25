@@ -48,7 +48,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         render: function () {
             // only render if visible
             console.log ("prot info render called");
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 var dataSource = this.model.get("selectedProtein");
                 var prots = dataSource ? CLMS.arrayFromMapValues(dataSource) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
@@ -116,7 +116,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         showState: function () {
             var self = this;
             //console.log ("in prot info filter");
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 var selectedLinks = self.model.get("selection");
                 var selidset = d3.set (_.pluck (selectedLinks, "id"));
                 var highlightedLinks = self.model.get("highlights");

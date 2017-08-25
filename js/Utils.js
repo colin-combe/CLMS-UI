@@ -482,6 +482,7 @@ CLMSUI.utils = {
         bringToTop : function () {
             var sortArr = [];
             var activeDivs = d3.selectAll(".dynDiv").filter (function() {
+                //console.log ("this", this, this.$el, $(this));
                 return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
             });
             
@@ -506,6 +507,7 @@ CLMSUI.utils = {
         },
 
         setVisible: function (show) {
+            this.visible = show;
             d3.select(this.el).style ('display', show ? 'block' : 'none');
 
             if (show) {
@@ -517,13 +519,13 @@ CLMSUI.utils = {
             }
         },
 
-        // Ask if view is currently visible in the DOM
+        // Ask if view is currently visible in the DOM (use boolean for performance, querying dom for visibility often took ages)
         isVisible: function () {
             var start = window.performance.now();
-            console.log(this.$el.toString() + "isVis start:" + start);
-            var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
-            console.log(this.$el, "isVis time:" + answer , (window.performance.now() - start));
-
+            CLMSUI.utils.xilog (this.$el.toString(), "isVis start:", start);
+            //var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
+            var answer = this.visible;
+            CLMSUI.utils.xilog (this.$el, "isVis time:" + answer , (window.performance.now() - start));
             return answer;
         },
 

@@ -207,7 +207,7 @@
             
             options = options || {};
             
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;

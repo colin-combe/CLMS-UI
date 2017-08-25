@@ -244,7 +244,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (this.isVisible()) {
             this.showFiltered();
             console.log ("re rendering NGL view");
         }
@@ -330,7 +330,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     rerenderColours: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             console.log ("rerendering ngl");
             // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
@@ -340,21 +340,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     showHighlighted: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
     showSelected: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
     showFiltered: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             //~ var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var stageModel = this.model.get("stageModel");
             var filteredCrossLinks = this.model.getFilteredCrossLinks();
@@ -855,11 +855,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
 
     setDisplayedResidues: function (residues) {
-        console.log ("set displayed residues");
         var availableResidues = this._getAvailableResidues (residues);
+        var a = performance.now();
         this.resRepr.setSelection (
             this.crosslinkData.getSelectionFromResidue (availableResidues)
         );
+        console.log ("set displayed residues, time", performance.now() - a);
     },
 
     setSelectedResidues: function (residues) {

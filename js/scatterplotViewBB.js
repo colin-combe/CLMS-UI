@@ -399,7 +399,7 @@
         
 
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (this.isVisible()) {
             console.log ("SCATTERPLOT RENDER");
             this
                 .resize()
@@ -419,7 +419,7 @@
     renderCrossLinks: function (options) {
         options = options || {};
         
-        if (options.isVisible || CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (options.isVisible || this.isVisible()) {
             
             var pointSize = this.options.pointSize;
             

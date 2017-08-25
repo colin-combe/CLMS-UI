@@ -159,12 +159,16 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         
         this.filteredXLinks = {
-            all: [],
-            targets: [],
-            linears: [],
-            decoysTD: [],
-            decoysDD: []
+            all: [],    // all filtered crosslinks
+            targets: [],    // non-decoy non-linear links
+            linears: [],    // all linear links
+            linearTargets: [],  // non-decoy linear links
+            decoysTD: [],   // links with a decoy protein at one end (will include any decoy linears)
+            decoysDD: [],   // links with decoy proteins at both ends
         };
+        // all = targets + linearTargets + decoysTD + decoysDD
+        // count of decoy linears = linears - linearTargets
+        
 
         for (var i = 0; i < clCount; ++i) {
             var crossLink = crossLinksArr[i];
@@ -174,8 +178,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 if (linear) {
                     this.filteredXLinks.linears.push(crossLink);
                 }
-                if (!crossLink.isDecoyLink() /*&& !linear*/) {
-                    this.filteredXLinks.targets.push(crossLink);
+                if (!crossLink.isDecoyLink()) {
+                    this.filteredXLinks[linear ? "linearTargets" : "targets"].push(crossLink);
                 } else {
                     // is it a TD or DD decoy, stick it in the right sub-cache
                     var decoyLinkCache = crossLink.fromProtein.is_decoy && !linear && crossLink.toProtein.is_decoy ? "decoysDD" : "decoysTD";
