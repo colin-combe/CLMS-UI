@@ -82,7 +82,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                         filterModel.navigationFilter(match)
                     ;
 
-                    if (match.is_decoy && !filterModel.get("decoys")) {
+                    if (match.isDecoy() && !filterModel.get("decoys")) {
                         pass = false;
                     }
 
@@ -189,27 +189,21 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
         console.log ("xlinks", this.filteredXLinks);
 
-        //hiding linkless participants
-        var participantsArr = CLMS.arrayFromMapValues(clmsModel.get("participants"));
-        var participantCount = participantsArr.length;
-        for (var p = 0; p < participantCount; ++p) {
-            var participant = participantsArr[p];
-            participant.filteredNotDecoyNotLinearCrossLinks = [];
-
+        //hiding linkless participants  
+        CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
+            participant.hidden = true;
             var partCls = participant.crossLinks;
-            var partClCount = partCls.length;
 
-            for (var pCl = 0; pCl < partClCount; ++pCl) {
+            for (var pCl = 0; pCl < partCls.length; ++pCl) {
                 var pCrossLink = partCls[pCl];
                 if (pCrossLink.filteredMatches_pp.length &&
                     !pCrossLink.isDecoyLink() &&
                     !pCrossLink.isLinearLink()) {
-                    participant.filteredNotDecoyNotLinearCrossLinks.push(pCrossLink);
+                    participant.hidden = false;
+                    break;
                 }
             }
-
-            participant.hidden = (participant.filteredNotDecoyNotLinearCrossLinks.length === 0);
-        }
+        });
 
         this.trigger("filteringDone");
         this.trigger("hiddenChanged");
