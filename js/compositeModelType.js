@@ -76,21 +76,29 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 for (var m = 0; m < matchCount; m++) {
                     var matchAndPepPos = matches_pp[m];
                     var match = matchAndPepPos.match;
-                    var pass = filterModel.subsetFilter(match, proteinMatchFunc) &&
-                        filterModel.validationStatusFilter(match) &&
-                        filterModel.scoreFilter(match) &&
-                        filterModel.navigationFilter(match)
+                    var pass = filterModel.subsetFilter (match, proteinMatchFunc) &&
+                        filterModel.validationStatusFilter (match) &&
+                        filterModel.scoreFilter (match)
                     ;
 
-                    if (match.is_decoy && !filterModel.get("decoys")) {
+                    if (pass && match.isDecoy() && !filterModel.get("decoys")) {
                         pass = false;
                     }
+                    
+                    // Either 1.
+                    // this beforehand means navigation filters do affect ambiguous state of crosslinks
+                    // pass = pass && filterModel.navigationFilter(match);
+                    
+                    if (pass && match.crossLinks.length === 1) {
+                        crossLink.ambiguous = false;
+                    }
+                    
+                    // Or 2.
+                    // this afterwards means navigation filters don't affect ambiguous state of crosslinks
+                    pass = pass && filterModel.navigationFilter(match);
 
                     if (pass) {
-                        crossLink.filteredMatches_pp.push(matchAndPepPos);
-                        if (match.crossLinks.length === 1) {
-                            crossLink.ambiguous = false;
-                        }
+                        crossLink.filteredMatches_pp.push (matchAndPepPos);
                         // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
                         if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
                             crossLink.confirmedHomomultimer = true;
@@ -99,48 +107,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-        
-        /*
-        var allMatches = this.get("clmsModel").get("matches");
-        var matchModelMap = d3.map();
-        allMatches.forEach (function (match) {
-            //console.log ("mart", match, match.containingModel);
-            var modelId = match.containingModel.cid;
-            if (!matchModelMap.has(modelId)) {
-                matchModelMap.set (modelId, match.containingModel);
-            }
-            match.containingModel = modelId;
-        });
-        
-        
-        var c = performance.now();
-        
-        var para = new Parallel (crossLinksArr.slice(), {env: {filterModel: filterModel}}); 
-        console.log ("PARD", para.data);
-        para.require(filterCrossLink).map (function (datum) {
-            var crossLink = datum;
-            console.log ("glo", global.env);
-            //console.log ("yo", crossLink.id, crossLink.filteredMatches_pp.length);
-            if (global.env.filterModel) {
-                console.log ("blurrr");
-                filterCrossLink (crossLink);
-            } else { // no filter model, let everything thru
-                crossLink.filteredMatches_pp = crossLink.matches_pp;
-            }
-            console.log ("yo 2", crossLink.filteredMatches_pp.length);
-            return datum;
-        }).then(function (data) {
-            console.log("PARALLEL RES", data); // logs sdrawrof
-            allMatches.forEach (function (match) {
-                var modelId = match.containingModel;
-                match.containingModel = matchModelMap.get(modelId);
-            });
-            var d = performance.now();
-            console.log ("par filtering time", (d-c), "ms");
-            //this.trigger("filteringDone");
-            //this.trigger("hiddenChanged");
-        });
-        */
         
         
         var a = performance.now();
@@ -179,6 +145,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     this.filteredXLinks.linears.push(crossLink);
                 }
                 if (!crossLink.isDecoyLink()) {
+                    // is it a linear or normal target, stick it in the right sub-cache
                     this.filteredXLinks[linear ? "linearTargets" : "targets"].push(crossLink);
                 } else {
                     // is it a TD or DD decoy, stick it in the right sub-cache
@@ -189,27 +156,21 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
         console.log ("xlinks", this.filteredXLinks);
 
-        //hiding linkless participants
-        var participantsArr = CLMS.arrayFromMapValues(clmsModel.get("participants"));
-        var participantCount = participantsArr.length;
-        for (var p = 0; p < participantCount; ++p) {
-            var participant = participantsArr[p];
-            participant.filteredNotDecoyNotLinearCrossLinks = [];
-
+        //hiding linkless participants  
+        CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
+            participant.hidden = true;
             var partCls = participant.crossLinks;
-            var partClCount = partCls.length;
 
-            for (var pCl = 0; pCl < partClCount; ++pCl) {
+            for (var pCl = 0; pCl < partCls.length; ++pCl) {
                 var pCrossLink = partCls[pCl];
                 if (pCrossLink.filteredMatches_pp.length &&
                     !pCrossLink.isDecoyLink() &&
                     !pCrossLink.isLinearLink()) {
-                    participant.filteredNotDecoyNotLinearCrossLinks.push(pCrossLink);
+                    participant.hidden = false;
+                    break;
                 }
             }
-
-            participant.hidden = (participant.filteredNotDecoyNotLinearCrossLinks.length === 0);
-        }
+        });
 
         this.trigger("filteringDone");
         this.trigger("hiddenChanged");
