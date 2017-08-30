@@ -379,7 +379,7 @@
         },
 
         showAccentOnTheseElements: function (d3Selection, accentType) {
-            var accentedLinkList = this.model.get(accentType);
+            var accentedLinkList = this.model.getMarkedCrossLinks(accentType);
             if (accentedLinkList) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
                 var accentedLinkIDs = _.pluck (accentedLinkList, "id");
@@ -399,7 +399,7 @@
                 return (link.fromProtein.id === nodeId && (anyPos || (link.fromResidue >= startPos && endPos >= link.fromResidue))) ||
                         (link.toProtein.id === nodeId && (anyPos || (link.toResidue >= startPos && endPos >= link.toResidue)));
             });
-            this.model.calcMatchingCrosslinks (actionType, matchLinks, actionType === "highlights", add);
+            this.model.setMarkedCrossLinks (actionType, matchLinks, actionType === "highlights", add);
             //this.model.set (actionType, matchLinks);
         },
 
@@ -645,15 +645,15 @@
                     .attr("class", "circleGhostLink")
                     .on ("mouseenter", function(d) {
                         self.linkTip (d);
-                        self.model.calcMatchingCrosslinks ("highlights",  [crossLinks.get(d.id)], true, false);
+                        self.model.setMarkedCrossLinks ("highlights",  [crossLinks.get(d.id)], true, false);
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on ("click", function (d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
-                        self.model.calcMatchingCrosslinks ("selection", [crossLinks.get(d.id)], false, add);
+                        self.model.setMarkedCrossLinks ("selection", [crossLinks.get(d.id)], false, add);
                     })
                     .call (function () {
                         self.showAccentOnTheseElements.call (self, this, "selection");
@@ -684,7 +684,7 @@
                     })
                     .on("mouseleave", function() {
                         self.clearTip ();
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
@@ -866,7 +866,7 @@
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;

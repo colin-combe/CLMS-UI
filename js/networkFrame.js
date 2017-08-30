@@ -188,12 +188,7 @@ CLMSUI.init.modelsEssential = function (options) {
         filterModel: filterModelInst,
         tooltipModel: tooltipModelInst,
         alignColl: options.alignmentCollectionInst,
-        selection: [], //will contain cross-link objects
-        highlights: [], //will contain cross-link objects
         linkColourAssignment: CLMSUI.linkColour.defaultColoursBB,
-        annotationTypes: null,
-        selectedProtein: null, //what type should this be? Set?
-        groupColours: null // will be d3.scale for colouring by search/group
     });
 
 	//moving this to end of allDataLoaded - think validation page needs this, TODO, check

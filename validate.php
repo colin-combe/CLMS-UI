@@ -162,8 +162,10 @@ header('Content-type: text/html; charset=utf-8');
                 //CLMSUI.vent.trigger ("spectrumShow", true);
                 
 				var allCrossLinks = CLMS.arrayFromMapValues(
-					CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
-				CLMSUI.compositeModelInst.set("selection", allCrossLinks);					
+                    CLMSUI.compositeModelInst.get("clmsModel").getMatchedCrossLinks("crossLinks")
+                );
+				//CLMSUI.compositeModelInst.set("selection", allCrossLinks);
+                CLMSUI.compositeModelInst.setMarkedCrossLinks ("selection", allCrossLinks, false, false);			
 
 				var resize = function(event) {
 					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);

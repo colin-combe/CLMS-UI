@@ -157,7 +157,7 @@
         },
 
         updateTable: function () {
-            this.selectedXLinkArray = this.model.get("selection")
+            this.selectedXLinkArray = this.model.getMarkedCrossLinks("selection")
                 .filter (function (xlink) { return xlink.filteredMatches_pp.length > 0; })
                 .sort (function (a,b) { return b.filteredMatches_pp[0].match.score - a.filteredMatches_pp[0].match.score; })    // sorts links by top match score
             ;

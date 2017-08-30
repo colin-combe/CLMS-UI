@@ -769,7 +769,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         }
         //console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
         
-        crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, add);
+        crosslinkData.getModel().setMarkedCrossLinks (pickType, pdtrans.xlinks, false, add);
     },
 
 
@@ -879,7 +879,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     filterByModelLinkArray: function (links, linkType) {  
-        var selectedSet = d3.set (_.pluck (this.crosslinkData.getModel().get(linkType), "id"));
+        var selectedSet = d3.set (_.pluck (this.crosslinkData.getModel().getMarkedCrossLinks(linkType), "id"));
         return links.filter (function (l) {
             return selectedSet.has (l.origId);   
         });
