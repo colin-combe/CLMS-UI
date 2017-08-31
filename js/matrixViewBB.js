@@ -457,8 +457,7 @@
             var add = evt.ctrlKey || evt.shiftKey;  // should this be added to current selection?
             var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
             var crossLinks = _.pluck (linkWrappers, "crossLink");   
-            this.model.calcMatchingCrosslinks ("selection", crossLinks, false, add);
-            //this.model.set ("selection", crossLinks);
+            this.model.setMarkedCrossLinks ("selection", crossLinks, false, add);
         }
     },
         
@@ -470,7 +469,7 @@
         
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
-        this.model.set ("highlights", crossLinks);
+        this.model.setMarkedCrossLinks ("highlights", crossLinks, true, false);
     },
         
     getSingleLinkDistances: function (crossLink) {
@@ -714,8 +713,8 @@
                 var proteinIDs = this.getCurrentProteinIDs();
 
                 var filteredCrossLinks = this.model.getFilteredCrossLinks ();//.values();
-                var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
-                var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
+                var selectedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("selection"), "id"));
+                var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("highlights"), "id"));
 
                 var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
                     var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);

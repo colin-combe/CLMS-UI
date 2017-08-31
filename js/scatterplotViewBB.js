@@ -197,7 +197,7 @@
             var type = options && options.select ? "selection" : "highlights";
             //console.log ("type", options, type);
             var add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
-            self.model.calcMatchingCrosslinks (type, matchingLinks, true, add);
+            self.model.setMarkedCrossLinks (type, matchingLinks, true, add);
         };
         var brushSnap = function () {
             if (d3.event.sourceEvent.type === "brush") { return; }
@@ -368,7 +368,7 @@
         ;
         
         if (!this.brush.empty()) {
-            this.model.calcMatchingCrosslinks ("highlights", [], false, false);
+            this.model.setMarkedCrossLinks ("highlights", [], false, false);
         }
         this.brush.clear();
           
@@ -427,8 +427,8 @@
             var colourScheme = this.model.get("linkColourAssignment");
 
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();
-            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
-            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
+            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("selection"), "id"));
+            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("highlights"), "id"));
             
             var radixSortBuckets = [[],[],[]]; // 3 groups
             filteredCrossLinks.forEach (function (link) {

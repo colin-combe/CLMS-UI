@@ -84,7 +84,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .on ("click", function() {
                         var idArray = self.splitDataAttr (d3.select(this), "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
-                        self.model.calcMatchingCrosslinks ("selection", crossLinks, true, d3.event.ctrlKey);
+                        self.model.setMarkedCrossLinks ("selection", crossLinks, true, d3.event.ctrlKey);
                     })
                     .on ("mouseover", function () {
                         //console.log ("model", self.model);
@@ -99,11 +99,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                             .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))
                             .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                         ;
-                        self.model.calcMatchingCrosslinks ("highlights", crossLinks, true, false);
+                        self.model.setMarkedCrossLinks ("highlights", crossLinks, true, false);
                     })
                     .on ("mouseout", function() {
                         self.model.get("tooltipModel").set("contents", null);
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                 ;
                 
@@ -117,9 +117,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             var self = this;
             //console.log ("in prot info filter");
             if (this.isVisible()) {
-                var selectedLinks = self.model.get("selection");
+                var selectedLinks = self.model.getMarkedCrossLinks ("selection");
                 var selidset = d3.set (_.pluck (selectedLinks, "id"));
-                var highlightedLinks = self.model.get("highlights");
+                var highlightedLinks = self.model.getMarkedCrossLinks ("highlights");
                 var highidset = d3.set (_.pluck (highlightedLinks, "id"));
                 
                 d3.select(this.el).selectAll("span.hit")

@@ -134,20 +134,18 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var msc = this.get("matchScoreCutoff");
                 return match.score >= msc[0] && match.score <= msc[1];
             },
+            
+            decoyFilter: function (match) {
+               return !match.isDecoy() || this.get("decoys");
+            },
 
             validationStatusFilter: function (match) {
                 var vChar = match.validated;
-                if (vChar == 'R') return false;
-                if (this.get(vChar) || this.get(this.valMap.get(vChar))) return true;
-                /*
-                 if (vChar == 'A' && this.get("A")) return true;
-                 if (vChar == 'B' && this.get("B")) return true;
-                 if (vChar == 'C' && this.get("C")) return true;
-                 if (vChar == '?' && this.get("Q")) return true;
-                 */
-
-                if (match.autovalidated && this.get("AUTO")) return true;
-                if (!match.autovalidated && !vChar && this.get("unval")) return true;
+                if (vChar != 'R') {
+                    if (this.get(vChar) || this.get(this.valMap.get(vChar))) return true;
+                    if (match.autovalidated && this.get("AUTO")) return true;
+                    if (!match.autovalidated && !vChar && this.get("unval")) return true;
+                }
 
                 return false;
             },

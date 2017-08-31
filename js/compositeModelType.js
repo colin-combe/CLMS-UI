@@ -2,6 +2,17 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
 CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
+    
+    initialize: function () {
+        this.set ({"highlights": [], "selection": [],
+            match_highlights: d3.map(),
+            match_selection: d3.map(),
+            annotationTypes: null,
+            selectedProtein: null, //what type should this be? Set?
+            groupColours: null // will be d3.scale for colouring by search/group
+        });
+    },
+    
     applyFilter: function () {
         var filterModel = this.get("filterModel");
         var clmsModel = this.get("clmsModel");
@@ -16,11 +27,12 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         // set all matches fdrPass att to false, then calc
         if (filterModel && filterModel.get("fdrMode")) {
             var matches = clmsModel.get("matches");
-            var matchesLen = matches.length;
-            for (var m = 0; m < matchesLen; ++m) {
+            for (var m = 0; m < matches.length; ++m) {
                 matches[m].fdrPass = false;
             }
-            result = CLMSUI.fdr(crossLinksArr, {
+            result = CLMSUI.fdr (crossLinksArr, {
+                filterModel: filterModel,
+                CLMSModel: clmsModel,
                 threshold: filterModel.get("fdrThreshold"),
                 filterLinears: true,
             });
@@ -38,7 +50,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         function filterCrossLink (crossLink) {
             crossLink.filteredMatches_pp = [];
-            if (filterModel.get("fdrMode") === true) {
+            if (filterModel.get("fdrMode")) {
                 // FDR mode
                 var pass;
                 if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
@@ -63,6 +75,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
                         filteredMatches_pp[fm_pp].match.fdrPass = true;
                     }
+                } else {
+                    crossLink.filteredMatches_pp = [];
                 }
                 //~ else {
                 //~ alert("i just failed fdr check");
@@ -78,12 +92,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     var match = matchAndPepPos.match;
                     var pass = filterModel.subsetFilter (match, proteinMatchFunc) &&
                         filterModel.validationStatusFilter (match) &&
-                        filterModel.scoreFilter (match)
+                        filterModel.scoreFilter (match) &&
+                        filterModel.decoyFilter (match)
                     ;
-
-                    if (pass && match.isDecoy() && !filterModel.get("decoys")) {
-                        pass = false;
-                    }
                     
                     // Either 1.
                     // this beforehand means navigation filters do affect ambiguous state of crosslinks
@@ -171,6 +182,16 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         });
+        
+        /*
+        var cfilter = crossfilter (clmsModel.get("matches"));
+        var subsetDimension = cfilter.dimension (function (match) {
+            return filterModel.subsetFilter (match, proteinMatchFunc);
+        });
+        subsetDimension.filterExact (true);
+        console.log (cfilter.allFiltered());
+        */
+        
 
         this.trigger("filteringDone");
         this.trigger("hiddenChanged");
@@ -219,31 +240,78 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         return prots;
     },
+    
+    getMarkedMatches: function (modelProperty) {
+        return this.get("match_"+modelProperty);
+    },
+    
+    getMarkedCrossLinks: function (modelProperty) {
+        return this.get(modelProperty);
+    },
+    
+    setMarkedMatches: function (modelProperty, matches, andAlternatives, add, propogate) {
+        var type = "match_"+modelProperty;
+        var map = add ? this.get(type) : new d3.map();
+        matches.forEach (function (match) {
+            var mmatch = match.match;
+            map.set (mmatch.id, mmatch);    
+        });
+        
+        if (propogate) {
+            var clinkset = d3.set();
+            var crossLinks = [];
+            map.values().forEach (function (match) {
+                var clinks = match.crossLinks;
+                for (var c = 0; c < clinks.length; c++) {
+                    var clink = clinks[c];
+                    var clinkid = clink.id;
+                    if (!clinkset.has(clinkid)) {
+                        clinkset.add (clinkid);
+                        crossLinks.push (clink);
+                    }
+                }
+            });
+
+            // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
+            this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false);
+        }
+    },
 
     // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
     // to fill in the model
     // - i'm not sure this is a good name for this function - cc
-    calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
+    setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, propogate) {
         if (crossLinks) { // if undefined nothing happens, to remove selection pass an empty array - []
             if (add) {
-                var existingCrossLinks = this.get(modelProperty);
-                crossLinks = crossLinks.concat(existingCrossLinks);
-                //console.log ("excl", existingCrossLinks);
+                crossLinks = crossLinks.concat (this.get(modelProperty));
             }
-            var crossLinkMap = d3.map(crossLinks, function (d) {
+            var crossLinkMap = d3.map (crossLinks, function (d) {
                 return d.id;
             });
 
             if (andAlternatives) {
                 crossLinks.forEach(function (crossLink) {
                     if (crossLink.ambiguous || crossLink.ambig) {
-                        this.recurseAmbiguity(crossLink, crossLinkMap);
+                        this.recurseAmbiguity (crossLink, crossLinkMap);
                     }
                 }, this);
             }
             var dedupedCrossLinks = CLMS.arrayFromMapValues(crossLinkMap);
-            this.set(modelProperty, dedupedCrossLinks);
+            
+            if (propogate) {
+                var matches = [];
+                dedupedCrossLinks.forEach (function (clink) {
+                    matches = matches.concat (clink.filteredMatches_pp);
+                });
+                this.setMarkedMatches (modelProperty, matches, andAlternatives, add);
+            }
+            
+            this.set (modelProperty, dedupedCrossLinks);
         }
+    },
+    
+    calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
+        this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, add);
     },
 
     //not recursive

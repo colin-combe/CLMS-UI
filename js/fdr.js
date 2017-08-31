@@ -15,8 +15,12 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     // 'threshold' can be legitimately undefined to have no fdr   
     options = _.extend ({}, {scoreCalcFunc: defaultScoreCalcFunc, threshold: undefined, filterLinears: false}, options);
     
-    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+    var filterModel = options.filterModel;
+    var clmsModel = options.CLMSModel;
+    if (!filterModel || !clmsModel) {
+        return null;
+    }
+    
     var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
     
     // Work out link score based on a function of the related match scores
