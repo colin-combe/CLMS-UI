@@ -40,12 +40,12 @@
         
         var scatterOptions = [
             {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
             {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cross-Link Distance", decimalPlaces: 2},
         ];
         
@@ -178,27 +178,49 @@
         
         // Brush
         var brushEnded = function (options) {
-            var xData = self.getAxisData ("X", true).data;
-            var yData = self.getAxisData ("Y", true).data;
+            var xAxisData = self.getAxisData ("X", true);
+            var yAxisData = self.getAxisData ("Y", true);
+            var xData = xAxisData.data;
+            var yData = yAxisData.data;
             var filteredCrossLinks = self.model.getFilteredCrossLinks ();
             var extent = self.brush.extent();
-            var matchingLinks = filteredCrossLinks.filter (function (link, i) {
-                var xDatum = xData[i];
-                var yDatum = yData[i];
-                var bool = xDatum && xDatum.some (function (xd) {
-                    return xd >= extent[0][0] && xd <= extent[1][0];
-                });
-                bool = bool && yDatum && yDatum.some (function (yd) {
-                    return yd >= extent[0][1] && yd <= extent[1][1];
-                });
-                return bool;
-            });
             
-            var type = options && options.select ? "selection" : "highlights";
-            //console.log ("type", options, type);
+            var matchLevel = xAxisData.matchLevel || yAxisData.matchLevel;
+            
             var add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
-            self.model.setMarkedCrossLinks (type, matchingLinks, true, add);
+            var type = options && options.select ? "selection" : "highlights";
+            //console.log ("type", options, type, matchLevel, xAxisData);
+            
+            if (matchLevel) {
+                var matchingMatches = filteredCrossLinks.map (function (link, i) {
+                    var xDatum = xData[i];
+                    var yDatum = yData[i];
+
+                    var passMatches = (xDatum && yDatum) ? link.filteredMatches_pp.filter (function (match, ii) {
+                        var xd = xDatum.length === 1 ? xDatum[0] : xDatum[ii];
+                        var yd = yDatum.length === 1 ? yDatum[0] : yDatum[ii];
+                        return (xd >= extent[0][0] && xd <= extent[1][0] && yd >= extent[0][1] && yd <= extent[1][1]);
+                    }) : [];
+                    return passMatches;
+                });
+                var allMatchingMatches = d3.merge (matchingMatches);
+                self.model.setMarkedMatches (type, allMatchingMatches, true, add);
+            } else {
+                var matchingLinks = filteredCrossLinks.filter (function (link, i) {
+                    var xDatum = xData[i];
+                    var yDatum = yData[i];
+                    var bool = xDatum && xDatum.some (function (xd) {
+                        return xd >= extent[0][0] && xd <= extent[1][0];
+                    });
+                    bool = bool && yDatum && yDatum.some (function (yd) {
+                        return yd >= extent[0][1] && yd <= extent[1][1];
+                    });
+                    return bool;
+                });
+                self.model.setMarkedCrossLinks (type, matchingLinks, true, add);
+            }
         };
+        
         var brushSnap = function () {
             if (d3.event.sourceEvent.type === "brush") { return; }
             var meta = self.getBothAxesMetaData();
@@ -246,13 +268,14 @@
             .on("brush", brushSnap)
             .on("brushend", brushEnded)
         ;
+        
         // Restore when match selection is sorted out
-        /*
         this.scatg.append("g")
             .attr("class", "brush")
             .call(self.brush)
         ;
-        */
+        
+        
         this.scatg.select(".resize.n").append("text");
         this.scatg.select(".resize.e").append("text");
         
@@ -328,7 +351,7 @@
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
         var data = this.getData (funcMeta ? funcMeta.func : undefined, filteredFlag, optionalLinks);
-        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased};
+        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false};
     },
         
     getBothAxesMetaData: function () {
@@ -429,6 +452,9 @@
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();
             var selectedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("selection"), "id"));
             var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("highlights"), "id"));
+            
+            var selectedMatchMap = this.model.getMarkedMatches ("selection");
+            var highlightedMatchMap = this.model.getMarkedMatches ("highlights");
             
             var radixSortBuckets = [[],[],[]]; // 3 groups
             filteredCrossLinks.forEach (function (link) {
@@ -536,16 +562,17 @@
             
             var datax = this.getAxisData ("X", true, filteredCrossLinks);
             var datay = this.getAxisData ("Y", true, filteredCrossLinks);
-
+            var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
             
+            //console.log ("ddd", datax, datay, filteredCrossLinks, coords);
+
             filteredCrossLinks.forEach (function (link, i) {
-                var high = highlightedCrossLinkIDs.has (link.id);
-                var selected = selectedCrossLinkIDs.has (link.id);
+                var high = !matchLevel && highlightedCrossLinkIDs.has (link.id);
+                var selected = !matchLevel && selectedCrossLinkIDs.has (link.id);
                 var jitter = this.options.jitter;
-                ctx.fillStyle = high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
                 ctx.strokeStyle = high || selected ? "black" : null;
-                //.style ("stroke-opacity", high || selected ? 0.4 : null)
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
@@ -564,9 +591,17 @@
                     ctx.stroke();
                 }
                 */
-                coords[i].forEach (function (coord) {
+                
+                coords[i].forEach (function (coord, ii) {
                     //var xr = (Math.random() - 0.5);
                     //var yr = (Math.random() - 0.5);
+                    if (matchLevel) {
+                        var match = link.filteredMatches_pp[ii].match;
+                        high = highlightedMatchMap.has (match.id);
+                        selected = selectedMatchMap.has (match.id);
+                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                        ctx.strokeStyle = high || selected ? "black" : null;
+                    }
                     var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
                     var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - (pointSize / 2);
                     x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
