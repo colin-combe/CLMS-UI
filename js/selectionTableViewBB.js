@@ -158,7 +158,7 @@
 
         updateTable: function () {
             this.selectedXLinkArray = this.model.getMarkedCrossLinks("selection")
-                .filter (function (xlink) { return xlink.filteredMatches_pp.length > 0; })
+                .filter (function (xlink) { return xlink.filteredMatches_pp.length > 0; })  // links may have been selected but then filtered out of view so don't show them here
                 .sort (function (a,b) { return b.filteredMatches_pp[0].match.score - a.filteredMatches_pp[0].match.score; })    // sorts links by top match score
             ;
             var selectedXLinkCount = this.selectedXLinkArray.length;
@@ -191,6 +191,7 @@
         },
 
         setPage : function (pg) {
+            // limit page number and set text elements
             var pageCount = Math.floor(this.selectedXLinkArray.length / this.pageSize) + 1;
             pg = Math.max (Math.min (pg, pageCount), 1);
             this.page = pg;
@@ -211,6 +212,7 @@
             console.log ("PAGE SET");
         },
 
+        // code that maintains the rows in the table
         addRows : function (selectedLinkArray, filteredProps) {
             var self = this;
             //var proteinMap = this.model.get("clmsModel").get("participants");
@@ -219,8 +221,11 @@
 
             // helper functions
             // return filtered matches from given crosslink
+            var selectedMatches = this.model.getMarkedMatches("selection");
             var getMatches = function (xlink) {
-                return _.pluck (xlink.filteredMatches_pp, "match");
+                return _.pluck (xlink.filteredMatches_pp, "match")
+                    .filter (function (m) { return selectedMatches.has (m.id); })   // selection now done on a per-match basis
+                ;
             };
 
             // make nice id string from cross link object
