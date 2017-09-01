@@ -249,15 +249,16 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return this.get(modelProperty);
     },
     
-    setMarkedMatches: function (modelProperty, matches, andAlternatives, add, propogate) {
+    setMarkedMatches: function (modelProperty, matches, andAlternatives, add, dontForward) {
         var type = "match_"+modelProperty;
         var map = add ? this.get(type) : new d3.map();
         matches.forEach (function (match) {
             var mmatch = match.match;
             map.set (mmatch.id, mmatch);    
         });
+        this.set (type, map);
         
-        if (propogate) {
+        if (!dontForward) {
             var clinkset = d3.set();
             var crossLinks = [];
             map.values().forEach (function (match) {
@@ -273,14 +274,14 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             });
 
             // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
-            this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false);
+            this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
         }
     },
 
     // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
     // to fill in the model
     // - i'm not sure this is a good name for this function - cc
-    setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, propogate) {
+    setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, dontForward) {
         if (crossLinks) { // if undefined nothing happens, to remove selection pass an empty array - []
             if (add) {
                 crossLinks = crossLinks.concat (this.get(modelProperty));
@@ -298,12 +299,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
             var dedupedCrossLinks = CLMS.arrayFromMapValues(crossLinkMap);
             
-            if (propogate) {
+            if (!dontForward) {
                 var matches = [];
                 dedupedCrossLinks.forEach (function (clink) {
                     matches = matches.concat (clink.filteredMatches_pp);
                 });
-                this.setMarkedMatches (modelProperty, matches, andAlternatives, add);
+                console.log (modelProperty, "matches", matches)
+                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
             }
             
             this.set (modelProperty, dedupedCrossLinks);
