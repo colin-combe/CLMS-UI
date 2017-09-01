@@ -105,15 +105,14 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                     .on ("click", function (d) {
                         var lsm = self.model.get("lastSelectedMatch");
                         if (lsm && lsm.match) {
-                            var randId = CLMSUI.modelUtils.getRandomSearchId (self.model.get("clmsModel"), lsm.match);
+                            //ar randId = CLMSUI.modelUtils.getRandomSearchId (self.model.get("clmsModel"), lsm.match);
+                            var randId = self.model.get("clmsModel").getSearchRandomId (lsm.match);
                             //console.log ("randId", randId);
                             CLMSUI.validate (lsm.match.id, d.label, randId, function() {
                                 lsm.match.validated = d.label;
                                 self.setButtonValidationState (lsm.match);
                                 self.model.trigger ("matchValidationStateUpdated");
                                 self.model.applyFilter();
-
-
                             });
                         }
                     })
