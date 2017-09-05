@@ -127,7 +127,8 @@
                 }
             });
 
-            this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
+            this.chart.internal.main.style("display", "none");
+            //this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
 
             var brush = d3.select(this.el).selectAll("svg .c3-brush");
             var flip = {"e":1, "w":-1};

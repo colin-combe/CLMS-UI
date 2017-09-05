@@ -67,6 +67,7 @@
             var columnsAsNamesOnly = d3.merge([this.options.seriesNames, this.options.subSeriesNames]).map (function(sname) { return [sname]; });
 
             var chartID = "#" + chartDiv.attr("id");
+            var firstRun = true;
             // Generate the C3 Chart
             this.chart = c3.generate({
                 bindto: chartID,
@@ -173,11 +174,17 @@
                 title: {
                     text: this.options.chartTitle
                 },
+                onrendered: function () {
+                    if (firstRun) {
+                        firstRun = false; 
+                        this.api.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
+                        if (! self.model.get("clmsModel").get("decoysPresent")) {   
+                            this.api.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
+                        }
+                    }
+                },
             });
-            this.chart.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
-            if (! this.model.get("clmsModel").get("decoysPresent")) {   
-                this.chart.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
-            }
+
             
             
             function distancesAvailable () {
