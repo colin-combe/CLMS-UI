@@ -102,6 +102,10 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                 .append("button")
                     .attr ("class", function(d) { return "validationButton "+d.klass; })
                     .text (function(d) { return d.label; })
+                    .attr ("title", function (d) {
+                        var alreadySet = d3.select(this).classed("validatedState");
+                        return (alreadySet ? "Validation State is currently Set to " : "Set Validation State to ") + d.label;
+                    })
                     .on ("click", function (d) {
                         var lsm = self.model.get("lastSelectedMatch");
                         if (lsm && lsm.match) {

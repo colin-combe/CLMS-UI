@@ -100,6 +100,7 @@
                 .enter()
                 .append ("option")
                 .text (function(d) { return d.label; })
+                .property ("selected", function (d,i) { return i === 0; })  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
         ;
         
         // Add jitter toggle checkbox
