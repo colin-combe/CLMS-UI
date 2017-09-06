@@ -86,15 +86,20 @@
 
 .proteinInfoPanel .hit.selected {
     background: yellow;
+     position: relative;
+    top: -1px;
 }
 
 .proteinInfoPanel .hit.highlighted {
-    background: #fdc086;
+    background: orange;
+    position: relative;
+    top: -1px;
 }
 
 .proteinInfoPanel .fixedSizeFont {
     font-family: monospace;
-    line-height: 1em;
+    font-size: 1em;
+    line-height: 1.2em;
 }
 
 .proteinInfoPanel tbody tr:hover td {
