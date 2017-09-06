@@ -301,7 +301,9 @@
 
             var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth"];
             cellJoin
-                
+                // this is quicker than doing individual .classed (or an aggregated .classed even)
+                // but only safe to use if confident these are the only possible classes applicable to these elements
+                // individual .classed = ~37.5% of addRows time, .attr("class") = ~11% of addRows time
                 .attr("class", function (d) {
                     var states = [
                         self.numberColumns.has(d),
