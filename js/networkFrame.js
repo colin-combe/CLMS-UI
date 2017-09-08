@@ -558,6 +558,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#distoPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
+        //colourScaleModel: CLMSUI.linkColour.defaultColoursBB,
         displayEventName: "distoShow",
         myOptions: {
             chartTitle: "Distogram",

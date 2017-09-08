@@ -229,15 +229,30 @@
                 // split TT list into sublists for length
                 var colModel = this.colourScaleModel;
                 var colDomain = colModel.get("colScale").domain();
-                var splitSeries = [[],[],[]];
+                console.log ("colDomain", colDomain);
+                var splitSeries = d3.range(0, colDomain.length + 1).map (function () { return []; });
+                
                 series[TT].forEach (function (val) {
-                    var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
+                    var cat = d3.bisect (colDomain, val);
+                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
                     splitSeries[cat].push (val);
                 });
+                
+                /*
+                this.model.getFilteredCrossLinks().forEach (function (link, i) {
+                    var val = colModel.getValue (link);
+                    //var cat = d3.bisect (colDomain, val);
+                    console.log ("val", val);
+                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
+                    splitSeries[val].push (series[TT][i]);
+                });
+                */
+                
                 splitSeries.forEach (function (subSeries) {
                     series.push (subSeries);
                     seriesLengths.push (subSeries.length);
                 });
+                console.log ("seroes", series, this.colourScaleModel);
                
                 // Add DD Decoys as temporary series for aggregation
                 var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
@@ -267,12 +282,8 @@
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
                 //console.log ("thresholds", thresholds);
-                
-                
-                
                 //console.log ("countArrays", countArrays);
 
-                
                 var redoChart = function () {
                     var colMap = this.getSeriesColours();
                     this.chart.load({
