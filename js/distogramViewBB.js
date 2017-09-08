@@ -287,6 +287,7 @@
                 
                 var resetMaxY = function () {
                     var curMaxY = this.chart.axis.max().y;
+                    
                     // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
                     // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
                     if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
@@ -309,16 +310,18 @@
                     });
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (chartInternal, {withLegend: true, withDimension: false, withEventRect: false});    // withLegend to change colours in key
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
+                    // Quicker way to just update c3 chart legend colours
+                    chartInternal.svg.selectAll("."+chartInternal.CLASS.legendItemTile).style("stroke", chartInternal.color);
                     c3.chart.internal.fn.redrawTitle = tempTitleHandle;
                 } else if (shortcut) {
-                    resetMaxY();
+                    resetMaxY.call (this);
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false});
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
                     c3.chart.internal.fn.redrawTitle = tempTitleHandle;
                 } else {
-                    resetMaxY();
+                    resetMaxY.call (this);
                     c3.chart.internal.fn.redrawTitle = tempTitleHandle;
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
@@ -334,6 +337,7 @@
         // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
         makeBarsSitBetweenTicks: function () {
             var internal = this.chart.internal;
+            //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
             var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
             d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
             return this;
