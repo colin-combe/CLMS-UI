@@ -1004,16 +1004,27 @@ c3_axis_fn.generateTransitions = function generateTransitions(duration) {
         axisSubX: duration ? axes.subx.transition().duration(duration) : axes.subx
     };
 };
-c3_axis_fn.redraw = function redraw(transitions, isHidden) {
+c3_axis_fn.redraw = function redraw(transitions, isHidden, updateTheseAxes) {
+    // MJG. Don't update all axes if requested
+    updateTheseAxes = updateTheseAxes || ["axisX", "axisY", "axisY2", "axisSubX"];
+    var axisMap = { axisX: "xAxis", axisY: "yAxis", axisY2: "y2Axis", axisSubX: "subXAxis" };
     var $$ = this.owner;
     $$.axes.x.style("opacity", isHidden ? 0 : 1);
     $$.axes.y.style("opacity", isHidden ? 0 : 1);
     $$.axes.y2.style("opacity", isHidden ? 0 : 1);
     $$.axes.subx.style("opacity", isHidden ? 0 : 1);
-    transitions.axisX.call($$.xAxis);
-    transitions.axisY.call($$.yAxis);
-    transitions.axisY2.call($$.y2Axis);
-    transitions.axisSubX.call($$.subXAxis);
+
+    updateTheseAxes.forEach(function (axisName) {
+        if (transitions[axisName]) {
+            transitions[axisName].call($$[axisMap[axisName]]);
+        }
+    }, this);
+    // end MJG
+
+    //transitions.axisX.call($$.xAxis);
+    //transitions.axisY.call($$.yAxis);
+    //transitions.axisY2.call($$.y2Axis);
+    //transitions.axisSubX.call($$.subXAxis);
 };
 
 var c3$1 = { version: "0.4.17" };
@@ -1544,6 +1555,11 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
     withTransitionForExit = getOption(options, "withTransitionForExit", withTransition);
     withTransitionForAxis = getOption(options, "withTransitionForAxis", withTransition);
 
+    var updateTheseAxes = getOption(options, "withTheseAxes", null); // MJG
+    if (withLegend) {
+        updateTheseAxes = null;
+    }
+
     duration = withTransition ? config.transition_duration : 0;
     durationForExit = withTransitionForExit ? duration : 0;
     durationForAxis = withTransitionForAxis ? duration : 0;
@@ -1589,7 +1605,7 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
     }
 
     // axes
-    $$.axis.redraw(transitions, hideAxis);
+    $$.axis.redraw(transitions, hideAxis, updateTheseAxes); // MJG
 
     // Update axis label
     $$.axis.updateLabels(withTransition);
@@ -7852,7 +7868,8 @@ c3_chart_internal_fn.generateDrawBar = function (barIndices, isSub) {
         var indexX = config.axis_rotated ? 1 : 0;
         var indexY = config.axis_rotated ? 0 : 1;
 
-        var path = 'M ' + points[0][indexX] + ',' + points[0][indexY] + ' ' + 'L' + points[1][indexX] + ',' + points[1][indexY] + ' ' + 'L' + points[2][indexX] + ',' + points[2][indexY] + ' ' + 'L' + points[3][indexX] + ',' + points[3][indexY] + ' ' + 'z';
+        // MJG. cut down number of concatenations, " L" not " " + "L"
+        var path = 'M ' + points[0][indexX] + ',' + points[0][indexY] + ' L' + points[1][indexX] + ',' + points[1][indexY] + ' L' + points[2][indexX] + ',' + points[2][indexY] + ' L' + points[3][indexX] + ',' + points[3][indexY] + ' z';
 
         return path;
     };

@@ -347,7 +347,10 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        this.template = _.template ("Post-Filter: <strong><%= targets %></strong> Cross-links<span> ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)</span>");
+        var targetTemplateString = "Post-Filter: <strong><%= targets %></strong> Cross-links";
+        this.targetTemplate = _.template (targetTemplateString);
+        this.allTemplate = _.template (targetTemplateString+" ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)");
+        
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
@@ -355,12 +358,16 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
 
     render: function () {
         var commaFormat = d3.format(",");
-        d3.select(this.el).html (this.template ({
-            targets: commaFormat (this.model.getFilteredCrossLinks().length),
-            decoysTD: commaFormat (this.model.getFilteredCrossLinks("decoysTD").length),
-            decoysDD: commaFormat (this.model.getFilteredCrossLinks("decoysDD").length),
-        }));
-        d3.select(this.el).select("span").classed("decoysIrrelevant", !this.model.get("clmsModel").get("decoysPresent"));
+        var model = this.model;
+        var decoysPresent = model.get("clmsModel").get("decoysPresent");
+        var variables = {
+            targets: commaFormat (model.getFilteredCrossLinks().length),
+        };
+        if (decoysPresent) {
+            variables.decoysTD = commaFormat (model.getFilteredCrossLinks("decoysTD").length);
+            variables.decoysDD = commaFormat (model.getFilteredCrossLinks("decoysDD").length);
+        }
+        d3.select(this.el).html ((decoysPresent ? this.allTemplate : this.targetTemplate) (variables));
         return this;
     },
 });
@@ -375,6 +382,8 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
             .append("p")
             .attr("class", function(d) { return d+"Elem"; })
         ;
+        
+        this.pctFormat = d3.format("%"); 
  
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
@@ -383,31 +392,35 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
 
     render: function () {
         var fdrTypes = {"interFdrCut": "Between", "intraFdrCut": "Within"};
+        
         var filterModel = this.model.get("filterModel");
         var threshold = filterModel.get("fdrThreshold");
+        var fdrMode = filterModel.get("fdrMode");
+        
         var clmsModel = this.model.get("clmsModel");
         var singleRealProtein = clmsModel.realProteinCount < 2;
         var decoysPresent = clmsModel.get("decoysPresent");
+
+        var self = this;
         
         d3.select(this.el).selectAll("p")
-            .text (function(d) {
-                var cut = filterModel.get(d);
-                return "• "+fdrTypes[d]+" score cutoff for "+d3.format("%")(threshold)+" is "+(cut ? cut.toFixed(2) : cut);
+            .text (function (d, i) {
+                if (fdrMode) {
+                    var cut = filterModel.get(d);
+                    return "• "+fdrTypes[d]+" score cutoff for "+self.pctFormat(threshold)+" is "+(cut ? cut.toFixed(2) : cut);
+                } else {
+                    if (i === 0 && decoysPresent) {
+                        var roughFDR = (self.model.getFilteredCrossLinks("decoysTD").length - self.model.getFilteredCrossLinks("decoysDD").length) / (self.model.getFilteredCrossLinks().length || 1);
+                        return "• Rough FDR Equivalent = "+self.pctFormat(roughFDR);
+                    }
+                    return "";
+                }
             })
             // Hide between protein score if only 1 real protein (will always be an undefined score)
             .style ("display", function(d) {
-                return d === "interFdrCut" && singleRealProtein ? "none" : null;
+                return decoysPresent && d === "interFdrCut" && singleRealProtein ? "none" : null;
             })
         ;
-        
-        if (!filterModel.get("fdrMode")) {
-            var roughFDR = (this.model.getFilteredCrossLinks("decoysTD").length - this.model.getFilteredCrossLinks("decoysDD").length) / (this.model.getFilteredCrossLinks().length || 1);
-            d3.select(this.el).selectAll("p")
-                .text (function (d,i) {
-                    return i === 0 && decoysPresent ? "• Rough FDR Equivalent = "+d3.format("%")(roughFDR) : "";
-                })
-            ;
-        }
         
         return this;
     },

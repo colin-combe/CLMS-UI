@@ -299,7 +299,25 @@
                 return cellFunc ? cellFunc(link) : (link[d] || "");
             };
 
+            var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth"];
             cellJoin
+                // this is quicker than doing individual .classed (or an aggregated .classed even)
+                // but only safe to use if confident these are the only possible classes applicable to these elements
+                // individual .classed = ~37.5% of addRows time, .attr("class") = ~11% of addRows time
+                .attr("class", function (d) {
+                    var states = [
+                        self.numberColumns.has(d),
+                        self.colSectionStarts.has(d),
+                        self.monospacedColumns.has(d),
+                        self.maxWidthColumns.has (d),
+                    ];
+                    var classes = possClasses.filter (function (cd, ci) {
+                        return states [ci];
+                    });
+                    return classes.join (" ");
+                })
+                
+                /*
                 .classed ("number", function(d) {
                     return self.numberColumns.has(d);
                 })
@@ -307,13 +325,24 @@
                     return self.colSectionStarts.has(d);
                 })
                 .classed ("monospaced", function(d) {
-                    return self.monospacedColumns.has(d);
+                    return self.monospacedColumns.has(d),
+                    
                 })
                 .classed ("maxWidth", function (d) {
                     return self.maxWidthColumns.has (d);
                 })
+                */
                 .text (getText)
                 .each (function (d) {
+                    /*
+                    d3.select(this).classed ({
+                        number: self.numberColumns.has(d),
+                        colSectionStart: self.colSectionStarts.has(d),
+                        monospaced: self.monospacedColumns.has(d),
+                        maxWidth: self.maxWidthColumns.has (d),
+                    });
+                    */
+                
                     if (self.maxWidthColumns.has (d)) {
                         d3.select(this).attr("title", getText.call (this, d));
                     }

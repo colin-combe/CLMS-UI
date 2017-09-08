@@ -285,28 +285,44 @@
                     ;
                 };
                 
-                 // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
-                var tempHandle = c3.chart.internal.fn.redraw;
-                c3.chart.internal.fn.redraw = function () {};
-                var chartInternal = this.chart.internal;
-
-                if (options.noRescale) {
-                    chartInternal.config.interaction_enabled = false; // don't recalc event rectangles, no need
-                    countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
-                        return arr[0] !== "Random";
-                    });
-                    redoChart.call (this);
-                    c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (chartInternal, {withLegend: true});
-                    chartInternal.config.interaction_enabled = true;  // reset interaction flag
-                } else {
+                var resetMaxY = function () {
                     var curMaxY = this.chart.axis.max().y;
+                    
                     // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
                     // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
                     if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
                         console.log ("resetting axis max from", curMaxY, "to", maxY, "nrs", options.noRescale);
                         this.chart.axis.max({y: maxY});
                     }
+                };
+                
+                 // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
+                var tempHandle = c3.chart.internal.fn.redraw;
+                c3.chart.internal.fn.redraw = function () {};
+                var tempTitleHandle = c3.chart.internal.fn.redrawTitle;
+                c3.chart.internal.fn.redrawTitle = function () {};
+                var chartInternal = this.chart.internal;
+                var shortcut = this.compareNewOldData (countArrays);
+
+                if (options.noRescale) {
+                    countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
+                        return arr[0] !== "Random";
+                    });
+                    redoChart.call (this);
+                    c3.chart.internal.fn.redraw = tempHandle;
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
+                    // Quicker way to just update c3 chart legend colours
+                    chartInternal.svg.selectAll("."+chartInternal.CLASS.legendItemTile).style("stroke", chartInternal.color);
+                    c3.chart.internal.fn.redrawTitle = tempTitleHandle;
+                } else if (shortcut) {
+                    resetMaxY.call (this);
+                    redoChart.call (this);
+                    c3.chart.internal.fn.redraw = tempHandle;
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
+                    c3.chart.internal.fn.redrawTitle = tempTitleHandle;
+                } else {
+                    resetMaxY.call (this);
+                    c3.chart.internal.fn.redrawTitle = tempTitleHandle;
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
                     tempHandle.call (chartInternal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
@@ -321,6 +337,7 @@
         // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
         makeBarsSitBetweenTicks: function () {
             var internal = this.chart.internal;
+            //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
             var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
             d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
             return this;
@@ -341,6 +358,23 @@
             //this.chart.internal.redrawTitle();
             
             return this;
+        },
+        
+        // See if new and old data are of the same series and of the same lengths
+        // (we can then shortcut the c3 drawing code somewhat)
+        compareNewOldData: function (newData) {
+            var oldData = this.chart.data();
+            //console.log ("oldData", this.chart, oldData, newData);
+            if (oldData.length !== newData.length) {
+                return false;
+            }
+            var oldNewMatch = newData.every (function (newSeries) {
+                var oldSeries = this.chart.data.values(newSeries[0]);
+                return oldSeries && oldSeries.length === newSeries.length - 1;
+            }, this);
+            
+            //console.log ("match", oldNewMatch);
+            return oldNewMatch;
         },
         
         getRelevantCrossLinkDistances: function () {

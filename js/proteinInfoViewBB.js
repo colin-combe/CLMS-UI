@@ -127,11 +127,24 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var d3sel = d3.select(this);
                         var idArray = self.splitDataAttr (d3sel, "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
-                        d3sel.classed ("filteredOutResidue", crossLinks.length === 0);
+                        //d3sel.classed ("filteredOutResidue", crossLinks.length === 0);
                         var selYes = crossLinks.some (function (xlink) { return selidset.has(xlink.id); }); 
-                        d3sel.classed ("selected", selYes);
+                        //d3sel.classed ("selected", selYes);
                         var highYes = crossLinks.some (function (xlink) { return highidset.has(xlink.id); }); 
-                        d3sel.classed ("highlighted", highYes);
+                        //d3sel.classed ("highlighted", highYes);
+                    
+                        // setting attr("class") once as a string is multiple times quicker than 3x .classed calls (roughly 5-6x quicker)
+                        var classStr = ["hit"]; // maintain the span element's hit class state
+                        if (crossLinks.length === 0) {
+                            classStr.push ("filteredOutResidue");
+                        }
+                        if (selYes) {
+                            classStr.push ("selected");
+                        }
+                        if (highYes) {
+                            classStr.push ("highlighted");
+                        }
+                        d3sel.attr ("class", classStr.join(" "));
                     })
                 ;
             }
