@@ -199,7 +199,7 @@
             }
 
             this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({noRescale:true, recolourOnly: true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
+            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({noAxesRescale: true, recolourOnly: true}); }); // have details (range, domain) of distance colour model changed?
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -218,7 +218,8 @@
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
-                var series = this.getRelevantCrossLinkDistances();
+                var measurements = this.getRelevantCrossLinkDistances();
+                var series = measurements.values;
                 var seriesLengths = _.pluck (series, "length");
 
                 // Add data and placeholders for random data
@@ -232,27 +233,31 @@
                 console.log ("colDomain", colDomain);
                 var splitSeries = d3.range(0, colDomain.length + 1).map (function () { return []; });
                 
+                /*
                 series[TT].forEach (function (val) {
-                    var cat = d3.bisect (colDomain, val);
+                    //var cat = d3.bisect (colDomain, val);
+                    var cat = colModel.getDomainIndex (val);
                     //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
                     splitSeries[cat].push (val);
                 });
-                
-                /*
-                this.model.getFilteredCrossLinks().forEach (function (link, i) {
-                    var val = colModel.getValue (link);
-                    //var cat = d3.bisect (colDomain, val);
-                    console.log ("val", val);
-                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
-                    splitSeries[val].push (series[TT][i]);
-                });
                 */
+                
+                console.log ("measurements", measurements);
+                
+                
+                measurements.viableFilteredTargetLinks.forEach (function (link, i) {
+                    var cat = colModel.getDomainIndex (link);
+                    //console.log ("cat", cat);
+                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
+                    splitSeries[cat].push (series[TT][i]);
+                });
+                
                 
                 splitSeries.forEach (function (subSeries) {
                     series.push (subSeries);
                     seriesLengths.push (subSeries.length);
                 });
-                console.log ("seroes", series, this.colourScaleModel);
+                console.log ("series", series, this.colourScaleModel);
                
                 // Add DD Decoys as temporary series for aggregation
                 var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
@@ -296,17 +301,6 @@
                     ;
                 };
                 
-                var resetMaxY = function () {
-                    var curMaxY = this.chart.axis.max().y;
-                    
-                    // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
-                    // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
-                    if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
-                        console.log ("resetting axis max from", curMaxY, "to", maxY, "nrs", options.noRescale);
-                        this.chart.axis.max({y: maxY});
-                    }
-                };
-                
                  // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
                 var tempHandle = c3.chart.internal.fn.redraw;
                 c3.chart.internal.fn.redraw = function () {};
@@ -315,24 +309,24 @@
                 var chartInternal = this.chart.internal;
                 var shortcut = this.compareNewOldData (countArrays);
 
-                if (options.noRescale) {
+                if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
                         return arr[0] !== "Random";
                     });
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: []});
                     // Quicker way to just update c3 chart legend colours
                     chartInternal.svg.selectAll("."+chartInternal.CLASS.legendItemTile).style("stroke", chartInternal.color);
                     c3.chart.internal.fn.redrawTitle = tempTitleHandle;
-                } else if (shortcut) {
-                    resetMaxY.call (this);
+                } else if (shortcut) {  // doing something where we don't need to rescale x axes (filtering existing data usually)
+                    this.resetMaxY();
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
                     tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
                     c3.chart.internal.fn.redrawTitle = tempTitleHandle;
-                } else {
-                    resetMaxY.call (this);
+                } else {    // normal
+                    this.resetMaxY();
                     c3.chart.internal.fn.redrawTitle = tempTitleHandle;
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
@@ -342,6 +336,17 @@
                 //console.log ("data", distArr, binnedData);
             }
 
+            return this;
+        },
+        
+        // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
+        // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
+        resetMaxY: function (maxY) {
+            var curMaxY = this.chart.axis.max().y;
+            if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
+                console.log ("resetting axis max from", curMaxY, "to", maxY);
+                this.chart.axis.max({y: maxY});
+            }
             return this;
         },
         
@@ -409,11 +414,21 @@
                 this.model.getFilteredCrossLinks ("decoysDD")
             ];
             
-            return [
-                this.model.getCrossLinkDistances (links[0]),    // TT
+            var distances = [
+                this.model.getCrossLinkDistances (links[0], {includeUndefineds: true}),    // TT
                 this.model.getCrossLinkDistances (links[1], {calcDecoyProteinDistances: true}),  // TD
                 this.model.getCrossLinkDistances (links[2], {calcDecoyProteinDistances: true}),  // DD
             ];
+            
+            links[0] = links[0].filter (function (link, i) {
+                return distances[0][i] !== undefined;    
+            });
+            distances[0] = distances[0].filter (function (dist) { return dist !== undefined; });
+            
+            return {
+                viableFilteredTargetLinks: links[0],
+                values: distances,
+            };
         },
         
         aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
@@ -466,7 +481,8 @@
 
         recalcRandomBinning: function () {
             // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
-            var distArr = this.getRelevantCrossLinkDistances();
+            var measurements = this.getRelevantCrossLinkDistances();
+            var distArr = measurements.values;
             var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
             console.log ("model", this.model);
             var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
