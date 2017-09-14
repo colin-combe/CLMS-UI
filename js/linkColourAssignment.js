@@ -17,7 +17,15 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     },
     getDomainIndex: function (crossLink) {
         var val = this.getValue(crossLink);
-        return (this.type !== "ordinal" ? d3.bisect (this.get("colScale").domain(), val) : this.get("colScale").domain().indexOf (val));
+        return (this.type !== "ordinal" ? d3.bisect (this.get("colScale").domain(), val) : 
+                this.get("colScale").domain().indexOf (val))
+        ;
+    },
+    getDomainCount: function () {
+        var domain = this.get("colScale").domain();
+        return this.type === "linear" ? domain[1] - domain[0] + 1 : 
+            (this.type === "threshold" ? domain.length + 1 : domain.length)
+        ;
     },
     getColour: function (crossLink) {
         var val = this.getValue (crossLink);
@@ -213,6 +221,7 @@ CLMSUI.linkColour.setupColourModels = function () {
 
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var linkArr = CLMS.arrayFromMapValues (links);
+    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; }))).values();
     var extents = d3.extent (linkArr, function(link) { return link.meta ? link.meta[field] : undefined; });
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {

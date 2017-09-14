@@ -25,15 +25,13 @@
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
-                subSeriesNames: viewOptions.colourScaleModel ? viewOptions.colourScaleModel.get("labels").range() : ["Short", "Good", "Overlong"],
+                subSeriesNames: [],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
                 intraRandomOnly: false,
                 maxX: 90
             };
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
-            this.options.groups = [this.options.subSeriesNames];
-            this.colourScaleModel = viewOptions.colourScaleModel;
 
             this.precalcedDistributions = {};
             this.displayEventName = viewOptions.displayEventName;
@@ -77,7 +75,7 @@
                 data: {
                     columns: columnsAsNamesOnly,
                     type: 'bar',
-                    groups: this.options.groups || this.options.seriesNames,
+                    //groups: [this.options.subSeriesNames] || this.options.seriesNames,
                     colors: {
                         "Cross Links": "#44d",
                         Random: "#888",
@@ -186,7 +184,6 @@
             });
 
             
-            
             function distancesAvailable () {
                 console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
                 this.recalcRandomBinning();
@@ -198,8 +195,9 @@
                 ;
             }
 
-            this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({noAxesRescale: true, recolourOnly: true}); }); // have details (range, domain) of distance colour model changed?
+            this.listenTo (this.model, "filteringDone", this.render);   // listen for custom filteringDone event from model
+            this.listenTo (this.model, "currentColourModelChanged", function() { this.render ({noAxesRescale: true, recolourOnly: true}); }); // have details (range, domain, colour) of current colour model changed?
+            this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -226,14 +224,21 @@
                 series.push ([]);
                 seriesLengths.push (this.randArrLength);  // we want to scale random distribution to unfiltered crosslink dataset size
                 
+                // Get colour model. If chosen colour model is non-categorical, default to distance colours.
+                var colModel = this.model.get("linkColourAssignment");
+                if (colModel.type === "linear") {
+                    colModel = CLMSUI.linkColour.distanceColoursBB;
+                }
+                this.colourScaleModel = colModel;
+                this.options.subSeriesNames = colModel.get("labels").range();
+                
                 // Add sub-series data
                 // split TT list into sublists for length
-                var colModel = this.colourScaleModel;
-                var colDomain = colModel.get("colScale").domain();
-                console.log ("colDomain", colDomain);
-                var splitSeries = d3.range(0, colDomain.length + 1).map (function () { return []; });
+                var splitSeries = d3.range(0, colModel.getDomainCount()).map (function () { return []; });
                 
                 /*
+                var colDomain = colModel.get("colScale").domain();
+                console.log ("colDomain", colDomain);
                 series[TT].forEach (function (val) {
                     //var cat = d3.bisect (colDomain, val);
                     var cat = colModel.getDomainIndex (val);
@@ -243,8 +248,7 @@
                 */
                 
                 console.log ("measurements", measurements);
-                
-                
+                // measurements.viableFilteredTargetLinks is 1-1 with measurements.values[0] (now series[TT])
                 measurements.viableFilteredTargetLinks.forEach (function (link, i) {
                     var cat = colModel.getDomainIndex (link);
                     //console.log ("cat", cat);
@@ -290,15 +294,22 @@
                 //console.log ("countArrays", countArrays);
 
                 var redoChart = function () {
-                    var colMap = this.getSeriesColours();
-                    this.chart.load({
+                    var chartOptions = {
                         columns: countArrays,
-                        colors: colMap,
-                    });
+                        colors: this.getSeriesColours(),
+                    };
+                    if (options.newColourModel) {
+                        chartOptions.unload = true;
+                    }
+                    this.chart.load (chartOptions);
+                    if (this.chart.groups().length === 0 || options.newColourModel) {
+                         this.chart.groups ([this.options.subSeriesNames]);
+                    }
                     this
                         .makeBarsSitBetweenTicks()
                         .makeChartTitle(splitSeries)
                     ;
+                    console.log ("CHART", this.chart);
                 };
                 
                  // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
@@ -308,6 +319,7 @@
                 c3.chart.internal.fn.redrawTitle = function () {};
                 var chartInternal = this.chart.internal;
                 var shortcut = this.compareNewOldData (countArrays);
+                console.log ("SHORTCUT", shortcut);
 
                 if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
@@ -391,6 +403,12 @@
             
             //console.log ("match", oldNewMatch);
             return oldNewMatch;
+        },
+        
+        useDifferentColourModel: function () {
+        
+            this.render({newColourModel: true});
+            return this;
         },
         
         getRelevantCrossLinkDistances: function () {
@@ -518,11 +536,11 @@
         },
         
         getSeriesColours: function () {
+            var colScale = this.colourScaleModel.get("colScale");
+            /*
             var colModel = this.colourScaleModel;
-            var colScale = colModel.get("colScale");
             var colLabels = colModel.get("labels");
             var colDomain = colScale.domain();
-            /*
             this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
             */
             
