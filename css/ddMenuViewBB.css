@@ -21,10 +21,12 @@
 
 .dropdown DIV LI .btn {
     font-size: inherit;
-    display: table-cell;
+    /*display: table-cell;*/
+    display: inline-block;
     width: 100%; 
     text-align: left;
-
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .dropdown DIV LI:hover {

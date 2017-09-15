@@ -141,13 +141,26 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 
 
 CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
-    initialize: function () {
+    initialize: function (properties, options) {
+        this.type = options.type || "linear";
         var domain = this.get("colScale").domain();
-        var labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]); 
-        domain.map (function (domVal, i) {
-            labels[i] += " (" + domVal + ")";
-        });
-        this.type = "linear";
+        var labels;
+        if (this.type === "linear") {
+            labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
+            domain.map (function (domVal, i) {
+                labels[i] += " (" + domVal + ")";
+            });
+        } else {
+            labels = domain.map (function (domVal) { 
+                return String(domVal)
+                    .toLowerCase()
+                    .replace(/\b[a-z](?=[a-z]{2})/g, function(letter) {
+                        return letter.toUpperCase(); 
+                    })
+                ;
+            });
+        }
+        
         this.set ("labels", this.get("colScale").copy().range(labels));
     },
     getValue: function (crossLink) {
@@ -221,7 +234,6 @@ CLMSUI.linkColour.setupColourModels = function () {
 
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var linkArr = CLMS.arrayFromMapValues (links);
-    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; }))).values();
     var extents = d3.extent (linkArr, function(link) { return link.meta ? link.meta[field] : undefined; });
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
@@ -229,15 +241,24 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
         range.splice (1, 0, "white");
     }
     
-    console.log ("extents", extents);
+    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).values();
+    // if the values in this metadata form 6 or less distinct values count it as categorical
+    var isCategorical = uniq.length < 7;
+    if (isCategorical) {
+        extents.push (undefined);
+        range = colorbrewer.Dark2[5];
+    }
+    
     var newColourModel = new CLMSUI.BackboneModelTypes.MetaDataColourModel (
         {
-            colScale: d3.scale.linear().domain(extents).range(range),
+            colScale: (isCategorical ? d3.scale.ordinal() : d3.scale.linear()).domain(extents).range(range),
             id: label,
             title: label || field,
             field: field,
         },
-        links
+        {
+            type: isCategorical ? "ordinal" : "linear",
+        }
     );
     
     var hexRegex = CLMSUI.utils.commonRegexes.hexColour;

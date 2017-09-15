@@ -180,7 +180,7 @@
             CLMSUI.AnnotationDropDownMenuViewBB.__super__.initialize.apply (this, arguments);
             
             //CLMSUI.domainColours.range(['#000000', '#e69f00', '#56b4e9', '#2b9f78', '#f0e442', '#0072b2', '#d55e00', '#cc79a7']);
-            d3.select("#annotationsDropdownPlaceholder").selectAll("li")
+            d3.select("#annotationsDropdownPlaceholder").selectAll("li label")
                 .insert ("span", ":first-child")
                 .attr ("class", "colourSwatchSquare")
                 .style ("background", "transparent")
