@@ -107,7 +107,7 @@
                         },
                         //max: this.options.maxX,
                         padding: {  // padding of 1 ticks to right of chart to stop bars in last column getting clipped
-                          left: 0,
+                          left: 0,  // 0.5,  // 0.5 used when we moved axis instead of bars to get alignments of bars between ticks
                           right: 1,
                         },
                         tick: {
@@ -132,6 +132,9 @@
                 grid: {
                     lines: {
                         front: false,   // stops overlong and short gridlines obscuring actual data
+                    },
+                    focus: {
+                        show: false,
                     },
                 },
                 padding: {
@@ -180,6 +183,7 @@
                             this.api.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
                         }
                     }
+                    self.makeBarsSitBetweenTicks (this);
                 },
             });
 
@@ -306,10 +310,9 @@
                          this.chart.groups ([this.options.subSeriesNames]);
                     }
                     this
-                        .makeBarsSitBetweenTicks()
+                        //.makeBarsSitBetweenTicks()
                         .makeChartTitle(splitSeries)
                     ;
-                    console.log ("CHART", this.chart);
                 };
                 
                  // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
@@ -319,7 +322,7 @@
                 c3.chart.internal.fn.redrawTitle = function () {};
                 var chartInternal = this.chart.internal;
                 var shortcut = this.compareNewOldData (countArrays);
-                console.log ("SHORTCUT", shortcut);
+                //console.log ("SHORTCUT", shortcut);
 
                 if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
@@ -363,10 +366,11 @@
         },
         
         // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
-        makeBarsSitBetweenTicks: function () {
-            var internal = this.chart.internal;
+        makeBarsSitBetweenTicks: function (chartObj) {
+            var internal = chartObj || this.chart.internal;
             //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
-            var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
+            var halfBarW = internal.getBarW (internal.xAxis, 1) / 2 || 0;
+            d3.select(this.el).selectAll(".c3-event-rects").attr("transform", "translate("+halfBarW+",0)");
             d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
             return this;
         },
@@ -531,7 +535,7 @@
             ;   
             //this.redrawColourRanges();
             this.chart.resize();
-            this.makeBarsSitBetweenTicks ();
+            //this.makeBarsSitBetweenTicks (this.chart.internal);
             return this;
         },
         
