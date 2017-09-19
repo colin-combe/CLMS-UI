@@ -304,7 +304,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 dedupedCrossLinks.forEach (function (clink) {
                     matches = matches.concat (clink.filteredMatches_pp);
                 });
-                console.log (modelProperty, "matches", matches)
+                //console.log (modelProperty, "matches", matches)
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
             }
             
