@@ -15,8 +15,9 @@
       }
       return _.extend({},parentEvents,{
         "mousemove .scatterplotBackground": "doTooltip",
-        "mousemove .background": "doTooltip",
-        "mousemove .extent": "doTooltip",
+        "mousemove .background": "doHighlightAndTooltip",
+        "mousemove .extent": "doHighlightAndTooltip",
+        "mouseleave .background": "clearHighlightAndTooltip",
         "click .jitter": "toggleJitter",
       });
     },
@@ -179,47 +180,10 @@
         
         // Brush
         var brushEnded = function (options) {
-            var xAxisData = self.getAxisData ("X", true);
-            var yAxisData = self.getAxisData ("Y", true);
-            var xData = xAxisData.data;
-            var yData = yAxisData.data;
-            var filteredCrossLinks = self.model.getFilteredCrossLinks ();
-            var extent = self.brush.extent();
-            
-            var matchLevel = xAxisData.matchLevel || yAxisData.matchLevel;
-            
-            var add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
-            var type = options && options.select ? "selection" : "highlights";
-            //console.log ("type", options, type, matchLevel, xAxisData);
-            
-            if (matchLevel) {
-                var matchingMatches = filteredCrossLinks.map (function (link, i) {
-                    var xDatum = xData[i];
-                    var yDatum = yData[i];
-
-                    var passMatches = (xDatum && yDatum) ? link.filteredMatches_pp.filter (function (match, ii) {
-                        var xd = xDatum.length === 1 ? xDatum[0] : xDatum[ii];
-                        var yd = yDatum.length === 1 ? yDatum[0] : yDatum[ii];
-                        return (xd >= extent[0][0] && xd <= extent[1][0] && yd >= extent[0][1] && yd <= extent[1][1]);
-                    }) : [];
-                    return passMatches;
-                });
-                var allMatchingMatches = d3.merge (matchingMatches);
-                self.model.setMarkedMatches (type, allMatchingMatches, true, add);
-            } else {
-                var matchingLinks = filteredCrossLinks.filter (function (link, i) {
-                    var xDatum = xData[i];
-                    var yDatum = yData[i];
-                    var bool = xDatum && xDatum.some (function (xd) {
-                        return xd >= extent[0][0] && xd <= extent[1][0];
-                    });
-                    bool = bool && yDatum && yDatum.some (function (yd) {
-                        return yd >= extent[0][1] && yd <= extent[1][1];
-                    });
-                    return bool;
-                });
-                self.model.setMarkedCrossLinks (type, matchingLinks, true, add);
-            }
+            options = options || {};
+            options.extent = self.brush.extent();
+            options.add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
+            self.selectPoints (options);
         };
         
         var brushSnap = function () {
@@ -267,7 +231,7 @@
             .y(self.y)
             //.clamp ([false, false])
             .on("brush", brushSnap)
-            .on("brushend", brushEnded)
+            .on("brushend", function() { brushEnded ({select: true}); })
         ;
         
         // Restore when match selection is sorted out
@@ -289,14 +253,6 @@
             })
         ;
         
-        // select brushed elements on right-click
-        this.scatg.select(".extent")
-            .on ("contextmenu", function () {
-                d3.event.preventDefault();
-                brushEnded ({select: true});
-            })
-        ;
-        
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
         this.listenTo (this.model, "change:highlights", this.recolourCrossLinks);
@@ -308,6 +264,53 @@
         this.axisChosen().render();     // initial render with defaults
     },
         
+    // options.extent = area of selection in data coordinates if we're not picking it up from the brush
+    // options.add = add to existing selections
+    // options.select = true for selections, false for highlight
+    selectPoints: function (options) {
+        options = options || {};
+        var xAxisData = this.getAxisData ("X", true);
+        var yAxisData = this.getAxisData ("Y", true);
+        var xData = xAxisData.data;
+        var yData = yAxisData.data;
+        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
+        var extent = options.extent || this.brush.extent();
+        var matchLevel = xAxisData.matchLevel || yAxisData.matchLevel;
+
+        var add = options.add || false;
+        var type = options.select ? "selection" : "highlights";
+        //console.log ("type", options, type, matchLevel, xAxisData);
+
+        if (matchLevel) {
+            var matchingMatches = filteredCrossLinks.map (function (link, i) {
+                var xDatum = xData[i];
+                var yDatum = yData[i];
+
+                var passMatches = (xDatum && yDatum) ? link.filteredMatches_pp.filter (function (match, ii) {
+                    var xd = xDatum.length === 1 ? xDatum[0] : xDatum[ii];
+                    var yd = yDatum.length === 1 ? yDatum[0] : yDatum[ii];
+                    return (xd >= extent[0][0] && xd <= extent[1][0] && yd >= extent[0][1] && yd <= extent[1][1]);
+                }) : [];
+                return passMatches;
+            });
+            var allMatchingMatches = d3.merge (matchingMatches);
+            this.model.setMarkedMatches (type, allMatchingMatches, true, add);
+        } else {
+            var matchingLinks = filteredCrossLinks.filter (function (link, i) {
+                var xDatum = xData[i];
+                var yDatum = yData[i];
+                var bool = xDatum && xDatum.some (function (xd) {
+                    return xd >= extent[0][0] && xd <= extent[1][0];
+                });
+                bool = bool && yDatum && yDatum.some (function (yd) {
+                    return yd >= extent[0][1] && yd <= extent[1][1];
+                });
+                return bool;
+            });
+            this.model.setMarkedCrossLinks (type, matchingLinks, true, add);
+        }
+    },
+        
     relayout: function () {
         this.render();
         return this;
@@ -317,10 +320,6 @@
         this.options.jitter = !this.options.jitter;
         this.render();
         return this;
-    },
-        
-    brushEnded: function () {
-                           
     },
         
     getData: function (func, filteredFlag, optionalLinks) {
@@ -399,6 +398,10 @@
         return this;
     }, 
         
+    doHighlightAndTooltip: function (evt) {
+        return this.doHighlight(evt).doTooltip (evt);
+    },
+        
     doTooltip: function (evt) {
         var axesMetaData = this.getBothAxesMetaData();
         var commaFormat = d3.format(",");
@@ -407,7 +410,8 @@
         var vals = [
             this.x.invert (CLMSUI.utils.crossBrowserElementX (evt, background) + margin),
             this.y.invert (CLMSUI.utils.crossBrowserElementY (evt, background) + margin),
-        ];
+        ];     
+        
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
             var val = commaFormat (d3.round (vals[i], axisMetaData.decimalPlaces));
             return [axisMetaData.label, val];    
@@ -419,9 +423,39 @@
             .set("location", evt)
         ;
         this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
+        return this;
     },
         
-
+    doHighlight: function (evt) {
+        var background = d3.select(this.el).select(".background").node();
+        var margin = this.options.chartMargin;
+        var x = CLMSUI.utils.crossBrowserElementX (evt, background) + margin;
+        var y = CLMSUI.utils.crossBrowserElementY (evt, background) + margin;
+        var sortFunc = function (a,b) { return a - b; };
+        var xrange = [this.x.invert (x - 20), this.x.invert (x + 20)].sort (sortFunc);
+        var yrange = [this.y.invert (y - 20), this.y.invert (y + 20)].sort (sortFunc);
+        var extent = [
+            [xrange[0], yrange[0]],
+            [xrange[1], yrange[1]],
+        ]; 
+        this.selectPoints ({extent: extent, add: false});
+        return this;
+    },
+        
+    clearHighlightAndTooltip: function () {
+        return this.clearHighlight().clearTooltip();    
+    },
+        
+    clearTooltip: function () {
+        this.model.get("tooltipModel").set("contents", null);
+        return this;
+    },
+        
+    clearHighlight: function () {
+        this.model.setMarkedCrossLinks ("highlights", [], false, false);
+        return this;
+    },
+        
     render: function () {
         if (this.isVisible()) {
             console.log ("SCATTERPLOT RENDER");

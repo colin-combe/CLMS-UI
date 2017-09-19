@@ -85,7 +85,7 @@
                         enabled: false,
                         grouped: true,
                         multiple: true,
-                        draggable: true
+                        draggable: true,
                     },
                     ondragend: function (extent) {
                         console.log ("extent", extent);
