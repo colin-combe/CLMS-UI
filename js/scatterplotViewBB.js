@@ -399,7 +399,7 @@
     }, 
         
     doHighlightAndTooltip: function (evt) {
-        return this.doHighlight(evt).doTooltip (evt);
+        return this.doTooltip(evt).doHighlight(evt);
     },
         
     doTooltip: function (evt) {

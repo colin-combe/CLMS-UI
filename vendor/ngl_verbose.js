@@ -51790,7 +51790,7 @@ function getMouseButtons( event ){
  * mouseObserver.signals.hovered.add( function(){ ... } );
  */
 var MouseObserver = function MouseObserver( domElement, params ){
-
+    console.log ("NGL DOM ELEM", domElement);
     /**
      * Events emitted by the mouse observer
      * @type {MouseSignals}
@@ -51901,17 +51901,19 @@ var MouseObserver = function MouseObserver( domElement, params ){
     this._onTouchmove = this._onTouchmove.bind( this );
 
     this._listen();
+    
+    this._mouseElem = domElement || document;
 
-    document.addEventListener( 'mousewheel', this._onMousewheel );
-    document.addEventListener( 'wheel', this._onMousewheel );
-    document.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
-    document.addEventListener( 'mousemove', this._onMousemove );
-    document.addEventListener( 'mousedown', this._onMousedown );
-    document.addEventListener( 'mouseup', this._onMouseup );
-    document.addEventListener( 'contextmenu', this._onContextmenu );
-    document.addEventListener( 'touchstart', this._onTouchstart );
-    document.addEventListener( 'touchend', this._onTouchend );
-    document.addEventListener( 'touchmove', this._onTouchmove );
+    this._mouseElem.addEventListener( 'mousewheel', this._onMousewheel );
+    this._mouseElem.addEventListener( 'wheel', this._onMousewheel );
+    this._mouseElem.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
+    this._mouseElem.addEventListener( 'mousemove', this._onMousemove );
+    this._mouseElem.addEventListener( 'mousedown', this._onMousedown );
+    this._mouseElem.addEventListener( 'mouseup', this._onMouseup );
+    this._mouseElem.addEventListener( 'contextmenu', this._onContextmenu );
+    this._mouseElem.addEventListener( 'touchstart', this._onTouchstart );
+    this._mouseElem.addEventListener( 'touchend', this._onTouchend );
+    this._mouseElem.addEventListener( 'touchmove', this._onTouchmove );
 
 };
 
@@ -52185,16 +52187,16 @@ MouseObserver.prototype._setKeys = function _setKeys ( event ){
 };
 
 MouseObserver.prototype.dispose = function dispose (){
-    document.removeEventListener( 'mousewheel', this._onMousewheel );
-    document.removeEventListener( 'wheel', this._onMousewheel );
-    document.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
-    document.removeEventListener( 'mousemove', this._onMousemove );
-    document.removeEventListener( 'mousedown', this._onMousedown );
-    document.removeEventListener( 'mouseup', this._onMouseup );
-    document.removeEventListener( 'contextmenu', this._onContextmenu );
-    document.removeEventListener( 'touchstart', this._onTouchstart );
-    document.removeEventListener( 'touchend', this._onTouchend );
-    document.removeEventListener( 'touchmove', this._onTouchmove );
+    this._mouseElem.removeEventListener( 'mousewheel', this._onMousewheel );
+    this._mouseElem.removeEventListener( 'wheel', this._onMousewheel );
+    this._mouseElem.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
+    this._mouseElem.removeEventListener( 'mousemove', this._onMousemove );
+    this._mouseElem.removeEventListener( 'mousedown', this._onMousedown );
+    this._mouseElem.removeEventListener( 'mouseup', this._onMouseup );
+    this._mouseElem.removeEventListener( 'contextmenu', this._onContextmenu );
+    this._mouseElem.removeEventListener( 'touchstart', this._onTouchstart );
+    this._mouseElem.removeEventListener( 'touchend', this._onTouchend );
+    this._mouseElem.removeEventListener( 'touchmove', this._onTouchmove );
 };
 
 Object.defineProperties( MouseObserver.prototype, prototypeAccessors$3 );

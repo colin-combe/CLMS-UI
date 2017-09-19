@@ -482,14 +482,18 @@ CLMSUI.utils = {
         bringToTop : function () {
             var sortArr = [];
             var activeDivs = d3.selectAll(".dynDiv").filter (function() {
-                //console.log ("this", this, this.$el, $(this));
+                //console.log ("this", this, this.$el, $(this), this.visible);
+                //return $(this).css('display') !== 'none';
+                //return d3.select(this).classed ("dynDivVisible");
                 return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
             });
             
             // Push objects containing the individual divs as selections along with their z-indexes to an array
             activeDivs.each (function() { 
                 // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
-                sortArr.push ({z: +d3.select(this).style("z-index") || 0, selection: d3.select(this)}); 
+                var zindex = d3.select(this).style("z-index"); //*/ d3.select(this).datum() ? d3.select(this).datum()("z-index") : 0;
+                zindex = zindex || 0;
+                sortArr.push ({z: zindex, selection: d3.select(this)}); 
             });
             // Sort that array by the z-index
             // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
@@ -498,17 +502,26 @@ CLMSUI.utils = {
                     return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
                 })
                 .forEach (function (sorted, i) {
-                    sorted.selection.style ("z-index", i + 1);    
+                    sorted.selection
+                        .style ("z-index", i + 1)
+                        //.datum ({"z-index": i+1})
+                    ;    
                 })
             ;
             // Make the current window top of this pile
-            d3.select(this.el).style("z-index", sortArr.length + 1);
+            d3.select(this.el)
+                .style("z-index", sortArr.length + 1)
+                //.datum ({"z-index": sortArr.length + 1 })
+            ;
             //console.log ("sortArr", sortArr);
         },
 
         setVisible: function (show) {
             this.visible = show;
-            d3.select(this.el).style ('display', show ? 'block' : 'none');
+            d3.select(this.el)
+                .style ('display', show ? 'block' : 'none')
+                .classed ('dynDivVisible', show)
+            ;
 
             if (show) {
                 this
