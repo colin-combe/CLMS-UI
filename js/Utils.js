@@ -480,40 +480,40 @@ CLMSUI.utils = {
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
-            var sortArr = [];
-            var activeDivs = d3.selectAll(".dynDiv").filter (function() {
-                //console.log ("this", this, this.$el, $(this), this.visible);
-                //return $(this).css('display') !== 'none';
-                //return d3.select(this).classed ("dynDivVisible");
-                return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
-            });
-            
-            // Push objects containing the individual divs as selections along with their z-indexes to an array
-            activeDivs.each (function() { 
-                // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
-                var zindex = d3.select(this).style("z-index"); //*/ d3.select(this).datum() ? d3.select(this).datum()("z-index") : 0;
-                zindex = zindex || 0;
-                sortArr.push ({z: zindex, selection: d3.select(this)}); 
-            });
-            // Sort that array by the z-index
-            // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
-            sortArr
-                .sort (function (a,b) {
-                    return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
-                })
-                .forEach (function (sorted, i) {
-                    sorted.selection
-                        .style ("z-index", i + 1)
-                        //.datum ({"z-index": i+1})
-                    ;    
-                })
-            ;
-            // Make the current window top of this pile
-            d3.select(this.el)
-                .style("z-index", sortArr.length + 1)
-                //.datum ({"z-index": sortArr.length + 1 })
-            ;
-            //console.log ("sortArr", sortArr);
+            if (this.el.id !== CLMSUI.utils.BaseFrameView.staticLastTopID) {
+                var sortArr = [];
+                var activeDivs = d3.selectAll(".dynDiv").filter (function() {
+                    return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
+                });
+                console.log ("this view", this);
+
+                // Push objects containing the individual divs as selections along with their z-indexes to an array
+                activeDivs.each (function() { 
+                    // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
+                    var zindex = d3.select(this).style("z-index"); //*/ d3.select(this).datum() ? d3.select(this).datum()("z-index") : 0;
+                    zindex = zindex || 0;
+                    sortArr.push ({z: zindex, selection: d3.select(this)}); 
+                });
+                // Sort that array by the z-index
+                // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
+                sortArr
+                    .sort (function (a,b) {
+                        return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
+                    })
+                    .forEach (function (sorted, i) {
+                        sorted.selection
+                            .style ("z-index", i + 1)
+                        ;    
+                    })
+                ;
+                // Make the current window top of this pile
+                d3.select(this.el)
+                    .style("z-index", sortArr.length + 1)
+                ;
+
+                CLMSUI.utils.BaseFrameView.staticLastTopID = this.el.id;    // store current top view as property of 'class' BaseFrameView (not instance of view)
+                //console.log ("sortArr", sortArr);
+            }
         },
 
         setVisible: function (show) {
@@ -563,6 +563,9 @@ CLMSUI.utils = {
         filenameStateString: function () {
             return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString()+"--"+this.identifier+"-"+this.optionsToString()+"--"+CLMSUI.utils.filterStateToString());
         },
+    },
+    {
+        staticLastTopID: 1, // stores id of last view which was 'brought to top' as class property. So I don't need to do expensive DOM operations sometimes.
     }),
 };
 

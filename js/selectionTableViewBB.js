@@ -95,7 +95,7 @@
             );
 
             var self = this;
-            //var twoZeroPadder = d3.format(".2f");
+            var twoZeroPadder = d3.format(".2f");
             var massZeroPadder = d3.format(".6f");
             this.cellFuncs = {
                     "id": function (d) { return d.id; },
@@ -118,7 +118,7 @@
 					},
                     "linkPos1": function(d) { return d.linkPos1; },
                     "linkPos2": function(d) { return d.linkPos2; },
-                    "score": function (d) { return d.score;}, //temp hack//twoZeroPadder (d.score); },
+                    "score": function (d) { return twoZeroPadder (d.score);}, //temp hack//twoZeroPadder (d.score); },
                   
 					"expMZ": function(d) { return massZeroPadder (d.expMZ()); },
 					"expMass": function(d) { return massZeroPadder (d.expMass()); },
@@ -216,7 +216,8 @@
         addRows : function (selectedLinkArray, filteredProps) {
             var self = this;
             //var proteinMap = this.model.get("clmsModel").get("participants");
-
+            var identityFunc = function (d) { return d.id; };
+            
             var colspan = d3.select(this.el).select("THEAD").selectAll("TH").size();    // get number of TH elements in header for colspan purposes
 
             // helper functions
@@ -238,7 +239,7 @@
             // table building starts here
             // match crosslinks up to tbody sections
             var xlinkTBodyJoin = d3.select(this.el).select("TABLE").selectAll("TBODY")
-                .data(selectedLinkArray, function(d) { return d.id; })
+                .data(selectedLinkArray, identityFunc)
             ;
 
             xlinkTBodyJoin.exit().remove();
@@ -252,19 +253,17 @@
             
             // all tbody
             xlinkTBodyJoin
-                .select("TR")
-                    .select("TD")
+                .select("TR>TD")
                     .text (niceCrossLinkName)
             ;
 
 
-            // Within each tbody section, match rows up to matches within each crosslink
-            var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data (function(d) { return getMatches(d); }, function(d) { return d.id; });
+            // Within each tbody section, match table rows up to matches within each crosslink
+            var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data (function(d) { return getMatches(d); }, identityFunc);
             tjoin.exit().remove();
-            tjoin.enter().append("tr").attr("class", "matchRow");
-            tjoin.order();
-            tjoin
-                .attr("id", function(d) { return 'match'+d.id; })
+            tjoin.enter().append("tr")
+                .attr("class", "matchRow")
+                .attr("id", function(d) { return 'match'+d.id; })   // since we key the rows on d.id this won't change, so we can set it for all time in enter()
                 .on("click", function(d) {
                     var mainModel = self.options.mainModel;
                     if (mainModel) {
@@ -282,6 +281,9 @@
 						self.model.trigger("change:lastSelectedMatch", self.model, {match: d, directSelection: true});
 					}
                 })
+            ;
+            tjoin.order();
+            tjoin
                 .classed ("spectrumShown2", function(d) {
                     var lsm = self.model.get("lastSelectedMatch");
                     return lsm && lsm.match ? lsm.match.id === d.id : false;
@@ -289,18 +291,11 @@
             ;
 
             // Within each row, match cells up to individual pieces of match information
-            var cellJoin = tjoin.selectAll("TD").data (this.filteredProps, function(d) { return d; });
-            cellJoin.exit().remove();
-            cellJoin.enter().append("td");
-            
-            var getText = function (d) {
-                var link = d3.select(this.parentNode).datum();
-                var cellFunc = self.cellFuncs[d];
-                return cellFunc ? cellFunc(link) : (link[d] || "");
-            };
-
             var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth"];
-            cellJoin
+            var cellJoin = tjoin.selectAll("TD").data (this.filteredProps/*, function(d) { return d; }*/);
+            cellJoin.exit().remove();
+            cellJoin.enter()
+                .append("td")
                 // this is quicker than doing individual .classed (or an aggregated .classed even)
                 // but only safe to use if confident these are the only possible classes applicable to these elements
                 // individual .classed = ~37.5% of addRows time, .attr("class") = ~11% of addRows time
@@ -316,7 +311,16 @@
                     });
                     return classes.join (" ");
                 })
-                
+                // The above states shouldn't change over the cells lifetime, so do it once in enter rather than repeatedly in the () selection below
+            ;
+            
+            var getText = function (d) {
+                var link = d3.select(this.parentNode).datum();
+                var cellFunc = self.cellFuncs[d];
+                return cellFunc ? cellFunc(link) : (link[d] || "");
+            };
+
+            cellJoin
                 /*
                 .classed ("number", function(d) {
                     return self.numberColumns.has(d);
