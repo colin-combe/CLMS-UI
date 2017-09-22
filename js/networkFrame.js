@@ -402,7 +402,8 @@ CLMSUI.init.viewsEssential = function (options) {
                             .set ("lastSelectedMatch", {match: match, directSelection: true})
                         ;
                         d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
-                        self.alternativesModel.set("selection", allCrossLinks);
+                        //self.alternativesModel.set("selection", allCrossLinks);
+                        self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
                         CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
                     }
                 });

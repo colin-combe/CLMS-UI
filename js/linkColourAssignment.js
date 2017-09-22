@@ -102,16 +102,30 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
     },
     getValue: function (crossLink) {	
         //check if link uniquely belongs to one group
-        var groupCheck = d3.set();
         var filteredMatchesAndPepPositions = crossLink.filteredMatches_pp;
+        /*
+        var groupCheck = d3.set();
         for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
             var match = filteredMatchesAndPepPositions[fm_pp].match; 
             var group = this.searchMap.get(match.searchId).group; 	
             groupCheck.add(group);
         }
-        // choose value if link definitely belongs to just one group or set as undefined
         var groupCheckArr = groupCheck.values();
         var value = (groupCheckArr.length === 1 ? groupCheckArr[0] : undefined);
+        */
+        var foundGroup = null;
+        for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
+            var match = filteredMatchesAndPepPositions[fm_pp].match; 
+            var group = this.searchMap.get(match.searchId).group; 	
+            if (!foundGroup) {
+                foundGroup = group;
+            } else if (foundGroup !== group) {
+                foundGroup = undefined;
+                break;
+            }
+        }
+        // choose value if link definitely belongs to just one group or set as undefined
+        var value = foundGroup;
         return value;		
     },
     getColour: function (crossLink) {

@@ -102,3 +102,20 @@
 .selectView input[type='number'] {
     max-width: 3.5em;
 }
+
+.selectView TR.matchRow.highlighted {
+    fill: #fdc086;
+    background-color: #fdc086;
+    color: #222;
+}
+
+.selectView tbody tr:hover td, .selectView tbody tr:hover td a {
+    color: inherit;
+    background-color: inherit;
+    -webkit-transition: initial;
+    -moz-transition: initial;
+    -ms-transition: initial;
+    -o-transition: initial;
+    transition: initial;
+}
+

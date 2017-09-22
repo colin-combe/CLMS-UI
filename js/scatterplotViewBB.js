@@ -255,7 +255,7 @@
         
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
-        this.listenTo (this.model, "change:highlights", this.recolourCrossLinks);
+        this.listenTo (this.model, "change:highlightsMatches", this.recolourCrossLinks);
         this.listenTo (this.model, "filteringDone", this.renderCrossLinks);
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
@@ -399,7 +399,7 @@
     }, 
         
     doHighlightAndTooltip: function (evt) {
-        return this.doHighlight(evt).doTooltip (evt);
+        return this.doTooltip(evt).doHighlight(evt);
     },
         
     doTooltip: function (evt) {
