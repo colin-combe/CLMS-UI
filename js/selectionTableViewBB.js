@@ -31,8 +31,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         });
 
         // highlight selected match table row (or not if nothing selected)
-        this.listenTo(this.model, "change:lastSelectedMatch", function () {
-            var selMatch = this.model.get("lastSelectedMatch");
+        this.listenTo(this.model, "change:lastSelectedMatch", function (model, selMatch) {
             this.clearCurrentRowHighlight();
             if (selMatch && selMatch.match) {
                 d3.select(this.el).select("tr#match" + selMatch.match.id).classed("spectrumShown2", true);
