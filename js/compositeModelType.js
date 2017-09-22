@@ -4,7 +4,11 @@ CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     
     initialize: function () {
-        this.set ({"highlights": [], "selection": [],
+        this.set ({
+            highlights: [],         // listen to these two for differences in highlighted selected links
+            selection: [],
+            highlightsMatches: [],  // listen to these two for differences in highlighted selects matches (more fine grained)
+            selectionMatches: [],
             match_highlights: d3.map(),
             match_selection: d3.map(),
             annotationTypes: null,
@@ -261,7 +265,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (!dontForward) {
             var clinkset = d3.set();
             var crossLinks = [];
-            map.values().forEach (function (match) {
+            var dedupedMatches = map.values();
+            dedupedMatches.forEach (function (match) {
                 var clinks = match.crossLinks;
                 for (var c = 0; c < clinks.length; c++) {
                     var clink = clinks[c];
@@ -273,6 +278,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             });
 
+            this.set (modelProperty+"Matches", dedupedMatches);
             // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
             this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
         }
