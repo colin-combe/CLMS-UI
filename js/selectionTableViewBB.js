@@ -3,6 +3,7 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     events: {
         "mouseover tr.matchRow": "highlight",
+        "mouseleave table": "highlight",
     },
 
     initialize: function (options) {
@@ -38,8 +39,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }
         });
         
-        this.listenTo (this.model, "change:highlightsMatches", function (model, highlightedMatches) {
-            this.setTableHighlights (highlightedMatches);
+        this.listenTo (this.model, "change:match_highlights", function (model, highlightedMatches) {
+            this.setTableHighlights (highlightedMatches.values());
         });
 
         var tableDataPropOrder = [
@@ -473,7 +474,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     // and should via the backbone models and events eventually call setTableHighlights above too
     highlight: function (evt) {
         var datum = d3.select(evt.currentTarget).datum();
-        this.model.setMarkedMatches ("highlights", [{match: datum}], true, false);
+        this.model.setMarkedMatches ("highlights", datum ? [{match: datum}] : [], true, evt.ctrlKey || evt.shiftKey);
         return this;
     },
 

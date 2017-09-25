@@ -7,9 +7,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.set ({
             highlights: [],         // listen to these two for differences in highlighted selected links
             selection: [],
-            highlightsMatches: [],  // listen to these two for differences in highlighted selects matches (more fine grained)
-            selectionMatches: [],
-            match_highlights: d3.map(),
+            match_highlights: d3.map(), // listen to these two for differences in highlighted selects matches (more fine grained)
             match_selection: d3.map(),
             annotationTypes: null,
             selectedProtein: null, //what type should this be? Set?
@@ -254,33 +252,35 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     },
     
     setMarkedMatches: function (modelProperty, matches, andAlternatives, add, dontForward) {
-        var type = "match_"+modelProperty;
-        var map = add ? this.get(type) : new d3.map();
-        matches.forEach (function (match) {
-            var mmatch = match.match;
-            map.set (mmatch.id, mmatch);    
-        });
-        this.set (type, map);
-        
-        if (!dontForward) {
-            var clinkset = d3.set();
-            var crossLinks = [];
-            var dedupedMatches = map.values();
-            dedupedMatches.forEach (function (match) {
-                var clinks = match.crossLinks;
-                for (var c = 0; c < clinks.length; c++) {
-                    var clink = clinks[c];
-                    var clinkid = clink.id;
-                    if (!clinkset.has(clinkid)) {
-                        clinkset.add (clinkid);
-                        crossLinks.push (clink);
-                    }
-                }
+        if (matches) {  // if undefined nothing happens, to clear selection pass an empty array - []
+            var type = "match_"+modelProperty;
+            var map = add ? new d3.map (this.get(type).values(), function(d) { return d.id; }) : new d3.map();
+            matches.forEach (function (match) {
+                var mmatch = match.match;
+                map.set (mmatch.id, mmatch);    
             });
+            this.set (type, map);
 
-            this.set (modelProperty+"Matches", dedupedMatches);
-            // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
-            this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
+            if (!dontForward) {
+                var clinkset = d3.set();
+                var crossLinks = [];
+                var dedupedMatches = map.values();
+                dedupedMatches.forEach (function (match) {
+                    var clinks = match.crossLinks;
+                    for (var c = 0; c < clinks.length; c++) {
+                        var clink = clinks[c];
+                        var clinkid = clink.id;
+                        if (!clinkset.has(clinkid)) {
+                            clinkset.add (clinkid);
+                            crossLinks.push (clink);
+                        }
+                    }
+                });
+
+                //this.set (modelProperty+"Matches", dedupedMatches);
+                // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
+                this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
+            }
         }
     },
 
@@ -288,7 +288,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     // to fill in the model
     // - i'm not sure this is a good name for this function - cc
     setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, dontForward) {
-        if (crossLinks) { // if undefined nothing happens, to remove selection pass an empty array - []
+        if (crossLinks) { // if undefined nothing happens, to clear selection pass an empty array - []
             if (add) {
                 crossLinks = crossLinks.concat (this.get(modelProperty));
             }
@@ -310,7 +310,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 dedupedCrossLinks.forEach (function (clink) {
                     matches = matches.concat (clink.filteredMatches_pp);
                 });
-                //console.log (modelProperty, "matches", matches)
+                //console.log (modelProperty, "matches", matches);
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
             }
             

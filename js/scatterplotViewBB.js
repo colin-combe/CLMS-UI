@@ -255,7 +255,7 @@
         
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
-        this.listenTo (this.model, "change:highlightsMatches", this.recolourCrossLinks);
+        this.listenTo (this.model, "change:match_highlights", this.recolourCrossLinks);
         this.listenTo (this.model, "filteringDone", this.renderCrossLinks);
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
@@ -438,7 +438,7 @@
             [xrange[0], yrange[0]],
             [xrange[1], yrange[1]],
         ]; 
-        this.selectPoints ({extent: extent, add: false});
+        this.selectPoints ({extent: extent, add: evt.shiftKey || evt.ctrlKey});
         return this;
     },
         
