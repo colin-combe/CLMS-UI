@@ -72,7 +72,7 @@
             
             wrapperPanel.append("div").attr("class", "messagebar");
             
-            this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white"});
+            this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white", tooltip: false});
             console.log ("STAGE", this.stage);
             // populate 3D network viewer if hard-coded pdb id present
             

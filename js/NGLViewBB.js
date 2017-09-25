@@ -233,7 +233,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 selectedColor: "yellow",
                 selectedLinksColor: "yellow",
                 sstrucColor: "gray",
-                displayedLabelColor: "gray",
+                displayedLabelColor: "black",
                 displayedLabelVisible: this.options.labelVisible,
                 colourScheme: this.options.colourScheme,
                 showAllProteins: this.options.showAllProteins,
@@ -401,12 +401,13 @@ CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
         colourScheme: "uniform",
         chainRep: "cartoon",
         sstrucColor: "wheat",
-        displayedLabelColor: "grey",
-        selectedLabelColor: "black",
-        highlightedLabelColor: "black",
+        displayedLabelColor: "black",
+        selectedLabelColor: "#440",
+        highlightedLabelColor: "#420",
         displayedLabelVisible: false,
         selectedLabelVisible: true,
         highlightedLabelVisible: true,
+        labelSize: 3.0,
         displayedResiduesColor: params.displayedColor || "lightgrey",
         displayedLinksColor: params.displayedColor || "lightblue",
         selectedResiduesColor: params.selectedColor || "lightgreen",
@@ -548,13 +549,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var xlPairEmph = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "selection"));
         var xlPairHigh = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "highlights"));
         var baseLinkScale = 3;
-        var labelSize = 2.0;
         
         this.linkRepr = comp.addRepresentation ("distance", {
             atomPair: xlPair,
             //colorValue: this.displayedLinksColor,
             colorScheme: this.colorOptions.linkColourScheme,
-            labelSize: labelSize,
+            labelSize: this.options.labelSize,
             labelColor: this.options.displayedLabelColor,
             labelVisible: this.options.displayedLabelVisible,
             labelUnit: "angstrom",
@@ -567,7 +567,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkEmphRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairEmph,
             colorValue: this.options.selectedLinksColor,
-            labelSize: labelSize,
+            labelSize: this.options.labelSize,
             labelColor: this.options.selectedLabelColor,
             labelVisible: this.options.selectedLabelVisible,
             labelUnit: "angstrom",
@@ -580,7 +580,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkHighRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairHigh,
             colorValue: this.options.highlightedLinksColor,
-            labelSize: labelSize,
+            labelSize: this.options.labelSize,
             labelColor: this.options.highlightedLabelColor,
             labelVisible: this.options.highlightedLabelVisible,
             labelUnit: "angstrom",
