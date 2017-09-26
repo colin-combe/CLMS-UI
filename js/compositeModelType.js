@@ -8,7 +8,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             highlights: [],         // listen to these two for differences in highlighted selected links
             selection: [],
             match_highlights: d3.map(), // listen to these two for differences in highlighted selects matches (more fine grained)
-            match_selection: d3.map(),
+            match_selection: d3.map(),  // listen to event selection/highlights+"MatchesLinksChanged" to run when both have been fully updated
             annotationTypes: null,
             selectedProtein: null, //what type should this be? Set?
             groupColours: null // will be d3.scale for colouring by search/group
@@ -277,9 +277,17 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     }
                 });
 
+                var changed = this.changedAttributes();
+                //console.log ("changed", changed);
                 //this.set (modelProperty+"Matches", dedupedMatches);
                 // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
                 this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
+                var changed2 = this.changedAttributes();
+                //console.log ("changed2", changed2);
+                
+                if (changed || changed2) {
+                    this.trigger (modelProperty+"MatchesLinksChanged");
+                }
             }
         }
     },
@@ -304,6 +312,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }, this);
             }
             var dedupedCrossLinks = CLMS.arrayFromMapValues(crossLinkMap);
+            this.set (modelProperty, dedupedCrossLinks);
             
             if (!dontForward) {
                 var matches = [];
@@ -312,13 +321,25 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 });
                 //console.log (modelProperty, "matches", matches);
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+                
+                var changed = this.changedAttributes();
+                //console.log ("changed", changed);
+                //this.set (modelProperty+"Matches", dedupedMatches);
+                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+                var changed2 = this.changedAttributes();
+                //console.log ("changed2", changed2);
+                
+                if (changed || changed2) {
+                    this.trigger (modelProperty+"MatchesLinksChanged");
+                }
             }
             
-            this.set (modelProperty, dedupedCrossLinks);
+            //this.set (modelProperty, dedupedCrossLinks);
         }
     },
     
     calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
+        console.log ("FROM XINET", modelProperty, crossLinks, andAlternatives, add);
         this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, add);
     },
 
