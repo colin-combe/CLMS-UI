@@ -277,17 +277,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     }
                 });
 
-                var changed = this.changedAttributes();
-                //console.log ("changed", changed);
-                //this.set (modelProperty+"Matches", dedupedMatches);
+                var matchesChanged = this.changedAttributes();
                 // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
                 this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
-                var changed2 = this.changedAttributes();
-                //console.log ("changed2", changed2);
-                
-                if (changed || changed2) {
-                    this.trigger (modelProperty+"MatchesLinksChanged");
-                }
+                this.triggerFinalMatchLinksChange (modelProperty, matchesChanged);
             }
         }
     },
@@ -322,19 +315,21 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 //console.log (modelProperty, "matches", matches);
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
                 
-                var changed = this.changedAttributes();
-                //console.log ("changed", changed);
-                //this.set (modelProperty+"Matches", dedupedMatches);
+                var linksChanged = this.changedAttributes();
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
-                var changed2 = this.changedAttributes();
-                //console.log ("changed2", changed2);
-                
-                if (changed || changed2) {
-                    this.trigger (modelProperty+"MatchesLinksChanged");
-                }
+                this.triggerFinalMatchLinksChange (modelProperty, linksChanged);
             }
             
             //this.set (modelProperty, dedupedCrossLinks);
+        }
+    },
+    
+    triggerFinalMatchLinksChange: function (modelProperty, penultimateSetOfChanges) {
+        // if either of the last two backbone sets did have a change then trigger an event
+        // so views waiting for both links and matches to finish updating can act
+        var lastSetOfChanges = this.changedAttributes();
+        if (penultimateSetOfChanges || lastSetOfChanges) {
+            this.trigger (modelProperty+"MatchesLinksChanged");
         }
     },
     
