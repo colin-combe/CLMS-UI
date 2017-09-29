@@ -8,7 +8,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             highlights: [],         // listen to these two for differences in highlighted selected links
             selection: [],
             match_highlights: d3.map(), // listen to these two for differences in highlighted selects matches (more fine grained)
-            match_selection: d3.map(),
+            match_selection: d3.map(),  // listen to event selection/highlights+"MatchesLinksChanged" to run when both have been fully updated
             annotationTypes: null,
             selectedProtein: null, //what type should this be? Set?
             groupColours: null // will be d3.scale for colouring by search/group
@@ -277,9 +277,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     }
                 });
 
-                //this.set (modelProperty+"Matches", dedupedMatches);
+                var matchesChanged = this.changedAttributes();
                 // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
                 this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, false, true);
+                this.triggerFinalMatchLinksChange (modelProperty, matchesChanged);
             }
         }
     },
@@ -304,6 +305,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }, this);
             }
             var dedupedCrossLinks = CLMS.arrayFromMapValues(crossLinkMap);
+            this.set (modelProperty, dedupedCrossLinks);
             
             if (!dontForward) {
                 var matches = [];
@@ -312,13 +314,27 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 });
                 //console.log (modelProperty, "matches", matches);
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+                
+                var linksChanged = this.changedAttributes();
+                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+                this.triggerFinalMatchLinksChange (modelProperty, linksChanged);
             }
             
-            this.set (modelProperty, dedupedCrossLinks);
+            //this.set (modelProperty, dedupedCrossLinks);
+        }
+    },
+    
+    triggerFinalMatchLinksChange: function (modelProperty, penultimateSetOfChanges) {
+        // if either of the last two backbone sets did have a change then trigger an event
+        // so views waiting for both links and matches to finish updating can act
+        var lastSetOfChanges = this.changedAttributes();
+        if (penultimateSetOfChanges || lastSetOfChanges) {
+            this.trigger (modelProperty+"MatchesLinksChanged");
         }
     },
     
     calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
+        console.log ("FROM XINET", modelProperty, crossLinks, andAlternatives, add);
         this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, add);
     },
 

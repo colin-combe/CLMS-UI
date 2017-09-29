@@ -25,7 +25,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             //~ }
         });
 
-        this.listenTo(this.model, "change:selection", function () {
+        this.listenTo(this.model, "selectionMatchesLinksChanged" /*"change:selection"*/, function () {
             //~ if (this.model.get("selection").length > 0) {
             this.render();
             //~ }
@@ -42,6 +42,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.listenTo (this.model, "change:match_highlights", function (model, highlightedMatches) {
             this.setTableHighlights (highlightedMatches.values());
         });
+        
 
         var tableDataPropOrder = [
                 "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
