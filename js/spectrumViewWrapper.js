@@ -121,6 +121,11 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                         }
                     })
             ;
+        } else {
+            d3.select(this.el).select("div.validationControls")
+                .append("p")
+                .html("Current Manual Validation State: <span class='validatedState'></span></p>")
+            ;
         }
 
         this.alternativesModel = new CLMSUI.BackboneModelTypes.CompositeModelType ({
@@ -147,12 +152,11 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         //~ );
 
         // redraw / hide table on selected cross-link change
-        altsSelectionViewer.listenTo (this.alternativesModel, "change:selection", function (model, selection) {
+        altsSelectionViewer.listenTo (this.alternativesModel, "selectionMatchesLinksChanged" /*"change:selection"*/, function () {
             altsSelectionViewer.render();
             //~ alert();
             //~ var emptySelection = (selection.length === 0);
             //~ split.collapse (emptySelection);    // this is a bit hacky as it's referencing the split component in another view
-
         });
         altsSelectionViewer.setVisible (true);
         //~ split.collapse (true);
@@ -163,7 +167,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         // Only if spectrum viewer visible...
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
-        this.listenTo (this.model, "change:selection", function (model, selection) {
+        this.listenTo (this.model, "selectionMatchesLinksChanged" /*"change:selection"*/, function (model) {
             /* var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
 
             if (fMatches.length === 0) {
@@ -175,14 +179,20 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 
             var highestScore = Number.MIN_VALUE;
             var highestScoringMatch = null;
+            var selection = model.get("selection");
+            var selectedMatches = model.get("match_selection");
 
             selection.forEach (function (selCrossLink) {
                 var filteredMatches_pp = selCrossLink.filteredMatches_pp;
                 //var fmLen = filteredMatches_pp.length;
                 //~ for (var fm = 0; fm < fmLen; ++fm) { //could kinda get rid of this loop, coz DB query orders by score
                 //ok, i'm doing that
-                if (filteredMatches_pp[0]) { 
-                    var match = filteredMatches_pp[0].match;
+                var filteredSelectedMatches = filteredMatches_pp.filter (function (match) {
+                    return selectedMatches.get(match.match.id);
+                });
+                if (filteredSelectedMatches.length) { 
+                    var match = filteredSelectedMatches[0].match;
+                    //console.log ("match", match, selectedMatches.get(match.id));
                     if (match.score > highestScore) {
 						highestScore = match.score;
                         highestScoringMatch = match;
@@ -190,8 +200,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                 }
             });
 			//todo: why isn't following clearing spec viewer if match is null
+            //console.log ("mm", highestScoringMatch);
             this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
-
         });
 
         this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
@@ -235,6 +245,12 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             this.enableControls (match);
             if (CLMSUI.loggedIn) {
                 this.setButtonValidationState (match);
+            } else {
+                d3.select(this.el).select("span.validatedState")
+                    .text(match.validated ? match.validated : "Undefined")
+                    .attr("class", "validatedState")
+                    .classed (match.validated, true)
+                ;
             }
         } else {
             this.newestSelectionShown = false;
@@ -268,7 +284,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     identifier: "Spectrum",
     
     optionsToString: function () {
-        console.log ("this", this);
+        //console.log ("this", this);
         var match = this.primaryMatch;
         var description = [
             {field: "id"},

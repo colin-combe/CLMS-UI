@@ -208,24 +208,31 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     },
 
     updateTable: function () {
-        this.selectedXLinkArray = this.model.getMarkedCrossLinks("selection")
-            .filter(function (xlink) {
-                return xlink.filteredMatches_pp.length > 0;
-            }) // links may have been selected but then filtered out of view so don't show them here
+         this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
+            // map to reduce filtered matches to selected matches only
+             .map (function (xlink) {
+                var selectedMatches = this.getMatches (xlink);
+                return {id: xlink.id, link: xlink, matches: selectedMatches};
+            }, this)
+            // Then get rid of links with no selected and filtered matches
+            .filter(function (selLinkMatchData) {
+                return selLinkMatchData.matches.length;
+            })
+            // Then sort links by top remaining match score for each link
             .sort(function (a, b) {
-                return b.filteredMatches_pp[0].match.score - a.filteredMatches_pp[0].match.score;
-            }) // sorts links by top filtered match score
+                return b.matches[0].score - a.matches[0].score;
+            })
         ;
         
         var count = 0;
-        this.matchCountIndices = this.selectedXLinkArray.map (function (xlink) {
-            var scount = count;
-            var selectedMatches = this.getMatches (xlink);
-            count += selectedMatches.length;
-            return {id: xlink.id, link: xlink, runningTotalStart: scount, runningTotalEnd: count};
-        }, this);
+        // add count metadata to matchCountIndices
+        this.matchCountIndices.forEach (function (selLinkMatchData) {
+            selLinkMatchData.runningTotalStart = count;
+            count += selLinkMatchData.matches.length;
+            selLinkMatchData.runningTotalEnd = count;
+        });
         
-        var selectedXLinkCount = this.selectedXLinkArray.length;
+        var selectedXLinkCount = this.matchCountIndices.length;
 
         var self = this;
 
@@ -283,7 +290,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         
         var panelHeading = d3.select(this.el).select(".crossLinkTotal");
         var commaFormat = d3.format(",");
-        var selectedXLinkCount = this.selectedXLinkArray.length;
+        var selectedXLinkCount = this.matchCountIndices.length;
         panelHeading.text (
             commaFormat(lower) + " - " + commaFormat(upper) + " of " +
             commaFormat(totalSelectedFilteredMatches) + " Match"+((totalSelectedFilteredMatches != 1) ? "es" : "")
@@ -291,8 +298,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
         );
         
-        //var tablePage = this.selectedXLinkArray.slice (lowerPageCount, upperPageCount);
-        //var tablePage = this.selectedXLinkArray.slice (lowerLink, upperLink + 1);
         var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
         this.addRows (tablePage, this.filteredProps, matchBounds);
     },
@@ -341,9 +346,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         // Within each tbody section, match table rows up to matches within each crosslink
         var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data(function (d, i) {
-            var md = self.getMatches (d.link);
+            var md = d.matches; //self.getMatches (d.link);
             // paging by matches means we may begin part way through a link's matches and end partway through a link's matches
-            if (i === 0  || i === selectedLinkArray.length - 1) {
+            if (i === 0 || i === selectedLinkArray.length - 1) {
                 md = md.slice (
                     i === 0 ? firstLastLinkMatchBounds.startMatch || 0 : 0, 
                     i === selectedLinkArray.length - 1 ? firstLastLinkMatchBounds.endMatch || md.length : md.length
