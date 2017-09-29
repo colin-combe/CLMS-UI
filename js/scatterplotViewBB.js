@@ -254,8 +254,8 @@
         ;
         
         // Listen to these events (and generally re-render in some fashion)
-        this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
-        this.listenTo (this.model, "change:match_highlights", this.recolourCrossLinks);
+        this.listenTo (this.model, "selectionMatchesLinksChanged", this.recolourCrossLinks);
+        this.listenTo (this.model, "highlightsMatchesLinksChanged", this.recolourCrossLinks);
         this.listenTo (this.model, "filteringDone", this.renderCrossLinks);
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);

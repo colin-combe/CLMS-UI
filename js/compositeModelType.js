@@ -329,7 +329,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         // so views waiting for both links and matches to finish updating can act
         var lastSetOfChanges = this.changedAttributes();
         if (penultimateSetOfChanges || lastSetOfChanges) {
-            this.trigger (modelProperty+"MatchesLinksChanged");
+            this.trigger (modelProperty+"MatchesLinksChanged", this);
         }
     },
     
