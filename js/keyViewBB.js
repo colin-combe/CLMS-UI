@@ -8,6 +8,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
           }
           return _.extend({},parentEvents,{
               "change input[type='color']": "changeColour",
+              "click .downloadButton3": "downloadKey",
           });
     },
     
@@ -19,9 +20,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")
-            .html("<div class='panelInner' flex-grow='1'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
-        ;           
-        topDiv.insert("p", ":first-child").attr("id", "linkColourDropdownPlaceholder");
+            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
+        ;         
+        this.controlDiv = topDiv.select(".toolbar");
+        this.controlDiv.append("button")
+            .attr ("class", "downloadButton3 btn btn-1 btn-1a")
+            .text ("Download Link Colour Scheme as SVG")
+        ;
+        this.controlDiv.append("p").attr("id", "linkColourDropdownPlaceholder");
         
         var chartDiv = topDiv.select(".panelInner");
         var svgs = {
@@ -39,6 +45,21 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>"
         };
         
+        var texts = {
+            clinkp: "Cross-link(s) between different proteins",
+            ambigp: "Ambiguous",
+            multip: "Multiple Linkage Sites",
+            selflinkp: "Self Link(s); could include links between two different molecules of same protein",
+            selflinkpc: "Self Link(s); definitely includes links between two different molecules of same protein",
+            clinkr: "Cross-link between different proteins",
+            ambigr: "Ambiguous",
+            selflinkr: "Self Link in same protein (could link either same or two different molecules)",
+            homom: "Homomultimeric Self Link (definitely links two different molecules of same protein)",
+            selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide)",
+            linkmodpep: "Linker modified peptide (unfilled = ambiguous)",
+            highlight: "Highlighted linked peptide",
+        };
+        
         var sectionData = [
             {
                 id: "colourKey",
@@ -48,26 +69,16 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             {
                 id: "proteinKey",
                 header: "Protein-Protein Level",
-                rows: [
-                    ["clinkp", "Cross-link(s) between different proteins"],
-                    ["ambigp", "Ambiguous"],
-                    ["multip", "Multiple Linkage Sites"],
-                    ["selflinkp", "Self Link(s); could include links between two different molecules of same protein"],
-                    ["selflinkpc", "Self Link(s); definitely includes links between two different molecules of same protein"],
-                ]
+                rows: ["clinkp", "ambigp", "multip", "selflinkp", "selflinkpc"].map (function(row) {
+                    return [row, texts[row]];
+                })
             },
             {
                 id: "residueKey",
                 header: "Residue Level",
-                rows: [
-                    ["clinkr", "Cross-link between different proteins"],
-                    ["ambigr", "Ambiguous"],
-                    ["selflinkr", "Self Link in same protein (could link either same or two different molecules)"],
-                    ["homom", "Homomultimeric Self Link (definitely links two different molecules of same protein)"],
-                    ["selflinkinter", "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide)"],
-                    ["linkmodpep", "Linker modified peptide (unfilled = ambiguous)"],
-                    ["highlight", "Highlighted linked peptide"],
-                ]
+                rows: ["clinkr", "ambigr", "selflinkr", "homom", "selflinkinter", "linkmodepep", "highlight"].map (function(row) {
+                    return [row, texts[row]];
+                })
             },
         ];
         
@@ -172,6 +183,13 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         }
         
         return this;
+    },
+    
+    downloadKey: function () {
+        var tempSVG = d3.select(this.el).append("svg").attr("class", "temp");
+        CLMSUI.utils.updateColourKey (this.model, tempSVG);
+        this.downloadSVG (null, tempSVG);
+        tempSVG.remove();
     },
     
     identifier: "Xi Legend",

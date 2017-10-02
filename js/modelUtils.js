@@ -737,6 +737,15 @@ CLMSUI.modelUtils = {
         //console.log ("mergedFeatures", features, merged);
         return merged;
     }, 
+    
+    radixSort: function (categoryCount, data, bucketFunction) {
+        var radixSortBuckets = Array.apply(null, Array(categoryCount)).map(function() { return []; });
+        data.forEach (function (d) {
+            var bucketIndex = bucketFunction (d);
+            radixSortBuckets[bucketIndex].push (d);
+        });
+        return d3.merge (radixSortBuckets);
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

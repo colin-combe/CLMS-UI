@@ -721,18 +721,16 @@
                     return protOK && this.esterFilter (crossLink);
                 }, this);
 
-                var radixSortBuckets = [[],[],[]]; // 3 groups
-                finalCrossLinks.forEach (function (link) {
-                    var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
-                    radixSortBuckets[bucketIndex].push (link);
+                var sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort (3, filteredCrossLinks, function (link) {
+                    return highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
                 });
-                finalCrossLinks = d3.merge (radixSortBuckets);
-                var fromToStore = finalCrossLinks.map (function (crossLink) {
+
+                var fromToStore = sortedFinalCrossLinks.map (function (crossLink) {
                     return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
                 });
 
                 var linkSel = this.zoomGroup.selectAll("rect.crossLink")
-                    .data(finalCrossLinks, function(d) { return d.id; })
+                    .data(sortedFinalCrossLinks, function(d) { return d.id; })
                     .order()
                 ;
                 linkSel.exit().remove();

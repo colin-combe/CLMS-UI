@@ -491,12 +491,9 @@
             var selectedMatchMap = this.model.getMarkedMatches ("selection");
             var highlightedMatchMap = this.model.getMarkedMatches ("highlights");
             
-            var radixSortBuckets = [[],[],[]]; // 3 groups
-            filteredCrossLinks.forEach (function (link) {
-                var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
-                radixSortBuckets[bucketIndex].push (link);
+            var sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (3, filteredCrossLinks, function (link) {
+                return highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
             });
-            filteredCrossLinks = d3.merge (radixSortBuckets);
             
             var makeCoords = function (datax, datay) {
                 return datax.data.map (function (xd, i) {
@@ -522,16 +519,6 @@
                     pairs = pairs.filter (function (pair) {
                         return pair[0] !== undefined && pair[1] !== undefined;
                     });
-                    
-                    /*
-                    pairs.sort (function (p1, p2) {
-                        var z = p1[0] - p2[0];
-                        if (!z) {
-                            z = p1[1] - p2[1];
-                        }
-                        return z;
-                    });
-                    */
                     
                     return pairs;
                 });
@@ -595,14 +582,14 @@
             ctx.fillRect (0, 0, canvasNode.width, canvasNode.height);
             ctx.imageSmoothingEnabled = false;
             
-            var datax = this.getAxisData ("X", true, filteredCrossLinks);
-            var datay = this.getAxisData ("Y", true, filteredCrossLinks);
+            var datax = this.getAxisData ("X", true, sortedFilteredCrossLinks);
+            var datay = this.getAxisData ("Y", true, sortedFilteredCrossLinks);
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
             
             //console.log ("ddd", datax, datay, filteredCrossLinks, coords);
 
-            filteredCrossLinks.forEach (function (link, i) {
+            sortedFilteredCrossLinks.forEach (function (link, i) {
                 var high = !matchLevel && highlightedCrossLinkIDs.has (link.id);
                 var selected = !matchLevel && selectedCrossLinkIDs.has (link.id);
                 var jitter = this.options.jitter;
