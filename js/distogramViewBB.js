@@ -10,10 +10,10 @@
     CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
           var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
-          if(_.isFunction(parentEvents)){
+          if (_.isFunction(parentEvents)) {
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{
+          return _.extend ({}, parentEvents, {
                "click .intraRandomButton": "reRandom",
           });
         },
