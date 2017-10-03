@@ -637,8 +637,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLinkEntry) {
-                var parts1 = d["Protein 1"].split("|");
-                var parts2 = d["Protein 2"].split("|");
+                var parts1 = d["Protein 1"] ? d["Protein 1"].split("|") : [];
+                var parts2 = d["Protein 2"] ? d["Protein 2"].split("|") : [];
                 var pkey1, pkey2;
                 parts1.forEach (function (part) {
                     pkey1 = pkey1 || protMap.get(part);
@@ -673,7 +673,7 @@ CLMSUI.modelUtils = {
                 }
             }
         });
-        if (columns && columns.length > 0) {
+        if (columns) {
             CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
         }    
     },
