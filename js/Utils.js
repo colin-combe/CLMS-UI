@@ -328,6 +328,8 @@ CLMSUI.utils = {
         ;
     },
     
+    // Functions for making useful file names
+    
     objectStateToAbbvString: function (object, fields, zeroFormatFields, abbvMap) {
         fields = fields.filter (function (field) {
             var val = object.get ? object.get(field) || object[field] : object[field];
@@ -377,6 +379,51 @@ CLMSUI.utils = {
         newStr = newStr.substring (0, 240);
         return newStr;
     },
+    
+    
+    // Function for making key as a group element
+    updateColourKey: function (model, svgElem) {
+        var keyGroup = svgElem.select("g.key");
+        if (keyGroup.empty()) {
+            svgElem
+                .append("g").attr("class", "key")
+                    .append("text").attr("class", "keyTitle")
+            ;
+        }
+        keyGroup = svgElem.select("g.key");
+        
+        var colourAssign = model.get("linkColourAssignment");
+        if (colourAssign) {
+            keyGroup.select("text.keyTitle")
+                .attr("y", 12)
+                .attr("text-decoration", "underline")
+                .text ("Key: "+colourAssign.get("title"))
+            ;
+            
+            var colScale = colourAssign.get("colScale");
+            var labels = colourAssign.get("labels");
+            var pairUp = d3.zip (colScale.range(), labels.range());
+            
+            var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
+            colourElems.exit().remove();
+            var newElems = colourElems.enter().append("g")
+                .attr("class", "keyPoint")
+                .attr("transform", function(d,i) { return "translate(0,"+((i+1)*15)+")"; })
+            ;
+            newElems.append("rect")
+                .attr("width", 16)
+                .attr("height", 4)
+                .attr("y", 5)
+            ;
+            newElems.append("text")
+                .attr("x", 19)
+                .attr("y", 12)
+            ;
+            colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
+            colourElems.select("text").text(function (d, i) { return d[1]; });
+        }
+        
+    },
 
     BaseFrameView: Backbone.View.extend ({
 
@@ -425,8 +472,9 @@ CLMSUI.utils = {
             return this;
         },
 
-        downloadSVG: function () {
-            var svgSel = d3.select(this.el).selectAll("svg");
+        // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
+        downloadSVG: function (event, thisSVG) {
+            var svgSel = thisSVG || d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
@@ -444,8 +492,7 @@ CLMSUI.utils = {
         And add an extra css rule after the style element's already been generated to try and stop the image anti-aliasing
         */
         downloadSVGWithCanvas: function () {
-            var mainDivSel = d3.select(this.el);
-            var svgSel = mainDivSel.selectAll("svg");
+            var svgSel = d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var detachedSVG = svgStrings[0];
@@ -708,6 +755,9 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 
     dataJoin.selectAll("h2").each (setArrow);
 };
+
+
+
 
 CLMSUI.utils.c3mods = function () {
     var c3guts = c3.chart.internal.fn;
