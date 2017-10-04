@@ -31,6 +31,18 @@
                 intraRandomOnly: false,
                 maxX: 90
             };
+            
+            var barOptions = [
+                {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
+                {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2},
+            ];
+            
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
             this.precalcedDistributions = {};
@@ -56,6 +68,18 @@
             
             var toolbar = mainDivSel.select("div.toolbar");
             CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+            
+            // Add a select widget for picking axis data type
+            /*
+            CLMSUI.utils.addMultipleSelectControls ({
+                addToElem: toolbar, 
+                selectList: ["X"], 
+                optionList: barOptions, 
+                selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+                optionLabelFunc: function (d) { return d.label; }, 
+                changeFunc: function () { self.render(); },
+            });
+            */
 
             var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
@@ -195,7 +219,7 @@
                 // hide random choice button if only 1 protein
                 var self = this;
                 d3.select(this.el).select("#distoPanelintraRandom")
-                    .style ("display", self.model.get("clmsModel").get("participants").size > 1 ? null : "none")
+                    .style ("display", self.model.get("clmsModel").realProteinCount > 1 ? null : "none")
                 ;
             }
 
@@ -220,7 +244,7 @@
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
-                var measurements = this.getRelevantCrossLinkDistances();
+                var measurements = this.getRelevantMatchCount(); //CrossLinkDistances();
                 var series = measurements.values;
                 var seriesLengths = _.pluck (series, "length");
 
@@ -450,6 +474,25 @@
             return {
                 viableFilteredTargetLinks: links[0],
                 values: distances,
+            };
+        },
+        
+        getRelevantMatchCount: function () {
+            var links = [
+                this.model.getFilteredCrossLinks (), 
+                this.model.getFilteredCrossLinks ("decoysTD"), 
+                this.model.getFilteredCrossLinks ("decoysDD")
+            ];
+            
+            var counts = links.map(function (linkArr) {
+                return linkArr.map (function (link) {
+                    return link.filteredMatches_pp.length;    
+                });
+            });
+
+            return {
+                viableFilteredTargetLinks: links[0],
+                values: counts,
             };
         },
         

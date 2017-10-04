@@ -48,7 +48,7 @@
             
             var self = this;
             this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
-                self.setStatusText (columns.length +" Link Attributes Parsed"); 
+                self.setStatusText (columns && columns.length ? columns.length +" Link Attributes Parsed" : "No Columns Successfully Parsed"); 
             });
         },
         

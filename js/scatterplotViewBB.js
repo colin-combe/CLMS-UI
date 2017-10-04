@@ -79,30 +79,14 @@
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
         // Add two select widgets for picking axes data types
-        var selects = this.controlDiv.selectAll("select")
-            .data(["X", "Y"])
-            .enter()
-            .append ("label")
-            .attr ("class", "btn")
-                .append ("span")
-                .attr ("class", "noBreak")
-                .text (function(d) { return d+" Axis Attribute"; })
-        ;
-        
-        selects.append("select")
-            .on ("change", function() {
-                self
-                    .axisChosen ()
-                    .render()
-                ;
-            })
-            .selectAll("option")
-            .data (scatterOptions)
-                .enter()
-                .append ("option")
-                .text (function(d) { return d.label; })
-                .property ("selected", function (d,i) { return i === 0; })  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
-        ;
+        CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: this.controlDiv, 
+            selectList: ["X", "Y"], 
+            optionList: scatterOptions, 
+            selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+            optionLabelFunc: function (d) { return d.label; }, 
+            changeFunc: function () { self.axisChosen().render(); },
+        });
         
         // Add jitter toggle checkbox
         var toggleButtonData = [

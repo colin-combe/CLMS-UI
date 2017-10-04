@@ -381,7 +381,7 @@ CLMSUI.utils = {
     },
     
     
-    // Function for making key as a group element
+    // Function for making a colour key as an svg group element
     updateColourKey: function (model, svgElem) {
         var keyGroup = svgElem.select("g.key");
         if (keyGroup.empty()) {
@@ -424,7 +424,51 @@ CLMSUI.utils = {
         }
         
     },
+    
+    
+    // settings can be
+    // addToElem - element to add select elements to
+    // selectList - names of select elements to add
+    // optionList - options to add to each select element (same)
+    // selectLabelFunc - function to set human readable name for select element label
+    // optionLabelFunc - function to set human readable name for option
+    // changeFunc - function that runs when change event occurs on a select element
+    // initialSelectionFunc - function that decides initially set option
+    addMultipleSelectControls: function (settings) {
+        var defaults = {
+            selectList: [],
+            optionList: [],
+            selectLabelFunc: function (d) { return d; },
+            optionLabelFunc: function (d) { return d; },
+            initialSelectionFunc: function (d,i) { return i === 0; }
+        };
+        settings = _.extend (defaults, settings);
+        
+        // Add two select widgets for picking axes data types
+        var selects = settings.addToElem.selectAll("select")
+            .data(settings.selectList, function(d) { return d.id ? d.id : d; })
+            .enter()
+            .append ("label")
+            .attr ("class", "btn")
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text (settings.selectLabelFunc)
+        ;
+        
+        selects.append("select")
+            .on ("change", settings.changeFunc)
+            .selectAll("option")
+            .data (settings.optionList)
+                .enter()
+                .append ("option")
+                .text (settings.optionLabelFunc)
+                .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
+        ;
+        
+        return selects;
+    },
 
+    
     BaseFrameView: Backbone.View.extend ({
 
         events: {
