@@ -244,7 +244,7 @@
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
-                var measurements = this.getRelevantMatchCount(); //CrossLinkDistances();
+                var measurements = this.getRelevantCrossLinkDistances(); //CrossLinkDistances();
                 var series = measurements.values;
                 var seriesLengths = _.pluck (series, "length");
 
