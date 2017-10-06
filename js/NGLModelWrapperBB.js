@@ -500,6 +500,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                         } else if (vals.length === 1) {
                             return "( "+vals[0]+":"+chainEntry.key+" )";    // if single val, chain:resno is quicker
                         } else {
+                            vals = this.joinConsecutiveNumbersIntoRanges (vals);
                             return "( :"+chainEntry.key+" AND ("+vals.join(" OR ")+") )";
                         }
                     } else {
@@ -511,9 +512,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                         });
                         return "( "+emptyChainNameRes.join(" OR ")+" )";
                     }
-                });
+                }, this);
                 return "( /"+modelEntry.key+" AND ("+perChainResidues.join(" OR ")+") )";
-            });
+            }, this);
             
             sele = "(" + modParts.join(" OR ") +" )" + (options.allAtoms || options.chainsOnly ? "" : " AND .CA");
             if (NGL.Debug) {
@@ -524,6 +525,34 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return sele;
     },
     
+    // assumes vals are already sorted numerically (though each val is a string)
+    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
+        joinString = joinString || "-";
+        
+        if (vals.length > 1) {
+            var newVals = [];
+            var last = +vals[0], start = +vals[0], run = 1; // initialise variables to first value
+            
+            for (var n = 1; n < vals.length + 1; n++) { // note + 1
+                // add extra loop iteration using MAX_SAFE_INTEGER as last value.
+                // loop will thus detect non-consecutive numbers on last iteration and output the last proper value in some form.
+                var v = (n < vals.length ? +vals[n] : Number.MAX_SAFE_INTEGER);
+                if (v - last === 1) {   // if consecutive to last number just increase the run length
+                    run++;
+                } else {  // but if not consecutive to last number...
+                    // add the previous numbers either as a sequence (if run > 1) or as a single value (last value was not part of a sequence itself)
+                    newVals.push (run > 1 ? start + joinString + last : last);
+                    run = 1;    // then reset the run and start variables to begin at current value
+                    start = v;
+                }
+                last = v;   // make last value the current value for next iteration of loop
+            }
+            
+            CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
+            vals = newVals;
+        }
+        return vals;
+    },
     
     makeResidueSelectionString: function (resno, chainProxy) {
         var chainName = chainProxy.chainname;

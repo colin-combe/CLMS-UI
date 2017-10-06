@@ -389,18 +389,38 @@ CLMSUI.modelUtils = {
         return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
     },
     
+    // call with alignmentCollection as this context through .call
+    addNewSequencesToAlignment : function (clmsModel) {
+        clmsModel.get("participants").forEach (function (entry) {
+            //console.log ("entry", entry);
+            if (!entry.is_decoy) {
+                this.add ([{
+                    "id": entry.id,
+                    "displayLabel": entry.name.replace("_", " "),
+                    "refID": "Search",
+                    "refSeq": entry.sequence,
+                }]);
+                if (entry.uniprot){
+					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence);
+				}
+                //~ console.log ("alignColl", this);
+            }
+        }, this);
+    },
+    
     matrixPairings: function (matrix, sequenceObjs) {
         var keys = d3.keys(matrix);
         var pairings = [];
         for (var n = 0; n < sequenceObjs.length; n++) {
             var max = {key: undefined, seqObj: undefined, score: 40};
+            var seqObj = sequenceObjs[n];
             keys.forEach (function (key) {
                 var score = matrix[key][n];
                 //console.log ("s", n, score, score / sequenceObjs[n].data.length);
-                if (score > max.score && (score / sequenceObjs[n].data.length) > 1) {
+                if (score > max.score && (score / seqObj.data.length) > 1) {
                     max.score = score;
                     max.key = key;
-                    max.seqObj = sequenceObjs[n];
+                    max.seqObj = seqObj;
                 }
             });
             if (max.key) {
@@ -617,8 +637,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLinkEntry) {
-                var parts1 = d["Protein 1"].split("|");
-                var parts2 = d["Protein 2"].split("|");
+                var parts1 = d["Protein 1"] ? d["Protein 1"].split("|") : [];
+                var parts2 = d["Protein 2"] ? d["Protein 2"].split("|") : [];
                 var pkey1, pkey2;
                 parts1.forEach (function (part) {
                     pkey1 = pkey1 || protMap.get(part);
@@ -653,7 +673,7 @@ CLMSUI.modelUtils = {
                 }
             }
         });
-        if (columns && columns.length > 0) {
+        if (columns) {
             CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
         }    
     },
@@ -665,12 +685,12 @@ CLMSUI.modelUtils = {
     crosslinkCountPerProteinPairing: function (crossLinkArr) {
         var obj = {};
         crossLinkArr.forEach (function (crossLink) {
-            var fromProtein = crossLink.fromProtein;
-            var toProtein = crossLink.toProtein;
-            var pid1 = fromProtein.id;
-            var pid2 = toProtein ? toProtein.id : "";
-            if (pid2 && !fromProtein.is_decoy && !toProtein.is_decoy) {
-                var key = pid1 + "-" + pid2;
+
+            // only show non-decoys, non-linears as we're only interested in real links with two ends
+            if (!crossLink.isLinearLink() && !crossLink.isDecoyLink()) {
+                var fromProtein = crossLink.fromProtein;
+                var toProtein = crossLink.toProtein;
+                var key = fromProtein.id + "-" + toProtein.id;
                 if (!obj[key]) {
                     obj[key] = {
                         crossLinks:[], 
@@ -716,8 +736,16 @@ CLMSUI.modelUtils = {
         //window.mergerxi = merged;
         //console.log ("mergedFeatures", features, merged);
         return merged;
-    },
+    }, 
     
+    radixSort: function (categoryCount, data, bucketFunction) {
+        var radixSortBuckets = Array.apply(null, Array(categoryCount)).map(function() { return []; });
+        data.forEach (function (d) {
+            var bucketIndex = bucketFunction (d);
+            radixSortBuckets[bucketIndex].push (d);
+        });
+        return d3.merge (radixSortBuckets);
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

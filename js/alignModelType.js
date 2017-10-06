@@ -171,6 +171,7 @@
          
         addSeq: function (modelId, seqId, seq, otherSettingsObj) {
             var model = this.get (modelId);
+            otherSettingsObj = otherSettingsObj || {};
             if (model) {
                 //console.log ("entry", modelId, seqId, seq, otherSettingsObj);
                 model.get("seqCollection").add (

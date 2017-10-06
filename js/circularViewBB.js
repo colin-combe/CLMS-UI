@@ -98,7 +98,7 @@
               parentEvents = parentEvents();
           }
           return _.extend({},parentEvents,{
-              "click .niceButton": "reOrder",
+              "click .niceButton": "reOrderAndRender",
               "click .flipIntraButton": "flipIntra",
               "click .showResLabelsButton": "showResLabelsIfRoom",
               "click .hideLinkless": "flipLinklessVisibility",
@@ -194,7 +194,7 @@
                     d.inputFirst = true;
                     d.func = function () {
                         self.options.sort = d.id;
-                        self.reOrder();
+                        self.reOrderAndRender();
                     };
                 }, this)
             ;
@@ -324,7 +324,7 @@
             this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
-            this.reOrder();
+            this.reOrder().render();
             
             return this;
         },
@@ -332,7 +332,8 @@
         reOrder: function () {
             //CLMSUI.utils.xilog ("this", this, this.options);
             this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
-            var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
+            //var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
+            var prots = CLMS.arrayFromMapValues (this.filterInteractors (this.model.get("clmsModel").get("participants")));
             var proteinSort = function (field) {
                 var numberSort = !isNaN(prots[0][field]);
                 var sortDir = this.options.sortDir;
@@ -341,13 +342,18 @@
                 });
                 return _.pluck (prots, "id");
             };
+            var self = this;
             var sortFuncs = {
-                best: function () { return CLMSUI.utils.circleArrange (this.model.get("clmsModel").get("participants")); },
+                best: function () { return CLMSUI.utils.circleArrange (self.filterInteractors (this.model.get("clmsModel").get("participants"))); },
                 size: function() { return proteinSort.call (this, "size"); },
                 alpha: function() { return proteinSort.call (this, "name"); },
             };
             this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : _.pluck (prots, "id");
-            this.render();
+            return this;
+        },
+        
+        reOrderAndRender: function () {
+            return this.reOrder().render();
         },
 
         flipIntra: function () {
@@ -373,7 +379,7 @@
         },
 
         showAccentOnTheseElements: function (d3Selection, accentType) {
-            var accentedLinkList = this.model.get(accentType);
+            var accentedLinkList = this.model.getMarkedCrossLinks(accentType);
             if (accentedLinkList) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
                 var accentedLinkIDs = _.pluck (accentedLinkList, "id");
@@ -393,7 +399,7 @@
                 return (link.fromProtein.id === nodeId && (anyPos || (link.fromResidue >= startPos && endPos >= link.fromResidue))) ||
                         (link.toProtein.id === nodeId && (anyPos || (link.toResidue >= startPos && endPos >= link.toResidue)));
             });
-            this.model.calcMatchingCrosslinks (actionType, matchLinks, actionType === "highlights", add);
+            this.model.setMarkedCrossLinks (actionType, matchLinks, actionType === "highlights", add);
             //this.model.set (actionType, matchLinks);
         },
 
@@ -490,7 +496,7 @@
             //CLMSUI.utils.xilog ("render args", arguments);
             var changed = options ? options.changed : undefined;
 
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 //CLMSUI.utils.xilog ("re-rendering circular view");
 
                 var interactors = this.model.get("clmsModel").get("participants");
@@ -607,6 +613,8 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             //CLMSUI.utils.xilog ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
+            
+            var lineCopy = {};  // make cache as linkJoin and ghostLinkJoin will have same 'd' paths for the same link
 
             // draw thin links
             var thinLayer = this.addOrGetGroupLayer (g, "thinLayer");
@@ -619,7 +627,9 @@
             ;
             linkJoin
                 .attr("d", function(d) { 
-                    return (d.outside ? self.outsideLine : self.line)(d.coords); 
+                    var path = (d.outside ? self.outsideLine : self.line)(d.coords); 
+                    lineCopy[d.id] = path;
+                    return path;
                 })
                 .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
                 .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
@@ -635,22 +645,25 @@
                     .attr("class", "circleGhostLink")
                     .on ("mouseenter", function(d) {
                         self.linkTip (d);
-                        self.model.calcMatchingCrosslinks ("highlights",  [crossLinks.get(d.id)], true, false);
+                        self.model.setMarkedCrossLinks ("highlights",  [crossLinks.get(d.id)], true, false);
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on ("click", function (d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
-                        self.model.calcMatchingCrosslinks ("selection", [crossLinks.get(d.id)], false, add);
+                        self.model.setMarkedCrossLinks ("selection", [crossLinks.get(d.id)], false, add);
                     })
                     .call (function () {
                         self.showAccentOnTheseElements.call (self, this, "selection");
                     })
             ;
             ghostLinkJoin
-                .attr("d", function(d) { return (d.outside ? self.outsideLine : self.line)(d.coords); })
+                .attr("d", function(d) { 
+                    var path = lineCopy[d.id] || (d.outside ? self.outsideLine : self.line)(d.coords);
+                    return path;
+                })
             ;
         },
 
@@ -671,7 +684,7 @@
                     })
                     .on("mouseleave", function() {
                         self.clearTip ();
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
@@ -853,7 +866,7 @@
                     })
                     .on ("mouseleave", function() {
                         self.clearTip ();
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;

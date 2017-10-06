@@ -328,6 +328,8 @@ CLMSUI.utils = {
         ;
     },
     
+    // Functions for making useful file names
+    
     objectStateToAbbvString: function (object, fields, zeroFormatFields, abbvMap) {
         fields = fields.filter (function (field) {
             var val = object.get ? object.get(field) || object[field] : object[field];
@@ -377,7 +379,96 @@ CLMSUI.utils = {
         newStr = newStr.substring (0, 240);
         return newStr;
     },
+    
+    
+    // Function for making a colour key as an svg group element
+    updateColourKey: function (model, svgElem) {
+        var keyGroup = svgElem.select("g.key");
+        if (keyGroup.empty()) {
+            svgElem
+                .append("g").attr("class", "key")
+                    .append("text").attr("class", "keyTitle")
+            ;
+        }
+        keyGroup = svgElem.select("g.key");
+        
+        var colourAssign = model.get("linkColourAssignment");
+        if (colourAssign) {
+            keyGroup.select("text.keyTitle")
+                .attr("y", 12)
+                .attr("text-decoration", "underline")
+                .text ("Key: "+colourAssign.get("title"))
+            ;
+            
+            var colScale = colourAssign.get("colScale");
+            var labels = colourAssign.get("labels");
+            var pairUp = d3.zip (colScale.range(), labels.range());
+            
+            var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
+            colourElems.exit().remove();
+            var newElems = colourElems.enter().append("g")
+                .attr("class", "keyPoint")
+                .attr("transform", function(d,i) { return "translate(0,"+((i+1)*15)+")"; })
+            ;
+            newElems.append("rect")
+                .attr("width", 16)
+                .attr("height", 4)
+                .attr("y", 5)
+            ;
+            newElems.append("text")
+                .attr("x", 19)
+                .attr("y", 12)
+            ;
+            colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
+            colourElems.select("text").text(function (d, i) { return d[1]; });
+        }
+        
+    },
+    
+    
+    // settings can be
+    // addToElem - element to add select elements to
+    // selectList - names of select elements to add
+    // optionList - options to add to each select element (same)
+    // selectLabelFunc - function to set human readable name for select element label
+    // optionLabelFunc - function to set human readable name for option
+    // changeFunc - function that runs when change event occurs on a select element
+    // initialSelectionFunc - function that decides initially set option
+    addMultipleSelectControls: function (settings) {
+        var defaults = {
+            selectList: [],
+            optionList: [],
+            selectLabelFunc: function (d) { return d; },
+            optionLabelFunc: function (d) { return d; },
+            initialSelectionFunc: function (d,i) { return i === 0; }
+        };
+        settings = _.extend (defaults, settings);
+        
+        // Add two select widgets for picking axes data types
+        var selects = settings.addToElem.selectAll("select")
+            .data(settings.selectList, function(d) { return d.id ? d.id : d; })
+            .enter()
+            .append ("label")
+            .attr ("class", "btn")
+                .append ("span")
+                .attr ("class", "noBreak")
+                .text (settings.selectLabelFunc)
+        ;
+        
+        selects.append("select")
+            .on ("change", settings.changeFunc)
+            .selectAll("option")
+            .data (settings.optionList)
+                .enter()
+                .append ("option")
+                .text (settings.optionLabelFunc)
+                .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
+        ;
+        
+        return selects;
+    },
 
+    
     BaseFrameView: Backbone.View.extend ({
 
         events: {
@@ -425,8 +516,9 @@ CLMSUI.utils = {
             return this;
         },
 
-        downloadSVG: function () {
-            var svgSel = d3.select(this.el).selectAll("svg");
+        // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
+        downloadSVG: function (event, thisSVG) {
+            var svgSel = thisSVG || d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
@@ -444,8 +536,7 @@ CLMSUI.utils = {
         And add an extra css rule after the style element's already been generated to try and stop the image anti-aliasing
         */
         downloadSVGWithCanvas: function () {
-            var mainDivSel = d3.select(this.el);
-            var svgSel = mainDivSel.selectAll("svg");
+            var svgSel = d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var detachedSVG = svgStrings[0];
@@ -480,33 +571,48 @@ CLMSUI.utils = {
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
-            var sortArr = [];
-            var activeDivs = d3.selectAll(".dynDiv").filter (function() {
-                return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
-            });
-            
-            // Push objects containing the individual divs as selections along with their z-indexes to an array
-            activeDivs.each (function() { 
-                // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
-                sortArr.push ({z: +d3.select(this).style("z-index") || 0, selection: d3.select(this)}); 
-            });
-            // Sort that array by the z-index
-            // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
-            sortArr
-                .sort (function (a,b) {
-                    return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
-                })
-                .forEach (function (sorted, i) {
-                    sorted.selection.style ("z-index", i + 1);    
-                })
-            ;
-            // Make the current window top of this pile
-            d3.select(this.el).style("z-index", sortArr.length + 1);
-            //console.log ("sortArr", sortArr);
+            if (this.el.id !== CLMSUI.utils.BaseFrameView.staticLastTopID) {
+                var sortArr = [];
+                var activeDivs = d3.selectAll(".dynDiv").filter (function() {
+                    return CLMSUI.utils.isZeptoDOMElemVisible ($(this));
+                });
+                console.log ("this view", this);
+
+                // Push objects containing the individual divs as selections along with their z-indexes to an array
+                activeDivs.each (function() { 
+                    // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
+                    var zindex = d3.select(this).style("z-index"); //*/ d3.select(this).datum() ? d3.select(this).datum()("z-index") : 0;
+                    zindex = zindex || 0;
+                    sortArr.push ({z: zindex, selection: d3.select(this)}); 
+                });
+                // Sort that array by the z-index
+                // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
+                sortArr
+                    .sort (function (a,b) {
+                        return a.z > b.z ? 1 : (a.z < b.z ? -1 : 0);
+                    })
+                    .forEach (function (sorted, i) {
+                        sorted.selection
+                            .style ("z-index", i + 1)
+                        ;    
+                    })
+                ;
+                // Make the current window top of this pile
+                d3.select(this.el)
+                    .style("z-index", sortArr.length + 1)
+                ;
+
+                CLMSUI.utils.BaseFrameView.staticLastTopID = this.el.id;    // store current top view as property of 'class' BaseFrameView (not instance of view)
+                //console.log ("sortArr", sortArr);
+            }
         },
 
         setVisible: function (show) {
-            d3.select(this.el).style ('display', show ? 'block' : 'none');
+            this.visible = show;
+            d3.select(this.el)
+                .style ('display', show ? 'block' : 'none')
+                .classed ('dynDivVisible', show)
+            ;
 
             if (show) {
                 this
@@ -517,13 +623,13 @@ CLMSUI.utils = {
             }
         },
 
-        // Ask if view is currently visible in the DOM
+        // Ask if view is currently visible in the DOM (use boolean for performance, querying dom for visibility often took ages)
         isVisible: function () {
             var start = window.performance.now();
-            console.log(this.$el.toString() + "isVis start:" + start);
-            var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
-            console.log(this.$el, "isVis time:" + answer , (window.performance.now() - start));
-
+            CLMSUI.utils.xilog (this.$el.toString(), "isVis start:", start);
+            //var answer = CLMSUI.utils.isZeptoDOMElemVisible (this.$el);
+            var answer = this.visible;
+            CLMSUI.utils.xilog (this.$el, "isVis time:" + answer , (window.performance.now() - start));
             return answer;
         },
 
@@ -548,6 +654,9 @@ CLMSUI.utils = {
         filenameStateString: function () {
             return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString()+"--"+this.identifier+"-"+this.optionsToString()+"--"+CLMSUI.utils.filterStateToString());
         },
+    },
+    {
+        staticLastTopID: 1, // stores id of last view which was 'brought to top' as class property. So I don't need to do expensive DOM operations sometimes.
     }),
 };
 
@@ -690,6 +799,9 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 
     dataJoin.selectAll("h2").each (setArrow);
 };
+
+
+
 
 CLMSUI.utils.c3mods = function () {
     var c3guts = c3.chart.internal.fn;

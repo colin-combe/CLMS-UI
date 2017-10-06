@@ -10,10 +10,10 @@
     CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend ({
         events: function() {
           var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
-          if(_.isFunction(parentEvents)){
+          if (_.isFunction(parentEvents)) {
               parentEvents = parentEvents();
           }
-          return _.extend({},parentEvents,{
+          return _.extend ({}, parentEvents, {
                "click .intraRandomButton": "reRandom",
           });
         },
@@ -25,15 +25,25 @@
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
                 seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
-                subSeriesNames: viewOptions.colourScaleModel ? viewOptions.colourScaleModel.get("labels").range() : ["Short", "Good", "Overlong"],
+                subSeriesNames: [],
                 scaleOthersTo: {"Random": "Cross Links"},
                 chartTitle: "Distogram",
                 intraRandomOnly: false,
                 maxX: 90
             };
+            
+            var barOptions = [
+                {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
+                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
+                {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2},
+            ];
+            
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
-            this.options.groups = [this.options.subSeriesNames];
-            this.colourScaleModel = viewOptions.colourScaleModel;
 
             this.precalcedDistributions = {};
             this.displayEventName = viewOptions.displayEventName;
@@ -58,6 +68,18 @@
             
             var toolbar = mainDivSel.select("div.toolbar");
             CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+            
+            // Add a select widget for picking axis data type
+            /*
+            CLMSUI.utils.addMultipleSelectControls ({
+                addToElem: toolbar, 
+                selectList: ["X"], 
+                optionList: barOptions, 
+                selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+                optionLabelFunc: function (d) { return d.label; }, 
+                changeFunc: function () { self.render(); },
+            });
+            */
 
             var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
@@ -67,6 +89,7 @@
             var columnsAsNamesOnly = d3.merge([this.options.seriesNames, this.options.subSeriesNames]).map (function(sname) { return [sname]; });
 
             var chartID = "#" + chartDiv.attr("id");
+            var firstRun = true;
             // Generate the C3 Chart
             this.chart = c3.generate({
                 bindto: chartID,
@@ -76,7 +99,7 @@
                 data: {
                     columns: columnsAsNamesOnly,
                     type: 'bar',
-                    groups: this.options.groups || this.options.seriesNames,
+                    //groups: [this.options.subSeriesNames] || this.options.seriesNames,
                     colors: {
                         "Cross Links": "#44d",
                         Random: "#888",
@@ -86,7 +109,7 @@
                         enabled: false,
                         grouped: true,
                         multiple: true,
-                        draggable: true
+                        draggable: true,
                     },
                     ondragend: function (extent) {
                         console.log ("extent", extent);
@@ -108,7 +131,7 @@
                         },
                         //max: this.options.maxX,
                         padding: {  // padding of 1 ticks to right of chart to stop bars in last column getting clipped
-                          left: 0,
+                          left: 0,  // 0.5,  // 0.5 used when we moved axis instead of bars to get alignments of bars between ticks
                           right: 1,
                         },
                         tick: {
@@ -133,6 +156,9 @@
                 grid: {
                     lines: {
                         front: false,   // stops overlong and short gridlines obscuring actual data
+                    },
+                    focus: {
+                        show: false,
                     },
                 },
                 padding: {
@@ -173,12 +199,18 @@
                 title: {
                     text: this.options.chartTitle
                 },
+                onrendered: function () {
+                    if (firstRun) {
+                        firstRun = false; 
+                        this.api.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
+                        if (! self.model.get("clmsModel").get("decoysPresent")) {   
+                            this.api.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
+                        }
+                    }
+                    self.makeBarsSitBetweenTicks (this);
+                },
             });
-            this.chart.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
-            if (! this.model.get("clmsModel").get("decoysPresent")) {   
-                this.chart.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
-            }
-            
+
             
             function distancesAvailable () {
                 console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
@@ -187,12 +219,13 @@
                 // hide random choice button if only 1 protein
                 var self = this;
                 d3.select(this.el).select("#distoPanelintraRandom")
-                    .style ("display", self.model.get("clmsModel").get("participants").size > 1 ? null : "none")
+                    .style ("display", self.model.get("clmsModel").realProteinCount > 1 ? null : "none")
                 ;
             }
 
-            this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-            this.listenTo (this.colourScaleModel, "colourModelChanged", function() { this.render ({noRescale:true, recolourOnly: true}); } /*relayout*/); // have details (range, domain) of distance colour model changed?
+            this.listenTo (this.model, "filteringDone", this.render);   // listen for custom filteringDone event from model
+            this.listenTo (this.model, "currentColourModelChanged", function() { this.render ({noAxesRescale: true, recolourOnly: true}); }); // have details (range, domain, colour) of current colour model changed?
+            this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
             
@@ -207,30 +240,56 @@
             
             options = options || {};
             
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
-                var series = this.getRelevantCrossLinkDistances();
+                var measurements = this.getRelevantCrossLinkDistances(); //CrossLinkDistances();
+                var series = measurements.values;
                 var seriesLengths = _.pluck (series, "length");
 
                 // Add data and placeholders for random data
                 series.push ([]);
                 seriesLengths.push (this.randArrLength);  // we want to scale random distribution to unfiltered crosslink dataset size
                 
+                // Get colour model. If chosen colour model is non-categorical, default to distance colours.
+                var colModel = this.model.get("linkColourAssignment");
+                if (colModel.type === "linear") {
+                    colModel = CLMSUI.linkColour.distanceColoursBB;
+                }
+                this.colourScaleModel = colModel;
+                this.options.subSeriesNames = colModel.get("labels").range();
+                
                 // Add sub-series data
                 // split TT list into sublists for length
-                var colModel = this.colourScaleModel;
+                var splitSeries = d3.range(0, colModel.getDomainCount()).map (function () { return []; });
+                
+                /*
                 var colDomain = colModel.get("colScale").domain();
-                var splitSeries = [[],[],[]];
+                console.log ("colDomain", colDomain);
                 series[TT].forEach (function (val) {
-                    var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
+                    //var cat = d3.bisect (colDomain, val);
+                    var cat = colModel.getDomainIndex (val);
+                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
                     splitSeries[cat].push (val);
                 });
+                */
+                
+                console.log ("measurements", measurements);
+                // measurements.viableFilteredTargetLinks is 1-1 with measurements.values[0] (now series[TT])
+                measurements.viableFilteredTargetLinks.forEach (function (link, i) {
+                    var cat = colModel.getDomainIndex (link);
+                    //console.log ("cat", cat);
+                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
+                    splitSeries[cat].push (series[TT][i]);
+                });
+                
+                
                 splitSeries.forEach (function (subSeries) {
                     series.push (subSeries);
                     seriesLengths.push (subSeries.length);
                 });
+                console.log ("series", series, this.colourScaleModel);
                
                 // Add DD Decoys as temporary series for aggregation
                 var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
@@ -260,46 +319,54 @@
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
                 //console.log ("thresholds", thresholds);
-                
-                
-                
                 //console.log ("countArrays", countArrays);
 
-                
                 var redoChart = function () {
-                    var colMap = this.getSeriesColours();
-                    this.chart.load({
+                    var chartOptions = {
                         columns: countArrays,
-                        colors: colMap,
-                    });
+                        colors: this.getSeriesColours(),
+                    };
+                    if (options.newColourModel) {
+                        chartOptions.unload = true;
+                    }
+                    this.chart.load (chartOptions);
+                    if (this.chart.groups().length === 0 || options.newColourModel) {
+                         this.chart.groups ([this.options.subSeriesNames]);
+                    }
                     this
-                        .makeBarsSitBetweenTicks()
+                        //.makeBarsSitBetweenTicks()
                         .makeChartTitle(splitSeries)
                     ;
                 };
                 
-                 // Jiggery-pokery to stop c3 doing redraws on every single command (near enough)
+                 // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
                 var tempHandle = c3.chart.internal.fn.redraw;
                 c3.chart.internal.fn.redraw = function () {};
+                var tempTitleHandle = c3.chart.internal.fn.redrawTitle;
+                c3.chart.internal.fn.redrawTitle = function () {};
                 var chartInternal = this.chart.internal;
+                var shortcut = this.compareNewOldData (countArrays);
+                //console.log ("SHORTCUT", shortcut);
 
-                if (options.noRescale) {
-                    chartInternal.config.interaction_enabled = false; // don't recalc event rectangles, no need
+                if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
                         return arr[0] !== "Random";
                     });
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
-                    tempHandle.call (chartInternal, {withLegend: true});
-                    chartInternal.config.interaction_enabled = true;  // reset interaction flag
-                } else {
-                    var curMaxY = this.chart.axis.max().y;
-                    // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
-                    // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
-                    if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
-                        console.log ("resetting axis max from", curMaxY, "to", maxY, "nrs", options.noRescale);
-                        this.chart.axis.max({y: maxY});
-                    }
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: []});
+                    // Quicker way to just update c3 chart legend colours
+                    chartInternal.svg.selectAll("."+chartInternal.CLASS.legendItemTile).style("stroke", chartInternal.color);
+                    c3.chart.internal.fn.redrawTitle = tempTitleHandle;
+                } else if (shortcut) {  // doing something where we don't need to rescale x axes (filtering existing data usually)
+                    this.resetMaxY();
+                    redoChart.call (this);
+                    c3.chart.internal.fn.redraw = tempHandle;
+                    tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: ["axisY"]});
+                    c3.chart.internal.fn.redrawTitle = tempTitleHandle;
+                } else {    // normal
+                    this.resetMaxY();
+                    c3.chart.internal.fn.redrawTitle = tempTitleHandle;
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
                     tempHandle.call (chartInternal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
@@ -311,10 +378,23 @@
             return this;
         },
         
+        // only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
+        // so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
+        resetMaxY: function (maxY) {
+            var curMaxY = this.chart.axis.max().y;
+            if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
+                console.log ("resetting axis max from", curMaxY, "to", maxY);
+                this.chart.axis.max({y: maxY});
+            }
+            return this;
+        },
+        
         // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
-        makeBarsSitBetweenTicks: function () {
-            var internal = this.chart.internal;
-            var halfBarW = internal.getBarW (internal.xAxis, 1) / 2;
+        makeBarsSitBetweenTicks: function (chartObj) {
+            var internal = chartObj || this.chart.internal;
+            //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
+            var halfBarW = internal.getBarW (internal.xAxis, 1) / 2 || 0;
+            d3.select(this.el).selectAll(".c3-event-rects").attr("transform", "translate("+halfBarW+",0)");
             d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
             return this;
         },
@@ -336,6 +416,29 @@
             return this;
         },
         
+        // See if new and old data are of the same series and of the same lengths
+        // (we can then shortcut the c3 drawing code somewhat)
+        compareNewOldData: function (newData) {
+            var oldData = this.chart.data();
+            //console.log ("oldData", this.chart, oldData, newData);
+            if (oldData.length !== newData.length) {
+                return false;
+            }
+            var oldNewMatch = newData.every (function (newSeries) {
+                var oldSeries = this.chart.data.values(newSeries[0]);
+                return oldSeries && oldSeries.length === newSeries.length - 1;
+            }, this);
+            
+            //console.log ("match", oldNewMatch);
+            return oldNewMatch;
+        },
+        
+        useDifferentColourModel: function () {
+        
+            this.render({newColourModel: true});
+            return this;
+        },
+        
         getRelevantCrossLinkDistances: function () {
             /*
             var filteredCrossLinks = this.model.getFilteredCrossLinks ("all");   
@@ -351,13 +454,46 @@
             });
             console.log ("links", links);
             */
-            var links = [this.model.getFilteredCrossLinks (), this.model.getFilteredCrossLinks ("decoysTD"), this.model.getFilteredCrossLinks ("decoysDD")];
+            var links = [
+                this.model.getFilteredCrossLinks (), 
+                this.model.getFilteredCrossLinks ("decoysTD"), 
+                this.model.getFilteredCrossLinks ("decoysDD")
+            ];
             
-            return [
-                this.model.getCrossLinkDistances (links[0]),    // TT
+            var distances = [
+                this.model.getCrossLinkDistances (links[0], {includeUndefineds: true}),    // TT
                 this.model.getCrossLinkDistances (links[1], {calcDecoyProteinDistances: true}),  // TD
                 this.model.getCrossLinkDistances (links[2], {calcDecoyProteinDistances: true}),  // DD
             ];
+            
+            links[0] = links[0].filter (function (link, i) {
+                return distances[0][i] !== undefined;    
+            });
+            distances[0] = distances[0].filter (function (dist) { return dist !== undefined; });
+            
+            return {
+                viableFilteredTargetLinks: links[0],
+                values: distances,
+            };
+        },
+        
+        getRelevantMatchCount: function () {
+            var links = [
+                this.model.getFilteredCrossLinks (), 
+                this.model.getFilteredCrossLinks ("decoysTD"), 
+                this.model.getFilteredCrossLinks ("decoysDD")
+            ];
+            
+            var counts = links.map(function (linkArr) {
+                return linkArr.map (function (link) {
+                    return link.filteredMatches_pp.length;    
+                });
+            });
+
+            return {
+                viableFilteredTargetLinks: links[0],
+                values: counts,
+            };
         },
         
         aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
@@ -410,7 +546,8 @@
 
         recalcRandomBinning: function () {
             // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
-            var distArr = this.getRelevantCrossLinkDistances();
+            var measurements = this.getRelevantCrossLinkDistances();
+            var distArr = measurements.values;
             var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
             console.log ("model", this.model);
             var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
@@ -441,16 +578,16 @@
             ;   
             //this.redrawColourRanges();
             this.chart.resize();
-            this.makeBarsSitBetweenTicks ();
+            //this.makeBarsSitBetweenTicks (this.chart.internal);
             return this;
         },
         
         getSeriesColours: function () {
+            var colScale = this.colourScaleModel.get("colScale");
+            /*
             var colModel = this.colourScaleModel;
-            var colScale = colModel.get("colScale");
             var colLabels = colModel.get("labels");
             var colDomain = colScale.domain();
-            /*
             this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
             */
             

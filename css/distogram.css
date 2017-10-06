@@ -15,3 +15,12 @@
 .distoDiv .c3-title {
     font-size: 1.25em;
 }
+
+.distoDiv rect.c3-event-rect:hover {
+    /*
+    stroke: black;
+    stroke-width: 1;
+    stroke-opacity: 0.3;
+    */
+    fill-opacity: 0.1;
+}

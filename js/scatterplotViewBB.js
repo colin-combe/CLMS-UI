@@ -15,8 +15,9 @@
       }
       return _.extend({},parentEvents,{
         "mousemove .scatterplotBackground": "doTooltip",
-        "mousemove .background": "doTooltip",
-        "mousemove .extent": "doTooltip",
+        "mousemove .background": "doHighlightAndTooltip",
+        "mousemove .extent": "doHighlightAndTooltip",
+        "mouseleave .background": "clearHighlightAndTooltip",
         "click .jitter": "toggleJitter",
       });
     },
@@ -40,12 +41,12 @@
         
         var scatterOptions = [
             {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
+            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
             {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cross-Link Distance", decimalPlaces: 2},
         ];
         
@@ -78,29 +79,14 @@
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
         // Add two select widgets for picking axes data types
-        var selects = this.controlDiv.selectAll("select")
-            .data(["X", "Y"])
-            .enter()
-            .append ("label")
-            .attr ("class", "btn")
-                .append ("span")
-                .attr ("class", "noBreak")
-                .text (function(d) { return d+" Axis Attribute"; })
-        ;
-        
-        selects.append("select")
-            .on ("change", function() {
-                self
-                    .axisChosen ()
-                    .render()
-                ;
-            })
-            .selectAll("option")
-            .data (scatterOptions)
-                .enter()
-                .append ("option")
-                .text (function(d) { return d.label; })
-        ;
+        CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: this.controlDiv, 
+            selectList: ["X", "Y"], 
+            optionList: scatterOptions, 
+            selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+            optionLabelFunc: function (d) { return d.label; }, 
+            changeFunc: function () { self.axisChosen().render(); },
+        });
         
         // Add jitter toggle checkbox
         var toggleButtonData = [
@@ -178,27 +164,12 @@
         
         // Brush
         var brushEnded = function (options) {
-            var xData = self.getAxisData ("X", true).data;
-            var yData = self.getAxisData ("Y", true).data;
-            var filteredCrossLinks = self.model.getFilteredCrossLinks ();
-            var extent = self.brush.extent();
-            var matchingLinks = filteredCrossLinks.filter (function (link, i) {
-                var xDatum = xData[i];
-                var yDatum = yData[i];
-                var bool = xDatum && xDatum.some (function (xd) {
-                    return xd >= extent[0][0] && xd <= extent[1][0];
-                });
-                bool = bool && yDatum && yDatum.some (function (yd) {
-                    return yd >= extent[0][1] && yd <= extent[1][1];
-                });
-                return bool;
-            });
-            
-            var type = options && options.select ? "selection" : "highlights";
-            //console.log ("type", options, type);
-            var add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
-            self.model.calcMatchingCrosslinks (type, matchingLinks, true, add);
+            options = options || {};
+            options.extent = self.brush.extent();
+            options.add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
+            self.selectPoints (options);
         };
+        
         var brushSnap = function () {
             if (d3.event.sourceEvent.type === "brush") { return; }
             var meta = self.getBothAxesMetaData();
@@ -244,15 +215,16 @@
             .y(self.y)
             //.clamp ([false, false])
             .on("brush", brushSnap)
-            .on("brushend", brushEnded)
+            .on("brushend", function() { brushEnded ({select: true}); })
         ;
+        
         // Restore when match selection is sorted out
-        /*
         this.scatg.append("g")
             .attr("class", "brush")
             .call(self.brush)
         ;
-        */
+        
+        
         this.scatg.select(".resize.n").append("text");
         this.scatg.select(".resize.e").append("text");
         
@@ -265,23 +237,62 @@
             })
         ;
         
-        // select brushed elements on right-click
-        this.scatg.select(".extent")
-            .on ("contextmenu", function () {
-                d3.event.preventDefault();
-                brushEnded ({select: true});
-            })
-        ;
-        
         // Listen to these events (and generally re-render in some fashion)
-        this.listenTo (this.model, "change:selection", this.recolourCrossLinks);
-        this.listenTo (this.model, "change:highlights", this.recolourCrossLinks);
+        this.listenTo (this.model, "selectionMatchesLinksChanged", this.recolourCrossLinks);
+        this.listenTo (this.model, "highlightsMatchesLinksChanged", this.recolourCrossLinks);
         this.listenTo (this.model, "filteringDone", this.renderCrossLinks);
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
         
         this.axisChosen().render();     // initial render with defaults
+    },
+        
+    // options.extent = area of selection in data coordinates if we're not picking it up from the brush
+    // options.add = add to existing selections
+    // options.select = true for selections, false for highlight
+    selectPoints: function (options) {
+        options = options || {};
+        var xAxisData = this.getAxisData ("X", true);
+        var yAxisData = this.getAxisData ("Y", true);
+        var xData = xAxisData.data;
+        var yData = yAxisData.data;
+        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
+        var extent = options.extent || this.brush.extent();
+        var matchLevel = xAxisData.matchLevel || yAxisData.matchLevel;
+
+        var add = options.add || false;
+        var type = options.select ? "selection" : "highlights";
+        //console.log ("type", options, type, matchLevel, xAxisData);
+
+        if (matchLevel) {
+            var matchingMatches = filteredCrossLinks.map (function (link, i) {
+                var xDatum = xData[i];
+                var yDatum = yData[i];
+
+                var passMatches = (xDatum && yDatum) ? link.filteredMatches_pp.filter (function (match, ii) {
+                    var xd = xDatum.length === 1 ? xDatum[0] : xDatum[ii];
+                    var yd = yDatum.length === 1 ? yDatum[0] : yDatum[ii];
+                    return (xd >= extent[0][0] && xd <= extent[1][0] && yd >= extent[0][1] && yd <= extent[1][1]);
+                }) : [];
+                return passMatches;
+            });
+            var allMatchingMatches = d3.merge (matchingMatches);
+            this.model.setMarkedMatches (type, allMatchingMatches, true, add);
+        } else {
+            var matchingLinks = filteredCrossLinks.filter (function (link, i) {
+                var xDatum = xData[i];
+                var yDatum = yData[i];
+                var bool = xDatum && xDatum.some (function (xd) {
+                    return xd >= extent[0][0] && xd <= extent[1][0];
+                });
+                bool = bool && yDatum && yDatum.some (function (yd) {
+                    return yd >= extent[0][1] && yd <= extent[1][1];
+                });
+                return bool;
+            });
+            this.model.setMarkedCrossLinks (type, matchingLinks, true, add);
+        }
     },
         
     relayout: function () {
@@ -293,10 +304,6 @@
         this.options.jitter = !this.options.jitter;
         this.render();
         return this;
-    },
-        
-    brushEnded: function () {
-                           
     },
         
     getData: function (func, filteredFlag, optionalLinks) {
@@ -328,7 +335,7 @@
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
         var data = this.getData (funcMeta ? funcMeta.func : undefined, filteredFlag, optionalLinks);
-        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased};
+        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false};
     },
         
     getBothAxesMetaData: function () {
@@ -368,12 +375,16 @@
         ;
         
         if (!this.brush.empty()) {
-            this.model.calcMatchingCrosslinks ("highlights", [], false, false);
+            this.model.setMarkedCrossLinks ("highlights", [], false, false);
         }
         this.brush.clear();
           
         return this;
     }, 
+        
+    doHighlightAndTooltip: function (evt) {
+        return this.doTooltip(evt).doHighlight(evt);
+    },
         
     doTooltip: function (evt) {
         var axesMetaData = this.getBothAxesMetaData();
@@ -383,7 +394,8 @@
         var vals = [
             this.x.invert (CLMSUI.utils.crossBrowserElementX (evt, background) + margin),
             this.y.invert (CLMSUI.utils.crossBrowserElementY (evt, background) + margin),
-        ];
+        ];     
+        
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
             var val = commaFormat (d3.round (vals[i], axisMetaData.decimalPlaces));
             return [axisMetaData.label, val];    
@@ -395,15 +407,45 @@
             .set("location", evt)
         ;
         this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
+        return this;
     },
         
-
+    doHighlight: function (evt) {
+        var background = d3.select(this.el).select(".background").node();
+        var margin = this.options.chartMargin;
+        var x = CLMSUI.utils.crossBrowserElementX (evt, background) + margin;
+        var y = CLMSUI.utils.crossBrowserElementY (evt, background) + margin;
+        var sortFunc = function (a,b) { return a - b; };
+        var xrange = [this.x.invert (x - 20), this.x.invert (x + 20)].sort (sortFunc);
+        var yrange = [this.y.invert (y - 20), this.y.invert (y + 20)].sort (sortFunc);
+        var extent = [
+            [xrange[0], yrange[0]],
+            [xrange[1], yrange[1]],
+        ]; 
+        this.selectPoints ({extent: extent, add: evt.shiftKey || evt.ctrlKey});
+        return this;
+    },
+        
+    clearHighlightAndTooltip: function () {
+        return this.clearHighlight().clearTooltip();    
+    },
+        
+    clearTooltip: function () {
+        this.model.get("tooltipModel").set("contents", null);
+        return this;
+    },
+        
+    clearHighlight: function () {
+        this.model.setMarkedCrossLinks ("highlights", [], false, false);
+        return this;
+    },
+        
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (this.isVisible()) {
             console.log ("SCATTERPLOT RENDER");
             this
                 .resize()
-                .renderCrossLinks ()
+                .renderCrossLinks ({isVisible: true})
             ;
         }
         return this;
@@ -417,9 +459,9 @@
         
 
     renderCrossLinks: function (options) {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-            
-            options = options || {};
+        options = options || {};
+        
+        if (options.isVisible || this.isVisible()) {
             
             var pointSize = this.options.pointSize;
             
@@ -427,15 +469,15 @@
             var colourScheme = this.model.get("linkColourAssignment");
 
             var filteredCrossLinks = this.model.getFilteredCrossLinks ();
-            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.get("selection"), "id"));
-            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.get("highlights"), "id"));
+            var selectedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("selection"), "id"));
+            var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("highlights"), "id"));
             
-            var radixSortBuckets = [[],[],[]]; // 3 groups
-            filteredCrossLinks.forEach (function (link) {
-                var bucketIndex = highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
-                radixSortBuckets[bucketIndex].push (link);
+            var selectedMatchMap = this.model.getMarkedMatches ("selection");
+            var highlightedMatchMap = this.model.getMarkedMatches ("highlights");
+            
+            var sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (3, filteredCrossLinks, function (link) {
+                return highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
             });
-            filteredCrossLinks = d3.merge (radixSortBuckets);
             
             var makeCoords = function (datax, datay) {
                 return datax.data.map (function (xd, i) {
@@ -461,16 +503,6 @@
                     pairs = pairs.filter (function (pair) {
                         return pair[0] !== undefined && pair[1] !== undefined;
                     });
-                    
-                    /*
-                    pairs.sort (function (p1, p2) {
-                        var z = p1[0] - p2[0];
-                        if (!z) {
-                            z = p1[1] - p2[1];
-                        }
-                        return z;
-                    });
-                    */
                     
                     return pairs;
                 });
@@ -534,18 +566,19 @@
             ctx.fillRect (0, 0, canvasNode.width, canvasNode.height);
             ctx.imageSmoothingEnabled = false;
             
-            var datax = this.getAxisData ("X", true, filteredCrossLinks);
-            var datay = this.getAxisData ("Y", true, filteredCrossLinks);
-
+            var datax = this.getAxisData ("X", true, sortedFilteredCrossLinks);
+            var datay = this.getAxisData ("Y", true, sortedFilteredCrossLinks);
+            var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
             
-            filteredCrossLinks.forEach (function (link, i) {
-                var high = highlightedCrossLinkIDs.has (link.id);
-                var selected = selectedCrossLinkIDs.has (link.id);
+            //console.log ("ddd", datax, datay, filteredCrossLinks, coords);
+
+            sortedFilteredCrossLinks.forEach (function (link, i) {
+                var high = !matchLevel && highlightedCrossLinkIDs.has (link.id);
+                var selected = !matchLevel && selectedCrossLinkIDs.has (link.id);
                 var jitter = this.options.jitter;
-                ctx.fillStyle = high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
                 ctx.strokeStyle = high || selected ? "black" : null;
-                //.style ("stroke-opacity", high || selected ? 0.4 : null)
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
@@ -564,9 +597,17 @@
                     ctx.stroke();
                 }
                 */
-                coords[i].forEach (function (coord) {
+                
+                coords[i].forEach (function (coord, ii) {
                     //var xr = (Math.random() - 0.5);
                     //var yr = (Math.random() - 0.5);
+                    if (matchLevel) {
+                        var match = link.filteredMatches_pp[ii].match;
+                        high = highlightedMatchMap.has (match.id);
+                        selected = selectedMatchMap.has (match.id);
+                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                        ctx.strokeStyle = high || selected ? "black" : null;
+                    }
                     var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
                     var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - (pointSize / 2);
                     x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)

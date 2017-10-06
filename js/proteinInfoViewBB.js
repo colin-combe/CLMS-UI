@@ -48,7 +48,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         render: function () {
             // only render if visible
             console.log ("prot info render called");
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+            if (this.isVisible()) {
                 var dataSource = this.model.get("selectedProtein");
                 var prots = dataSource ? CLMS.arrayFromMapValues(dataSource) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
@@ -84,7 +84,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .on ("click", function() {
                         var idArray = self.splitDataAttr (d3.select(this), "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
-                        self.model.calcMatchingCrosslinks ("selection", crossLinks, true, d3.event.ctrlKey);
+                        self.model.setMarkedCrossLinks ("selection", crossLinks, true, d3.event.ctrlKey);
                     })
                     .on ("mouseover", function () {
                         //console.log ("model", self.model);
@@ -99,11 +99,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                             .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))
                             .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                         ;
-                        self.model.calcMatchingCrosslinks ("highlights", crossLinks, true, false);
+                        self.model.setMarkedCrossLinks ("highlights", crossLinks, true, false);
                     })
                     .on ("mouseout", function() {
                         self.model.get("tooltipModel").set("contents", null);
-                        self.model.set ("highlights", []);
+                        self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                 ;
                 
@@ -116,10 +116,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         showState: function () {
             var self = this;
             //console.log ("in prot info filter");
-            if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
-                var selectedLinks = self.model.get("selection");
+            if (this.isVisible()) {
+                var selectedLinks = self.model.getMarkedCrossLinks ("selection");
                 var selidset = d3.set (_.pluck (selectedLinks, "id"));
-                var highlightedLinks = self.model.get("highlights");
+                var highlightedLinks = self.model.getMarkedCrossLinks ("highlights");
                 var highidset = d3.set (_.pluck (highlightedLinks, "id"));
                 
                 d3.select(this.el).selectAll("span.hit")
@@ -127,11 +127,24 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var d3sel = d3.select(this);
                         var idArray = self.splitDataAttr (d3sel, "data-linkids");
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
-                        d3sel.classed ("filteredOutResidue", crossLinks.length === 0);
+                        //d3sel.classed ("filteredOutResidue", crossLinks.length === 0);
                         var selYes = crossLinks.some (function (xlink) { return selidset.has(xlink.id); }); 
-                        d3sel.classed ("selected", selYes);
+                        //d3sel.classed ("selected", selYes);
                         var highYes = crossLinks.some (function (xlink) { return highidset.has(xlink.id); }); 
-                        d3sel.classed ("highlighted", highYes);
+                        //d3sel.classed ("highlighted", highYes);
+                    
+                        // setting attr("class") once as a string is multiple times quicker than 3x .classed calls (roughly 5-6x quicker)
+                        var classStr = ["hit"]; // maintain the span element's hit class state
+                        if (crossLinks.length === 0) {
+                            classStr.push ("filteredOutResidue");
+                        }
+                        if (selYes) {
+                            classStr.push ("selected");
+                        }
+                        if (highYes) {
+                            classStr.push ("highlighted");
+                        }
+                        d3sel.attr ("class", classStr.join(" "));
                     })
                 ;
             }
@@ -162,7 +175,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         makeInteractiveSeqString: function (protein, seq, xlinks, filterDecoys) {
             var proteinId = protein.id;
             if (filterDecoys) {
-                xlinks = xlinks.filter (function(xlink) { return !xlink.fromProtein.is_decoy && !xlink.toProtein.is_decoy; });
+                xlinks = xlinks.filter (function(xlink) { return !xlink.isDecoyLink(); });
             }
             var map = d3.map (xlinks, function(d) { return d.id; });
             var endPoints = {};
@@ -173,7 +186,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     endPoints[fromRes].push (xlink);
                 }
                 //added check for no toProtein (for linears)
-                if (xlink.toProtein && proteinId === xlink.toProtein.id) { 
+                if (!xlink.isLinearLink() && xlink.isSelfLink()) { 
                     var toRes = xlink.toResidue;
                     endPoints[toRes] = endPoints[toRes] || [];
                     endPoints[toRes].push (xlink);

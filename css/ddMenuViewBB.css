@@ -6,6 +6,8 @@
     border: 1px solid #fff;
     box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
     display: none;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .dropdown .menuTitle:hover {
@@ -19,10 +21,13 @@
 
 .dropdown DIV LI .btn {
     font-size: inherit;
-    display: table-cell;
+    /*display: table-cell;*/
+    display: inline-block;
     width: 100%; 
     text-align: left;
-
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 1.75em;
 }
 
 .dropdown DIV LI:hover {

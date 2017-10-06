@@ -90,90 +90,75 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var allReps = NGL.RepresentationRegistry.names.slice().sort();
         var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"];
         var mainReps = _.difference (allReps, ignoreReps);
-        var repSection = toolbar
-            .append ("label")
-            .attr ("class", "btn")
-                .append ("span")
-                .attr("class", "noBreak")
-                .text ("Chain Representation")
-        ;
-        repSection.append("select")
-            .on ("change", function () {
+        CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: toolbar,
+            selectList: ["Label Representation"], 
+            optionList: mainReps, 
+            changeFunc: function () {
                 if (self.xlRepr) {
                     self.options.chainRep = d3.event.target.value;
                     self.xlRepr.updateOptions (self.options, ["chainRep"]);
                     self.xlRepr.replaceChainRepresentation (self.options.chainRep);
                 }
-            })
-            .selectAll("option")
-            .data (mainReps)
-            .enter()
-            .append("option")
-            .text (function(d) { return d; })
-            .property ("selected", function(d) { return d === self.options.chainRep; })
-        ;
+            },
+            initialSelectionFunc: function(d) { return d === self.options.chainRep; }
+        });
+        
         
         // Residue colour scheme dropdown
-        
         var allColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
         var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"];
         var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
         var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference (allColourSchemes, ignoreColourSchemes);
-        var colourSection = toolbar
-            .append ("label")
-            .attr ("class", "btn")
-                .append ("span")
-                .attr("class", "noBreak")
-                .text ("Colour By")
-        ;
-        colourSection.append("select")
-            .on ("change", function () {
-                if (self.xlRepr) {
-                    var index = d3.event.target.selectedIndex;
-                    var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: undefined, colorValue: 0x808080};
-                    // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
-                    
-                    if (schemeObj.colorScheme !== "uniform") {
-                        var structure = self.model.get("stageModel").get("structureComp").structure;
-                        var scheme = NGL.ColormakerRegistry.getScheme ({scheme: schemeObj.colorScheme, structure: structure});
-                        var newSchemeClass = function (params) {
-                            this.subScheme = scheme; //params.subScheme;
-                            this.greyness = 0.6;
-
-                            this.atomColor = function (a) {
-                                var c = this.subScheme.atomColor (a);
-                                var notGrey = 1 - this.greyness;
-                                var greyComp = 176 * this.greyness;
-
-                                var cR = (((c & 0xff0000) >> 16) * notGrey) + greyComp;
-                                var cG = (((c & 0xff00) >> 8) * notGrey) + greyComp;
-                                var cB = ((c & 0xff) * notGrey) + greyComp;
-
-                                return (cR << 16 | cG << 8 | cB);
-                            };
-                        };
-
-                        schemeObj.colorScheme = NGL.ColormakerRegistry.addScheme (newSchemeClass, "custom");
-                    }
-
-                    self.options.colourScheme = schemeObj.colorScheme;
-                    self.xlRepr.updateOptions (self.options, ["colourScheme"]);   
-                    
-                    self.xlRepr.resRepr.setParameters (schemeObj);
-                    self.xlRepr.sstrucRepr.setParameters (schemeObj);
-                    self.xlRepr.labelRepr.setParameters (labellable.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
-                }
-            })
-            .selectAll("option")
-            .data (mainColourSchemes)
-            .enter()
-            .append("option")
-            .text (function(d) { return aliases[d] || d; })
-            .property ("selected", function(d) { return d === self.options.colourScheme; })
-        ;
         
+        var colourChangeFunc = function () {
+            if (self.xlRepr) {
+                var index = d3.event.target.selectedIndex;
+                var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: undefined, colorValue: 0x808080};
+                // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
 
+                if (schemeObj.colorScheme !== "uniform") {
+                    var structure = self.model.get("stageModel").get("structureComp").structure;
+                    var scheme = NGL.ColormakerRegistry.getScheme ({scheme: schemeObj.colorScheme, structure: structure});
+                    var newSchemeClass = function (params) {
+                        this.subScheme = scheme; //params.subScheme;
+                        this.greyness = 0.6;
+
+                        this.atomColor = function (a) {
+                            var c = this.subScheme.atomColor (a);
+                            var notGrey = 1 - this.greyness;
+                            var greyComp = 176 * this.greyness;
+
+                            var cR = (((c & 0xff0000) >> 16) * notGrey) + greyComp;
+                            var cG = (((c & 0xff00) >> 8) * notGrey) + greyComp;
+                            var cB = ((c & 0xff) * notGrey) + greyComp;
+
+                            return (cR << 16 | cG << 8 | cB);
+                        };
+                    };
+
+                    schemeObj.colorScheme = NGL.ColormakerRegistry.addScheme (newSchemeClass, "custom");
+                }
+
+                self.options.colourScheme = schemeObj.colorScheme;
+                self.xlRepr.updateOptions (self.options, ["colourScheme"]);   
+
+                self.xlRepr.resRepr.setParameters (schemeObj);
+                self.xlRepr.sstrucRepr.setParameters (schemeObj);
+                self.xlRepr.labelRepr.setParameters (labellable.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
+            }
+        };
+        
+        CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: toolbar,
+            selectList: ["Colour By"], 
+            optionList: mainColourSchemes, 
+            selectLabelFunc: function (d) { return aliases[d] || d; },
+            changeFunc: colourChangeFunc,
+            initialSelectionFunc: function(d) { return d === self.options.colourScheme; }
+        });
+        
 
         this.chartDiv = flexWrapperPanel.append("div")
             .attr ({class: "panelInner", "flex-grow": 1, id: "ngl"})
@@ -233,7 +218,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 selectedColor: "yellow",
                 selectedLinksColor: "yellow",
                 sstrucColor: "gray",
-                displayedLabelColor: "gray",
+                displayedLabelColor: "black",
                 displayedLabelVisible: this.options.labelVisible,
                 colourScheme: this.options.colourScheme,
                 showAllProteins: this.options.showAllProteins,
@@ -244,7 +229,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     render: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el)) {
+        if (this.isVisible()) {
             this.showFiltered();
             console.log ("re rendering NGL view");
         }
@@ -330,7 +315,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     rerenderColours: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             console.log ("rerendering ngl");
             // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
@@ -340,21 +325,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     showHighlighted: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
     showSelected: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
     showFiltered: function () {
-        if (CLMSUI.utils.isZeptoDOMElemVisible (this.$el) && this.xlRepr) {
+        if (this.xlRepr && this.isVisible()) {
             //~ var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var stageModel = this.model.get("stageModel");
             var filteredCrossLinks = this.model.getFilteredCrossLinks();
@@ -401,12 +386,13 @@ CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
         colourScheme: "uniform",
         chainRep: "cartoon",
         sstrucColor: "wheat",
-        displayedLabelColor: "grey",
-        selectedLabelColor: "black",
-        highlightedLabelColor: "black",
+        displayedLabelColor: "black",
+        selectedLabelColor: "#440",
+        highlightedLabelColor: "#420",
         displayedLabelVisible: false,
         selectedLabelVisible: true,
         highlightedLabelVisible: true,
+        labelSize: 3.0,
         displayedResiduesColor: params.displayedColor || "lightgrey",
         displayedLinksColor: params.displayedColor || "lightblue",
         selectedResiduesColor: params.selectedColor || "lightgreen",
@@ -548,13 +534,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var xlPairEmph = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "selection"));
         var xlPairHigh = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "highlights"));
         var baseLinkScale = 3;
-        var labelSize = 2.0;
         
         this.linkRepr = comp.addRepresentation ("distance", {
             atomPair: xlPair,
             //colorValue: this.displayedLinksColor,
             colorScheme: this.colorOptions.linkColourScheme,
-            labelSize: labelSize,
+            labelSize: this.options.labelSize,
             labelColor: this.options.displayedLabelColor,
             labelVisible: this.options.displayedLabelVisible,
             labelUnit: "angstrom",
@@ -567,7 +552,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkEmphRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairEmph,
             colorValue: this.options.selectedLinksColor,
-            labelSize: labelSize,
+            labelSize: this.options.labelSize,
             labelColor: this.options.selectedLabelColor,
             labelVisible: this.options.selectedLabelVisible,
             labelUnit: "angstrom",
@@ -580,7 +565,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.linkHighRepr = comp.addRepresentation ("distance", {
             atomPair: xlPairHigh,
             colorValue: this.options.highlightedLinksColor,
-            labelSize: labelSize,
+            labelSize: this.options.labelSize,
             labelColor: this.options.highlightedLabelColor,
             labelVisible: this.options.highlightedLabelVisible,
             labelUnit: "angstrom",
@@ -769,7 +754,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         }
         //console.log ("pd and pdtrans", pickingData, pdtrans.xlinks);
         
-        crosslinkData.getModel().calcMatchingCrosslinks (pickType, pdtrans.xlinks, false, add);
+        crosslinkData.getModel().setMarkedCrossLinks (pickType, pdtrans.xlinks, false, add);
     },
 
 
@@ -855,11 +840,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     
 
     setDisplayedResidues: function (residues) {
-        console.log ("set displayed residues");
         var availableResidues = this._getAvailableResidues (residues);
+        var a = performance.now();
         this.resRepr.setSelection (
             this.crosslinkData.getSelectionFromResidue (availableResidues)
         );
+        console.log ("set displayed residues, time", performance.now() - a);
     },
 
     setSelectedResidues: function (residues) {
@@ -878,7 +864,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     filterByModelLinkArray: function (links, linkType) {  
-        var selectedSet = d3.set (_.pluck (this.crosslinkData.getModel().get(linkType), "id"));
+        var selectedSet = d3.set (_.pluck (this.crosslinkData.getModel().getMarkedCrossLinks(linkType), "id"));
         return links.filter (function (l) {
             return selectedSet.has (l.origId);   
         });

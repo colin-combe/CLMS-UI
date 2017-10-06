@@ -2,30 +2,38 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.fdr = function (crossLinksArr, options) {
     
-    var threshold = options.threshold;  // can be legitimately undefined to have no fdr   
-    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
-    // Work out link score based on a function of the related match scores
-    // Ignore matches that don't meet data subset filter
-    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
-    
     var defaultScoreCalcFunc = function (crossLink) {      // default function is based on quadratic mean (rms)
         var filtered = crossLink.matches_pp
             .filter (function (match_pp) {
+                // filter out matches which don't pass current subset filter (used to be just peptide length we considered here)
                 return filterModel.subsetFilter (match_pp.match, proteinMatchFunc);
-                //~ return match_pp.match.matchedPeptides[0].sequence.length > peptideLength
-                //~ && match_pp.match.matchedPeptides[1].sequence.length > peptideLength;
             })
         ;
         return Math.sqrt (d3.mean (filtered, function(match_pp) { return match_pp.match.score * match_pp.match.score; }) || 0);
     };
-    var scoreCalcFunc = options.scoreCalcFunc || defaultScoreCalcFunc;
     
+    // 'threshold' can be legitimately undefined to have no fdr   
+    options = _.extend ({}, {scoreCalcFunc: defaultScoreCalcFunc, threshold: undefined, filterLinears: false}, options);
+    
+    var filterModel = options.filterModel;
+    var clmsModel = options.CLMSModel;
+    if (!filterModel || !clmsModel) {
+        return null;
+    }
+    
+    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
+    
+    // Work out link score based on a function of the related match scores
     var clCount = crossLinksArr.length;
     for (var i = 0; i < clCount; ++i) {
 		var crossLink = crossLinksArr[i];
         crossLink.meta = crossLink.meta || {};
-        crossLink.meta.meanMatchScore = scoreCalcFunc (crossLink);
+        crossLink.meta.meanMatchScore = options.scoreCalcFunc (crossLink);
+    }
+    
+    // filter out linears
+    if (options.filterLinears) {
+        crossLinksArr = crossLinksArr.filter (function (link) { return !link.isLinearLink(); });
     }
     
     // Divide crosslinks into inter and intra-protein groups, and sort them by the scores just calculated
@@ -39,14 +47,14 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     
     // What kind of link is this, TT, DT or DD? (0, 1 or 2)
     function decoyClass (link) {
-        return (link.fromProtein.is_decoy ? 1 : 0) + (/*link.toProtein &&*/ link.toProtein.is_decoy ? 1 : 0);
+        return (link.fromProtein.is_decoy ? 1 : 0) + ((!link.toProtein || link.toProtein.is_decoy) ? 1 : 0);
     }
     
     // Loop through both groups and work out the fdr
     var fdrResult = linkArrs.map (function (linkArr, index) {
         var fdr = 1, t = [0,0,0,0], cutoffIndex = 0, runningFdr = [], fdrScoreCutoff;
         
-        if (linkArr.length && threshold !== undefined) {
+        if (linkArr.length && options.threshold !== undefined) {
             // first run, count tt, td, and dd
             linkArr.forEach (function (link) {
                 if (link.meta.meanMatchScore > 0) {
@@ -75,9 +83,9 @@ CLMSUI.fdr = function (crossLinksArr, options) {
                     t[decoyClass(link)]--;
                 }
                 i++;
-                if (fdr <= threshold && cutoffIndex === 0) {
+                if (fdr <= options.threshold && cutoffIndex === 0) {
                     cutoffIndex = i;
-                    //console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
+                    console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
                 }
             });
 
@@ -92,11 +100,11 @@ CLMSUI.fdr = function (crossLinksArr, options) {
             if (false) {
                 console.log (arrLabels[index]+" post totals tt td dd (should be zero)", t);
                 console.log ("runningFdr", runningFdr, "final fdr", fdr);
-                console.log (fdr, "fdr of",threshold,"met or lower at index",cutoffIndex,"link",lastLink,"and fdr score", fdrScoreCutoff);
+                console.log (fdr, "fdr of", options.threshold, "met or lower at index", cutoffIndex, "link", lastLink, "and fdr score", fdrScoreCutoff);
             }
         }
 
-        return {label: arrLabels[index], index: cutoffIndex, fdr: fdrScoreCutoff, totals: t, thresholdMet: fdr !== undefined && !(fdr > threshold)};
+        return {label: arrLabels[index], index: cutoffIndex, fdr: fdrScoreCutoff, totals: t, thresholdMet: fdr !== undefined && !(fdr > options.threshold)};
     });
     
     return fdrResult;
