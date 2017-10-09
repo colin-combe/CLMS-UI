@@ -114,6 +114,12 @@
                     ondragend: function (extent) {
                         console.log ("extent", extent);
                     },
+                    onclick: function (d, elem) {
+                        self.highlightOrSelect ("selection", this.data(), d);
+                    },
+                    onmouseover: function (d) {
+                        self.highlightOrSelect ("highlights", this.data(), d);
+                    },
                     order: null,
                 },
                 bar: {
@@ -209,12 +215,15 @@
                     }
                     self.makeBarsSitBetweenTicks (this);
                 },
+                onmouseout: function () {
+                    self.model.setMarkedCrossLinks ("highlights", [], false, false);
+                },
             });
 
             
             function distancesAvailable () {
                 console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
-                this.recalcRandomBinning();
+                this.options.reRandom = true;
                 this.render();
                 // hide random choice button if only 1 protein
                 var self = this;
@@ -244,13 +253,10 @@
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
-                var measurements = this.getRelevantCrossLinkDistances(); //CrossLinkDistances();
-                var series = measurements.values;
+                var measurements = this.getDataCount();
+                //var series = measurements.values;
+                var series = measurements.linksWithValues;
                 var seriesLengths = _.pluck (series, "length");
-
-                // Add data and placeholders for random data
-                series.push ([]);
-                seriesLengths.push (this.randArrLength);  // we want to scale random distribution to unfiltered crosslink dataset size
                 
                 // Get colour model. If chosen colour model is non-categorical, default to distance colours.
                 var colModel = this.model.get("linkColourAssignment");
@@ -264,24 +270,10 @@
                 // split TT list into sublists for length
                 var splitSeries = d3.range(0, colModel.getDomainCount()).map (function () { return []; });
                 
-                /*
-                var colDomain = colModel.get("colScale").domain();
-                console.log ("colDomain", colDomain);
-                series[TT].forEach (function (val) {
-                    //var cat = d3.bisect (colDomain, val);
-                    var cat = colModel.getDomainIndex (val);
-                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
-                    splitSeries[cat].push (val);
-                });
-                */
-                
-                console.log ("measurements", measurements);
-                // measurements.viableFilteredTargetLinks is 1-1 with measurements.values[0] (now series[TT])
-                measurements.viableFilteredTargetLinks.forEach (function (link, i) {
-                    var cat = colModel.getDomainIndex (link);
-                    //console.log ("cat", cat);
-                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
-                    splitSeries[cat].push (series[TT][i]);
+                //console.log ("measurements", measurements);
+                measurements.linksWithValues[TT].forEach (function (linkDatum) {
+                    var cat = colModel.getDomainIndex (linkDatum[0]);
+                    splitSeries[cat].push (linkDatum);
                 });
                 
                 
@@ -289,7 +281,7 @@
                     series.push (subSeries);
                     seriesLengths.push (subSeries.length);
                 });
-                console.log ("series", series, this.colourScaleModel);
+                //console.log ("series", series, this.colourScaleModel);
                
                 // Add DD Decoys as temporary series for aggregation
                 var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
@@ -299,7 +291,6 @@
                 var removeCatchAllCategory = true;
                 var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
                 
-                //console.log ("ca", countArrays, countArrays[DD]);
                 // Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
                 countArrays[TD].forEach (function (v, i) {
                     countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts  
@@ -394,8 +385,7 @@
             var internal = chartObj || this.chart.internal;
             //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
             var halfBarW = internal.getBarW (internal.xAxis, 1) / 2 || 0;
-            d3.select(this.el).selectAll(".c3-event-rects").attr("transform", "translate("+halfBarW+",0)");
-            d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+            d3.select(this.el).selectAll(".c3-event-rects,.c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
             return this;
         },
         
@@ -434,26 +424,30 @@
         },
         
         useDifferentColourModel: function () {
-        
             this.render({newColourModel: true});
             return this;
         },
         
         getRelevantCrossLinkDistances: function () {
-            /*
-            var filteredCrossLinks = this.model.getFilteredCrossLinks ("all");   
-            function decoyClass (link) {
-                return (link.fromProtein.is_decoy ? 1 : 0) + (link.toProtein.is_decoy ? 1 : 0);
-            }
-            var links = [[],[],[]];
+            var recalcRandomBinning = function (linkCount) {
+                var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
+                var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
+                //console.log ("ress", residueSets);
+                var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
+                    Math.min ((linkCount * 100) || 10000, 100000), 
+                    d3.values (residueSets),
+                    {intraOnly: this.options.intraRandomOnly}
+                );
+                var thresholds = this.getBinThresholds ([[]]);
+                var binnedData = d3.layout.histogram()
+                    .bins(thresholds)
+                    (randArr)
+                ;
+                console.log ("RANDOM", binnedData, randArr.length);
 
-            filteredCrossLinks.forEach (function (xlink) {
-                if (xlink.toProtein) {  // ignore linears
-                    links [decoyClass (xlink)].push (xlink);
-                }
-            });
-            console.log ("links", links);
-            */
+                return {data: binnedData, origSize: randArr.length};
+            };
+            
             var links = [
                 this.model.getFilteredCrossLinks (), 
                 this.model.getFilteredCrossLinks ("decoysTD"), 
@@ -470,10 +464,23 @@
                 return distances[0][i] !== undefined;    
             });
             distances[0] = distances[0].filter (function (dist) { return dist !== undefined; });
+
+            var joins = links.map (function (linkList, i) {
+                return _.zip (linkList, distances[i]);    
+            });
+            
+            if (this.options.reRandom) {
+                this.precalcedDistributions["Random"] = recalcRandomBinning.call (this, distances[0].length);
+                this.options.reRandom = false;
+            }
+            distances.push (this.precalcedDistributions["Random"]);
+            joins.push (this.precalcedDistributions["Random"]);
             
             return {
+                linksWithValues: joins,
                 viableFilteredTargetLinks: links[0],
                 values: distances,
+                seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Random"],
             };
         },
         
@@ -484,27 +491,44 @@
                 this.model.getFilteredCrossLinks ("decoysDD")
             ];
             
-            var counts = links.map(function (linkArr) {
+            var counts = links.map (function (linkArr) {
                 return linkArr.map (function (link) {
                     return link.filteredMatches_pp.length;    
                 });
             });
+            
+            var joins = links.map (function (linkList, i) {
+                return _.zip (linkList, counts[i]);    
+            });
 
             return {
+                linksWithValues: joins,
                 viableFilteredTargetLinks: links[0],
                 values: counts,
+                seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"],
             };
         },
         
-        aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
+        getDataCount: function () {
+            return this.getRelevantCrossLinkDistances();    
+        },
+        
+        getBinThresholds: function (series) {
             // get extents of all arrays, concatenate them, then get extent of that array
-            var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
+            var extent = d3.extent ([].concat.apply([], series.map (function(item) { return d3.extent(item, function (d) { return d[0]; }); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
             var thresholds = d3.range (d3.min ([0, Math.floor(extent[0])]), d3.max ([1 /*Math.ceil(extent[1])*/, this.options.maxX]));
             //console.log ("thresholds", thresholds, extent);
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
+            return thresholds;
+        },
+        
+        aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
+
+            var thresholds = this.getBinThresholds (series);
+            //console.log ("precalcs", precalcedDistributions, seriesNames);
 
             var countArrays = series.map (function (aseries, i) {
                 var aseriesName = seriesNames[i];
@@ -516,13 +540,20 @@
                     //console.log ("rescale", aseriesName, rescaleToSeries, seriesNames, rsIndex, seriesLengths);
                 }
                 
-                var binnedData = precalcedDistributions[aseriesName]
-                    ? precalcedDistributions[aseriesName]
-                    : d3.layout.histogram().bins(thresholds)(aseries)
+                var pcd = precalcedDistributions[aseriesName];
+                var binnedData = pcd ? pcd.data : 
+                    d3.layout
+                        .histogram()
+                        .value (function (d) { return d[1]; })  // [1] is the actual value, [0] is the crosslink
+                        .bins(thresholds)(aseries)
                 ;
-                //console.log (aseriesName, "binnedData", aseries, binnedData);
+                var dataLength = pcd ? pcd.origSize : seriesLengths[i];
+                if (i === 0) {
+                    this.currentBins = binnedData;  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
+                }
+                //console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
-                var scale = rescaleToSeries ? rescaleLength / (seriesLengths[i] || rescaleLength) : 1;
+                var scale = rescaleToSeries ? rescaleLength / (dataLength || rescaleLength) : 1;
                 return binnedData.map (function (nestedArr) {
                     return nestedArr.y * scale;
                 });
@@ -539,34 +570,8 @@
         
         reRandom: function () {
             this.options.intraRandomOnly = !this.options.intraRandomOnly;
-            this.recalcRandomBinning();
+            this.options.reRandom = true;
             this.render();
-        },
-        
-
-        recalcRandomBinning: function () {
-            // need to calc getRelevant as we want random to be proportionate to count of filtered links that have 3d distances
-            var measurements = this.getRelevantCrossLinkDistances();
-            var distArr = measurements.values;
-            var linkCount = distArr[0].length; // d3.sum (distArr, function(d) { return d.length; });   // random count prop to real links, not decoys as well
-            console.log ("model", this.model);
-            var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
-            var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
-            console.log ("ress", residueSets);
-            var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
-                Math.min ((linkCount * 100) || 10000, 100000), 
-                d3.values (residueSets),
-                {intraOnly: this.options.intraRandomOnly}
-            );
-            var thresholds = d3.range(0, this.options.maxX);
-            var binnedData = d3.layout.histogram()
-                .bins(thresholds)
-                (randArr)
-            ;
-            this.randArrLength = randArr.length;
-            this.precalcedDistributions = this.precalcedDistributions || {};
-            this.precalcedDistributions["Random"] = binnedData;
-            console.log ("RANDOM", binnedData);
         },
 
         relayout: function () {
@@ -600,6 +605,16 @@
             
             //this.chart.data.colors (colMap);
             //return this;    
+        },
+        
+        highlightOrSelect: function (type, c3Data, c3MouseData) {
+            var seriesIndex = _.indexOf (_.pluck (c3Data, "id"), c3MouseData.id);  // get the series id associated with the c3 mouse data
+            if (seriesIndex === 0) {    // ...and then only run this routine for the first series in the c3 dataset
+                var bin = this.currentBins[c3MouseData.index];  // get bin for the c3 index under mouse
+                var crossLinks = bin.map (function (linkData) { return linkData[0]; }); // get the link data from that bin
+                var ev = d3.event || {};
+                this.model.setMarkedCrossLinks (type, crossLinks, false, ev.ctrlKey || ev.shiftKey);    // set marked cross links according to type and modal keys
+            }
         },
 
         // removes view
