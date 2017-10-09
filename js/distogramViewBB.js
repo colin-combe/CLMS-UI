@@ -115,13 +115,10 @@
                         console.log ("extent", extent);
                     },
                     onclick: function (d, elem) {
-                        //console.log ("click", arguments, d, elem);  
+                        self.highlightOrSelect ("selection", this.data(), d);
                     },
-                    onmouseover: function (d, elem) {
-                        var seriesIndex = _.indexOf (_.pluck (this.data(), "id"), d.id);
-                        if (seriesIndex === 0) {
-                            console.log ("mouseover", arguments, d, elem, this);  
-                        }
+                    onmouseover: function (d) {
+                        self.highlightOrSelect ("highlights", this.data(), d);
                     },
                     order: null,
                 },
@@ -218,6 +215,9 @@
                     }
                     self.makeBarsSitBetweenTicks (this);
                 },
+                onmouseout: function () {
+                    self.model.setMarkedCrossLinks ("highlights", [], false, false);
+                },
             });
 
             
@@ -254,7 +254,8 @@
 
                 var TT = 0, TD = 1, DD = 2;
                 var measurements = this.getDataCount();
-                var series = measurements.values;
+                //var series = measurements.values;
+                var series = measurements.linksWithValues;
                 var seriesLengths = _.pluck (series, "length");
                 
                 // Get colour model. If chosen colour model is non-categorical, default to distance colours.
@@ -269,24 +270,10 @@
                 // split TT list into sublists for length
                 var splitSeries = d3.range(0, colModel.getDomainCount()).map (function () { return []; });
                 
-                /*
-                var colDomain = colModel.get("colScale").domain();
-                console.log ("colDomain", colDomain);
-                series[TT].forEach (function (val) {
-                    //var cat = d3.bisect (colDomain, val);
-                    var cat = colModel.getDomainIndex (val);
-                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
-                    splitSeries[cat].push (val);
-                });
-                */
-                
-                console.log ("measurements", measurements);
-                // measurements.viableFilteredTargetLinks is 1-1 with measurements.values[0] (now series[TT])
-                measurements.viableFilteredTargetLinks.forEach (function (link, i) {
-                    var cat = colModel.getDomainIndex (link);
-                    //console.log ("cat", cat);
-                    //var cat = val < colDomain[0] ? 0 : (val > colDomain[1] ? 2 : 1);
-                    splitSeries[cat].push (series[TT][i]);
+                //console.log ("measurements", measurements);
+                measurements.linksWithValues[TT].forEach (function (linkDatum) {
+                    var cat = colModel.getDomainIndex (linkDatum[0]);
+                    splitSeries[cat].push (linkDatum);
                 });
                 
                 
@@ -294,7 +281,7 @@
                     series.push (subSeries);
                     seriesLengths.push (subSeries.length);
                 });
-                console.log ("series", series, this.colourScaleModel);
+                //console.log ("series", series, this.colourScaleModel);
                
                 // Add DD Decoys as temporary series for aggregation
                 var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
@@ -398,8 +385,7 @@
             var internal = chartObj || this.chart.internal;
             //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
             var halfBarW = internal.getBarW (internal.xAxis, 1) / 2 || 0;
-            d3.select(this.el).selectAll(".c3-event-rects").attr("transform", "translate("+halfBarW+",0)");
-            d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
+            d3.select(this.el).selectAll(".c3-event-rects,.c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
             return this;
         },
         
@@ -446,7 +432,7 @@
             var recalcRandomBinning = function (linkCount) {
                 var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
                 var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
-                console.log ("ress", residueSets);
+                //console.log ("ress", residueSets);
                 var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
                     Math.min ((linkCount * 100) || 10000, 100000), 
                     d3.values (residueSets),
@@ -479,14 +465,19 @@
             });
             distances[0] = distances[0].filter (function (dist) { return dist !== undefined; });
 
+            var joins = links.map (function (linkList, i) {
+                return _.zip (linkList, distances[i]);    
+            });
             
             if (this.options.reRandom) {
                 this.precalcedDistributions["Random"] = recalcRandomBinning.call (this, distances[0].length);
                 this.options.reRandom = false;
             }
             distances.push (this.precalcedDistributions["Random"]);
+            joins.push (this.precalcedDistributions["Random"]);
             
             return {
+                linksWithValues: joins,
                 viableFilteredTargetLinks: links[0],
                 values: distances,
                 seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Random"],
@@ -500,13 +491,18 @@
                 this.model.getFilteredCrossLinks ("decoysDD")
             ];
             
-            var counts = links.map(function (linkArr) {
+            var counts = links.map (function (linkArr) {
                 return linkArr.map (function (link) {
                     return link.filteredMatches_pp.length;    
                 });
             });
+            
+            var joins = links.map (function (linkList, i) {
+                return _.zip (linkList, counts[i]);    
+            });
 
             return {
+                linksWithValues: joins,
                 viableFilteredTargetLinks: links[0],
                 values: counts,
                 seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"],
@@ -519,7 +515,7 @@
         
         getBinThresholds: function (series) {
             // get extents of all arrays, concatenate them, then get extent of that array
-            var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
+            var extent = d3.extent ([].concat.apply([], series.map (function(item) { return d3.extent(item, function (d) { return d[0]; }); })));
             //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
             var thresholds = d3.range (d3.min ([0, Math.floor(extent[0])]), d3.max ([1 /*Math.ceil(extent[1])*/, this.options.maxX]));
             //console.log ("thresholds", thresholds, extent);
@@ -545,8 +541,16 @@
                 }
                 
                 var pcd = precalcedDistributions[aseriesName];
-                var binnedData = pcd ? pcd.data : d3.layout.histogram().bins(thresholds)(aseries);
+                var binnedData = pcd ? pcd.data : 
+                    d3.layout
+                        .histogram()
+                        .value (function (d) { return d[1]; })  // [1] is the actual value, [0] is the crosslink
+                        .bins(thresholds)(aseries)
+                ;
                 var dataLength = pcd ? pcd.origSize : seriesLengths[i];
+                if (i === 0) {
+                    this.currentBins = binnedData;  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
+                }
                 //console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
                 var scale = rescaleToSeries ? rescaleLength / (dataLength || rescaleLength) : 1;
@@ -601,6 +605,16 @@
             
             //this.chart.data.colors (colMap);
             //return this;    
+        },
+        
+        highlightOrSelect: function (type, c3Data, c3MouseData) {
+            var seriesIndex = _.indexOf (_.pluck (c3Data, "id"), c3MouseData.id);  // get the series id associated with the c3 mouse data
+            if (seriesIndex === 0) {    // ...and then only run this routine for the first series in the c3 dataset
+                var bin = this.currentBins[c3MouseData.index];  // get bin for the c3 index under mouse
+                var crossLinks = bin.map (function (linkData) { return linkData[0]; }); // get the link data from that bin
+                var ev = d3.event || {};
+                this.model.setMarkedCrossLinks (type, crossLinks, false, ev.ctrlKey || ev.shiftKey);    // set marked cross links according to type and modal keys
+            }
         },
 
         // removes view
