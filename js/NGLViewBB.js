@@ -21,6 +21,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
+            "mouseout canvas": "clearHighlighted",
         });
     },
 
@@ -352,6 +353,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             };
             //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
             stageModel.setLinkList (filteredCrossLinks, filterFunc);
+        }
+        return this;
+    },
+    
+    clearHighlighted: function () {
+        if (this.xlRepr && this.isVisible()) {
+            // next line eventually fires through an empty selection to showHighlighted above
+            this.model.setMarkedCrossLinks ("highlights", [], false, false);
+            this.model.get("tooltipModel").set("contents", null);
         }
         return this;
     },
