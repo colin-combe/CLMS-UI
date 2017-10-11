@@ -38,11 +38,10 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     
     // Divide crosslinks into inter and intra-protein groups, and sort them by the scores just calculated
     var arrLabels = ["Inter", "Intra"];
-    var linkArrs = _.partition (crossLinksArr, function (x) { return !clmsModel.isIntraLink (x); });
+    var linkArrs = _.partition (crossLinksArr, function (xLink) { return !xLink.isSelfLink (); });
     linkArrs.forEach (function (linkArr) { 
         linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; }); 
     });  // in ascending order (lowest first)
-
     //console.log ("linkArrs", linkArrs);
     
     // What kind of link is this, TT, DT or DD? (0, 1 or 2)
@@ -85,7 +84,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
                 i++;
                 if (fdr <= options.threshold && cutoffIndex === 0) {
                     cutoffIndex = i;
-                    console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
+                    //console.log ("cutoff totals tt td dd", t, link, cutoffIndex);
                 }
             });
 

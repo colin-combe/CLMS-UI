@@ -47,7 +47,7 @@
             {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
             {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
             {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
-            {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cross-Link Distance", decimalPlaces: 2},
+            {func: function(c) { return c.isLinearLink() ? [] : [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cross-Link Distance", decimalPlaces: 2},
         ];
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -257,7 +257,7 @@
         var yAxisData = this.getAxisData ("Y", true);
         var xData = xAxisData.data;
         var yData = yAxisData.data;
-        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
+        var filteredCrossLinks = this.getFilteredCrossLinks ();
         var extent = options.extent || this.brush.extent();
         var matchLevel = xAxisData.matchLevel || yAxisData.matchLevel;
 
@@ -308,7 +308,7 @@
         
     getData: function (func, filteredFlag, optionalLinks) {
         var crossLinks = optionalLinks || 
-            (filteredFlag ? this.model.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
+            (filteredFlag ? this.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
         ;
         var data = crossLinks.map (function (c) {
             return func ? func (c) : [undefined];
@@ -330,6 +330,10 @@
         ;
         
         return funcMeta;
+    },
+        
+    getFilteredCrossLinks: function () {
+        return this.model.getFilteredCrossLinks ("all");    // include decoys and linears for this view
     },
         
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
@@ -468,15 +472,15 @@
             var self = this;
             var colourScheme = this.model.get("linkColourAssignment");
 
-            var filteredCrossLinks = this.model.getFilteredCrossLinks ();
+            var filteredCrossLinks = this.getFilteredCrossLinks ();
             var selectedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("selection"), "id"));
             var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("highlights"), "id"));
             
             var selectedMatchMap = this.model.getMarkedMatches ("selection");
             var highlightedMatchMap = this.model.getMarkedMatches ("highlights");
             
-            var sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (3, filteredCrossLinks, function (link) {
-                return highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
+            var sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (4, filteredCrossLinks, function (link) {
+                return highlightedCrossLinkIDs.has (link.id) ? 3 : (selectedCrossLinkIDs.has (link.id) ? 2 : (link.isDecoyLink() ? 0 : 1));
             });
             
             var makeCoords = function (datax, datay) {
@@ -576,9 +580,10 @@
             sortedFilteredCrossLinks.forEach (function (link, i) {
                 var high = !matchLevel && highlightedCrossLinkIDs.has (link.id);
                 var selected = !matchLevel && selectedCrossLinkIDs.has (link.id);
+                var decoy = link.isDecoyLink();
                 var jitter = this.options.jitter;
                 ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
-                ctx.strokeStyle = high || selected ? "black" : null;
+                ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
@@ -606,15 +611,22 @@
                         high = highlightedMatchMap.has (match.id);
                         selected = selectedMatchMap.has (match.id);
                         ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
-                        ctx.strokeStyle = high || selected ? "black" : null;
+                        ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                     }
                     var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
                     var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - (pointSize / 2);
                     x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
                     y = Math.round (y);
-                    ctx.fillRect (x, y, pointSize, pointSize) ;
-                    if (high || selected) {
-                        ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize) ;
+                    if (decoy) {
+                        //var offset = Math.floor (pointSize / 2);
+                        ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+                        //ctx.fillRect (x, y + offset, pointSize + 1, 1);
+                        //ctx.fillRect (x + offset, y, 1, pointSize + 1);
+                    } else {
+                        ctx.fillRect (x, y, pointSize, pointSize);
+                        if (high || selected) {
+                            ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+                        }
                     }
                 });
             }, this);
