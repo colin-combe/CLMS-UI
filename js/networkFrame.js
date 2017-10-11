@@ -450,6 +450,12 @@ CLMSUI.init.viewsEssential = function (options) {
         }
     });
 
+
+    d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
+    new CLMSUI.TooltipViewBB ({
+        el: "#tooltip2",
+        model: CLMSUI.compositeModelInst.get("tooltipModel")
+    });
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function () {
@@ -507,12 +513,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         "linkColourAssignment",
         CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
     );
-
-    d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
-    new CLMSUI.TooltipViewBB ({
-        el: "#tooltip2",
-        model: CLMSUI.compositeModelInst.get("tooltipModel")
-    });
 
     crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv",
