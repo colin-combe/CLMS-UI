@@ -390,23 +390,31 @@
         return this.doTooltip(evt).doHighlight(evt);
     },
         
+    getHighlightRange: function (evt, squarius) {
+        var background = d3.select(this.el).select(".background").node();
+        var margin = this.options.chartMargin;
+        var x = CLMSUI.utils.crossBrowserElementX (evt, background) + margin;
+        var y = CLMSUI.utils.crossBrowserElementY (evt, background) + margin;
+        var sortFunc = function (a,b) { return a - b; };
+        var xrange = [this.x.invert (x - squarius), this.x.invert (x + squarius)].sort (sortFunc);
+        var yrange = [this.y.invert (y - squarius), this.y.invert (y + squarius)].sort (sortFunc);
+        return {xrange: xrange, yrange: yrange};
+    },
+      
     doTooltip: function (evt) {
         var axesMetaData = this.getBothAxesMetaData();
         var commaFormat = d3.format(",");
-        var background = d3.select(this.el).select(".background").node();
-        var margin = this.options.chartMargin;
-        var vals = [
-            this.x.invert (CLMSUI.utils.crossBrowserElementX (evt, background) + margin),
-            this.y.invert (CLMSUI.utils.crossBrowserElementY (evt, background) + margin),
-        ];     
+        var highlightRange = this.getHighlightRange (evt, 0);
+        var vals = [highlightRange.xrange, highlightRange.yrange];
         
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
-            var val = commaFormat (d3.round (vals[i], axisMetaData.decimalPlaces));
-            return [axisMetaData.label, val];    
+            var valLow = commaFormat (d3.round (vals[i][0], axisMetaData.decimalPlaces));
+            var valHigh = commaFormat (d3.round (vals[i][1], axisMetaData.decimalPlaces));
+            return [axisMetaData.label, valLow/*, valHigh*/];    
         });
         
          this.model.get("tooltipModel")
-            .set("header", "Values")
+            .set("header", "Highlighted Values near to:")
             .set("contents", tooltipData)
             .set("location", evt)
         ;
@@ -415,16 +423,10 @@
     },
         
     doHighlight: function (evt) {
-        var background = d3.select(this.el).select(".background").node();
-        var margin = this.options.chartMargin;
-        var x = CLMSUI.utils.crossBrowserElementX (evt, background) + margin;
-        var y = CLMSUI.utils.crossBrowserElementY (evt, background) + margin;
-        var sortFunc = function (a,b) { return a - b; };
-        var xrange = [this.x.invert (x - 20), this.x.invert (x + 20)].sort (sortFunc);
-        var yrange = [this.y.invert (y - 20), this.y.invert (y + 20)].sort (sortFunc);
+        var highlightRange = this.getHighlightRange (evt, 20);
         var extent = [
-            [xrange[0], yrange[0]],
-            [xrange[1], yrange[1]],
+            [highlightRange.xrange[0], highlightRange.yrange[0]],
+            [highlightRange.xrange[1], highlightRange.yrange[1]],
         ]; 
         this.selectPoints ({extent: extent, add: evt.shiftKey || evt.ctrlKey});
         return this;
