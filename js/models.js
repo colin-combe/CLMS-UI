@@ -103,7 +103,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     }
                 }
 
-
                 //temp
                 var aaApart = +this.get("aaApart");
                 if (!isNaN(aaApart)) {
@@ -111,7 +110,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     if (!match.confirmedHomomultimer && !ambig && match.crossLinks[0].isSelfLink()) {
                         // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
                         var unambigCrossLink = match.crossLinks[0];
-                        var calc = unambigCrossLink.toResidue - unambigCrossLink.fromResidue - 1;
+                        var calc = Math.abs (unambigCrossLink.toResidue - unambigCrossLink.fromResidue) - 1;
                         if (calc < aaApart) {
                             return false;
                         }
