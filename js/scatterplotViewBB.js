@@ -405,6 +405,7 @@
         var axesMetaData = this.getBothAxesMetaData();
         var highlightRange = this.getHighlightRange (evt, 20);
         var vals = [highlightRange.xrange, highlightRange.yrange];
+        var inBetweenValidValues = false;
         
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
             var commaFormat = d3.format(",."+axisMetaData.decimalPlaces+"f");
@@ -414,12 +415,13 @@
                 return v;
             });
             var fvals = rvals.map (function (v) { return commaFormat(v); });
+            inBetweenValidValues |= (rvals[0] > rvals[1]);
             return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to "+fvals[1])];  
         });
         
          this.model.get("tooltipModel")
             .set("header", "Highlighting Values")
-            .set("contents", tooltipData)
+            .set("contents", inBetweenValidValues ? null : tooltipData)
             .set("location", evt)
         ;
         this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
