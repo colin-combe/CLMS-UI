@@ -403,14 +403,18 @@
       
     doTooltip: function (evt) {
         var axesMetaData = this.getBothAxesMetaData();
-        var commaFormat = d3.format(",");
         var highlightRange = this.getHighlightRange (evt, 20);
         var vals = [highlightRange.xrange, highlightRange.yrange];
         
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
-            var valLow = commaFormat (CLMSUI.utils.ceil (vals[i][0], axisMetaData.decimalPlaces));
-            var valHigh = commaFormat (CLMSUI.utils.floor (vals[i][1], axisMetaData.decimalPlaces));
-            return [axisMetaData.label, valLow === valHigh ? valLow : valLow+" to "+valHigh];  
+            var commaFormat = d3.format(",."+axisMetaData.decimalPlaces+"f");
+            var rvals = ["ceil", "floor"].map (function (func, ii) {
+                var v = CLMSUI.utils[func] (vals[i][ii], axisMetaData.decimalPlaces);
+                if (v === 0) { v = 0; } // gets rid of negative zero
+                return v;
+            });
+            var fvals = rvals.map (function (v) { return commaFormat(v); });
+            return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to "+fvals[1])];  
         });
         
          this.model.get("tooltipModel")
