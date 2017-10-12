@@ -404,17 +404,17 @@
     doTooltip: function (evt) {
         var axesMetaData = this.getBothAxesMetaData();
         var commaFormat = d3.format(",");
-        var highlightRange = this.getHighlightRange (evt, 0);
+        var highlightRange = this.getHighlightRange (evt, 20);
         var vals = [highlightRange.xrange, highlightRange.yrange];
         
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
-            var valLow = commaFormat (d3.round (vals[i][0], axisMetaData.decimalPlaces));
-            var valHigh = commaFormat (d3.round (vals[i][1], axisMetaData.decimalPlaces));
-            return [axisMetaData.label, valLow/*, valHigh*/];    
+            var valLow = commaFormat (CLMSUI.utils.ceil (vals[i][0], axisMetaData.decimalPlaces));
+            var valHigh = commaFormat (CLMSUI.utils.floor (vals[i][1], axisMetaData.decimalPlaces));
+            return [axisMetaData.label, valLow === valHigh ? valLow : valLow+" to "+valHigh];  
         });
         
          this.model.get("tooltipModel")
-            .set("header", "Highlighted Values near to:")
+            .set("header", "Highlighting Values")
             .set("contents", tooltipData)
             .set("location", evt)
         ;

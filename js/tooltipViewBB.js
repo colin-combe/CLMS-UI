@@ -33,7 +33,7 @@
             var cstring;
             if (twod) {
                 cstring="<table>";
-                var rtype = "th";
+                var rtype = contents.tableHasHeaders ? "th" : "td";
                 var headerCount = 0;
                 contents.forEach (function (row) {
                     headerCount = headerCount || row.length;

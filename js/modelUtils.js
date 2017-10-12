@@ -98,6 +98,7 @@ CLMSUI.modelUtils = {
                 return diff;
             });
             ttinfo.unshift (["Pos", "Residue", "Protein", "Matches"]);
+            ttinfo.tableHasHeaders = true;
             var length = ttinfo.length;
             var limit = CLMSUI.modelUtils.makeTooltipContents.maxRows;
             if (length > limit) {
@@ -136,6 +137,7 @@ CLMSUI.modelUtils = {
                     header.push (entry.key);
                 });
                 details.unshift (header);
+                details.tableHasHeaders = true;
             } else {
                 details = null;
             }
