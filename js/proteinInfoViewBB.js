@@ -94,6 +94,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         var posData = self.splitDataAttr (d3sel, "data-pos", "_");
                         var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
+
                         self.model.get("tooltipModel")
                             .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (interactor, +posData[1]))
                             .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))

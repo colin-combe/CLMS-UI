@@ -185,6 +185,21 @@ CLMSUI.utils = {
         roundVal *= pow;
         return roundVal;
     },
+    
+    // correlates to d3's .round with decimal places function
+    ceil: function (val, decimalPlaces) {
+        var pow = Math.pow (10, decimalPlaces);
+        val *= pow;
+        val = Math.ceil (val);
+        return val / pow;
+    },
+    
+    floor: function (val, decimalPlaces) {
+        var pow = Math.pow (10, decimalPlaces);
+        val *= pow;
+        val = Math.floor (val);
+        return val / pow;
+    },
 
     displayError: function (condition, message) {
         if (condition()) {

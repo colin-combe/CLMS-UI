@@ -387,27 +387,43 @@
     }, 
         
     doHighlightAndTooltip: function (evt) {
-        return this.doTooltip(evt).doHighlight(evt);
+        return this.doHighlight(evt).doTooltip(evt);
     },
         
-    doTooltip: function (evt) {
-        var axesMetaData = this.getBothAxesMetaData();
-        var commaFormat = d3.format(",");
+    getHighlightRange: function (evt, squarius) {
         var background = d3.select(this.el).select(".background").node();
         var margin = this.options.chartMargin;
-        var vals = [
-            this.x.invert (CLMSUI.utils.crossBrowserElementX (evt, background) + margin),
-            this.y.invert (CLMSUI.utils.crossBrowserElementY (evt, background) + margin),
-        ];     
+        var x = CLMSUI.utils.crossBrowserElementX (evt, background) + margin;
+        var y = CLMSUI.utils.crossBrowserElementY (evt, background) + margin;
+        var sortFunc = function (a,b) { return a - b; };
+        var xrange = [this.x.invert (x - squarius), this.x.invert (x + squarius)].sort (sortFunc);
+        var yrange = [this.y.invert (y - squarius), this.y.invert (y + squarius)].sort (sortFunc);
+        return {xrange: xrange, yrange: yrange};
+    },
+      
+    doTooltip: function (evt) {
+        var axesMetaData = this.getBothAxesMetaData();
+        var highlightRange = this.getHighlightRange (evt, 20);
+        var vals = [highlightRange.xrange, highlightRange.yrange];
+        var inBetweenValidValues = false;
         
         var tooltipData = axesMetaData.map (function (axisMetaData, i) {
-            var val = commaFormat (d3.round (vals[i], axisMetaData.decimalPlaces));
-            return [axisMetaData.label, val];    
+            var commaFormat = d3.format(",."+axisMetaData.decimalPlaces+"f");
+            var rvals = ["ceil", "floor"].map (function (func, ii) {
+                var v = CLMSUI.utils[func] (vals[i][ii], axisMetaData.decimalPlaces);
+                if (v === 0) { v = 0; } // gets rid of negative zero
+                return v;
+            });
+            var fvals = rvals.map (function (v) { return commaFormat(v); });
+            inBetweenValidValues |= (rvals[0] > rvals[1]);
+            return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to "+fvals[1])];  
         });
         
+        var level = axesMetaData.some (function (axmd) { return axmd.matchLevel; }) ? "Matches" : "Cross-Links";
+        
          this.model.get("tooltipModel")
-            .set("header", "Values")
-            .set("contents", tooltipData)
+            .set("header", "Highlighting "+level)
+            .set("contents", inBetweenValidValues ? null : tooltipData)
             .set("location", evt)
         ;
         this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
@@ -415,16 +431,10 @@
     },
         
     doHighlight: function (evt) {
-        var background = d3.select(this.el).select(".background").node();
-        var margin = this.options.chartMargin;
-        var x = CLMSUI.utils.crossBrowserElementX (evt, background) + margin;
-        var y = CLMSUI.utils.crossBrowserElementY (evt, background) + margin;
-        var sortFunc = function (a,b) { return a - b; };
-        var xrange = [this.x.invert (x - 20), this.x.invert (x + 20)].sort (sortFunc);
-        var yrange = [this.y.invert (y - 20), this.y.invert (y + 20)].sort (sortFunc);
+        var highlightRange = this.getHighlightRange (evt, 20);
         var extent = [
-            [xrange[0], yrange[0]],
-            [xrange[1], yrange[1]],
+            [highlightRange.xrange[0], highlightRange.yrange[0]],
+            [highlightRange.xrange[1], highlightRange.yrange[1]],
         ]; 
         this.selectPoints ({extent: extent, add: evt.shiftKey || evt.ctrlKey});
         return this;
@@ -574,16 +584,19 @@
             var datay = this.getAxisData ("Y", true, sortedFilteredCrossLinks);
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
-            
+            var jitter = this.options.jitter;
             //console.log ("ddd", datax, datay, filteredCrossLinks, coords);
 
             sortedFilteredCrossLinks.forEach (function (link, i) {
-                var high = !matchLevel && highlightedCrossLinkIDs.has (link.id);
-                var selected = !matchLevel && selectedCrossLinkIDs.has (link.id);
                 var decoy = link.isDecoyLink();
-                var jitter = this.options.jitter;
-                ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
-                ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                var colour = colourScheme.getColour (link);
+                var high, selected;
+                if (!matchLevel) {
+                    high = highlightedCrossLinkIDs.has (link.id);
+                    selected = selectedCrossLinkIDs.has (link.id);
+                    ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
+                    ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                }
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
@@ -610,7 +623,7 @@
                         var match = link.filteredMatches_pp[ii].match;
                         high = highlightedMatchMap.has (match.id);
                         selected = selectedMatchMap.has (match.id);
-                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
                         ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                     }
                     var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
