@@ -387,7 +387,7 @@
     }, 
         
     doHighlightAndTooltip: function (evt) {
-        return this.doTooltip(evt).doHighlight(evt);
+        return this.doHighlight(evt).doTooltip(evt);
     },
         
     getHighlightRange: function (evt, squarius) {
@@ -419,8 +419,10 @@
             return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to "+fvals[1])];  
         });
         
+        var level = axesMetaData.some (function (axmd) { return axmd.matchLevel; }) ? "Matches" : "Cross-Links";
+        
          this.model.get("tooltipModel")
-            .set("header", "Highlighting Values")
+            .set("header", "Highlighting "+level)
             .set("contents", inBetweenValidValues ? null : tooltipData)
             .set("location", evt)
         ;
@@ -582,16 +584,19 @@
             var datay = this.getAxisData ("Y", true, sortedFilteredCrossLinks);
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
-            
+            var jitter = this.options.jitter;
             //console.log ("ddd", datax, datay, filteredCrossLinks, coords);
 
             sortedFilteredCrossLinks.forEach (function (link, i) {
-                var high = !matchLevel && highlightedCrossLinkIDs.has (link.id);
-                var selected = !matchLevel && selectedCrossLinkIDs.has (link.id);
                 var decoy = link.isDecoyLink();
-                var jitter = this.options.jitter;
-                ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
-                ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                var colour = colourScheme.getColour (link);
+                var high, selected;
+                if (!matchLevel) {
+                    high = highlightedCrossLinkIDs.has (link.id);
+                    selected = selectedCrossLinkIDs.has (link.id);
+                    ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
+                    ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                }
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
@@ -618,7 +623,7 @@
                         var match = link.filteredMatches_pp[ii].match;
                         high = highlightedMatchMap.has (match.id);
                         selected = selectedMatchMap.has (match.id);
-                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (link));
+                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
                         ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                     }
                     var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
