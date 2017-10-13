@@ -24,9 +24,9 @@
             var defaultOptions = {
                 xlabel: "Cα-Cα Distance (Å)",
                 ylabel: "Count",
-                seriesNames: ["Cross Links", "Decoys (TD-DD)", "Random"],
+                seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
                 subSeriesNames: [],
-                scaleOthersTo: {"Random": "Cross Links"},
+                scaleOthersTo: {"Random": "Cross-Links"},
                 chartTitle: "Distogram",
                 intraRandomOnly: false,
                 maxX: 90
@@ -41,6 +41,11 @@
                 {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
                 {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
                 {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2},
+            ];
+            
+            var barOptions2 = [
+                {func: function() { return this.getRelevantCrossLinkDistances(); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2}, 
+                {func: function() { return this.getRelevantMatchCount(); }, label: "Cross-Link Match Count", decimalPlaces: 0},
             ];
             
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -70,16 +75,15 @@
             CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
             
             // Add a select widget for picking axis data type
-            /*
             CLMSUI.utils.addMultipleSelectControls ({
                 addToElem: toolbar, 
                 selectList: ["X"], 
-                optionList: barOptions, 
+                optionList: barOptions2, 
                 selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
                 optionLabelFunc: function (d) { return d.label; }, 
                 changeFunc: function () { self.render(); },
             });
-            */
+            toolbar.selectAll("label").filter(function(d) { return d === "X"; }).style("display", "none");   // temp hiding until full ready
 
             var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
@@ -101,7 +105,7 @@
                     type: 'bar',
                     //groups: [this.options.subSeriesNames] || this.options.seriesNames,
                     colors: {
-                        "Cross Links": "#44d",
+                        "Cross-Links": "#44d",
                         Random: "#888",
                         "Decoys (TD-DD)": "#d44",
                     },
@@ -175,7 +179,8 @@
                 tooltip: {
                     format: {
                         title: function (x) {
-                            return self.options.xlabel + " " + x;
+                            var xlabel = self.chart.internal.config.axis_x_label;
+                            return (xlabel.text || xlabel) + " " + x;
                         },
                         name: function (name) {
                             return name + " " + self.options.ylabel;
@@ -208,7 +213,7 @@
                 onrendered: function () {
                     if (firstRun) {
                         firstRun = false; 
-                        this.api.hide ("Cross Links", {withLegend: true});    // doesn't work properly if done in configuration above
+                        this.api.hide ("Cross-Links", {withLegend: true});    // doesn't work properly if done in configuration above
                         if (! self.model.get("clmsModel").get("decoysPresent")) {   
                             this.api.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
                         }
@@ -250,6 +255,14 @@
             options = options || {};
             
             if (this.isVisible()) {
+                // Update X Label if necessary
+                var funcMeta = this.getSelectedOption ("X");
+                var curXLabel = this.chart.internal.config.axis_x_label;
+                var newX = curXLabel !== funcMeta.label;
+                if (newX) {
+                    this.chart.axis.labels ({x: funcMeta.label});
+                }
+                
                 console.log ("re rendering distogram");
 
                 var TT = 0, TD = 1, DD = 2;
@@ -284,8 +297,8 @@
                 //console.log ("series", series, this.colourScaleModel);
                
                 // Add DD Decoys as temporary series for aggregation
-                var seriesNames = d3.merge ([this.options.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
-                seriesNames.splice (DD, 0, "Decoys (DD)");
+                var seriesNames = d3.merge ([measurements.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
+                //seriesNames.splice (DD, 0, "Decoys (DD)");
                 
                 //console.log ("seriesLengths", seriesLengths);
                 var removeCatchAllCategory = true;
@@ -328,6 +341,7 @@
                         //.makeBarsSitBetweenTicks()
                         .makeChartTitle(splitSeries)
                     ;
+                    this.hideShowSeries ("Random", measurements.seriesNames.indexOf ("Random") >= 0);
                 };
                 
                  // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
@@ -336,7 +350,7 @@
                 var tempTitleHandle = c3.chart.internal.fn.redrawTitle;
                 c3.chart.internal.fn.redrawTitle = function () {};
                 var chartInternal = this.chart.internal;
-                var shortcut = this.compareNewOldData (countArrays);
+                var shortcut = this.compareNewOldData (countArrays) && !newX;
                 //console.log ("SHORTCUT", shortcut);
 
                 if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
@@ -378,6 +392,16 @@
                 this.chart.axis.max({y: maxY});
             }
             return this;
+        },
+            
+        // Show hide series depending on whether data is present for it (active) and whether it's currently shown or not
+        hideShowSeries: function (seriesName, active) {
+            var hidden = this.chart.internal.hiddenTargetIds;
+            var curHidden = hidden.indexOf(seriesName) >= 0;
+            if (curHidden === active) {
+                var func = active ? "show" : "hide";
+                this.chart[func](seriesName, {withLegend: true});
+            }
         },
         
         // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
@@ -421,11 +445,6 @@
             
             //console.log ("match", oldNewMatch);
             return oldNewMatch;
-        },
-        
-        useDifferentColourModel: function () {
-            this.render({newColourModel: true});
-            return this;
         },
         
         getRelevantCrossLinkDistances: function () {
@@ -509,8 +528,26 @@
             };
         },
         
+        getSelectedOption: function (axisLetter) {
+            var funcMeta;
+
+            d3.select(this.el)
+                .selectAll("select")
+                    .filter(function(d) { return d === axisLetter; })
+                    .selectAll("option")
+                    .filter(function() { return d3.select(this).property("selected"); })
+                    .each (function (d) {
+                        funcMeta = d;
+                    })
+            ;
+
+            return funcMeta;
+        },
+        
         getDataCount: function () {
-            return this.getRelevantCrossLinkDistances();    
+            var funcMeta = this.getSelectedOption ("X");
+            return funcMeta.func.call(this);
+            //return this.getRelevantCrossLinkDistances();    
         },
         
         getBinThresholds: function (series) {

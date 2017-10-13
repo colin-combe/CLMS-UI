@@ -602,20 +602,6 @@
                 var xr = ((link.fromResidue % 10) / 10) - 0.45;
                 var yr = ((link.toResidue % 10) / 10) - 0.45;
                 
-                /*
-                if (high || selected) {
-                    ctx.beginPath();
-                    coords[i].forEach (function (coord) {
-                        var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0);
-                        var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0);
-                        x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
-                        y = Math.round (y);
-                        ctx[i === 0 ? "moveTo" : "lineTo"](x - 0.5, y - 0.5);
-                    });
-                    ctx.stroke();
-                }
-                */
-                
                 coords[i].forEach (function (coord, ii) {
                     //var xr = (Math.random() - 0.5);
                     //var yr = (Math.random() - 0.5);
