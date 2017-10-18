@@ -179,7 +179,7 @@ if (count($_GET) > 0) {
 			. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
 			. " WHERE t1.search_id LIKE '" . $sid . "' );";
 
-	$layoutResult = $res = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+	$layoutResult = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 	while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
 		echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
 	}
@@ -434,6 +434,7 @@ if (count($_GET) > 0) {
         $endTime = microtime(true);
         //~ echo '/*db time: '.($endTime - $startTime)."ms*/\n";
         //~ echo '/*rows:'.pg_num_rows($res)."*/\n";
+        $interactorAccs = [];
         echo "\"proteins\":[\n";
         $line = pg_fetch_array($res, null, PGSQL_ASSOC);
         while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
@@ -449,19 +450,33 @@ if (count($_GET) > 0) {
                     . '"seq_mods":"' .$line["sequence"] . '",'
                     . '"is_decoy":' .$isDecoy
                     . "}";
+                    
+                $interactorAccs[$line["accession_number"]] = 1;
+                
                 $line = pg_fetch_array($res, null, PGSQL_ASSOC);
                 if ($line) {echo ",\n";}
             }
         echo "\n],";
+
+		//interactors
+		$interactorQuery = "SELECT * FROM uniprot WHERE accession IN ('"
+				.implode(array_keys($interactorAccs), "','")."');";
+		//echo "**".$interactorQuery."**";
+		$interactorDbConn = pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
+		$interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
+		echo "\"interactors\":{\n";
+		$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+		while ($line) {
+			echo "\"".$line["accession"]."\":".$line["json"];
+            $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+            if ($line) {echo ",\n";}
+  		}
+		echo "\n},";
+
         echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
         echo "}\n";
         $endTime = microtime(true);
         //~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
-
-
-
-        $endTime = microtime(true);
-        //~ echo "\n/*page time: ".($endTime - $pageStartTime)."ms*/\n\n";
     }
 
     // Free resultset
