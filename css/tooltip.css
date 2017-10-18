@@ -5,7 +5,7 @@
     background: #add;
     opacity: 0.9;
     z-index: 1001;
-    max-width: 300px;
+    max-width: 330px;
     line-height: 1em;
     top: 0; /* default tooltip to top so it doesn't sit at bottom and cause unnecessary scrollbar to start with */
 }

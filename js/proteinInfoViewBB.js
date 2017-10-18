@@ -90,10 +90,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         //console.log ("model", self.model);
                         var d3sel = d3.select(this);
                         var idArray = self.splitDataAttr (d3sel, "data-linkids");
-                        console.log ("idarry", idArray);
+                        //console.log ("idarry", idArray);
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         var posData = self.splitDataAttr (d3sel, "data-pos", "_");
                         var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
+
                         self.model.get("tooltipModel")
                             .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (interactor, +posData[1]))
                             .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))
@@ -186,7 +187,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     endPoints[fromRes].push (xlink);
                 }
                 //added check for no toProtein (for linears)
-                if (!xlink.isLinearLink() && xlink.isSelfLink()) { 
+                if (/*!xlink.isLinearLink() &&*/ xlink.isSelfLink()) {  // if linear then will fail for selflink anyways
                     var toRes = xlink.toResidue;
                     endPoints[toRes] = endPoints[toRes] || [];
                     endPoints[toRes].push (xlink);

@@ -57,8 +57,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 var pass;
                 if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
                     var fdr = crossLink.meta.meanMatchScore;
-                    var intra = clmsModel.isIntraLink(crossLink);
-                    var cut = intra ? result[1].fdr : result[0].fdr;
+                    var self = crossLink.isSelfLink();
+                    var cut = self ? result[1].fdr : result[0].fdr;
                     pass = fdr >= cut;
                 }
 

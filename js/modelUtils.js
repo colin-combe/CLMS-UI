@@ -53,10 +53,14 @@ CLMSUI.modelUtils = {
     },
     
     makeTooltipContents: {
+        maxRows: 25,
+        
         link: function (xlink) {
+            var linear = xlink.isLinearLink();
             var info = [
                 ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
-                ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
+                linear ? ["To", "---", "---", "Linear"]
+                    : ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
                 ["Matches", xlink.filteredMatches_pp.length],
 				["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
@@ -74,12 +78,13 @@ CLMSUI.modelUtils = {
         
         multilinks: function (xlinks, interactorId, residueIndex) {
             var ttinfo = xlinks.map (function (xlink) {
-                var startIsTo = (xlink.toProtein.id === interactorId && xlink.toResidue === residueIndex);
-                var threeLetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, !startIsTo)];
+                var linear = xlink.isLinearLink();
+                var startIsTo = !linear && (xlink.toProtein.id === interactorId && xlink.toResidue === residueIndex);
+                var threeLetterCode = linear ? "---" : CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, !startIsTo)];
                 if (startIsTo) {
                     return [xlink.fromResidue, threeLetterCode, xlink.fromProtein.name, xlink.filteredMatches_pp.length]; 
                 } else {
-                    return [xlink.toResidue, threeLetterCode, xlink.toProtein.name, xlink.filteredMatches_pp.length];
+                    return [linear ? "---" : xlink.toResidue, threeLetterCode, linear ? "Linear" : xlink.toProtein.name, xlink.filteredMatches_pp.length];
                 }
             });
             var sortFields = [3, 0]; // sort by matches, then res index
@@ -93,6 +98,13 @@ CLMSUI.modelUtils = {
                 return diff;
             });
             ttinfo.unshift (["Pos", "Residue", "Protein", "Matches"]);
+            ttinfo.tableHasHeaders = true;
+            var length = ttinfo.length;
+            var limit = CLMSUI.modelUtils.makeTooltipContents.maxRows;
+            if (length > limit) {
+                ttinfo = ttinfo.slice (0, limit);
+                ttinfo.push (["+ "+(length-limit)+" More"]);
+            }
             return ttinfo;
         },
         
@@ -125,6 +137,7 @@ CLMSUI.modelUtils = {
                     header.push (entry.key);
                 });
                 details.unshift (header);
+                details.tableHasHeaders = true;
             } else {
                 details = null;
             }
@@ -744,6 +757,7 @@ CLMSUI.modelUtils = {
             var bucketIndex = bucketFunction (d);
             radixSortBuckets[bucketIndex].push (d);
         });
+        //console.log ("buckets", radixSortBuckets);
         return d3.merge (radixSortBuckets);
     },
 };
