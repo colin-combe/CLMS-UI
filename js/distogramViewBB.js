@@ -83,7 +83,7 @@
                 optionLabelFunc: function (d) { return d.label; }, 
                 changeFunc: function () { self.render(); },
             });
-            toolbar.selectAll("label").filter(function(d) { return d === "X"; }).style("display", "none");   // temp hiding until full ready
+            //toolbar.selectAll("label").filter(function(d) { return d === "X"; }).style("display", "none");   // temp hiding until full ready
 
             var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
@@ -447,6 +447,17 @@
             return oldNewMatch;
         },
         
+        getFilteredLinksByDecoyStatus: function () {
+            return {
+                links: [
+                    this.model.getFilteredCrossLinks (), 
+                    this.model.getFilteredCrossLinks ("decoysTD"), 
+                    this.model.getFilteredCrossLinks ("decoysDD")
+                ],
+                seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"]
+            };
+        },
+        
         getRelevantCrossLinkDistances: function () {
             var recalcRandomBinning = function (linkCount) {
                 var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
@@ -467,17 +478,16 @@
                 return {data: binnedData, origSize: randArr.length};
             };
             
-            var links = [
-                this.model.getFilteredCrossLinks (), 
-                this.model.getFilteredCrossLinks ("decoysTD"), 
-                this.model.getFilteredCrossLinks ("decoysDD")
-            ];
+            var linkData = this.getFilteredLinksByDecoyStatus();
+            var seriesNames = linkData.seriesNames;
+            var links = linkData.links;
             
-            var distances = [
-                this.model.getCrossLinkDistances (links[0], {includeUndefineds: true}),    // TT
-                this.model.getCrossLinkDistances (links[1], {calcDecoyProteinDistances: true}),  // TD
-                this.model.getCrossLinkDistances (links[2], {calcDecoyProteinDistances: true}),  // DD
+            var conditions = [
+               {includeUndefineds: true}, {calcDecoyProteinDistances: true}, {calcDecoyProteinDistances: true} // TT, TD then DD
             ];
+            var distances = conditions.map (function (cond, i) {
+                return this.model.getCrossLinkDistances (links[i], cond);
+            }, this);
             
             links[0] = links[0].filter (function (link, i) {
                 return distances[0][i] !== undefined;    
@@ -488,27 +498,27 @@
                 return _.zip (linkList, distances[i]);    
             });
             
+            // Add Random series if plotting distance data
             if (this.options.reRandom) {
                 this.precalcedDistributions["Random"] = recalcRandomBinning.call (this, distances[0].length);
                 this.options.reRandom = false;
             }
             distances.push (this.precalcedDistributions["Random"]);
             joins.push (this.precalcedDistributions["Random"]);
+            seriesNames.push ("Random"); 
             
             return {
                 linksWithValues: joins,
-                viableFilteredTargetLinks: links[0],
+                //viableFilteredTargetLinks: links[0],
                 values: distances,
-                seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Random"],
+                seriesNames: seriesNames,
             };
         },
         
         getRelevantMatchCount: function () {
-            var links = [
-                this.model.getFilteredCrossLinks (), 
-                this.model.getFilteredCrossLinks ("decoysTD"), 
-                this.model.getFilteredCrossLinks ("decoysDD")
-            ];
+            var linkData = this.getFilteredLinksByDecoyStatus();
+            var seriesNames = linkData.seriesNames;
+            var links = linkData.links;
             
             var counts = links.map (function (linkArr) {
                 return linkArr.map (function (link) {
@@ -522,9 +532,9 @@
 
             return {
                 linksWithValues: joins,
-                viableFilteredTargetLinks: links[0],
+                //viableFilteredTargetLinks: links[0],
                 values: counts,
-                seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"],
+                seriesNames: seriesNames,
             };
         },
         
@@ -553,9 +563,12 @@
         getBinThresholds: function (series) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(item) { return d3.extent(item, function (d) { return d[0]; }); })));
-            //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
-            var thresholds = d3.range (d3.min ([0, Math.floor(extent[0])]), d3.max ([1 /*Math.ceil(extent[1])*/, this.options.maxX]));
-            //console.log ("thresholds", thresholds, extent);
+            var min = d3.min ([0, Math.floor(extent[0])]);
+            var max = d3.max ([1 /*Math.ceil(extent[1])*/, this.options.maxX]);
+            var step = CLMSUI.utils.niceRound ((max - min) / 100);
+            var thresholds = d3.range (min, max, step);
+            //console.log ("thresholds", thresholds, extent, min, max, step);
+            
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
@@ -588,6 +601,7 @@
                 if (i === 0) {
                     this.currentBins = binnedData;  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
                 }
+                console.log ("CURRENT BINS", this.currentBins);
                 //console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
                 var scale = rescaleToSeries ? rescaleLength / (dataLength || rescaleLength) : 1;
