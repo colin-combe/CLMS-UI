@@ -22,7 +22,7 @@
             CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
 
             var defaultOptions = {
-                xlabel: "Cα-Cα Distance (Å)",
+                xlabel: "X Value",
                 ylabel: "Count",
                 seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
                 subSeriesNames: [],
@@ -33,19 +33,14 @@
             };
             
             var barOptions = [
-                {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
-                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
-                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
-                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
-                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
-                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
-                {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
-                {func: function(c) { return [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2},
-            ];
-            
-            var barOptions2 = [
-                {func: function() { return this.getRelevantCrossLinkDistances(); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2}, 
-                {func: function() { return this.getRelevantMatchCount(); }, label: "Cross-Link Match Count", decimalPlaces: 0},
+                {mainFunc: function(lf) { return this.getRelevantCrossLinkDistances(lf); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90}, 
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.length; }, label: "Cross-Link Match Count", decimalPlaces: 0},
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
+                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
             ];
             
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -78,7 +73,7 @@
             CLMSUI.utils.addMultipleSelectControls ({
                 addToElem: toolbar, 
                 selectList: ["X"], 
-                optionList: barOptions2, 
+                optionList: barOptions, 
                 selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
                 optionLabelFunc: function (d) { return d.label; }, 
                 changeFunc: function () { self.render(); },
@@ -145,9 +140,14 @@
                           right: 1,
                         },
                         tick: {
+                            format: function (v) {
+                                return (v + (self.options.minX || 0)) * (self.options.gapX || 1);
+                            }
+                            /*
                             culling: {
                                 max: Math.floor (this.options.maxX / 10)
                             }
+                            */
                         }
                     },
                     y: {
@@ -179,8 +179,9 @@
                 tooltip: {
                     format: {
                         title: function (x) {
+                            var realX = self.chart.internal.xAxisTickFormat (x);
                             var xlabel = self.chart.internal.config.axis_x_label;
-                            return (xlabel.text || xlabel) + " " + x;
+                            return (xlabel.text || xlabel) + " " + realX;
                         },
                         name: function (name) {
                             return name + " " + self.options.ylabel;
@@ -258,7 +259,7 @@
                 // Update X Label if necessary
                 var funcMeta = this.getSelectedOption ("X");
                 var curXLabel = this.chart.internal.config.axis_x_label;
-                var newX = curXLabel !== funcMeta.label;
+                var newX = (curXLabel !== funcMeta.label);
                 if (newX) {
                     this.chart.axis.labels ({x: funcMeta.label});
                 }
@@ -301,8 +302,9 @@
                 //seriesNames.splice (DD, 0, "Decoys (DD)");
                 
                 //console.log ("seriesLengths", seriesLengths);
-                var removeCatchAllCategory = true;
-                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
+                var removeCatchAllCategory = (this.options.maxX !== undefined);
+                var aggregate = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
+                var countArrays = aggregate.counts;
                 
                 // Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
                 countArrays[TD].forEach (function (v, i) {
@@ -422,7 +424,8 @@
                 return commaed(count)+" "+this.options.subSeriesNames[i];
             }, this);
             
-            var titleText = this.options.chartTitle +": "+commaed(total)+" Cross-Links - "+linkReportStr.join(", ");
+            var funcMeta = this.getSelectedOption ("X");
+            var titleText = this.options.chartTitle +": "+commaed(total)+(funcMeta.matchLevel ? " Matches - " : " Cross-Links - ")+linkReportStr.join(", ");
             
             d3.select(this.el).select(".c3-title").text (titleText);
             //this.chart.internal.redrawTitle();
@@ -509,31 +512,49 @@
             
             return {
                 linksWithValues: joins,
-                //viableFilteredTargetLinks: links[0],
-                values: distances,
+                //values: distances,
                 seriesNames: seriesNames,
             };
         },
         
-        getRelevantMatchCount: function () {
+        getRelevantMatchCount: function (linkFunc) {
+            var cross = function (arr) {
+                return arr[1].map (function (val) {
+                    return [arr[0], val];
+                });    
+            };
+            
             var linkData = this.getFilteredLinksByDecoyStatus();
             var seriesNames = linkData.seriesNames;
             var links = linkData.links;
             
             var counts = links.map (function (linkArr) {
-                return linkArr.map (function (link) {
-                    return link.filteredMatches_pp.length;    
+                var vals = [];
+                linkArr.forEach (function (link) {
+                    var res = linkFunc (link);
+                    if (res.length) {   // if multiple values returned for a link (is match data)
+                        var filteredMatches = link.filteredMatches_pp;
+                        res.forEach (function (matchValue, i) {
+                            vals.push ([link, matchValue, filteredMatches[i]]);
+                        });
+                    } else {
+                        vals.push ([link, res]);
+                    }
                 });
+                return vals;
             });
             
+            var joins = counts;
+            console.log ("counts", counts);
+            /*
             var joins = links.map (function (linkList, i) {
-                return _.zip (linkList, counts[i]);    
+                return _.zip (linkList, counts[i]);     
             });
+            */
 
             return {
                 linksWithValues: joins,
-                //viableFilteredTargetLinks: links[0],
-                values: counts,
+                //values: counts,
                 seriesNames: seriesNames,
             };
         },
@@ -556,18 +577,20 @@
         
         getDataCount: function () {
             var funcMeta = this.getSelectedOption ("X");
-            return funcMeta.func.call(this);
+            this.options.maxX = funcMeta.maxVal;
+            console.log ("mm", funcMeta.maxVal);
+            return funcMeta.mainFunc.call(this, funcMeta.linkFunc);
             //return this.getRelevantCrossLinkDistances();    
         },
         
         getBinThresholds: function (series) {
             // get extents of all arrays, concatenate them, then get extent of that array
-            var extent = d3.extent ([].concat.apply([], series.map (function(item) { return d3.extent(item, function (d) { return d[0]; }); })));
+            var extent = d3.extent ([].concat.apply([], series.map (function(item) { return d3.extent(item, function (d) { return d[1]; }); })));
             var min = d3.min ([0, Math.floor(extent[0])]);
-            var max = d3.max ([1 /*Math.ceil(extent[1])*/, this.options.maxX]);
-            var step = CLMSUI.utils.niceRound ((max - min) / 100);
-            var thresholds = d3.range (min, max, step);
-            //console.log ("thresholds", thresholds, extent, min, max, step);
+            var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
+            var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
+            var thresholds = d3.range (min, max + (step * 2), step);
+            console.log ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
             
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
@@ -615,8 +638,11 @@
                     array.pop();
                 });
             }
+            
+            this.options.minX = thresholds[0];
+            this.options.gapX = thresholds[1] - thresholds[0];
 
-            return countArrays;
+            return {counts: countArrays, thresholds: thresholds};
         },
         
         reRandom: function () {
@@ -660,11 +686,17 @@
         
         highlightOrSelect: function (type, c3Data, c3MouseData) {
             var seriesIndex = _.indexOf (_.pluck (c3Data, "id"), c3MouseData.id);  // get the series id associated with the c3 mouse data
+            var matchBasedSelection = this.getSelectedOption("X").matchLevel;
             if (seriesIndex === 0) {    // ...and then only run this routine for the first series in the c3 dataset
                 var bin = this.currentBins[c3MouseData.index];  // get bin for the c3 index under mouse
-                var crossLinks = bin.map (function (linkData) { return linkData[0]; }); // get the link data from that bin
                 var ev = d3.event || {};
-                this.model.setMarkedCrossLinks (type, crossLinks, false, ev.ctrlKey || ev.shiftKey);    // set marked cross links according to type and modal keys
+                if (matchBasedSelection) {
+                    var matches = bin.map (function (linkData) { return linkData[2]; }); // get the link data from that bin
+                    this.model.setMarkedMatches (type, matches, false, ev.ctrlKey || ev.shiftKey);    // set marked cross links according to type and modal keys
+                } else {
+                    var crossLinks = bin.map (function (linkData) { return linkData[0]; }); // get the link data from that bin
+                    this.model.setMarkedCrossLinks (type, crossLinks, false, ev.ctrlKey || ev.shiftKey);    // set marked cross links according to type and modal keys
+                }
             }
         },
 
