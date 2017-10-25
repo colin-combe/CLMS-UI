@@ -334,7 +334,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     },
     
     calcMatchingCrosslinks: function (modelProperty, crossLinks, andAlternatives, add) {
-        console.log ("FROM XINET", modelProperty, crossLinks, andAlternatives, add);
+        //console.log ("FROM XINET", modelProperty, crossLinks, andAlternatives, add);
         this.setMarkedCrossLinks (modelProperty, crossLinks, andAlternatives, add);
     },
 
