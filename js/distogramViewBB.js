@@ -40,7 +40,7 @@
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
-                                {mainFunc: function(lf) { return this.getRelevantCrossLinkDistances(lf); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90}, 
+                {mainFunc: function(lf) { return this.getRelevantCrossLinkDistances(lf); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90, showRandomButton: true}, 
             ];
             
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
@@ -78,7 +78,6 @@
                 optionLabelFunc: function (d) { return d.label; }, 
                 changeFunc: function () { self.render(); },
             });
-            //toolbar.selectAll("label").filter(function(d) { return d === "X"; }).style("display", "none");   // temp hiding until full ready
 
             var chartDiv = mainDivSel.select(".distoDiv")
                 .attr ("id", mainDivSel.attr("id")+"c3Chart")
@@ -237,10 +236,7 @@
                 this.options.reRandom = true;
                 this.render();
                 // hide random choice button if only 1 protein
-                var self = this;
-                d3.select(this.el).select("#distoPanelintraRandom")
-                    .style ("display", self.model.get("clmsModel").realProteinCount > 1 ? null : "none")
-                ;
+                this.showRandomButton();
             }
 
             this.listenTo (this.model, "filteringDone", this.render);   // listen for custom filteringDone event from model
@@ -268,6 +264,7 @@
                 if (newX) {
                     this.chart.axis.labels ({x: funcMeta.label});
                 }
+                this.showRandomButton();
                 
                 console.log ("re rendering distogram");
 
@@ -643,6 +640,14 @@
             this.options.intraRandomOnly = !this.options.intraRandomOnly;
             this.options.reRandom = true;
             this.render();
+        },
+      
+        showRandomButton: function () {
+            var self = this;
+            var funcMeta = this.getSelectedOption("X");
+            d3.select(this.el).select("#distoPanelintraRandom")
+                .style ("display", self.model.get("clmsModel").realProteinCount > 1 && funcMeta.showRandomButton ? null : "none")
+            ;
         },
 
         relayout: function () {

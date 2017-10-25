@@ -144,6 +144,7 @@ CLMSUI.init.modelsEssential = function (options) {
     );
 
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
+    //console.log ("options", options);
     clmsModelInst.parseJSON(options);
     
     // some proteins have no size, i.e. ambiguous placeholders, and lack of size property is breaking things later on. MJG 17/05/17
