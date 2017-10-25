@@ -27,13 +27,12 @@
                 seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
                 subSeriesNames: [],
                 scaleOthersTo: {"Random": "Cross-Links"},
-                chartTitle: "Distogram",
+                chartTitle: this.identifier,
                 intraRandomOnly: false,
-                maxX: 90
+                maxX: 90,
             };
             
             var barOptions = [
-                {mainFunc: function(lf) { return this.getRelevantCrossLinkDistances(lf); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90}, 
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.length; }, label: "Cross-Link Match Count", decimalPlaces: 0},
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
@@ -41,11 +40,12 @@
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
                 {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
+                                {mainFunc: function(lf) { return this.getRelevantCrossLinkDistances(lf); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90}, 
             ];
             
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
-            this.precalcedDistributions = {};
+            this.precalcedDistributions = {Random: {data: [], origSize: 0}};
             this.displayEventName = viewOptions.displayEventName;
 
             var self = this;
@@ -104,6 +104,11 @@
                         Random: "#888",
                         "Decoys (TD-DD)": "#d44",
                     },
+                    empty: {
+                        label: {
+                            text: "Currently No Data For This Attribute"
+                        }
+                    },
                     selection: {
                         enabled: false,
                         grouped: true,
@@ -113,7 +118,7 @@
                     ondragend: function (extent) {
                         console.log ("extent", extent);
                     },
-                    onclick: function (d, elem) {
+                    onclick: function (d) {
                         self.highlightOrSelect ("selection", this.data(), d);
                     },
                     onmouseover: function (d) {
@@ -303,8 +308,7 @@
                 
                 //console.log ("seriesLengths", seriesLengths);
                 var removeCatchAllCategory = (this.options.maxX !== undefined);
-                var aggregate = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
-                var countArrays = aggregate.counts;
+                var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
                 
                 // Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
                 countArrays[TD].forEach (function (v, i) {
@@ -321,6 +325,8 @@
                 });
                 maxY = Math.max (maxY, 1);
                 //console.log ("maxY", maxY);
+                
+                
                 
                 // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
@@ -466,11 +472,13 @@
                 var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
                 var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
                 //console.log ("ress", residueSets);
-                var randArr = this.model.get("clmsModel").get("distancesObj").getRandomDistances (
+                var distObj = this.model.get("clmsModel").get("distancesObj");
+                var randArr = distObj ? distObj.getRandomDistances (
                     Math.min ((linkCount * 100) || 10000, 100000), 
                     d3.values (residueSets),
                     {intraOnly: this.options.intraRandomOnly}
-                );
+                )
+                : [];
                 var thresholds = this.getBinThresholds ([[]]);
                 var binnedData = d3.layout.histogram()
                     .bins(thresholds)
@@ -492,13 +500,13 @@
                 return this.model.getCrossLinkDistances (links[i], cond);
             }, this);
             
-            links[0] = links[0].filter (function (link, i) {
-                return distances[0][i] !== undefined;    
-            });
-            distances[0] = distances[0].filter (function (dist) { return dist !== undefined; });
-
             var joins = links.map (function (linkList, i) {
                 return _.zip (linkList, distances[i]);    
+            });
+            joins = joins.map (function (join) {
+                return join.filter (function (pair) {
+                    return pair[1] !== undefined;
+                });
             });
             
             // Add Random series if plotting distance data
@@ -506,29 +514,21 @@
                 this.precalcedDistributions["Random"] = recalcRandomBinning.call (this, distances[0].length);
                 this.options.reRandom = false;
             }
-            distances.push (this.precalcedDistributions["Random"]);
-            joins.push (this.precalcedDistributions["Random"]);
+            joins.push (this.getPrecalcedDistribution("Random"));
             seriesNames.push ("Random"); 
             
             return {
                 linksWithValues: joins,
-                //values: distances,
                 seriesNames: seriesNames,
             };
         },
         
         getRelevantMatchCount: function (linkFunc) {
-            var cross = function (arr) {
-                return arr[1].map (function (val) {
-                    return [arr[0], val];
-                });    
-            };
-            
             var linkData = this.getFilteredLinksByDecoyStatus();
             var seriesNames = linkData.seriesNames;
             var links = linkData.links;
             
-            var counts = links.map (function (linkArr) {
+            var joinedCounts = links.map (function (linkArr) {
                 var vals = [];
                 linkArr.forEach (function (link) {
                     var res = linkFunc (link);
@@ -543,18 +543,9 @@
                 });
                 return vals;
             });
-            
-            var joins = counts;
-            console.log ("counts", counts);
-            /*
-            var joins = links.map (function (linkList, i) {
-                return _.zip (linkList, counts[i]);     
-            });
-            */
 
             return {
-                linksWithValues: joins,
-                //values: counts,
+                linksWithValues: joinedCounts,
                 seriesNames: seriesNames,
             };
         },
@@ -578,14 +569,13 @@
         getDataCount: function () {
             var funcMeta = this.getSelectedOption ("X");
             this.options.maxX = funcMeta.maxVal;
-            console.log ("mm", funcMeta.maxVal);
             return funcMeta.mainFunc.call(this, funcMeta.linkFunc);
             //return this.getRelevantCrossLinkDistances();    
         },
         
         getBinThresholds: function (series) {
             // get extents of all arrays, concatenate them, then get extent of that array
-            var extent = d3.extent ([].concat.apply([], series.map (function(item) { return d3.extent(item, function (d) { return d[1]; }); })));
+            var extent = d3.extent ([].concat.apply([], series.map (function(item) { return item ? d3.extent(item, function (d) { return d[1]; }) : [0,1]; })));
             var min = d3.min ([0, Math.floor(extent[0])]);
             var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
             var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
@@ -596,6 +586,10 @@
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
             }
             return thresholds;
+        },
+        
+        getPrecalcedDistribution: function (seriesName) {
+            return this.precalcedDistributions[seriesName];
         },
         
         aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
@@ -613,18 +607,18 @@
                     //console.log ("rescale", aseriesName, rescaleToSeries, seriesNames, rsIndex, seriesLengths);
                 }
                 
-                var pcd = precalcedDistributions[aseriesName];
+                var pcd = this.getPrecalcedDistribution (aseriesName);
                 var binnedData = pcd ? pcd.data : 
                     d3.layout
                         .histogram()
                         .value (function (d) { return d[1]; })  // [1] is the actual value, [0] is the crosslink
-                        .bins(thresholds)(aseries)
+                        .bins(thresholds)(aseries || [])
                 ;
                 var dataLength = pcd ? pcd.origSize : seriesLengths[i];
                 if (i === 0) {
                     this.currentBins = binnedData;  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
                 }
-                console.log ("CURRENT BINS", this.currentBins);
+                console.log ("CURRENT BINS", this.currentBins, i, aseries);
                 //console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
                 var scale = rescaleToSeries ? rescaleLength / (dataLength || rescaleLength) : 1;
@@ -642,7 +636,7 @@
             this.options.minX = thresholds[0];
             this.options.gapX = thresholds[1] - thresholds[0];
 
-            return {counts: countArrays, thresholds: thresholds};
+            return countArrays;
         },
         
         reRandom: function () {
@@ -708,10 +702,11 @@
             this.chart = this.chart.destroy();
         },
         
-        identifier: "Distogram",
+        identifier: "Histogram",
         
         optionsToString: function () {
             var seriesIDs = _.pluck (this.chart.data.shown(), "id");
-            return seriesIDs.join("-").toUpperCase();    
+            var funcMeta = this.getSelectedOption("X");
+            return funcMeta.label + "-" + seriesIDs.join("-").toUpperCase();    
         },
     });

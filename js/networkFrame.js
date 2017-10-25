@@ -223,16 +223,16 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes for view dropdown
     var checkBoxData = [
-        {id: "circularChkBxPlaceholder", label: "Circular", eventName:"circularShow"},
-        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName:"spectrumShow"},
-        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName:"scatterplotShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName:"matrixShow"},
-        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName:"proteinInfoShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName:"alignShow", sectionEnd: true},
-        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName:"nglShow"},
-        {id: "distoChkBxPlaceholder", label: "Distogram", eventName:"distoShow", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName:"keyShow", sectionEnd: true},
-        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName:"searchesShow"},
+        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow"},
+        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow"},
+        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow"},
+        {id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow"},
+        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", sectionEnd: true},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", sectionEnd: true},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", sectionEnd: true},
+        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow"},
     ];
     checkBoxData.forEach (function (cbdata) {
         var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
@@ -240,7 +240,7 @@ CLMSUI.init.views = function () {
     });
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
-    var maybeViews = ["#nglChkBxPlaceholder", "#distoChkBxPlaceholder"];
+    var maybeViews = ["#nglChkBxPlaceholder"/*, "#distoChkBxPlaceholder"*/];
     new CLMSUI.DropDownMenuViewBB ({
         el: "#viewDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
@@ -563,7 +563,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         colourScaleModel: CLMSUI.linkColour.groupColoursBB,
         displayEventName: "distoShow",
         myOptions: {
-            chartTitle: "Distogram",
+            chartTitle: "Histogram",
             seriesName: "Actual"
         }
     });
