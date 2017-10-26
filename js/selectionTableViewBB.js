@@ -48,7 +48,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
                 "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score",
                 "autovalidated", "validated", "group", "runName", "scanNumber",
-                "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError", //"precursorIntensity",
+                "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError",
+                "precursorIntensity", "elutionStart", "elutionEnd",
             ];
 
         this.headerLabels = {
@@ -74,7 +75,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "matchMZ": "Match M/Z",
             "matchMass": "Match Mass",
             "massError": "Mass Error",
-            //~ "precursorIntensity": "Intensity",
+            "precursorIntensity": "Intensity",
+            "elutionStart": "Elut.Start",
+            "elutionEnd": "Elut.End",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError", "precursorItensity", ]);
@@ -167,7 +170,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "massError": function (d) {
                 return massZeroPadder(d.massError());
             },
-            //~ "precursorIntensity": function(d) { return d.precursorIntensity; },
+            "precursorIntensity": function(d) { return d.precursorIntensity; },
+            "elutionStart": function(d) { return d.elution_time_start; },
+            "elutionEnd": function(d) { return d.elution_time_end; },
         };
 
         this.page = 1;
