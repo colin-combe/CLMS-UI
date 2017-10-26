@@ -462,15 +462,15 @@ if (count($_GET) > 0) {
 		$interactorQuery = "SELECT * FROM uniprot WHERE accession IN ('"
 				.implode(array_keys($interactorAccs), "','")."');";
 		//echo "**".$interactorQuery."**";
-		//$interactorDbConn = pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
-		//$interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
+		$interactorDbConn = pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
+		$interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
 		echo "\"interactors\":{\n";
-		//$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
-		//while ($line) {
-		//	echo "\"".$line["accession"]."\":".$line["json"];
-            //$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
-            //if ($line) {echo ",\n";}
-  		//}
+		$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+		while ($line) {
+			echo "\"".$line["accession"]."\":".$line["json"];
+            $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+            if ($line) {echo ",\n";}
+  		}
 		echo "\n},";
 
         echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
