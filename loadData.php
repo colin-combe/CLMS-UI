@@ -465,16 +465,29 @@ if (count($_GET) > 0) {
 		$interactorQuery = "SELECT * FROM uniprot WHERE accession IN ('"
 				.implode(array_keys($interactorAccs), "','")."');";
 		//echo "**".$interactorQuery."**";
-		$interactorDbConn = pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
-		$interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
-		echo "\"interactors\":{\n";
-		$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
-		while ($line) {
-			echo "\"".$line["accession"]."\":".$line["json"];
-            $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
-            if ($line) {echo ",\n";}
-  		}
-		echo "\n},";
+        try {
+            // @ stops pg_connect echo'ing out failure messages that knacker the returned data
+            $interactorDbConn = @pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
+            
+            if ($interactorDbConn) {
+                $interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
+                echo "\"interactors\":{\n";
+                $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+                while ($line) {
+                    echo "\"".$line["accession"]."\":".$line["json"];
+                    $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+                    if ($line) {echo ",\n";}
+                }
+                echo "\n},";
+            } else {
+                throw new Exception ("Could not connect to interaction database");
+            }
+        } catch (Exception $e) {
+            //error_log (print_r ("UNIPROT ERR ".$e, true));
+            echo "\"interactors\":{},\n";
+        }
+        
+        
 
         echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
         echo "}\n";

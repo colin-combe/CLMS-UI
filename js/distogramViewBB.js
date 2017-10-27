@@ -183,9 +183,12 @@
                 tooltip: {
                     format: {
                         title: function (x) {
-                            var realX = self.chart.internal.xAxisTickFormat (x);
+                            var tickFunc = self.chart.internal.xAxisTickFormat;
+                            var realX = tickFunc (x);
+                            var funcMeta = self.getSelectedOption ("X");
+                            var nextX = funcMeta.decimalPlaces ? tickFunc (x + 1) : null;
                             var xlabel = self.chart.internal.config.axis_x_label;
-                            return (xlabel.text || xlabel) + " " + realX;
+                            return (xlabel.text || xlabel) + " " + realX + (nextX ? " to <"+nextX : "");
                         },
                         name: function (name) {
                             return name + " " + self.options.ylabel;
@@ -329,13 +332,19 @@
                 countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
                 //console.log ("thresholds", thresholds);
                 //console.log ("countArrays", countArrays);
+                
+                var clearAll = false;
+                if (this.isEmpty(series)) {
+                    countArrays = [[]];
+                    clearAll = true;
+                }
 
                 var redoChart = function () {
                     var chartOptions = {
                         columns: countArrays,
                         colors: this.getSeriesColours(),
                     };
-                    if (options.newColourModel) {
+                    if (options.newColourModel || clearAll) {
                         chartOptions.unload = true;
                     }
                     this.chart.load (chartOptions);
@@ -570,6 +579,10 @@
             //return this.getRelevantCrossLinkDistances();    
         },
         
+        isEmpty: function (series) {
+            return series.every (function (aSeries) { return !aSeries.length; });
+        },
+        
         getBinThresholds: function (series) {
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(item) { return item ? d3.extent(item, function (d) { return d[1]; }) : [0,1]; })));
@@ -577,7 +590,7 @@
             var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
             var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
             var thresholds = d3.range (min, max + (step * 2), step);
-            console.log ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
+            //console.log ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
             
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
@@ -590,7 +603,7 @@
         },
         
         aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
-
+            
             var thresholds = this.getBinThresholds (series);
             //console.log ("precalcs", precalcedDistributions, seriesNames);
 
@@ -615,7 +628,7 @@
                 if (i === 0) {
                     this.currentBins = binnedData;  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
                 }
-                console.log ("CURRENT BINS", this.currentBins, i, aseries);
+                //console.log ("CURRENT BINS", this.currentBins, i, aseries);
                 //console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
                 var scale = rescaleToSeries ? rescaleLength / (dataLength || rescaleLength) : 1;
