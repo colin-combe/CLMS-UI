@@ -30,18 +30,15 @@
                 chartTitle: this.identifier,
                 intraRandomOnly: false,
                 maxX: 90,
+                attributeOptions: CLMSUI.modelUtils.attributeOptions,
             };
             
-            var barOptions = [
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.length; }, label: "Cross-Link Match Count", decimalPlaces: 0},
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
-                {mainFunc: function(lf) { return this.getRelevantMatchCount(lf); }, linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
-                {mainFunc: function(lf) { return this.getRelevantCrossLinkDistances(lf); }, label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90, showRandomButton: true}, 
-            ];
+            this.attrExtraOptions = {
+                "Distance": {
+                    conditions: [{includeUndefineds: true}, {calcDecoyProteinDistances: true}, {calcDecoyProteinDistances: true}], // TT, TD then DD
+                    showRandoms: true,
+                }
+            };
             
             this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -73,7 +70,7 @@
             CLMSUI.utils.addMultipleSelectControls ({
                 addToElem: toolbar, 
                 selectList: ["X"], 
-                optionList: barOptions, 
+                optionList: this.options.attributeOptions, 
                 selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
                 optionLabelFunc: function (d) { return d.label; }, 
                 changeFunc: function () { self.render(); },
@@ -289,7 +286,7 @@
                 // split TT list into sublists for length
                 var splitSeries = d3.range(0, colModel.getDomainCount()).map (function () { return []; });
                 
-                //console.log ("measurements", measurements);
+                console.log ("measurements", measurements);
                 measurements.linksWithValues[TT].forEach (function (linkDatum) {
                     var cat = colModel.getDomainIndex (linkDatum[0]);
                     splitSeries[cat].push (linkDatum);
@@ -473,82 +470,64 @@
             };
         },
         
-        getRelevantCrossLinkDistances: function () {
-            var recalcRandomBinning = function (linkCount) {
-                var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
-                var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
-                //console.log ("ress", residueSets);
-                var distObj = this.model.get("clmsModel").get("distancesObj");
-                var randArr = distObj ? distObj.getRandomDistances (
-                    Math.min ((linkCount * 100) || 10000, 100000), 
-                    d3.values (residueSets),
-                    {intraOnly: this.options.intraRandomOnly}
-                )
-                : [];
-                var thresholds = this.getBinThresholds ([[]]);
-                var binnedData = d3.layout.histogram()
-                    .bins(thresholds)
-                    (randArr)
-                ;
-                console.log ("RANDOM", binnedData, randArr.length);
+        recalcRandomBinning: function (linkCount) {
+            var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
+            var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
+            //console.log ("ress", residueSets);
+            var distObj = this.model.get("clmsModel").get("distancesObj");
+            var randArr = distObj ? distObj.getRandomDistances (
+                Math.min ((linkCount * 100) || 10000, 100000), 
+                d3.values (residueSets),
+                {intraOnly: this.options.intraRandomOnly}
+            )
+            : [];
+            var thresholds = this.getBinThresholds ([[]]);
+            var binnedData = d3.layout.histogram()
+                .bins(thresholds)
+                (randArr)
+            ;
+            console.log ("RANDOM", binnedData, randArr.length);
 
-                return {data: binnedData, origSize: randArr.length};
-            };
-            
-            var linkData = this.getFilteredLinksByDecoyStatus();
-            var seriesNames = linkData.seriesNames;
-            var links = linkData.links;
-            
-            var conditions = [
-               {includeUndefineds: true}, {calcDecoyProteinDistances: true}, {calcDecoyProteinDistances: true} // TT, TD then DD
-            ];
-            var distances = conditions.map (function (cond, i) {
-                return this.model.getCrossLinkDistances (links[i], cond);
-            }, this);
-            
-            var joins = links.map (function (linkList, i) {
-                return _.zip (linkList, distances[i]);    
-            });
-            joins = joins.map (function (join) {
-                return join.filter (function (pair) {
-                    return pair[1] !== undefined;
-                });
-            });
-            
-            // Add Random series if plotting distance data
-            if (this.options.reRandom) {
-                this.precalcedDistributions["Random"] = recalcRandomBinning.call (this, distances[0].length);
-                this.options.reRandom = false;
-            }
-            joins.push (this.getPrecalcedDistribution("Random"));
-            seriesNames.push ("Random"); 
-            
-            return {
-                linksWithValues: joins,
-                seriesNames: seriesNames,
-            };
+            return {data: binnedData, origSize: randArr.length};
         },
         
-        getRelevantMatchCount: function (linkFunc) {
+        getRelevantAttributeData: function (attrMetaData) {
+            var linkFunc = attrMetaData.linkFunc;
             var linkData = this.getFilteredLinksByDecoyStatus();
             var seriesNames = linkData.seriesNames;
             var links = linkData.links;
             
-            var joinedCounts = links.map (function (linkArr) {
+            var extras = this.attrExtraOptions[attrMetaData.id] || {conditions:[]};
+            var conditions = extras.conditions;
+            
+            var joinedCounts = links.map (function (linkArr, i) {
+                var condition = conditions[i];
                 var vals = [];
                 linkArr.forEach (function (link) {
-                    var res = linkFunc (link);
-                    if (res.length) {   // if multiple values returned for a link (is match data)
-                        var filteredMatches = link.filteredMatches_pp;
-                        res.forEach (function (matchValue, i) {
-                            vals.push ([link, matchValue, filteredMatches[i]]);
-                        });
-                    } else {
-                        vals.push ([link, res]);
+                    var res = linkFunc.call (this, link, condition);
+                    if (res != undefined) {
+                        if (attrMetaData.matchLevel) {   // if multiple values returned for a link (is match data)
+                            var filteredMatches = link.filteredMatches_pp;
+                            res.forEach (function (matchValue, i) {
+                                vals.push ([link, matchValue, filteredMatches[i]]);
+                            });
+                        } else if (res[0]) {
+                            vals.push ([link, res[0]]);
+                        }
                     }
-                });
+                }, this);
                 return vals;
-            });
+            }, this);
+            
+            // Add Random series if plotting distance data
+            if (extras.showRandoms) {
+                if (this.options.reRandom) {
+                    this.precalcedDistributions["Random"] = this.recalcRandomBinning.call (this, joinedCounts[0].length);
+                    this.options.reRandom = false;
+                }
+                joinedCounts.push (this.getPrecalcedDistribution("Random"));
+                seriesNames.push ("Random");
+            }
 
             return {
                 linksWithValues: joinedCounts,
@@ -575,8 +554,7 @@
         getDataCount: function () {
             var funcMeta = this.getSelectedOption ("X");
             this.options.maxX = funcMeta.maxVal;
-            return funcMeta.mainFunc.call(this, funcMeta.linkFunc);
-            //return this.getRelevantCrossLinkDistances();    
+            return this.getRelevantAttributeData.call(this, funcMeta);
         },
         
         isEmpty: function (series) {
@@ -658,8 +636,9 @@
         showRandomButton: function () {
             var self = this;
             var funcMeta = this.getSelectedOption("X");
+            var extras = this.attrExtraOptions[funcMeta.id] || {};
             d3.select(this.el).select("#distoPanelintraRandom")
-                .style ("display", self.model.get("clmsModel").realProteinCount > 1 && funcMeta.showRandomButton ? null : "none")
+                .style ("display", self.model.get("clmsModel").realProteinCount > 1 && extras.showRandoms ? null : "none")
             ;
         },
 

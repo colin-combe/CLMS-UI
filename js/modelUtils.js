@@ -760,6 +760,17 @@ CLMSUI.modelUtils = {
         //console.log ("buckets", radixSortBuckets);
         return d3.merge (radixSortBuckets);
     },
+    
+    attributeOptions: [
+        {linkFunc: function (link) { return [link.filteredMatches_pp.length]; }, id: "MatchCount", label: "Cross-Link Match Count", decimalPlaces: 0},
+        {linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.score; }); }, id: "Score", label: "Match Score", decimalPlaces: 2, matchLevel: true},
+        {linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, id: "MZ", label: "Match Precursor m/z", decimalPlaces: 4, matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, id: "Charge", label: "Match Precursor Charge (z)", decimalPlaces: 0,  matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, id: "CalcMass", label: "Match Calculated Mass (m)", decimalPlaces: 4, matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, id: "MassError", label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, id: "SmallPeptideLen", label: "Match Smaller Peptide Length (AA)", decimalPlaces: 0, matchLevel: true},
+        {linkFunc: function (link, option) { return link.isLinearLink() ? [] : [this.model.getSingleCrosslinkDistance (link, null, null, option)]; }, id: "Distance", label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90,}, 
+    ],
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

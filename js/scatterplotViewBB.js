@@ -37,18 +37,8 @@
             jitter: true,
             chartMargin: 10,
             pointSize: 4,
+            attributeOptions: CLMSUI.modelUtils.attributeOptions,
         };
-        
-        var scatterOptions = [
-            {func: function(c) { return [c.filteredMatches_pp.length]; }, label: "Cross-Link Match Count", decimalPlaces: 0},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.score; }); }, label: "Match Score", decimalPlaces: 2, matchLevel: true},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorMZ; }); }, label: "Match Precursor MZ", decimalPlaces: 4, matchLevel: true},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, label: "Match Precursor Charge", decimalPlaces: 0,  matchLevel: true},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, label: "Match Calculated Mass", decimalPlaces: 4, matchLevel: true},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
-            {func: function(c) { return c.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, label: "Match Smaller Peptide Length", decimalPlaces: 0, matchLevel: true},
-            {func: function(c) { return c.isLinearLink() ? [] : [self.model.getSingleCrosslinkDistance (c)]; }, label: "Cross-Link Distance", decimalPlaces: 2},
-        ];
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
         
@@ -82,7 +72,7 @@
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: this.controlDiv, 
             selectList: ["X", "Y"], 
-            optionList: scatterOptions, 
+            optionList: this.options.attributeOptions, 
             selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
             optionLabelFunc: function (d) { return d.label; }, 
             changeFunc: function () { self.axisChosen().render(); },
@@ -306,12 +296,12 @@
         return this;
     },
         
-    getData: function (func, filteredFlag, optionalLinks) {
+    getData: function (linkFunc, filteredFlag, optionalLinks) {
         var crossLinks = optionalLinks || 
             (filteredFlag ? this.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
         ;
         var data = crossLinks.map (function (c) {
-            return func ? func (c) : [undefined];
+            return linkFunc ? linkFunc (c) : [undefined];
         });
         return data;
     },
@@ -338,7 +328,7 @@
         
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
-        var data = this.getData (funcMeta ? funcMeta.func : undefined, filteredFlag, optionalLinks);
+        var data = this.getData (funcMeta ? funcMeta.linkFunc : undefined, filteredFlag, optionalLinks);
         return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false};
     },
         
