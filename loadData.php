@@ -75,102 +75,145 @@ if (count($_GET) > 0) {
 
     //get search meta data
     $id_rands = explode("," , $sid);
-    $searchId_randGroup = [];
+    $searchId_metaData = [];
+    $searchId_randomId = [];
     for ($i = 0; $i < count($id_rands); $i++) {
         //$s = [];
         $dashSeperated = explode("-" , $id_rands[$i]);
         $randId = implode('-' , array_slice($dashSeperated, 1 , 4));
         $id = $dashSeperated[0];
-        //~ $searchDataQuery = "SELECT search.name, sequence_file.file_name"
-                    //~ ." FROM search, search_sequencedb, sequence_file "
-                    //~ ."WHERE search.id = search_sequencedb.search_id "
-                    //~ ."AND search_sequencedb.seqdb_id = sequence_file.id "
-                    //~ ."AND search.id = '".$id."';";
 
-        $searchDataQuery = "SELECT s.id, s.name, s.private, s.submit_date, s.notes, s.random_id,
-
-    (
-        SELECT json_agg(sf.*) FROM (
-         SELECT search_id, name, file_name, decoy_file, file_path, notes, upload_date,
-         user_name AS uploaded_by
-         FROM search_sequencedb
-         INNER JOIN sequence_file
-         ON search_sequencedb.seqdb_id = sequence_file.id
-         INNER JOIN users
-         ON sequence_file.uploadedby = users.id
-         WHERE search_sequencedb.search_id = s.id
-        ) sf
-    )
-    AS sequence_files,
-
-    (
-        SELECT json_agg(r.*)
-
-        FROM search_acquisition sa
-
-        INNER JOIN (
-            SELECT acq_id, run_id,
-                    run.name AS run_name,
-                    run.file_path AS run_file_path,
-                    acquisition.name AS acquisition_name,
-                    users.user_name AS uploaded_by,
-                    notes
-            FROM run
-            INNER JOIN acquisition ON run.acq_id = acquisition.id
-            INNER JOIN users ON acquisition.uploadedby = users.id
-            ) r
-        ON sa.run_id = r.run_id AND sa.acq_id = r.acq_id
-        WHERE sa.search_id = s.id
-      ) AS runs,
-
-    (SELECT json_agg(e.*) FROM (
-         SELECT id, name, description FROM enzyme
-    ) e  WHERE ps.enzyme_chosen = e.id) AS enzymes,
-
-    (SELECT json_agg(cm.*) FROM (
-         SELECT paramset_id, name, description, fixed FROM chosen_modification
-         INNER JOIN modification
-         ON chosen_modification.mod_id = modification.id
-    ) cm  WHERE cm.paramset_id = ps.id) AS modifications,
-
-    (SELECT json_agg(cc.*) FROM (
-     SELECT paramset_id, name, mass, is_decoy, description FROM chosen_crosslinker
-     INNER JOIN crosslinker
-     ON chosen_crosslinker.crosslinker_id = crosslinker.id
-    ) cc  WHERE cc.paramset_id = ps.id) AS crosslinkers,
-
-    (SELECT json_agg(cl.*) FROM (
-     SELECT paramset_id, name, lost_mass, description FROM chosen_losses
-     INNER JOIN loss
-     ON chosen_losses.loss_id = loss.id
-    ) cl  WHERE cl.paramset_id = ps.id) AS losses
-
-    FROM search s
-    INNER JOIN parameter_set ps ON s.paramset_id = ps.id
-    WHERE s.id = '".$id."';";
+        $searchDataQuery = "SELECT s.id AS id, s.name, s.private, 
+			s.submit_date, s.notes, s.random_id, paramset_id,
+			ps.enzyme_chosen AS enzyme_chosen
+			FROM search s
+			INNER JOIN parameter_set ps ON s.paramset_id = ps.id
+			INNER JOIN users u ON s.uploadedby = u.id
+			WHERE s.id = '".$id."';";
 
         $res = pg_query($searchDataQuery)
                     or die('Query failed: ' . pg_last_error());
         $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-
+        
         if (count($dashSeperated) == 6){
             $line["group"] = $dashSeperated[5];
         } else {
             $line["group"] = "'NA'";
         }
         $line["random_id"] = $randId;
-        $searchId_randGroup[$id] = $line;
+		
+		//sequence files
+        $seqFileQuery = "SELECT search_id, name, file_name, decoy_file, file_path, notes, upload_date,
+			 user_name AS uploaded_by
+			 FROM search_sequencedb
+			 INNER JOIN sequence_file
+			 ON search_sequencedb.seqdb_id = sequence_file.id
+			 INNER JOIN users
+			 ON sequence_file.uploadedby = users.id
+			 WHERE search_sequencedb.search_id = '".$id."';";        
+        $sequenceFileResult = pg_query($seqFileQuery)
+                    or die('Query failed: ' . pg_last_error());
+		$sequenceFiles = [];
+		while ($seqFile = pg_fetch_object($sequenceFileResult)) {
+			array_push($sequenceFiles, $seqFile);
+		}
+		$line["sequenceFiles"] = $sequenceFiles;
+		// Free resultset
+		pg_free_result($sequenceFileResult);
+    
+			
+			
+        //runs        
+		$runQuery = "SELECT *
+			FROM search_acquisition sa
+			INNER JOIN (
+				SELECT acq_id, run_id,
+						run.name AS run_name,
+						run.file_path AS run_file_path,
+						acquisition.name AS acquisition_name,
+						users.user_name AS uploaded_by,
+						notes
+				FROM run
+				INNER JOIN acquisition ON run.acq_id = acquisition.id
+				INNER JOIN users ON acquisition.uploadedby = users.id
+				) r
+			ON sa.run_id = r.run_id AND sa.acq_id = r.acq_id
+        WHERE sa.search_id = '".$id."';";              
+        $runResult = pg_query($dbconn, $runQuery)
+                    or die('Query failed: ' . pg_last_error());
+		$runs = [];
+		while ($run = pg_fetch_object($runResult)) {
+			array_push($runs, $run);
+		}
+		$line["runs"] = $runs;
+        // Free resultset
+		pg_free_result($runResult);
+    
+		//enzymes - xiDB only supports 1 enzyme at moment, xiUI will get it as array containing 1 element
+		//	since it should change to multiple enzymes at some future point,  
+		$enzymeQuery = "SELECT * FROM enzyme e WHERE e.id = '".$line["enzyme_chosen"]."';";              
+        $enzymeResult = pg_query($dbconn, $enzymeQuery)
+                    or die('Query failed: ' . pg_last_error());
+		$enzymes = [];
+		while ($enzyme = pg_fetch_object($enzymeResult)) { //this will only loop once at moment
+			array_push($enzymes, $enzyme);
+		}
+		$line["enzymes"] = $enzymes;
+		// Free resultset
+		pg_free_result($enzymeResult);
+    
+		//need paramater_set id for modification, crosslinkers & losses
+		$psId =$line["paramset_id"];
+				
+		//modifications
+		$modQuery = "SELECT * FROM chosen_modification cm INNER JOIN modification m ON cm.mod_id = m.id  
+		 WHERE cm.paramset_id = '".$psId."';";              
+        $modResult = pg_query($dbconn, $modQuery)
+                    or die('Query failed: ' . pg_last_error());
+		$mods = [];
+		while ($mod = pg_fetch_object($modResult)) {
+			array_push($mods, $mod);
+		}
+		$line["modifications"] = $mods;
+		// Free resultset
+		pg_free_result($modResult);
+		
+		//cross-linkers
+		$crosslinkerQuery = "SELECT * FROM chosen_crosslinker cc INNER JOIN crosslinker cl ON cc.crosslinker_id = cl.id  
+		 WHERE cc.paramset_id = '".$psId."';";              
+        $crosslinkerResult = pg_query($dbconn, $crosslinkerQuery)
+                    or die('Query failed: ' . pg_last_error());
+		$crosslinkers = [];
+		while ($crosslinker = pg_fetch_object($crosslinkerResult)) {
+			array_push($crosslinkers, $crosslinker);
+		}
+		$line["crosslinkers"] = $crosslinkers;
+		// Free resultset
+		pg_free_result($crosslinkerResult);
+		
+	
+		//losses
+		$lossesQuery = "SELECT * FROM chosen_losses closs INNER JOIN loss ON closs.loss_id = loss.id  
+		 WHERE closs.paramset_id = '".$psId."';";              
+        $lossesResult = pg_query($dbconn, $lossesQuery)
+                    or die('Query failed: ' . pg_last_error());
+		$losses = [];
+		while ($loss = pg_fetch_object($lossesResult)) { //this will only loop once at moment
+			array_push($losses, $loss);
+		}
+		$line["losses"] = $losses;
+		//free result set
+		pg_free_result($lossesResult);
+		
+		//now take out some untidy looking attributes
+		unset($line["enzyme_chosen"]);
+        unset($line["paramset_id"]);
+        
+        $searchId_metaData[$id] = $line;
+        $searchId_randomId[$id] = $randId;
     }
 
-    //problems with unwanted escaping / quote marks introduced by json_encode
-    $temp = json_encode($searchId_randGroup);
-    $temp = preg_replace("/\\\\n/", "", $temp);
-    $temp = preg_replace("/\"\[/", "[", $temp);
-    $temp = preg_replace("/\]\"/", "]", $temp);
-    $temp = stripslashes($temp);
-
-    echo "\"searches\":" . $temp . ",\n";
-
+    echo "\"searches\":".json_encode($searchId_metaData). ",\n";
 
     //Stored layouts
 	$layoutQuery = "SELECT t1.layout AS l "
@@ -187,20 +230,22 @@ if (count($_GET) > 0) {
     //load data -
     $WHERE_spectrumMatch = ' ( '; //WHERE clause for spectrumMatch table
     $WHERE_matchedPeptide = ' ( ';//WHERE clause for matchedPeptide table
-    for ($i = 0; $i < count($searchId_randGroup); $i++) {
-        $search = array_values($searchId_randGroup)[$i];
+    $i = 0;
+    foreach ($searchId_randomId as $key => $value) {
         if ($i > 0){
             $WHERE_spectrumMatch = $WHERE_spectrumMatch.' OR ';
             $WHERE_matchedPeptide = $WHERE_matchedPeptide.' OR ';
         }
-        $randId = $search["random_id"];
-        $id = $search["id"];
+        $id = $key;
+        $randId = $value;
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
         $WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
+        
+        $i++; 
     }
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND score >= '.$lowestScore.') ';
-    $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
-
+    $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';	
+	
     if ($decoys == false){
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND (NOT is_decoy) ';
     }
@@ -365,7 +410,7 @@ if (count($_GET) > 0) {
     }
 
 	$proteinIdField = "hp.protein_id";
-    if (count($searchId_randGroup) > 1 || $accAsId) {
+    if (count($searchId_randomId) > 1 || $accAsId) {
         $proteinIdField = "p.accession_number";
     }
 
@@ -423,7 +468,7 @@ if (count($_GET) > 0) {
          */
 
         $proteinIdField = "id";
-        if (count($searchId_randGroup) > 1  || $accAsId) {
+        if (count($searchId_randomId) > 1  || $accAsId) {
             $proteinIdField = "accession_number";
         }
 
