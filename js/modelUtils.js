@@ -769,6 +769,9 @@ CLMSUI.modelUtils = {
         {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, id: "CalcMass", label: "Match Calculated Mass (m)", decimalPlaces: 4, matchLevel: true},
         {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.massError(); }); }, id: "MassError", label: "Match Mass Error", decimalPlaces: 4, matchLevel: true},
         {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, id: "SmallPeptideLen", label: "Match Smaller Peptide Length (AA)", decimalPlaces: 0, matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); }, id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_start; }); }, id: "ElutionTimeStart", label: "Elution Time Start", decimalPlaces: 2, matchLevel: true},
+        {linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_end; }); }, id: "ElutionTimeEnd", label: "Elution Time End", decimalPlaces: 2, matchLevel: true},
         {linkFunc: function (link, option) { return link.isLinearLink() ? [] : [this.model.getSingleCrosslinkDistance (link, null, null, option)]; }, id: "Distance", label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90,}, 
     ],
 };
