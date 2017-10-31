@@ -270,7 +270,7 @@ if (count($_GET) > 0) {
                 sm.score, sm.autovalidated, sm.validated, sm.rejected,
                 sm.search_id, sm.is_decoy, sm.calc_mass, sm.precursor_charge,
                 sp.scan_number, sp.source_id as source,
-                /*sp.precursor_intensity,*/ sp.precursor_mz
+                sp.precursor_intensity, sp.precursor_mz, sp.elution_time_start, sp.elution_time_end
             FROM
                 (SELECT sm.id, sm.score, sm.autovalidated, sm.validated, sm.rejected,
                 sm.search_id, sm.precursor_charge, sm.is_decoy, sm.spectrum_id,
@@ -325,7 +325,10 @@ if (count($_GET) > 0) {
                 . '"sn":' . $line["scan_number"]. ','
                 . '"pc_c":' . $line["precursor_charge"]. ','
                 . '"pc_mz":' . $line["precursor_mz"] . ','
-                . '"cm":' . $line["calc_mass"]
+                . '"cm":' . $line["calc_mass"] . ','
+                . '"pc_i":' . $line["precursor_intensity"] . ','
+                . '"e_s":' . $line["elution_time_start"] . ','
+                . '"e_e":' . $line["elution_time_end"]
                 . "}";
             $line = pg_fetch_array($res, null, PGSQL_ASSOC);
             if ($line) {echo ",\n";}
@@ -462,16 +465,29 @@ if (count($_GET) > 0) {
 		$interactorQuery = "SELECT * FROM uniprot WHERE accession IN ('"
 				.implode(array_keys($interactorAccs), "','")."');";
 		//echo "**".$interactorQuery."**";
-		//$interactorDbConn = pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
-		//$interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
-		echo "\"interactors\":{\n";
-		//$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
-		//while ($line) {
-		//	echo "\"".$line["accession"]."\":".$line["json"];
-            //$line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
-            //if ($line) {echo ",\n";}
-  		//}
-		echo "\n},";
+        try {
+            // @ stops pg_connect echo'ing out failure messages that knacker the returned data
+            $interactorDbConn = @pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
+            
+            if ($interactorDbConn) {
+                $interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
+                echo "\"interactors\":{\n";
+                $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+                while ($line) {
+                    echo "\"".$line["accession"]."\":".$line["json"];
+                    $line = pg_fetch_array($interactorResult, null, PGSQL_ASSOC);
+                    if ($line) {echo ",\n";}
+                }
+                echo "\n},";
+            } else {
+                throw new Exception ("Could not connect to interaction database");
+            }
+        } catch (Exception $e) {
+            //error_log (print_r ("UNIPROT ERR ".$e, true));
+            echo "\"interactors\":{},\n";
+        }
+        
+        
 
         echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
         echo "}\n";
