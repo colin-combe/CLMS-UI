@@ -201,7 +201,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             });
 			//todo: why isn't following clearing spec viewer if match is null
             //console.log ("mm", highestScoringMatch);
-            this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
+            this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: true});
         });
 
         this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
