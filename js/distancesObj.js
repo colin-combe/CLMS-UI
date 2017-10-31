@@ -350,7 +350,8 @@ CLMSUI.DistancesObj.prototype = {
                             //CLMSUI.utils.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                             // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                             var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
-                            if (!isNaN(dist)) {
+                            // dist is zero if same residues getting linked, which isn't really a plausible scenario, or is it?
+                            if (!isNaN(dist) && dist > 0) {
                                 randDists.push (dist);
                             }
                         }
@@ -384,7 +385,7 @@ CLMSUI.DistancesObj.prototype = {
                             //CLMSUI.utils.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                             // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
                             var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
-                            if (!isNaN(dist)) {
+                            if (!isNaN(dist) && dist > 0) {
                                 randDists.push (dist);
                             }
                         }
