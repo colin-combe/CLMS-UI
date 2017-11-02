@@ -136,11 +136,16 @@
 		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
         <!-- Spectrum view .js files -->
+        <script type="text/javascript" src="../spectrum/vendor/datatables.min.js"></script>
+        <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js"></script>
+        <script type="text/javascript" src="../spectrum/vendor/js.cookie.js"></script>
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js"></script> 
-        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>        
+        <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/PepInputView.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
