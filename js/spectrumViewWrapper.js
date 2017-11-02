@@ -40,6 +40,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<input id='lockZoom' type='checkbox' style='visibility: hidden;'>"
             +"</form>"
             +"<button id='toggleView' title='Click to toggle view'>QC</button>"
+            +"<button id='toggleSettings' title='Show/Hide Settings' class='btn btn-1a btn-topNav'>&#9881;</button>"
             +"</div>"
             +"</div>"
             +"<div class='heightFill'>"
