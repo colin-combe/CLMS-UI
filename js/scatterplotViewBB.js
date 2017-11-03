@@ -250,6 +250,7 @@
         var filteredCrossLinks = this.getFilteredCrossLinks ();
         var extent = options.extent || this.brush.extent();
         var matchLevel = xAxisData.matchLevel || yAxisData.matchLevel;
+        var exmin = extent[0][0], exmax = extent[1][0], eymin = extent[0][1], eymax = extent[1][1];
 
         var add = options.add || false;
         var type = options.select ? "selection" : "highlights";
@@ -263,24 +264,26 @@
                 var passMatches = (xDatum && yDatum) ? link.filteredMatches_pp.filter (function (match, ii) {
                     var xd = xDatum.length === 1 ? xDatum[0] : xDatum[ii];
                     var yd = yDatum.length === 1 ? yDatum[0] : yDatum[ii];
-                    return (xd >= extent[0][0] && xd <= extent[1][0] && yd >= extent[0][1] && yd <= extent[1][1]);
+                    return (xd >= exmin && xd <= exmax && yd >= eymin && yd <= eymax);
                 }) : [];
                 return passMatches;
             });
             var allMatchingMatches = d3.merge (matchingMatches);
+            this.selectSize = allMatchingMatches.length;
             this.model.setMarkedMatches (type, allMatchingMatches, true, add);
         } else {
             var matchingLinks = filteredCrossLinks.filter (function (link, i) {
                 var xDatum = xData[i];
                 var yDatum = yData[i];
                 var bool = xDatum && xDatum.some (function (xd) {
-                    return xd >= extent[0][0] && xd <= extent[1][0];
+                    return xd >= exmin && xd <= exmax;
                 });
                 bool = bool && yDatum && yDatum.some (function (yd) {
-                    return yd >= extent[0][1] && yd <= extent[1][1];
+                    return yd >= eymin && yd <= eymax;
                 });
                 return bool;
             });
+            this.selectSize = matchingLinks.length;
             this.model.setMarkedCrossLinks (type, matchingLinks, true, add);
         }
     },
@@ -409,10 +412,11 @@
             return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to "+fvals[1])];  
         });
         
-        var level = axesMetaData.some (function (axmd) { return axmd.matchLevel; }) ? "Matches" : "Cross-Links";
+        var size = this.selectSize;
+        var level = axesMetaData.some (function (axmd) { return axmd.matchLevel; }) ? (size === 1 ? "Match" : "Matches") : (size === 1 ? "Cross-Link" : "Cross-Links");
         
          this.model.get("tooltipModel")
-            .set("header", "Highlighting "+level)
+            .set("header", "Highlighting "+(d3.format(",")(size))+" "+level)
             .set("contents", inBetweenValidValues ? null : tooltipData)
             .set("location", evt)
         ;
