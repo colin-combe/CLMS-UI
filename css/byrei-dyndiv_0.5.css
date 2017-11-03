@@ -50,7 +50,7 @@
  border-right: 0;
  padding: 0;
  overflow: hidden;
- white-space:nowrap;
+ /*white-space:nowrap;*/ /* https://bugzilla.mozilla.org/show_bug.cgi?id=488725 */
 }
 
 .dynDiv_minmaxDiv {
