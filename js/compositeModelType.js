@@ -167,22 +167,23 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-        console.log ("xlinks", this.filteredXLinks);
+//        console.log ("xlinks", this.filteredXLinks);
 
         //hiding linkless participants  
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
             participant.hidden = true;
             var partCls = participant.crossLinks;
-
-            for (var pCl = 0; pCl < partCls.length; ++pCl) {
-                var pCrossLink = partCls[pCl];
-                if (pCrossLink.filteredMatches_pp.length &&
-                    !pCrossLink.isDecoyLink() &&
-                    !pCrossLink.isLinearLink()) {
-                    participant.hidden = false;
-                    break;
-                }
-            }
+			if (participant.manuallyHidden != true) {
+				for (var pCl = 0; pCl < partCls.length; ++pCl) {
+					var pCrossLink = partCls[pCl];
+					if (pCrossLink.filteredMatches_pp.length &&
+						!pCrossLink.isDecoyLink() &&
+						!pCrossLink.isLinearLink()) {
+						participant.hidden = false;
+						break;
+					}
+				}
+			}
         });
         
         /*
@@ -396,6 +397,32 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.trigger("change:selectedProtein", this);
         console.log("map", this.get("selectedProtein"));
     },
+    
+    invertSelectedProteins: function () {
+		var idsToSelect = [];
+		var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
+		var participantCount = participantsArr.length;
+		var selected = CLMS.arrayFromMapKeys(this.get("selectedProtein"));
+		for (var p = 0; p < participantCount; p++) {
+			var id = participantsArr[p].id;
+			if (selected.indexOf(id) == -1) {
+				idsToSelect.push(id);
+			}
+		}
+		this.setSelectedProteins(idsToSelect);
+	},
+	
+	hideSelectedProteins: function () {		
+		var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
+		var selectedCount = selectedArr.length;
+		for (var s = 0; s < selectedCount; s++) {
+			var participant = selectedArr[s].id;
+			participant.manuallyHidden = true;
+		}
+		this.setSelectedProteins([]);
+		this.get("filterModel").trigger("change");
+		     
+},
 
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         // distancesObj and alignCollection can be supplied to function or, if not present, taken from model

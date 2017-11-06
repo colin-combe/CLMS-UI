@@ -1,7 +1,7 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
-    
+
     var xiAnnotRoot = CLMSUI.xiAnnotRoot || "";
 
     var url = xiAnnotRoot + "/xiAnnotator/annotate/"
