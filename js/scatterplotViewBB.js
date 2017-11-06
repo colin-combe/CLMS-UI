@@ -234,6 +234,26 @@
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
+        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+            //console.log ("HELLO", arguments);
+            var newOptions = columns.map (function (column) {
+                return {id: column, label: column, decimalPlaces: 2, matchLevel: false, linkFunc: function (c) {
+                    return c.meta ? [c.meta[column]] : [];
+                }};
+            });
+            //console.log ("NEW OPTIONS", newOptions);
+
+            var toolbar = mainDivSel.select("div.toolbar");
+            CLMSUI.utils.addMultipleSelectControls ({
+                addToElem: toolbar, 
+                selectList: ["X", "Y"], 
+                optionList: newOptions, 
+                keepOldOptions: true,
+                selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+                optionLabelFunc: function (d) { return d.label; }, 
+                changeFunc: function () { self.axisChosen().render(); },
+            });
+        });
         
         this.axisChosen().render();     // initial render with defaults
     },
@@ -304,8 +324,8 @@
             (filteredFlag ? this.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
         ;
         var data = crossLinks.map (function (c) {
-            return linkFunc ? linkFunc (c) : [undefined];
-        });
+            return linkFunc ? linkFunc.call (this, c) : [undefined];
+        }, this);
         return data;
     },
         
@@ -352,17 +372,20 @@
         
         directions.forEach (function (direction) {
             var dom = d3.extent (d3.merge (direction.dataDetails.data));
-            if (dom[0] === undefined) {
+            if (dom[0] === undefined || !_.isNumber (dom[0])) {
                 dom = [0, 0];
             }
-            if (direction.dataDetails.zeroBased) {
-                dom[0] = Math.min (0, dom[0]);
+            if (direction.dataDetails.zeroBased && _.isNumber (dom[0])) {
+                dom[0] = d3.min ([0, dom[0]]);
             }
-            dom = dom.map (function (v, i) { return Math[i === 0 ? "floor": "ceil"](v); });
+            dom = dom.map (function (v, i) { 
+                return _.isNumber(v) ? Math[i === 0 ? "floor": "ceil"](v) : v; 
+            });
             //var leeway = Math.ceil (Math.abs(dom[1] - dom[0]) / 10) / 2;
             //dom[0] -= xLeeway; // 0.5;
             //dom[1] += 0.5;
             direction.scale.domain (dom);
+            //console.log ("DOM", dom, direction.scale, direction.scale.domain());
         }); 
         //console.log ("data", datax, datay, domX, domY);
         
