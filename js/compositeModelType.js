@@ -416,13 +416,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 		var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
 		var selectedCount = selectedArr.length;
 		for (var s = 0; s < selectedCount; s++) {
-			var participant = selectedArr[s].id;
+			var participant = selectedArr[s];
 			participant.manuallyHidden = true;
 		}
 		this.setSelectedProteins([]);
 		this.get("filterModel").trigger("change");
 		     
-},
+	},
 
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
