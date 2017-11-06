@@ -313,6 +313,7 @@
                 });
                 countArrays.splice (DD,1);   // remove DD, its purpose is done
                 seriesNames.splice (DD,1);
+                //this.currentBins.splice (DD, 1);
                 //console.log ("ca2", countArrays);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
@@ -584,6 +585,7 @@
             
             var thresholds = this.getBinThresholds (series);
             //console.log ("precalcs", precalcedDistributions, seriesNames);
+            this.currentBins = [];
 
             var countArrays = series.map (function (aseries, i) {
                 var aseriesName = seriesNames[i];
@@ -603,9 +605,7 @@
                         .bins(thresholds)(aseries || [])
                 ;
                 var dataLength = pcd ? pcd.origSize : seriesLengths[i];
-                if (i === 0) {
-                    this.currentBins = binnedData;  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
-                }
+                this.currentBins[i] = {bin: binnedData, id: aseriesName};  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
                 //console.log ("CURRENT BINS", this.currentBins, i, aseries);
                 //console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
@@ -678,8 +678,23 @@
         highlightOrSelect: function (type, c3Data, c3MouseData) {
             var seriesIndex = _.indexOf (_.pluck (c3Data, "id"), c3MouseData.id);  // get the series id associated with the c3 mouse data
             var matchBasedSelection = this.getSelectedOption("X").matchLevel;
-            if (seriesIndex === 0) {    // ...and then only run this routine for the first series in the c3 dataset
-                var bin = this.currentBins[c3MouseData.index];  // get bin for the c3 index under mouse
+            var hidden = this.chart.internal.hiddenTargetIds;
+            //console.log ("this currentBins", this.currentBins, this.options.subSeriesNames);
+            if (seriesIndex === 0) {    // ...and then only run this routine for the first series in the c3 dataset (could be any, important thing is just do it once)
+                var bins = this.currentBins
+                    .filter (function (seriesBin) {
+                        var seriesID = seriesBin.id;
+                        var subSeries = this.options.subSeriesNames.indexOf (seriesID) >= 0;
+                        var curHidden = hidden.indexOf(seriesID) >= 0;
+                        return subSeries && !curHidden;
+                    }, this)
+                    .map (function (seriesBin) {
+                        return seriesBin.bin[c3MouseData.index];
+                    })
+                ;
+                var bin = d3.merge (bins);
+                //console.log ("bins", bins, bin);
+
                 var ev = d3.event || {};
                 if (matchBasedSelection) {
                     var matches = bin.map (function (linkData) { return linkData[2]; }); // get the link data from that bin
