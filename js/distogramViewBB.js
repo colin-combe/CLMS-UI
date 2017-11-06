@@ -244,6 +244,26 @@
             this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
             this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
             this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
+            this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+                //console.log ("HELLO", arguments);
+                var newOptions = columns.map (function (column) {
+                    return {id: column, label: column, decimalPlaces: 2, matchLevel: false, linkFunc: function (c) {
+                        return c.meta ? [c.meta[column]] : [];
+                    }};
+                });
+                //console.log ("NEW OPTIONS", newOptions);
+                
+                var toolbar = mainDivSel.select("div.toolbar");
+                CLMSUI.utils.addMultipleSelectControls ({
+                    addToElem: toolbar, 
+                    selectList: ["X"], 
+                    optionList: newOptions, 
+                    keepOldOptions: true,
+                    selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+                    optionLabelFunc: function (d) { return d.label; }, 
+                    changeFunc: function () { self.render(); },
+                });
+            });
             
             if (this.model.get("clmsModel").get("distancesObj")) {
                 distancesAvailable();

@@ -452,21 +452,37 @@ CLMSUI.utils = {
         };
         settings = _.extend (defaults, settings);
         
-        // Add two select widgets for picking axes data types
-        var selects = settings.addToElem.selectAll("select")
+        // Add a number of select widgets for picking axes data types
+        var selectHolders = settings.addToElem.selectAll("label.selectHolder")
             .data(settings.selectList, function(d) { return d.id ? d.id : d; })
+        ;
+        
+        // new select elements
+        selectHolders
             .enter()
             .append ("label")
-            .attr ("class", "btn")
+            .attr ("class", "btn selectHolder")
                 .append ("span")
                 .attr ("class", "noBreak")
                 .text (settings.selectLabelFunc)
+                .append("select")
+                    .on ("change", settings.changeFunc)
         ;
         
-        selects.append("select")
-            .on ("change", settings.changeFunc)
+        var optionData = settings.optionList.slice();
+        if (settings.keepOldOptions) {
+            var existingOptions = selectHolders.select("select").selectAll("option");
+            var oldData = existingOptions.length ? existingOptions.data() : [];
+            //console.log ("OLD DATA", oldData);
+            optionData = oldData.concat(optionData);
+        }
+        //console.log ("SETTUINGS", optionData);
+        
+        // add options to new and existing select elements
+        var selects = selectHolders.selectAll("select");
+        selects
             .selectAll("option")
-            .data (settings.optionList)
+            .data (optionData)
                 .enter()
                 .append ("option")
                 .text (settings.optionLabelFunc)
