@@ -430,7 +430,35 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 		for (var p = 0; p < participantCount; p++) {
 			participantsArr[p].manuallyHidden = false;
 		}
+		
 		this.get("filterModel").trigger("change");
+	},
+
+	
+	stepOutSelectedProteins: function () {		
+		var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
+		var selectedCount = selectedArr.length;
+		var idsToSelect = new Set ();
+		for (var s = 0; s < selectedCount; s++) {
+			var participant = selectedArr[s];
+			var crossLinks = participant.crossLinks;
+			var clCount = crossLinks.length;
+			for (var cl = 0; cl < clCount; cl++){
+				var crossLink = crossLinks[cl];
+				var fromProtein = crossLink.fromProtein;
+				fromProtein.manuallyHidden = false;
+				idsToSelect.add(fromProtein.id);
+				if (crossLink.toProtein) {
+					var toProtein = crossLink.toProtein;
+					toProtein.manuallyHidden = false;
+					idsToSelect.add(toProtein.id);					
+				}
+			}
+		}
+					
+		this.get("filterModel").trigger("change");
+		this.setSelectedProteins(Array.from(idsToSelect));
+
 	},
 
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
