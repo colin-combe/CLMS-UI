@@ -31,6 +31,9 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
         var val = this.getValue (crossLink);
         return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
     },
+    getColourByValue: function (val) {
+        return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
+    },
     triggerColourModelChanged: function (obj) {
         this.trigger ("colourModelChanged", obj);
         if (this.collection) {

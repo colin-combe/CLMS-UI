@@ -220,6 +220,22 @@ CLMSUI.utils = {
         ;
         callback (image);
     },
+    
+    declutterAxis: function (d3AxisElem) {
+        var last = Number.NEGATIVE_INFINITY;
+        d3AxisElem.selectAll(".tick text")
+            .each (function () {
+                var text = d3.select(this);
+                var bounds = this.getBoundingClientRect();
+                var overlap = bounds.x < last;
+                //console.log ("bounds", bounds);
+                text.style ("visibility", overlap ? "hidden" : null);
+                if (!overlap) {
+                    last = bounds.x + bounds.width;
+                }
+            })
+        ;
+    },
 
     RadioButtonFilterViewBB: Backbone.View.extend ({
         tagName: "div",
