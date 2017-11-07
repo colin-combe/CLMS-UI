@@ -281,7 +281,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     modeChanged: function () {
 		var fdrMode = d3.select("#fdrMode").node().checked;
-        d3.selectAll("#validationStatus,#matchScore,#navFilters").style("display", fdrMode ? "none" : "inline-block");
+        d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
         d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
 		this.model.set ("fdrMode", fdrMode);
     },

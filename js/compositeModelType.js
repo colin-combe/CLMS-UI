@@ -63,19 +63,28 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 				}
 
 				if (pass) {
-					crossLink.filteredMatches_pp = crossLink.matches_pp.filter(
+					var filteredMatches_pp = crossLink.matches_pp.filter(
 						function (value) {
 							return filterModel.subsetFilter(value.match, proteinMatchFunc);
 						}
 					);
 
-					crossLink.ambiguous = !crossLink.filteredMatches_pp.some(function (matchAndPepPos) {
+					crossLink.ambiguous = !filteredMatches_pp.some(function (matchAndPepPos) {
 						return matchAndPepPos.match.crossLinks.length === 1;
 					});
-					var filteredMatches_pp = crossLink.filteredMatches_pp;
+					//~ var filteredMatches_pp = crossLink.filteredMatches_pp;
+					crossLink.filteredMatches_pp = [];
 					var filteredMatchCount = filteredMatches_pp.length;
 					for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
-						filteredMatches_pp[fm_pp].match.fdrPass = true;
+						var fm_pp = filteredMatches_pp[fm_pp];
+						//set its fdr pass att to true even though it may not be in final results 
+						fm_pp.match.fdrPass = true;
+						//check its not manually hidden and meets navigation filter
+						if (crossLink.fromProtein.manuallyHidden != true 
+							&& (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true)
+							&& filterModel.navigationFilter(fm_pp.match)) {
+							crossLink.filteredMatches_pp.push(fm_pp);
+						}
 					}
 				} else {
 					crossLink.filteredMatches_pp = [];
@@ -446,9 +455,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 			for (var cl = 0; cl < clCount; cl++){
 				var crossLink = crossLinks[cl];
 				var fromProtein = crossLink.fromProtein;
-				fromProtein.manuallyHidden = false;
-				idsToSelect.add(fromProtein.id);
-				if (crossLink.toProtein) {
+				if (fromProtein.is_decoy != true) {
+					fromProtein.manuallyHidden = false;
+					idsToSelect.add(fromProtein.id);
+				}
+				if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
 					var toProtein = crossLink.toProtein;
 					toProtein.manuallyHidden = false;
 					idsToSelect.add(toProtein.id);					
