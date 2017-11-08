@@ -659,7 +659,7 @@
                 }, this);
             }, this);
             
-            this.makeChartTitle (this.counts, colourScheme);
+            this.makeChartTitle (this.counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
         }
         return this;
     },
@@ -753,23 +753,6 @@
                 return "translate("+d.x+" "+d.y+") rotate("+d.rot+")";
             })
         ;
-        return this;
-    },
-        
-    makeChartTitle: function (counts, colourScheme) {
-        var labels = colourScheme.get("labels").range();
-        var commaed = d3.format(",");
-        var total = d3.sum (counts);
-        var linkCountStr = counts.map (function (count, i) {
-            return commaed(count)+" "+labels[i];
-        }, this);
-
-        var funcMetaX = this.getSelectedOption ("X");
-        var funcMetaY = this.getSelectedOption ("Y");
-        var titleText = this.options.chartTitle +": "+commaed(total)+(funcMetaX.matchLevel || funcMetaY.matchLevel ? " Matches - " : " Cross-Links - ")+linkCountStr.join(", ");
-
-        d3.select(this.el).select(".chartHeader").text (titleText);
-
         return this;
     },
         

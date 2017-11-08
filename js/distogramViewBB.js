@@ -375,7 +375,7 @@
                     }
                     this
                         //.makeBarsSitBetweenTicks()
-                        .makeChartTitle(splitSeries)
+                        .makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel);
                     ;
                     this.hideShowSeries ("Random", measurements.seriesNames.indexOf ("Random") >= 0);
                 };
@@ -447,24 +447,6 @@
             //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
             var halfBarW = internal.getBarW (internal.xAxis, 1) / 2 || 0;
             d3.select(this.el).selectAll(".c3-event-rects,.c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
-            return this;
-        },
-        
-        // reset title
-        makeChartTitle: function (splitSeries) {
-            var commaed = d3.format(",");
-            var linkReport = _.pluck (splitSeries, "length");
-            var total = d3.sum (linkReport);
-            var linkReportStr = linkReport.map (function (count, i) {
-                return commaed(count)+" "+this.options.subSeriesNames[i];
-            }, this);
-            
-            var funcMeta = this.getSelectedOption ("X");
-            var titleText = this.options.chartTitle +": "+commaed(total)+(funcMeta.matchLevel ? " Matches - " : " Cross-Links - ")+linkReportStr.join(", ");
-            
-            d3.select(this.el).select(".c3-title").text (titleText);
-            //this.chart.internal.redrawTitle();
-            
             return this;
         },
         
