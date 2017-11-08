@@ -30,7 +30,7 @@
         var defaultOptions = {
             xlabel: "Axis 1",
             ylabel: "Axis 2",
-            chartTitle: "Cross-Link Data Scatterplot",
+            chartTitle: "Scatterplot",
             selectedColour: "#ff0",
             highlightedColour: "#f80",
             background: "#eee",
@@ -603,11 +603,18 @@
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
             var jitter = this.options.jitter;
-            console.log ("ddd", datax, datay, filteredCrossLinks, coords, colourScheme);
+            //console.log ("ddd", datax, datay, filteredCrossLinks, coords, colourScheme);
+            
+            var countable = colourScheme.isCategorical();
+            if (countable) {
+                this.counts = d3.range (0, colourScheme.getDomainCount()).map (function() { return 0; });
+            }
 
             sortedFilteredCrossLinks.forEach (function (link, i) {
                 var decoy = link.isDecoyLink();
-                var colour = colourScheme.getColour (link);
+                var linkValue = colourScheme.getValue (link);
+                var colour = colourScheme.getColourByValue (linkValue);
+
                 var high, selected;
                 if (!matchLevel) {
                     high = highlightedCrossLinkIDs.has (link.id);
@@ -644,10 +651,15 @@
                         if (high || selected) {
                             ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
                         }
+                        
+                        if (countable) {
+                            this.counts[linkValue]++;
+                        }
                     }
-                });
+                }, this);
             }, this);
             
+            this.makeChartTitle (this.counts, colourScheme);
         }
         return this;
     },
@@ -741,6 +753,23 @@
                 return "translate("+d.x+" "+d.y+") rotate("+d.rot+")";
             })
         ;
+        return this;
+    },
+        
+    makeChartTitle: function (counts, colourScheme) {
+        var labels = colourScheme.get("labels").range();
+        var commaed = d3.format(",");
+        var total = d3.sum (counts);
+        var linkCountStr = counts.map (function (count, i) {
+            return commaed(count)+" "+labels[i];
+        }, this);
+
+        var funcMetaX = this.getSelectedOption ("X");
+        var funcMetaY = this.getSelectedOption ("Y");
+        var titleText = this.options.chartTitle +": "+commaed(total)+(funcMetaX.matchLevel || funcMetaY.matchLevel ? " Matches - " : " Cross-Links - ")+linkCountStr.join(", ");
+
+        d3.select(this.el).select(".chartHeader").text (titleText);
+
         return this;
     },
         

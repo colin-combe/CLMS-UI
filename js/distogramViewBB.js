@@ -299,7 +299,7 @@
                 
                 // Get colour model. If chosen colour model is non-categorical, default to distance colours.
                 var colModel = this.model.get("linkColourAssignment");
-                if (colModel.type === "linear") {
+                if (!colModel.isCategorical()) {
                     colModel = CLMSUI.linkColour.defaultColoursBB;  // make default colour choice for histogram if current colour model is continuous
                 }
                 this.colourScaleModel = colModel;
