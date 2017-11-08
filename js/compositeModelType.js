@@ -52,73 +52,84 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         function filterCrossLink (crossLink) {
             crossLink.filteredMatches_pp = [];
-            if (filterModel.get("fdrMode")) {
-                // FDR mode
-                var pass;
-                if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
-                    var fdr = crossLink.meta.meanMatchScore;
-                    var self = crossLink.isSelfLink();
-                    var cut = self ? result[1].fdr : result[0].fdr;
-                    pass = fdr >= cut;
-                }
+			if (filterModel.get("fdrMode")) {
+				// FDR mode
+				var pass;
+				if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
+					var fdr = crossLink.meta.meanMatchScore;
+					var self = crossLink.isSelfLink();
+					var cut = self ? result[1].fdr : result[0].fdr;
+					pass = fdr >= cut;
+				}
 
-                if (pass) {
-                    crossLink.filteredMatches_pp = crossLink.matches_pp.filter(
-                        function (value) {
-                            return filterModel.subsetFilter(value.match, proteinMatchFunc);
-                        }
-                    );
+				if (pass) {
+					var filteredMatches_pp = crossLink.matches_pp.filter(
+						function (value) {
+							return filterModel.subsetFilter(value.match, proteinMatchFunc);
+						}
+					);
 
-                    crossLink.ambiguous = !crossLink.filteredMatches_pp.some(function (matchAndPepPos) {
-                        return matchAndPepPos.match.crossLinks.length === 1;
-                    });
-                    var filteredMatches_pp = crossLink.filteredMatches_pp;
-                    var filteredMatchCount = filteredMatches_pp.length;
-                    for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
-                        filteredMatches_pp[fm_pp].match.fdrPass = true;
-                    }
-                } else {
-                    crossLink.filteredMatches_pp = [];
-                }
-                //~ else {
-                //~ alert("i just failed fdr check");
-                //~ }
-            } else {
-                //not FDR mode
-                crossLink.ambiguous = true;
-                crossLink.confirmedHomomultimer = false;
-                var matches_pp = crossLink.matches_pp;
-                var matchCount = matches_pp.length;
-                for (var m = 0; m < matchCount; m++) {
-                    var matchAndPepPos = matches_pp[m];
-                    var match = matchAndPepPos.match;
-                    var pass = filterModel.subsetFilter (match, proteinMatchFunc) &&
-                        filterModel.validationStatusFilter (match) &&
-                        filterModel.scoreFilter (match) &&
-                        filterModel.decoyFilter (match)
-                    ;
-                    
-                    // Either 1.
-                    // this beforehand means navigation filters do affect ambiguous state of crosslinks
-                    // pass = pass && filterModel.navigationFilter(match);
-                    
-                    if (pass && match.crossLinks.length === 1) {
-                        crossLink.ambiguous = false;
-                    }
-                    
-                    // Or 2.
-                    // this afterwards means navigation filters don't affect ambiguous state of crosslinks
-                    pass = pass && filterModel.navigationFilter(match);
+					crossLink.ambiguous = !filteredMatches_pp.some(function (matchAndPepPos) {
+						return matchAndPepPos.match.crossLinks.length === 1;
+					});
+					//~ var filteredMatches_pp = crossLink.filteredMatches_pp;
+					crossLink.filteredMatches_pp = [];
+					var filteredMatchCount = filteredMatches_pp.length;
+					for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+						var fm_pp = filteredMatches_pp[fm_pp];
+						//set its fdr pass att to true even though it may not be in final results 
+						fm_pp.match.fdrPass = true;
+						//check its not manually hidden and meets navigation filter
+						if (crossLink.fromProtein.manuallyHidden != true 
+							&& (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true)
+							&& filterModel.navigationFilter(fm_pp.match)) {
+							crossLink.filteredMatches_pp.push(fm_pp);
+						}
+					}
+				} else {
+					crossLink.filteredMatches_pp = [];
+				}
+				//~ else {
+				//~ alert("i just failed fdr check");
+				//~ }
+			} else {
+				//not FDR mode
+				if (crossLink.fromProtein.manuallyHidden != true && (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true)) {
+					crossLink.ambiguous = true;
+					crossLink.confirmedHomomultimer = false;
+					var matches_pp = crossLink.matches_pp;
+					var matchCount = matches_pp.length;
+					for (var m = 0; m < matchCount; m++) {
+						var matchAndPepPos = matches_pp[m];
+						var match = matchAndPepPos.match;
+						var pass = filterModel.subsetFilter (match, proteinMatchFunc) &&
+							filterModel.validationStatusFilter (match) &&
+							filterModel.scoreFilter (match) &&
+							filterModel.decoyFilter (match)
+						;
+						
+						// Either 1.
+						// this beforehand means navigation filters do affect ambiguous state of crosslinks
+						// pass = pass && filterModel.navigationFilter(match);
+						
+						if (pass && match.crossLinks.length === 1) {
+							crossLink.ambiguous = false;
+						}
+						
+						// Or 2.
+						// this afterwards means navigation filters don't affect ambiguous state of crosslinks
+						pass = pass && filterModel.navigationFilter(match);
 
-                    if (pass) {
-                        crossLink.filteredMatches_pp.push (matchAndPepPos);
-                        // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
-                        if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
-                            crossLink.confirmedHomomultimer = true;
-                        }
-                    }
-                }
-            }
+						if (pass) {
+							crossLink.filteredMatches_pp.push (matchAndPepPos);
+							// TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
+							if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
+								crossLink.confirmedHomomultimer = true;
+							}
+						}
+					}
+				}
+			}
         }
         
         
@@ -167,22 +178,21 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-        console.log ("xlinks", this.filteredXLinks);
+//        console.log ("xlinks", this.filteredXLinks);
 
         //hiding linkless participants  
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
             participant.hidden = true;
             var partCls = participant.crossLinks;
-
-            for (var pCl = 0; pCl < partCls.length; ++pCl) {
-                var pCrossLink = partCls[pCl];
-                if (pCrossLink.filteredMatches_pp.length &&
-                    !pCrossLink.isDecoyLink() &&
-                    !pCrossLink.isLinearLink()) {
-                    participant.hidden = false;
-                    break;
-                }
-            }
+			for (var pCl = 0; pCl < partCls.length; ++pCl) {
+				var pCrossLink = partCls[pCl];
+				if (pCrossLink.filteredMatches_pp.length &&
+					!pCrossLink.isDecoyLink() &&
+					!pCrossLink.isLinearLink()) {
+					participant.hidden = false;
+					break;
+				}
+			}
         });
         
         /*
@@ -396,6 +406,71 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.trigger("change:selectedProtein", this);
         console.log("map", this.get("selectedProtein"));
     },
+    
+    invertSelectedProteins: function () {
+		var idsToSelect = [];
+		var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
+		var participantCount = participantsArr.length;
+		var selected = CLMS.arrayFromMapKeys(this.get("selectedProtein"));
+		for (var p = 0; p < participantCount; p++) {
+			var id = participantsArr[p].id;
+			if (selected.indexOf(id) == -1) {
+				idsToSelect.push(id);
+			}
+		}
+		this.setSelectedProteins(idsToSelect);
+	},
+	
+	hideSelectedProteins: function () {		
+		var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
+		var selectedCount = selectedArr.length;
+		for (var s = 0; s < selectedCount; s++) {
+			var participant = selectedArr[s];
+			participant.manuallyHidden = true;
+		}
+		this.setSelectedProteins([]);
+		this.get("filterModel").trigger("change");
+		     
+	},
+	
+	showHiddenProteins: function () {		
+		var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
+		var participantCount = participantsArr.length;
+		for (var p = 0; p < participantCount; p++) {
+			participantsArr[p].manuallyHidden = false;
+		}
+		
+		this.get("filterModel").trigger("change");
+	},
+
+	
+	stepOutSelectedProteins: function () {		
+		var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
+		var selectedCount = selectedArr.length;
+		var idsToSelect = new Set ();
+		for (var s = 0; s < selectedCount; s++) {
+			var participant = selectedArr[s];
+			var crossLinks = participant.crossLinks;
+			var clCount = crossLinks.length;
+			for (var cl = 0; cl < clCount; cl++){
+				var crossLink = crossLinks[cl];
+				var fromProtein = crossLink.fromProtein;
+				if (fromProtein.is_decoy != true) {
+					fromProtein.manuallyHidden = false;
+					idsToSelect.add(fromProtein.id);
+				}
+				if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
+					var toProtein = crossLink.toProtein;
+					toProtein.manuallyHidden = false;
+					idsToSelect.add(toProtein.id);					
+				}
+			}
+		}
+					
+		this.get("filterModel").trigger("change");
+		this.setSelectedProteins(Array.from(idsToSelect));
+
+	},
 
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         // distancesObj and alignCollection can be supplied to function or, if not present, taken from model

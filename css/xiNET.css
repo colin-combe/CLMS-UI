@@ -52,3 +52,54 @@ svg {
     margin-top: 11px;
 }
 /*.proteinScaleLabelText { font-size: 8pt; }*/
+
+.custom-menu {
+  display: none;
+  z-index: 1000;
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid #CCC;
+  white-space: nowrap;
+/*
+  font-family: sans-serif;
+*/
+  background: #FFF;
+  color: #333;
+  list-style: none;
+  padding:0;
+  margin: 0;
+}
+
+.custom-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+    
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.custom-menu li:hover {
+  background-color: #DEF;
+}
+
+#hiddenProteinsMessage{
+  display: none;
+  z-index: 900;
+  position: absolute;
+  overflow: hidden;
+  white-space: nowrap;
+  background-color: #091D42;
+  color: #fff;
+  padding:10px;
+  margin: 10px;
+  top: 46px;
+  right: 10px;
+  text-align: right;
+}
+
+.showHidden{
+  margin: 0px;
+}

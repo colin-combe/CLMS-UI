@@ -199,7 +199,7 @@ CLMSUI.init.modelsEssential = function (options) {
     // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
     // the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
-		console.log("filterChange");
+		//console.log("filterChange");
         this.applyFilter();
     });
 
