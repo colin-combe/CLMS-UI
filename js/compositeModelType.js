@@ -297,7 +297,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     // modelProperty can be "highlights" or "selection" (or a new one) depending on what array you want
     // to fill in the model
-    // - i'm not sure this is a good name for this function - cc
     setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, dontForward) {
         if (crossLinks) { // if undefined nothing happens, to clear selection pass an empty array - []
             if (add) {
