@@ -398,7 +398,7 @@
                 c3.chart.internal.fn.redrawTitle = function () {};
                 var chartInternal = this.chart.internal;
                 var shortcut = this.compareNewOldData (countArrays) && !newX;
-                console.log ("SHORTCUT", shortcut, this.chart);
+                //console.log ("SHORTCUT", shortcut, this.chart);
 
                 if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
