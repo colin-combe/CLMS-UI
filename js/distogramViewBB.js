@@ -173,7 +173,7 @@
                 padding: {
                     left: 45, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
                     right: 20,
-                    top: 0
+                    top: 6
                 },
                 tooltip: {
                     format: {
@@ -304,13 +304,13 @@
                 }
                 this.colourScaleModel = colModel;
                 this.options.subSeriesNames = colModel.get("labels").range().concat(["Unknown"]);
-                console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
+                //console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
                 
                 // Add sub-series data
                 // split TT list into sublists for length
                 var splitSeries = d3.range(0, colModel.getDomainCount() + 1).map (function () { return []; });
                 
-                console.log ("measurements", measurements);
+                //console.log ("measurements", measurements);
                 measurements.linksWithValues[TT].forEach (function (linkDatum) {
                     var cat = colModel.getDomainIndex (linkDatum[0]);
                     if (cat === undefined) { cat = splitSeries.length - 1; }
@@ -362,6 +362,14 @@
                 }
 
                 var redoChart = function () {
+                    /*
+                    var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
+                    if (hideUnknowns && (options.newColourModel || clearAll)) {
+                        splitSeries.pop();
+                        countArrays.pop();
+                    }
+                    */
+                    
                     var chartOptions = {
                         columns: countArrays,
                         colors: this.getSeriesColours(),
@@ -375,11 +383,13 @@
                     }
                     
                     // Remove 'Unknown' category if empty
+                    
                     var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
                     if (hideUnknowns) {
                         console.log ("POP", splitSeries);
                         splitSeries.pop();
                     }
+                    
                     this.hideShowSeries ([
                         //{name:"Unknown", active: !hideUnknowns},
                         {name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
