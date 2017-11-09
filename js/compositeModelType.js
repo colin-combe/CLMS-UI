@@ -308,7 +308,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
             if (andAlternatives) {
                 crossLinks.forEach(function (crossLink) {
-                    if (crossLink.ambiguous || crossLink.ambig) {
+                    if (crossLink.ambiguous) {
                         this.recurseAmbiguity (crossLink, crossLinkMap);
                     }
                 }, this);
@@ -349,7 +349,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     //not recursive
     recurseAmbiguity: function (crossLink, crossLinkMap) {
-        // it doesn't need to be recursive;
+        //  doesn't need to be recursive;
         // only interested in alternative cross-links for ambiguous matches of this cross-link
         // -- its because a more ambiguous match, with a shorter version of the peptide, should already be in the matches of the orignal cross-link
 
