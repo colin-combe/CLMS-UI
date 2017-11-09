@@ -376,7 +376,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
         }
 
-        /*//previous recursive function         
+        */ //previous recursive function         
    /*         var matches = crossLink.filteredMatches_pp;
             matches.forEach (function (match) {
                 var matchData = match.match;
