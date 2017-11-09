@@ -48,18 +48,19 @@
             
             var self = this;
             this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
-                self.setStatusText (columns && columns.length ? columns.length +" Link Attributes Parsed" : "No Columns Successfully Parsed"); 
+                self.setStatusText ("File "+this.lastFileName+":<br>"+(columns && columns.length ? columns.length +" Link MetaData Attributes Parsed" : "No Columns Successfully Parsed")); 
             });
         },
         
         setStatusText : function (msg) {
-            d3.select(this.el).select(".messagebar").text(msg);    
+            d3.select(this.el).select(".messagebar").html(msg);    
         },
         
         selectMetaDataFile: function (evt) {
             var fileObj = evt.target.files[0];
             var clmsModel = this.model.get("clmsModel");
             this.setStatusText ("Please Wait...");
+            this.lastFileName = fileObj.name;
             CLMSUI.modelUtils.loadUserFile (fileObj, function (fileContents) {
                 CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);
             });    

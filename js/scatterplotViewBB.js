@@ -30,7 +30,7 @@
         var defaultOptions = {
             xlabel: "Axis 1",
             ylabel: "Axis 2",
-            chartTitle: "Cross-Link Data Scatterplot",
+            chartTitle: "Scatterplot",
             selectedColour: "#ff0",
             highlightedColour: "#f80",
             background: "#eee",
@@ -495,6 +495,7 @@
         if (options.isVisible || this.isVisible()) {
             
             var pointSize = this.options.pointSize;
+            var halfPointSize = pointSize / 2;
             
             var self = this;
             var colourScheme = this.model.get("linkColourAssignment");
@@ -602,11 +603,18 @@
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
             var jitter = this.options.jitter;
-            //console.log ("ddd", datax, datay, filteredCrossLinks, coords);
+            //console.log ("ddd", datax, datay, filteredCrossLinks, coords, colourScheme);
+            
+            var countable = colourScheme.isCategorical();
+            if (countable) {
+                this.counts = d3.range (0, colourScheme.getDomainCount()).map (function() { return 0; });
+            }
 
             sortedFilteredCrossLinks.forEach (function (link, i) {
                 var decoy = link.isDecoyLink();
-                var colour = colourScheme.getColour (link);
+                var linkValue = colourScheme.getValue (link);
+                var colour = colourScheme.getColourByValue (linkValue);
+
                 var high, selected;
                 if (!matchLevel) {
                     high = highlightedCrossLinkIDs.has (link.id);
@@ -629,12 +637,12 @@
                         ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
                         ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                     }
-                    var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - (pointSize / 2);
-                    var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - (pointSize / 2);
+                    var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - halfPointSize;
+                    var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - halfPointSize;
                     x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
                     y = Math.round (y);
                     if (decoy) {
-                        //var offset = Math.floor (pointSize / 2);
+                        //var offset = Math.floor (halfPointSize);
                         ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
                         //ctx.fillRect (x, y + offset, pointSize + 1, 1);
                         //ctx.fillRect (x + offset, y, 1, pointSize + 1);
@@ -643,10 +651,15 @@
                         if (high || selected) {
                             ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
                         }
+                        
+                        if (countable) {
+                            this.counts[linkValue]++;
+                        }
                     }
-                });
+                }, this);
             }, this);
             
+            this.makeChartTitle (this.counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
         }
         return this;
     },
@@ -720,6 +733,8 @@
             .repositionLabels (sizeData)
             .calcJitterRanges()
         ;
+        
+        CLMSUI.utils.declutterAxis (this.vis.select(".x"));
         
         return this;
     },
