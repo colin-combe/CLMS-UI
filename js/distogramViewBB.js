@@ -83,6 +83,7 @@
             // make 'empty' columns for all series and sub-series
             var columnsAsNamesOnly = d3.merge([this.options.seriesNames, this.options.subSeriesNames]).map (function(sname) { return [sname]; });
 
+            var numberFormat = d3.format(",");
             var chartID = "#" + chartDiv.attr("id");
             var firstRun = true;
             // Generate the C3 Chart
@@ -137,13 +138,15 @@
                         },
                         //max: this.options.maxX,
                         padding: {  // padding of 1 ticks to right of chart to stop bars in last column getting clipped
-                          left: 0,  // 0.5,  // 0.5 used when we moved axis instead of bars to get alignments of bars between ticks
-                          right: 1,
+                            left: 0,  // 0.5,  // 0.5 used when we moved axis instead of bars to get alignments of bars between ticks
+                            right: 1,
                         },
                         tick: {
-                            format: function (v) {
-                                return (v + (self.options.minX || 0)) * (self.options.gapX || 1);
-                            }
+                            format: function (v, returnUnformattedToo) {
+                                var val = (v + (self.options.minX || 0)) * (self.options.gapX || 1);
+                                var formattedVal = numberFormat (val);
+                                return returnUnformattedToo ? {val: val, formattedVal: formattedVal} : formattedVal;
+                            },
                             /*
                             culling: {
                                 max: Math.floor (this.options.maxX / 10)
@@ -153,16 +156,11 @@
                     },
                     y: {
                         label: this.options.ylabel,
-                        tick: { // blank non-whole numbers on y axis with this function
+                        tick: { // blank non-whole numbers on y axis with this d3 format function
                             // except this does the same for tooltips, so non-whole numbers dont get shown in tooltips unless tooltip.value overridden below
-                            format: function (n) {
-                                return (n == Math.floor(n)) ? n : "";
-                            }
+                            format: d3.format("d")
                         }
                     }
-                },
-                legend: {
-                    //hide: this.options.seriesNames
                 },
                 grid: {
                     lines: {
@@ -173,32 +171,37 @@
                     },
                 },
                 padding: {
-                    left: 40, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
+                    left: 45, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
                     right: 20,
                     top: 0
                 },
                 tooltip: {
                     format: {
                         title: function (x) {
-                            var tickFunc = self.chart.internal.xAxisTickFormat;
-                            var realX = tickFunc (x);
+                            var tickFunc = self.chart.internal.config.axis_x_tick_format;
+                            var realX = tickFunc (x, true);
+                            var nextX = tickFunc (x + 1, true);
+                            var realXVal = realX.val;
+                            var nextXVal = nextX.val;
                             var funcMeta = self.getSelectedOption ("X");
-                            var nextX = funcMeta.decimalPlaces ? tickFunc (x + 1) : null;
+                            var invPow = Math.pow (10, -(funcMeta.decimalPlaces || 0));
+                            var barIsRange = (nextXVal - realXVal) > invPow;
+                            var endOfRange = invPow === 1 ? numberFormat (nextXVal - invPow) : "<" + numberFormat (nextXVal);
                             var xlabel = self.chart.internal.config.axis_x_label;
-                            return (xlabel.text || xlabel) + " " + realX + (nextX ? " to <"+nextX : "");
+                            return (xlabel.text || xlabel) + " " + realX.formattedVal + (barIsRange ? " to "+endOfRange : "");
                         },
                         name: function (name) {
                             return name + " " + self.options.ylabel;
                         },
-                        value: function (value, ratio, id) {
-                            var v = "";
-                            if (value !== undefined) {
-                                v = value.toFixed (id === "Random" ? 1 : 0);
+                        value: function (count, ratio, id) {
+                            var c = "";
+                            if (count !== undefined) {
+                                c = count.toFixed (id === "Random" ? 1 : 0);
                                 if (id !== "Random") {
-                                    v += "<span style='visibility:hidden; margin: 0'>.0</span>";
+                                    c += "<span style='visibility:hidden; margin: 0'>.0</span>";
                                 }
                             }
-                            return v;
+                            return c;
                         },
                     },  
                     contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
@@ -296,11 +299,12 @@
                 
                 // Get colour model. If chosen colour model is non-categorical, default to distance colours.
                 var colModel = this.model.get("linkColourAssignment");
-                if (colModel.type === "linear") {
-                    colModel = CLMSUI.linkColour.distanceColoursBB;
+                if (!colModel.isCategorical()) {
+                    colModel = CLMSUI.linkColour.defaultColoursBB;  // make default colour choice for histogram if current colour model is continuous
                 }
                 this.colourScaleModel = colModel;
                 this.options.subSeriesNames = colModel.get("labels").range();
+                console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
                 
                 // Add sub-series data
                 // split TT list into sublists for length
@@ -371,7 +375,7 @@
                     }
                     this
                         //.makeBarsSitBetweenTicks()
-                        .makeChartTitle(splitSeries)
+                        .makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel);
                     ;
                     this.hideShowSeries ("Random", measurements.seriesNames.indexOf ("Random") >= 0);
                 };
@@ -407,6 +411,7 @@
                     redoChart.call (this);
                     c3.chart.internal.fn.redraw = tempHandle;
                     tempHandle.call (chartInternal, {withLegend: true, withUpdateOrgXDomain: true, withUpdateXDomain: true});
+                    CLMSUI.utils.declutterAxis (d3.select(this.el).select(".c3-axis-x"));
                 }
                             
                 //console.log ("data", distArr, binnedData);
@@ -442,24 +447,6 @@
             //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
             var halfBarW = internal.getBarW (internal.xAxis, 1) / 2 || 0;
             d3.select(this.el).selectAll(".c3-event-rects,.c3-chart-bars").attr("transform", "translate("+halfBarW+",0)");
-            return this;
-        },
-        
-        // reset title
-        makeChartTitle: function (splitSeries) {
-            var commaed = d3.format(",");
-            var linkReport = _.pluck (splitSeries, "length");
-            var total = d3.sum (linkReport);
-            var linkReportStr = linkReport.map (function (count, i) {
-                return commaed(count)+" "+this.options.subSeriesNames[i];
-            }, this);
-            
-            var funcMeta = this.getSelectedOption ("X");
-            var titleText = this.options.chartTitle +": "+commaed(total)+(funcMeta.matchLevel ? " Matches - " : " Cross-Links - ")+linkReportStr.join(", ");
-            
-            d3.select(this.el).select(".c3-title").text (titleText);
-            //this.chart.internal.redrawTitle();
-            
             return this;
         },
         
@@ -671,6 +658,7 @@
             ;   
             //this.redrawColourRanges();
             this.chart.resize();
+            CLMSUI.utils.declutterAxis (d3.select(this.el).select(".c3-axis-x"));
             //this.makeBarsSitBetweenTicks (this.chart.internal);
             return this;
         },

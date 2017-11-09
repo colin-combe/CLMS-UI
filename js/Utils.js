@@ -220,6 +220,22 @@ CLMSUI.utils = {
         ;
         callback (image);
     },
+    
+    declutterAxis: function (d3AxisElem) {
+        var last = Number.NEGATIVE_INFINITY;
+        d3AxisElem.selectAll(".tick text")
+            .each (function () {
+                var text = d3.select(this);
+                var bounds = this.getBoundingClientRect();
+                var overlap = bounds.x < last;
+                //console.log ("bounds", bounds);
+                text.style ("visibility", overlap ? "hidden" : null);
+                if (!overlap) {
+                    last = bounds.x + bounds.width;
+                }
+            })
+        ;
+    },
 
     RadioButtonFilterViewBB: Backbone.View.extend ({
         tagName: "div",
@@ -668,6 +684,21 @@ CLMSUI.utils = {
         },
         
         identifier: "Base",
+        
+        makeChartTitle: function (counts, colourScheme, titleElem, matchLevel) {
+            var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
+            var commaed = d3.format(",");
+            var total = d3.sum (counts);
+            var linkCountStr = counts.map (function (count, i) {
+                return commaed(count)+" "+labels[i];
+            }, this);
+
+            var titleText = this.identifier +": "+commaed(total)+(matchLevel ? " Matches - " : " Cross-Links - ")+linkCountStr.join(", ");
+
+            titleElem.text (titleText);
+
+            return this;
+        },
         
         // return any relevant view states that can be used to label a screenshot etc
         optionsToString: function () {

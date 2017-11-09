@@ -23,12 +23,15 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     },
     getDomainCount: function () {
         var domain = this.get("colScale").domain();
-        return this.type === "linear" ? domain[1] - domain[0] + 1 : 
+        return !this.isCategorical() ? domain[1] - domain[0] + 1 : 
             (this.type === "threshold" ? domain.length + 1 : domain.length)
         ;
     },
     getColour: function (crossLink) {
         var val = this.getValue (crossLink);
+        return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
+    },
+    getColourByValue: function (val) {
         return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
     },
     triggerColourModelChanged: function (obj) {
@@ -37,6 +40,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
             this.collection.trigger ("aColourModelChanged", this, obj);
         }
     },
+    isCategorical: function () { return this.type !== "linear"; },
     undefinedColour: "#888",
     type: "ordinal",
 });
@@ -65,7 +69,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         this.searchMap = options.searchMap;
         // find the search to group mappings
         var groups = new Map();
-		var searchArray = CLMS.arrayFromMapValues(this.searchMap);
+        var searchArray = CLMS.arrayFromMapValues(this.searchMap);
         searchArray.forEach (function (search) {
             var arr = groups.get(search.group);
             if (!arr) {
@@ -100,14 +104,14 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
             .set("labels", this.get("colScale").copy().range(labelRange))
         ;
     },
-    getValue: function (crossLink) {	
+    getValue: function (crossLink) {    
         //check if link uniquely belongs to one group
         var filteredMatchesAndPepPositions = crossLink.filteredMatches_pp;
         /*
         var groupCheck = d3.set();
         for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
             var match = filteredMatchesAndPepPositions[fm_pp].match; 
-            var group = this.searchMap.get(match.searchId).group; 	
+            var group = this.searchMap.get(match.searchId).group;   
             groupCheck.add(group);
         }
         var groupCheckArr = groupCheck.values();
@@ -116,7 +120,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         var foundGroup = null;
         for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
             var match = filteredMatchesAndPepPositions[fm_pp].match; 
-            var group = this.searchMap.get(match.searchId).group; 	
+            var group = this.searchMap.get(match.searchId).group;   
             if (!foundGroup) {
                 foundGroup = group;
             } else if (foundGroup !== group) {
@@ -126,10 +130,9 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         }
         // choose value if link definitely belongs to just one group or set as undefined
         var value = foundGroup;
-        return value;		
+        return value;       
     },
-    getColour: function (crossLink) {
-        var val = this.getValue (crossLink);
+    getColourByValue: function (val) {
         var scale = this.get("colScale");
         // the ordinal scales will have had a colour for undefined already added to their scales (in initialize)
         // if it's the linear scale [-1 = multiple, 0 = single] and value is undefined we change it to -1 so it then takes the [multiple] colour value
@@ -137,7 +140,11 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
             val = -1;
         }
         // now all 'undefined' values will get a colour so we don't have to check/set undefined colour here like we do in the default getColour function
-        return this.get("colScale")(val);
+        return scale(val);
+    },
+    getColour: function (crossLink) {
+        var val = this.getValue (crossLink);
+        return this.getColourByValue (val);
     },
 });
 
@@ -159,7 +166,7 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
         this.type = options.type || "linear";
         var domain = this.get("colScale").domain();
         var labels;
-        if (this.type === "linear") {
+        if (!this.isCategorical()) {
             labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
             domain.map (function (domVal, i) {
                 labels[i] += " (" + domVal + ")";
@@ -186,7 +193,7 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
         colScale: d3.scale.ordinal().domain([0,1,2]).range([
-            CLMS.xiNET.defaultSelfLinkColour.toRGB(), CLMS.xiNET.homodimerLinkColour.toRGB(), CLMS.xiNET.defaultInterLinkColour.toRGB()
+            "#9970ab", "#a50f15", "#35978f"
         ]),
         title: "Cross-Link Type",
         id: "Default"
@@ -283,6 +290,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
             var val = this.getValue (crossLink);
             return val !== undefined ? val : this.undefinedColour;
         };
+        newColourModel.getColourByValue = function (val) { return val !== undefined ? val : this.undefinedColour; };
     }
     
     return newColourModel;
