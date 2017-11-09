@@ -17,8 +17,8 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     },
     getDomainIndex: function (crossLink) {
         var val = this.getValue(crossLink);
-        return (this.type !== "ordinal" ? d3.bisect (this.get("colScale").domain(), val) : 
-                this.get("colScale").domain().indexOf (val))
+        return val != undefined ? (this.type !== "ordinal" ? d3.bisect (this.get("colScale").domain(), val) : 
+                this.get("colScale").domain().indexOf (val)) : undefined
         ;
     },
     getDomainCount: function () {

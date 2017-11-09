@@ -98,7 +98,7 @@
                     //groups: [this.options.subSeriesNames] || this.options.seriesNames,
                     colors: {
                         "Cross-Links": "#44d",
-                        Random: "#888",
+                        Random: "#444",
                         "Decoys (TD-DD)": "#d44",
                     },
                     empty: {
@@ -303,19 +303,19 @@
                     colModel = CLMSUI.linkColour.defaultColoursBB;  // make default colour choice for histogram if current colour model is continuous
                 }
                 this.colourScaleModel = colModel;
-                this.options.subSeriesNames = colModel.get("labels").range();
+                this.options.subSeriesNames = colModel.get("labels").range().concat(["Unknown"]);
                 console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
                 
                 // Add sub-series data
                 // split TT list into sublists for length
-                var splitSeries = d3.range(0, colModel.getDomainCount()).map (function () { return []; });
+                var splitSeries = d3.range(0, colModel.getDomainCount() + 1).map (function () { return []; });
                 
                 console.log ("measurements", measurements);
                 measurements.linksWithValues[TT].forEach (function (linkDatum) {
                     var cat = colModel.getDomainIndex (linkDatum[0]);
+                    if (cat === undefined) { cat = splitSeries.length - 1; }
                     splitSeries[cat].push (linkDatum);
                 });
-                
                 
                 splitSeries.forEach (function (subSeries) {
                     series.push (subSeries);
@@ -337,7 +337,7 @@
                 });
                 countArrays.splice (DD,1);   // remove DD, its purpose is done
                 seriesNames.splice (DD,1);
-                //this.currentBins.splice (DD, 1);
+                
                 //console.log ("ca2", countArrays);
 
                 //var maxY = d3.max(countArrays[0]);  // max calced on real data only
@@ -373,11 +373,22 @@
                     if (this.chart.groups().length === 0 || options.newColourModel) {
                          this.chart.groups ([this.options.subSeriesNames]);
                     }
+                    
+                    // Remove 'Unknown' category if empty
+                    var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
+                    if (hideUnknowns) {
+                        console.log ("POP", splitSeries);
+                        splitSeries.pop();
+                    }
+                    this.hideShowSeries ([
+                        //{name:"Unknown", active: !hideUnknowns},
+                        {name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
+                    ]);
+                    console.log ("chartoptions", chartOptions, this.chart);
                     this
                         //.makeBarsSitBetweenTicks()
                         .makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel);
                     ;
-                    this.hideShowSeries ("Random", measurements.seriesNames.indexOf ("Random") >= 0);
                 };
                 
                  // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
@@ -387,7 +398,7 @@
                 c3.chart.internal.fn.redrawTitle = function () {};
                 var chartInternal = this.chart.internal;
                 var shortcut = this.compareNewOldData (countArrays) && !newX;
-                //console.log ("SHORTCUT", shortcut);
+                console.log ("SHORTCUT", shortcut, this.chart);
 
                 if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                     countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
@@ -432,13 +443,25 @@
         },
             
         // Show hide series depending on whether data is present for it (active) and whether it's currently shown or not
-        hideShowSeries: function (seriesName, active) {
+        hideShowSeries: function (seriesInfo) {
             var hidden = this.chart.internal.hiddenTargetIds;
-            var curHidden = hidden.indexOf(seriesName) >= 0;
-            if (curHidden === active) {
-                var func = active ? "show" : "hide";
-                this.chart[func](seriesName, {withLegend: true});
+            var toggleList = seriesInfo.filter (function (sseriesInfo) {
+                var curHidden = hidden.indexOf(sseriesInfo.name) >= 0;
+                var active = sseriesInfo.active;
+                return (curHidden === active);
+            })
+            .map (function (fsseriesInfo) {
+                return fsseriesInfo.name;    
+            });
+            
+            if (toggleList.length) {
+                this.chart.toggle (toggleList, {withLegend: true});
+                if (toggleList.indexOf("Unknown") >= 0) {
+                    this.chart.flush();
+                }
             }
+            
+            console.log ("togglelist", toggleList);
         },
         
         // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
@@ -664,9 +687,10 @@
         },
         
         getSeriesColours: function () {
-            var colScale = this.colourScaleModel.get("colScale");
-            /*
             var colModel = this.colourScaleModel;
+            var colScale = colModel.get("colScale");
+            
+            /*
             var colLabels = colModel.get("labels");
             var colDomain = colScale.domain();
             this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
@@ -677,10 +701,8 @@
             this.options.subSeriesNames.forEach (function (subSeries, i) {
                 colMap[subSeries] = colRange[i];
             });
-            return colMap;
-            
-            //this.chart.data.colors (colMap);
-            //return this;    
+            colMap["Unknown"] = colModel.undefinedColour;
+            return colMap; 
         },
         
         highlightOrSelect: function (type, c3Data, c3MouseData) {
