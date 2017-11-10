@@ -690,7 +690,7 @@ CLMSUI.utils = {
             var commaed = d3.format(",");
             var total = d3.sum (counts);
             var linkCountStr = counts.map (function (count, i) {
-                return commaed(count)+" "+labels[i];
+                return commaed(count)+" "+(labels[i] ? labels[i] : "Unknown");
             }, this);
 
             var titleText = this.identifier +": "+commaed(total)+(matchLevel ? " Matches - " : " Cross-Links - ")+linkCountStr.join(", ");
