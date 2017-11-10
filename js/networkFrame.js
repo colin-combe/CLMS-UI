@@ -515,7 +515,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
     );
 
-    crosslinkViewer = new CLMS.xiNET.CrosslinkViewer ({
+    new CLMS.xiNET.CrosslinkViewer ({
         el: "#networkDiv",
         model: CLMSUI.compositeModelInst,
    //     myOptions: {layout: storedLayout}
