@@ -607,12 +607,13 @@
             
             var countable = colourScheme.isCategorical();
             if (countable) {
-                this.counts = d3.range (0, colourScheme.getDomainCount()).map (function() { return 0; });
+                this.counts = d3.range (0, colourScheme.getDomainCount() + 1).map (function() { return 0; });
             }
 
             sortedFilteredCrossLinks.forEach (function (link, i) {
                 var decoy = link.isDecoyLink();
                 var linkValue = colourScheme.getValue (link);
+                var linkDomainInd = colourScheme.getDomainIndex (link);
                 var colour = colourScheme.getColourByValue (linkValue);
 
                 var high, selected;
@@ -653,12 +654,21 @@
                         }
                         
                         if (countable) {
-                            this.counts[linkValue]++;
+                            if (linkDomainInd === undefined) {
+                                linkDomainInd = this.counts.length - 1;
+                            }
+                            this.counts[linkDomainInd]++;
                         }
                     }
                 }, this);
             }, this);
             
+            //console.log ("COUNTS", this.counts);
+            
+            // Remove unknown from appearing in title if none of them
+            if (this.counts[this.counts.length - 1] === 0) {
+                this.counts.pop();
+            }
             this.makeChartTitle (this.counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
         }
         return this;
