@@ -173,7 +173,7 @@
                 padding: {
                     left: 45, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
                     right: 20,
-                    top: 0
+                    top: 6
                 },
                 tooltip: {
                     format: {
@@ -304,13 +304,13 @@
                 }
                 this.colourScaleModel = colModel;
                 this.options.subSeriesNames = colModel.get("labels").range().concat(["Unknown"]);
-                console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
+                //console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
                 
                 // Add sub-series data
                 // split TT list into sublists for length
                 var splitSeries = d3.range(0, colModel.getDomainCount() + 1).map (function () { return []; });
                 
-                console.log ("measurements", measurements);
+                //console.log ("measurements", measurements);
                 measurements.linksWithValues[TT].forEach (function (linkDatum) {
                     var cat = colModel.getDomainIndex (linkDatum[0]);
                     if (cat === undefined) { cat = splitSeries.length - 1; }
@@ -355,39 +355,47 @@
                 //console.log ("thresholds", thresholds);
                 //console.log ("countArrays", countArrays);
                 
-                var clearAll = false;
                 if (this.isEmpty(series)) {
                     countArrays = [[]];
-                    clearAll = true;
                 }
 
                 var redoChart = function () {
+                    
+                    // Remove 'Unknown' category if empty
+                    var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
+                    if (hideUnknowns) {
+                        splitSeries.pop();
+                        countArrays.pop();
+                    }
+                    var currentlyLoaded = _.pluck (this.chart.data(), "id");
+                    var toBeLoaded = countArrays.map (function (arr) { return arr[0]; });
+                    var unload = _.difference (currentlyLoaded, toBeLoaded);
+                    //console.log ("this.chart", this.chart, currentlyLoaded, toBeLoaded, unload);
+                    
                     var chartOptions = {
                         columns: countArrays,
                         colors: this.getSeriesColours(),
                     };
-                    if (options.newColourModel || clearAll) {
-                        chartOptions.unload = true;
+                    if (unload.length) {
+                        chartOptions.unload = unload;
                     }
+
                     this.chart.load (chartOptions);
                     if (this.chart.groups().length === 0 || options.newColourModel) {
                          this.chart.groups ([this.options.subSeriesNames]);
                     }
                     
-                    // Remove 'Unknown' category if empty
-                    var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
-                    if (hideUnknowns) {
-                        console.log ("POP", splitSeries);
-                        splitSeries.pop();
-                    }
+                    /*
+                    // hiding/showing/toggling series when it is loading/unloading causes all kinds of issues due to transitions getting overwritten in c3
                     this.hideShowSeries ([
                         //{name:"Unknown", active: !hideUnknowns},
-                        {name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
+                        //{name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
                     ]);
-                    console.log ("chartoptions", chartOptions, this.chart);
+                    */
+
                     this
                         //.makeBarsSitBetweenTicks()
-                        .makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel);
+                        .makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel)
                     ;
                 };
                 

@@ -132,7 +132,7 @@ CLMSUI.DistancesObj.prototype = {
         // the 3d sequences to the search sequences, and taking those sub-portions of the search sequence
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
-        var peptideTerminalPositions = clmsModel.get("terminiPositions") || d3.map();
+        //var peptideTerminalPositions = clmsModel.get("terminiPositions") || d3.map();
         
         var seqs = d3.entries(this.chainMap).map (function (chainEntry) {
             var protID = chainEntry.key;
@@ -149,36 +149,7 @@ CLMSUI.DistancesObj.prototype = {
         CLMSUI.utils.xilog ("seqs", seqs);
         
         var seqsByProt = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(seqs), function (d) { return d.key; });
-        CLMSUI.utils.xilog ("spp", seqsByProt, peptideTerminalPositions);
-        /*
-        var alignedTerminalIndices = {ntermList: [], ctermList: []};
-        peptideTerminalPositions.entries().forEach (function (protEntry) {
-            var protValue = protEntry.value;
-            var protKey = protEntry.key;
-            var seqValues = (seqsByProt.get(protKey) || {values: []}).values;
-            CLMSUI.utils.xilog ("sv", seqValues);
-            ["ctermList", "ntermList"].forEach (function (termType) {
-                var alignedTerminalIndex = alignedTerminalIndices[termType];
-                protValue[termType].forEach (function (searchIndex) {
-                    var alignedPos = undefined;
-                    seqValues.forEach (function (seqValue) {
-                        if (searchIndex >= seqValue.first && searchIndex <= seqValue.last) {
-                            alignedPos = {
-                                searchIndex: searchIndex,
-                                resIndex: alignCollBB.getAlignedIndex (searchIndex, protKey, false, seqValue.alignID, false),
-                                chainIndex: seqValue.chainIndex,
-                                protID: seqValue.protID,
-                                resType: termType,
-                            };
-                        }    
-                    });
-                    if (alignedPos) {
-                        alignedTerminalIndex.push (alignedPos);
-                    }
-                });
-            }); 
-        }, this);
-        */
+        CLMSUI.utils.xilog ("spp", seqsByProt);
         
          
         // n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
@@ -210,7 +181,7 @@ CLMSUI.DistancesObj.prototype = {
             });
         });
         
-        CLMSUI.utils.xilog ("ptp", peptideTerminalPositions, alignedTerminalIndices);
+        CLMSUI.utils.xilog ("ati", alignedTerminalIndices);
         
         
         var randDists = [];
