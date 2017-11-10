@@ -230,16 +230,18 @@
         // Listen to these events (and generally re-render in some fashion)
         this.listenTo (this.model, "selectionMatchesLinksChanged", this.recolourCrossLinks);
         this.listenTo (this.model, "highlightsMatchesLinksChanged", this.recolourCrossLinks);
-        this.listenTo (this.model, "filteringDone", this.renderCrossLinks);
+        this.listenTo (this.model, "filteringDone", function() { this.renderCrossLinks ({isFiltering: true}); });
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
         this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
             //console.log ("HELLO", arguments);
             var newOptions = columns.map (function (column) {
-                return {id: column, label: column, decimalPlaces: 2, matchLevel: false, linkFunc: function (c) {
-                    return c.meta ? [c.meta[column]] : [];
-                }};
+                return {
+                    id: column, label: column, decimalPlaces: 2, matchLevel: false, 
+                    linkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+                    unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+                };
             });
             //console.log ("NEW OPTIONS", newOptions);
 
@@ -319,7 +321,8 @@
         return this;
     },
         
-    getData: function (linkFunc, filteredFlag, optionalLinks) {
+    getData: function (funcMeta, filteredFlag, optionalLinks) {
+        var linkFunc = funcMeta ? (filteredFlag ? funcMeta.linkFunc : funcMeta.unfilteredLinkFunc) : undefined;
         var crossLinks = optionalLinks || 
             (filteredFlag ? this.getFilteredCrossLinks () : CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks")))
         ;
@@ -351,7 +354,7 @@
         
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
-        var data = this.getData (funcMeta ? funcMeta.linkFunc : undefined, filteredFlag, optionalLinks);
+        var data = this.getData (funcMeta, filteredFlag, optionalLinks);
         return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false};
     },
         
@@ -362,9 +365,26 @@
     },
         
     axisChosen: function () { 
-        var datax = this.getAxisData ("X", false);
-        var datay = this.getAxisData ("Y", false);
+        var dataX = this.getAxisData ("X", false);
+        var dataY = this.getAxisData ("Y", false);
         
+        this.scaleAxes (dataX, dataY);
+        //console.log ("data", dataX, dataY);
+        
+        // Update x/y labels and axes tick formats
+        this.vis.selectAll("g.label text").data([dataX, dataY])
+            .text (function(d) { return d.label; })
+        ;
+        
+        if (!this.brush.empty()) {
+            this.model.setMarkedCrossLinks ("highlights", [], false, false);
+        }
+        this.brush.clear();
+          
+        return this;
+    }, 
+        
+    scaleAxes: function (datax, datay) {
         var directions = [
             {dataDetails: datax, scale: this.x},
             {dataDetails: datay, scale: this.y},
@@ -387,20 +407,11 @@
             direction.scale.domain (dom);
             //console.log ("DOM", dom, direction.scale, direction.scale.domain());
         }); 
-        //console.log ("data", datax, datay, domX, domY);
         
-        // Update x/y labels and axes tick formats
-        this.vis.selectAll("g.label text").data([datax, datay])
-            .text (function(d) { return d.label; })
-        ;
+        this.calcJitterRanges();
         
-        if (!this.brush.empty()) {
-            this.model.setMarkedCrossLinks ("highlights", [], false, false);
-        }
-        this.brush.clear();
-          
         return this;
-    }, 
+    },
         
     doHighlightAndTooltip: function (evt) {
         return this.doHighlight(evt).doTooltip(evt);
@@ -591,7 +602,7 @@
                 ;
             }
             */
-            
+                        
             var canvasNode = this.canvas.node();
             var ctx = canvasNode.getContext("2d");       
             ctx.fillStyle = this.options.background;
@@ -600,6 +611,12 @@
             
             var datax = this.getAxisData ("X", true, sortedFilteredCrossLinks);
             var datay = this.getAxisData ("Y", true, sortedFilteredCrossLinks);
+            
+            /*
+            if (options.isFiltering) {
+                this.scaleAxes (datax, datay);
+            }
+            */
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
             var jitter = this.options.jitter;
@@ -665,6 +682,12 @@
             
             //console.log ("COUNTS", this.counts);
             
+            /*
+            if (options.isFiltering) {
+                this.redrawAxes (this.getSizeData());
+            }
+            */
+            
             // Remove unknown from appearing in title if none of them
             if (this.counts[this.counts.length - 1] === 0) {
                 this.counts.pop();
@@ -728,7 +751,17 @@
 
         this.xAxis.ticks (Math.round ((sizeData.width - (chartMargin * 2)) / 40)).outerTickSize(0);
         this.yAxis.ticks (Math.round ((sizeData.height - (chartMargin * 2)) / 40)).outerTickSize(0);
+
+        this
+            .redrawAxes (sizeData)
+            .repositionLabels (sizeData)
+            .calcJitterRanges()
+        ;
         
+        return this;
+    },
+        
+    redrawAxes: function (sizeData) {
         this.vis.select(".y")
             .attr("transform", "translate(-1,0)")
             .call(this.yAxis)
@@ -737,11 +770,6 @@
         this.vis.select(".x")
             .attr("transform", "translate(0," + (sizeData.height) + ")")
             .call(this.xAxis)
-        ;
-        
-        this
-            .repositionLabels (sizeData)
-            .calcJitterRanges()
         ;
         
         CLMSUI.utils.declutterAxis (this.vis.select(".x"));
