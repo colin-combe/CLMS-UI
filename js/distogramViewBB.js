@@ -250,9 +250,11 @@
             this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
                 //console.log ("HELLO", arguments);
                 var newOptions = columns.map (function (column) {
-                    return {id: column, label: column, decimalPlaces: 2, matchLevel: false, linkFunc: function (c) {
-                        return c.meta ? [c.meta[column]] : [];
-                    }};
+                    return {
+                        id: column, label: column, decimalPlaces: 2, matchLevel: false, 
+                        linkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+                        unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+                    };
                 });
                 //console.log ("NEW OPTIONS", newOptions);
                 
