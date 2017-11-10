@@ -606,32 +606,6 @@ CLMSUI.modelUtils = {
         });
         return searchMap;
     },
-        
-    // Calculate c- and n-term positions in a per-protein map, pass in an array of peptide from searchmodel
-   /* getTerminiPositions: function (peptideArray) {
-        var perProtMap = d3.map();
-        peptideArray.forEach (function (peptide) {
-            var seqlen = peptide.sequence.length;
-            for (var n = 0; n < peptide.pos.length; n++) {
-                var pos = peptide.pos[n];
-                var prot = peptide.prt[n];
-                var protSet = perProtMap.get(prot);
-                if (!protSet) {
-                    protSet = {"ntermSet": d3.set(), "ctermSet": d3.set()};
-                    perProtMap.set (prot, protSet);
-                }
-                protSet.ntermSet.add (pos);
-                protSet.ctermSet.add (pos + seqlen - 1);
-            }
-        });
-
-        perProtMap.forEach (function (id, termLists) {
-            termLists.ntermList = termLists.ntermSet.values().map(function (v) { return +v; });
-            termLists.ctermList = termLists.ctermSet.values().map(function (v) { return +v; });
-        });
-
-        return perProtMap;
-    },*/
     
     updateLinkMetadata: function (metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");

@@ -353,45 +353,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
     },
 
-    //could be removed?
- /*   recurseAmbiguity: function (crossLink, crossLinkMap) {
-        //  doesn't need to be recursive;
-        // only interested in alternative cross-links for ambiguous matches of this cross-link
-        // -- its because a more ambiguous match, with a shorter version of the peptide, should already be in the matches of the orignal cross-link
-
-        // todo: we might want to highlight smallest possible set of alternatives
-        // i.e. the alternative cross-links for the least ambiguous match,
-        // this would consistent with other parts of the interface
-        // e.g. if a cross-link has both ambiguous and non-ambiguous matches it is shown as not ambiguous
-
-        var filteredMatchesAndPeptidePositions = crossLink.filteredMatches_pp;
-        var fm_ppCount = filteredMatchesAndPeptidePositions.length;
-        for (var fm_pp = 0; fm_pp < fm_ppCount; fm_pp++) {
-            var crossLinks = filteredMatchesAndPeptidePositions[fm_pp].match.crossLinks;
-            var clCount = crossLinks.length;
-
-            for (var cl = 0; cl < clCount; cl++) {
-                var mCrossLink = crossLinks[cl];
-                crossLinkMap.set(mCrossLink.id, mCrossLink);
-            }
-        }
-
-        */ //previous recursive function         
-   /*         var matches = crossLink.filteredMatches_pp;
-            matches.forEach (function (match) {
-                var matchData = match.match;
-                if (matchData.isAmbig()) {
-                    matchData.crossLinks.forEach (function (overlapCrossLink) {
-                        if (!crossLinkMap.has (overlapCrossLink.id)) {
-                            crossLinkMap.set (overlapCrossLink.id, overlapCrossLink);
-                            this.recurseAmbiguity (overlapCrossLink, crossLinkMap);
-                        }
-                    }, this);
-                }
-            }, this);
-             */
-    /* }, */
-
     //what type should selectedProtein be? Set? Array? Is a map needed?
     // agree map's not needed, prob just Array - cc
     setSelectedProteins: function (idArr, add) {
