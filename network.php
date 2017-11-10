@@ -68,7 +68,9 @@
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
+<!--
         <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
+-->
         <script type="text/javascript" src="./vendor/ngl_verbose.js"></script>
         <script type="text/javascript" src="./vendor/c3.js"></script>
         <script type="text/javascript" src="./vendor/split.js"></script>
