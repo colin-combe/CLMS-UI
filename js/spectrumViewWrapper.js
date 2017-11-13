@@ -168,15 +168,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         // When crosslink selection changes, pick highest scoring filtered match of the set
         // and tell it to show the spectrum for that match
         this.listenTo (this.model, "selectionMatchesLinksChanged" /*"change:selection"*/, function (model) {
-            /* var fMatches = CLMSUI.modelUtils.aggregateCrossLinkFilteredMatches (selection);
-
-            if (fMatches.length === 0) {
-                this.model.set ("lastSelectedMatch", {match: null, directSelection: false});
-            } else {
-                fMatches.sort (function(a,b) { return b.match.score - a.match.score; });
-                this.model.set ("lastSelectedMatch", {match: fMatches[0].match, directSelection: false});
-            } */
-
             var highestScore = Number.MIN_VALUE;
             var highestScoringMatch = null;
             var selection = model.get("selection");
@@ -184,9 +175,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 
             selection.forEach (function (selCrossLink) {
                 var filteredMatches_pp = selCrossLink.filteredMatches_pp;
-                //var fmLen = filteredMatches_pp.length;
-                //~ for (var fm = 0; fm < fmLen; ++fm) { //could kinda get rid of this loop, coz DB query orders by score
-                //ok, i'm doing that
+                // DB query orders by score
                 var filteredSelectedMatches = filteredMatches_pp.filter (function (match) {
                     return selectedMatches.get(match.match.id);
                 });
@@ -199,9 +188,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                     }
                 }
             });
-			//todo: why isn't following clearing spec viewer if match is null
-            //console.log ("mm", highestScoringMatch);
-            this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
+			this.model.set ("lastSelectedMatch", {match: highestScoringMatch, directSelection: false});
         });
 
         this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
@@ -246,11 +233,17 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             if (CLMSUI.loggedIn) {
                 this.setButtonValidationState (match);
             } else {
-                d3.select(this.el).select("span.validatedState")
-                    .text(match.validated ? match.validated : "Undefined")
-                    .attr("class", "validatedState")
-                    .classed (match.validated, true)
-                ;
+				if (match) {
+					d3.select(this.el).select("span.validatedState")
+						.text(match.validated ? match.validated : "Undefined")
+						.attr("class", "validatedState")
+						.classed (match.validated, true)
+					;
+				} else {
+					d3.select(this.el).select("span.validatedState")
+						.text("")
+						.attr("class", "validatedState");
+				}
             }
         } else {
             this.newestSelectionShown = false;
