@@ -131,6 +131,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             
             scoreFilter: function (match) {
                 var msc = this.get("matchScoreCutoff");
+                //defend against not having a score (from a CSV file without such a column)
+                if (!match.score) {return true;}
                 return match.score >= msc[0] && match.score <= msc[1];
             },
             
