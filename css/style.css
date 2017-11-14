@@ -320,6 +320,12 @@
 }
 
 
+.verticalFlexContainer {
+    height: 100%;
+    display: flex;
+    flex-direction: column
+}
+
 
 .dynTitle {
     position: relative;

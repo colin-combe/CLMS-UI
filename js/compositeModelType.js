@@ -324,7 +324,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     }
                 }, this);
             }
-            var dedupedCrossLinks = CLMS.arrayFromMapValues(crossLinkMap);
+            
+            // is d3 map, so .values always works, don't need to worry about whether ie11 supports Array.from (in fact ie11 gets keys/values wrong way round if we call CLMS.array...)
+            var dedupedCrossLinks = crossLinkMap.values(); //CLMS.arrayFromMapValues(crossLinkMap);
             this.set (modelProperty, dedupedCrossLinks);
             
             if (!dontForward) {

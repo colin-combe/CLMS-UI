@@ -17,7 +17,10 @@
 }
 
 #spectrumControls {
-	float:right;
+	/*float:right;*/
+    margin-left: auto;
+    text-align: right;  /* fix for ie 11 */
+    flex-shrink: 0;
 }
 
 #spectrumControlsTop {
