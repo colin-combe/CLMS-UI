@@ -421,6 +421,7 @@ A.btn {
 .toolbar:first-child {
     margin-bottom: 0.15em;
     border-bottom: 1px solid rgba(0,0,0,0.5);
+    flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
 .toolbar button {
