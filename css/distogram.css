@@ -1,6 +1,6 @@
 .distoDiv {
     background: #eee;
-    display: table-row;
+    /*display: table-row;*/ /* not needed, now a flex-box approach */
     height: 100%;
 }
 

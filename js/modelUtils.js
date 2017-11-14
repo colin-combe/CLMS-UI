@@ -143,6 +143,12 @@ CLMSUI.modelUtils = {
             }
             return details;   
         },
+        
+        match: function (match) {
+            return [
+               ["Match ID", match.match.id], 
+            ];
+        },
     },
     
     highestScore: function (crosslink) { 
