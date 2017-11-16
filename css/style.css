@@ -126,11 +126,29 @@
 
 /* Colour Slider */
 
-#sliderDiv{
+#sliderDiv {
     height:70%;
+    width: 90px;
     position:absolute;
-    top:15%;
-    right:0%;
+    top:50px;
+    right:0;
+}
+
+#sliderDiv > * {
+    margin-bottom: 0.5em;
+}
+
+#sliderDiv input {
+    flex-shrink: 0;
+}
+
+#sliderDiv svg {
+    flex-grow: 1;
+}
+
+#sliderDiv rect {
+    stroke: #444;
+    stroke-width: 0.5px;
 }
 
 .resize path {

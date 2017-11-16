@@ -31,6 +31,9 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         ;
               
         var self = this;
+        var top = d3.select(this.el);
+        
+        top.classed("verticalFlexContainer", true);
         
 
         this.brush = d3.svg.brush()
@@ -40,12 +43,29 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .on("brush", function () { self.brushmove(); })
             .on("brushend", function () { self.brushend(); })
         ;
+        
+        var cutoffs = [
+            {id: "a3dminSlider", min: 0, max: 35},
+            {id: "a3dmaxSlider", min: 0, max: 35},
+        ]
+        top.selectAll("input.subsetNumberFilter")
+            .data (cutoffs)
+            .enter()
+            .append("input")
+            .attr ({
+                id: function(d) { return d.id; }, 
+                class: "subsetNumberFilter", 
+                type: "number", 
+						          min: function(d) { return d.min; }, 
+                max: function(d) { return d.max; }
+            })
+        ;
 
-        var svg = d3.select(this.el).append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", this.height + margin.top + margin.bottom)
+        var svg = top.append("svg")
+            //.attr("width", width + margin.left + margin.right)
+            //.attr("height", this.height + margin.top)
             .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         
         // http://stackoverflow.com/questions/13069446/simple-fill-pattern-in-svg-diagonal-hatching
         /*
@@ -76,7 +96,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 
         console.log ("this", this.model);
         // upper brush rectangles with colours from underlying scale
-        this.upperRange = svg.append("rect").attr("x", 0).attr("y", -10).attr("width", 50);
+        this.upperRange = svg.append("rect").attr("x", 0).attr("y", /*-10*/ 0).attr("width", 50);
         this.lowerRange = svg.append("rect").attr("x", 0).attr("width", 50);
         this.textFormat = d3.format(".2f");
         
@@ -117,6 +137,10 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         
         this.brushmove();
         
+        top.append (function() {
+          return top.select("input.subsetNumberFilter:last-of-type").remove().node();
+        });
+        
         this.listenTo (this.model, "colourModelChanged", this.render); // if range  (or domain) changes in current colour model
         
         return this;
@@ -126,13 +150,19 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         var s = this.brush.extent();
 
         var colRange = this.model.get("colScale").range();
-        this.upperRange.attr("height", this.y(s[1]) + 10).style("fill", colRange[2]);
+        this.upperRange.attr("height", this.y(s[1]) /*+ 10*/).style("fill", colRange[2]);
         this.brushg.select(".extent").style ("fill", colRange[1]);
         this.lowerRange.attr("height", this.height - this.y(s[0])).attr("y", this.y(s[0])).style("fill", colRange[0]);
 
         var self = this;
         d3.select(this.el).selectAll(".brushValueText")
             .text (function(d,i) { return self.textFormat(s[s.length - i - 1]); })
+        ;
+        
+        var cutoffs = this.model.get("colScale").domain().reverse();
+        console.log ("cutoffs", cutoffs);
+        d3.select(this.el).selectAll("input.subsetNumberFilter")
+            .property ("value", function(d, i) { return cutoffs[i]; })
         ;
         return this;
     },
