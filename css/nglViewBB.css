@@ -1,9 +1,3 @@
-.verticalFlexContainer {
-    height: 100%;
-    display: flex;
-    flex-direction: column
-}
-
 .overlayInfo {
     position: absolute;
     color: grey;
