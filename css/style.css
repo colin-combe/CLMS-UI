@@ -255,6 +255,8 @@
     position: fixed;
     bottom: 0;
     height: 65px;
+    
+    border-top: 1px solid #ccc;
 
     width: 100%;
     background:#ecedf2;
