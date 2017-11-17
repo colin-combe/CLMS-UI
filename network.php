@@ -73,7 +73,7 @@
 -->
         <script type="text/javascript" src="./vendor/ngl_verbose.js"></script>
         <script type="text/javascript" src="./vendor/c3.js"></script>
-        <script type="text/javascript" src="./vendor/split.js"></script>
+        <script type="text/javascript" src="./vendor/split_new.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
 <!--
@@ -213,7 +213,9 @@
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                        { direction: "vertical", sizes: [80,20], minSize: [200,10] }
+                        { direction: "vertical", sizes: [80,20], minSize: [200,10], 
+                            onDragEnd: function () { console.log ("wheeee!"); CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+                        }
                     );
                     
                     CLMSUI.init.views();

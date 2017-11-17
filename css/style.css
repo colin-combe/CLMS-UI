@@ -89,6 +89,7 @@
 
 #topDiv {
     overflow:hidden;
+    position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
 #networkDiv {
@@ -126,41 +127,47 @@
 
 /* Colour Slider */
 
-#sliderDiv {
-    height:70%;
+.threeColourSlider.verticalFlexContainer {
+    height: calc(100% - 70px);
     width: 90px;
-    position:absolute;
-    top:50px;
-    right:0;
+    position: absolute;
+    top: 50px;
+    right: 0;
 }
 
-#sliderDiv > * {
+.threeColourSlider > * {
     margin-bottom: 0.5em;
 }
 
-#sliderDiv input {
+.threeColourSlider input {
     flex-shrink: 0;
 }
 
-#sliderDiv svg {
+.threeColourSlider svg {
     flex-grow: 1;
 }
 
-#sliderDiv rect {
+.threeColourSlider rect {
     stroke: #444;
     stroke-width: 0.5px;
 }
 
-.resize path {
+.threeColourSlider .resize path {
   fill: #888;
   stroke: #000;
   stroke-width: 1.5px;
 }
 
-.resize path.bevel {
+.threeColourSlider .resize path.bevel {
     fill: none;
     stroke: #ccc;
     stroke-width: 2.5px;
+}
+
+.threeColourSliderTitle {
+    fill: #888;
+    pointer-events: none;
+    font-size: 0.8em;
 }
 
 .axis path, .axis line {

@@ -277,18 +277,20 @@ CLMSUI.init.views = function () {
     });
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
-    var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
+    //var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
 
     new CLMSUI.ThreeColourSliderBB ({
         el: "#sliderDiv",
         model: CLMSUI.linkColour.distanceColoursBB,
         domain: [0,35],
         extent: [15,25],
+        title: "Distance Cutoffs",
     })
         .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
         .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
         })
+        .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
 };
 
