@@ -25,9 +25,9 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<button id='clearHighlights'>Clear Highlights</button>"
             +"</div>"
             +"<div id='spectrumControlsBottom'>"
-            +"<label id='colorSelectorLabel'>Colour scheme:</label>"
-            +"<select id='colorSelector'></select>"
-            +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
+            // +"<label id='colorSelectorLabel'>Colour scheme:</label>"
+            // +"<select id='colorSelector'></select>"
+//             +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
             +"<label class='movePeakLabels'>Move Labels<input id='moveLabels' type='checkbox'></label>"
             +"<label>Measure<input id='measuringTool' type='checkbox'></label>"
             +"<form id='setrange'><label>m/z Range:</label>"
@@ -40,6 +40,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<input id='lockZoom' type='checkbox' style='visibility: hidden;'>"
             +"</form>"
             +"<button id='toggleView' title='Click to toggle view'>QC</button>"
+            +"<button id='openSettings' title='Show Settings' class='btn btn-1a btn-topNav'>&#9881;</button>"
             +"</div>"
             +"</div>"
             +"<div class='heightFill'>"
@@ -180,7 +181,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                 var filteredSelectedMatches = filteredMatches_pp.filter (function (match) {
                     return selectedMatches.get(match.match.id);
                 });
-                if (filteredSelectedMatches.length) { 
+                if (filteredSelectedMatches.length) {
                     var match = filteredSelectedMatches[0].match;
                     //console.log ("match", match, selectedMatches.get(match.id));
                     if (match.score > highestScore) {
@@ -274,9 +275,9 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         //alts.style("width", w+"px");
         return this;
     },
-    
+
     identifier: "Spectrum",
-    
+
     optionsToString: function () {
         //console.log ("this", this);
         var match = this.primaryMatch;
@@ -311,9 +312,9 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         //description.push(["crossLinks", match.crossLinks.map(function(xlink) { return xlink.id; }).join("&") ]);
         var description1 = description.map (function (desc) { return (desc.label || desc.field)+"="+desc.value; });
         var joinedDescription = description1.join ("-");
-        return joinedDescription;                        
+        return joinedDescription;
     },
-    
+
     // Returns a useful filename given the view and filters current states
     filenameStateString: function () {
         return CLMSUI.utils.makeLegalFileName (this.identifier+"-"+this.optionsToString());
