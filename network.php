@@ -135,7 +135,10 @@
         <script type="text/javascript" src="./js/downloads.js"></script>
 		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
-        <!-- Spectrum view .js files -->
+        <!-- Spectrum view files -->
+        <link rel="stylesheet" href="../spectrum/css/style.css">
+        <link rel="stylesheet" href="../spectrum/css/dropdown.css">
+        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js"></script>
         <script type="text/javascript" src="../spectrum/vendor/js.cookie.js"></script>
@@ -158,14 +161,14 @@
         <div id="main">
 
             <div class="page-header">
-                    <i class="fa fa-home fa-xi" 
-						onclick="window.location = '../history/history.html';" 
+                    <i class="fa fa-home fa-xi"
+						onclick="window.location = '../history/history.html';"
 						title="Return to search history / Login"></i>
-                    <i class="fa fa-github fa-xi" 
-						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
+                    <i class="fa fa-github fa-xi"
+						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');"
 						title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
-                    <i class="fa fa-question fa-xi" 
-						onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');" 
+                    <i class="fa fa-question fa-xi"
+						onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');"
 						title="Xi Documentation"></i>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
@@ -186,7 +189,7 @@
                 <div class="filterResultGroup">
                     <div id="filterReportPlaceholder"></div>
                     <div id="fdrSummaryPlaceholder"></div>
-                </div>        
+                </div>
             </div>
         </div><!-- MAIN -->
 
@@ -211,14 +214,14 @@
                     var json = {};
                     if (text) { json = JSON.parse (text);}
                     CLMSUI.init.models (json);
-                    
+
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
                         { direction: "vertical", sizes: [80,20], minSize: [200,10] }
                     );
-                    
+
                     CLMSUI.init.views();
                     allDataLoaded ();
                 } catch (err) {

@@ -377,6 +377,12 @@ CLMSUI.init.viewsEssential = function (options) {
     spectrumModel.otherModel = settingsSpectrumModel;
     settingsSpectrumModel.otherModel = spectrumModel;
 
+    settingsSpectrumModel.listenTo(spectrumModel, "change:JSONdata", function(t){
+
+		var json_data_copy = jQuery.extend({}, t.JSONdata);
+		settingsSpectrumModel.set({JSONdata: json_data_copy});
+	})
+
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -421,7 +427,11 @@ CLMSUI.init.viewsEssential = function (options) {
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
     var errorIntensityPlot = new ErrorIntensityPlotView ({model: spectrumModel, el:"#spectrumPanel"});
-    var spectrumSettingsViewer = new SpectrumSettingsView ({model: settingsSpectrumModel, el:"#spectrumSettingsWrapper"});
+    var spectrumSettingsViewer = new SpectrumSettingsView ({
+      model: settingsSpectrumModel,
+      el:"#spectrumSettingsWrapper",
+      displayEventName: "spectrumSettingsShow",
+    });
 
     // Update spectrum view when external resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
