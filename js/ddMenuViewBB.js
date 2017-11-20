@@ -155,7 +155,8 @@
         menuSelection: function (evt) {  
             var d3target = d3.select (evt.target);
             if (d3target && d3target.datum() && d3target.datum().func) {
-                (d3target.datum().func)(d3target); // as value holds function reference
+                var context = d3target.datum().context || this;
+                (d3target.datum().func).call (context, d3target); // as value holds function reference
             }
             
             if (this.options.closeOnClick) {
