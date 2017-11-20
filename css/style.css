@@ -89,6 +89,7 @@
 
 #topDiv {
     overflow:hidden;
+    position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
 #networkDiv {
@@ -124,26 +125,6 @@
     stroke-linecap:round;
 }
 
-/* Colour Slider */
-
-#sliderDiv{
-    height:70%;
-    position:absolute;
-    top:15%;
-    right:0%;
-}
-
-.resize path {
-  fill: #888;
-  stroke: #000;
-  stroke-width: 1.5px;
-}
-
-.resize path.bevel {
-    fill: none;
-    stroke: #ccc;
-    stroke-width: 2.5px;
-}
 
 .axis path, .axis line {
   fill: none;
