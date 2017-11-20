@@ -33,15 +33,11 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             self.resize().render(); 
         });
 
-        
-        this.cx = this.el.clientWidth;
-        this.cy = this.el.clientHeight;
-
         var margin = _.extend ({top: 50, right: 50, bottom: 50, left: 50}, options.margin || {});
         var width = 140 - margin.left - margin.right;
         var sliderWidth = 50;
         
-        this.height = this.cy - margin.top - margin.bottom;
+        this.height = this.el.clientHeight - margin.top - margin.bottom;
 
         this.y = d3.scale.linear()
             .domain(options.domain || [0, 100])
@@ -49,7 +45,6 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         ;
         
         
-
         this.brush = d3.svg.brush()
             .y(this.y)
             .extent(options.extent || [40, 60])
@@ -71,7 +66,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
                 type: "number",
                 min: options.domain[0],
                 max: options.domain[1],
-                step: 0.1,
+                step: 0.01,
             })
         ;
 
@@ -103,13 +98,15 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .style ("fill", "#777")
         ;
         */
+        /*
+        
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(-1,0)")
             .call(d3.svg.axis().scale(this.y).orient("left"))
         ;
-
-        console.log ("this", this.model);
+        */
+        
         // upper brush rectangles with colours from underlying scale
         this.upperRange = svg.append("rect").attr("x", 0).attr("y", /*-10*/ 0).attr("width", sliderWidth);
         this.lowerRange = svg.append("rect").attr("x", 0).attr("width", sliderWidth);
@@ -173,8 +170,11 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
     resize: function () {
         var d3el = d3.select(this.el);
         
+        // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
+        var jqElem = $(d3el.select("svg").node());
+        this.height = jqElem.height(); //this.svg.node().clientHeight;
+        
         // changing y range automatically adjusts the extent, but we want to keep the same extent
-        this.height = d3el.select("svg").node().clientHeight;
         var oldExtent = this.brush.extent();
         this.y.range ([this.height, 0]);
         this.brush.extent (oldExtent);
@@ -187,9 +187,9 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         var s = this.brush.extent();
         var d3el = d3.select(this.el);
         
-        this.height = d3el.select("svg").node().clientHeight;
-        
-        console.log ("this.height", this.height, d3el.select("svg"), "brush extent", s);
+        // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
+        var jqElem = $(d3el.select("svg").node());
+        this.height = jqElem.height(); //this.svg.node().clientHeight;
 
         var colRange = this.model.get("colScale").range();
         this.upperRange.attr("height", this.y(s[1]) /*+ 10*/).style("fill", colRange[2]);
@@ -201,9 +201,12 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .text (function(d,i) { return self.textFormat(s[s.length - i - 1]); })
         ;
         
-        var cutoffs = this.model.get("colScale").domain();
-        d3el.select("input.vmin").property ("value", cutoffs[0]);
-        d3el.select("input.vmax").property ("value", cutoffs[1]);
+        var rounded = s.map (function (val) {
+            return parseFloat(this.textFormat(val));
+        }, this);
+        
+        d3el.select("input.vmin").property ("value", rounded[0]);
+        d3el.select("input.vmax").property ("value", rounded[1]);
         return this;
     },
     
@@ -217,7 +220,11 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 
 	brushmove: function () {
         var s = this.brush.extent();
-        this.model.setDomain ([s[0], s[1]]);    // this'll trigger a re-render due to the colourModelChanged listener above ^^^
+        // round so values in domain are the same that are shown in text labels and input controls
+        var rounded = s.map (function (val) {
+            return parseFloat(this.textFormat(val));
+        }, this);
+        this.model.setDomain (rounded);    // this'll trigger a re-render due to the colourModelChanged listener above ^^^
         return this;     
 	},
 
@@ -229,7 +236,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         var value = +target.value;
         var isMin = d3.select(target).classed("vmin");
         var bounds = this.y.domain();
-        console.log ("bounds", bounds);
+
         var s = this.brush.extent();
         var correct = 
             [bounds[0], isMin ? value : s[0], isMin ? s[1] : value, bounds[1]]
