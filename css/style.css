@@ -236,7 +236,7 @@
     position: fixed;
     bottom: 0;
     height: 65px;
-    
+
     border-top: 1px solid #ccc;
 
     width: 100%;
@@ -279,8 +279,8 @@
 #spectrumSettingsWrapper{
   left: 200px;
   top: 100px;
-  width:600px;
-  height:600px;
+  width: 600px;
+  height: 550px;
   min-width: 550px;
   min-height: 530px;
 }
