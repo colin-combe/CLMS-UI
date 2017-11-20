@@ -25,7 +25,7 @@ _.extend (CLMSUI.vent, Backbone.Events);
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 var allDataLoaded = _.after (3, function() {
     console.log ("DATA LOADED AND WINDOW LOADED");
-	
+
 	CLMSUI.blosumCollInst.trigger ("modelSelected", CLMSUI.blosumCollInst.models[3]);
 
     //init annotation types
@@ -53,7 +53,7 @@ var allDataLoaded = _.after (3, function() {
 	annotationTypes.push(alignedAnnotationType);
 
 	//get uniprot feature types
-	var uniprotFeatureTypes = new Map();     
+	var uniprotFeatureTypes = new Map();
 	var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
 	var participantCount = participantArray.length;
     for (var p = 0; p < participantCount; p++){
@@ -75,9 +75,9 @@ var allDataLoaded = _.after (3, function() {
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
-    
+
     CLMSUI.init.viewsThatNeedAsyncData();
-    
+
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
     ByRei_dynDiv.init.main();
@@ -96,7 +96,7 @@ CLMSUI.init.models = function (options) {
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
 
         CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, clmsModel);
-        
+
         allDataLoaded();
 
         console.log ("ASYNC. uniprot sequences poked to collection", this);
@@ -146,12 +146,12 @@ CLMSUI.init.modelsEssential = function (options) {
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
     //console.log ("options", options);
     clmsModelInst.parseJSON(options);
-    
+
     // some proteins have no size, i.e. ambiguous placeholders, and lack of size property is breaking things later on. MJG 17/05/17
     clmsModelInst.get("participants").forEach (function (prot) {
         prot.size = prot.size || 1;
     });
-      
+
     // Anonymiser for screen shots / videos. MJG 17/05/17
     var urlChunkSet = d3.set (window.location.search.split("&"));
     if (urlChunkSet.has("anon")) {
@@ -160,15 +160,15 @@ CLMSUI.init.modelsEssential = function (options) {
             prot.description = "Protein "+(i+1)+" Description";
         });
     }
-    
-    
+
+
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
     var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
     clmsModelInst.get("searches").forEach (function (value, key) {
-       value.participantIDSet = searchMap[key]; 
+       value.participantIDSet = searchMap[key];
     });
     //console.log ("smap", searchMap);
-    
+
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
@@ -178,7 +178,7 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: clmsModelInst.get("autoValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE, 
+        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE,
             Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
     });
 
@@ -209,7 +209,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -318,7 +318,7 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         }
     });
-    
+
     new CLMSUI.FilterSummaryViewBB ({
         el:"#filterReportPlaceholder",
         model: CLMSUI.compositeModelInst,
@@ -374,7 +374,16 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    var spectrumModel = new AnnotatedSpectrumModel();
+    var spectrumModel = new AnnotatedSpectrumModel({baseDir: "/spectrum/"});
+    var settingsSpectrumModel = new AnnotatedSpectrumModel({baseDir: "/spectrum/"});
+    spectrumModel.otherModel = settingsSpectrumModel;
+    settingsSpectrumModel.otherModel = spectrumModel;
+
+    settingsSpectrumModel.listenTo(spectrumModel, "change:JSONdata", function(t){
+
+		var json_data_copy = jQuery.extend({}, t.JSONdata);
+		settingsSpectrumModel.set({JSONdata: json_data_copy});
+	})
 
     var spectrumWrapper = new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
@@ -416,10 +425,15 @@ CLMSUI.init.viewsEssential = function (options) {
         })
     ;
 
-    var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});    
-    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"}); 
-    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"}); 
-    var errorIntensityPlot = new ErrorIntensityPlotView ({model: spectrumModel, el:"#spectrumPanel"}); 
+    var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
+    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
+    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
+    var errorIntensityPlot = new ErrorIntensityPlotView ({model: spectrumModel, el:"#spectrumPanel"});
+    var spectrumSettingsViewer = new SpectrumSettingsView ({
+      model: settingsSpectrumModel,
+      el:"#spectrumSettingsWrapper",
+      displayEventName: "spectrumSettingsShow",
+    });
 
     // Update spectrum view when external resize event called
     spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
@@ -469,13 +483,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "keyShow",
         model: CLMSUI.compositeModelInst,
     });
-    
+
     new CLMSUI.SearchSummaryViewBB ({
         el: "#searchSummaryPanel",
         displayEventName: "searchesShow",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
     });
-    
+
     /* 'cos circle listens to annotation model which is formed from uniprot async data */
     new CLMSUI.CircularViewBB ({
         el: "#circularPanel",
@@ -483,7 +497,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
     });
 
-   
+
     // Make a drop down menu constructed from the annotations collection
     new CLMSUI.AnnotationDropDownMenuViewBB ({
         el: "#annotationsDropdownPlaceholder",
@@ -496,7 +510,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             toggleAttribute: "shown",
         }
     });
-    
+
 
     new CLMSUI.utils.ColourCollectionOptionViewBB ({
         el: "#linkColourDropdownPlaceholder",
@@ -545,7 +559,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             console.log ("3D sequences poked to collection", this);
         }
     });
-    
+
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
      CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
@@ -597,19 +611,19 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
         displayEventName: "pdbShow",
     });
-    
+
     new CLMSUI.ScatterplotViewBB ({
         el: "#scatterplotPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "scatterplotShow",
     });
-    
+
 	   new CLMSUI.CSVFileChooserBB ({
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",
     });
-    
+
     new CLMSUI.LinkMetaDataFileChooserBB ({
         el: "#linkMetaLoadPanel",
         model: CLMSUI.compositeModelInst,
@@ -627,7 +641,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         //displayEventName: "fdrShow",
         model: CLMSUI.compositeModelInst.get("filterModel"),
     });
-    
+
     new CLMSUI.FDRSummaryViewBB ({
         el: "#fdrSummaryPlaceholder",
         //displayEventName: "fdrShow",
