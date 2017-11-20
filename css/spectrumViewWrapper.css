@@ -1,5 +1,6 @@
 #spectrumControls {
-    display: table-row;
+    /*display: table-row;*/
+    flex-shrink: 0;
 }
 
 #spectrumControls div {
@@ -31,7 +32,9 @@
 
 /* Important, let's the div with this class take up the remaining height inside a div declared with display:table */
 .heightFill {
-    display: table-row;
+    /*display: table-row;*/
+    flex-grow: 1;
+    overflow: hidden;
     height: 100%;
     background: #fff;
 }
@@ -39,6 +42,7 @@
 .validationControls {
 	padding:5px;
 	background: white;
+    flex-shrink: 0;
 /*
     display: table-row;
 */
@@ -62,14 +66,6 @@
     line-height: normal;
 }
 
-#alternatives {
-/*
-	margin-left: 10px;
-*/
-    padding: 10px;
-    height:200px;
-}
-
 .scrollHolder {
     color: #888;
 }
@@ -82,4 +78,13 @@
 
 .CLMSUIspectrumWrapper input[type='submit'] {
     display: none;
+}
+
+#alternatives {
+    height:200px;
+    flex-shrink: 0;
+}
+
+.CLMSUIspectrumWrapper #alternatives {
+    padding: 0;
 }

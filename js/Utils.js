@@ -12,7 +12,7 @@ CLMSUI.utils = {
     
     commonRegexes: {
         uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
-        pdbPattern: "[A-Z0-9]{4}",
+        pdbPattern: "[A-Za-z0-9]{4}",
         hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
     },
     

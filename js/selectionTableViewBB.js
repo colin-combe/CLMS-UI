@@ -8,7 +8,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
     initialize: function (options) {
         this.options = options || {};
-        var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView");
+        var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView verticalFlexContainer");
         holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
         // redraw table on filter change if crosslinks selected (matches may have changed)

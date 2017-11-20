@@ -1,0 +1,44 @@
+/* Colour Slider */
+
+.threeColourSlider.verticalFlexContainer {
+    height: calc(100% - 70px);
+    width: 90px;
+    position: absolute;
+    top: 50px;
+    right: 0;
+}
+
+.threeColourSlider > * {
+    margin-bottom: 0.5em;
+}
+
+.threeColourSlider input {
+    flex-shrink: 0;
+}
+
+.threeColourSlider svg {
+    flex-grow: 1;
+}
+
+.threeColourSlider rect {
+    stroke: #444;
+    stroke-width: 0.5px;
+}
+
+.threeColourSlider .resize path {
+  fill: #888;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.threeColourSlider .resize path.bevel {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 2.5px;
+}
+
+.threeColourSliderTitle {
+    fill: #888;
+    pointer-events: none;
+    font-size: 0.8em;
+}

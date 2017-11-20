@@ -89,6 +89,7 @@
 
 #topDiv {
     overflow:hidden;
+    position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
 #networkDiv {
@@ -124,26 +125,6 @@
     stroke-linecap:round;
 }
 
-/* Colour Slider */
-
-#sliderDiv{
-    height:70%;
-    position:absolute;
-    top:15%;
-    right:0%;
-}
-
-.resize path {
-  fill: #888;
-  stroke: #000;
-  stroke-width: 1.5px;
-}
-
-.resize path.bevel {
-    fill: none;
-    stroke: #ccc;
-    stroke-width: 2.5px;
-}
 
 .axis path, .axis line {
   fill: none;
@@ -255,6 +236,8 @@
     position: fixed;
     bottom: 0;
     height: 65px;
+    
+    border-top: 1px solid #ccc;
 
     width: 100%;
     background:#ecedf2;
@@ -319,6 +302,12 @@
     height: 25em;
 }
 
+
+.verticalFlexContainer {
+    height: 100%;
+    display: flex;
+    flex-direction: column
+}
 
 
 .dynTitle {
@@ -421,6 +410,7 @@ A.btn {
 .toolbar:first-child {
     margin-bottom: 0.15em;
     border-bottom: 1px solid rgba(0,0,0,0.5);
+    flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
 .toolbar button {

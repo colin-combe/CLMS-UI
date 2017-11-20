@@ -277,6 +277,23 @@
         var add = options.add || false;
         var type = options.select ? "selection" : "highlights";
         //console.log ("type", options, type, matchLevel, xAxisData);
+        
+        // set up for calculating nearest datum to mouse position
+        var nearest = {link: undefined, match: undefined, distance: Number.POSITIVE_INFINITY};
+        var jitterOn = this.options.jitter;
+        
+        function testNearest (link, match, xd, yd) {
+            var xjr = jitterOn ? this.getXJitter(link) : 0;
+            var yjr = jitterOn ? this.getYJitter(link) : 0;
+            var px = this.getXPosition (xd, xjr) - options.mousePosition.px;
+            var py = this.getYPosition (yd, yjr) - options.mousePosition.py;
+            var pd = (px * px) + (py * py);
+            if (pd < nearest.distance) {
+                nearest.distance = pd;
+                nearest.match = match;
+                nearest.link = link;
+            }
+        }
 
         if (matchLevel) {
             var matchingMatches = filteredCrossLinks.map (function (link, i) {
@@ -286,10 +303,15 @@
                 var passMatches = (xDatum && yDatum) ? link.filteredMatches_pp.filter (function (match, ii) {
                     var xd = xDatum.length === 1 ? xDatum[0] : xDatum[ii];
                     var yd = yDatum.length === 1 ? yDatum[0] : yDatum[ii];
-                    return (xd >= exmin && xd <= exmax && yd >= eymin && yd <= eymax);
-                }) : [];
+                    var within = (xd >= exmin && xd <= exmax && yd >= eymin && yd <= eymax);
+                    if (within && options.calcNearest) {
+                        testNearest.call (this, link, match, xd, yd);
+                    }
+                    return within;
+                }, this) : [];
+
                 return passMatches;
-            });
+            }, this);
             var allMatchingMatches = d3.merge (matchingMatches);
             this.selectSize = allMatchingMatches.length;
             this.model.setMarkedMatches (type, allMatchingMatches, true, add);
@@ -297,17 +319,24 @@
             var matchingLinks = filteredCrossLinks.filter (function (link, i) {
                 var xDatum = xData[i];
                 var yDatum = yData[i];
-                var bool = xDatum && xDatum.some (function (xd) {
+                var within = xDatum && xDatum.some (function (xd) {
                     return xd >= exmin && xd <= exmax;
                 });
-                bool = bool && yDatum && yDatum.some (function (yd) {
+                within = within && yDatum && yDatum.some (function (yd) {
                     return yd >= eymin && yd <= eymax;
                 });
-                return bool;
-            });
+                
+                if (within && options.calcNearest) {
+                    testNearest.call (this, link, undefined, xDatum[0], yDatum[0]);
+                }
+                return within;
+            }, this);
             this.selectSize = matchingLinks.length;
             this.model.setMarkedCrossLinks (type, matchingLinks, true, add);
         }
+        
+        //console.log ("nearest", nearest);
+        this.nearest = nearest;
     },
         
     relayout: function () {
@@ -425,7 +454,7 @@
         var sortFunc = function (a,b) { return a - b; };
         var xrange = [this.x.invert (x - squarius), this.x.invert (x + squarius)].sort (sortFunc);
         var yrange = [this.y.invert (y - squarius), this.y.invert (y + squarius)].sort (sortFunc);
-        return {xrange: xrange, yrange: yrange};
+        return {xrange: xrange, yrange: yrange, mousePosition: {px: x, py: y}};
     },
       
     doTooltip: function (evt) {
@@ -446,12 +475,27 @@
             return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to "+fvals[1])];  
         });
         
+        if (inBetweenValidValues) {
+            tooltipData = [];
+        }
+        
+        var isMatchLevel = axesMetaData.some (function (axmd) { return axmd.matchLevel; });
         var size = this.selectSize;
-        var level = axesMetaData.some (function (axmd) { return axmd.matchLevel; }) ? (size === 1 ? "Match" : "Matches") : (size === 1 ? "Cross-Link" : "Cross-Links");
+        var levelText = isMatchLevel ? (size === 1 ? "Match" : "Matches") : (size === 1 ? "Cross-Link" : "Cross-Links");
+        
+        if (this.nearest && this.nearest.link) {
+            var tipExtra = isMatchLevel ? CLMSUI.modelUtils.makeTooltipContents.match (this.nearest.match)
+                : CLMSUI.modelUtils.makeTooltipContents.link (this.nearest.link);
+            tooltipData = tooltipData.concat([["&nbsp;"],["Nearest "+(isMatchLevel ? "Match" : "Link")]]).concat (tipExtra);
+        }
+        
+        if (!this.nearest.link) {
+            tooltipData = null;
+        }
         
          this.model.get("tooltipModel")
-            .set("header", "Highlighting "+(d3.format(",")(size))+" "+level)
-            .set("contents", inBetweenValidValues ? null : tooltipData)
+            .set("header", "Highlighting "+(d3.format(",")(size))+" "+levelText)
+            .set("contents", tooltipData)
             .set("location", evt)
         ;
         this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
@@ -464,7 +508,7 @@
             [highlightRange.xrange[0], highlightRange.yrange[0]],
             [highlightRange.xrange[1], highlightRange.yrange[1]],
         ]; 
-        this.selectPoints ({extent: extent, add: evt.shiftKey || evt.ctrlKey});
+        this.selectPoints ({extent: extent, add: evt.shiftKey || evt.ctrlKey, calcNearest: true, mousePosition: highlightRange.mousePosition});
         return this;
     },
         
@@ -508,7 +552,7 @@
             var pointSize = this.options.pointSize;
             var halfPointSize = pointSize / 2;
             
-            var self = this;
+            //var self = this;
             var colourScheme = this.model.get("linkColourAssignment");
 
             var filteredCrossLinks = this.getFilteredCrossLinks ();
@@ -619,13 +663,11 @@
             */
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords (datax, datay);
-            var jitter = this.options.jitter;
+            var jitterOn = this.options.jitter;
             //console.log ("ddd", datax, datay, filteredCrossLinks, coords, colourScheme);
             
             var countable = colourScheme.isCategorical();
-            if (countable) {
-                this.counts = d3.range (0, colourScheme.getDomainCount() + 1).map (function() { return 0; });
-            }
+            var counts = countable ? d3.range (0, colourScheme.getDomainCount() + 1).map (function() { return 0; }) : [];
 
             sortedFilteredCrossLinks.forEach (function (link, i) {
                 var decoy = link.isDecoyLink();
@@ -637,13 +679,13 @@
                 if (!matchLevel) {
                     high = highlightedCrossLinkIDs.has (link.id);
                     selected = selectedCrossLinkIDs.has (link.id);
-                    ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
+                    ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
                     ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                 }
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
-                var xr = ((link.fromResidue % 10) / 10) - 0.45;
-                var yr = ((link.toResidue % 10) / 10) - 0.45;
+                var xjr = jitterOn ? this.getXJitter(link) : 0;
+                var yjr = jitterOn ? this.getYJitter(link) : 0;
                 
                 coords[i].forEach (function (coord, ii) {
                     //var xr = (Math.random() - 0.5);
@@ -652,11 +694,11 @@
                         var match = link.filteredMatches_pp[ii].match;
                         high = highlightedMatchMap.has (match.id);
                         selected = selectedMatchMap.has (match.id);
-                        ctx.fillStyle = high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colour);
+                        ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
                         ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
                     }
-                    var x = self.x (coord[0]) + (jitter ? xr * self.jitterRanges.x : 0) - halfPointSize;
-                    var y = self.y (coord[1]) + (jitter ? yr * self.jitterRanges.y : 0) - halfPointSize;
+                    var x = this.x (coord[0]) + xjr - halfPointSize;
+                    var y = this.y (coord[1]) + yjr - halfPointSize;
                     x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
                     y = Math.round (y);
                     if (decoy) {
@@ -672,15 +714,13 @@
                         
                         if (countable) {
                             if (linkDomainInd === undefined) {
-                                linkDomainInd = this.counts.length - 1;
+                                linkDomainInd = counts.length - 1;
                             }
-                            this.counts[linkDomainInd]++;
+                            counts[linkDomainInd]++;
                         }
                     }
                 }, this);
             }, this);
-            
-            //console.log ("COUNTS", this.counts);
             
             /*
             if (options.isFiltering) {
@@ -688,13 +728,30 @@
             }
             */
             
-            // Remove unknown from appearing in title if none of them
-            if (this.counts[this.counts.length - 1] === 0) {
-                this.counts.pop();
+            // Remove unknown from appearing in title if no data falls into this category
+            //console.log ("COUNTS", this.counts);
+            if (counts[counts.length - 1] === 0) {
+                counts.pop();
             }
-            this.makeChartTitle (this.counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
+            this.makeChartTitle (counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
         }
         return this;
+    },
+        
+    getXJitter: function (link) {
+        return (((link.fromResidue % 10) / 10) - 0.45) * this.jitterRanges.x;
+    },
+        
+    getYJitter: function (link) {
+        return (((link.fromResidue % 10) / 10) - 0.45) * this.jitterRanges.y;
+    },
+        
+    getXPosition: function (xCoord, xJitter) {
+        return this.x (xCoord) + xJitter;
+    },
+        
+    getYPosition: function (yCoord, yJitter) {
+        return this.y (yCoord) + yJitter;
     },
         
     getSizeData: function () {

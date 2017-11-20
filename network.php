@@ -64,6 +64,7 @@
 		<link rel="stylesheet" href="./css/csvUpload.css">
 		<link rel="stylesheet" href="./css/searchSummary.css">
 		<link rel="stylesheet" href="./css/jquery.jsonview.css">
+        <link rel="stylesheet" href="./css/threeColourSlider.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -73,7 +74,7 @@
 -->
         <script type="text/javascript" src="./vendor/ngl_verbose.js"></script>
         <script type="text/javascript" src="./vendor/c3.js"></script>
-        <script type="text/javascript" src="./vendor/split.js"></script>
+        <script type="text/javascript" src="./vendor/split_new.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
 <!--
@@ -110,7 +111,7 @@
         <script type="text/javascript" src="./js/fdr.js"></script>
         <script type="text/javascript" src="./js/distancesObj.js"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js"></script>
-        <script type="text/javascript" src="./js/ThreeColourSliderBB.js"></script>
+        <script type="text/javascript" src="./js/threeColourSliderBB.js"></script>
         <script type="text/javascript" src="./js/filterViewBB.js"></script>
         <script type="text/javascript" src="./js/matrixViewBB.js"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
@@ -213,7 +214,9 @@
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                        { direction: "vertical", sizes: [80,20], minSize: [200,10] }
+                        { direction: "vertical", sizes: [80,20], minSize: [200,10], 
+                            onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+                        }
                     );
                     
                     CLMSUI.init.views();
