@@ -121,7 +121,7 @@ function getLinksCSV(){
 
     var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
-    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true});
+    var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true, calcDecoyProteinDistances: true});
     //console.log ("pd", physicalDistances);
     var distance2dp = d3.format(".2f");
     
