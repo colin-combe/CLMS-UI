@@ -251,7 +251,7 @@
 #main .controls{
     overflow: hidden;
     /*display: table-row;*/
-    
+
     position: fixed;
     bottom: 0;
     height: 65px;
@@ -270,7 +270,7 @@
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #searchSummaryPanel {
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #searchSummaryPanel {
     display:none;
     top:80px;
 }
@@ -293,7 +293,15 @@
 #spectrumPanelWrapper{
     left: 280px;
     width:600px;
-    height:600px;
+    height: 580px;
+}
+#spectrumSettingsWrapper{
+  left: 200px;
+  top: 100px;
+  width:600px;
+  height:600px;
+  min-width: 550px;
+  min-height: 590px;
 }
 #nglPanel{
     left: 40px;
@@ -336,7 +344,7 @@
     letter-spacing: 0.5px;
     font-size: 0.9em;
     color: white;
-    
+
 }
 
 #alignPanel{

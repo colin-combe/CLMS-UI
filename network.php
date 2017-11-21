@@ -138,12 +138,20 @@
         <script type="text/javascript" src="./js/downloads.js"></script>
         <script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
-        <!-- Spectrum view .js files -->
+        <!-- Spectrum view files -->
+        <link rel="stylesheet" href="../spectrum/css/style.css">
+        <link rel="stylesheet" href="../spectrum/css/dropdown.css">
+        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
+        <script type="text/javascript" src="../spectrum/vendor/datatables.min.js"></script>
+        <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js"></script>
+        <script type="text/javascript" src="../spectrum/vendor/js.cookie.js"></script>
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js"></script> 
-        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>        
+        <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/PepInputView.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
@@ -189,7 +197,7 @@
                 <div class="filterResultGroup">
                     <div id="filterReportPlaceholder"></div>
                     <div id="fdrSummaryPlaceholder"></div>
-                </div>        
+                </div>
             </div>
         </div><!-- MAIN -->
 
@@ -214,7 +222,7 @@
                     var json = {};
                     if (text) { json = JSON.parse (text);}
                     CLMSUI.init.models (json);
-                    
+
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
@@ -223,7 +231,7 @@
                             onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
                         }
                     );
-                    
+
                     CLMSUI.init.views();
                     allDataLoaded ();
                 } catch (err) {
