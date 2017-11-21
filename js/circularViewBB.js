@@ -321,7 +321,7 @@
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
-            this.listenTo (this.model, "change:selectedProtein", function () { renderPartial (["nodes"]); });
+            this.listenTo (this.model, "change:selectedProteins", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             this.reOrder().render();
@@ -361,9 +361,9 @@
             this.render();
         },
         
-        showResLabelsIfRoom: function () {		
-            this.options.showResLabels = !this.options.showResLabels;		
-            this.render();		
+        showResLabelsIfRoom: function () {      
+            this.options.showResLabels = !this.options.showResLabels;       
+            this.render();      
         },
         
         flipLinklessVisibility : function () {
@@ -554,11 +554,11 @@
                 var arcRadii = [
                     {arc: "arc", inner: innerNodeRadius, outer: tickRadius},
                     {arc: "featureArc", inner: innerFeatureRadius, outer: tickRadius}, // both radii same for textArc
-                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc		
-                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},		
-                 ];		
-                 arcRadii.forEach (function (arcData) {		
-                     this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);		
+                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc      
+                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},        
+                 ];     
+                 arcRadii.forEach (function (arcData) {     
+                     this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);       
                  }, this);
 
                 var nodes = layout.nodes;
@@ -591,8 +591,8 @@
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
-                if (!changed || changed.has("links")) {		
-                    this.drawResidueLetters (gRot, linkCoords);		
+                if (!changed || changed.has("links")) {     
+                    this.drawResidueLetters (gRot, linkCoords);     
                 }
             }
 
@@ -689,15 +689,19 @@
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.id, "selection", add);
-                        self.model.setSelectedProteins ([d.id], add);
+                        self.model.setSelectedProteins ([d], add);
                     })
             ;
 
             nodeJoin
                 .attr("d", this.arc)
                 .classed ("selected", function(d) {
-                    var map = self.model.get("selectedProtein");
-                    return map && map.has(d.id);
+                    //~ var map = self.model.get("selectedProteins");
+                    //~ return map && map.has(d.id);
+                    var id = d.id;
+                    //does selectedProteins contain a protein with that id
+                    var filtered = self.model.get("selectedProteins").filter(function (p) {return p.id == id;});
+                    return filtered.length > 0;
                 })
             ;
 

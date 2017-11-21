@@ -61,9 +61,9 @@
         <link rel="stylesheet" href="./css/scatterplot.css">
         <link rel="stylesheet" href="./css/nglViewBB.css">
         <link rel="stylesheet" href="./css/networkPage.css">
-		<link rel="stylesheet" href="./css/csvUpload.css">
-		<link rel="stylesheet" href="./css/searchSummary.css">
-		<link rel="stylesheet" href="./css/jquery.jsonview.css">
+        <link rel="stylesheet" href="./css/csvUpload.css">
+        <link rel="stylesheet" href="./css/searchSummary.css">
+        <link rel="stylesheet" href="./css/jquery.jsonview.css">
         <link rel="stylesheet" href="./css/threeColourSlider.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
@@ -85,8 +85,8 @@
         arrg, jquerys got in it, it for the json tree view, which we may not keep
 -->
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
-		<script type="text/javascript" src="./vendor/backbone.js"></script>
-		<script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
+        <script type="text/javascript" src="./vendor/backbone.js"></script>
+        <script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
         <script type="text/javascript" src="./vendor/crossfilter.js"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
@@ -136,7 +136,7 @@
         <script type="text/javascript" src="./js/scatterplotViewBB.js"></script>
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
-		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
+        <script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
         <!-- Spectrum view .js files -->
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
@@ -157,18 +157,17 @@
 
             <div class="page-header">
                     <i class="fa fa-home fa-xi" 
-						onclick="window.location = '../history/history.html';" 
-						title="Return to search history / Login"></i>
+                        onclick="window.location = '../history/history.html';" 
+                        title="Return to search history / Login"></i>
                     <i class="fa fa-github fa-xi" 
-						onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
-						title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
-                    <i class="fa fa-question fa-xi" 
-						onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');" 
-						title="Xi Documentation"></i>
-                    <p id="annotationsDropdownPlaceholder"></p>
-                    <p id="viewDropdownPlaceholder"></p>
+                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
+                        title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
                     <p id="loadDropdownPlaceholder"></p>
+                    <p id="viewDropdownPlaceholder"></p>
+                    <p id="proteinSelectionDropdownPlaceholder"></p>
+                    <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
+                    <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
             </div>
 
             <div class="mainContent">
@@ -178,6 +177,12 @@
                 </div>
                 <div id="bottomDiv"></div>
             </div>
+
+            <div id='hiddenProteinsMessage'>
+                <p id='hiddenProteinsText'>Maunally Hidden Message</p>
+                <!-- not very backbone but its only a button -->
+                <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
+            </div>"
 
             <div class="controls">
                 <div id="filterPlaceholder"></div>
@@ -227,7 +232,6 @@
             };
 
             var url = "./loadData.php" + window.location.search;
-
 
             d3.text (url, function (error, text) {
                 if (!error) {

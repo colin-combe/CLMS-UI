@@ -10,7 +10,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             match_highlights: d3.map(), // listen to these two for differences in highlighted selects matches (more fine grained)
             match_selection: d3.map(),  // listen to event selection/highlights+"MatchesLinksChanged" to run when both have been fully updated
             annotationTypes: null,
-            selectedProtein: null, //what type should this be? Set?
+            selectedProteins: [],
             groupColours: null // will be d3.scale for colouring by search/group
         });
     },
@@ -355,42 +355,40 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
     },
 
-    //what type should selectedProtein be? Set? Array? Is a map needed?
-    // agree map's not needed, prob just Array - cc
-    setSelectedProteins: function (idArr, add) {
-        var map = add ? new Map(this.get("selectedProtein")) : new Map();
-        if (add && idArr.length == 1 && map.has(idArr[0])) { // if ctrl/shift click and already selected the remove
-            map.delete(idArr[0]);
+    setSelectedProteins: function (pArr, add) {
+        var toSelect = add ? this.get("selectedProteins").slice() : [];//see note below
+        if (add && pArr.length == 1 && toSelect.indexOf(pArr[0]) > -1) { // if ctrl/shift click and already selected the remove
+            toSelect = toSelect.filter(function(el){
+                    return el !== pArr[0];
+                }
+            );
         } else {
-            idArr.forEach(function (id) {
-                map.set(id, this.get("clmsModel").get("participants").get(id));
-            }, this);
+            for (var p = 0; p < pArr.length; p++) {
+                var protein = pArr[p];
+                if (toSelect.indexOf(protein) == -1){
+                    toSelect.push(protein);
+                }
+            }
         }
-        //console.log ("map eq", map == this.get("selectedProtein"));
-        // Currently (03/06/16) Maps/Sets don't trigger change functions even for new Objects
-        // https://github.com/jashkenas/underscore/issues/2451
-        // So need to force change event
-        this.set("selectedProtein", map);
-        this.trigger("change:selectedProtein", this);
-        console.log("map", this.get("selectedProtein"));
+        this.set("selectedProteins", toSelect);//the array.slice() clones the array so this triggers a change   
     },
     
     invertSelectedProteins: function () {
-        var idsToSelect = [];
+        var toSelect = [];
         var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
         var participantCount = participantsArr.length;
-        var selected = CLMS.arrayFromMapKeys(this.get("selectedProtein"));
+        var selected = this.get("selectedProteins");
         for (var p = 0; p < participantCount; p++) {
-            var id = participantsArr[p].id;
-            if (selected.indexOf(id) == -1) {
-                idsToSelect.push(id);
+            var participant = participantsArr[p];
+            if (selected.indexOf(participant) == -1) {
+                toSelect.push(participant);
             }
         }
-        this.setSelectedProteins(idsToSelect);
+        this.setSelectedProteins(toSelect);
     },
     
     hideSelectedProteins: function () {     
-        var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
+        var selectedArr = this.get("selectedProteins");
         var selectedCount = selectedArr.length;
         for (var s = 0; s < selectedCount; s++) {
             var participant = selectedArr[s];
@@ -413,9 +411,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     
     stepOutSelectedProteins: function () {      
-        var selectedArr = CLMS.arrayFromMapValues(this.get("selectedProtein"));
+        var selectedArr = this.get("selectedProteins");
         var selectedCount = selectedArr.length;
-        var idsToSelect = new Set ();
+        var toSelect = new Set ();
         for (var s = 0; s < selectedCount; s++) {
             var participant = selectedArr[s];
             var crossLinks = participant.crossLinks;
@@ -425,18 +423,19 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 var fromProtein = crossLink.fromProtein;
                 if (fromProtein.is_decoy != true) {
                     fromProtein.manuallyHidden = false;
-                    idsToSelect.add(fromProtein.id);
+                    toSelect.add(fromProtein);
                 }
                 if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
                     var toProtein = crossLink.toProtein;
                     toProtein.manuallyHidden = false;
-                    idsToSelect.add(toProtein.id);                  
+                    toSelect.add(toProtein);                  
                 }
             }
         }
                     
-        this.get("filterModel").trigger("change");
-        this.setSelectedProteins(Array.from(idsToSelect));
+        //this.get("filterModel").trigger("change");
+        //~ this.setSelectedProteins(CLMS.arrayFromMapValues(idsToSelect));//todo: IE
+        this.setSelectedProteins(Array.from(toSelect));//todo: IE
 
     },
 
