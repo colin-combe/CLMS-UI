@@ -37,7 +37,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .text("Selected Info for 0 Proteins")
             ;
             
-            this.listenTo (this.model, "change:selectedProtein", this.render);
+            this.listenTo (this.model, "change:selectedProteins", this.render);
             this.listenTo (this.model, "filteringDone", this.showState);
             this.listenTo (this.model, "change:selection", this.showState);
             this.listenTo (this.model, "change:highlights", this.showState);
@@ -49,8 +49,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             // only render if visible
             console.log ("prot info render called");
             if (this.isVisible()) {
-                var dataSource = this.model.get("selectedProtein");
-                var prots = dataSource ? CLMS.arrayFromMapValues(dataSource) : [];
+                var dataSource = this.model.get("selectedProteins");
+                var prots = dataSource;// ? CLMS.arrayFromMapValues(dataSource) : [];
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
                 

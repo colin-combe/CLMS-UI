@@ -161,7 +161,6 @@ CLMSUI.init.modelsEssential = function (options) {
         });
     }
 
-
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
     var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
     clmsModelInst.get("searches").forEach (function (value, key) {
@@ -256,6 +255,21 @@ CLMSUI.init.views = function () {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
+    
+    // Generate protein selection drop down
+    var compModel = CLMSUI.compositeModelInst;
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#proteinSelectionDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Protein-Selection",
+            menu: [
+                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel}, 
+                {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
+                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
+            ]
+        }
+    });
 
     // Generate buttons for load dropdown
     var buttonData = [
@@ -459,9 +473,10 @@ CLMSUI.init.viewsEssential = function (options) {
         el: "#expDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
-            title: "Data-Export",
+            title: "Data-Download",
             menu: [
-                {name: "Links", func: downloadLinks}, {name:"Matches", func: downloadMatches},
+                {name: "Links", func: downloadLinks},
+                {name:"Matches", func: downloadMatches},
                 {name: "Residues", func: downloadResidueCount}
             ]
         }
