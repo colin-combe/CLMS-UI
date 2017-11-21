@@ -139,7 +139,7 @@
 		<script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
 
         <!-- Spectrum view files -->
-        <link rel="stylesheet" href="../spectrum/css/style.css">
+        <link rel="stylesheet" href="../spectrum/css/settings.css">
         <link rel="stylesheet" href="../spectrum/css/dropdown.css">
         <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js"></script>
@@ -222,7 +222,7 @@
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
                     CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
-                        { direction: "vertical", sizes: [80,20], minSize: [200,10], 
+                        { direction: "vertical", sizes: [80,20], minSize: [200,10],
                             onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
                         }
                     );
