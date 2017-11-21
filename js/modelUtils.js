@@ -261,17 +261,9 @@ CLMSUI.modelUtils = {
         
         stage.loadFile (uri, params)
             .then (function (structureComp) {
-                var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
-                var interactorMap = bbmodel.get("clmsModel").get("participants");
-                var interactorArr = CLMS.arrayFromMapValues(interactorMap);
-                // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
-                if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
-                    CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-                        //console.log ("pdb's pdbUniProtMap", pdbUniProtMap);
-                        sequenceMapsAvailable (pdbUniProtMap);
-                    });
-                }
-                else {  // without access to pdb codes have to match comparing all proteins against all chains
+            
+                // match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
+                function matchByAlignment () {
                     var protAlignCollection = bbmodel.get("alignColl");
                     var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
                         function(sObj) { return sObj.data; }
@@ -279,11 +271,31 @@ CLMSUI.modelUtils = {
                     //console.log ("our pdbUniProtMap", pdbUniProtMap);
                     sequenceMapsAvailable (pdbUniProtMap);
                 }
+               
+                var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
+                var interactorMap = bbmodel.get("clmsModel").get("participants");
+                var interactorArr = CLMS.arrayFromMapValues(interactorMap);
+            
+                // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
+                // This is asynchronous so we use a callback
+                if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
+                    CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
+                        //console.log ("pdb's pdbUniProtMap", pdbUniProtMap);
+                        if (!pdbUniProtMap.length) {    // no matches, fall back to aligning
+                            matchByAlignment();
+                        } else {
+                            sequenceMapsAvailable (pdbUniProtMap);
+                        }
+                    });
+                }
+                else {  // without access to pdb codes have to match comparing all proteins against all chains
+                    matchByAlignment();
+                }
 
                 // bit to continue onto after ngl protein chain to clms protein matching has been done
                 function sequenceMapsAvailable (sequenceMap) {
                     
-                    console.log ("seqmpa", sequenceMap);
+                    //console.log ("seqmpa", sequenceMap);
                     //if (sequenceMap && sequenceMap.length) {
                         var chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
@@ -360,7 +372,6 @@ CLMSUI.modelUtils = {
                     });
                     // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I 
                     var mapArr = CLMS.arrayFromMapValues(map);
-                    //console.log ("map", map, mapArr, nglSequences);
                     
                     if (callback) {
                         var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
@@ -378,6 +389,7 @@ CLMSUI.modelUtils = {
                             });
                             mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                         });
+                        
                         mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none"; });
                         callback (mapArr);
                     }
@@ -404,7 +416,7 @@ CLMSUI.modelUtils = {
                 matchMatrix[prot.id] = scores;
             }   
         });
-        console.log ("matchMatrix", matchMatrix, sequenceObjs);
+        //console.log ("matchMatrix", matchMatrix, sequenceObjs);
         return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
     },
     
@@ -732,7 +744,7 @@ CLMSUI.modelUtils = {
     }, 
     
     radixSort: function (categoryCount, data, bucketFunction) {
-        var radixSortBuckets = Array.apply(null, Array(categoryCount)).map(function() { return []; });
+        var radixSortBuckets = Array.apply (null, Array(categoryCount)).map(function() { return []; });
         data.forEach (function (d) {
             var bucketIndex = bucketFunction (d);
             radixSortBuckets[bucketIndex].push (d);
@@ -758,12 +770,12 @@ CLMSUI.modelUtils = {
             id: "MZ", label: "Match Precursor m/z", decimalPlaces: 4, matchLevel: true
         },
         {
-            linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.precursorCharge; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.precursorCharge; }); },
             id: "Charge", label: "Match Precursor Charge (z)", decimalPlaces: 0,  matchLevel: true
         },
         {
-            linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.calc_mass; }); },
             id: "CalcMass", label: "Match Calculated Mass (m)", decimalPlaces: 4, matchLevel: true
         },
@@ -773,22 +785,22 @@ CLMSUI.modelUtils = {
             id: "MassError", label: "Match Mass Error", decimalPlaces: 4, matchLevel: true
         },
         {
-            linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return Math.min (m.pepPos[0].length, m.pepPos[1].length); }); },
             id: "SmallPeptideLen", label: "Match Smaller Peptide Length (AA)", decimalPlaces: 0, matchLevel: true
         },
         {
-            linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); },
             id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true
         },
         {
-            linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_start; }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_start; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.elution_time_start; }); },
             id: "ElutionTimeStart", label: "Elution Time Start", decimalPlaces: 2, matchLevel: true
         },
         {
-            linkFunc: function(link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_end; }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_end; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.elution_time_end; }); },
             id: "ElutionTimeEnd", label: "Elution Time End", decimalPlaces: 2, matchLevel: true
         },
