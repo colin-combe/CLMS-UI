@@ -255,7 +255,7 @@ CLMSUI.init.views = function () {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
-    
+
     // Generate protein selection drop down
     var compModel = CLMSUI.compositeModelInst;
     new CLMSUI.DropDownMenuViewBB ({
@@ -264,7 +264,7 @@ CLMSUI.init.views = function () {
         myOptions: {
             title: "Protein-Selection",
             menu: [
-                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel}, 
+                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
                 {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
                 {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
             ]
@@ -388,8 +388,10 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    var spectrumModel = new AnnotatedSpectrumModel({baseDir: "/spectrum/"});
-    var settingsSpectrumModel = new AnnotatedSpectrumModel({baseDir: "/spectrum/"});
+    var spectrumModel_vars = {baseDir: "/spectrum/", xiAnnotatorBaseURL: "/xiAnnotator/"};
+
+    var spectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
+    var settingsSpectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
     spectrumModel.otherModel = settingsSpectrumModel;
     settingsSpectrumModel.otherModel = spectrumModel;
 
