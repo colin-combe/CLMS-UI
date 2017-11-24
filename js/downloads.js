@@ -109,15 +109,13 @@ function getMatchesCSV () {
 function getLinksCSV(){
     var validatedTypes = ["A", "B", "C", "?", "R"];
     
-    var csv = '"Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance","From Chain","ToChain"';
-    
-    var searchIds = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys());
+    var headerArray = ["Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance","From Chain","To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
+    var searchIds = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys());
     for (var i = 0; i < searchIds.length; i++ ) {
-        csv += ',"Search_'+searchIds[i] +'"';
+        headerArray.push ("Search_"+searchIds[i]);
     }
     console.log ("searchIds", searchIds);
-
-    csv += '\r\n';
+    var headerRow = '"' + headerArray.join('","') + '"';
 
     var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
@@ -125,6 +123,7 @@ function getLinksCSV(){
     //console.log ("pd", physicalDistances);
     var distance2dp = d3.format(".2f");
     
+    /*
     crossLinks.forEach (function (crossLink, i) {
         var linear = crossLink.isLinearLink();
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
@@ -175,6 +174,51 @@ function getLinksCSV(){
 
         csv += '"\r\n';
     }, this);
+    */
+    
+     var rows = crossLinks.map (function (crossLink, i) {
+        var row = [];
+        var linear = crossLink.isLinearLink();
+        var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
+        row.push (
+            mostReadableId(crossLink.fromProtein), crossLink.fromResidue, crossLink.fromProtein.sequence[crossLink.fromResidue - 1], 
+            (linear ? "" : mostReadableId(crossLink.toProtein)), crossLink.toResidue,
+            !linear && crossLink.toResidue ? crossLink.toProtein.sequence[crossLink.toResidue - 1] : ""
+        );
+
+        var highestScore = null;
+        var searchesFound = new Set();
+        var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
+        var linkAutovalidated = false;
+        var validationStats = [];
+        for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+            var match = filteredMatchesAndPepPos[fm_pp].match;
+            if (highestScore == null || match.score > highestScore) {
+                highestScore = match.score.toFixed(4);
+            }
+            if (match.autovalidated === true) {linkAutovalidated = true;}
+            validationStats.push(match.validated);
+            searchesFound.add(match.searchId);
+        }
+        //console.log ("sf", searchesFound);
+        row.push (highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), (crossLink.meta ? crossLink.meta.fdr : undefined));
+        var pDist = physicalDistances[i];
+        if (pDist && pDist.distance) {
+            var chain = pDist.chainInfo;
+            row.push (distance2dp (pDist.distance), chain.from, chain.to, chain.fromRes + 1, chain.toRes + 1);  // +1 to return to 1-INDEXED
+		} else {
+            row.push ("", "", "", "", "");
+		}     
+
+        for (var s = 0; s < searchIds.length; s++){
+            row.push (searchesFound.has(searchIds[s]) ? "X" : "");
+        }
+
+        return '"' + row.join('","') + '"';
+    }, this);
+    
+    rows.unshift (headerRow);
+    var csv = rows.join("\r\n") + '\r\n';
     return csv;
 }
 

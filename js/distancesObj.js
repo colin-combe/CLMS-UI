@@ -42,7 +42,7 @@ CLMSUI.DistancesObj.prototype = {
         options = options || {};
         var average = options.average || false;
         var returnChainInfo = options.returnChainInfo || false;
-        var chainInfo = returnChainInfo ? {from: [], to: []} : null;
+        var chainInfo = returnChainInfo ? {from: [], to: [], fromRes: [], toRes: []} : null;
         var chainMap = this.chainMap;
         var matrices = this.matrices;
         var pid1 = options.realFromPid || xlink.fromProtein.id; // use pids if passed in by options as first choice
@@ -62,14 +62,14 @@ CLMSUI.DistancesObj.prototype = {
                 var chainIndex1 = chains1[n].index;
                 var chainName1 = chains1[n].name;
                 var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName1, chainIndex1);
-                var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1, true) - 1; 
+                var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1, true) - 1;   // -1 for ZERO-INDEXED
                 
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var chainIndex2 = chains2[m].index;
                         var chainName2 = chains2[m].name;
                         var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName2, chainIndex2);
-                        var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; 
+                        var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
                         // align from 3d to search index. resindex is 0-indexed so -1 before querying
                         //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
                         
@@ -82,12 +82,16 @@ CLMSUI.DistancesObj.prototype = {
                                     if (returnChainInfo) {
                                         chainInfo.from.push (chainName1);
                                         chainInfo.to.push (chainName2);
+                                        chainInfo.fromRes.push (resIndex1);
+                                        chainInfo.toRes.push (resIndex2);
                                     }
                                 } else if (dist < minDist || minDist === undefined) {
                                     minDist = dist;
                                     if (returnChainInfo) {
                                         chainInfo.from = chainName1;
                                         chainInfo.to = chainName2;
+                                        chainInfo.fromRes = resIndex1;
+                                        chainInfo.toRes = resIndex2;
                                     }
                                 }
                             }
