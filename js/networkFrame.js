@@ -388,7 +388,7 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    var spectrumModel_vars = {baseDir: "/spectrum/", xiAnnotatorBaseURL: "/xiAnnotator/"};
+    var spectrumModel_vars = {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot};
 
     var spectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
     var settingsSpectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);

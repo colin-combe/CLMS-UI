@@ -4,7 +4,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
 
     var xiAnnotRoot = CLMSUI.xiAnnotRoot || "";
 
-    var url = xiAnnotRoot + "/xiAnnotator/annotate/"
+    var url = xiAnnotRoot + "annotate/"
         + match.searchId + "/" + (randId || "12345") + "/" + match.id 
         + "/?peptide=" + match.matchedPeptides[0].seq_mods 
         + ((match.matchedPeptides[1])? ("&peptide=" + match.matchedPeptides[1].seq_mods) : "")
