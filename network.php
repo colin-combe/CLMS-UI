@@ -211,8 +211,10 @@
             if (isset($_SESSION['session_name'])) {
                 echo "CLMSUI.loggedIn = true;";
             }
+            if (file_exists('../xiSpecConfig.php')) {
+                include('../xiSpecConfig.php');
+            }
         ?>
-
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
             var success = function (text) {
