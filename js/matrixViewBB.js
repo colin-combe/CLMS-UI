@@ -33,6 +33,7 @@
             matrixObj: null,
             selectedColour: "#ff0",
             highlightedColour: "#f80",
+            linkWidth: 5,
         };
         
         this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
@@ -705,7 +706,7 @@
                 var seqLengthB = seqLengths.lengthB - 1;
                 var xStep = 1;//minDim / seqLengthA;
                 var yStep = 1;//minDim / seqLengthB;
-                var linkWidth = 3;
+                var linkWidth = this.options.linkWidth;
                 var linkWidthOffset = (linkWidth - 1) / 2;
                 var xLinkWidth = linkWidth * xStep;
                 var yLinkWidth = linkWidth * yStep;
@@ -721,10 +722,10 @@
                     return protOK && this.esterFilter (crossLink);
                 }, this);
 
-                var sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort (3, filteredCrossLinks, function (link) {
+                var sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort (3, finalCrossLinks, function (link) {
                     return highlightedCrossLinkIDs.has (link.id) ? 2 : (selectedCrossLinkIDs.has (link.id) ? 1 : 0);
                 });
-
+                
                 var fromToStore = sortedFinalCrossLinks.map (function (crossLink) {
                     return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
                 });
