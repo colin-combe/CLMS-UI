@@ -44,12 +44,10 @@
     border-bottom: none;
 }
 
-.dynDiv_moveParentDiv{
+:not(.dynDiv) > .dynDiv_moveParentDiv, :not(.dynDiv) > .draggableCorner {
 	display: none;
 }
-.dynDiv_resizeDiv_tl, .dynDiv_resizeDiv_tr, .dynDiv_resizeDiv_bl, .dynDiv_resizeDiv_br{
-	display:none;
-}
+
 #spectrum {
 	width: 100%;
 }
