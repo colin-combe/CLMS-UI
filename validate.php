@@ -48,6 +48,7 @@ header('Content-type: text/html; charset=utf-8');
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
         <link rel="stylesheet" href="./css/reset.css" />
+        <link rel="stylesheet" href="./css/byrei-dyndiv_0.5.css">
         <link rel="stylesheet" href="./css/style.css" />
         <link rel="stylesheet" href="./css/common.css" />
         <link rel="stylesheet" href="./css/tooltip.css">
@@ -66,6 +67,7 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
 
         
+        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
 
@@ -190,6 +192,10 @@ header('Content-type: text/html; charset=utf-8');
 				//CLMSUI.compositeModelInst.set("selection", allCrossLinks);
                 CLMSUI.compositeModelInst.setMarkedCrossLinks ("selection", allCrossLinks, false, false);			
 
+                // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
+                // so we run it again here, doesn't do any harm
+                //ByRei_dynDiv.init.main();
+                
 				var resize = function(event) {
 					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
 					var alts = d3.select("#alternatives");
