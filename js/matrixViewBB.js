@@ -34,6 +34,7 @@
             selectedColour: "#ff0",
             highlightedColour: "#f80",
             linkWidth: 5,
+            tooltipRange: 3,
         };
         
         this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
@@ -444,7 +445,7 @@
                 proteinY: proteinIDs[1] ? proteinIDs[1].proteinID : undefined,
             };
         };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2, true);
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, this.options.tooltipRange, true);
         return neighbourhoodLinks.filter (function (nlink) { return this.esterFilter (nlink.crossLink); }, this);
     },
         
@@ -749,7 +750,7 @@
                         d3.select(this)
                             .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
                             .style ("stroke", high || selected ? "black" : null)
-                            .style ("stroke-opacity", high || selected ? 0.4 : null)
+                            //.style ("stroke-opacity", high || selected ? 0.4 : null)
                         ;
                     })
                 ;
@@ -803,13 +804,15 @@
         viewPort
             .style("width",  minDim+"px")
             .style("height", minDim+"px")
-            //.style("width",  sizeData.width+"px")
-            //.style("height", sizeData.height+"px")
+            //.style("width",  (sizeData.width / maxRatio)+"px")
+            //.style("height", (sizeData.height / maxRatio)+"px")
         ;
         
         d3.select(this.el).select("#matrixClip > rect")
             .attr ("width", minDim)
             .attr ("height", minDim)
+            //.attr ("width", sizeData.width / maxRatio)
+            //.attr ("height", sizeData.height / maxRatio)
         ;
  
         // Need to rejig x/y scales and d3 translate coordinates if resizing
@@ -824,6 +827,8 @@
 			 .domain([sizeData.lengthB + 1, 1])
 			 .range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
         ;
+        
+        console.log ("XAX", this.x, this.xAxis, this.vis.select(".x"));
         
         var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
         this.xAxis.ticks(approxTicks).outerTickSize(0);
@@ -858,9 +863,9 @@
         // reposition labels
         //console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.viewWidth / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
+            {x: sizeData.right / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
             {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
-            {x: sizeData.viewWidth / 2, y: 0, rot: 0}
+            {x: sizeData.right / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
             .data (labelCoords)
@@ -924,6 +929,8 @@
             .attr("transform", "translate(0," + bottom + ")")
             .call(self.xAxis)
         ;
+        
+        CLMSUI.utils.declutterAxis (this.vis.select(".x"));
         
         sizeData.bottom = bottom;
         sizeData.right = right;
