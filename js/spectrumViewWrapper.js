@@ -12,8 +12,12 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 
 
     initialize: function (options) {
-        var myOptions = options.myOptions;
         SpectrumViewWrapper.__super__.initialize.apply (this, arguments);
+        
+        var defaultOptions = {
+            canBringToTop: true
+        };
+        this.options = _.extend ({}, this.options, defaultOptions, options.myOptions);
 
         var _html = "" // i think its a mistake (of mine, I think - cc) to use id's in following instaed of classes... its a backbone thing
             //~ +"<div id='spectrum'>"
@@ -58,13 +62,13 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             .classed ("CLMSUIspectrumWrapper", true)
             .append("div")
             .attr ("class", "verticalFlexContainer")
-            .attr ("id", myOptions.wrapperID)
+            .attr ("id", this.options.wrapperID)
             // http://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space?rq=1
             //.style ("display", "table")
             .html (_html)
         ;
 
-        d3.select("#"+myOptions.wrapperID)
+        d3.select("#"+this.options.wrapperID)
             .selectAll("button,input[type='submit']")
             .classed ("btn btn-1 btn-1a", true)
         ;

@@ -17,13 +17,12 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
         initialize: function (viewOptions) {
             CLMSUI.ProteinInfoViewBB.__super__.initialize.apply (this, arguments);
             
-            var self = this;
             var defaultOptions = {
                 fixedFontKeys: d3.set(["sequence", "seq"]),
                 removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
                 expandTheseKeys: d3.set (["uniprotFeatures"]),
             };
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
 
             this.displayEventName = viewOptions.displayEventName;
 

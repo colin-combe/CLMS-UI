@@ -16,7 +16,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         CLMSUI.KeyViewBB.__super__.initialize.apply (this, arguments);
         
         var defaultOptions = {};
-        this.options = _.extend(defaultOptions, viewOptions.myOptions);
+        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")

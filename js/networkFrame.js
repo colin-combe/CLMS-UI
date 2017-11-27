@@ -401,11 +401,11 @@ CLMSUI.init.viewsEssential = function (options) {
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
 	})
 
-    var spectrumWrapper = new SpectrumViewWrapper ({
+    new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
         displayEventName: "spectrumShow",
-        myOptions: {wrapperID: "spectrumPanel"}
+        myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
             if (match) {

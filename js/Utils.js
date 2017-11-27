@@ -523,6 +523,10 @@ CLMSUI.utils = {
 
         initialize: function (viewOptions) {
 
+            // window level options that don't depend on type of view
+            var defaultOptions = {canBringToTop: true};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+            
             this.displayEventName = viewOptions.displayEventName;
 
             var self = this;
@@ -543,7 +547,6 @@ CLMSUI.utils = {
             if (this.displayEventName) {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }
-
 
             return this;
         },
@@ -611,7 +614,7 @@ CLMSUI.utils = {
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
-            if (this.el.id !== CLMSUI.utils.BaseFrameView.staticLastTopID) {
+            if (this.options.canBringToTop !== false && this.el.id !== CLMSUI.utils.BaseFrameView.staticLastTopID) {
                 var sortArr = [];
                 var activeDivs = d3.selectAll(".dynDiv").filter (function() {
                     return CLMSUI.utils.isZeptoDOMElemVisible ($(this));

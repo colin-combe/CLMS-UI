@@ -38,7 +38,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             colourScheme: "uniform",
             showAllProteins: false,
         };
-        this.options = _.extend(defaultOptions, viewOptions.myOptions);
+        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
 
         this.displayEventName = viewOptions.displayEventName;
 
