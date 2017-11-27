@@ -6,6 +6,7 @@
 #spectrumControls div {
     padding-bottom: 0.3em;
     border-bottom: 1px solid grey;
+    line-height: normal;
 }
 
 #spectrumControls label {
@@ -20,6 +21,7 @@
 }
      
 #spectrumControls form {
+    vertical-align: top;
     display: inline-block;
     border-left: 1px solid #091d42;
     border-right: 1px solid #091d42;
@@ -87,4 +89,8 @@
 
 .CLMSUIspectrumWrapper #alternatives {
     padding: 0;
+}
+
+.btn-topNav {
+    font-size: 0.9em;
 }

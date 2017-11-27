@@ -182,7 +182,7 @@ header('Content-type: text/html; charset=utf-8');
                     .attr("id", "spectrumSettingsWrapper")
                     .attr("class", "dynDiv")
                 ;						
-				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
+				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
                 CLMSUI.vent.trigger ("spectrumShow", true);
                 
@@ -194,7 +194,7 @@ header('Content-type: text/html; charset=utf-8');
 
                 // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
                 // so we run it again here, doesn't do any harm
-                //ByRei_dynDiv.init.main();
+                ByRei_dynDiv.init.main();
                 
 				var resize = function(event) {
 					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);

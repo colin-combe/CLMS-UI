@@ -35,7 +35,7 @@
             highlightedColour: "#f80",
         };
         
-        this.options = _.extend(defaultOptions, viewOptions.myOptions);
+        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
         
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,

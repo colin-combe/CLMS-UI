@@ -40,7 +40,7 @@
                 }
             };
             
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
 
             this.precalcedDistributions = {Random: {data: [], origSize: 0}};
             this.displayEventName = viewOptions.displayEventName;
