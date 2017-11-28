@@ -85,7 +85,7 @@ if (count($_GET) > 0) {
 
         $searchDataQuery = "SELECT s.id AS id, s.name, s.private, 
 			s.submit_date, s.notes, s.random_id, paramset_id,
-			ps.enzyme_chosen AS enzyme_chosen
+			ps.enzyme_chosen AS enzyme_chosen, ps.customsettings
 			FROM search s
 			INNER JOIN parameter_set ps ON s.paramset_id = ps.id
 			INNER JOIN users u ON s.uploadedby = u.id
