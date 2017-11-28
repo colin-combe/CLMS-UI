@@ -260,8 +260,10 @@ CLMSUI.modelUtils = {
         stage.removeAllComponents();   // necessary to remove old stuff so old sequences don't pop up in sequence finding
         
         stage.loadFile (uri, params)
+            .catch (function (reason) {
+                console.log ("FAILED", reason);
+            })
             .then (function (structureComp) {
-            
                 // match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
                 function matchByAlignment () {
                     var protAlignCollection = bbmodel.get("alignColl");
@@ -271,11 +273,11 @@ CLMSUI.modelUtils = {
                     //console.log ("our pdbUniProtMap", pdbUniProtMap);
                     sequenceMapsAvailable (pdbUniProtMap);
                 }
-               
+
                 var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
                 var interactorMap = bbmodel.get("clmsModel").get("participants");
                 var interactorArr = CLMS.arrayFromMapValues(interactorMap);
-            
+
                 // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
                 // This is asynchronous so we use a callback
                 if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
@@ -294,7 +296,7 @@ CLMSUI.modelUtils = {
 
                 // bit to continue onto after ngl protein chain to clms protein matching has been done
                 function sequenceMapsAvailable (sequenceMap) {
-                    
+
                     //console.log ("seqmpa", sequenceMap);
                     //if (sequenceMap && sequenceMap.length) {
                         var chainMap = {};
@@ -328,7 +330,7 @@ CLMSUI.modelUtils = {
                         crosslinkData.setupLinks (bbmodel.get("clmsModel"));
                 }
             })
-        ;  
+        ;
     },
 
     
