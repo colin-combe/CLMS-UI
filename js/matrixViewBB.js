@@ -34,6 +34,7 @@
             selectedColour: "#ff0",
             highlightedColour: "#f80",
             linkWidth: 5,
+            tooltipRange: 3,
         };
         
         this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
@@ -444,7 +445,7 @@
                 proteinY: proteinIDs[1] ? proteinIDs[1].proteinID : undefined,
             };
         };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, 2, true);
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, this.options.tooltipRange, true);
         return neighbourhoodLinks.filter (function (nlink) { return this.esterFilter (nlink.crossLink); }, this);
     },
         
@@ -507,8 +508,10 @@
         // bounded zoom behavior adapted from https://gist.github.com/shawnbot/6518285
         // (d3 events translate and scale values are just copied from zoomStatus)
         var seqLenABRatio = sizeData.lengthA / sizeData.lengthB;
-        var widthLim = (seqLenABRatio > 1.0) ? minDim : minDim * seqLenABRatio;
-        var heightLim = (seqLenABRatio < 1.0) ? minDim : minDim * (1.0 / seqLenABRatio);
+        //var widthLim = (seqLenABRatio > 1.0) ? minDim : minDim * seqLenABRatio;
+        //var heightLim = (seqLenABRatio < 1.0) ? minDim : minDim * (1.0 / seqLenABRatio);
+        var widthLim = (seqLenABRatio > 1.0) ? width : width * seqLenABRatio;
+        var heightLim = (seqLenABRatio < 1.0) ? height : height * (1.0 / seqLenABRatio);
         var tx = Math.min (0, Math.max (d3.event.translate[0], widthLim - (widthLim * d3.event.scale)));
         var ty = Math.min (0, Math.max (d3.event.translate[1], heightLim - (heightLim * d3.event.scale)));
         self.zoomStatus.translate ([tx, ty]);
@@ -749,7 +752,7 @@
                         d3.select(this)
                             .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
                             .style ("stroke", high || selected ? "black" : null)
-                            .style ("stroke-opacity", high || selected ? 0.4 : null)
+                            //.style ("stroke-opacity", high || selected ? 0.4 : null)
                         ;
                     })
                 ;
@@ -786,48 +789,56 @@
         console.log ("matrix resize");
         var sizeData = this.getSizeData(); 
         var minDim = sizeData.minDim;
-        var deltaz = this.last ? (minDim / this.last) : 1;
-        //console.log ("deltaz", deltaz);
-        this.last = minDim;
         		
         // fix viewport new size, previously used .attr, but then setting the size on the child canvas element expanded it, some style trumps attr thing
-        
-        var widthRatio = minDim / sizeData.lengthA;
-        var heightRatio = minDim / sizeData.lengthB;
+        //var widthRatio = minDim / sizeData.lengthA;
+        //var heightRatio = minDim / sizeData.lengthB;
+        var widthRatio = sizeData.width / sizeData.lengthA;
+        var heightRatio = sizeData.height / sizeData.lengthB;
         var minRatio = Math.min (widthRatio, heightRatio);
-        var maxRatio = Math.max (widthRatio, heightRatio);
         var diffRatio = widthRatio / heightRatio;
-        //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, maxRatio, diffRatio);
         
         var viewPort = d3.select(this.el).select(".viewport");
+        
+        var fx = sizeData.lengthA * minRatio;
+        var fy = sizeData.lengthB * minRatio;
+        
+        //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, diffRatio, "FXY", fx, fy);
+        
         viewPort
-            .style("width",  minDim+"px")
-            .style("height", minDim+"px")
-            //.style("width",  sizeData.width+"px")
-            //.style("height", sizeData.height+"px")
+            //.style("width",  minDim+"px")
+            //.style("height", minDim+"px")
+            .style("width",  fx+"px")
+            .style("height", fy+"px")
         ;
         
         d3.select(this.el).select("#matrixClip > rect")
-            .attr ("width", minDim)
-            .attr ("height", minDim)
+            //.attr ("width", minDim)
+            //.attr ("height", minDim)
+            .attr ("width", fx)
+            .attr ("height", fy)
         ;
  
         // Need to rejig x/y scales and d3 translate coordinates if resizing
         // set x/y scales to full domains and current size (range)
         this.x
             .domain([1, sizeData.lengthA + 1])
-            .range([0, diffRatio > 1 ? minDim / diffRatio : minDim])
+            //.range([0, diffRatio > 1 ? minDim / diffRatio : minDim])
+            .range([0, fx])
         ;
 
         // y-scale (inverted domain)
         this.y
 			 .domain([sizeData.lengthB + 1, 1])
-			 .range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
+			 //.range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
+            .range([0, fy])
         ;
         
-        var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
-        this.xAxis.ticks(approxTicks).outerTickSize(0);
-        this.yAxis.ticks (approxTicks).outerTickSize(0);     
+        //console.log ("XAX", this.x, this.xAxis, this.vis.select(".x"));
+        
+        //var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
+        this.xAxis.ticks(Math.round (fx / 50)).outerTickSize(0);
+        this.yAxis.ticks (Math.round (fy / 50)).outerTickSize(0);     
         
         // then store the current pan/zoom values
         var curt = this.zoomStatus.translate();
@@ -837,6 +848,9 @@
         this.zoomStatus.x(this.x).y(this.y);
 
         // modify translate coordinates by change (delta) in display size
+        var deltaz = this.last ? (minDim / this.last) : 1;
+        //console.log ("deltaz", deltaz);
+        this.last = minDim;
         curt[0] *= deltaz;
         curt[1] *= deltaz;
         // feed current pan/zoom values back into zoomStatus object
@@ -858,9 +872,9 @@
         // reposition labels
         //console.log ("SD", sizeData, this.margin);
         var labelCoords = [
-            {x: sizeData.viewWidth / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
+            {x: sizeData.right / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
             {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
-            {x: sizeData.viewWidth / 2, y: 0, rot: 0}
+            {x: sizeData.right / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
             .data (labelCoords)
@@ -878,26 +892,22 @@
         var sizeData = this.getSizeData();
         
         // rescale and position canvas according to pan/zoom settings and available space
-        var baseScale = Math.min (sizeData.minDim / sizeData.lengthA, sizeData.minDim / sizeData.lengthB);
+        //var baseScale = Math.min (sizeData.minDim / sizeData.lengthA, sizeData.minDim / sizeData.lengthB);
+        var baseScale = Math.min (sizeData.width / sizeData.lengthA, sizeData.height / sizeData.lengthB);
         var scale = baseScale * this.zoomStatus.scale();
         var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.zoomStatus.translate()[0]+"px,"+ this.zoomStatus.translate()[1]+"px)";
         var transformString = translateString + " " + scaleString;
-        this.canvas
-           .style("-ms-transform", transformString)
-           .style("-moz-transform", transformString)
-           .style("-o-transform", transformString)
-           .style("-webkit-transform", transformString)
-           .style("transform", transformString)
-        ;
         
-        this.zoomGroup
-            .style("-ms-transform", transformString)
-           .style("-moz-transform", transformString)
-           .style("-o-transform", transformString)
-           .style("-webkit-transform", transformString)
-           .style("transform", transformString)
-        ;
+        [this.canvas, this.zoomGroup].forEach (function (d3sel) {
+            d3sel
+                .style("-ms-transform", transformString)
+                .style("-moz-transform", transformString)
+                .style("-o-transform", transformString)
+                .style("-webkit-transform", transformString)
+                .style("transform", transformString)
+            ;
+        });
         
         // If bottom edge of canvas is higher up than bottom of viewport put the x axis beneath it
         var cvs = $(this.canvas.node());
@@ -924,6 +934,8 @@
             .attr("transform", "translate(0," + bottom + ")")
             .call(self.xAxis)
         ;
+        
+        CLMSUI.utils.declutterAxis (this.vis.select(".x"));
         
         sizeData.bottom = bottom;
         sizeData.right = right;
