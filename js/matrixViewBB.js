@@ -86,10 +86,7 @@
                             .filter(function(d) { return d3.select(this).property("selected"); })
                             .datum()
                         ;
-                        self
-                            .matrixChosen (selectedDatum.value)
-                            .render()
-                        ;
+                        self.setAndShowPairing (selectedDatum.value);
                         var selElem = d3.select(d3.event.target);
                         setSelectTitleString (selElem);
                     })
@@ -218,11 +215,8 @@
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
         
         var entries = this.makeProteinPairingOptions();
-        var chosenPairing = entries && entries.length ? entries[0].value : undefined;
-        this
-            .matrixChosen (chosenPairing)
-            .render()
-        ;
+        var startPairing = entries && entries.length ? entries[0].value : undefined;
+        this.setAndShowPairing (startPairing);
     },
         
     relayout: function () {
@@ -233,6 +227,14 @@
     esterFilter: function (crossLink) {
         return (this.filterVal === undefined || CLMSUI.modelUtils.getEsterLinkType (crossLink) >= this.filterVal);
     },
+        
+    setAndShowPairing: function (pairing) {
+        this
+            .matrixChosen (pairing)
+            .resetZoomHandler (this)
+            .render()
+        ;
+    }, 
         
     makeProteinPairingOptions: function () {
         var crossLinks = CLMS.arrayFromMapValues (this.model.get("clmsModel").get("crossLinks"));
@@ -502,21 +504,28 @@
     
     zoomHandler: function (self) {
         var sizeData = this.getSizeData();
-        var minDim = sizeData.minDim;
         var width = sizeData.width;
         var height = sizeData.height;
         // bounded zoom behavior adapted from https://gist.github.com/shawnbot/6518285
         // (d3 events translate and scale values are just copied from zoomStatus)
-        var seqLenABRatio = sizeData.lengthA / sizeData.lengthB;
-        //var widthLim = (seqLenABRatio > 1.0) ? minDim : minDim * seqLenABRatio;
-        //var heightLim = (seqLenABRatio < 1.0) ? minDim : minDim * (1.0 / seqLenABRatio);
-        var widthLim = (seqLenABRatio > 1.0) ? width : width * seqLenABRatio;
-        var heightLim = (seqLenABRatio < 1.0) ? height : height * (1.0 / seqLenABRatio);
-        var tx = Math.min (0, Math.max (d3.event.translate[0], widthLim - (widthLim * d3.event.scale)));
-        var ty = Math.min (0, Math.max (d3.event.translate[1], heightLim - (heightLim * d3.event.scale)));
-        console.log ("tx", tx, ty, width, height, widthLim, heightLim);
+        
+        var widthRatio = width / sizeData.lengthA;
+        var heightRatio = height / sizeData.lengthB;
+        var minRatio = Math.min (widthRatio, heightRatio);
+        
+        var fx = sizeData.lengthA * minRatio;
+        var fy = sizeData.lengthB * minRatio;
+
+        var tx = Math.min (0, Math.max (d3.event.translate[0], fx - (fx * d3.event.scale)));
+        var ty = Math.min (0, Math.max (d3.event.translate[1], fy - (fy * d3.event.scale)));
+        //console.log ("tx", tx, ty, fx, fy, width, height);
         self.zoomStatus.translate ([tx, ty]);
         self.panZoom();
+    },
+        
+    resetZoomHandler: function (self) {
+        self.zoomStatus.scale(1.0).translate([0, 0]);
+        return this;
     },
         
     // That's how you define the value of a pixel //
