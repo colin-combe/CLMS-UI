@@ -79,7 +79,7 @@
             this.listenTo (this.model, "3dsync", function (sequences) {
                 var count = sequences && sequences.length ? sequences.length : 0;
                 var msg = count ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
-                    : "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
+                    : sequences.failureReason || "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
                 this.setStatusText(msg);    
             });
         },

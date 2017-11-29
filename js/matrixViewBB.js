@@ -344,7 +344,7 @@
         var self = this;
         
         var clickFunc = function (d3target) {
-            var datum = this;
+            var datum = d3target.datum(); //this;
             var index = datum.index;
             var dropdownIndex = datum.dropdownIndex;
             var checked = d3target.property("checked");
@@ -514,6 +514,7 @@
         var heightLim = (seqLenABRatio < 1.0) ? height : height * (1.0 / seqLenABRatio);
         var tx = Math.min (0, Math.max (d3.event.translate[0], widthLim - (widthLim * d3.event.scale)));
         var ty = Math.min (0, Math.max (d3.event.translate[1], heightLim - (heightLim * d3.event.scale)));
+        console.log ("tx", tx, ty, width, height, widthLim, heightLim);
         self.zoomStatus.translate ([tx, ty]);
         self.panZoom();
     },
