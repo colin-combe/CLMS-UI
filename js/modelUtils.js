@@ -261,7 +261,9 @@ CLMSUI.modelUtils = {
         
         stage.loadFile (uri, params)
             .catch (function (reason) {
-                console.log ("FAILED", reason);
+                var emptySequenceMap = [];
+                emptySequenceMap.failureReason = pdbInfo.baseSeqId+" not found... ("+reason+")";
+                bbmodel.trigger ("3dsync", emptySequenceMap);
             })
             .then (function (structureComp) {
                 // match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
