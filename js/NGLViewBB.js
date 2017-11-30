@@ -557,6 +557,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             opacity: 1,
             name: "link",
             side: "front",
+            useCylinder: true,
         });
 
         this.linkEmphRepr = comp.addRepresentation ("distance", {
@@ -570,6 +571,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             opacity: 0.6,
             name: "linkEmph",
             side: "front",
+            useCylinder: true,
         });
         
         this.linkHighRepr = comp.addRepresentation ("distance", {
@@ -582,6 +584,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             scale: baseLinkScale * 1.8,
             opacity: 0.4,
             name: "linkHigh",
+            useCylinder: true,
         });
     },
     
