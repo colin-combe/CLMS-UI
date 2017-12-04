@@ -170,7 +170,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "massError": function (d) {
                 return massZeroPadder(d.massError());
             },
-            "precursorIntensity": function(d) { return d.precursorIntensity; },
+            "precursorIntensity": function(d) { return d.precursor_intensity; },
             "elutionStart": function(d) { return d.elution_time_start; },
             "elutionEnd": function(d) { return d.elution_time_end; },
         };
