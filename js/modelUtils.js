@@ -360,10 +360,11 @@ CLMSUI.modelUtils = {
     // Therefore, current default is to use sequence matching to detect similarities
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
         $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
-            function (data, status, xhr) {                   
-                if (status === "success") {
-                    //console.log ("data", data);
+            function (data, status, xhr) {   
+                //console.log ("data", data, arguments);
+                if (status === "success" && data.xmlVersion) {  // data is an xml fragment
                     var map = d3.map();
+
                     $(data).find("block").each (function(i,b) { 
                         var segArr = $(this).find("segment[intObjectId]"); 
                         for (var n = 0; n < segArr.length; n += 2) {
@@ -376,7 +377,7 @@ CLMSUI.modelUtils = {
                     });
                     // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I 
                     var mapArr = CLMS.arrayFromMapValues(map);
-                    
+
                     if (callback) {
                         var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
 
@@ -393,11 +394,11 @@ CLMSUI.modelUtils = {
                             });
                             mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                         });
-                        
+
                         mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none"; });
                         callback (mapArr);
                     }
-                } 
+                }
             }
         ); 
     },
