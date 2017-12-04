@@ -170,8 +170,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
         this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
         this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally
-        this.listenTo (this.model, "change:selection", this.showSelected);
-        this.listenTo (this.model, "change:highlights", this.showHighlighted);
+        this.listenTo (this.model, "change:selection", this.showSelectedLinks);
+        this.listenTo (this.model, "change:highlights", this.showHighlightedLinks);
 
         this.listenTo (this.model, "change:stageModel", function (model, newStageModel) {
             // swap out stage models and listeners
@@ -325,14 +325,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    showHighlighted: function () {
+    showHighlightedLinks: function () {
         if (this.xlRepr && this.isVisible()) {
             this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
-    showSelected: function () {
+    showSelectedLinks: function () {
         if (this.xlRepr && this.isVisible()) {
             this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
         }
@@ -541,8 +541,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var links = this.crosslinkData.getLinks();
 
         var xlPair = this._getAtomPairsFromLinks (links);
-        var xlPairEmph = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "selection"));
-        var xlPairHigh = this._getAtomPairsFromLinks (this.filterByModelLinkArray (links, "highlights"));
+        var xlPairEmph = this._getAtomPairsFromLinks (this.filterByLinkState (links, "selection"));
+        var xlPairHigh = this._getAtomPairsFromLinks (this.filterByLinkState (links, "highlights"));
         var baseLinkScale = 3;
         
         this.linkRepr = comp.addRepresentation ("distance", {
@@ -800,8 +800,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.setDisplayedResidues (this.crosslinkData.getResidues());
         this.setSelectedResidues ([]);
 
-        this.setDisplayedLinks (this.crosslinkData.getLinks());
-        this.setSelectedLinks (this.crosslinkData.getLinks());
+        var links = this.crosslinkData.getLinks();
+        this.setDisplayedLinks (links);
+        this.setSelectedLinks (links);
     },
     
     defaultDisplayedProteins: function (getSelectionOnly) {
@@ -873,37 +874,33 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             this.crosslinkData.getSelectionFromResidue (availableResidues)
         );
     },
-    
-    filterByModelLinkArray: function (links, linkType) {  
-        var selectedSet = d3.set (_.pluck (this.crosslinkData.getModel().getMarkedCrossLinks(linkType), "id"));
-        return links.filter (function (l) {
-            return selectedSet.has (l.origId);   
-        });
-    },
 
     setDisplayedLinks: function (links) {
-        var availableLinks = this._getAvailableLinks (links);
-        this.linkRepr.setParameters ({
-            atomPair: this._getAtomPairsFromLinks (availableLinks),
-        });
+        this.setLinks (links, this.linkRepr, undefined);
     },
     
     setSelectedLinks: function (links) {
-        var availableLinks = this._getAvailableLinks (this.filterByModelLinkArray (links, "selection"));
-        var atomPairs = this._getAtomPairsFromLinks (availableLinks);
-        this.linkEmphRepr.setParameters ({
-            atomPair: atomPairs,
-        });
-        //CLMSUI.utils.xilog ("ATOMPAIRS", atomPairs);
+        this.setLinks (links, this.linkEmphRepr, "selection");
     },
     
     setHighlightedLinks: function (links) {
-        var availableLinks = this._getAvailableLinks (this.filterByModelLinkArray (links, "highlights"));
-        if (this.linkHighRepr) {
-            this.linkHighRepr.setParameters ({
-                atomPair: this._getAtomPairsFromLinks (availableLinks),
-            });
-        }
+        this.setLinks (links, this.linkHighRepr, "highlights");
+    },
+    
+    setLinks: function (links, aLinkRepr, linkState) {
+        var availableLinks = this._getAvailableLinks (this.filterByLinkState (links, linkState));
+        var atomPairs = this._getAtomPairsFromLinks (availableLinks);
+        aLinkRepr.setParameters ({
+            atomPair: atomPairs,
+        });
+    },
+    
+    filterByLinkState: function (links, linkState) {  
+        if (linkState === undefined) { return links; }
+        var selectedSet = d3.set (_.pluck (this.crosslinkData.getModel().getMarkedCrossLinks(linkState), "id"));
+        return links.filter (function (l) {
+            return selectedSet.has (l.origId);   
+        });
     },
 
     dispose: function () {

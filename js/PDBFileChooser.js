@@ -78,9 +78,10 @@
             
             this.listenTo (this.model, "3dsync", function (sequences) {
                 var count = sequences && sequences.length ? sequences.length : 0;
-                var msg = count ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
+                var success = count > 0;
+                var msg = success ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
                     : sequences.failureReason || "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
-                this.setStatusText(msg);    
+                this.setStatusText (msg, success);    
             });
         },
         
@@ -107,8 +108,13 @@
             }
         },
         
-        setStatusText : function (msg) {
-            d3.select(this.el).select(".messagebar").text(msg);    
+        setStatusText : function (msg, success) {
+            var mbar = d3.select(this.el).select(".messagebar");
+            var t = mbar.text(msg).transition().style("color", (success === false ? "red" : (success === true ? "blue" : null)));
+            if (success !== false) {
+                //t.transition().duration(20000).style("color", "#091d42");
+                //console.log ("t", t);
+            }
         },
         
         selectPDBFile: function (evt) {
