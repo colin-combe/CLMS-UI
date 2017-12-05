@@ -19,7 +19,15 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         "mouseup input.subsetNumberFilter": "directInput",
     },
     
-    initialize: function (options) {
+    initialize: function (viewOptions) {
+		
+		var defaultOptions = {
+			unitText: "",
+			extent: [40, 60],
+			domain: [0, 100],
+			margin: {},
+        };
+        this.options = _.extend ({}, defaultOptions, viewOptions);
         
         var self = this;
         var top = d3.select(this.el);
@@ -33,21 +41,20 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             self.resize().render(); 
         });
 
-        var margin = _.extend ({top: 50, right: 50, bottom: 50, left: 50}, options.margin || {});
-        var width = 140 - margin.left - margin.right;
+        var margin = _.extend ({top: 50, right: 50, bottom: 50, left: 50}, this.options.margin);
+        //var width = 140 - margin.left - margin.right;
         var sliderWidth = 50;
         
         this.height = this.el.clientHeight - margin.top - margin.bottom;
 
         this.y = d3.scale.linear()
-            .domain(options.domain || [0, 100])
+            .domain(self.options.domain)
             .range([this.height, 0])
         ;
         
-        
         this.brush = d3.svg.brush()
             .y(this.y)
-            .extent(options.extent || [40, 60])
+            .extent(self.options.extent)
             .on("brushstart", function () { self.brushstart(); })
             .on("brush", function () { self.brushmove(); })
             .on("brushend", function () { self.brushend(); })
@@ -57,17 +64,23 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             {class: "vmin"},
             {class: "vmax"},
         ];
-        top.selectAll("input.subsetNumberFilter")
+        var numberInputs = top.selectAll("div.inputWrapper")
             .data (cutoffs)
             .enter()
-            .append("input")
+            .append("div")
+			.attr("class", function(d) { return "inputWrapper "+d.class; })
+		;
+		numberInputs.append("input")
             .attr ({
                 class: function(d) { return "subsetNumberFilter "+d.class; }, 
                 type: "number",
-                min: options.domain[0],
-                max: options.domain[1],
+                min: self.options.domain[0],
+                max: self.options.domain[1],
                 step: 0.01,
             })
+		;
+		numberInputs.append("span")
+			.text (self.options.unitText)
         ;
 
         var svg = top.append("svg")
@@ -154,12 +167,12 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         svg.append("text")
             .attr ("transform", "rotate(90) translate(0,-"+(sliderWidth+2)+")")
             .attr ("class", "threeColourSliderTitle")
-            .text (options.title)
+            .text (self.options.title)
         ;
         
         // move min box to bottom of slider
         top.append (function() {
-            return top.select("input.vmin").remove().node();
+            return top.select("div.vmin").remove().node();
         });
         
         this.listenTo (this.model, "colourModelChanged", this.render); // if range  (or domain) changes in current colour model
@@ -198,15 +211,15 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 
         var self = this;
         d3el.selectAll(".brushValueText")
-            .text (function(d,i) { return self.textFormat(s[s.length - i - 1]); })
+            .text (function(d,i) { return self.textFormat(s[s.length - i - 1]) + self.options.unitText; })
         ;
         
         var rounded = s.map (function (val) {
             return parseFloat(this.textFormat(val));
         }, this);
         
-        d3el.select("input.vmin").property ("value", rounded[0]);
-        d3el.select("input.vmax").property ("value", rounded[1]);
+        d3el.select("div.vmin > input").property ("value", rounded[0]);
+        d3el.select("div.vmax > input").property ("value", rounded[1]);
         return this;
     },
     
