@@ -174,7 +174,11 @@ CLMSUI.init.modelsEssential = function (options) {
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
-//        AUTO: clmsModelInst.get("autoValidatedPresent"),
+        A: clmsModelInst.get("manualValidatedPresent"),
+        B: clmsModelInst.get("manualValidatedPresent"),
+        C: clmsModelInst.get("manualValidatedPresent"),
+        Q: clmsModelInst.get("manualValidatedPresent"),
+        AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
         matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE,
