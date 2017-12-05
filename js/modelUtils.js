@@ -797,7 +797,8 @@ CLMSUI.modelUtils = {
         {
             linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); },
-            id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true
+            id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true,
+			valueFormat: d3.format("e"),
         },
         {
             linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_start; }); }, 

@@ -31,6 +31,7 @@
                 intraRandomOnly: false,
                 maxX: 90,
                 attributeOptions: CLMSUI.modelUtils.attributeOptions,
+				xStandardTickFormat: d3.format(","),
             };
             
             this.attrExtraOptions = {
@@ -83,7 +84,6 @@
             // make 'empty' columns for all series and sub-series
             var columnsAsNamesOnly = d3.merge([this.options.seriesNames, this.options.subSeriesNames]).map (function(sname) { return [sname]; });
 
-            var numberFormat = d3.format(",");
             var chartID = "#" + chartDiv.attr("id");
             var firstRun = true;
             // Generate the C3 Chart
@@ -144,7 +144,7 @@
                         tick: {
                             format: function (v, returnUnformattedToo) {
                                 var val = (v + (self.options.minX || 0)) * (self.options.gapX || 1);
-                                var formattedVal = numberFormat (val);
+                                var formattedVal = self.options.xStandardTickFormat (val);
                                 return returnUnformattedToo ? {val: val, formattedVal: formattedVal} : formattedVal;
                             },
                             /*
@@ -158,7 +158,7 @@
                         label: this.options.ylabel,
                         tick: { // blank non-whole numbers on y axis with this d3 format function
                             // except this does the same for tooltips, so non-whole numbers dont get shown in tooltips unless tooltip.value overridden below
-                            format: d3.format("d")
+                            format: d3.format(",d")
                         }
                     }
                 },
@@ -186,7 +186,7 @@
                             var funcMeta = self.getSelectedOption ("X");
                             var invPow = Math.pow (10, -(funcMeta.decimalPlaces || 0));
                             var barIsRange = (nextXVal - realXVal) > invPow;
-                            var endOfRange = invPow === 1 ? numberFormat (nextXVal - invPow) : "<" + numberFormat (nextXVal);
+                            var endOfRange = invPow === 1 ? self.options.xStandardTickFormat (nextXVal - invPow) : "<" + self.options.xStandardTickFormat (nextXVal);
                             var xlabel = self.chart.internal.config.axis_x_label;
                             return (xlabel.text || xlabel) + " " + realX.formattedVal + (barIsRange ? " to "+endOfRange : "");
                         },
@@ -288,6 +288,7 @@
                 var newX = (curXLabel !== funcMeta.label);
                 if (newX) {
                     this.chart.axis.labels ({x: funcMeta.label});
+					//this.chart.axis.	// find out how to change tick format
                 }
                 this.showRandomButton();
                 
