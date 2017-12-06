@@ -302,6 +302,7 @@ CLMSUI.init.views = function () {
         model: CLMSUI.linkColour.distanceColoursBB,
         domain: [0,35],
         extent: [15,25],
+		unitText: " Å",
         title: "Distance Cutoffs",
     })
         .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)

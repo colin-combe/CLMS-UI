@@ -112,6 +112,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var self = this;
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
+		var scientific = d3.format(".4e");
         this.cellFuncs = {
             "id": function (d) {
                 return d.id;
@@ -170,7 +171,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "massError": function (d) {
                 return massZeroPadder(d.massError());
             },
-            "precursorIntensity": function(d) { return d.precursor_intensity; },
+            "precursorIntensity": function(d) { return scientific (d.precursor_intensity); },
             "elutionStart": function(d) { return d.elution_time_start; },
             "elutionEnd": function(d) { return d.elution_time_end; },
         };
