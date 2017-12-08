@@ -14,6 +14,7 @@
 
 .filterControlGroup input {
     line-height: 1.3em;
+	color: #091D42;
 }
 
 #filterPlaceholder > .filterControlGroup:first-of-type {

@@ -152,9 +152,10 @@ CLMSUI.init.modelsEssential = function (options) {
         prot.size = prot.size || 1;
     });
 
-    // Anonymiser for screen shots / videos. MJG 17/05/17
-    var urlChunkSet = d3.set (window.location.search.split("&"));
-    if (urlChunkSet.has("anon")) {
+	var urlChunkMap = CLMSUI.modelUtils.parseURLOptions (window.location.search.slice(1));
+		
+	// Anonymiser for screen shots / videos. MJG 17/05/17
+    if (urlChunkMap["anon"]) {
         clmsModelInst.get("participants").forEach (function (prot, i) {
             prot.name = "Protein "+(i+1);
             prot.description = "Protein "+(i+1)+" Description";
@@ -171,7 +172,12 @@ CLMSUI.init.modelsEssential = function (options) {
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
+	var urlChunkKeys = d3.keys (urlChunkMap);
+	var possibleFilterKeys = d3.keys (CLMSUI.BackboneModelTypes.FilterModel.prototype.defaults);
+	possibleFilterKeys.push ("matchScoreCutoff");
+	var intersectingKeys = _.intersection (urlChunkKeys, possibleFilterKeys);
+	var urlFilterChunkMap = _.pick (urlChunkMap, intersectingKeys);
+	var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
         A: clmsModelInst.get("manualValidatedPresent"),
@@ -183,7 +189,10 @@ CLMSUI.init.modelsEssential = function (options) {
         linears: clmsModelInst.get("linearsPresent"),
         matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE,
             Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
-    });
+    };
+	filterSettings = _.extend (filterSettings, urlFilterChunkMap);
+	console.log ("urlFCM", urlFilterChunkMap, "filterSettings", filterSettings)
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
@@ -347,7 +356,12 @@ CLMSUI.init.viewsEssential = function (options) {
 		d3.select("#filterModeDiv").style("display","none");
 	};
 
-    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
+	var miniMod = filterModel.get("matchScoreCutoff");
+	console.log ("mm", miniMod);
+    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
+		domainStart: miniMod[0],
+		domainEnd: miniMod[1],
+	});
     miniDistModelInst.data = function() {
         return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];
     };

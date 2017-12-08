@@ -79,7 +79,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("class", "modeToggle")
             .attr ("name", "modeSelect")
             .attr ("type", "radio")
-            .property ("checked", function(d) { return self.model.get(d.id); })
+            .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
         ;
 
 
@@ -100,7 +100,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("id", function(d) { return d.id; })
             .attr ("class", "subsetToggleFilterToggle")
             .attr ("type", "checkbox")
-            .property ("checked", function(d) { return self.model.get(d.id); })
+            .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
         ;
 		
 		
@@ -145,7 +145,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("id", function(d) { return d.id; })
             .attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
             .attr ("type", "checkbox")
-            .property ("checked", function(d) { return self.model.get(d.id); })
+            .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
         ;
 
 		var cutoffDivSel = mainDivSel.append ("div")
@@ -169,6 +169,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 step: 0.1,
                 //min: 0,
             })
+			.property ("value", function () {
+				var isMinInput = d3.select(this.parentNode).classed("vmin");
+				var cutoff = self.model.get("matchScoreCutoff");
+				var val = cutoff [isMinInput ? 0 : 1];
+				return val !== Number.MAX_VALUE && val !== -Number.MAX_VALUE ? val : "";
+			})
             .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                 //console.log ("model", self.model);
                 var val = +this.value;
@@ -212,6 +218,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("class", "filterTypeText")
             .attr ("type", "textbox")
             .attr ("size", function(d) { return d.chars; })
+			.property ("value", function(d) { return self.model.get(d.id); })
         ;
         
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
@@ -233,8 +240,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
         //todo: extend to update all attributes
-        this.listenTo (this.model, "change:unval", function(model, val) {
-			mainDivSel.select("#unval").property("checked", val);
+        this.listenTo (this.model, "change:unval", function  (model, val) {
+			mainDivSel.select("#unval").property("checked", Boolean (val));
 		});
         
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
@@ -313,15 +320,13 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     .attr("type", "radio")
                     .attr("value", function(d) { return d; })
                     .attr("name", "fdrPercent")
-                    .property("checked", function(d) { return d === 0.05; })
+                    .property("checked", function(d) { return d === self.model.get("fdrThreshold"); })
                     .on ("click", function(d) {
-                        d3.select(self.el).select("input[type='number']").property("value", "");
+                        d3.select(self.el).select("input[type='number']").property("value", d * 100 /*""*/);
                         self.model.set("fdrThreshold", d);
                     })
         ;
-
-        
-        
+		
         chartDiv.select("span")
             .append("label")
             .attr("class", "horizontalFlow")
@@ -333,6 +338,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     .attr("min", 0)
                     .attr("max", 100)
                     .attr("step", 1)
+					.property ("value", self.model.get("fdrThreshold") * 100)
                     .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                         d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
                         self.model.set("fdrThreshold", (+this.value) / 100);
