@@ -90,7 +90,8 @@
                         padding: {
                           left: 0,
                           right: 0,
-                        }
+                        },
+						//extent: [self.model.get("domainStart"), self.model.get("domainEnd")],
                     }
                 },
                 subchart: {
@@ -119,13 +120,27 @@
                     size: {
                         height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
                     },
+					/*
                     axis: {
                         x: {
                             show: true,
                         }
                     }
-                }
+					*/
+                },
+				onrendered: function () {
+					// for some reason setting extent in the x axis configuration isn't working, so get it to run once and once only when the chart is rendered
+					if (self.runOnce) {
+						self.runOnce = false;
+						var start = self.model.get("domainStart");
+						if (start !== -Number.MAX_VALUE && start !== undefined) {
+							self.brushRecalc();
+						}
+					}
+				}
             });
+			
+			this.runOnce = true;
 
             this.chart.internal.main.style("display", "none");
             //this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
