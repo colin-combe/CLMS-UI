@@ -781,8 +781,9 @@ CLMSUI.modelUtils = {
 		str.split("&").forEach (function (part) {
 			var keyValuePair = part.split("=");
 			var val = keyValuePair[1];
+			console.log ("kvp", keyValuePair);
 			var jsonVal = CLMSUI.modelUtils.tryParseJSON (val);
-			urlChunkMap[keyValuePair[0]] = Number.isNaN(Number(val)) ? (val == "true" ? true : (val == "false" ? false : (jsonVal ? jsonVal : val))) : Number(val);
+			urlChunkMap[keyValuePair[0]] = val !== "" ? (Number.isNaN(Number(val)) ? (val == "true" ? true : (val == "false" ? false : (jsonVal ? jsonVal : val))) : Number(val)) : val;
 		});
 		console.log ("ucm", urlChunkMap);
 		return urlChunkMap;

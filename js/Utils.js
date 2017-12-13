@@ -403,6 +403,35 @@ CLMSUI.utils = {
         newStr = newStr.substring (0, 240);
         return newStr;
     },
+	
+	
+	FilterModelStateShareButton: Backbone.View.extend ({
+        tagName: "span",
+        className: "shareButton",
+        events: {
+            "click i": "buttonClicked"
+        },
+
+        initialize: function (viewOptions) {
+            var defaultOptions = {};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+
+            // this.el is the dom element this should be getting added to, replaces targetDiv
+            var sel = d3.select(this.el);
+            if (!sel.attr("id")) {
+                sel.attr("id", this.options.id);
+            }
+
+            sel.append("i")
+                .attr("class", "fa fa-xi fa-share")
+				.attr("title", "Share search in current filter state")
+            ;
+        },
+
+        buttonClicked: function () {
+			CLMSUI.vent.trigger (this.options.eventName, true);
+        }
+    }),
     
     
     // Function for making a colour key as an svg group element
@@ -544,6 +573,7 @@ CLMSUI.utils = {
                 .call (drag)
             ;
 
+			console.log ("TDDD", this.displayEventName, this.identifier, viewOptions)
             if (this.displayEventName) {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }

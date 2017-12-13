@@ -338,6 +338,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return true;
                 }
             },
+			
+			
 
             stateString: function () {
                 // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
@@ -377,9 +379,28 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     //console.log ("filter fieldset", this.attributes, fields);
                 }
 
-                var str = CLMSUI.utils.objectStateToAbbvString(this, fields, zeroFormatFields, abbvMap);
+                var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);
                 return str;
             },
+			
+			urlString: function () {
+				var attrEntries = d3.entries (this.attributes);
+				var parts = attrEntries.map (function (attrEntry) {
+					var val = attrEntry.value;
+					if (typeof val === "boolean") {
+						val = +val;	// turn true/false to 1/0
+					} else if (typeof val === "string") {
+						val = val;
+					} else if (val === undefined) {
+						val = "";
+					} else {
+						val = JSON.stringify(val);
+					}
+					return attrEntry.key + "=" + val;
+				});
+				parts.unshift (window.location.search);
+				return window.location.origin + window.location.pathname + parts.join("&");
+			},
 
         }),
 

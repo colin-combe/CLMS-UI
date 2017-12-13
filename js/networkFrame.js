@@ -221,7 +221,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -302,6 +302,20 @@ CLMSUI.init.views = function () {
             menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
+	
+	new CLMSUI.utils.FilterModelStateShareButton ({
+		el: "#sharePlaceholder",
+		myOptions: {
+			eventName: "shareURL",
+		}
+	});
+	
+	new CLMSUI.URLSearchBoxViewBB ({
+		el: "#urlSearchBox",
+		model: CLMSUI.compositeModelInst.get("filterModel"),
+		displayEventName: "shareURL",
+		myOptions: {}
+	});
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     //var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
