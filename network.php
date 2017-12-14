@@ -65,6 +65,7 @@
         <link rel="stylesheet" href="./css/searchSummary.css">
         <link rel="stylesheet" href="./css/jquery.jsonview.css">
         <link rel="stylesheet" href="./css/threeColourSlider.css">
+		<link rel="stylesheet" href="./css/urlSearchBoxViewBB.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>

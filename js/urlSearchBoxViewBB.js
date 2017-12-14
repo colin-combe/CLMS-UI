@@ -24,31 +24,54 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend ({
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
+			mainDivSel.classed ("urlSearchBox", true);
+			
             var innerPanel = mainDivSel.append("div")
                 .attr ("class", "panelInner")
             ;
 			
             innerPanel.append("h1")
-            	.text("Share Current URL with filter")
+            	.text("Share URL with current filter settings")
             ;
 			
-			innerPanel.append("input")
+			var flexPanel = innerPanel.append("div")
+				.attr("display", "flex")
+			;
+			
+			var but = flexPanel.append("button")
+				.classed ("btn btn-1 btn-1a", true)
+				.style ("display", "inline-block")
+				.style ("flex-grow", "0")
+				.attr ("title", "Copy URL to Clipboard")
+			;
+			
+			but.append("i")
+				.attr("class", "fa fa-xi fa-clipboard")
+				.style("flex-grow", "1")
+			;
+				
+			flexPanel.append("input")
 				.attr("type", "text")
-				.attr("length", "50")
+				.attr("readonly", "true")
+				.attr("length", "500")
 			;
             
             this.listenTo (this.model, "change", this.render);
                 
-			console.log ("oUJHJKLptions", this.options);
             return this;
         },
     
         render: function () {
             // only render if visible
-            d3.select(this.el).select("input[type=text]").property("value", this.model.urlString());
+			if (this.isVisible()) {
+				var d3el = d3.select(this.el);
+            	d3el.select("input[type=text]").property("value", this.model.urlString());
+				var input = d3el.select("input[type=text]").node();
+				input.focus();
+				input.select();
+			}
             return this;
         },
     
         identifier: "Share Search URL",
 });
-            
