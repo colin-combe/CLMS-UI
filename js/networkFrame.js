@@ -187,8 +187,9 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE,
-            Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
+		matchScoreCutoff: [undefined, undefined],
+        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined,
+        //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
     };
 	filterSettings = _.extend (filterSettings, urlFilterChunkMap);
 	console.log ("urlFCM", urlFilterChunkMap, "filterSettings", filterSettings)
@@ -371,7 +372,6 @@ CLMSUI.init.viewsEssential = function (options) {
 	};
 
 	var miniMod = filterModel.get("matchScoreCutoff");
-	console.log ("mm", miniMod);
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
 		domainStart: miniMod[0],
 		domainEnd: miniMod[1],
@@ -382,6 +382,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
+		console.log ("MSC change", [model.get("domainStart"), model.get("domainEnd")]);
         this.set ("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 

@@ -424,7 +424,7 @@ CLMSUI.utils = {
 
             sel.append("i")
                 .attr("class", "fa fa-xi fa-share")
-				.attr("title", "Share search in current filter state")
+				.attr("title", "Share Link to Search with Current Filter State")
             ;
         },
 
@@ -573,7 +573,6 @@ CLMSUI.utils = {
                 .call (drag)
             ;
 
-			console.log ("TDDD", this.displayEventName, this.identifier, viewOptions)
             if (this.displayEventName) {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }

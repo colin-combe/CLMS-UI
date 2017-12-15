@@ -173,7 +173,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 				var isMinInput = d3.select(this.parentNode).classed("vmin");
 				var cutoff = self.model.get("matchScoreCutoff");
 				var val = cutoff [isMinInput ? 0 : 1];
-				return val !== Number.MAX_VALUE && val !== -Number.MAX_VALUE ? val : "";
+				return val !== undefined ? val : "";
 			})
             .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                 //console.log ("model", self.model);
@@ -183,9 +183,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var scoreExtent = self.model.scoreExtent;
                 // take new values, along with score extents, sort them and discard extremes for new cutoff settings
                 var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val, scoreExtent[0], scoreExtent[1]]
+					.filter (function (v) { return v != undefined; })
                     .sort(function(a,b) { return a - b;})
-                    .slice (1,3)
-                ;
+				;
+				newVals = newVals.slice ((newVals.length / 2) - 1, (newVals.length / 2) + 1);
+
                 self.model.set("matchScoreCutoff", newVals);
             })
         ;

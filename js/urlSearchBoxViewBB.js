@@ -11,7 +11,9 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend ({
             if(_.isFunction(parentEvents)){
                 parentEvents = parentEvents();
             }
-            return _.extend({},parentEvents,{});
+            return _.extend({
+				"click button.copyClipboard" : "copyToClipboard",
+			},parentEvents,{});
         },
 
         initialize: function (viewOptions) {
@@ -31,29 +33,27 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend ({
             ;
 			
             innerPanel.append("h1")
-            	.text("Share URL with current filter settings")
+            	.text("Click button to copy link to clipboard")
             ;
 			
 			var flexPanel = innerPanel.append("div")
-				.attr("display", "flex")
+				.attr("class", "flexBox")
 			;
 			
 			var but = flexPanel.append("button")
-				.classed ("btn btn-1 btn-1a", true)
-				.style ("display", "inline-block")
-				.style ("flex-grow", "0")
-				.attr ("title", "Copy URL to Clipboard")
+				.classed ("btn btn-1 btn-1a flexStatic copyClipboard", true)
+				.attr ("title", "Copy Link to Clipboard")
 			;
 			
 			but.append("i")
 				.attr("class", "fa fa-xi fa-clipboard")
-				.style("flex-grow", "1")
 			;
 				
 			flexPanel.append("input")
-				.attr("type", "text")
-				.attr("readonly", "true")
-				.attr("length", "500")
+				.attr ("class", "flexStretch")
+				.attr ("type", "text")
+				.attr ("readonly", "true")
+				.attr ("length", "500")
 			;
             
             this.listenTo (this.model, "change", this.render);
@@ -64,14 +64,23 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend ({
         render: function () {
             // only render if visible
 			if (this.isVisible()) {
-				var d3el = d3.select(this.el);
-            	d3el.select("input[type=text]").property("value", this.model.urlString());
-				var input = d3el.select("input[type=text]").node();
+				var d3input = d3.select(this.el).select("input[type=text]");
+            	d3input.property("value", this.model.urlString());
+				var input = d3input.node();
 				input.focus();
 				input.select();
+				input.blur();
 			}
             return this;
         },
+	
+		copyToClipboard: function () {
+			var input = d3.select(this.el).select("input[type=text]").node();
+			input.focus();
+			input.select();
+			document.execCommand("Copy");
+			return this;	
+		},
     
-        identifier: "Share Search URL",
+        identifier: "Share Link with Current Filter State",
 });

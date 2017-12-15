@@ -133,7 +133,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var msc = this.get("matchScoreCutoff");
                 //defend against not having a score (from a CSV file without such a column)
                 if (!match.score) {return true;}
-                return match.score >= msc[0] && match.score <= msc[1];
+                return (msc[0] == undefined || match.score >= msc[0]) && (msc[1] == undefined || match.score <= msc[1]);	// == undefined cos shared links get undefined json'ified to null
             },
             
             decoyFilter: function (match) {
@@ -372,7 +372,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     }
                 } else {
                     var antiFields = ["fdrThreshold", "interFdrCut", "intraFdrCut", "fdrMode"];
-                    if (this.get("matchScoreCutoff")[1] === Number.MAX_VALUE) { // ignore matchscorecutoff if everything allowed
+                    if (this.get("matchScoreCutoff")[1] == undefined) { // ignore matchscorecutoff if everything allowed
                         antiFields.push("matchScoreCutoff");
                     }
                     fields = d3.keys(_.omit(this.attributes, antiFields));
@@ -398,7 +398,15 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 					}
 					return attrEntry.key + "=" + val;
 				});
-				parts.unshift (window.location.search);
+				
+				// return just ?sid=xxx part of current url query string
+				var search = window.location.search;
+				var queryParts = search.split("&").filter (function (qpart) {
+					return qpart.split("=")[0] === "?sid";	
+				});
+				// and queue it to be start of new url query string
+				parts.unshift (queryParts[0]);
+				
 				return window.location.origin + window.location.pathname + parts.join("&");
 			},
 
@@ -407,8 +415,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
         // I want MinigramBB to be model agnostic so I can re-use it in other places
         MinigramModel: Backbone.Model.extend({
             defaults: {
-                domainStart: 0,
-                domainEnd: 100,
+                //domainStart: 0,
+                //domainEnd: 100,
             },
             data: function () {
                 return [1, 2, 3, 4];
