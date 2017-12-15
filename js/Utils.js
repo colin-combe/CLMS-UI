@@ -30,6 +30,7 @@ CLMSUI.utils = {
     
     commonLabels: {
         downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906 
+		shareLink: "Share Search Link with Current Filter State",
     },
 
     addFourCorners: function (d3DivSelection) {
@@ -424,7 +425,7 @@ CLMSUI.utils = {
 
             sel.append("i")
                 .attr("class", "fa fa-xi fa-share")
-				.attr("title", "Share Link to Search with Current Filter State")
+				.attr("title", CLMSUI.utils.commonLabels.shareLink)
             ;
         },
 

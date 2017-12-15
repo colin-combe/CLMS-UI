@@ -82,5 +82,5 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend ({
 			return this;	
 		},
     
-        identifier: "Share Link with Current Filter State",
+        identifier: CLMSUI.utils.commonLabels.shareLink,
 });
