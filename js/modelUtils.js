@@ -288,6 +288,8 @@ CLMSUI.modelUtils = {
                 bbmodel.trigger ("3dsync", emptySequenceMap);
             })
             .then (function (structureComp) {
+			
+				console.log ("structureComp", structureComp);
                 // match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
                 function matchByAlignment () {
                     var protAlignCollection = bbmodel.get("alignColl");
