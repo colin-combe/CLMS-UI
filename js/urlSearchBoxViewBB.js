@@ -65,7 +65,7 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend ({
             // only render if visible
 			if (this.isVisible()) {
 				var d3input = d3.select(this.el).select("input[type=text]");
-            	d3input.property("value", this.model.urlString());
+            	d3input.property("value", this.model.generateUrlString());
 				var input = d3input.node();
 				input.focus();
 				input.select();

@@ -811,7 +811,7 @@ CLMSUI.modelUtils = {
 		return urlChunkMap;
 	},
 	
-	makeURLQueryString: function (obj) {
+	makeURLQueryString: function (obj, commonKeyPrefix) {
 		var attrEntries = d3.entries (obj);
 		var parts = attrEntries.map (function (attrEntry) {
 			var val = attrEntry.value;
@@ -824,7 +824,7 @@ CLMSUI.modelUtils = {
 			} else {
 				val = encodeURI(JSON.stringify(val));
 			}
-			return attrEntry.key + "=" + val;
+			return commonKeyPrefix + attrEntry.key + "=" + val;
 		});
 		return parts;
 	},

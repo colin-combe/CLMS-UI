@@ -172,11 +172,6 @@ CLMSUI.init.modelsEssential = function (options) {
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
-	var urlChunkKeys = d3.keys (urlChunkMap);
-	var possibleFilterKeys = d3.keys (CLMSUI.BackboneModelTypes.FilterModel.prototype.defaults);
-	possibleFilterKeys.push ("matchScoreCutoff");
-	var intersectingKeys = _.intersection (urlChunkKeys, possibleFilterKeys);
-	var urlFilterChunkMap = _.pick (urlChunkMap, intersectingKeys);
 	var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
@@ -191,8 +186,9 @@ CLMSUI.init.modelsEssential = function (options) {
         //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined,
         //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
     };
-	filterSettings = _.extend (filterSettings, urlFilterChunkMap);
-	console.log ("urlFCM", urlFilterChunkMap, "filterSettings", filterSettings)
+	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
+	filterSettings = _.extend (filterSettings, urlFilterSettings);
+	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings)
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();

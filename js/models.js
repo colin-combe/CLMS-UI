@@ -383,18 +383,36 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return str;
             },
 			
-			urlString: function () {
-				var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes);
+			generateUrlString: function () {
+				// make url parts from current filter attributes
+				var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
 				
-				// return just ?sid=xxx part of current url query string
-				var search = window.location.search;
-				var queryParts = search.split("&").filter (function (qpart) {
-					return qpart.split("=")[0] === "?sid";	
+				// return parts of current url query string that aren't filter flags or values
+				var search = window.location.search.slice(1);
+				var nonFilterKeys = d3.set (["sid", "decoys", "unval", "lowestScore", "anon"]);
+				var nonFilterParts = search.split("&").filter (function (nfpart) {
+					return nonFilterKeys.has (nfpart.split("=")[0]);	
 				});
-				// and queue it to be start of new url query string
-				parts.unshift (queryParts[0]);
+				// and queue them to be at the start of new url query string (before filter attributes)
+				parts = nonFilterParts.concat (parts);
 				
-				return window.location.origin + window.location.pathname + parts.join("&");
+				return window.location.origin + window.location.pathname + "?" + parts.join("&");
+			},
+			
+			getFilterUrlSettings: function (urlChunkMap) {
+				var urlChunkKeys = d3.keys (urlChunkMap).filter(function(key) {
+					return key[0] === "F";
+				});
+				var filterUrlSettingsMap = {};
+				urlChunkKeys.forEach (function (key) {
+					filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
+				})
+				var allowableFilterKeys = d3.keys (this.defaults);
+				allowableFilterKeys.push ("matchScoreCutoff");
+				var intersectingKeys = _.intersection (d3.keys(filterUrlSettingsMap), allowableFilterKeys);
+				var filterChunkMap = _.pick (filterUrlSettingsMap, intersectingKeys);
+				console.log ("FCM", filterChunkMap)
+				return filterChunkMap;
 			},
 
         }),
