@@ -477,16 +477,19 @@
     },
         
     getSingleLinkDistances: function (crossLink) {
+		return this.model.getSingleCrosslinkDistance (crossLink);
+		/*
         var alignColl = this.model.get("alignColl");
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
         return distanceObj ? distanceObj.getXLinkDistance (crossLink, alignColl) : undefined;
+		*/
     },
         
     invokeTooltip : function (evt, linkWrappers) {
         if (this.options.matrixObj) {
             linkWrappers.forEach (function (linkWrapper) {
                 linkWrapper.distance = this.getSingleLinkDistances (linkWrapper.crossLink);
-                linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
+                linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(2) : "Unknown";
             }, this);
             linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
             var crossLinks = _.pluck (linkWrappers, "crossLink");
@@ -494,7 +497,7 @@
 
             this.model.get("tooltipModel")
                 .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (crossLinks.length - 1))
-                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance": linkDistances}))
+                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance (Å)": linkDistances}))
                 .set("location", evt)
             ;
             this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change

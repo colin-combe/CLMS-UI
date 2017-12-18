@@ -132,8 +132,7 @@
 					// for some reason setting extent in the x axis configuration isn't working, so get it to run once and once only when the chart is rendered
 					if (self.runOnce) {
 						self.runOnce = false;
-						var start = self.model.get("domainStart");
-						if (start !== -Number.MAX_VALUE && start !== undefined) {
+						if (self.model.get("domainStart") != undefined) {
 							self.brushRecalc();
 						}
 					}
@@ -235,6 +234,7 @@
         brushRecalc: function () {
             //console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
             // Have to go via c3 chart internal properties as it isn't exposed via API
+			//console.log ("New Extent", [this.model.get("domainStart"), this.model.get("domainEnd")]);
             this.chart.internal.brush
                 .clamp(true)
                 .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])

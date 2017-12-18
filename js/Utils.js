@@ -30,6 +30,7 @@ CLMSUI.utils = {
     
     commonLabels: {
         downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906 
+		shareLink: "Share Search Link with Current Filter State",
     },
 
     addFourCorners: function (d3DivSelection) {
@@ -403,6 +404,35 @@ CLMSUI.utils = {
         newStr = newStr.substring (0, 240);
         return newStr;
     },
+	
+	
+	FilterModelStateShareButton: Backbone.View.extend ({
+        tagName: "span",
+        className: "shareButton",
+        events: {
+            "click i": "buttonClicked"
+        },
+
+        initialize: function (viewOptions) {
+            var defaultOptions = {};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+
+            // this.el is the dom element this should be getting added to, replaces targetDiv
+            var sel = d3.select(this.el);
+            if (!sel.attr("id")) {
+                sel.attr("id", this.options.id);
+            }
+
+            sel.append("i")
+                .attr("class", "fa fa-xi fa-share")
+				.attr("title", CLMSUI.utils.commonLabels.shareLink)
+            ;
+        },
+
+        buttonClicked: function () {
+			CLMSUI.vent.trigger (this.options.eventName, true);
+        }
+    }),
     
     
     // Function for making a colour key as an svg group element

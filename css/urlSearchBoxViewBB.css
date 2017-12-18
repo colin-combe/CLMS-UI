@@ -1,0 +1,27 @@
+.urlSearchBox input[type=text] {
+	min-width: 25em;
+	width: 100%;
+	line-height: 2em;
+}
+
+.urlSearchBox .panelInner div > *:not(:first-child) {
+	margin-left: 1em;
+}
+
+.urlSearchBox .panelInner div > * {
+	vertical-align: middle;
+}
+
+.flexBox {
+	display: flex;
+}
+
+.flexStatic {
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+
+.flexStretch {
+	flex-grow: 1;
+	flex-shrink: 1;
+}

@@ -152,7 +152,7 @@ CLMSUI.init.modelsEssential = function (options) {
         prot.size = prot.size || 1;
     });
 
-	var urlChunkMap = CLMSUI.modelUtils.parseURLOptions (window.location.search.slice(1));
+	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
 		
 	// Anonymiser for screen shots / videos. MJG 17/05/17
     if (urlChunkMap["anon"]) {
@@ -172,11 +172,6 @@ CLMSUI.init.modelsEssential = function (options) {
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
-	var urlChunkKeys = d3.keys (urlChunkMap);
-	var possibleFilterKeys = d3.keys (CLMSUI.BackboneModelTypes.FilterModel.prototype.defaults);
-	possibleFilterKeys.push ("matchScoreCutoff");
-	var intersectingKeys = _.intersection (urlChunkKeys, possibleFilterKeys);
-	var urlFilterChunkMap = _.pick (urlChunkMap, intersectingKeys);
 	var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
@@ -187,11 +182,13 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE,
-            Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
+		matchScoreCutoff: [undefined, undefined],
+        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined,
+        //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
     };
-	filterSettings = _.extend (filterSettings, urlFilterChunkMap);
-	console.log ("urlFCM", urlFilterChunkMap, "filterSettings", filterSettings)
+	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
+	filterSettings = _.extend (filterSettings, urlFilterSettings);
+	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings)
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
@@ -221,7 +218,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -302,6 +299,20 @@ CLMSUI.init.views = function () {
             menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
+	
+	new CLMSUI.utils.FilterModelStateShareButton ({
+		el: "#sharePlaceholder",
+		myOptions: {
+			eventName: "shareURL",
+		}
+	});
+	
+	new CLMSUI.URLSearchBoxViewBB ({
+		el: "#urlSearchBox",
+		model: CLMSUI.compositeModelInst.get("filterModel"),
+		displayEventName: "shareURL",
+		myOptions: {}
+	});
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     //var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
@@ -357,7 +368,6 @@ CLMSUI.init.viewsEssential = function (options) {
 	};
 
 	var miniMod = filterModel.get("matchScoreCutoff");
-	console.log ("mm", miniMod);
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
 		domainStart: miniMod[0],
 		domainEnd: miniMod[1],
@@ -368,6 +378,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
+		console.log ("MSC change", [model.get("domainStart"), model.get("domainEnd")]);
         this.set ("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 
