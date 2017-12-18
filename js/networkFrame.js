@@ -152,7 +152,7 @@ CLMSUI.init.modelsEssential = function (options) {
         prot.size = prot.size || 1;
     });
 
-	var urlChunkMap = CLMSUI.modelUtils.parseURLOptions (window.location.search.slice(1));
+	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
 		
 	// Anonymiser for screen shots / videos. MJG 17/05/17
     if (urlChunkMap["anon"]) {

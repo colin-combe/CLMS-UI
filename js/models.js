@@ -384,20 +384,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 			
 			urlString: function () {
-				var attrEntries = d3.entries (this.attributes);
-				var parts = attrEntries.map (function (attrEntry) {
-					var val = attrEntry.value;
-					if (typeof val === "boolean") {
-						val = +val;	// turn true/false to 1/0
-					} else if (typeof val === "string") {
-						val = val;
-					} else if (val === undefined) {
-						val = "";
-					} else {
-						val = JSON.stringify(val);
-					}
-					return attrEntry.key + "=" + val;
-				});
+				var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes);
 				
 				// return just ?sid=xxx part of current url query string
 				var search = window.location.search;

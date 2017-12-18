@@ -55,7 +55,7 @@ CLMSUI.modelUtils = {
     makeTooltipContents: {
         maxRows: 25,
         
-        link: function (xlink) {
+        link: function (xlink, extras) {
             var linear = xlink.isLinearLink();
             var info = [
                 ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
@@ -64,6 +64,13 @@ CLMSUI.modelUtils = {
                 ["Matches", xlink.filteredMatches_pp.length],
 				["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
+
+			var extraEntries = d3.entries (extras);
+			extraEntries.forEach (function (entry) {
+				info.push ([entry.key, entry.value]);
+			});
+			
+			console.log ("xlink", xlink, this);
             d3.entries(xlink.meta).forEach (function (entry) {
                 if (! _.isObject (entry.value)) {
                     info.push ([entry.key, entry.value]);
@@ -76,7 +83,7 @@ CLMSUI.modelUtils = {
              return [["ID", interactor.id], ["Accession", interactor.accession], ["Size", interactor.size], ["Desc.", interactor.description]];
         },
         
-        multilinks: function (xlinks, interactorId, residueIndex) {
+        multilinks: function (xlinks, interactorId, residueIndex, extras) {
             var ttinfo = xlinks.map (function (xlink) {
                 var linear = xlink.isLinearLink();
                 var startIsTo = !linear && (xlink.toProtein.id === interactorId && xlink.toResidue === residueIndex);
@@ -87,6 +94,14 @@ CLMSUI.modelUtils = {
                     return [linear ? "---" : xlink.toResidue, threeLetterCode, linear ? "Linear" : xlink.toProtein.name, xlink.filteredMatches_pp.length];
                 }
             });
+			
+			var extraEntries = d3.entries (extras);
+			extraEntries.forEach (function (extraEntry) {
+				extraEntry.value.forEach (function (val, i) {
+					ttinfo[i].push (val);
+				})
+			});
+			
             var sortFields = [3, 0]; // sort by matches, then res index
             var sortDirs = [1, -1];
             ttinfo.sort (function(a, b) { 
@@ -97,7 +112,14 @@ CLMSUI.modelUtils = {
                 }
                 return diff;
             });
-            ttinfo.unshift (["Pos", "Residue", "Protein", "Matches"]);
+			
+			
+			var headers = ["Pos", "Residue", "Protein", "Matches"];
+			extraEntries.forEach (function (extraEntry) {
+				headers.push (extraEntry.key);	
+			});
+			
+            ttinfo.unshift (headers);
             ttinfo.tableHasHeaders = true;
             var length = ttinfo.length;
             var limit = CLMSUI.modelUtils.makeTooltipContents.maxRows;
@@ -776,7 +798,7 @@ CLMSUI.modelUtils = {
 		return false;
 	},
 	
-	parseURLOptions: function (str) {
+	parseURLQueryString: function (str) {
 		var urlChunkMap = {};
 		str.split("&").forEach (function (part) {
 			var keyValuePair = part.split("=");
@@ -787,6 +809,24 @@ CLMSUI.modelUtils = {
 		});
 		//console.log ("ucm", urlChunkMap);
 		return urlChunkMap;
+	},
+	
+	makeURLQueryString: function (obj) {
+		var attrEntries = d3.entries (obj);
+		var parts = attrEntries.map (function (attrEntry) {
+			var val = attrEntry.value;
+			if (typeof val === "boolean") {
+				val = +val;	// turn true/false to 1/0
+			} else if (typeof val === "string") {
+				val = val;
+			} else if (val === undefined) {
+				val = "";
+			} else {
+				val = encodeURI(JSON.stringify(val));
+			}
+			return attrEntry.key + "=" + val;
+		});
+		return parts;
 	},
     
     attributeOptions: [

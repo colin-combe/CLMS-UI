@@ -477,16 +477,19 @@
     },
         
     getSingleLinkDistances: function (crossLink) {
+		return this.model.getSingleCrosslinkDistance (crossLink);
+		/*
         var alignColl = this.model.get("alignColl");
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
         return distanceObj ? distanceObj.getXLinkDistance (crossLink, alignColl) : undefined;
+		*/
     },
         
     invokeTooltip : function (evt, linkWrappers) {
         if (this.options.matrixObj) {
             linkWrappers.forEach (function (linkWrapper) {
                 linkWrapper.distance = this.getSingleLinkDistances (linkWrapper.crossLink);
-                linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(3) : "Unknown";
+                linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(2) : "Unknown";
             }, this);
             linkWrappers.sort (function (a, b) { return b.distance - a.distance; });
             var crossLinks = _.pluck (linkWrappers, "crossLink");
