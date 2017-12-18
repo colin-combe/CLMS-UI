@@ -88,7 +88,7 @@
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
         <script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
-        <script type="text/javascript" src="./vendor/crossfilter.js"></script>
+        <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>

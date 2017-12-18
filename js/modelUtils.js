@@ -99,7 +99,7 @@ CLMSUI.modelUtils = {
 			extraEntries.forEach (function (extraEntry) {
 				extraEntry.value.forEach (function (val, i) {
 					ttinfo[i].push (val);
-				})
+				});
 			});
 			
             var sortFields = [3, 0]; // sort by matches, then res index

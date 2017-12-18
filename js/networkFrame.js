@@ -188,7 +188,7 @@ CLMSUI.init.modelsEssential = function (options) {
     };
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
 	filterSettings = _.extend (filterSettings, urlFilterSettings);
-	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings)
+	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
@@ -365,7 +365,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
     if (CLMSUI.compositeModelInst.get("clmsModel").get("decoysPresent") === false) {
 		d3.select("#filterModeDiv").style("display","none");
-	};
+	}
 
 	var miniMod = filterModel.get("matchScoreCutoff");
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
@@ -429,7 +429,7 @@ CLMSUI.init.viewsEssential = function (options) {
 
 		var json_data_copy = jQuery.extend({}, t.JSONdata);
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
-	})
+	});
 
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,

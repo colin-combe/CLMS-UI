@@ -406,12 +406,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 				var filterUrlSettingsMap = {};
 				urlChunkKeys.forEach (function (key) {
 					filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
-				})
+				});
 				var allowableFilterKeys = d3.keys (this.defaults);
 				allowableFilterKeys.push ("matchScoreCutoff");
 				var intersectingKeys = _.intersection (d3.keys(filterUrlSettingsMap), allowableFilterKeys);
 				var filterChunkMap = _.pick (filterUrlSettingsMap, intersectingKeys);
-				console.log ("FCM", filterChunkMap)
+				console.log ("FCM", filterChunkMap);
 				return filterChunkMap;
 			},
 
