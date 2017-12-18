@@ -729,7 +729,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
                     crosslinkData.getModel().get("tooltipModel")
                         .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
-                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex, {Distance: distances}))
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex, {"Distance (Å)": distances}))
                         .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                     ;
                     crosslinkData.getModel().get("tooltipModel").trigger ("change:location");
@@ -765,7 +765,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
                     crosslinkData.getModel().get("tooltipModel")
                         .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
-                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0], distance ? {distance: d3.format(".2f")(distance)} : {}))
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.link (pdtrans.xlinks[0], distance ? {distance: d3.format(".2f")(distance)+" Å"} : {}))
                         .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                     ;
                     crosslinkData.getModel().get("tooltipModel").trigger ("change:location");

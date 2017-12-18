@@ -497,7 +497,7 @@
 
             this.model.get("tooltipModel")
                 .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList (crossLinks.length - 1))
-                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance": linkDistances}))
+                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList (crossLinks, {"Distance (Å)": linkDistances}))
                 .set("location", evt)
             ;
             this.trigger ("change:location", this.model, evt);  // necessary to change position 'cos d3 event is a global property, it won't register as a change
