@@ -70,7 +70,6 @@ CLMSUI.modelUtils = {
 				info.push ([entry.key, entry.value]);
 			});
 			
-			console.log ("xlink", xlink, this);
             d3.entries(xlink.meta).forEach (function (entry) {
                 if (! _.isObject (entry.value)) {
                     info.push ([entry.key, entry.value]);

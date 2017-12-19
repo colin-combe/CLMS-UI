@@ -321,7 +321,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             CLMSUI.utils.xilog ("rerendering ngl");
             // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
-			console.log ("fggdfgfg", this.xlRepr.linkRepr);
             this.xlRepr.linkRepr.repr.viewer.requestRender();
         }
         return this;
