@@ -21,6 +21,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
+			"click .showLongChainDescriptorsCB": "toggleShowLongChainDescriptors",
             "mouseout canvas": "clearHighlighted",
         });
     },
@@ -37,6 +38,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             chainRep: "cartoon",
             colourScheme: "uniform",
             showAllProteins: false,
+			showLongChainDescriptors: false,
         };
         this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
 
@@ -65,6 +67,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             {initialState: this.options.showResidues, class: "showResiduesCB", label: "Residues", id: "showResidues"},
             {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Link Option Only", id: "shortestOnly"},
             {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins"},
+			{initialState: this.options.showLongChainDescriptors, class: "showLongChainDescriptorsCB", label: "Verbose Chain Descriptors", id: "showLongChainDescriptors"},
         ];
         toggleButtonData
             .forEach (function (d) {
@@ -108,7 +111,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         
         // Residue colour scheme dropdown
         var allColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
-        var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "entityindex", "entitytype", "densityfit", "chainid"];
+        var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "densityfit", "chainid"];
         var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
         var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference (allColourSchemes, ignoreColourSchemes);
@@ -315,6 +318,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
         return this;
     },
+	
+	toggleShowLongChainDescriptors: function (event) {
+		var bool = event.target.checked;
+        this.options.showAllProteins = bool;
+        if (this.xlRepr) {
+			this.xlRepr.options.showLongChainDescriptors = bool;
+			this.xlRepr.redoChainLabels ();
+		}
+		return this;
+	},
 
     rerenderColours: function () {
         if (this.xlRepr && this.isVisible()) {
@@ -476,13 +489,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this._getAtomPairsFromLinks (linkList);
     },
     
-    getFirstAtomSelectionInEachChain: function (chainIndexSet) {
+    getPerChainAtomSelection: function (chainIndexSet) {
         var comp = this.structureComp.structure;
         var sels = [];
         comp.eachChain (function (cp) {
             // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (CLMSUI.modelUtils.isViableChainLength(cp) && cp.entity.description !== "water" && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
-                sels.push (cp.atomOffset);
+            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+				sels.push (cp.atomOffset);
             }
         });
         return "@"+sels.join(",");
@@ -597,33 +610,40 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             useCylinder: true,
         });
     },
-    
-    _initLabelRepr: function () {
-        var comp = this.structureComp;
-        var customText = {};
-        var self = this;
-        
-        var chainIndexToProteinMap = d3.map();
+	
+	getLabelTexts: function () {
+		var comp = this.structureComp;
+		var customText = {};
+		var self = this;
+		var verbose = this.options.showLongChainDescriptors;
+		
+		var chainIndexToProteinMap = d3.map();
         d3.entries(self.crosslinkData.get("chainMap")).forEach (function (cmapEntry) {
             cmapEntry.value.forEach (function (chainData) {
                  chainIndexToProteinMap.set (chainData.index, cmapEntry.key);                     
             });
         });
         //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
-        
-        comp.structure.eachChain (function (chainProxy) {
+		comp.structure.eachChain (function (chainProxy) {
 			//console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
+			var description = chainProxy.entity.description;
             var pid = chainIndexToProteinMap.get (chainProxy.index);
-            if (pid && CLMSUI.modelUtils.isViableChainLength (chainProxy) && chainProxy.entity.description !== "water") {
+            if (pid && CLMSUI.modelUtils.isViableChain (chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
-                customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")";
+                customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")" + (verbose ? " "+description : "");
             }
         });
+		
+		return customText;
+	},
+    
+    _initLabelRepr: function () {
+        var customText = this.getLabelTexts ();
         
-        var atomSelection = this.getFirstAtomSelectionInEachChain ();
+        var atomSelection = this.getPerChainAtomSelection ();
         //CLMSUI.utils.xilog ("LABEL SELE", atomSelection);
-        this.labelRepr = comp.addRepresentation ("label", {
+        this.labelRepr = this.structureComp.addRepresentation ("label", {
             color: "#222",
             radiusScale: 3.0,
             sele: atomSelection,
@@ -687,8 +707,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             return xlinks.get (link.origId);
         });
     },
-    
-    //makeSelectionString
     
     _handlePicking: function (pickingData, pickType, doEmpty) {
         var crosslinkData = this.crosslinkData;
@@ -822,7 +840,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
-                var labelSele = this.getFirstAtomSelectionInEachChain (d3.set(showableChains.chainIndices));
+                var labelSele = this.getPerChainAtomSelection (d3.set(showableChains.chainIndices));
                 //CLMSUI.utils.xilog ("LABEL SELE", labelSele);
                 this.labelRepr.setSelection (labelSele);
             }
@@ -865,8 +883,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         //CLMSUI.utils.xilog ("CHAIN SELE", selectionString);
         return selectionString;
     },
+	
+	redoChainLabels: function () {
+		var labelTexts = this.getLabelTexts();
+		this.labelRepr.setParameters ({labelText: labelTexts});		
+	},
     
-
     setDisplayedResidues: function (residues) {
         var a = performance.now();
         this.setResidues (residues, this.resRepr);
