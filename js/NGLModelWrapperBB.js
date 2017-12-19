@@ -88,14 +88,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
                 fromChainIndices.forEach (function (fromChainIndex) {
                     chainProxy.index = fromChainIndex;
-                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
+                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1;  // residues are 0-indexed in NGL so -1
 
                     if (fromResidue >= 0) {
                         residueProxy1.index = fromResidue + chainProxy.residueOffset;
 
                         toChainIndices.forEach (function (toChainIndex) {
                             chainProxy.index = toChainIndex;
-                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
+                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex), true) - 1;    // residues are 0-indexed in NGL so -1
 
                             //console.log ("fr", fromResidue, "tr", toResidue);
                             if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   

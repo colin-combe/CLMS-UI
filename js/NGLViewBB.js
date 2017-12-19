@@ -208,8 +208,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.utils.xilog ("REPOPULATE", this.model, this.model.get("stageModel"));
         var pdbID = this.model.get("stageModel").get("pdbBaseSeqID");
         var overText = "PDB File: " + (pdbID.length === 4 ?
-            "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID
-        );      
+            "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID)
+			+" - "+this.model.get("stageModel").get("structureComp").structure.title
+        ;      
         this.chartDiv.select("div.overlayInfo").html(overText);
 
         this.xlRepr = new CLMSUI.CrosslinkRepresentation (
@@ -320,7 +321,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             CLMSUI.utils.xilog ("rerendering ngl");
             // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
             this.xlRepr.linkRepr.update({color: this.xlRepr.colorOptions.linkColourScheme});
-            this.xlRepr.linkRepr.viewer.requestRender();
+            this.xlRepr.linkRepr.repr.viewer.requestRender();
         }
         return this;
     },
@@ -480,7 +481,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var sels = [];
         comp.eachChain (function (cp) {
             // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (CLMSUI.modelUtils.isViableChainLength(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+            if (CLMSUI.modelUtils.isViableChainLength(cp) && cp.entity.description !== "water" && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
                 sels.push (cp.atomOffset);
             }
         });
@@ -611,8 +612,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
         
         comp.structure.eachChain (function (chainProxy) {
+			//console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
             var pid = chainIndexToProteinMap.get (chainProxy.index);
-            if (pid) {
+            if (pid && CLMSUI.modelUtils.isViableChainLength (chainProxy) && chainProxy.entity.description !== "water") {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")";
