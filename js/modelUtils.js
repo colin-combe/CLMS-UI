@@ -364,7 +364,7 @@ CLMSUI.modelUtils = {
         
         stage.eachComponent (function (comp) {    
             comp.structure.eachChain (function (c) {
-                if (CLMSUI.modelUtils.isViableChainLength (c)) {    // short chains are ions/water molecules, ignore
+                if (CLMSUI.modelUtils.isViableChain (c)) {    // short chains are ions/water molecules, ignore
                     console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
                     var resList = [];
                     c.eachResidue (function (r) {
@@ -711,8 +711,9 @@ CLMSUI.modelUtils = {
         }    
     },
     
-    isViableChainLength: function (chainProxy) {
-        return chainProxy.residueCount > 10;
+	// test to ignore short chains and those that are just water molecules
+    isViableChain: function (chainProxy) {
+        return chainProxy.residueCount > 10 && chainProxy.entity.description !== "water";
     },
     
     crosslinkCountPerProteinPairing: function (crossLinkArr) {

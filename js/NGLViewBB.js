@@ -489,13 +489,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this._getAtomPairsFromLinks (linkList);
     },
     
-    getFirstAtomSelectionInEachChain: function (chainIndexSet) {
+    getPerChainAtomSelection: function (chainIndexSet) {
         var comp = this.structureComp.structure;
         var sels = [];
         comp.eachChain (function (cp) {
             // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (CLMSUI.modelUtils.isViableChainLength(cp) && cp.entity.description !== "water" && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
-                sels.push (cp.atomOffset);
+            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+				sels.push (cp.atomOffset);
             }
         });
         return "@"+sels.join(",");
@@ -628,7 +628,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 			//console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
 			var description = chainProxy.entity.description;
             var pid = chainIndexToProteinMap.get (chainProxy.index);
-            if (pid && CLMSUI.modelUtils.isViableChainLength (chainProxy) && description !== "water") {
+            if (pid && CLMSUI.modelUtils.isViableChain (chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")" + (verbose ? " "+description : "");
@@ -641,7 +641,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLabelRepr: function () {
         var customText = this.getLabelTexts ();
         
-        var atomSelection = this.getFirstAtomSelectionInEachChain ();
+        var atomSelection = this.getPerChainAtomSelection ();
         //CLMSUI.utils.xilog ("LABEL SELE", atomSelection);
         this.labelRepr = this.structureComp.addRepresentation ("label", {
             color: "#222",
@@ -840,7 +840,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
-                var labelSele = this.getFirstAtomSelectionInEachChain (d3.set(showableChains.chainIndices));
+                var labelSele = this.getPerChainAtomSelection (d3.set(showableChains.chainIndices));
                 //CLMSUI.utils.xilog ("LABEL SELE", labelSele);
                 this.labelRepr.setSelection (labelSele);
             }
