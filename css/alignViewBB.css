@@ -161,3 +161,12 @@ DIV.alignSettings {
 .alignSeqCount::after {
     content: "";
 }
+
+.alignSettings .alignChoiceGroup input[type=radio] {
+	vertical-align: text-bottom;
+}
+
+.alignSettings .alignChoiceGroup label:not(:last-of-type) {
+	border-right: 1px solid #aaa;
+	margin-right: 0.5em;
+}

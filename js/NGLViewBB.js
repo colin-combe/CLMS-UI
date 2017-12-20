@@ -92,7 +92,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // Protein view type dropdown
         var allReps = NGL.RepresentationRegistry.names.slice().sort();
-        var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"];
+        var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation", "angle", "dihedral"];
         var mainReps = _.difference (allReps, ignoreReps);
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: toolbar,

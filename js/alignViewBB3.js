@@ -21,7 +21,7 @@
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
             var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
             holdingDiv.html (template ({
-                headerText: "Select Protein Name for Details",
+                headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
@@ -109,7 +109,6 @@
         },
         
         radioClicked: function (evt) {
-            console.log ("evt", evt, evt.target);
             var model = this.collection.get (evt.target.value);
             this.setFocusModel (model);
         },
@@ -163,6 +162,10 @@
     });
     
     CLMSUI.ProtAlignViewBB = Backbone.View.extend ({
+		defaults: {
+			defaultSeqShowSetting: 3,
+		},
+		
         events: {
             "mouseleave td.seq>span" : "clearTooltip",
             "change input.diff" : "render",
@@ -174,14 +177,29 @@
             
             var topElem = d3.select(this.el);
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><div><label><%= diffLabel %></label><input type='checkbox' class='diff'></input></div>");
+            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><div class='alignChoiceGroup'></div>");
             holdingDiv.html (template ({
-                    firstColHeader:"Name", 
-                    secondColHeader:"Sequence", 
-                    diffLabel:"Show differences only",
-            }));       
+                    firstColHeader: "Name", 
+                    secondColHeader: "Sequence", 
+            }));    
+			var labelData = [
+				{label: "Show differences only", value: 1},
+				{label: "Show all", value: 3},
+				{label: "Show similarities only", value: 2},
+			];
+			d3.select(this.el).select(".alignChoiceGroup").selectAll("label").data (labelData)
+				.enter()
+				.append("label")
+				.text (function (d) { return d.label})
+					.append("input")
+					.attr("type", "radio")
+					.attr("class", "diff")
+					.attr("name", "alignChoice")
+					.attr("value", function(d) { return d.value; })
+			;
             
             //this.listenTo (this.model, "change:compAlignment", this.render);
+			d3.select(this.el).select(".alignChoiceGroup input[type=radio][value='"+this.defaults.defaultSeqShowSetting+"']").property("checked", true);
             this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
                 this.render ({affectedModel: affectedModel});
             });
@@ -217,8 +235,13 @@
             console.log ("rerendering alignment for", affectedModel);
             var place = d3.select(this.el).select("tbody");
             var self = this;
-            
-            var showDiff = d3.select(this.el).select("input.diff").property("checked");
+			
+			var selectedRadioValue = d3.select(this.el).select("input[name='alignChoice']:checked").property("value");
+			// keep this value and set it as a default for this view. Seems OK as this only affects visual output, not the model
+			// that is supplying the information. Plus there is only 1 of these views at a time, so changing the defaults doesn't bother any other views.
+			this.defaults.defaultSeqShowSetting = +selectedRadioValue;
+            var showSimilar = (selectedRadioValue & 2) > 0;
+			var showDiff = (selectedRadioValue & 1) > 0;
             
             // I suppose I could do a view per model rather than this, but it fits the d3 way of doing things
             var seqModels = this.model.get("seqCollection").models.filter (function (m) {
@@ -232,79 +255,92 @@
             });
             //console.log ("refs, comps", refs, comps);
             
+			function ellipsisInsertContextless (size, strArr1, strArr2) {
+				var estr = this.ellipFill (size);
+				strArr1.push (estr);
+				strArr2.push (estr);
+			};
+			var ellipsisInsert = ellipsisInsertContextless.bind (this);
+			
+			function makeOpenSpanTag (delStreak, misStreak, start, end) {
+				return "<span class='"+(delStreak ? "seqDelete" : (misStreak ? "seqMismatch" : "seqMatch"))+"' data-start='"+start+"' data-end='"+end+"'>";	
+			};
+			
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
                 var str = seq.str;
+				var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
+				var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
                 var l = [];
                 var rf = [];
                 var delStreak = false;
                 var misStreak = false;
                 var i = 0;
+				
                 for (var n = 0; n < str.length; n++) {
                     var c = str[n];
                     var r = rstr[n];
+					// end of missing or deleted streak? make span, add characters, close span
                     if ((c !== "-" && delStreak) || (c === r && misStreak)) {
-                        rf.push (rstr.substring(i,n));
-                        l.push (str.substring(i,n));
-                        l.push ("</span>");
-                        i = n;
-                        delStreak = false;
-                        misStreak = false;
+						l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
+						if (showDiff) {
+							rf.push (rstr.substring(i,n));
+							l.push (str.substring(i,n));
+						} else if (n > i) {	// or add ellipses if showDiff is true
+							ellipsisInsert (n - i, l, rf);
+                        }
+						l.push ("</span>");
+						delStreak = false;
+						misStreak = false;
+						i = n;
                     }
               
+					// start of streak present in ref but missing in c
                     if (c === "-" && !delStreak) {
-                        delStreak = true;
-                        if (misStreak || !showDiff) {
-                            rf.push (rstr.substring(i,n));
-                            l.push (str.substring(i,n));
-                            if (misStreak) {
-                                l.push ("</span>");
-                                misStreak = false;
-                            }
-                        } else if (n > i) {
-                            var estr = this.ellipFill (n - i);
-                            l.push (estr);
-                            rf.push (estr);
-                        }
-                        
-                        l.push ("<span class='seqDelete'>");
+						// add previous characters
+						l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
+						if ((misStreak && showDiff) || (!misStreak && showSimilar)) {
+							rf.push (rstr.substring(i,n));
+							l.push (str.substring(i,n));
+						} else if (n > i) {	// or add ellipses if showDiff is true
+							ellipsisInsert (n - i, l, rf);
+						}
+						l.push ("</span>");
+						misStreak = false;
+						delStreak = true;
                         i = n;
                     }
+					// start of streak present in c but missing/different in ref
                     else if (c !== "-" && c !== r && !misStreak) {
-                        misStreak = true;
-                        if (delStreak || !showDiff) {
-                            rf.push (rstr.substring(i,n));
-                            l.push (str.substring(i,n));
-                            if (delStreak) {
-                                l.push ("</span>");
-                                delStreak = false;
-                            }
-                        } else if (n > i) {
-                            var estr = this.ellipFill (n - i);
-                            l.push (estr);
-                            rf.push (estr);
-                        }
-      
-                        l.push ("<span class='seqMismatch'>");
+						// add previous characters
+						l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
+						if ((delStreak && showDiff) || (!delStreak && showSimilar)) {
+							rf.push (rstr.substring(i,n));
+							l.push (str.substring(i,n));
+						} else if (n > i) {	// or add ellipses if showDiff is true
+							ellipsisInsert (n - i, l, rf);
+						}
+						l.push ("</span>");
+						misStreak = true;
+						delStreak = false;
                         i = n;
                     }
                 }
                 
-                if (misStreak || delStreak || !showDiff) {
-                    l.push (str.substring(i,n));
-                    rf.push (rstr.substring(i,n));
-                    if (misStreak || delStreak) {
-                        l.push("</span>");
-                        misStreak = false;
-                        delStreak = false;
-                    }
+				// deal with remaining sequence when end reached
+				var openStreak = misStreak || delStreak;
+				l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
+                if ((openStreak && showDiff) || (!openStreak && showSimilar)) {
+					l.push (str.substring(i,n));
+					rf.push (rstr.substring(i,n));
                 } else if (n > i) {
-                    var estr = this.ellipFill (n - i);
-                    l.push (estr);
-                    rf.push (estr);
+                    ellipsisInsert (n - i, l, rf);
                 }
+				l.push("</span>");
+				misStreak = false;
+				delStreak = false;
                 
-                seq.decoratedRStr = showDiff ? rf.join('') : rstr;
+                seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
                 seq.decoratedStr = l.join('');
                 var max = Math.max (seq.str.length, seq.refStr.length);
                 seq.indexStr = this.makeIndexString(max,20).substring(0, max);
@@ -356,9 +392,9 @@
                 .attr("class", "seq")
                 .append ("span")
                     // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
-                    .on ("mousemove", function(d) {
-                        self.invokeTooltip (d, this);
-                    })
+                    //.on ("mousemove", function(d) {
+                   //     self.invokeTooltip (d, this);
+                    //})
             ;
             
             rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
@@ -369,6 +405,22 @@
                     return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
                 })
             ;
+			
+			newRows.selectAll("td > span > span")
+				.on("mouseenter", function (d) {
+					if (self.tooltipModel) {
+						var span = d3.select(this);
+						var parent = d3.select(this.parentNode);
+						var parentDatum = parent.datum();
+						self.tooltipModel.set("header", parentDatum.label).set("contents", [
+							["Type", span.attr("class")],
+							["Start", span.attr("data-start")],
+							["End", span.attr("data-end")],
+						]).set("location", d3.event);
+						self.tooltipModel.trigger ("change:location");
+					}
+				}
+			);
             
             return this;
         },
@@ -387,17 +439,6 @@
                 var str = d.str;
                 var charWidth = width / str.length;
                 var charIndex = Math.floor (xx / charWidth);
-                
-                /*
-                var evt = d3.event;
-                var xs = {offsetX: evt.offsetX, clientX: evt.clientX, layerX: evt.layerX, pageX: evt.pageX, screenX: evt.screenX, x: evt.x};
-                var offs = {offsetLeft: elem.offsetLeft, scrollLeft: elem.scrollLeft};
-                console.log ("moved xs", xs, "offs", offs);
-                console.log ("@", xx, width, charIndex, d3.event, d3.event.target, elem);
-                //console.log (d.convertToRef, d.convertFromRef);
-                */
-                
-                //var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
 
                 this.tooltipModel.set("header", d.label).set("contents", [
                     ["Align Index", charIndex + 1],
