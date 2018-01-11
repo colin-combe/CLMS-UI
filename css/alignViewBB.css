@@ -75,13 +75,15 @@ DIV.tableWrapper TABLE SPAN {
 }
 
 .seqDelete {
-    pointer-events: none;   /* so events aren't captured by substrings in sequence readout */
-    background: #44a;
+    background: #88f;
 }
 
-.seqMismatch {
-    pointer-events: none;   /* so events aren't captured by substrings in sequence readout */
-    background: #f80;
+.seqInsert {
+    background: #8f8;
+}
+
+.seqVar {
+	background: #fc6;
 }
 
 P.seq, TD.seq {

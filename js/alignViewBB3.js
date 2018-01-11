@@ -262,74 +262,95 @@
 			};
 			var ellipsisInsert = ellipsisInsertContextless.bind (this);
 			
-			function makeOpenSpanTag (delStreak, misStreak, start, end) {
-				return "<span class='"+(delStreak ? "seqDelete" : (misStreak ? "seqMismatch" : "seqMatch"))+"' data-start='"+start+"' data-end='"+end+"'>";	
+			var MATCH = 0, DELETE = 1, INSERT = 2, VARIATION = 3;
+			var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];
+			
+			function makeOpenSpanTag (streakType, start, end) {
+				console.log ("st", streakType, classes);
+				return "<span class='"+classes[streakType]+"' data-start='"+start+"' data-end='"+end+"'>";	
 			};
 			
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
                 var str = seq.str;
-				var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
-				var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
+				//var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
+				//var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
                 var l = [];
                 var rf = [];
-                var delStreak = false;
-                var misStreak = false;
+                var streak = MATCH;
+				var inOtherStreak = false;
                 var i = 0;
 				
                 for (var n = 0; n < str.length; n++) {
                     var c = str[n];
                     var r = rstr[n];
-					// end of missing or deleted streak? make span, add characters, close span
-                    if ((c !== "-" && delStreak) || (c === r && misStreak)) {
-						l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
+					var rhyphen = (r === "-");
+					var chyphen = (c === "-");
+
+					// end of inserted or deleted streak? make span, add characters, close span
+                    if ((!chyphen && streak === DELETE) || (c === r && streak === VARIATION) || (!rhyphen && streak === INSERT)) {
+						l.push (makeOpenSpanTag (streak, i, n));
 						if (showDiff) {
-							rf.push (rstr.substring(i,n));
-							l.push (str.substring(i,n));
+							rf.push (rstr.substring (i,n));
+							l.push (str.substring (i,n));
 						} else if (n > i) {	// or add ellipses if showDiff is true
 							ellipsisInsert (n - i, l, rf);
                         }
 						l.push ("</span>");
-						delStreak = false;
-						misStreak = false;
+						streak = MATCH;
 						i = n;
                     }
               
 					// start of streak present in ref but missing in c
-                    if (c === "-" && !delStreak) {
+                    if (chyphen && streak !== DELETE) {
 						// add previous characters
-						l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
-						if ((misStreak && showDiff) || (!misStreak && showSimilar)) {
-							rf.push (rstr.substring(i,n));
-							l.push (str.substring(i,n));
+						l.push (makeOpenSpanTag (streak, i, n));
+						inOtherStreak = (streak === INSERT || streak === VARIATION);
+						if ((inOtherStreak && showDiff) || (!inOtherStreak && showSimilar)) {
+							rf.push (rstr.substring (i,n));
+							l.push (str.substring (i,n));
 						} else if (n > i) {	// or add ellipses if showDiff is true
 							ellipsisInsert (n - i, l, rf);
 						}
 						l.push ("</span>");
-						misStreak = false;
-						delStreak = true;
+						streak = DELETE;
                         i = n;
                     }
-					// start of streak present in c but missing/different in ref
-                    else if (c !== "-" && c !== r && !misStreak) {
+					// start of streak present in c but missing in ref
+                    else if (rhyphen && streak !== INSERT) {
 						// add previous characters
-						l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
-						if ((delStreak && showDiff) || (!delStreak && showSimilar)) {
+						l.push (makeOpenSpanTag (streak, i, n));
+						inOtherStreak = (streak === DELETE || streak === VARIATION);
+						if ((inOtherStreak && showDiff) || (!inOtherStreak && showSimilar)) {
 							rf.push (rstr.substring(i,n));
 							l.push (str.substring(i,n));
 						} else if (n > i) {	// or add ellipses if showDiff is true
 							ellipsisInsert (n - i, l, rf);
 						}
 						l.push ("</span>");
-						misStreak = true;
-						delStreak = false;
+						streak = INSERT;
+                        i = n;
+                    }
+					// start of streak present in c and different in ref
+                    else if (!chyphen && !rhyphen && c !== r && streak !== VARIATION) {
+						// add previous characters
+						l.push (makeOpenSpanTag (streak, i, n));
+						inOtherStreak = (streak === DELETE || streak === INSERT);
+						if ((inOtherStreak && showDiff) || (!inOtherStreak && showSimilar)) {
+							rf.push (rstr.substring(i,n));
+							l.push (str.substring(i,n));
+						} else if (n > i) {	// or add ellipses if showDiff is true
+							ellipsisInsert (n - i, l, rf);
+						}
+						l.push ("</span>");
+						streak = VARIATION;
                         i = n;
                     }
                 }
                 
 				// deal with remaining sequence when end reached
-				var openStreak = misStreak || delStreak;
-				l.push (makeOpenSpanTag (delStreak, misStreak, i, n));
+				var openStreak = streak !== MATCH;
+				l.push (makeOpenSpanTag (streak, i, n));
                 if ((openStreak && showDiff) || (!openStreak && showSimilar)) {
 					l.push (str.substring(i,n));
 					rf.push (rstr.substring(i,n));
@@ -337,8 +358,7 @@
                     ellipsisInsert (n - i, l, rf);
                 }
 				l.push("</span>");
-				misStreak = false;
-				delStreak = false;
+				streak = MATCH;
                 
                 seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
                 seq.decoratedStr = l.join('');
@@ -391,10 +411,6 @@
             newRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
-                    // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
-                    //.on ("mousemove", function(d) {
-                   //     self.invokeTooltip (d, this);
-                    //})
             ;
             
             rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
@@ -406,17 +422,29 @@
                 })
             ;
 			
-			newRows.selectAll("td > span > span")
+			var seqTypeLabelMap = {
+				"seqMatch": "Matching",
+				"seqDelete": "Missing",
+				"seqInsert": "Extra",
+				"seqVar": "Different"
+			};
+
+			rowBind.selectAll("td > span > span")
 				.on("mouseenter", function (d) {
+					//console.log ("hi", this);
 					if (self.tooltipModel) {
 						var span = d3.select(this);
 						var parent = d3.select(this.parentNode);
 						var parentDatum = parent.datum();
-						self.tooltipModel.set("header", parentDatum.label).set("contents", [
-							["Type", span.attr("class")],
-							["Start", span.attr("data-start")],
-							["End", span.attr("data-end")],
-						]).set("location", d3.event);
+						self.tooltipModel
+							.set("header", parentDatum.label+" compared")
+							.set("contents", [
+								["AAs are", seqTypeLabelMap[span.attr("class")]],
+								["Start", +span.attr("data-start") + 1],	// + 1 for 1-based index
+								["End", span.attr("data-end")],
+							])
+							.set("location", d3.event)
+						;
 						self.tooltipModel.trigger ("change:location");
 					}
 				}
@@ -428,24 +456,6 @@
         clearTooltip: function () {
             if (this.tooltipModel) {
                 this.tooltipModel.set ("contents", null);
-            }
-            return this;
-        },
-        
-        invokeTooltip: function (d, elem) {
-            if (this.tooltipModel) {
-                var xx = CLMSUI.utils.crossBrowserElementX (d3.event, elem);
-                var width = $.zepto ? $(elem).width() : $(elem).outerWidth();
-                var str = d.str;
-                var charWidth = width / str.length;
-                var charIndex = Math.floor (xx / charWidth);
-
-                this.tooltipModel.set("header", d.label).set("contents", [
-                    ["Align Index", charIndex + 1],
-                    ["Search Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
-                    ["Seq Value", str[charIndex]],
-                ]).set("location", d3.event);
-                this.tooltipModel.trigger ("change:location");
             }
             return this;
         },
