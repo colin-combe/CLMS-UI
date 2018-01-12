@@ -4,12 +4,13 @@
     height: auto;
     overflow: x-auto;
     cursor: pointer;
+	border-top: 0.5em solid #eee;
 }
 
 /* Following 6 rules are for fixed first column and fixed header row */
 DIV.tableWrapper TABLE {
     table-layout: fixed;
-    font-size: 1em;
+    font-size: 10pt;
 }
 
 DIV.tableWrapper TABLE TBODY {
@@ -97,12 +98,15 @@ P.seq, TD.seq {
 */
 
 DIV.checkHolder {
-    border-bottom: 4px solid rgba(255,255,255,0.5);
-    padding-bottom: 0;
+	padding-top: 1px;
+    padding-bottom: 1px;
     margin-bottom: 0;
     line-height: normal;
     max-height: 10em;
     overflow-y: auto;
+	/* this makes the tabs appear to fill from the bottom up */
+	display: flex;
+	flex-wrap: wrap-reverse;
 }
 
 /* allows breaking after a span tab but not in the label it contains */
@@ -128,12 +132,13 @@ DIV.checkHolder SPAN INPUT {
 DIV.checkHolder SPAN INPUT:checked + label {
     background: white;
     border: 1px solid #888;
+	border-bottom: none;
     color: #002;
 }
 
 DIV.alignSettings {
-    padding-top: 0.5em;
-    font-size: 0.8em
+    padding-bottom: 0.5em;
+    font-size: 1em
 }
 
 .controlBlock label {

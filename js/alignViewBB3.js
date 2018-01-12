@@ -263,12 +263,7 @@
 			var ellipsisInsert = ellipsisInsertContextless.bind (this);
 			
 			var MATCH = 0, DELETE = 1, INSERT = 2, VARIATION = 3;
-			var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];
-			
-			function makeOpenSpanTag (streakType, start, end) {
-				return "<span class='"+classes[streakType]+"' data-start='"+start+"' data-end='"+end+"'>";	
-			};
-			
+			var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];		
 			
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
@@ -278,11 +273,20 @@
                 var l = [];
                 var rf = [];
                 var streak = MATCH;
-                var i = 0;
+                var i = 0, ri = 0, ci = 0;
 				
 				function addSequenceChunk (streakType) {
 					if (n) {	// don't add zero-length match at start of sequence
-						l.push (makeOpenSpanTag (streakType, i, n));
+						var oldri = ri;
+						var insert = streakType === INSERT;
+						ri += (insert ? 0 : n - i);
+						
+						var oldci = ci;
+						var deleted = streakType === DELETE;
+						ci += (deleted ? 0 : n - i);
+						
+						l.push ("<span class='"+classes[streakType]+"' data-start='"+oldri+"' data-end='"+(ri + (insert ? 1 : 0))
+								+"' data-cstart='"+oldci+"' data-cend='"+(ci + (deleted ? 1 : 0))+"'>");
 						if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) {
 							rf.push (rstr.substring (i,n));
 							l.push (str.substring (i,n));
@@ -386,7 +390,7 @@
             rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
             
             rowBind.select ("td > span")
-                .html (function(d,i) {
+                .html (function(d, i) {
                     var v = i % wrap; 
                     return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
                 })
@@ -407,11 +411,12 @@
 						var parent = d3.select(this.parentNode);
 						var parentDatum = parent.datum();
 						self.tooltipModel
-							.set("header", parentDatum.label+" compared")
+							.set("header", "Alignment to Search")
 							.set("contents", [
-								["AAs are", seqTypeLabelMap[span.attr("class")]],
-								["Start", +span.attr("data-start") + 1],	// + 1 for 1-based index
-								["End", span.attr("data-end")],
+								["This AA Range", (+span.attr("data-cstart") + 1)+" - "+span.attr("data-cend")],	// + 1 for 1-based index
+								["Search AA Range", (+span.attr("data-start") + 1)+" - "+span.attr("data-end")],	// + 1 for 1-based index	
+								["Align Sequence", parentDatum.label],
+								["AAs are...", seqTypeLabelMap[span.attr("class")]],
 							])
 							.set("location", d3.event)
 						;
