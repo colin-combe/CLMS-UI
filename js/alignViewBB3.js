@@ -266,9 +266,9 @@
 			var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];
 			
 			function makeOpenSpanTag (streakType, start, end) {
-				console.log ("st", streakType, classes);
 				return "<span class='"+classes[streakType]+"' data-start='"+start+"' data-end='"+end+"'>";	
 			};
+			
 			
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
@@ -278,8 +278,21 @@
                 var l = [];
                 var rf = [];
                 var streak = MATCH;
-				var inOtherStreak = false;
                 var i = 0;
+				
+				function addSequenceChunk (streakType) {
+					if (n) {	// don't add zero-length match at start of sequence
+						l.push (makeOpenSpanTag (streakType, i, n));
+						if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) {
+							rf.push (rstr.substring (i,n));
+							l.push (str.substring (i,n));
+						} else if (n > i) {	// or add ellipses as showDiff / showSimilar flags dictate
+							ellipsisInsert (n - i, l, rf);
+						}
+						l.push ("</span>");
+						i = n;
+					}
+				};
 				
                 for (var n = 0; n < str.length; n++) {
                     var c = str[n];
@@ -287,77 +300,34 @@
 					var rhyphen = (r === "-");
 					var chyphen = (c === "-");
 
-					// end of inserted or deleted streak? make span, add characters, close span
-                    if ((!chyphen && streak === DELETE) || (c === r && streak === VARIATION) || (!rhyphen && streak === INSERT)) {
-						l.push (makeOpenSpanTag (streak, i, n));
-						if (showDiff) {
-							rf.push (rstr.substring (i,n));
-							l.push (str.substring (i,n));
-						} else if (n > i) {	// or add ellipses if showDiff is true
-							ellipsisInsert (n - i, l, rf);
-                        }
-						l.push ("</span>");
-						streak = MATCH;
-						i = n;
+					// if AA's are the same, but not currently on a match streak
+					if (c === r && streak !== MATCH) {
+						// add previous characters as current streak type
+						addSequenceChunk (streak);
+						streak = MATCH;	// set new streak type
                     }
-              
-					// start of streak present in ref but missing in c
-                    if (chyphen && streak !== DELETE) {
-						// add previous characters
-						l.push (makeOpenSpanTag (streak, i, n));
-						inOtherStreak = (streak === INSERT || streak === VARIATION);
-						if ((inOtherStreak && showDiff) || (!inOtherStreak && showSimilar)) {
-							rf.push (rstr.substring (i,n));
-							l.push (str.substring (i,n));
-						} else if (n > i) {	// or add ellipses if showDiff is true
-							ellipsisInsert (n - i, l, rf);
-						}
-						l.push ("</span>");
-						streak = DELETE;
-                        i = n;
+					// if AA missing in c, but not currently on a delete streak
+                    else if (chyphen && streak !== DELETE) {
+						// add previous characters as current streak type
+						addSequenceChunk (streak);
+						streak = DELETE;	// set new streak type
                     }
-					// start of streak present in c but missing in ref
+					// else if AA missing in ref, but not currently on an insert streak
                     else if (rhyphen && streak !== INSERT) {
-						// add previous characters
-						l.push (makeOpenSpanTag (streak, i, n));
-						inOtherStreak = (streak === DELETE || streak === VARIATION);
-						if ((inOtherStreak && showDiff) || (!inOtherStreak && showSimilar)) {
-							rf.push (rstr.substring(i,n));
-							l.push (str.substring(i,n));
-						} else if (n > i) {	// or add ellipses if showDiff is true
-							ellipsisInsert (n - i, l, rf);
-						}
-						l.push ("</span>");
-						streak = INSERT;
-                        i = n;
+						// add previous characters as current streak type
+						addSequenceChunk (streak);
+						streak = INSERT;	// set new streak type
                     }
-					// start of streak present in c and different in ref
+					// else if AAs in c and ref different, but not currently on a variation streak
                     else if (!chyphen && !rhyphen && c !== r && streak !== VARIATION) {
-						// add previous characters
-						l.push (makeOpenSpanTag (streak, i, n));
-						inOtherStreak = (streak === DELETE || streak === INSERT);
-						if ((inOtherStreak && showDiff) || (!inOtherStreak && showSimilar)) {
-							rf.push (rstr.substring(i,n));
-							l.push (str.substring(i,n));
-						} else if (n > i) {	// or add ellipses if showDiff is true
-							ellipsisInsert (n - i, l, rf);
-						}
-						l.push ("</span>");
-						streak = VARIATION;
-                        i = n;
+						// add previous characters as current streak type
+						addSequenceChunk (streak);
+						streak = VARIATION;	// set new streak type
                     }
                 }
                 
 				// deal with remaining sequence when end reached
-				var openStreak = streak !== MATCH;
-				l.push (makeOpenSpanTag (streak, i, n));
-                if ((openStreak && showDiff) || (!openStreak && showSimilar)) {
-					l.push (str.substring(i,n));
-					rf.push (rstr.substring(i,n));
-                } else if (n > i) {
-                    ellipsisInsert (n - i, l, rf);
-                }
-				l.push("</span>");
+				addSequenceChunk (streak);
 				streak = MATCH;
                 
                 seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
@@ -430,7 +400,7 @@
 			};
 
 			rowBind.selectAll("td > span > span")
-				.on("mouseenter", function (d) {
+				.on("mouseenter", function () {
 					//console.log ("hi", this);
 					if (self.tooltipModel) {
 						var span = d3.select(this);
