@@ -149,6 +149,7 @@ DIV.alignSettings {
 
 .controlBlock input, .controlBlock select {
     font-size: 1em;
+	line-height: 1em;
     padding: 0;
 }
 

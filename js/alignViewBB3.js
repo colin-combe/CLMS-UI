@@ -255,12 +255,7 @@
             });
             //console.log ("refs, comps", refs, comps);
             
-			function ellipsisInsertContextless (size, strArr1, strArr2) {
-				var estr = this.ellipFill (size);
-				strArr1.push (estr);
-				strArr2.push (estr);
-			};
-			var ellipsisInsert = ellipsisInsertContextless.bind (this);
+			var ellipsisInsert = this.ellipFill.bind (this);
 			
 			var MATCH = 0, DELETE = 1, INSERT = 2, VARIATION = 3;
 			var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];		
@@ -271,6 +266,7 @@
 				//var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
 				//var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
                 var l = [];
+				var ll = [];
                 var rf = [];
                 var streak = MATCH;
                 var i = 0, ri = 0, ci = 0;
@@ -285,13 +281,26 @@
 						var deleted = streakType === DELETE;
 						ci += (deleted ? 0 : n - i);
 						
-						l.push ("<span class='"+classes[streakType]+"' data-start='"+oldri+"' data-end='"+(ri + (insert ? 1 : 0))
-								+"' data-cstart='"+oldci+"' data-cend='"+(ci + (deleted ? 1 : 0))+"'>");
-						if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) {
-							rf.push (rstr.substring (i,n));
-							l.push (str.substring (i,n));
+						l.push ("<span class='"+classes[streakType]+"' data-start='"+oldri+"' data-end='"+ri
+								+"' data-cstart='"+oldci+"' data-cend='"+ci +"'>");
+						/*
+						ll.push ({
+							klass: classes[streakType],
+							rstart: oldri,
+							rend: ri + (insert ? 1 : 0),
+							cstart: oldci,
+							cend: ci + (deleted ? 1 : 0),
+							section: str.substring (i, n)
+						});
+						*/
+						
+						if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) {	// add sequence part
+							rf.push (rstr.substring (i, n));
+							l.push (str.substring (i, n));
 						} else if (n > i) {	// or add ellipses as showDiff / showSimilar flags dictate
-							ellipsisInsert (n - i, l, rf);
+							var ellip = ellipsisInsert (n - i);
+							rf.push (ellip);
+							l.push (ellip);
 						}
 						l.push ("</span>");
 						i = n;
@@ -336,6 +345,7 @@
                 
                 seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
                 seq.decoratedStr = l.join('');
+				//seq.parts = ll;
                 var max = Math.max (seq.str.length, seq.refStr.length);
                 seq.indexStr = this.makeIndexString(max,20).substring(0, max);
             }, this);
@@ -396,6 +406,7 @@
                 })
             ;
 			
+			
 			var seqTypeLabelMap = {
 				"seqMatch": "Matching",
 				"seqDelete": "Missing",
@@ -410,13 +421,18 @@
 						var span = d3.select(this);
 						var parent = d3.select(this.parentNode);
 						var parentDatum = parent.datum();
+						var rds = +span.attr("data-start");
+						var rde = +span.attr("data-end");
+						var cds = +span.attr("data-cstart");
+						var cde = +span.attr("data-cend");
 						self.tooltipModel
 							.set("header", "Alignment to Search")
 							.set("contents", [
-								["This AA Range", (+span.attr("data-cstart") + 1)+" - "+span.attr("data-cend")],	// + 1 for 1-based index
-								["Search AA Range", (+span.attr("data-start") + 1)+" - "+span.attr("data-end")],	// + 1 for 1-based index	
-								["Align Sequence", parentDatum.label],
 								["AAs are...", seqTypeLabelMap[span.attr("class")]],
+								["Search AA Range", rds >= rde ? "Would be after "+rds : (rds + 1)+" - "+rde],	// + 1 for 1-based index	
+								["This AA Range", cds >= cde ? "Would be after "+cds : (cds + 1)+" - "+cde],	// + 1 for 1-based index
+								["Align Sequence", parentDatum.label],
+
 							])
 							.set("location", d3.event)
 						;
