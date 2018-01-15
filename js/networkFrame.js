@@ -218,7 +218,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -283,9 +283,10 @@ CLMSUI.init.views = function () {
 
     // Generate buttons for load dropdown
     var buttonData = [
-        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
-        {id: "csvUploadPlaceholder", label: "CSV", eventName:"csvShow"},
-        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName:"linkMetaShow"},
+        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName: "pdbShow"},
+        {id: "csvUploadPlaceholder", label: "CSV", eventName: "csvShow"},
+        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName: "linkMetaShow"},
+		{id: "proteinMetaUploadPlaceholder", label: "Protein Metadata", eventName: "proteinMetaShow"},
     ];
     buttonData.forEach (function (bdata) {
         var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
@@ -665,7 +666,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "scatterplotShow",
     });
 
-	   new CLMSUI.CSVFileChooserBB ({
+	new CLMSUI.CSVFileChooserBB ({
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",
@@ -675,6 +676,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#linkMetaLoadPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "linkMetaShow",
+    });
+	
+	new CLMSUI.ProteinMetaDataFileChooserBB ({
+        el: "#proteinMetaLoadPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "proteinMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB ({

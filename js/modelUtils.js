@@ -710,6 +710,39 @@ CLMSUI.modelUtils = {
             CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
         }    
     },
+	
+	updateProteinMetadata: function (metaDataFileContents, clmsModel) {
+        var proteins = clmsModel.get("participants");
+        var first = true;
+        var columns = [];
+        var dontStoreArray = ["proteinID", "ProteinID"];
+        var dontStoreSet = d3.set (dontStoreArray);
+        d3.csv.parse (metaDataFileContents, function (d) {
+			if (first) {
+				var keys = d3.keys(d);
+				columns = d3.set(keys);
+				dontStoreArray.forEach (function (dont) {
+					columns.remove (dont);
+				});
+				columns = columns.values();
+				first = false;
+			}
+			
+            var proteinID = d.proteinID || d.ProteinID;
+			var protein = proteins.get(proteinID);
+			
+			console.log ("protein", protein);
+            
+            if (protein) {
+				var name = d.name || d.Name;
+                protein.name = name || protein.name;
+				console.log ("name", name);
+            }
+        });
+        if (columns) {
+            CLMSUI.vent.trigger ("proteinMetadataUpdated", columns, proteins);
+        }    
+    },
     
 	// test to ignore short chains and those that are just water molecules
     isViableChain: function (chainProxy) {
