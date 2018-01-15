@@ -32,6 +32,7 @@
     transition: all .3s;
     cursor:pointer;
     padding: 0 1px;
+	user-select: none;
 }
 .fa-xi:hover {
     color: #091D42;
@@ -270,7 +271,7 @@
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #searchSummaryPanel {
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox {
     display:none;
     top:80px;
 }
@@ -308,7 +309,7 @@
     width:700px;
     height:400px;
 }
-#pdbPanel, #linkMetaLoadPanel {
+#pdbPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel {
     left: 40px;
 }
 #distoPanel{
@@ -327,6 +328,10 @@
     left: 40px;
     width: 40em;
     height: 25em;
+}
+
+#urlSearchBox {
+	left: 60px;
 }
 
 

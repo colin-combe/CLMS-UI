@@ -151,7 +151,7 @@
                 sortDir: 1,
                 hideLinkless: false,
             };
-            this.options = _.extend(defaultOptions, viewOptions.myOptions);
+            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
 
             this.displayEventName = viewOptions.displayEventName;
 
@@ -194,7 +194,7 @@
                     d.inputFirst = true;
                     d.func = function () {
                         self.options.sort = d.id;
-                        self.reOrderAndRender();
+                        self.reOrderAndRender({reverseConsecutive: true});
                     };
                 }, this)
             ;
@@ -322,16 +322,20 @@
             this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProteins", function () { renderPartial (["nodes"]); });
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
-            this.reOrder().render();
+            this.reOrderAndRender();
             
             return this;
         },
 
-        reOrder: function () {
+        reOrder: function (orderOptions) {
+            orderOptions = orderOptions || {};
             //CLMSUI.utils.xilog ("this", this, this.options);
-            this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
+            if (orderOptions.reverseConsecutive) {
+                this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
+            }
             //var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
             var prots = CLMS.arrayFromMapValues (this.filterInteractors (this.model.get("clmsModel").get("participants")));
             var proteinSort = function (field) {
@@ -352,8 +356,8 @@
             return this;
         },
         
-        reOrderAndRender: function () {
-            return this.reOrder().render();
+        reOrderAndRender: function (localOptions) {
+            return this.reOrder(localOptions).render(localOptions);
         },
 
         flipIntra: function () {
@@ -587,7 +591,7 @@
                      // draw features
                     this.drawFeatures (gRot, features);
                 }
-                if (!changed) {
+                if (!changed || changed.has("nodes")) {
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
@@ -841,8 +845,11 @@
                     .append("textPath")
                         .attr("startOffset", "50%")
                         .attr("xlink:href", function(d) { return "#" + pathId(d); })
-                        .text (function(d) { return d.name.replace("_", " "); })
+                        //.text (function(d) { return d.name.replace("_", " "); })
             ;
+			
+			// this lets names update for existing nodes
+			textJoin.select("text textPath").text (function(d) { return d.name.replace("_", " "); });
 
             return this;
         },

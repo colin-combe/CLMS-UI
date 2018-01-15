@@ -38,9 +38,10 @@
             chartMargin: 10,
             pointSize: 4,
             attributeOptions: CLMSUI.modelUtils.attributeOptions,
+			standardTickFormat: d3.format(",d"),
         };
         
-        this.options = _.extend(defaultOptions, viewOptions.myOptions);
+        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
         
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
@@ -122,8 +123,8 @@
         //;
         
         // Axes setup
-        this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(d3.format(",d"));
-        this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(d3.format(",d"));
+        this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(self.options.standardTickFormat);
+        this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(self.options.standardTickFormat);
         
         this.vis.append("g")
             .attr("class", "y axis")
@@ -384,7 +385,7 @@
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
         var data = this.getData (funcMeta, filteredFlag, optionalLinks);
-        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false};
+        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false, tickFormat: funcMeta.valueFormat || this.options.standardTickFormat};
     },
         
     getBothAxesMetaData: function () {
@@ -396,6 +397,9 @@
     axisChosen: function () { 
         var dataX = this.getAxisData ("X", false);
         var dataY = this.getAxisData ("Y", false);
+		
+		this.xAxis.tickFormat (dataX.tickFormat);
+		this.yAxis.tickFormat (dataY.tickFormat);
         
         this.scaleAxes (dataX, dataY);
         //console.log ("data", dataX, dataY);

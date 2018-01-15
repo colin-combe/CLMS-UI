@@ -30,6 +30,7 @@ CLMSUI.utils = {
     
     commonLabels: {
         downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906 
+		shareLink: "Share Search Link with Current Filter State",
     },
 
     addFourCorners: function (d3DivSelection) {
@@ -403,6 +404,35 @@ CLMSUI.utils = {
         newStr = newStr.substring (0, 240);
         return newStr;
     },
+	
+	
+	FilterModelStateShareButton: Backbone.View.extend ({
+        tagName: "span",
+        className: "shareButton",
+        events: {
+            "click i": "buttonClicked"
+        },
+
+        initialize: function (viewOptions) {
+            var defaultOptions = {};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+
+            // this.el is the dom element this should be getting added to, replaces targetDiv
+            var sel = d3.select(this.el);
+            if (!sel.attr("id")) {
+                sel.attr("id", this.options.id);
+            }
+
+            sel.append("i")
+                .attr("class", "fa fa-xi fa-share")
+				.attr("title", CLMSUI.utils.commonLabels.shareLink)
+            ;
+        },
+
+        buttonClicked: function () {
+			CLMSUI.vent.trigger (this.options.eventName, true);
+        }
+    }),
     
     
     // Function for making a colour key as an svg group element
@@ -523,6 +553,10 @@ CLMSUI.utils = {
 
         initialize: function (viewOptions) {
 
+            // window level options that don't depend on type of view
+            var defaultOptions = {canBringToTop: true};
+            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+            
             this.displayEventName = viewOptions.displayEventName;
 
             var self = this;
@@ -543,7 +577,6 @@ CLMSUI.utils = {
             if (this.displayEventName) {
                 this.listenTo (CLMSUI.vent, this.displayEventName, this.setVisible);
             }
-
 
             return this;
         },
@@ -611,7 +644,7 @@ CLMSUI.utils = {
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
         bringToTop : function () {
-            if (this.el.id !== CLMSUI.utils.BaseFrameView.staticLastTopID) {
+            if (this.options.canBringToTop !== false && this.el.id !== CLMSUI.utils.BaseFrameView.staticLastTopID) {
                 var sortArr = [];
                 var activeDivs = d3.selectAll(".dynDiv").filter (function() {
                     return CLMSUI.utils.isZeptoDOMElemVisible ($(this));

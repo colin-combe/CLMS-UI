@@ -133,7 +133,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var msc = this.get("matchScoreCutoff");
                 //defend against not having a score (from a CSV file without such a column)
                 if (!match.score) {return true;}
-                return match.score >= msc[0] && match.score <= msc[1];
+                return (msc[0] == undefined || match.score >= msc[0]) && (msc[1] == undefined || match.score <= msc[1]);	// == undefined cos shared links get undefined json'ified to null
             },
             
             decoyFilter: function (match) {
@@ -338,6 +338,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return true;
                 }
             },
+			
+			
 
             stateString: function () {
                 // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
@@ -370,24 +372,56 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     }
                 } else {
                     var antiFields = ["fdrThreshold", "interFdrCut", "intraFdrCut", "fdrMode"];
-                    if (this.get("matchScoreCutoff")[1] === Number.MAX_VALUE) { // ignore matchscorecutoff if everything allowed
+                    if (this.get("matchScoreCutoff")[1] == undefined) { // ignore matchscorecutoff if everything allowed
                         antiFields.push("matchScoreCutoff");
                     }
                     fields = d3.keys(_.omit(this.attributes, antiFields));
                     //console.log ("filter fieldset", this.attributes, fields);
                 }
 
-                var str = CLMSUI.utils.objectStateToAbbvString(this, fields, zeroFormatFields, abbvMap);
+                var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);
                 return str;
             },
+			
+			generateUrlString: function () {
+				// make url parts from current filter attributes
+				var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
+				
+				// return parts of current url query string that aren't filter flags or values
+				var search = window.location.search.slice(1);
+				var nonFilterKeys = d3.set (["sid", "decoys", "unval", "lowestScore", "anon"]);
+				var nonFilterParts = search.split("&").filter (function (nfpart) {
+					return nonFilterKeys.has (nfpart.split("=")[0]);	
+				});
+				// and queue them to be at the start of new url query string (before filter attributes)
+				parts = nonFilterParts.concat (parts);
+				
+				return window.location.origin + window.location.pathname + "?" + parts.join("&");
+			},
+			
+			getFilterUrlSettings: function (urlChunkMap) {
+				var urlChunkKeys = d3.keys (urlChunkMap).filter(function(key) {
+					return key[0] === "F";
+				});
+				var filterUrlSettingsMap = {};
+				urlChunkKeys.forEach (function (key) {
+					filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
+				});
+				var allowableFilterKeys = d3.keys (this.defaults);
+				allowableFilterKeys.push ("matchScoreCutoff");
+				var intersectingKeys = _.intersection (d3.keys(filterUrlSettingsMap), allowableFilterKeys);
+				var filterChunkMap = _.pick (filterUrlSettingsMap, intersectingKeys);
+				console.log ("FCM", filterChunkMap);
+				return filterChunkMap;
+			},
 
         }),
 
         // I want MinigramBB to be model agnostic so I can re-use it in other places
         MinigramModel: Backbone.Model.extend({
             defaults: {
-                domainStart: 0,
-                domainEnd: 100,
+                //domainStart: 0,
+                //domainEnd: 100,
             },
             data: function () {
                 return [1, 2, 3, 4];

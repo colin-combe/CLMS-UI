@@ -55,7 +55,7 @@ CLMSUI.modelUtils = {
     makeTooltipContents: {
         maxRows: 25,
         
-        link: function (xlink) {
+        link: function (xlink, extras) {
             var linear = xlink.isLinearLink();
             var info = [
                 ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
@@ -64,6 +64,12 @@ CLMSUI.modelUtils = {
                 ["Matches", xlink.filteredMatches_pp.length],
 				["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
+
+			var extraEntries = d3.entries (extras);
+			extraEntries.forEach (function (entry) {
+				info.push ([entry.key, entry.value]);
+			});
+			
             d3.entries(xlink.meta).forEach (function (entry) {
                 if (! _.isObject (entry.value)) {
                     info.push ([entry.key, entry.value]);
@@ -76,7 +82,7 @@ CLMSUI.modelUtils = {
              return [["ID", interactor.id], ["Accession", interactor.accession], ["Size", interactor.size], ["Desc.", interactor.description]];
         },
         
-        multilinks: function (xlinks, interactorId, residueIndex) {
+        multilinks: function (xlinks, interactorId, residueIndex, extras) {
             var ttinfo = xlinks.map (function (xlink) {
                 var linear = xlink.isLinearLink();
                 var startIsTo = !linear && (xlink.toProtein.id === interactorId && xlink.toResidue === residueIndex);
@@ -87,6 +93,14 @@ CLMSUI.modelUtils = {
                     return [linear ? "---" : xlink.toResidue, threeLetterCode, linear ? "Linear" : xlink.toProtein.name, xlink.filteredMatches_pp.length];
                 }
             });
+			
+			var extraEntries = d3.entries (extras);
+			extraEntries.forEach (function (extraEntry) {
+				extraEntry.value.forEach (function (val, i) {
+					ttinfo[i].push (val);
+				});
+			});
+			
             var sortFields = [3, 0]; // sort by matches, then res index
             var sortDirs = [1, -1];
             ttinfo.sort (function(a, b) { 
@@ -97,7 +111,14 @@ CLMSUI.modelUtils = {
                 }
                 return diff;
             });
-            ttinfo.unshift (["Pos", "Residue", "Protein", "Matches"]);
+			
+			
+			var headers = ["Pos", "Residue", "Protein", "Matches"];
+			extraEntries.forEach (function (extraEntry) {
+				headers.push (extraEntry.key);	
+			});
+			
+            ttinfo.unshift (headers);
             ttinfo.tableHasHeaders = true;
             var length = ttinfo.length;
             var limit = CLMSUI.modelUtils.makeTooltipContents.maxRows;
@@ -260,8 +281,14 @@ CLMSUI.modelUtils = {
         stage.removeAllComponents();   // necessary to remove old stuff so old sequences don't pop up in sequence finding
         
         stage.loadFile (uri, params)
+            .catch (function (reason) {
+                var emptySequenceMap = [];
+                emptySequenceMap.failureReason = pdbInfo.baseSeqId+" not found... ("+reason+")";
+                bbmodel.trigger ("3dsync", emptySequenceMap);
+            })
             .then (function (structureComp) {
-            
+			
+				console.log ("structureComp", structureComp);
                 // match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
                 function matchByAlignment () {
                     var protAlignCollection = bbmodel.get("alignColl");
@@ -271,11 +298,11 @@ CLMSUI.modelUtils = {
                     //console.log ("our pdbUniProtMap", pdbUniProtMap);
                     sequenceMapsAvailable (pdbUniProtMap);
                 }
-               
+
                 var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
                 var interactorMap = bbmodel.get("clmsModel").get("participants");
                 var interactorArr = CLMS.arrayFromMapValues(interactorMap);
-            
+
                 // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
                 // This is asynchronous so we use a callback
                 if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
@@ -294,7 +321,7 @@ CLMSUI.modelUtils = {
 
                 // bit to continue onto after ngl protein chain to clms protein matching has been done
                 function sequenceMapsAvailable (sequenceMap) {
-                    
+
                     //console.log ("seqmpa", sequenceMap);
                     //if (sequenceMap && sequenceMap.length) {
                         var chainMap = {};
@@ -328,7 +355,7 @@ CLMSUI.modelUtils = {
                         crosslinkData.setupLinks (bbmodel.get("clmsModel"));
                 }
             })
-        ;  
+        ;
     },
 
     
@@ -337,7 +364,7 @@ CLMSUI.modelUtils = {
         
         stage.eachComponent (function (comp) {    
             comp.structure.eachChain (function (c) {
-                if (CLMSUI.modelUtils.isViableChainLength (c)) {    // short chains are ions/water molecules, ignore
+                if (CLMSUI.modelUtils.isViableChain (c)) {    // short chains are ions/water molecules, ignore
                     console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
                     var resList = [];
                     c.eachResidue (function (r) {
@@ -356,10 +383,11 @@ CLMSUI.modelUtils = {
     // Therefore, current default is to use sequence matching to detect similarities
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
         $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
-            function (data, status, xhr) {                   
-                if (status === "success") {
-                    //console.log ("data", data);
+            function (data, status, xhr) {   
+                //console.log ("data", data, arguments);
+                if (status === "success" && data.xmlVersion) {  // data is an xml fragment
                     var map = d3.map();
+
                     $(data).find("block").each (function(i,b) { 
                         var segArr = $(this).find("segment[intObjectId]"); 
                         for (var n = 0; n < segArr.length; n += 2) {
@@ -372,7 +400,7 @@ CLMSUI.modelUtils = {
                     });
                     // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I 
                     var mapArr = CLMS.arrayFromMapValues(map);
-                    
+
                     if (callback) {
                         var interactors = interactorArr.filter (function(i) { return !i.is_decoy; });
 
@@ -389,11 +417,11 @@ CLMSUI.modelUtils = {
                             });
                             mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                         });
-                        
+
                         mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none"; });
                         callback (mapArr);
                     }
-                } 
+                }
             }
         ); 
     },
@@ -682,9 +710,43 @@ CLMSUI.modelUtils = {
             CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
         }    
     },
+	
+	updateProteinMetadata: function (metaDataFileContents, clmsModel) {
+        var proteins = clmsModel.get("participants");
+        var first = true;
+        var columns = [];
+        var dontStoreArray = ["proteinID", "ProteinID"];
+        var dontStoreSet = d3.set (dontStoreArray);
+        d3.csv.parse (metaDataFileContents, function (d) {
+			if (first) {
+				var keys = d3.keys(d);
+				columns = d3.set(keys);
+				dontStoreArray.forEach (function (dont) {
+					columns.remove (dont);
+				});
+				columns = columns.values();
+				first = false;
+			}
+			
+            var proteinID = d.proteinID || d.ProteinID;
+			var protein = proteins.get(proteinID);
+			
+			console.log ("protein", protein);
+            
+            if (protein) {
+				var name = d.name || d.Name;
+                protein.name = name || protein.name;
+				console.log ("name", name);
+            }
+        });
+        if (columns) {
+            CLMSUI.vent.trigger ("proteinMetadataUpdated", columns, proteins);
+        }    
+    },
     
-    isViableChainLength: function (chainProxy) {
-        return chainProxy.residueCount > 10;
+	// test to ignore short chains and those that are just water molecules
+    isViableChain: function (chainProxy) {
+        return chainProxy.residueCount > 10 && (!chainProxy.entity || chainProxy.entity.description !== "water");
     },
     
     crosslinkCountPerProteinPairing: function (crossLinkArr) {
@@ -752,6 +814,55 @@ CLMSUI.modelUtils = {
         //console.log ("buckets", radixSortBuckets);
         return d3.merge (radixSortBuckets);
     },
+	
+	// https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string-in-javascript-without-using-try
+	tryParseJSON: function (jsonString) {
+		try {
+			var o = JSON.parse(decodeURI(jsonString));	// decodeURI in case square brackets have been escaped in url transmission
+
+			// Handle non-exception-throwing cases:
+			// Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+			// but... JSON.parse(null) returns null, and typeof null === "object", 
+			// so we must check for that, too. Thankfully, null is falsey, so this suffices:
+			if (o && typeof o === "object") {
+				return o;
+			}
+		}
+		catch (e) { }
+
+		return false;
+	},
+	
+	parseURLQueryString: function (str) {
+		var urlChunkMap = {};
+		str.split("&").forEach (function (part) {
+			var keyValuePair = part.split("=");
+			var val = keyValuePair[1];
+			//console.log ("kvp", keyValuePair);
+			var jsonVal = CLMSUI.modelUtils.tryParseJSON (val);
+			urlChunkMap[keyValuePair[0]] = val !== "" ? (Number.isNaN(Number(val)) ? (val == "true" ? true : (val == "false" ? false : (jsonVal ? jsonVal : val))) : Number(val)) : val;
+		});
+		//console.log ("ucm", urlChunkMap);
+		return urlChunkMap;
+	},
+	
+	makeURLQueryString: function (obj, commonKeyPrefix) {
+		var attrEntries = d3.entries (obj);
+		var parts = attrEntries.map (function (attrEntry) {
+			var val = attrEntry.value;
+			if (typeof val === "boolean") {
+				val = +val;	// turn true/false to 1/0
+			} else if (typeof val === "string") {
+				val = val;
+			} else if (val === undefined) {
+				val = "";
+			} else {
+				val = encodeURI(JSON.stringify(val));
+			}
+			return commonKeyPrefix + attrEntry.key + "=" + val;
+		});
+		return parts;
+	},
     
     attributeOptions: [
         {
@@ -792,7 +903,8 @@ CLMSUI.modelUtils = {
         {
             linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); },
-            id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true
+            id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true,
+			valueFormat: d3.format("e"),
         },
         {
             linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_start; }); }, 

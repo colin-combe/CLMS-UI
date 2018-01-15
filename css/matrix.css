@@ -11,6 +11,7 @@
     width: 100%;
     position: absolute;
     pointer-events: none;
+    shape-rendering: crispedges;
 }
 
 .matrixView text {

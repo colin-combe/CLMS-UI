@@ -228,7 +228,7 @@ if (count($_GET) > 0) {
 	}
     
     //load data -
-    $WHERE_spectrumMatch = ' ( '; //WHERE clause for spectrumMatch table
+    $WHERE_spectrumMatch = ' ( ( '; //WHERE clause for spectrumMatch table
     $WHERE_matchedPeptide = ' ( ';//WHERE clause for matchedPeptide table
     $i = 0;
     foreach ($searchId_randomId as $key => $value) {
@@ -243,7 +243,7 @@ if (count($_GET) > 0) {
         
         $i++; 
     }
-    $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND score >= '.$lowestScore.') ';
+    $WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) AND score >= '.$lowestScore.') ';
     $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';	
 	
     if ($decoys == false){
@@ -263,6 +263,8 @@ if (count($_GET) > 0) {
     else {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
     }
+	
+	error_log (print_r ($WHERE_spectrumMatch, true));
 
     // MJG. 06/09/16. Changed query 'cos it crashed when using old db
     $isNewQuery = pg_query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'spectrum_source'");

@@ -152,9 +152,10 @@ CLMSUI.init.modelsEssential = function (options) {
         prot.size = prot.size || 1;
     });
 
-    // Anonymiser for screen shots / videos. MJG 17/05/17
-    var urlChunkSet = d3.set (window.location.search.split("&"));
-    if (urlChunkSet.has("anon")) {
+	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
+		
+	// Anonymiser for screen shots / videos. MJG 17/05/17
+    if (urlChunkMap["anon"]) {
         clmsModelInst.get("participants").forEach (function (prot, i) {
             prot.name = "Protein "+(i+1);
             prot.description = "Protein "+(i+1)+" Description";
@@ -171,7 +172,7 @@ CLMSUI.init.modelsEssential = function (options) {
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel ({
+	var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
         A: clmsModelInst.get("manualValidatedPresent"),
@@ -181,9 +182,14 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-        matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || -Number.MAX_VALUE,
-            Math.ceil(clmsModelInst.get("maxScore")) || Number.MAX_VALUE],
-    });
+		matchScoreCutoff: [undefined, undefined],
+        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined,
+        //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
+    };
+	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
+	filterSettings = _.extend (filterSettings, urlFilterSettings);
+	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
@@ -212,7 +218,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -277,9 +283,10 @@ CLMSUI.init.views = function () {
 
     // Generate buttons for load dropdown
     var buttonData = [
-        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
-        {id: "csvUploadPlaceholder", label: "CSV", eventName:"csvShow"},
-        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName:"linkMetaShow"},
+        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName: "pdbShow"},
+        {id: "csvUploadPlaceholder", label: "CSV", eventName: "csvShow"},
+        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName: "linkMetaShow"},
+		{id: "proteinMetaUploadPlaceholder", label: "Protein Metadata", eventName: "proteinMetaShow"},
     ];
     buttonData.forEach (function (bdata) {
         var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
@@ -293,6 +300,20 @@ CLMSUI.init.views = function () {
             menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
         }
     });
+	
+	new CLMSUI.utils.FilterModelStateShareButton ({
+		el: "#sharePlaceholder",
+		myOptions: {
+			eventName: "shareURL",
+		}
+	});
+	
+	new CLMSUI.URLSearchBoxViewBB ({
+		el: "#urlSearchBox",
+		model: CLMSUI.compositeModelInst.get("filterModel"),
+		displayEventName: "shareURL",
+		myOptions: {}
+	});
 
     console.log ("MODEL", CLMSUI.compositeModelInst);
     //var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
@@ -302,6 +323,7 @@ CLMSUI.init.views = function () {
         model: CLMSUI.linkColour.distanceColoursBB,
         domain: [0,35],
         extent: [15,25],
+		unitText: " Å",
         title: "Distance Cutoffs",
     })
         .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
@@ -344,15 +366,20 @@ CLMSUI.init.viewsEssential = function (options) {
 
     if (CLMSUI.compositeModelInst.get("clmsModel").get("decoysPresent") === false) {
 		d3.select("#filterModeDiv").style("display","none");
-	};
+	}
 
-    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ();
+	var miniMod = filterModel.get("matchScoreCutoff");
+    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
+		domainStart: miniMod[0],
+		domainEnd: miniMod[1],
+	});
     miniDistModelInst.data = function() {
         return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];
     };
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo (miniDistModelInst, "change", function (model) {
+		console.log ("MSC change", [model.get("domainStart"), model.get("domainEnd")]);
         this.set ("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 
@@ -403,13 +430,13 @@ CLMSUI.init.viewsEssential = function (options) {
 
 		var json_data_copy = jQuery.extend({}, t.JSONdata);
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
-	})
+	});
 
-    var spectrumWrapper = new SpectrumViewWrapper ({
+    new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
         displayEventName: "spectrumShow",
-        myOptions: {wrapperID: "spectrumPanel"}
+        myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
             if (match) {
@@ -639,7 +666,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "scatterplotShow",
     });
 
-	   new CLMSUI.CSVFileChooserBB ({
+	new CLMSUI.CSVFileChooserBB ({
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",
@@ -649,6 +676,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#linkMetaLoadPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "linkMetaShow",
+    });
+	
+	new CLMSUI.ProteinMetaDataFileChooserBB ({
+        el: "#proteinMetaLoadPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "proteinMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB ({

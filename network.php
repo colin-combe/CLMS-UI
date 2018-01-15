@@ -65,6 +65,7 @@
         <link rel="stylesheet" href="./css/searchSummary.css">
         <link rel="stylesheet" href="./css/jquery.jsonview.css">
         <link rel="stylesheet" href="./css/threeColourSlider.css">
+		<link rel="stylesheet" href="./css/urlSearchBoxViewBB.css">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
@@ -87,7 +88,7 @@
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
         <script type="text/javascript" src="./vendor/backbone.js"></script>
         <script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
-        <script type="text/javascript" src="./vendor/crossfilter.js"></script>
+        <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
@@ -121,6 +122,7 @@
         <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
         <script type="text/javascript" src="./js/CSVFileChooser.js"></script>
         <script type="text/javascript" src="./js/linkMetaDataFileChooserBB.js"></script>
+		<script type="text/javascript" src="./js/proteinMetaDataFileChooserBB.js"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
@@ -137,6 +139,7 @@
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
         <script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
+		<script type="text/javascript" src="./js/urlSearchBoxViewBB.js"></script>
 
         <!-- Spectrum view files -->
         <link rel="stylesheet" href="../spectrum/css/settings.css">
@@ -175,6 +178,7 @@
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
+					<p id="sharePlaceholder"></p>
                     <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
             </div>
 

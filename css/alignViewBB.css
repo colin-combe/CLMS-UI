@@ -3,56 +3,47 @@
     width: auto;
     height: auto;
     overflow: x-auto;
+	position: relative;
     cursor: pointer;
+	border-top: 0.5em solid #eee;
 }
 
-/* Following 6 rules are for fixed first column and fixed header row */
 DIV.tableWrapper TABLE {
-    table-layout: fixed;
-    font-size: 1em;
+    /*table-layout: fixed;*/
+    font-size: 10pt;
+	color: #000;
+	position: inherit;
 }
 
-DIV.tableWrapper TABLE TBODY {
-    display: block;
+DIV.tableWrapper DIV.seqDiv {
      /* always show scrollbar even if not needed so content underneath doesn't jump (which it does with auto) */
     overflow-x: scroll;
     overflow-y: hidden;
-}
-
-DIV.tableWrapper TABLE THEAD {
-    display: block;
-    margin: 0;
-    background: #eee;
+	border-left: 8em solid #eee;
 }
 
 DIV.tableWrapper TABLE TH:first-child {
      width:8em;
 }
 
-DIV.tableWrapper TABLE TBODY TH:first-child {
-     position: absolute;    /* 'fixed' caused overflow of container */
+DIV.tableWrapper TABLE THEAD {
+    /* display: block; */
+    margin: 0;
+    background: #eee;
+	height: 1em;
+}
+
+DIV.tableWrapper TABLE.seqTable TBODY TH:first-child {
+    position: absolute;    /* 'fixed' caused overflow of container */
     overflow: hidden;
     text-overflow: ellipsis;
+	left: 0;
 }
 
-DIV.tableWrapper TABLE TBODY TD {
-     padding-left: 8em;
+DIV.tableWrapper TBODY {
+    border-top: 0.5em solid #eee;
 }
 
-
-
-DIV.tableWrapper TABLE {
-    color: #000;
-}
-
-DIV.tableWrapper TBODY TR:nth-child(2n+3) {
-    border-top: 1.3em solid #fff;
-}
-/*
-DIV.tableWrapper TBODY TR:nth-child(3n) TD {
-    color: #888;
-}
-*/
 DIV.tableWrapper TD, DIV.tableWrapper TH {
     margin: 0;
     padding: 0em 0.1em;
@@ -62,6 +53,7 @@ DIV.tableWrapper TD, DIV.tableWrapper TH {
 
 DIV.tableWrapper TH {
     background: #eee;
+	text-align: left;
 }
 
 DIV.tableWrapper THEAD TH {
@@ -75,13 +67,15 @@ DIV.tableWrapper TABLE SPAN {
 }
 
 .seqDelete {
-    pointer-events: none;   /* so events aren't captured by substrings in sequence readout */
-    background: #44a;
+    background: #88f;
 }
 
-.seqMismatch {
-    pointer-events: none;   /* so events aren't captured by substrings in sequence readout */
-    background: #f80;
+.seqInsert {
+    background: #8f8;
+}
+
+.seqVar {
+	background: #fc6;
 }
 
 P.seq, TD.seq {
@@ -95,12 +89,15 @@ P.seq, TD.seq {
 */
 
 DIV.checkHolder {
-    border-bottom: 4px solid rgba(255,255,255,0.5);
-    padding-bottom: 0;
+	padding-top: 1px;
+    padding-bottom: 1px;
     margin-bottom: 0;
     line-height: normal;
     max-height: 10em;
     overflow-y: auto;
+	/* this makes the tabs appear to fill from the bottom up */
+	display: flex;
+	flex-wrap: wrap-reverse;
 }
 
 /* allows breaking after a span tab but not in the label it contains */
@@ -126,12 +123,13 @@ DIV.checkHolder SPAN INPUT {
 DIV.checkHolder SPAN INPUT:checked + label {
     background: white;
     border: 1px solid #888;
+	border-bottom: none;
     color: #002;
 }
 
 DIV.alignSettings {
-    padding-top: 0.5em;
-    font-size: 0.8em
+    padding-bottom: 0.5em;
+    font-size: 1em
 }
 
 .controlBlock label {
@@ -142,6 +140,7 @@ DIV.alignSettings {
 
 .controlBlock input, .controlBlock select {
     font-size: 1em;
+	line-height: 1em;
     padding: 0;
 }
 
@@ -160,4 +159,13 @@ DIV.alignSettings {
 
 .alignSeqCount::after {
     content: "";
+}
+
+.alignSettings .alignChoiceGroup input[type=radio] {
+	vertical-align: text-bottom;
+}
+
+.alignSettings .alignChoiceGroup label:not(:last-of-type) {
+	border-right: 1px solid #aaa;
+	margin-right: 0.5em;
 }

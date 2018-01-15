@@ -88,14 +88,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
                 fromChainIndices.forEach (function (fromChainIndex) {
                     chainProxy.index = fromChainIndex;
-                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex)) - 1;  // residues are 0-indexed in NGL so -1
+                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1;  // residues are 0-indexed in NGL so -1
 
                     if (fromResidue >= 0) {
                         residueProxy1.index = fromResidue + chainProxy.residueOffset;
 
                         toChainIndices.forEach (function (toChainIndex) {
                             chainProxy.index = toChainIndex;
-                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex)) - 1;    // residues are 0-indexed in NGL so -1
+                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex), true) - 1;    // residues are 0-indexed in NGL so -1
 
                             //console.log ("fr", fromResidue, "tr", toResidue);
                             if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
@@ -245,7 +245,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         //console.log ("strcutcomp", this.get("structureComp").structure);
         this.get("structureComp").structure.eachChain (function (cp) {
             // Don't include chains which are tiny or ones we can't match to a protein
-            if (CLMSUI.modelUtils.isViableChainLength(cp) && CLMSUI.modelUtils.getProteinFromChainIndex (self.get("chainMap"), cp.index)) {
+            if (CLMSUI.modelUtils.isViableChain(cp) && CLMSUI.modelUtils.getProteinFromChainIndex (self.get("chainMap"), cp.index)) {
                 resCount += cp.residueCount;
                 viableChainIndices.push (cp.index);
             }

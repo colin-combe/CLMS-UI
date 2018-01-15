@@ -48,6 +48,7 @@ header('Content-type: text/html; charset=utf-8');
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
         <link rel="stylesheet" href="./css/reset.css" />
+        <link rel="stylesheet" href="./css/byrei-dyndiv_0.5.css">
         <link rel="stylesheet" href="./css/style.css" />
         <link rel="stylesheet" href="./css/common.css" />
         <link rel="stylesheet" href="./css/tooltip.css">
@@ -59,7 +60,14 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/filter.css">
         <link rel="stylesheet" href="./css/validationPage.css">
+        
+        <!-- Spectrum styles -->
+        <link rel="stylesheet" href="../spectrum/css/settings.css">
+        <link rel="stylesheet" href="../spectrum/css/dropdown.css">
+        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
 
+        
+        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
 
@@ -67,7 +75,8 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./vendor/split.js"></script>
         <script type="text/javascript" src="./vendor/svgexp.js"></script>
         <script type="text/javascript" src="./vendor/underscore.js"></script>
-        <script type="text/javascript" src="./vendor/zepto.js"></script>
+        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
+        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
         <script type="text/javascript" src="./vendor/backbone.js"></script>
         <script type="text/javascript" src="./vendor/spin.js"></script>
 
@@ -93,14 +102,21 @@ header('Content-type: text/html; charset=utf-8');
 
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
+        
+        
 
 
         <!-- Spectrum view .js files -->
+        <script type="text/javascript" src="../spectrum/vendor/datatables.min.js"></script>
+        <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js"></script>
+        <script type="text/javascript" src="../spectrum/vendor/js.cookie.js"></script>
         <script type="text/javascript" src="../spectrum/src/model.js"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
         <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>     
+        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js"></script>
+        <script type="text/javascript" src="../spectrum/src/PepInputView.js"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
@@ -142,6 +158,9 @@ header('Content-type: text/html; charset=utf-8');
 				if (isset($_SESSION['session_name'])) {
 					echo "CLMSUI.loggedIn = true;";
 				}
+                if (file_exists('../xiSpecConfig.php')) {
+                    include('../xiSpecConfig.php');
+                }
 			?>
 			
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
@@ -150,15 +169,20 @@ header('Content-type: text/html; charset=utf-8');
                 spinner.stop(); // stop spinner on request returning 
 				var json = JSON.parse (text);	
 				CLMSUI.init.modelsEssential(json);
-
+                
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                 document.title = "Validate " + CLMS.arrayFromMapKeys(searches).join();	
 				CLMSUI.split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
 						sizes: [60,40], minSize: [200,10],
 							onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
 				} });	
-										
-				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv"});
+                
+                // need to make #spectrumSettingsWrapper before we can turn it into a backbone view later. mjg 27/11/17
+                d3.select("body").append("div")
+                    .attr("id", "spectrumSettingsWrapper")
+                    .attr("class", "dynDiv")
+                ;						
+				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
                 CLMSUI.vent.trigger ("spectrumShow", true);
                 
@@ -168,6 +192,10 @@ header('Content-type: text/html; charset=utf-8');
 				//CLMSUI.compositeModelInst.set("selection", allCrossLinks);
                 CLMSUI.compositeModelInst.setMarkedCrossLinks ("selection", allCrossLinks, false, false);			
 
+                // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
+                // so we run it again here, doesn't do any harm
+                ByRei_dynDiv.init.main();
+                
 				var resize = function(event) {
 					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
 					var alts = d3.select("#alternatives");
