@@ -177,7 +177,7 @@
             
             var topElem = d3.select(this.el);
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><div class='alignChoiceGroup'></div>");
+            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD></TABLE><DIV class='seqDiv'><TABLE class='seqTable'></TABLE></DIV></DIV><div class='alignChoiceGroup'></div>");
             holdingDiv.html (template ({
                     firstColHeader: "Name", 
                     secondColHeader: "Sequence", 
@@ -210,7 +210,7 @@
         },
         
         ellipFill: function (length) {
-            var sigfigs = length ? Math.floor (Math.log10 (length)) + 1 : 0;
+            var sigfigs = length ? Math.floor (Math.log (length) / Math.LN10) + 1 : 0;	// cos Math.log10 non-existent in IE11
             return this.ellipStr.substring (0, sigfigs);
         },
         
@@ -233,7 +233,7 @@
         render: function (obj) {
             var affectedModel = obj ? obj.affectedModel : undefined;
             console.log ("rerendering alignment for", affectedModel);
-            var place = d3.select(this.el).select("tbody");
+            var place = d3.select(this.el).select("table.seqTable");//.select("tbody");
             var self = this;
 			
 			var selectedRadioValue = d3.select(this.el).select("input[name='alignChoice']:checked").property("value");
@@ -253,7 +253,7 @@
             var comps = seqModels.map (function (seqModel) {
                 return seqModel.get("compAlignment");
             });
-            //console.log ("refs, comps", refs, comps);
+            console.log ("refs, comps", refs, comps);
             
 			var ellipsisInsert = this.ellipFill.bind (this);
 			
@@ -349,10 +349,103 @@
                 var max = Math.max (seq.str.length, seq.refStr.length);
                 seq.indexStr = this.makeIndexString(max,20).substring(0, max);
             }, this);
+			
+
+            var nformat = d3.format(",d");
+            var scoreFormat = function (val) {
+                return val === Number.MAX_VALUE ? "Exact" : nformat (val);
+            };
+			
+			
+			var tbodybind = place.selectAll("tbody").data(comps, function(d) { return d.label; })
+			//tbodybind.exit().remove();	  // removes other rows if only 1 affectedmodel passed in. Don't want that.
+			tbodybind.enter().append("tbody");
+			
+			var rowBind = tbodybind.selectAll("tr").data(function(d) { return [
+				{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID")}, {seqInfo: d, str: d.decoratedStr, rowLabel: d.label}
+			]; });
+			var newRows = rowBind.enter()
+				.append ("tr")
+                .attr ("id", function(d, i) { return "seqComp"+d.seqInfo.label+i; })
+			;
             
-            var allSeqs = [];
+            newRows.append("th")
+                .attr("class", "seqLabel")
+                .on ("mouseenter", function (d) {
+					var seqInfo = d.seqInfo;
+                    self.tooltipModel
+                        .set ("header", self.model.get("displayLabel"))
+                        .set("contents", [
+                            ["Align Sequence", seqInfo.label],
+                            ["Search Length", nformat(seqInfo.convertFromRef.length)], 
+                            [d.label+" Length", nformat(seqInfo.convertToRef.length)], 
+                            ["Align Score", scoreFormat(seqInfo.score)],
+                        ])
+                        .set("location", d3.event)
+                    ;
+                    self.tooltipModel.trigger ("change:location");
+                })
+            ;
+            
+            newRows.append("td")
+                .attr("class", "seq")
+                .append ("span")
+            ;
+            
+            rowBind.select("th")	// .select rather than .selectAll pushes changes in datum on existing rows in rowBind down to the th element
+			    .html (function (d) { return d.rowLabel; })
+			;
+            
+            rowBind.select("td > span")	// as above, so data in span actually changes
+                .html (function (d) { return d.str; })
+            ;
+			
+			
+			var seqTypeLabelMap = {
+				"seqMatch": "Matching",
+				"seqDelete": "Missing",
+				"seqInsert": "Extra",
+				"seqVar": "Different"
+			};
+
+			rowBind.selectAll("td > span > span")
+				.on("mouseenter", function () {
+					//console.log ("hi", this);
+					if (self.tooltipModel) {
+						var span = d3.select(this);
+						var parent = d3.select(this.parentNode);
+						var parentDatum = parent.datum();
+						var rds = +span.attr("data-start");
+						var rde = +span.attr("data-end");
+						var cds = +span.attr("data-cstart");
+						var cde = +span.attr("data-cend");
+						var refID = self.model.get("refID");
+						self.tooltipModel
+							.set("header", "Alignment to "+refID)
+							.set("contents", [
+								["AAs are...", seqTypeLabelMap[span.attr("class")]],
+								[refID+" AA Range", rds >= rde ? "Would be after "+rds : (rds + 1)+" - "+rde],	// + 1 for 1-based index	
+								["This AA Range", cds >= cde ? "Would be after "+cds : (cds + 1)+" - "+cde],	// + 1 for 1-based index
+								["Align Sequence", parentDatum.rowLabel],
+
+							])
+							.set("location", d3.event)
+						;
+						self.tooltipModel.trigger ("change:location");
+					}
+				}
+			);
+            
+			
+			/*
+			var allSeqs = [];
             var wrap = 2;
-            refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
+			
+            refs.forEach (function(r,i) { 
+				allSeqs.push(comps[i]); 
+				allSeqs.push(comps[i]);
+				//allSeqs.push(comps[i]);
+			});
 
             var nformat = d3.format(",d");
             var scoreFormat = function (val) {
@@ -400,7 +493,7 @@
             rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
             
             rowBind.select ("td > span")
-                .html (function(d, i) {
+                .html (function (d, i) {
                     var v = i % wrap; 
                     return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
                 })
@@ -440,6 +533,7 @@
 					}
 				}
 			);
+			*/
             
             return this;
         },
