@@ -253,7 +253,7 @@
             var comps = seqModels.map (function (seqModel) {
                 return seqModel.get("compAlignment");
             });
-            console.log ("refs, comps", refs, comps);
+            //console.log ("refs, comps", refs, comps);
             
 			var ellipsisInsert = this.ellipFill.bind (this);
 			
@@ -265,13 +265,12 @@
                 var str = seq.str;
 				//var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
 				//var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
-                var l = [];
-				var ll = [];
+				var segments = [];
                 var rf = [];
                 var streak = MATCH;
                 var i = 0, ri = 0, ci = 0;
 				
-				function addSequenceChunk (streakType) {
+				function addSequenceSegment (streakType) {
 					if (n) {	// don't add zero-length match at start of sequence
 						var oldri = ri;
 						var insert = streakType === INSERT;
@@ -281,28 +280,25 @@
 						var deleted = streakType === DELETE;
 						ci += (deleted ? 0 : n - i);
 						
-						l.push ("<span class='"+classes[streakType]+"' data-start='"+oldri+"' data-end='"+ri
-								+"' data-cstart='"+oldci+"' data-cend='"+ci +"'>");
-						/*
-						ll.push ({
+						var newSegment = {
 							klass: classes[streakType],
 							rstart: oldri,
 							rend: ri + (insert ? 1 : 0),
 							cstart: oldci,
 							cend: ci + (deleted ? 1 : 0),
-							section: str.substring (i, n)
-						});
-						*/
+							segment: str.substring (i, n)
+						};
 						
 						if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) {	// add sequence part
 							rf.push (rstr.substring (i, n));
-							l.push (str.substring (i, n));
+							newSegment.segment = str.substring (i, n);
 						} else if (n > i) {	// or add ellipses as showDiff / showSimilar flags dictate
 							var ellip = ellipsisInsert (n - i);
 							rf.push (ellip);
-							l.push (ellip);
+							newSegment.segment = ellip;
 						}
-						l.push ("</span>");
+						
+						segments.push (newSegment);
 						i = n;
 					}
 				};
@@ -316,36 +312,35 @@
 					// if AA's are the same, but not currently on a match streak
 					if (c === r && streak !== MATCH) {
 						// add previous characters as current streak type
-						addSequenceChunk (streak);
+						addSequenceSegment (streak);
 						streak = MATCH;	// set new streak type
                     }
 					// if AA missing in c, but not currently on a delete streak
                     else if (chyphen && streak !== DELETE) {
 						// add previous characters as current streak type
-						addSequenceChunk (streak);
+						addSequenceSegment (streak);
 						streak = DELETE;	// set new streak type
                     }
 					// else if AA missing in ref, but not currently on an insert streak
                     else if (rhyphen && streak !== INSERT) {
 						// add previous characters as current streak type
-						addSequenceChunk (streak);
+						addSequenceSegment (streak);
 						streak = INSERT;	// set new streak type
                     }
 					// else if AAs in c and ref different, but not currently on a variation streak
                     else if (!chyphen && !rhyphen && c !== r && streak !== VARIATION) {
 						// add previous characters as current streak type
-						addSequenceChunk (streak);
+						addSequenceSegment (streak);
 						streak = VARIATION;	// set new streak type
                     }
                 }
                 
 				// deal with remaining sequence when end reached
-				addSequenceChunk (streak);
+				addSequenceSegment (streak);
 				streak = MATCH;
                 
                 seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
-                seq.decoratedStr = l.join('');
-				//seq.parts = ll;
+				seq.segments = segments;
                 var max = Math.max (seq.str.length, seq.refStr.length);
                 seq.indexStr = this.makeIndexString(max,20).substring(0, max);
             }, this);
@@ -356,19 +351,24 @@
                 return val === Number.MAX_VALUE ? "Exact" : nformat (val);
             };
 			
-			
+			// add one tbody per alignment
 			var tbodybind = place.selectAll("tbody").data(comps, function(d) { return d.label; })
-			//tbodybind.exit().remove();	  // removes other rows if only 1 affectedmodel passed in. Don't want that.
+			//tbodybind.exit().remove();	  // removes other tbodies if only 1 affectedmodel passed in. Don't want that.
 			tbodybind.enter().append("tbody");
 			
-			var rowBind = tbodybind.selectAll("tr").data(function(d) { return [
-				{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID")}, {seqInfo: d, str: d.decoratedStr, rowLabel: d.label}
-			]; });
+			// add 2 rows to each tbody
+			var rowBind = tbodybind.selectAll("tr")
+				.data(function(d) { return [
+					{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID"), segments: [{klass: undefined, segment: d.decoratedRStr}]}, 
+					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label, segments: d.segments}
+				]; 
+			});
+			
 			var newRows = rowBind.enter()
 				.append ("tr")
-                .attr ("id", function(d, i) { return "seqComp"+d.seqInfo.label+i; })
 			;
             
+			// add a th element to each of these rows with sequence name and a tooltip
             newRows.append("th")
                 .attr("class", "seqLabel")
                 .on ("mouseenter", function (d) {
@@ -387,43 +387,47 @@
                 })
             ;
             
+			// add a td element and a child span element to each row
             newRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
             ;
             
+			// update th element with row label
             rowBind.select("th")	// .select rather than .selectAll pushes changes in datum on existing rows in rowBind down to the th element
 			    .html (function (d) { return d.rowLabel; })
 			;
-            
-            rowBind.select("td > span")	// as above, so data in span actually changes
-                .html (function (d) { return d.str; })
-            ;
-			
-			
+						
 			var seqTypeLabelMap = {
 				"seqMatch": "Matching",
 				"seqDelete": "Missing",
 				"seqInsert": "Extra",
 				"seqVar": "Different"
 			};
-
-			rowBind.selectAll("td > span > span")
-				.on("mouseenter", function () {
+			
+			// add number of segment spans to each td element according to d.segments
+			var segmentSpans = rowBind.select("td > span")
+				.selectAll("span")
+				.data (function(d) { return d.segments; })
+			;
+			segmentSpans.exit().remove();
+			// add tooltip to each segment span
+			segmentSpans.enter()
+				.append("span")
+				.on("mouseenter", function (d) {
 					//console.log ("hi", this);
-					if (self.tooltipModel) {
-						var span = d3.select(this);
+					if (self.tooltipModel && d.klass) {
 						var parent = d3.select(this.parentNode);
 						var parentDatum = parent.datum();
-						var rds = +span.attr("data-start");
-						var rde = +span.attr("data-end");
-						var cds = +span.attr("data-cstart");
-						var cde = +span.attr("data-cend");
+						var rds = +d.rstart;
+						var rde = +d.rend;
+						var cds = +d.cstart;
+						var cde = +d.cend;
 						var refID = self.model.get("refID");
 						self.tooltipModel
 							.set("header", "Alignment to "+refID)
 							.set("contents", [
-								["AAs are...", seqTypeLabelMap[span.attr("class")]],
+								["AAs are...", seqTypeLabelMap[d.klass]],
 								[refID+" AA Range", rds >= rde ? "Would be after "+rds : (rds + 1)+" - "+rde],	// + 1 for 1-based index	
 								["This AA Range", cds >= cde ? "Would be after "+cds : (cds + 1)+" - "+cde],	// + 1 for 1-based index
 								["Align Sequence", parentDatum.rowLabel],
@@ -433,107 +437,14 @@
 						;
 						self.tooltipModel.trigger ("change:location");
 					}
-				}
-			);
-            
+				})
+			;
 			
-			/*
-			var allSeqs = [];
-            var wrap = 2;
-			
-            refs.forEach (function(r,i) { 
-				allSeqs.push(comps[i]); 
-				allSeqs.push(comps[i]);
-				//allSeqs.push(comps[i]);
-			});
-
-            var nformat = d3.format(",d");
-            var scoreFormat = function (val) {
-                return val === Number.MAX_VALUE ? "Exact" : nformat (val);
-            };
-            
-            var rowBind = place.selectAll("tr")
-                .data(allSeqs, function (d, i) { return d.label + (i % wrap); })
-            ;
-            
-            //rowBind.exit().remove();  // removes other rows if only 1 affectedmodel passed in. Don't want that.
-            
-            var newRows = rowBind
-                .enter()
-                .append ("tr")
-                .attr ("id", function(d, i) { return "seqComp"+d.label+(i % wrap); })
-            ;
-            
-            newRows.append("th")
-                .attr("class", "seqLabel")
-                .html (function (d, i) { 
-                    var v = i % wrap; 
-                    return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); 
-                })
-                .on ("mouseenter", function(d) {
-                    self.tooltipModel
-                        .set ("header", self.model.get("displayLabel"))
-                        .set("contents", [
-                            ["Align Sequence", d.label],
-                            ["Search Length", nformat(d.convertFromRef.length)], 
-                            [d.label+" Length", nformat(d.convertToRef.length)], 
-                            ["Align Score", scoreFormat(d.score)],
-                        ])
-                        .set("location", d3.event)
-                    ;
-                    self.tooltipModel.trigger ("change:location");
-                })
-            ;
-            
-            newRows.append("td")
-                .attr("class", "seq")
-                .append ("span")
-            ;
-            
-            rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
-            
-            rowBind.select ("td > span")
-                .html (function (d, i) {
-                    var v = i % wrap; 
-                    return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
-                })
-            ;
-			
-			
-			var seqTypeLabelMap = {
-				"seqMatch": "Matching",
-				"seqDelete": "Missing",
-				"seqInsert": "Extra",
-				"seqVar": "Different"
-			};
-
-			rowBind.selectAll("td > span > span")
-				.on("mouseenter", function () {
-					//console.log ("hi", this);
-					if (self.tooltipModel) {
-						var span = d3.select(this);
-						var parent = d3.select(this.parentNode);
-						var parentDatum = parent.datum();
-						var rds = +span.attr("data-start");
-						var rde = +span.attr("data-end");
-						var cds = +span.attr("data-cstart");
-						var cde = +span.attr("data-cend");
-						self.tooltipModel
-							.set("header", "Alignment to Search")
-							.set("contents", [
-								["AAs are...", seqTypeLabelMap[span.attr("class")]],
-								["Search AA Range", rds >= rde ? "Would be after "+rds : (rds + 1)+" - "+rde],	// + 1 for 1-based index	
-								["This AA Range", cds >= cde ? "Would be after "+cds : (cds + 1)+" - "+cde],	// + 1 for 1-based index
-								["Align Sequence", parentDatum.label],
-
-							])
-							.set("location", d3.event)
-						;
-						self.tooltipModel.trigger ("change:location");
-					}
-				}
-			);
-			*/
+			// update segment spans with current data (from d.segments)
+			segmentSpans
+				.attr ("class", function(d) { return d.klass; })
+				.text (function(d) { return d.segment; })
+			;
             
             return this;
         },
