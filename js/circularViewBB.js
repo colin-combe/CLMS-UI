@@ -322,6 +322,7 @@
             this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProteins", function () { renderPartial (["nodes"]); });
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             this.reOrderAndRender();
@@ -590,7 +591,7 @@
                      // draw features
                     this.drawFeatures (gRot, features);
                 }
-                if (!changed) {
+                if (!changed || changed.has("nodes")) {
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
@@ -844,8 +845,11 @@
                     .append("textPath")
                         .attr("startOffset", "50%")
                         .attr("xlink:href", function(d) { return "#" + pathId(d); })
-                        .text (function(d) { return d.name.replace("_", " "); })
+                        //.text (function(d) { return d.name.replace("_", " "); })
             ;
+			
+			// this lets names update for existing nodes
+			textJoin.select("text textPath").text (function(d) { return d.name.replace("_", " "); });
 
             return this;
         },
