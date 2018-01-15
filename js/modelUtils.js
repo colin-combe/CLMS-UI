@@ -713,7 +713,7 @@ CLMSUI.modelUtils = {
     
 	// test to ignore short chains and those that are just water molecules
     isViableChain: function (chainProxy) {
-        return chainProxy.residueCount > 10 && chainProxy.entity.description !== "water";
+        return chainProxy.residueCount > 10 && (!chainProxy.entity || chainProxy.entity.description !== "water");
     },
     
     crosslinkCountPerProteinPairing: function (crossLinkArr) {

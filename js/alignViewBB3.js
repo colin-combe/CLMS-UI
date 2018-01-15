@@ -21,7 +21,7 @@
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
             var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
             holdingDiv.html (template ({
-                headerText: "Select Protein Name for Details",
+                headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
@@ -109,7 +109,6 @@
         },
         
         radioClicked: function (evt) {
-            console.log ("evt", evt, evt.target);
             var model = this.collection.get (evt.target.value);
             this.setFocusModel (model);
         },
@@ -163,6 +162,10 @@
     });
     
     CLMSUI.ProtAlignViewBB = Backbone.View.extend ({
+		defaults: {
+			defaultSeqShowSetting: 3,
+		},
+		
         events: {
             "mouseleave td.seq>span" : "clearTooltip",
             "change input.diff" : "render",
@@ -174,14 +177,29 @@
             
             var topElem = d3.select(this.el);
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD><TBODY></TBODY></TABLE></DIV><div><label><%= diffLabel %></label><input type='checkbox' class='diff'></input></div>");
+            var template = _.template ("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD></TABLE><DIV class='seqDiv'><TABLE class='seqTable'></TABLE></DIV></DIV><div class='alignChoiceGroup'></div>");
             holdingDiv.html (template ({
-                    firstColHeader:"Name", 
-                    secondColHeader:"Sequence", 
-                    diffLabel:"Show differences only",
-            }));       
+                    firstColHeader: "Name", 
+                    secondColHeader: "Sequence", 
+            }));    
+			var labelData = [
+				{label: "Show differences only", value: 1},
+				{label: "Show all", value: 3},
+				{label: "Show similarities only", value: 2},
+			];
+			d3.select(this.el).select(".alignChoiceGroup").selectAll("label").data (labelData)
+				.enter()
+				.append("label")
+				.text (function (d) { return d.label})
+					.append("input")
+					.attr("type", "radio")
+					.attr("class", "diff")
+					.attr("name", "alignChoice")
+					.attr("value", function(d) { return d.value; })
+			;
             
             //this.listenTo (this.model, "change:compAlignment", this.render);
+			d3.select(this.el).select(".alignChoiceGroup input[type=radio][value='"+this.defaults.defaultSeqShowSetting+"']").property("checked", true);
             this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
                 this.render ({affectedModel: affectedModel});
             });
@@ -192,7 +210,7 @@
         },
         
         ellipFill: function (length) {
-            var sigfigs = length ? Math.floor (Math.log10 (length)) + 1 : 0;
+            var sigfigs = length ? Math.floor (Math.log (length) / Math.LN10) + 1 : 0;	// cos Math.log10 non-existent in IE11
             return this.ellipStr.substring (0, sigfigs);
         },
         
@@ -215,10 +233,15 @@
         render: function (obj) {
             var affectedModel = obj ? obj.affectedModel : undefined;
             console.log ("rerendering alignment for", affectedModel);
-            var place = d3.select(this.el).select("tbody");
+            var place = d3.select(this.el).select("table.seqTable");//.select("tbody");
             var self = this;
-            
-            var showDiff = d3.select(this.el).select("input.diff").property("checked");
+			
+			var selectedRadioValue = d3.select(this.el).select("input[name='alignChoice']:checked").property("value");
+			// keep this value and set it as a default for this view. Seems OK as this only affects visual output, not the model
+			// that is supplying the information. Plus there is only 1 of these views at a time, so changing the defaults doesn't bother any other views.
+			this.defaults.defaultSeqShowSetting = +selectedRadioValue;
+            var showSimilar = (selectedRadioValue & 2) > 0;
+			var showDiff = (selectedRadioValue & 1) > 0;
             
             // I suppose I could do a view per model rather than this, but it fits the d3 way of doing things
             var seqModels = this.model.get("seqCollection").models.filter (function (m) {
@@ -232,119 +255,131 @@
             });
             //console.log ("refs, comps", refs, comps);
             
+			var ellipsisInsert = this.ellipFill.bind (this);
+			
+			var MATCH = 0, DELETE = 1, INSERT = 2, VARIATION = 3;
+			var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];		
+			
             comps.forEach (function (seq) {
                 var rstr = seq.refStr;
                 var str = seq.str;
-                var l = [];
+				//var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
+				//var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
+				var segments = [];
                 var rf = [];
-                var delStreak = false;
-                var misStreak = false;
-                var i = 0;
+                var streak = MATCH;
+                var i = 0, ri = 0, ci = 0;
+				
+				function addSequenceSegment (streakType) {
+					if (n) {	// don't add zero-length match at start of sequence
+						var oldri = ri;
+						var insert = streakType === INSERT;
+						ri += (insert ? 0 : n - i);
+						
+						var oldci = ci;
+						var deleted = streakType === DELETE;
+						ci += (deleted ? 0 : n - i);
+						
+						var newSegment = {
+							klass: classes[streakType],
+							rstart: oldri,
+							rend: ri + (insert ? 1 : 0),
+							cstart: oldci,
+							cend: ci + (deleted ? 1 : 0),
+							segment: str.substring (i, n)
+						};
+						
+						if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) {	// add sequence part
+							rf.push (rstr.substring (i, n));
+							newSegment.segment = str.substring (i, n);
+						} else if (n > i) {	// or add ellipses as showDiff / showSimilar flags dictate
+							var ellip = ellipsisInsert (n - i);
+							rf.push (ellip);
+							newSegment.segment = ellip;
+						}
+						
+						segments.push (newSegment);
+						i = n;
+					}
+				};
+				
                 for (var n = 0; n < str.length; n++) {
                     var c = str[n];
                     var r = rstr[n];
-                    if ((c !== "-" && delStreak) || (c === r && misStreak)) {
-                        rf.push (rstr.substring(i,n));
-                        l.push (str.substring(i,n));
-                        l.push ("</span>");
-                        i = n;
-                        delStreak = false;
-                        misStreak = false;
+					var rhyphen = (r === "-");
+					var chyphen = (c === "-");
+
+					// if AA's are the same, but not currently on a match streak
+					if (c === r && streak !== MATCH) {
+						// add previous characters as current streak type
+						addSequenceSegment (streak);
+						streak = MATCH;	// set new streak type
                     }
-              
-                    if (c === "-" && !delStreak) {
-                        delStreak = true;
-                        if (misStreak || !showDiff) {
-                            rf.push (rstr.substring(i,n));
-                            l.push (str.substring(i,n));
-                            if (misStreak) {
-                                l.push ("</span>");
-                                misStreak = false;
-                            }
-                        } else if (n > i) {
-                            var estr = this.ellipFill (n - i);
-                            l.push (estr);
-                            rf.push (estr);
-                        }
-                        
-                        l.push ("<span class='seqDelete'>");
-                        i = n;
+					// if AA missing in c, but not currently on a delete streak
+                    else if (chyphen && streak !== DELETE) {
+						// add previous characters as current streak type
+						addSequenceSegment (streak);
+						streak = DELETE;	// set new streak type
                     }
-                    else if (c !== "-" && c !== r && !misStreak) {
-                        misStreak = true;
-                        if (delStreak || !showDiff) {
-                            rf.push (rstr.substring(i,n));
-                            l.push (str.substring(i,n));
-                            if (delStreak) {
-                                l.push ("</span>");
-                                delStreak = false;
-                            }
-                        } else if (n > i) {
-                            var estr = this.ellipFill (n - i);
-                            l.push (estr);
-                            rf.push (estr);
-                        }
-      
-                        l.push ("<span class='seqMismatch'>");
-                        i = n;
+					// else if AA missing in ref, but not currently on an insert streak
+                    else if (rhyphen && streak !== INSERT) {
+						// add previous characters as current streak type
+						addSequenceSegment (streak);
+						streak = INSERT;	// set new streak type
+                    }
+					// else if AAs in c and ref different, but not currently on a variation streak
+                    else if (!chyphen && !rhyphen && c !== r && streak !== VARIATION) {
+						// add previous characters as current streak type
+						addSequenceSegment (streak);
+						streak = VARIATION;	// set new streak type
                     }
                 }
                 
-                if (misStreak || delStreak || !showDiff) {
-                    l.push (str.substring(i,n));
-                    rf.push (rstr.substring(i,n));
-                    if (misStreak || delStreak) {
-                        l.push("</span>");
-                        misStreak = false;
-                        delStreak = false;
-                    }
-                } else if (n > i) {
-                    var estr = this.ellipFill (n - i);
-                    l.push (estr);
-                    rf.push (estr);
-                }
+				// deal with remaining sequence when end reached
+				addSequenceSegment (streak);
+				streak = MATCH;
                 
-                seq.decoratedRStr = showDiff ? rf.join('') : rstr;
-                seq.decoratedStr = l.join('');
+                seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
+				seq.segments = segments;
                 var max = Math.max (seq.str.length, seq.refStr.length);
                 seq.indexStr = this.makeIndexString(max,20).substring(0, max);
             }, this);
-            
-            var allSeqs = [];
-            var wrap = 2;
-            refs.forEach (function(r,i) { allSeqs.push(comps[i]); allSeqs.push(comps[i]); /* allSeqs.push(comps[i]); */});
+			
 
             var nformat = d3.format(",d");
             var scoreFormat = function (val) {
                 return val === Number.MAX_VALUE ? "Exact" : nformat (val);
             };
+			
+			// add one tbody per alignment
+			var tbodybind = place.selectAll("tbody").data(comps, function(d) { return d.label; })
+			//tbodybind.exit().remove();	  // removes other tbodies if only 1 affectedmodel passed in. Don't want that.
+			tbodybind.enter().append("tbody");
+			
+			// add 2 rows to each tbody
+			var rowBind = tbodybind.selectAll("tr")
+				.data(function(d) { return [
+					{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID"), segments: [{klass: undefined, segment: d.decoratedRStr}]}, 
+					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label, segments: d.segments}
+				]; 
+			});
+			
+			var newRows = rowBind.enter()
+				.append ("tr")
+			;
             
-            var rowBind = place.selectAll("tr")
-                .data(allSeqs, function (d, i) { return d.label + (i % wrap); })
-            ;
-            
-            //rowBind.exit().remove();  // removes other rows if only 1 affectedmodel passed in. Don't want that.
-            
-            var newRows = rowBind
-                .enter()
-                .append ("tr")
-                .attr ("id", function(d, i) { return "seqComp"+d.label+(i % wrap); })
-            ;
-            
+			// add a th element to each of these rows with sequence name and a tooltip
             newRows.append("th")
                 .attr("class", "seqLabel")
-                .html (function (d, i) { 
-                    var v = i % wrap; 
-                    return (v === 0) ? self.model.get("refID") : (v === 1 ? d.label : "Index"); 
-                })
-                .on ("mouseenter", function(d) {
+                .on ("mouseenter", function (d) {
+					var seqInfo = d.seqInfo;
                     self.tooltipModel
                         .set ("header", self.model.get("displayLabel"))
                         .set("contents", [
-                            ["Align Sequence", d.label],
-                            ["Search Length", nformat(d.convertFromRef.length)], 
-                            [d.label+" Length", nformat(d.convertToRef.length)], 
-                            ["Align Score", scoreFormat(d.score)],
+                            ["Align Sequence", seqInfo.label],
+                            ["Search Length", nformat(seqInfo.convertFromRef.length)], 
+                            [d.label+" Length", nformat(seqInfo.convertToRef.length)], 
+                            ["Align Score", scoreFormat(seqInfo.score)],
                         ])
                         .set("location", d3.event)
                     ;
@@ -352,23 +387,64 @@
                 })
             ;
             
+			// add a td element and a child span element to each row
             newRows.append("td")
                 .attr("class", "seq")
                 .append ("span")
-                    // mousemove can't be done as a backbone-defined event because we need access to the d datum that d3 supplies
-                    .on ("mousemove", function(d) {
-                        self.invokeTooltip (d, this);
-                    })
             ;
             
-            rowBind.select("th");   // Pushes changes in datum on existing rows in rowBind down to the th element
-            
-            rowBind.select ("td > span")
-                .html (function(d,i) {
-                    var v = i % wrap; 
-                    return (v === 0) ? d.decoratedRStr : (v === 1 ? d.decoratedStr : d.indexStr); 
-                })
-            ;
+			// update th element with row label
+            rowBind.select("th")	// .select rather than .selectAll pushes changes in datum on existing rows in rowBind down to the th element
+			    .html (function (d) { return d.rowLabel; })
+			;
+						
+			var seqTypeLabelMap = {
+				"seqMatch": "Matching",
+				"seqDelete": "Missing",
+				"seqInsert": "Extra",
+				"seqVar": "Different"
+			};
+			
+			// add number of segment spans to each td element according to d.segments
+			var segmentSpans = rowBind.select("td > span")
+				.selectAll("span")
+				.data (function(d) { return d.segments; })
+			;
+			segmentSpans.exit().remove();
+			// add tooltip to each segment span
+			segmentSpans.enter()
+				.append("span")
+				.on("mouseenter", function (d) {
+					//console.log ("hi", this);
+					if (self.tooltipModel && d.klass) {
+						var parent = d3.select(this.parentNode);
+						var parentDatum = parent.datum();
+						var rds = +d.rstart;
+						var rde = +d.rend;
+						var cds = +d.cstart;
+						var cde = +d.cend;
+						var refID = self.model.get("refID");
+						self.tooltipModel
+							.set("header", "Alignment to "+refID)
+							.set("contents", [
+								["AAs are...", seqTypeLabelMap[d.klass]],
+								[refID+" AA Range", rds >= rde ? "Would be after "+rds : (rds + 1)+" - "+rde],	// + 1 for 1-based index	
+								["This AA Range", cds >= cde ? "Would be after "+cds : (cds + 1)+" - "+cde],	// + 1 for 1-based index
+								["Align Sequence", parentDatum.rowLabel],
+
+							])
+							.set("location", d3.event)
+						;
+						self.tooltipModel.trigger ("change:location");
+					}
+				})
+			;
+			
+			// update segment spans with current data (from d.segments)
+			segmentSpans
+				.attr ("class", function(d) { return d.klass; })
+				.text (function(d) { return d.segment; })
+			;
             
             return this;
         },
@@ -376,35 +452,6 @@
         clearTooltip: function () {
             if (this.tooltipModel) {
                 this.tooltipModel.set ("contents", null);
-            }
-            return this;
-        },
-        
-        invokeTooltip: function (d, elem) {
-            if (this.tooltipModel) {
-                var xx = CLMSUI.utils.crossBrowserElementX (d3.event, elem);
-                var width = $.zepto ? $(elem).width() : $(elem).outerWidth();
-                var str = d.str;
-                var charWidth = width / str.length;
-                var charIndex = Math.floor (xx / charWidth);
-                
-                /*
-                var evt = d3.event;
-                var xs = {offsetX: evt.offsetX, clientX: evt.clientX, layerX: evt.layerX, pageX: evt.pageX, screenX: evt.screenX, x: evt.x};
-                var offs = {offsetLeft: elem.offsetLeft, scrollLeft: elem.scrollLeft};
-                console.log ("moved xs", xs, "offs", offs);
-                console.log ("@", xx, width, charIndex, d3.event, d3.event.target, elem);
-                //console.log (d.convertToRef, d.convertFromRef);
-                */
-                
-                //var t = d.refStr ? d.convertToRef[charIndex] : charIndex;
-
-                this.tooltipModel.set("header", d.label).set("contents", [
-                    ["Align Index", charIndex + 1],
-                    ["Search Value", d.refStr ? d.refStr[charIndex] : str[charIndex]],
-                    ["Seq Value", str[charIndex]],
-                ]).set("location", d3.event);
-                this.tooltipModel.trigger ("change:location");
             }
             return this;
         },

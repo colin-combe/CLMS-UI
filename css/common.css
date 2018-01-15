@@ -17,6 +17,15 @@
        url('../fonts/lato/regular/Lato-Regular.svg#svgLato-Regular') format('svg');  /* Legacy iOS */
 }
 
+/* make printing print html background colours, works for chrome, other browsers may need checkbox set in print dialog */
+@media print {
+	body, html {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		color-adjust: exact;
+	}
+}
+
 /* Styles that can apply across projects, such as history, searchsubmit etc */
 
 
