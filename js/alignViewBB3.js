@@ -44,6 +44,9 @@
             this.listenTo (this.collection, "bulkAlignChange", function () {
                 this.render();
             });
+			this.listenTo (this.collection, "change:displayLabel", function (indAlignModel) {
+				this.renderTab (indAlignModel);
+			});
             return this;
         },
         
@@ -60,6 +63,20 @@
             }
             return this;
         },
+		
+		setTabContents: function (d) {
+			var seqCount = d.get("seqCollection") ? d.get("seqCollection").length : 0;
+            return d.get("displayLabel") + (seqCount ? "<span class='alignSeqCount'>"+seqCount+"</span>" : "");
+		},
+		
+		renderTab: function (indAlignModel) {
+			var list = d3.select(this.el).select("DIV.checkHolder");
+			var indTab = list.selectAll("span.alignTab").filter (function (d) {
+				return d.id = indAlignModel.get("id");	
+			});
+			var self = this;
+			indTab.select("label").html(self.setTabContents);
+		},
         
         render: function () {
             var topElem = d3.select(this.el);
@@ -97,16 +114,15 @@
             
             // label count can change for existing protein
             proteins.select("label")
-                .html (function(d) {
-                    var seqCount = d.get("seqCollection") ? d.get("seqCollection").length : 0;
-                    return d.get("displayLabel") + (seqCount ? "<span class='alignSeqCount'>"+seqCount+"</span>" : "");
-                })
+                .html (self.setTabContents)
             ;
             
             proteins.order();
             
             return this;
         },
+		
+		
         
         radioClicked: function (evt) {
             var model = this.collection.get (evt.target.value);

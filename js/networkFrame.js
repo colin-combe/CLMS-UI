@@ -284,8 +284,8 @@ CLMSUI.init.views = function () {
     // Generate buttons for load dropdown
     var buttonData = [
         {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName: "pdbShow"},
-        {id: "csvUploadPlaceholder", label: "CSV", eventName: "csvShow"},
-        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName: "linkMetaShow"},
+        {id: "csvUploadPlaceholder", label: "Cross-Links (CSV)", eventName: "csvShow"},
+        {id: "linkMetaUploadPlaceholder", label: "Cross-Link Metadata", eventName: "linkMetaShow"},
 		{id: "proteinMetaUploadPlaceholder", label: "Protein Metadata", eventName: "proteinMetaShow"},
     ];
     buttonData.forEach (function (bdata) {

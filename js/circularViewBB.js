@@ -693,7 +693,8 @@
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.id, "selection", add);
-                        self.model.setSelectedProteins ([d], add);
+						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
+                        self.model.setSelectedProteins ([interactor], add);
                     })
             ;
 
