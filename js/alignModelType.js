@@ -72,16 +72,28 @@
         initialize: function () {
             // this is where changes to gap scores and blosum choices are picked up
             this.listenTo (this, "change", function() { 
-                //~ console.log ("something in per protein align settings changed so realign all prot seqs", this.changed); 
-                this.get("seqCollection").forEach (function (model) {
-                    model.align();
-                });
+                // console.log ("something in per protein align settings changed so realign all prot seqs", this.changed); 
+				// change to displayLabel doesn't affect alignment so ignore if just this has changed
+				if (!(this.hasChanged("displayLabel") && d3.keys(this.changedAttributes()).length === 1)) {
+					this.get("seqCollection").forEach (function (model) {
+						model.align();
+					});
+				}
             });
             
             this.listenTo (this.get("seqCollection"), "change:alignStr", function (seqModel) {
                 //console.log ("collection catching one of its model's alignStr changing", arguments);
                 this.trigger ("nonTrivialAlignmentChange", seqModel); 
             });
+			
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (fields, interactors) {
+				if (!fields || fields.indexOf("name") >= 0) {
+					var interactor = interactors.get (this.get("id"));
+					if (interactor) {
+						this.set("displayLabel", interactor.name.replace("_", " "));
+					}
+				}
+			});
             
             return this;
         },

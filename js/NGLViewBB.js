@@ -204,6 +204,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.repopulate();
             });
         });
+		
+		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (fields, interactors) {
+			if (this.xlRepr) {
+				this.xlRepr.redoChainLabels ();
+			}
+		});
 
     },
 
@@ -885,8 +891,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 	
 	redoChainLabels: function () {
-		var labelTexts = this.getLabelTexts();
-		this.labelRepr.setParameters ({labelText: labelTexts});		
+		this.labelRepr.setParameters ({labelText: this.getLabelTexts()});		
 	},
     
     setDisplayedResidues: function (residues) {

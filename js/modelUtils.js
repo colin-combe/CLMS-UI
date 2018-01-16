@@ -715,14 +715,18 @@ CLMSUI.modelUtils = {
         var proteins = clmsModel.get("participants");
         var first = true;
         var columns = [];
-        var dontStoreArray = ["proteinID", "ProteinID"];
+        var dontStoreArray = ["proteinID"];
         var dontStoreSet = d3.set (dontStoreArray);
         d3.csv.parse (metaDataFileContents, function (d) {
 			if (first) {
 				var keys = d3.keys(d);
+				keys = keys.map (function (key) {
+					return key.toLocaleLowerCase();
+				});
 				columns = d3.set(keys);
 				dontStoreArray.forEach (function (dont) {
-					columns.remove (dont);
+					var dontLower = dont.toLocaleLowerCase();
+					columns.remove (dontLower);
 				});
 				columns = columns.values();
 				first = false;
