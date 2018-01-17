@@ -18,22 +18,23 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			"click .intraRandomButton": "reRandom",
 		});
 	},
+	
+	defaultOptions: {
+		xlabel: "X Value",
+		ylabel: "Count",
+		seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
+		subSeriesNames: [],
+		scaleOthersTo: {"Random": "Cross-Links"},
+		chartTitle: this.identifier,
+		intraRandomOnly: false,
+		maxX: 90,
+		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		xStandardTickFormat: d3.format(","),
+	},
 
 	initialize: function (viewOptions) {
+		//this.defaultOptions.chartTitle = this.identifier;
 		CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
-
-		var defaultOptions = {
-			xlabel: "X Value",
-			ylabel: "Count",
-			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
-			subSeriesNames: [],
-			scaleOthersTo: {"Random": "Cross-Links"},
-			chartTitle: this.identifier,
-			intraRandomOnly: false,
-			maxX: 90,
-			attributeOptions: CLMSUI.modelUtils.attributeOptions,
-			xStandardTickFormat: d3.format(","),
-		};
 
 		this.attrExtraOptions = {
 			"Distance": {
@@ -42,10 +43,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 		};
 
-		this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
 		this.precalcedDistributions = {Random: {data: [], origSize: 0}};
-		this.displayEventName = viewOptions.displayEventName;
 
 		var self = this;
 

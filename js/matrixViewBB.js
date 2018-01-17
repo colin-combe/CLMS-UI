@@ -18,26 +18,24 @@
         "click canvas": "selectNeighbourhood",
       });
     },
+		
+	defaultOptions: {
+		xlabel: "Residue Index 1",
+		ylabel: "Residue Index 2",
+		chartTitle: "Cross-Link Matrix",
+		background: "#ccc",
+		chainBackground: "white",
+		matrixObj: null,
+		selectedColour: "#ff0",
+		highlightedColour: "#f80",
+		linkWidth: 5,
+		tooltipRange: 3,
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
-
-        var defaultOptions = {
-            xlabel: "Residue Index 1",
-            ylabel: "Residue Index 2",
-            chartTitle: "Cross-Link Matrix",
-            background: "#ccc",
-            chainBackground: "white",
-            matrixObj: null,
-            selectedColour: "#ff0",
-            highlightedColour: "#f80",
-            linkWidth: 5,
-            tooltipRange: 3,
-        };
-        
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
         
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
@@ -46,7 +44,6 @@
             left:   this.options.ylabel ? 60 : 40
         };
         
-        this.displayEventName = viewOptions.displayEventName;
         this.colourScaleModel = viewOptions.colourScaleModel;
         
         // targetDiv could be div itself or id of div - lets deal with that

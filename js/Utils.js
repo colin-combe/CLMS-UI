@@ -554,8 +554,8 @@ CLMSUI.utils = {
         initialize: function (viewOptions) {
 
             // window level options that don't depend on type of view
-            var defaultOptions = {canBringToTop: true};
-            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+            var globalOptions = {canBringToTop: true};
+            this.options = _.extend (globalOptions, this.defaultOptions, viewOptions.myOptions);
             
             this.displayEventName = viewOptions.displayEventName;
 
@@ -866,6 +866,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 
     var arrayExpandFunc = function (d, entries) {
         var expandKeys = self.options.expandTheseKeys;
+		console.log ("DEEE", d, entries);
         var newEntries = entries.map (function (entry) {
             return (expandKeys && expandKeys.has(entry.key)) ?
                 {key: entry.key, value: makeTable237 (d[entry.key])} : entry

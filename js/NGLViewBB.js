@@ -25,24 +25,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "mouseout canvas": "clearHighlighted",
         });
     },
+	
+	defaultOptions: {
+		labelVisible: false,
+		selectedOnly: false,
+		showResidues: true,
+		shortestLinksOnly: true,
+		chainRep: "cartoon",
+		colourScheme: "uniform",
+		showAllProteins: false,
+		showLongChainDescriptors: false,
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
         var self = this;
-
-        var defaultOptions = {
-            labelVisible: false,
-            selectedOnly: false,
-            showResidues: true,
-            shortestLinksOnly: true,
-            chainRep: "cartoon",
-            colourScheme: "uniform",
-            showAllProteins: false,
-			showLongChainDescriptors: false,
-        };
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
-        this.displayEventName = viewOptions.displayEventName;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);

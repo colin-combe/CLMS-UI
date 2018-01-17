@@ -40,19 +40,6 @@
     border-bottom: 1px solid transparent;
 }
 
-.proteinInfoPanel h2 {
-    width: 100%;
-    cursor: pointer;
-}
-
-.proteinInfoPanel h2 svg {
-    margin-right: 1em;
-    width: 16px;
-    height: 16px;
-    fill: white;
-    stroke: white;
-}
-
 .proteinInfoPanel h2 svg:hover {
     fill: orange;
     stroke: orange;

@@ -439,6 +439,20 @@ A.btn {
     transform: rotate(90deg);
 }
 
+.sectionTable h2 {
+    width: 100%;
+    cursor: pointer;
+}
+
+.sectionTable h2 svg {
+    margin-right: 1em;
+    width: 16px;
+    height: 16px;
+    fill: white;
+    stroke: white;
+    vertical-align: sub;
+}
+
 .toolbar:first-child {
     margin-bottom: 0.15em;
     border-bottom: 1px solid rgba(0,0,0,0.5);
@@ -455,4 +469,21 @@ A.btn {
 
 .toolbar > * {
     display: inline-block;
+}
+
+/* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
+DIV[class='messagebar']:not(:last-of-type) {
+	margin-bottom: 0.15em;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
+}
+
+.expectedFormatPanel {
+	margin-bottom: 0.15em;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
+}
+
+.expectedFormatPanel TABLE TBODY {
+	color: grey;
+	font-size: 0.7rem;
+	font-family: monospace;
 }

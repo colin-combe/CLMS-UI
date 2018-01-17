@@ -13,18 +13,15 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
             return _.extend({},parentEvents,{});
         },
+	
+		defaultOptions: {
+			fixedFontKeys: d3.set(["sequence", "seq"]),
+            removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
+            expandTheseKeys: d3.set (["uniprotFeatures"]),
+		},
 
         initialize: function (viewOptions) {
             CLMSUI.ProteinInfoViewBB.__super__.initialize.apply (this, arguments);
-            
-            var defaultOptions = {
-                fixedFontKeys: d3.set(["sequence", "seq"]),
-                removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
-                expandTheseKeys: d3.set (["uniprotFeatures"]),
-            };
-            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
-            this.displayEventName = viewOptions.displayEventName;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);

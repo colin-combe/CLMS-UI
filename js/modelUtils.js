@@ -697,11 +697,7 @@ CLMSUI.modelUtils = {
                     }
                 });
                 if (first) {
-                    columns = d3.set(keys);
-                    dontStoreArray.forEach (function (dont) {
-                        columns.remove (dont);
-                    });
-                    columns = columns.values();
+					columns = _.difference (keys, dontStoreArray);
                     first = false;
                 }
             }
@@ -715,32 +711,23 @@ CLMSUI.modelUtils = {
         var proteins = clmsModel.get("participants");
         var first = true;
         var columns = [];
-        var dontStoreArray = ["proteinID"];
+        var dontStoreArray = ["proteinID"].map (function (str) { return str.toLocaleLowerCase(); });
         var dontStoreSet = d3.set (dontStoreArray);
         d3.csv.parse (metaDataFileContents, function (d) {
 			if (first) {
-				var keys = d3.keys(d);
-				keys = keys.map (function (key) {
+				var keys = d3.keys(d).map (function (key) {
 					return key.toLocaleLowerCase();
 				});
-				columns = d3.set(keys);
-				dontStoreArray.forEach (function (dont) {
-					var dontLower = dont.toLocaleLowerCase();
-					columns.remove (dontLower);
-				});
-				columns = columns.values();
+				columns = _.difference (keys, dontStoreArray);
 				first = false;
 			}
 			
             var proteinID = d.proteinID || d.ProteinID;
 			var protein = proteins.get(proteinID);
-			
-			console.log ("protein", protein);
             
             if (protein) {
 				var name = d.name || d.Name;
                 protein.name = name || protein.name;
-				console.log ("name", name);
             }
         });
         if (columns) {

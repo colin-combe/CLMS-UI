@@ -77,20 +77,6 @@ changes there are automatically reflected in the legend
     display: none;
 }
 
-.keyPanel h2 {
-    width: 100%;
-    cursor: pointer;
-}
-
-.keyPanel h2 svg {
-    margin-right: 1em;
-    width: 16px;
-    height: 16px;
-    fill: white;
-    stroke: white;
-    vertical-align: sub;
-}
-
 .keyPanel input[type='color'] {
     cursor: pointer;
 }
