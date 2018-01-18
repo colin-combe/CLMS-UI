@@ -97,7 +97,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
         };
         
-        CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc);
+        CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0]);
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var notLinear = function () { return false; };

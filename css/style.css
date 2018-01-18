@@ -431,6 +431,7 @@ A.btn {
     shape-rendering: crispEdges;
 }
 
+
 .sectionTable .tableShown {
     background: #ccc;
 }
@@ -452,6 +453,41 @@ A.btn {
     stroke: white;
     vertical-align: sub;
 }
+
+.sectionTable table td:first-child, .sectionTable table th {
+    text-transform: capitalize;
+}
+
+.sectionTable tbody tr > td {
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid transparent;
+}
+
+.sectionTable tr:hover > td {
+    color: #666;
+    background: inherit;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    transition: none;
+    border-top-color: #444;
+    border-bottom-color: #444;
+}
+
+.sectionTable table {
+	border-collapse: separate;
+}
+
+.sectionTable table table {
+    border: 1px solid gray;
+}
+
+.expectedFormatPanel .sectionTable tbody td:first-child {
+    background: #ddd;
+}
+
+
 
 .toolbar:first-child {
     margin-bottom: 0.15em;

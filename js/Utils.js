@@ -808,8 +808,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     }
 });
 
-CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
-    //console.log ("data", data, this, arguments);
+CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc, openSectionIndices) {
     var self = this;
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
@@ -838,10 +837,12 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 	newHeaders.append("span");
 	dataJoin.selectAll("h2 > span").text(headerFunc);	// name may have changed for existing tables too
 
-	
     newElems.append("table")
         .html("<thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
         .attr("id", function(d) { return idPrefix+d.id; })
+		.style("display", function (d,i) {
+			return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
+		})
     ;
 	var tables = dataJoin.selectAll("table");
 
@@ -866,13 +867,11 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 
     var arrayExpandFunc = function (d, entries) {
         var expandKeys = self.options.expandTheseKeys;
-		console.log ("DEEE", d, entries);
         var newEntries = entries.map (function (entry) {
             return (expandKeys && expandKeys.has(entry.key)) ?
                 {key: entry.key, value: makeTable237 (d[entry.key])} : entry
             ;
         });
-		//console.log ("newEntries", newEntries);
         return newEntries;
     };
 

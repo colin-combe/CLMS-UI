@@ -18,6 +18,11 @@
             });
         },
 		
+		defaultOptions: {
+           	expandTheseKeys: d3.set (["example"]),
+			removeTheseKeys: d3.set (["sectionName", "id"]),
+		},
+		
 		initialize: function (viewOptions) {
             CLMSUI.AbstractMetaDataFileChooserBB.__super__.initialize.apply (this, arguments);
 
@@ -43,37 +48,23 @@
             wrapperPanel.append("div").attr("class", "messagebar").style("display", "none");
 			
 			var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
-			/*
-			formatPanel.append("p").text("Expected CSV Format:");
-			formatPanel.selectAll("p.expFormat").data(this.options.expectedFormat)
-				.enter()
-				.append("p")
-				.attr("class", "expFormat")
-				.text (function(d) { return d; })
-			;
-			*/
 			
-			var sectionData = [
-				{
-					id: "ExpectedFormat",
-					header: "Expected CSV Format",
-					rows: this.options.expectedFormat
-				},
-			];
+			var sectionData = [this.options.expectedFormat];
+			sectionData[0].id = "ExpectedFormat";
+			sectionData[0].sectionName = "Expected CSV Format";
 
-			var headerFunc = function(d) { return d.header; };
+			var headerFunc = function(d) { return d.sectionName; };
 			var rowFilterFunc = function(d) { 
-				console.log ("RFF", d, d3.entries(d.rows));
-				return d3.entries(d.rows);
-				//return d3.entries(d);
+				var rows = d3.entries(d);
+				var badKeys = self.options.removeTheseKeys;
+				return rows.filter (function (row) {
+					return !badKeys || !badKeys.has(row.key); 
+				});
 			};
-			var cellFunc = function (d) {
-				d3.select(this).text (d.value);
-			};
+			var cellFunc = function (d) { d3.select(this).html (d.value); };
 
-			CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc);
+			CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc, []);
 			
-			  
             this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (columns) {
                 self.setStatusText ("File "+this.lastFileName+":<br>"+(columns && columns.length ? columns.length +" "+this.options.parseMsg : "No Columns Successfully Parsed")); 
             });
@@ -102,10 +93,14 @@
 				loadedEventName: "proteinMetadataUpdated",
 				parseMsg: "Protein MetaData Attributes Parsed",
 				expectedFormat: {
-					Headers: "ProteinID,<MetaData1 Name>*,<MetaData2 Name> etc",
-					Data: "<ProteinID>,<number or string><number or string>",
-					Example: "2000171,My Protein,0.79 etc",
-					Notes: "*If a metadata column name is 'Name' it will change displayed protein names"
+					header: "ProteinID,{MetaData1 Name}*,{MetaData2 Name} etc",
+					data: "{ProteinID},{number or string},{number or string}",
+					example: [
+						{"csv file": ["ProteinID", "Name", "Value"]},
+						{csv: ["2000171,My Protein,0.79"]}, 
+						{csv: ["2000172,Mouse Protein,0.58"]},
+					],
+					notes: "*If a MetaData column name is 'Name' it will change displayed protein names"
 				}
 			};
 			viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
@@ -128,11 +123,16 @@
 				buttonText: "Select Cross-Link MetaData CSV File",
 				loadedEventName: "linkMetadataUpdated",
 				parseMsg: "Cross-Link MetaData Attributes Parsed",
-				expectedFormat: [
-					"Headers: LinkID, or all of Protein 1,SeqPos 1,Protein 2,SeqPos 2, then <MetaData1 Name>,<MetaData2 Name> etc",
-					"Rows: <ProteinID>_<SeqPos1>-<ProteinID>_<SeqPos2>, or all of <Accession or Name or ProteinID>,<SeqPos1>,<Accession or Name or ProteinID>,<SeqPos2>, then <number or #color> etc",
-					"Example Row: 2000171_107-2000171_466, or all of P02768-A,107,sp|P02768-A|ALBU_HUMAN,466, then 57.07,#FF8800 etc"	
-				]
+				expectedFormat: {
+					header: "LinkID, or all of Protein 1,SeqPos 1,Protein 2,SeqPos 2, then {MetaData1 Name},{MetaData2 Name} etc",
+					rows: "{ProteinID}_{SeqPos1}-{ProteinID}_{SeqPos2}, or {Accession|Name|ProteinID},{SeqPos1},{Accession|Name|ProteinID},{SeqPos2}, then {number or #color} etc",
+					example: [
+						{"csv file": ["Protein 1", "SeqPos 1","Protein 2","SeqPos 2","Quantitation", "Fixed Colour"]}, 
+						{csv: ["sp|P02768-A|ALBU_HUMAN","107","sp|P02768-A|ALBU_HUMAN","466", "57.07","#FF8800"]},
+						{csv: ["sp|P02768-A|ALBU_HUMAN","126","sp|P02768-A|ALBU_HUMAN","426", "52.04","#FFaa00"]}
+					],
+					notes: "Protein 1 and Protein 2 fields will be split by | and the individual parts parsed to find a name or accession number"
+				}
 			};
 			viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
             CLMSUI.LinkMetaDataFileChooserBB.__super__.initialize.apply (this, arguments);

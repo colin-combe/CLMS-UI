@@ -75,7 +75,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 
                 var headerFunc = function(d) { return d.name.replace("_", " "); };
                 
-                CLMSUI.utils.sectionTable.call (this, tabs, prots, "protInfo", ["Property", "Value"], headerFunc, rowFilterFunc, cellFunc);
+                CLMSUI.utils.sectionTable.call (this, tabs, prots, "protInfo", ["Property", "Value"], headerFunc, rowFilterFunc, cellFunc, [0]);
                 
                 tabs.selectAll("span.hit")
                     .on ("click", function() {
