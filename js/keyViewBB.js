@@ -158,7 +158,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
                 var rgbCol = colScale.range()[i];
                 var rgbHex = d3.rgb(rgbCol).toString();
-                var span = "<input type='color' value='"+rgbHex+"' title='Press to change colour'/>";
+                var span = "<input type='color' value='"+rgbHex+"' title='Press to change colour for "+val+"'/>";
                 return [span, val, i];
             });
 

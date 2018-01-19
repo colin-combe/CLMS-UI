@@ -177,7 +177,6 @@
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
-					<p id="sharePlaceholder"></p>
                     <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
             </div>
 

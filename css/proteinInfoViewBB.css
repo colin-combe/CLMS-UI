@@ -4,7 +4,7 @@
 
 .proteinInfoPanel section {
     margin-top: 5px;
-    border-bottom: 2px solid white;
+    border-bottom: 1px solid grey;
 }
 
 .proteinInfoPanel table {
@@ -22,16 +22,6 @@
 .proteinInfoPanel tbody td {
     word-wrap: break-word;
     line-height: 1.4em;
-}
-
-.proteinInfoPanel h2 svg:hover {
-    fill: orange;
-    stroke: orange;
-}
-
-.proteinInfoPanel h2:hover {
-    fill: orange;
-    color: orange;
 }
 
 .proteinInfoPanel .hit {

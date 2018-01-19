@@ -443,6 +443,8 @@ A.btn {
 .sectionTable h2 {
     width: 100%;
     cursor: pointer;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
 }
 
 .sectionTable h2 svg {
@@ -450,8 +452,15 @@ A.btn {
     width: 16px;
     height: 16px;
     fill: white;
-    stroke: white;
+    stroke: #888;
+	shape-rendering: crispedges;
     vertical-align: sub;
+}
+
+.sectionTable h2:hover {
+    background: white;
+	border-bottom: 1px solid black;
+	border-top: 1px solid black;
 }
 
 .sectionTable table td:first-child, .sectionTable table th {
@@ -463,16 +472,16 @@ A.btn {
     border-bottom: 1px solid transparent;
 }
 
-.sectionTable tr:hover > td {
-    color: #666;
+.sectionTable tbody tr:hover td {
+	color: #777;
     background: inherit;
     -webkit-transition: none;
     -moz-transition: none;
     -ms-transition: none;
     -o-transition: none;
     transition: none;
-    border-top-color: #444;
-    border-bottom-color: #444;
+    /*border-top-color: #444;
+    border-bottom-color: #444;*/
 }
 
 .sectionTable table {

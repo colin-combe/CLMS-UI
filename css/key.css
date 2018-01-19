@@ -74,6 +74,10 @@ changes there are automatically reflected in the legend
     cursor: pointer;
 }
 
+.keyPanel input[type='color']:hover {
+    border: 1px solid black;
+}
+
 #linkColourDropdownPlaceholder {
     margin-bottom: 0.4em;
 }
