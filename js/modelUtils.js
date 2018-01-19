@@ -664,6 +664,7 @@ CLMSUI.modelUtils = {
         var columns = [];
         var dontStoreArray = ["linkID", "LinkID", "Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2"];
         var dontStoreSet = d3.set (dontStoreArray);
+		var matchedCrossLinkCount = 0;
         d3.csv.parse (metaDataFileContents, function (d) {
             var linkID = d.linkID || d.LinkID;
             var crossLinkEntry = crossLinks.get(linkID);
@@ -684,6 +685,7 @@ CLMSUI.modelUtils = {
             }
             
             if (crossLinkEntry) {
+				matchedCrossLinkCount++;
                 crossLinkEntry.meta = crossLinkEntry.meta || {};
                 var meta = crossLinkEntry.meta;
                 var keys = d3.keys(d);
@@ -713,6 +715,7 @@ CLMSUI.modelUtils = {
         var columns = [];
         var dontStoreArray = ["proteinID"].map (function (str) { return str.toLocaleLowerCase(); });
         var dontStoreSet = d3.set (dontStoreArray);
+		var matchedProteinCount = 0;
         d3.csv.parse (metaDataFileContents, function (d) {
 			if (first) {
 				var keys = d3.keys(d).map (function (key) {
@@ -726,6 +729,7 @@ CLMSUI.modelUtils = {
 			var protein = proteins.get(proteinID);
             
             if (protein) {
+				matchedProteinCount++;
 				var name = d.name || d.Name;
                 protein.name = name || protein.name;
             }

@@ -65,13 +65,19 @@
 
 			CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc, []);
 			
-            this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (columns) {
-                self.setStatusText ("File "+this.lastFileName+":<br>"+(columns && columns.length ? columns.length +" "+this.options.parseMsg : "No Columns Successfully Parsed")); 
+            this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (columns, items, matchedItemCount) {
+				var success = columns && columns.length;// && matchedItemCount;
+				var msg1 = _.template(this.options.parseMsgTemplate)({attrCount: columns ? columns.length : 0, itemCount: matchedItemCount});
+                self.setStatusText ("File "+this.lastFileName+":<br>"+(success ? msg1 : "No Columns Successfully Parsed"), success); 
             });
         },
         
-        setStatusText : function (msg) {
-            d3.select(this.el).select(".messagebar").style("display", null).html(msg);    
+        setStatusText : function (msg, success) {
+			var mbar = d3.select(this.el).select(".messagebar").style("display", null);
+			var t = mbar.html(msg).transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
+			if (success !== undefined) {
+				t.transition().duration(5000).style("color", "#091d42");
+			}
         },
         
         selectMetaDataFile: function (evt) {
@@ -91,7 +97,7 @@
 			var myDefaults = {
 				buttonText: "Select Protein MetaData CSV File",
 				loadedEventName: "proteinMetadataUpdated",
-				parseMsg: "Protein MetaData Attributes Parsed",
+				parseMsgTemplate: "<%= attrCount %> MetaData Attributes Parsed for Proteins",
 				expectedFormat: {
 					header: "ProteinID,{MetaData1 Name}*,{MetaData2 Name} etc",
 					data: "{ProteinID},{number or string},{number or string}",
@@ -122,7 +128,7 @@
 			var myDefaults = {
 				buttonText: "Select Cross-Link MetaData CSV File",
 				loadedEventName: "linkMetadataUpdated",
-				parseMsg: "Cross-Link MetaData Attributes Parsed",
+				parseMsgTemplate: "<%= attrCount %> MetaData Attributes Parsed for Cross-Links",
 				expectedFormat: {
 					header: "LinkID, or all of Protein 1,SeqPos 1,Protein 2,SeqPos 2, then {MetaData1 Name},{MetaData2 Name} etc",
 					rows: "{ProteinID}_{SeqPos1}-{ProteinID}_{SeqPos2}, or {Accession|Name|ProteinID},{SeqPos1},{Accession|Name|ProteinID},{SeqPos2}, then {number or #color} etc",
