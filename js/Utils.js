@@ -839,8 +839,12 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     var arrayExpandFunc = function (d, entries) {
         var expandKeys = self.options.expandTheseKeys;
         var newEntries = entries.map (function (entry) {
+			var subTableVals = d[entry.key];
+			if ($.isPlainObject (subTableVals)) {	// convert object into array of objects that'll have Key/Value as headings
+				subTableVals = d3.entries (subTableVals);
+			}
             return (expandKeys && expandKeys.has(entry.key)) ?
-                {key: entry.key, value: makeTable237 (d[entry.key])} : entry
+                {key: entry.key, value: makeTable237 (subTableVals)} : entry
             ;
         });
         return newEntries;
