@@ -223,16 +223,15 @@ CLMSUI.utils = {
     },
     
     declutterAxis: function (d3AxisElem) {
-        var last = Number.NEGATIVE_INFINITY;
+        var lastBounds = {left: -100, right: -100, top: -100, bottom: -100};
         d3AxisElem.selectAll(".tick text")
             .each (function () {
                 var text = d3.select(this);
                 var bounds = this.getBoundingClientRect();
-                var overlap = bounds.x < last;
-                //console.log ("bounds", bounds);
+                var overlap = !(bounds.right < lastBounds.left || bounds.left > lastBounds.right || bounds.bottom < lastBounds.top || bounds.top > lastBounds.bottom);
                 text.style ("visibility", overlap ? "hidden" : null);
                 if (!overlap) {
-                    last = bounds.x + bounds.width;
+                    lastBounds = bounds;
                 }
             })
         ;
