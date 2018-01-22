@@ -242,11 +242,13 @@ CLMSUI.linkColour.setupColourModels = function () {
     });
     
     // All colour scales with ids in metadataFields array are removed (if already extant) and added
-    CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metadataFields, crossLinks) {
-        var colMaps = metadataFields.map (function (field) {
+    CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
+		var columns = metaMetaData.columns;
+		var crossLinks = metaMetaData.items;
+        var colMaps = columns.map (function (field) {
             return CLMSUI.linkColour.makeColourModel (field, field, crossLinks);
         });  
-        this.remove (metadataFields);
+        this.remove (columns);
         this.add (colMaps);
         
         replaceCurrentLinkColourAssignment (this);

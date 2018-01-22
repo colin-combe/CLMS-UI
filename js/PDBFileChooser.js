@@ -23,11 +23,6 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 	initialize: function (viewOptions) {
 		CLMSUI.PDBFileChooserBB.__super__.initialize.apply (this, arguments);
 
-		var defaultOptions = {};
-		this.options = _.extend (defaultOptions, viewOptions.myOptions);
-
-		this.displayEventName = viewOptions.displayEventName;
-
 		// this.el is the dom element this should be getting added to, replaces targetDiv
 		var mainDivSel = d3.select(this.el);
 
@@ -68,7 +63,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		;
 
 
-		wrapperPanel.append("div").attr("class", "messagebar");
+		wrapperPanel.append("div").attr("class", "messagebar").style("display", "none");
 
 		this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white", tooltip: false});
 		console.log ("STAGE", this.stage);
@@ -107,7 +102,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 	},
 
   	setStatusText : function (msg, success) {
-		var mbar = d3.select(this.el).select(".messagebar");
+		var mbar = d3.select(this.el).select(".messagebar").style("display", null);
 		var t = mbar.text(msg).transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
 		if (success !== undefined) {
 			t.transition().duration(5000).style("color", "#091d42");
@@ -133,14 +128,6 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 				CLMSUI.modelUtils.repopulateNGL ({pdbCode: pdbCode, stage: this.stage, bbmodel: this.model});
 			}
 		}
-	},
-
-  	render: function () {
-		return this;
-	},
-
-  	relayout: function () {
-		return this;
 	},
 
   	identifier: "PDB File Chooser",

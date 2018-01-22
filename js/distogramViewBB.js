@@ -18,22 +18,23 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			"click .intraRandomButton": "reRandom",
 		});
 	},
+	
+	defaultOptions: {
+		xlabel: "X Value",
+		ylabel: "Count",
+		seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
+		subSeriesNames: [],
+		scaleOthersTo: {"Random": "Cross-Links"},
+		chartTitle: this.identifier,
+		intraRandomOnly: false,
+		maxX: 90,
+		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		xStandardTickFormat: d3.format(","),
+	},
 
 	initialize: function (viewOptions) {
+		//this.defaultOptions.chartTitle = this.identifier;
 		CLMSUI.DistogramBB.__super__.initialize.apply (this, arguments);
-
-		var defaultOptions = {
-			xlabel: "X Value",
-			ylabel: "Count",
-			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
-			subSeriesNames: [],
-			scaleOthersTo: {"Random": "Cross-Links"},
-			chartTitle: this.identifier,
-			intraRandomOnly: false,
-			maxX: 90,
-			attributeOptions: CLMSUI.modelUtils.attributeOptions,
-			xStandardTickFormat: d3.format(","),
-		};
 
 		this.attrExtraOptions = {
 			"Distance": {
@@ -42,10 +43,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 		};
 
-		this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
 		this.precalcedDistributions = {Random: {data: [], origSize: 0}};
-		this.displayEventName = viewOptions.displayEventName;
 
 		var self = this;
 
@@ -248,7 +246,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
 		this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
 		this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
-		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
+			var columns = metaMetaData.columns;
 			//console.log ("HELLO", arguments);
 			var newOptions = columns.map (function (column) {
 				return {

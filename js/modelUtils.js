@@ -664,6 +664,7 @@ CLMSUI.modelUtils = {
         var columns = [];
         var dontStoreArray = ["linkID", "LinkID", "Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2"];
         var dontStoreSet = d3.set (dontStoreArray);
+		var matchedCrossLinkCount = 0;
         d3.csv.parse (metaDataFileContents, function (d) {
             var linkID = d.linkID || d.LinkID;
             var crossLinkEntry = crossLinks.get(linkID);
@@ -684,6 +685,7 @@ CLMSUI.modelUtils = {
             }
             
             if (crossLinkEntry) {
+				matchedCrossLinkCount++;
                 crossLinkEntry.meta = crossLinkEntry.meta || {};
                 var meta = crossLinkEntry.meta;
                 var keys = d3.keys(d);
@@ -697,17 +699,13 @@ CLMSUI.modelUtils = {
                     }
                 });
                 if (first) {
-                    columns = d3.set(keys);
-                    dontStoreArray.forEach (function (dont) {
-                        columns.remove (dont);
-                    });
-                    columns = columns.values();
+					columns = _.difference (keys, dontStoreArray);
                     first = false;
                 }
             }
         });
         if (columns) {
-            CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
+            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, items: crossLinks, matchedItemCount: matchedCrossLinkCount});
         }    
     },
 	
@@ -715,36 +713,43 @@ CLMSUI.modelUtils = {
         var proteins = clmsModel.get("participants");
         var first = true;
         var columns = [];
-        var dontStoreArray = ["proteinID"];
+        var dontStoreArray = ["proteinID"].map (function (str) { return str.toLocaleLowerCase(); });
         var dontStoreSet = d3.set (dontStoreArray);
+		var matchedProteinCount = 0;
         d3.csv.parse (metaDataFileContents, function (d) {
 			if (first) {
-				var keys = d3.keys(d);
-				keys = keys.map (function (key) {
+				var keys = d3.keys(d).map (function (key) {
 					return key.toLocaleLowerCase();
 				});
-				columns = d3.set(keys);
-				dontStoreArray.forEach (function (dont) {
-					var dontLower = dont.toLocaleLowerCase();
-					columns.remove (dontLower);
-				});
-				columns = columns.values();
+				columns = _.difference (keys, dontStoreArray);
 				first = false;
 			}
 			
             var proteinID = d.proteinID || d.ProteinID;
 			var protein = proteins.get(proteinID);
 			
-			console.log ("protein", protein);
-            
             if (protein) {
+				matchedProteinCount++;
 				var name = d.name || d.Name;
                 protein.name = name || protein.name;
-				console.log ("name", name);
+				
+				protein.meta = protein.meta || {};
+                var meta = protein.meta;
+                d3.entries(d).forEach (function (entry) {
+					var key = entry.key;
+					var val = entry.value;
+					var column = key.toLocaleLowerCase();
+                    if (val && !dontStoreSet.has(column) && column !== "name") {
+                        if (!isNaN(val)) {
+                            val = +val;
+                        }
+                        meta[column] = val;
+                    }
+                });
             }
         });
         if (columns) {
-            CLMSUI.vent.trigger ("proteinMetadataUpdated", columns, proteins);
+            CLMSUI.vent.trigger ("proteinMetadataUpdated", {columns: columns, items: proteins, matchedItemCount: matchedProteinCount});
         }    
     },
     

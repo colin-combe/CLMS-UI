@@ -119,8 +119,7 @@
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/CSVFileChooser.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/linkMetaDataFileChooserBB.js<?php echo $cacheBuster ?>"></script>
-		    <script type="text/javascript" src="./js/proteinMetaDataFileChooserBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/alignModelType.js<?php echo $cacheBuster ?>"></script>
@@ -176,8 +175,8 @@
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
-					<p id="sharePlaceholder"></p>
                     <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
+                    <p id="xiNetControlsDropdownPlaceholder"></p>
             </div>
 
             <div class="mainContent">

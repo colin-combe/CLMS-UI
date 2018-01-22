@@ -21,36 +21,32 @@
         "click .jitter": "toggleJitter",
       });
     },
+		
+	defaultOptions: {
+		xlabel: "Axis 1",
+		ylabel: "Axis 2",
+		chartTitle: "Scatterplot",
+		selectedColour: "#ff0",
+		highlightedColour: "#f80",
+		background: "#eee",
+		jitter: true,
+		chartMargin: 10,
+		pointSize: 4,
+		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		standardTickFormat: d3.format(",d"),
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.ScatterplotViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
 
-        var defaultOptions = {
-            xlabel: "Axis 1",
-            ylabel: "Axis 2",
-            chartTitle: "Scatterplot",
-            selectedColour: "#ff0",
-            highlightedColour: "#f80",
-            background: "#eee",
-            jitter: true,
-            chartMargin: 10,
-            pointSize: 4,
-            attributeOptions: CLMSUI.modelUtils.attributeOptions,
-			standardTickFormat: d3.format(",d"),
-        };
-        
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-        
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
             right:  20,
             bottom: this.options.xlabel ? 40 : 25,
             left:   this.options.ylabel ? 70 : 50
         };
-        
-        this.displayEventName = viewOptions.displayEventName;
         
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
@@ -235,8 +231,9 @@
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
-        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
             //console.log ("HELLO", arguments);
+			var columns = metaMetaData.columns;
             var newOptions = columns.map (function (column) {
                 return {
                     id: column, label: column, decimalPlaces: 2, matchLevel: false, 

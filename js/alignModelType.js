@@ -86,8 +86,10 @@
                 this.trigger ("nonTrivialAlignmentChange", seqModel); 
             });
 			
-			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (fields, interactors) {
-				if (!fields || fields.indexOf("name") >= 0) {
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (metaMetaData) {
+				var columns = metaMetaData.columns;
+				var interactors = metaMetaData.items;
+				if (!columns || columns.indexOf("name") >= 0) {
 					var interactor = interactors.get (this.get("id"));
 					if (interactor) {
 						this.set("displayLabel", interactor.name.replace("_", " "));

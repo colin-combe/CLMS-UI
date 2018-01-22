@@ -1,21 +1,21 @@
 var CLMSUI = CLMSUI || {};
 
 CLMSUI.utils = {
-    
+
     debug: false,
-    
+
     xilog: function () {
         if (this.debug && (typeof(console) !== 'undefined')) {
             console.log.apply (console, arguments);
         }
     },
-    
+
     commonRegexes: {
         uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
         pdbPattern: "[A-Za-z0-9]{4}",
         hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
     },
-    
+
     // return comma-separated list of protein names from array of protein ids
     proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
         var mpeptides = d.matchedPeptides[matchedPeptideIndex];
@@ -27,9 +27,9 @@ CLMSUI.utils = {
         var mpeptides = d.matchedPeptides[matchedPeptideIndex];
         return mpeptides ? mpeptides.pos.join(", ") : "";
     },
-    
+
     commonLabels: {
-        downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906 
+        downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906
 		shareLink: "Share Search Link with Current Filter State",
     },
 
@@ -43,7 +43,7 @@ CLMSUI.utils = {
                 .attr("class", function(d) { return d; } )  // make class the classname entry
                 .classed ("draggableCorner", true)
         ;
-            
+
         return fourCorners;
     },
 
@@ -52,13 +52,13 @@ CLMSUI.utils = {
             .append("div")
             .attr("class", "dynDiv_moveParentDiv")
         ;
-        
+
         parentBar
             .append("span")
             .attr("class", "dynTitle")
             //.text ("Title")
         ;
-        
+
         parentBar
             .append ("i")
             .attr ("class", "fa fa-times-circle closeButton")
@@ -88,7 +88,7 @@ CLMSUI.utils = {
     crossBrowserElementY : function (evt, optElem) {
         return evt.clientY - $(optElem || evt.target).offset().top;
     },
-    
+
     buttonView: Backbone.View.extend ({
         tagName: "span",
         className: "buttonPlaceholder",
@@ -117,7 +117,59 @@ CLMSUI.utils = {
         }
     }),
 
-    checkBoxView: Backbone.View.extend ({
+        checkBoxView: Backbone.View.extend ({
+            tagName: "span",
+            className: "buttonPlaceholder",
+            events: {
+                "click input": "checkboxClicked"
+            },
+
+            initialize: function (viewOptions) {
+                var defaultOptions = {
+                    labelFirst: true
+                };
+                this.options = _.extend(defaultOptions, viewOptions.myOptions);
+
+                // this.el is the dom element this should be getting added to, replaces targetDiv
+                var sel = d3.select(this.el);
+                if (!sel.attr("id")) {
+                    sel.attr("id", this.options.id.replace(/ /g, "_"));
+                }
+
+                var labs = sel.append("label")
+                    .attr("class", "btn")
+                ;
+                labs.append ("input")
+                    .attr ("id", sel.attr("id")+"ChkBx")
+                    .attr("type", "checkbox")
+                ;
+                var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
+                labelText.text (this.options.label);
+
+                // Remember to listen to changes to model or global event state that come from outside the view (keeps it in sync with models)
+                if (this.model && this.options.toggleAttribute) {
+                    this.listenTo (this.model, "change:"+this.options.toggleAttribute, this.showState);
+                } else if (this.options.eventName) {
+                    this.listenTo (CLMSUI.vent, this.options.eventName, this.showState);
+                }
+            },
+
+            showState : function (args) {
+                var boolVal = arguments.length > 1 ? arguments[1] : arguments[0];
+                d3.select(this.el).select("input").property("checked", boolVal);
+            },
+
+            checkboxClicked: function () {
+                var checked = d3.select(this.el).select("input").property("checked");
+                if (this.model && this.options.toggleAttribute) {
+                    this.model.set (this.options.toggleAttribute, checked);
+                } else if (this.options.eventName) {
+                    CLMSUI.vent.trigger (this.options.eventName, checked);
+                }
+            }
+        }),
+
+    radioButtonView: Backbone.View.extend ({
         tagName: "span",
         className: "buttonPlaceholder",
         events: {
@@ -141,11 +193,11 @@ CLMSUI.utils = {
             ;
             labs.append ("input")
                 .attr ("id", sel.attr("id")+"ChkBx")
-                .attr("type", "checkbox")
+                .attr("type", "radio")
             ;
             var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
             labelText.text (this.options.label);
-            
+
             // Remember to listen to changes to model or global event state that come from outside the view (keeps it in sync with models)
             if (this.model && this.options.toggleAttribute) {
                 this.listenTo (this.model, "change:"+this.options.toggleAttribute, this.showState);
@@ -179,7 +231,7 @@ CLMSUI.utils = {
         roundVal *= pow;
         return roundVal;
     },
-    
+
     // correlates to d3's .round with decimal places function
     ceil: function (val, decimalPlaces) {
         var pow = Math.pow (10, decimalPlaces);
@@ -187,7 +239,7 @@ CLMSUI.utils = {
         val = Math.ceil (val);
         return val / pow;
     },
-    
+
     floor: function (val, decimalPlaces) {
         var pow = Math.pow (10, decimalPlaces);
         val *= pow;
@@ -208,7 +260,7 @@ CLMSUI.utils = {
             ;
         }
     },
-        
+
     convertCanvasToImage: function (canvas, image, callback) {
         image
             .attr ("width", canvas.attr("width"))
@@ -221,7 +273,7 @@ CLMSUI.utils = {
         ;
         callback (image);
     },
-    
+
     declutterAxis: function (d3AxisElem) {
         var last = Number.NEGATIVE_INFINITY;
         d3AxisElem.selectAll(".tick text")
@@ -294,20 +346,20 @@ CLMSUI.utils = {
              }
          }
      }),
-    
+
     // Routine assumes on click methods are added via backbone definitions, though they could be added later with d3
     // targetDiv is a d3 select element
     // buttonData array of objects of type:
-    // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button", 
+    // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button",
     // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
-    makeBackboneButtons: function (targetDiv, baseID, buttonData) { 
+    makeBackboneButtons: function (targetDiv, baseID, buttonData) {
         var makeID = function (d) { return baseID + d.id; };
-        
+
         // Don't make buttons whose id already exists
         buttonData = buttonData.filter (function (d) {
-            return d3.select("#"+makeID(d)).empty();   
+            return d3.select("#"+makeID(d)).empty();
         });
-        
+
         targetDiv.selectAll("button.tempClass")  // .tempClass ensures existing buttons aren't picked up, only new ones created
             .data (buttonData.filter(function(bd) { return bd.type === "button"; }), function(d) { return d.id; })
             .enter()
@@ -317,26 +369,26 @@ CLMSUI.utils = {
                 .classed ("btn btn-1 btn-1a", true) // and we don't class .temp so these can't be picked up by a subsequent call to make backbonebuttons
                 .attr("id", makeID)
         ;
-            
+
         var cboxes = targetDiv.selectAll("label.tempClass")
-            .data (buttonData.filter(function(bd) { return bd.type === "checkbox" || bd.type === "radio"; }), function(d) { return d.id; })		
-            .enter()		
-            .append ("label")		
+            .data (buttonData.filter(function(bd) { return bd.type === "checkbox" || bd.type === "radio"; }), function(d) { return d.id; })
+            .enter()
+            .append ("label")
                 .attr ("class", "btn noBreak")
                 .attr ("title", function(d) { return d.title; })
                 .attr ("id", makeID)
         ;
-        
+
         cboxes
             .filter (function(d) { return !d.inputFirst; })
-            .append ("span")		
+            .append ("span")
                 .style ("white-space", function(d) { return d.noBreak ? "nowrap" : "normal"; })
-                .text (function(d) { return d.label; })		
+                .text (function(d) { return d.label; })
         ;
-        
-        cboxes.append ("input")		
-            .attr("type", function(d) { return d.type; })		
-            .attr("class", function(d) { return d.class; })		
+
+        cboxes.append ("input")
+            .attr("type", function(d) { return d.type; })
+            .attr("class", function(d) { return d.class; })
             .property ("checked", function(d) { return d.initialState; })
             .each (function(d) {
                 if (d.group) {
@@ -344,25 +396,25 @@ CLMSUI.utils = {
                 }
             })
         ;
-        
+
         cboxes
             .filter (function(d) { return d.inputFirst; })
-            .append ("span")		
+            .append ("span")
                 .style ("white-space", function(d) { return d.noBreak ? "nowrap" : "normal"; })
-                .text (function(d) { return d.label; })		
+                .text (function(d) { return d.label; })
         ;
     },
-    
+
     // Functions for making useful file names
-    
+
     objectStateToAbbvString: function (object, fields, zeroFormatFields, abbvMap) {
         fields = fields.filter (function (field) {
             var val = object.get ? object.get(field) || object[field] : object[field];
-            return !(val === "" || val === false || val === undefined);    
+            return !(val === "" || val === false || val === undefined);
         }, this);
 
         //console.log ("fields", fields);
-        
+
         var zeroFormat = d3.format (".4f");
         var strValue = function (field, val) {
             if (val === true) {
@@ -373,7 +425,7 @@ CLMSUI.utils = {
             }
             if ($.isArray (val)) {
                 var arrayStr = val.map (function (elem) {
-                    return strValue (field, elem); 
+                    return strValue (field, elem);
                 });
                 return arrayStr.join("-");
             }
@@ -384,57 +436,28 @@ CLMSUI.utils = {
             var val = object.get ? object.get(field) || object[field] : object[field];
             return (abbvMap[field] || field.toUpperCase()) + (val === true ? "" : "=" + strValue (field, val));
         }, this);
-        return strParts.join(".");    
+        return strParts.join(".");
     },
-    
+
     filterStateToString: function () {
         var filterStr = CLMSUI.compositeModelInst.get("filterModel").stateString();
         return filterStr.substring(0, 160);
     },
-    
+
     searchesToString: function () {
         var searches = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
         var searchKeys = searches.map (function (search) { return search[0]; }); // just the keys
         var searchStr = ("SRCH="+searchKeys.join("-")).substring(0, 40);
         return searchStr;
     },
-    
+
     makeLegalFileName: function (fileNameStr) {
-        var newStr = fileNameStr.replace (/[^a-zA-Z0-9-=&()¦_\\.]/g, ""); 
+        var newStr = fileNameStr.replace (/[^a-zA-Z0-9-=&()¦_\\.]/g, "");
         newStr = newStr.substring (0, 240);
         return newStr;
     },
-	
-	
-	FilterModelStateShareButton: Backbone.View.extend ({
-        tagName: "span",
-        className: "shareButton",
-        events: {
-            "click i": "buttonClicked"
-        },
 
-        initialize: function (viewOptions) {
-            var defaultOptions = {};
-            this.options = _.extend (defaultOptions, viewOptions.myOptions);
 
-            // this.el is the dom element this should be getting added to, replaces targetDiv
-            var sel = d3.select(this.el);
-            if (!sel.attr("id")) {
-                sel.attr("id", this.options.id);
-            }
-
-            sel.append("i")
-                .attr("class", "fa fa-xi fa-share")
-				.attr("title", CLMSUI.utils.commonLabels.shareLink)
-            ;
-        },
-
-        buttonClicked: function () {
-			CLMSUI.vent.trigger (this.options.eventName, true);
-        }
-    }),
-    
-    
     // Function for making a colour key as an svg group element
     updateColourKey: function (model, svgElem) {
         var keyGroup = svgElem.select("g.key");
@@ -445,7 +468,7 @@ CLMSUI.utils = {
             ;
         }
         keyGroup = svgElem.select("g.key");
-        
+
         var colourAssign = model.get("linkColourAssignment");
         if (colourAssign) {
             keyGroup.select("text.keyTitle")
@@ -453,11 +476,11 @@ CLMSUI.utils = {
                 .attr("text-decoration", "underline")
                 .text ("Key: "+colourAssign.get("title"))
             ;
-            
+
             var colScale = colourAssign.get("colScale");
             var labels = colourAssign.get("labels");
             var pairUp = d3.zip (colScale.range(), labels.range());
-            
+
             var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
             colourElems.exit().remove();
             var newElems = colourElems.enter().append("g")
@@ -476,10 +499,10 @@ CLMSUI.utils = {
             colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
             colourElems.select("text").text(function (d, i) { return d[1]; });
         }
-        
+
     },
-    
-    
+
+
     // settings can be
     // addToElem - element to add select elements to
     // selectList - names of select elements to add
@@ -497,12 +520,12 @@ CLMSUI.utils = {
             initialSelectionFunc: function (d,i) { return i === 0; }
         };
         settings = _.extend (defaults, settings);
-        
+
         // Add a number of select widgets for picking axes data types
         var selectHolders = settings.addToElem.selectAll("label.selectHolder")
             .data(settings.selectList, function(d) { return d.id ? d.id : d; })
         ;
-        
+
         // new select elements
         selectHolders
             .enter()
@@ -514,7 +537,7 @@ CLMSUI.utils = {
                 .append("select")
                     .on ("change", settings.changeFunc)
         ;
-        
+
         var optionData = settings.optionList.slice();
         if (settings.keepOldOptions) {
             var existingOptions = selectHolders.select("select").selectAll("option");
@@ -523,7 +546,7 @@ CLMSUI.utils = {
             optionData = oldData.concat(optionData);
         }
         //console.log ("SETTUINGS", optionData);
-        
+
         // add options to new and existing select elements
         var selects = selectHolders.selectAll("select");
         selects
@@ -534,11 +557,11 @@ CLMSUI.utils = {
                 .text (settings.optionLabelFunc)
                 .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
         ;
-        
+
         return selects;
     },
 
-    
+
     BaseFrameView: Backbone.View.extend ({
 
         events: {
@@ -554,9 +577,9 @@ CLMSUI.utils = {
         initialize: function (viewOptions) {
 
             // window level options that don't depend on type of view
-            var defaultOptions = {canBringToTop: true};
-            this.options = _.extend (defaultOptions, viewOptions.myOptions);
-            
+            var globalOptions = {canBringToTop: true};
+            this.options = _.extend (globalOptions, this.defaultOptions, viewOptions.myOptions);
+
             this.displayEventName = viewOptions.displayEventName;
 
             var self = this;
@@ -596,13 +619,13 @@ CLMSUI.utils = {
             var svgStrings = CLMSUI.svgUtils.capture (svgArr);
             var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
             //console.log ("xml", svgXML);
-            
+
             var fileName = this.filenameStateString().substring (0,240);
             download (svgXML, 'application/svg', fileName+".svg");
         },
 
         canvasImageParent: "svg",
-        
+
         /**
         Called when we need to change a canvas element to an image to add to a cloned svg element we download.
         Needs canvasImageParent set to decide where to place it in an svg (e.g. for matrix we put it in a g with a clipPath)
@@ -635,7 +658,7 @@ CLMSUI.utils = {
                 download (svgXML, "application/svg", fileName);
             });
         },
-        
+
 
         hideView: function () {
             CLMSUI.vent.trigger (this.displayEventName, false);
@@ -652,11 +675,11 @@ CLMSUI.utils = {
                 console.log ("this view", this);
 
                 // Push objects containing the individual divs as selections along with their z-indexes to an array
-                activeDivs.each (function() { 
+                activeDivs.each (function() {
                     // default z-index is "auto" on firefox, + on this returns NaN, so need || 0 to make it sensible
                     var zindex = d3.select(this).style("z-index"); //*/ d3.select(this).datum() ? d3.select(this).datum()("z-index") : 0;
                     zindex = zindex || 0;
-                    sortArr.push ({z: zindex, selection: d3.select(this)}); 
+                    sortArr.push ({z: zindex, selection: d3.select(this)});
                 });
                 // Sort that array by the z-index
                 // Then reset the z-index incrementally based on that sort - stops z-index racing away to a number large enough to overwrite dropdown menus
@@ -667,7 +690,7 @@ CLMSUI.utils = {
                     .forEach (function (sorted, i) {
                         sorted.selection
                             .style ("z-index", i + 1)
-                        ;    
+                        ;
                     })
                 ;
                 // Make the current window top of this pile
@@ -715,9 +738,9 @@ CLMSUI.utils = {
             // this line destroys the containing backbone view and it's events
             Backbone.View.prototype.remove.call(this);
         },
-        
+
         identifier: "Base",
-        
+
         makeChartTitle: function (counts, colourScheme, titleElem, matchLevel) {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
@@ -732,12 +755,12 @@ CLMSUI.utils = {
 
             return this;
         },
-        
+
         // return any relevant view states that can be used to label a screenshot etc
         optionsToString: function () {
             return "";
         },
-        
+
         // Returns a useful filename given the view and filters current states
         filenameStateString: function () {
             return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString()+"--"+this.identifier+"-"+this.optionsToString()+"--"+CLMSUI.utils.filterStateToString());
@@ -755,7 +778,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             .append("span")
             .text("Choose Link Colour Scheme ")
         ;
-        
+
         var addOptions = function (selectSel) {
             var optionSel = selectSel
                 .selectAll("option")
@@ -788,7 +811,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
                 this.setSelected (newColourModel);
             });
         }
-        
+
         this.listenTo (this.model, "update", function () {
             d3.select(this.el).select("select#linkColourSelect").call (addOptions);
         });
@@ -808,8 +831,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     }
 });
 
-CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
-    //console.log ("data", data, this, arguments);
+CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc, openSectionIndices) {
     var self = this;
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
@@ -838,10 +860,12 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 	newHeaders.append("span");
 	dataJoin.selectAll("h2 > span").text(headerFunc);	// name may have changed for existing tables too
 
-	
     newElems.append("table")
         .html("<thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
         .attr("id", function(d) { return idPrefix+d.id; })
+		.style("display", function (d,i) {
+			return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
+		})
     ;
 	var tables = dataJoin.selectAll("table");
 
@@ -871,7 +895,6 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
                 {key: entry.key, value: makeTable237 (d[entry.key])} : entry
             ;
         });
-		//console.log ("newEntries", newEntries);
         return newEntries;
     };
 
@@ -901,7 +924,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 CLMSUI.utils.c3mods = function () {
     var c3guts = c3.chart.internal.fn;
     var c3funcs = c3.chart.fn;
-    
+
     c3guts.redrawMirror = c3guts.redraw;
     c3funcs.enableRedraw = function (enable, immediate) {
         c3guts.enableRedrawFlag = enable;
@@ -911,7 +934,7 @@ CLMSUI.utils.c3mods = function () {
             //c3guts.redraw.call (this);
         }
     };
-    
+
     c3guts.redraw = function (options, transitions) {
         console.log ("this", this);
         var c3guts = c3.chart.internal.fn;
@@ -919,7 +942,7 @@ CLMSUI.utils.c3mods = function () {
         if (c3guts.enableRedrawFlag) {
             this.redrawMirror (this.accumulatedOptions, transitions);
             this.accumulatedOptions = {};
-        } 
+        }
         console.log ("accum", c3guts.enableRedrawFlag, this.accumulatedOptions);
     };
 };
