@@ -33,10 +33,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 .classed ("proteinInfoPanel", true)
                 .append("h1")
                     .attr("class", "infoHeader")
-                    .text("Selected Info for 0 Proteins")
+                    .text("Info for 0 Selected Proteins")
             ;
             
             this.listenTo (this.model, "change:selectedProteins", this.render);
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
             this.listenTo (this.model, "filteringDone", this.showState);
             this.listenTo (this.model, "change:selection", this.showState);
             this.listenTo (this.model, "change:highlights", this.showState);
@@ -53,7 +54,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
                 
-                tabs.select("h1.infoHeader").text("Selected Info for "+prots.length+" Protein"+(prots.length !== 1 ? "s" : ""));
+                tabs.select("h1.infoHeader").text("Info for "+prots.length+" Selected Protein"+(prots.length !== 1 ? "s" : ""));
                 
                 var self = this;
 

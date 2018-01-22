@@ -810,7 +810,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
 
 CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
     //console.log ("data", data, this, arguments);
-
+    var self = this;
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
         d3.select(this).classed ("tableShown", assocTable.style("display") !== "none");
@@ -835,14 +835,15 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
         .append("polygon")
             .attr("points", "2,1 16,8 2,15")
     ;
-    newHeaders.append("span").text(headerFunc);
+	newHeaders.append("span");
+	dataJoin.selectAll("h2 > span").text(headerFunc);	// name may have changed for existing tables too
 
-    var tables = newElems.append("table")
+	
+    newElems.append("table")
         .html("<thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
         .attr("id", function(d) { return idPrefix+d.id; })
     ;
-
-    var self = this;
+	var tables = dataJoin.selectAll("table");
 
     // yet another cobble a table together function, but as a string
     var makeTable237 = function (arrOfObjs) {
@@ -870,20 +871,26 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
                 {key: entry.key, value: makeTable237 (d[entry.key])} : entry
             ;
         });
+		//console.log ("newEntries", newEntries);
         return newEntries;
     };
 
-    var tbodies = tables.select("tbody");
-    var rowJoin = tbodies.selectAll("tr").data(function(d) { return arrayExpandFunc (d, rowFilterFunc (d)); });
+    var tbodies = tables.select("tbody");	// pushes table's 'd' (data)  down to the tbody child
+    var rowJoin = tbodies.selectAll("tr")
+		.data(function(d) { return arrayExpandFunc (d, rowFilterFunc (d)); }, function(d) { return d.key; })
+	;
     rowJoin.exit().remove();
     var newRows = rowJoin.enter().append("tr");
 
-    newRows.selectAll("td").data(function(d) { return [{key: d.key, value: d.key}, {key: d.key, value: d.value}]; })
+    var cells = rowJoin.selectAll("td")
+		.data(function(d) { return [{key: d.key, value: d.key}, {key: d.key, value: d.value}]; })
+	;
+	cells
         .enter()
         .append("td")
         .classed ("fixedSizeFont", function(d,i) { return self.options.fixedFontKeys && self.options.fixedFontKeys.has (d.key) && i; })
-        .each (cellFunc)
     ;
+	rowJoin.selectAll("td").each(cellFunc);	// existing rows in existing tables may have seen data change
 
     dataJoin.selectAll("h2").each (setArrow);
 };
