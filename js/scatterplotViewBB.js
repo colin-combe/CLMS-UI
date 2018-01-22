@@ -231,8 +231,9 @@
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
-        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
             //console.log ("HELLO", arguments);
+			var columns = metaMetaData.columns;
             var newOptions = columns.map (function (column) {
                 return {
                     id: column, label: column, decimalPlaces: 2, matchLevel: false, 

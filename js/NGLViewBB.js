@@ -202,7 +202,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
         });
 		
-		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (fields, interactors) {
+		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () {
 			if (this.xlRepr) {
 				this.xlRepr.redoChainLabels ();
 			}

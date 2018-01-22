@@ -246,7 +246,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
 		this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
 		this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
-		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
+			var columns = metaMetaData.columns;
 			//console.log ("HELLO", arguments);
 			var newOptions = columns.map (function (column) {
 				return {

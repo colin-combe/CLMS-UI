@@ -65,10 +65,13 @@
 
 			CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc, []);
 			
-            this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (columns, items, matchedItemCount) {
-				var success = columns && columns.length;// && matchedItemCount;
+            this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (metaMetaData) {
+				var columns = metaMetaData.columns;
+				//var items = metaMetaData.items;
+				var matchedItemCount = metaMetaData.matchedItemCount;
+				var success = columns && columns.length && matchedItemCount ? true : false;
 				var msg1 = _.template(this.options.parseMsgTemplate)({attrCount: columns ? columns.length : 0, itemCount: matchedItemCount});
-                self.setStatusText ("File "+this.lastFileName+":<br>"+(success ? msg1 : "No Columns Successfully Parsed"), success); 
+                self.setStatusText ("File "+this.lastFileName+":<br>"+(success ? "" : "Error! ") + msg1, success); 
             });
         },
         
@@ -97,7 +100,7 @@
 			var myDefaults = {
 				buttonText: "Select Protein MetaData CSV File",
 				loadedEventName: "proteinMetadataUpdated",
-				parseMsgTemplate: "<%= attrCount %> MetaData Attributes Parsed for Proteins",
+				parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes for <%= itemCount %> Identified Proteins",
 				expectedFormat: {
 					header: "ProteinID,{MetaData1 Name}*,{MetaData2 Name} etc",
 					data: "{ProteinID},{number or string},{number or string}",
@@ -128,7 +131,7 @@
 			var myDefaults = {
 				buttonText: "Select Cross-Link MetaData CSV File",
 				loadedEventName: "linkMetadataUpdated",
-				parseMsgTemplate: "<%= attrCount %> MetaData Attributes Parsed for Cross-Links",
+				parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes for <%= itemCount %> Identified Cross-Links",
 				expectedFormat: {
 					header: "LinkID, or all of Protein 1,SeqPos 1,Protein 2,SeqPos 2, then {MetaData1 Name},{MetaData2 Name} etc",
 					rows: "{ProteinID}_{SeqPos1}-{ProteinID}_{SeqPos2}, or {Accession|Name|ProteinID},{SeqPos1},{Accession|Name|ProteinID},{SeqPos2}, then {number or #color} etc",

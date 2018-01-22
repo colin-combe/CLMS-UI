@@ -705,7 +705,7 @@ CLMSUI.modelUtils = {
             }
         });
         if (columns) {
-            CLMSUI.vent.trigger ("linkMetadataUpdated", columns, crossLinks);
+            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, items: crossLinks, matchedItemCount: matchedCrossLinkCount});
         }    
     },
 	
@@ -727,15 +727,29 @@ CLMSUI.modelUtils = {
 			
             var proteinID = d.proteinID || d.ProteinID;
 			var protein = proteins.get(proteinID);
-            
+			
             if (protein) {
 				matchedProteinCount++;
 				var name = d.name || d.Name;
                 protein.name = name || protein.name;
+				
+				protein.meta = protein.meta || {};
+                var meta = protein.meta;
+                d3.entries(d).forEach (function (entry) {
+					var key = entry.key;
+					var val = entry.value;
+					var column = key.toLocaleLowerCase();
+                    if (val && !dontStoreSet.has(column) && column !== "name") {
+                        if (!isNaN(val)) {
+                            val = +val;
+                        }
+                        meta[column] = val;
+                    }
+                });
             }
         });
         if (columns) {
-            CLMSUI.vent.trigger ("proteinMetadataUpdated", columns, proteins);
+            CLMSUI.vent.trigger ("proteinMetadataUpdated", {columns: columns, items: proteins, matchedItemCount: matchedProteinCount});
         }    
     },
     
