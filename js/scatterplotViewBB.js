@@ -19,6 +19,8 @@
         "mousemove .extent": "doHighlightAndTooltip",
         "mouseleave .background": "clearHighlightAndTooltip",
         "click .jitter": "toggleJitter",
+		"click .logX": "toggleLogX",
+		"click .logY": "toggleLogY",
       });
     },
 		
@@ -34,6 +36,8 @@
 		pointSize: 4,
 		attributeOptions: CLMSUI.modelUtils.attributeOptions,
 		standardTickFormat: d3.format(",d"),
+		logX: false,
+		logY: false
 	},
 
     initialize: function (viewOptions) {
@@ -77,7 +81,9 @@
         
         // Add jitter toggle checkbox
         var toggleButtonData = [
-            {class: "jitter", label: "Jitter", id: "jitter", type: "checkbox", inputFirst: true, initialState: this.options.jitter}
+            {class: "jitter", label: "Add Jitter", id: "jitter", type: "checkbox", inputFirst: true, initialState: this.options.jitter},
+			{class: "logX", label: "Log X Axis", id: "logx", type: "checkbox", inputFirst: true, initialState: this.options.logX},
+			{class: "logY", label: "Log Y Axis", id: "logy", type: "checkbox", inputFirst: true, initialState: this.options.logY}
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, toggleButtonData);
         
@@ -347,6 +353,24 @@
         this.render();
         return this;
     },
+		
+	toggleLogX: function (evt) {
+		var checked = d3.select(evt.target).property("checked");
+		this.options.logX = checked;
+		return this
+			.axisChosen()	// redo all axis information
+			.render()
+		;
+	},
+		
+	toggleLogY: function (evt) {
+		var checked = d3.select(evt.target).property("checked");
+		this.options.logY = checked;
+		return this
+			.axisChosen()	// redo all axis information
+			.render()
+		;
+	},
         
     getData: function (funcMeta, filteredFlag, optionalLinks) {
         var linkFunc = funcMeta ? (filteredFlag ? funcMeta.linkFunc : funcMeta.unfilteredLinkFunc) : undefined;
@@ -388,7 +412,7 @@
 			zeroBased: !funcMeta.nonZeroBased, 
 			matchLevel: funcMeta.matchLevel || false, 
 			tickFormat: funcMeta.valueFormat || this.options.standardTickFormat,
-			canLogAxes: funcMeta.logAxis,
+			canLogAxis: funcMeta.logAxis || false,
 			logStart: funcMeta.logStart
 		};
     },
@@ -400,29 +424,33 @@
     },
 		
 	isLinearScale: function (scale) {
-		return scale(20) - scale(10) === scale(10);	
+		var domain = scale.domain();
+		var bottomVal = scale(domain[0]);
+		var fullRange = Math.abs (scale(domain[1]) - bottomVal);
+		var halfRange = Math.abs (scale(d3.mean (domain)) - bottomVal);
+		return (fullRange / halfRange) >= (2 - 0.001);	// -0.0001 for rounding
 	},
 		
 	setValidEmptyBrushExtent: function () {
 		this.brush.extent ([[this.x.domain()[0], this.y.domain()[0]], [this.x.domain()[0], this.y.domain()[0]]]);
 	},
 		
-	resetXAxisType: function (setAsLogScale) {
-		if (setAsLogScale !== this.isLinearScale (this.x)) {
+	makeXAxisType: function (setAsLogScale) {
+		if (setAsLogScale !== this.isLinearScale (this.x)) {	// only if different scale type is required
 			this.x = setAsLogScale ? d3.scale.log() : d3.scale.linear();
 			this.xAxis.scale (this.x);
 			this.brush.x (this.x);
-			this.setValidEmptyBrushExtent();
 		}
+		return this;
 	},
 		
-	resetYAxisType: function (setAsLogScale) {
-		if (setAsLogScale !== this.isLinearScale (this.y)) {
+	makeYAxisType: function (setAsLogScale) {
+		if (setAsLogScale !== this.isLinearScale (this.y)) {	// only if different scale type is required
 			this.y = setAsLogScale ? d3.scale.log() : d3.scale.linear();
 			this.yAxis.scale (this.y);
 			this.brush.y (this.y);
-			this.setValidEmptyBrushExtent();
 		}
+		return this;
 	},
         
     axisChosen: function () { 
@@ -433,14 +461,22 @@
 		this.yAxis.tickFormat (dataY.tickFormat);
 		
 		// swap out log or linear scales if current scale is different to incoming scale type
-		this.resetXAxisType (dataX.canLogAxes);
-		this.resetYAxisType (dataY.canLogAxes);
+		this.makeXAxisType (dataX.canLogAxis && this.options.logX);
+		this.makeYAxisType (dataY.canLogAxis && this.options.logY);
+		
+		var rootid = "#"+d3.select(this.el).attr("id");
+		d3.select(this.el).select(rootid+"logx").style ("display", dataX.canLogAxis ? null : "none");
+		d3.select(this.el).select(rootid+"logy").style ("display", dataY.canLogAxis ? null : "none");
+		
+		// make brush extent empty when new axis chosen. Make sure it's a valid value i.e. no zeroes in a log scale
+		this.setValidEmptyBrushExtent();
         
         this.scaleAxes (dataX, dataY);
         
         // Update x/y labels and axes tick formats
+		var self = this;
         this.vis.selectAll("g.label text").data([dataX, dataY])
-            .text (function(d) { return d.label; })
+            .text (function(d, i) { return (d.canLogAxis && self.options[i === 0 ? "logX": "logY"] ? "Log ": "") + d.label; })
         ;
         
         if (!this.brush.empty()) {
@@ -469,7 +505,7 @@
                 return _.isNumber(v) ? Math[i === 0 ? "floor": "ceil"](v) : v; 
             });
 			
-			var log = direction.dataDetails.canLogAxes;
+			var log = direction.dataDetails.canLogAxis;
 			if (log) {
 				dom[0] = direction.dataDetails.logStart;
 			}
@@ -477,7 +513,7 @@
             //dom[0] -= xLeeway; // 0.5;
             //dom[1] += 0.5;
             direction.scale.domain (dom);
-            console.log ("DOM", dom, direction.scale, direction.scale.domain());
+            //console.log ("DOM", dom, direction.scale, direction.scale.domain());
         }); 
         
         this.calcJitterRanges();
@@ -850,7 +886,7 @@
         // https://stackoverflow.com/questions/32720469/d3-updating-brushs-scale-doesnt-update-brush
 		
         this.brush.extent (extent); // old extent restored
-		console.log ("BRUISH EXTENT", extent);
+		//console.log ("BRUISH EXTENT", extent);
         this.scatg.select(".brush").call(this.brush);   // recall brush binding so background rect is resized and brush redrawn
 
         this.xAxis.ticks (Math.round ((sizeData.width - (chartMargin * 2)) / 40)).outerTickSize(0);
@@ -866,16 +902,16 @@
     },
         
     redrawAxes: function (sizeData) {
+		this.vis.select(".x")
+            .attr("transform", "translate(0," + (sizeData.height) + ")")
+            .call(this.xAxis)
+        ;
+		
         this.vis.select(".y")
             .attr("transform", "translate(-1,0)")
             .call(this.yAxis)
         ;
-        
-        this.vis.select(".x")
-            .attr("transform", "translate(0," + (sizeData.height) + ")")
-            .call(this.xAxis)
-        ;
-        
+
         CLMSUI.utils.declutterAxis (this.vis.select(".x"));
 		CLMSUI.utils.declutterAxis (this.vis.select(".y"));
         
