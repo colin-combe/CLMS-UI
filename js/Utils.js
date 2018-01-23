@@ -275,16 +275,15 @@ CLMSUI.utils = {
     },
 
     declutterAxis: function (d3AxisElem) {
-        var last = Number.NEGATIVE_INFINITY;
+        var lastBounds = {left: -100, right: -100, top: -100, bottom: -100};
         d3AxisElem.selectAll(".tick text")
             .each (function () {
                 var text = d3.select(this);
                 var bounds = this.getBoundingClientRect();
-                var overlap = bounds.x < last;
-                //console.log ("bounds", bounds);
+                var overlap = !(bounds.right < lastBounds.left || bounds.left > lastBounds.right || bounds.bottom < lastBounds.top || bounds.top > lastBounds.bottom);
                 text.style ("visibility", overlap ? "hidden" : null);
                 if (!overlap) {
-                    last = bounds.x + bounds.width;
+                    lastBounds = bounds;
                 }
             })
         ;
@@ -891,8 +890,12 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     var arrayExpandFunc = function (d, entries) {
         var expandKeys = self.options.expandTheseKeys;
         var newEntries = entries.map (function (entry) {
+			var subTableVals = d[entry.key];
+			if ($.isPlainObject (subTableVals)) {	// convert object into array of objects that'll have Key/Value as headings
+				subTableVals = d3.entries (subTableVals);
+			}
             return (expandKeys && expandKeys.has(entry.key)) ?
-                {key: entry.key, value: makeTable237 (d[entry.key])} : entry
+                {key: entry.key, value: makeTable237 (subTableVals)} : entry
             ;
         });
         return newEntries;

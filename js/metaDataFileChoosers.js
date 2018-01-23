@@ -42,7 +42,7 @@
                 .append("span")
                     .text(self.options.buttonText)
                     .append("input")
-                        .attr({type: "file", accept: ".csv", class: "selectMetaDataFileButton"})
+                        .attr({type: "file", accept: "text/csv,.csv", class: "selectMetaDataFileButton"})
             ;
             
             wrapperPanel.append("div").attr("class", "messagebar").style("display", "none");
@@ -102,12 +102,12 @@
 				loadedEventName: "proteinMetadataUpdated",
 				parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes for <%= itemCount %> Identified Proteins",
 				expectedFormat: {
-					header: "ProteinID,{MetaData1 Name}*,{MetaData2 Name} etc",
-					data: "{ProteinID},{number or string},{number or string}",
+					header: "Accession,{MetaData1 Name}*,{MetaData2 Name} etc",
+					data: "{Protein Accession Number},{number or string},{number or string}",
 					example: [
-						{"csv file": ["ProteinID", "Name", "Value"]},
-						{csv: ["2000171,My Protein,0.79"]}, 
-						{csv: ["2000172,Mouse Protein,0.58"]},
+						{"csv file": ["Accession", "Name", "Value"]},
+						{csv: ["P02768-A,Human Protein,0.79"]}, 
+						{csv: ["G3RE98,Gorilla Protein,0.58"]},
 					],
 					notes: "*If a MetaData column name is 'Name' it will change displayed protein names"
 				}

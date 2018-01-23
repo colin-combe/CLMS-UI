@@ -17,7 +17,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
 		defaultOptions: {
 			fixedFontKeys: d3.set(["sequence", "seq"]),
             removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
-            expandTheseKeys: d3.set (["uniprotFeatures"]),
+            expandTheseKeys: d3.set (["uniprotFeatures", "meta"]),
 		},
 
         initialize: function (viewOptions) {
@@ -62,10 +62,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         if ($.isArray(entry.value)) {
                             entry.value = entry.value.length;
                         }
-                        if (entry.key === "sequence") {
+                        else if (entry.key === "sequence") {
                             entry.value =  self.makeInteractiveSeqString (d, d.sequence, d.crossLinks, true);
                         }
-                        return ! ($.isFunction(entry.value) || $.isPlainObject(entry.value) || (badKeys && badKeys.has(entry.key))); 
+                        return ! ($.isFunction(entry.value) || (badKeys && badKeys.has(entry.key))); 
                     });
                 };
                 

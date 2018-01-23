@@ -713,9 +713,17 @@ CLMSUI.modelUtils = {
         var proteins = clmsModel.get("participants");
         var first = true;
         var columns = [];
-        var dontStoreArray = ["proteinID"].map (function (str) { return str.toLocaleLowerCase(); });
+        var dontStoreArray = ["proteinID", "Accession"].map (function (str) { return str.toLocaleLowerCase(); });
         var dontStoreSet = d3.set (dontStoreArray);
 		var matchedProteinCount = 0;
+		
+		var protMap = d3.map();
+		proteins.forEach (function (value, key) {
+            protMap.set (value.accession, key);
+            protMap.set (value.name, key);
+			protMap.set (value.id, key);
+        });
+		
         d3.csv.parse (metaDataFileContents, function (d) {
 			if (first) {
 				var keys = d3.keys(d).map (function (key) {
@@ -725,28 +733,31 @@ CLMSUI.modelUtils = {
 				first = false;
 			}
 			
-            var proteinID = d.proteinID || d.ProteinID;
-			var protein = proteins.get(proteinID);
-			
-            if (protein) {
-				matchedProteinCount++;
-				var name = d.name || d.Name;
-                protein.name = name || protein.name;
-				
-				protein.meta = protein.meta || {};
-                var meta = protein.meta;
-                d3.entries(d).forEach (function (entry) {
-					var key = entry.key;
-					var val = entry.value;
-					var column = key.toLocaleLowerCase();
-                    if (val && !dontStoreSet.has(column) && column !== "name") {
-                        if (!isNaN(val)) {
-                            val = +val;
-                        }
-                        meta[column] = val;
-                    }
-                });
-            }
+            var proteinIDValue = d.proteinID || d.ProteinID || d.Accession || d.accession;
+			var proteinID = protMap.get(proteinIDValue);
+			if (proteinID !== undefined) {
+				var protein = proteins.get (proteinID);
+
+				if (protein) {
+					matchedProteinCount++;
+					var name = d.name || d.Name;
+					protein.name = name || protein.name;
+
+					protein.meta = protein.meta || {};
+					var meta = protein.meta;
+					d3.entries(d).forEach (function (entry) {
+						var key = entry.key;
+						var val = entry.value;
+						var column = key.toLocaleLowerCase();
+						if (val && !dontStoreSet.has(column) && column !== "name") {
+							if (!isNaN(val)) {
+								val = +val;
+							}
+							meta[column] = val;
+						}
+					});
+				}
+			}
         });
         if (columns) {
             CLMSUI.vent.trigger ("proteinMetadataUpdated", {columns: columns, items: proteins, matchedItemCount: matchedProteinCount});
@@ -913,7 +924,7 @@ CLMSUI.modelUtils = {
             linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); }, 
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { var p = m.match.precursor_intensity; return isNaN(p) ? undefined : p; }); },
             id: "PrecursorIntensity", label: "Match Precursor Intensity", decimalPlaces: 2, matchLevel: true,
-			valueFormat: d3.format("e"),
+			valueFormat: d3.format(".1e"), logAxis: true, logStart: 1000
         },
         {
             linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.elution_time_start; }); }, 
