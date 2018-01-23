@@ -305,10 +305,11 @@
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
-                if (self.options.hideLinkless) {
+				// filtering can change node and thus feature positioning too if proteins are hidden or rearranged by sorting
+                if (self.options.hideLinkless || self.options.sort === "best") {
                     self.render();
                 } else {
-                    renderPartial (["links"]);
+                    renderPartial (["links", "nodes"]);
                 }   
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccented ("selection"); });
