@@ -402,6 +402,28 @@
 	isLinearScale: function (scale) {
 		return scale(20) - scale(10) === scale(10);	
 	},
+		
+	setValidEmptyBrushExtent: function () {
+		this.brush.extent ([[this.x.domain()[0], this.y.domain()[0]], [this.x.domain()[0], this.y.domain()[0]]]);
+	},
+		
+	resetXAxisType: function (setAsLogScale) {
+		if (setAsLogScale !== this.isLinearScale (this.x)) {
+			this.x = setAsLogScale ? d3.scale.log() : d3.scale.linear();
+			this.xAxis.scale (this.x);
+			this.brush.x (this.x);
+			this.setValidEmptyBrushExtent();
+		}
+	},
+		
+	resetYAxisType: function (setAsLogScale) {
+		if (setAsLogScale !== this.isLinearScale (this.y)) {
+			this.y = setAsLogScale ? d3.scale.log() : d3.scale.linear();
+			this.yAxis.scale (this.y);
+			this.brush.y (this.y);
+			this.setValidEmptyBrushExtent();
+		}
+	},
         
     axisChosen: function () { 
         var dataX = this.getAxisData ("X", false);
@@ -411,20 +433,10 @@
 		this.yAxis.tickFormat (dataY.tickFormat);
 		
 		// swap out log or linear scales if current scale is different to incoming scale type
-		if (dataX.canLogAxes !== this.isLinearScale (this.x)) {
-			this.x = dataX.canLogAxes ? d3.scale.log() : d3.scale.linear();
-			this.xAxis.scale (this.x);
-			this.brush.x (this.x);
-		}
-		
-		if (dataY.canLogAxes !== this.isLinearScale (this.y)) {
-			this.y = dataY.canLogAxes ? d3.scale.log() : d3.scale.linear();
-			this.yAxis.scale (this.y);
-			this.brush.y (this.y);
-		}
+		this.resetXAxisType (dataX.canLogAxes);
+		this.resetYAxisType (dataY.canLogAxes);
         
         this.scaleAxes (dataX, dataY);
-        //console.log ("data", dataX, dataY);
         
         // Update x/y labels and axes tick formats
         this.vis.selectAll("g.label text").data([dataX, dataY])
