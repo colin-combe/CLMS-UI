@@ -436,7 +436,7 @@
 	},
 		
 	makeXAxisType: function (setAsLogScale) {
-		if (setAsLogScale !== this.isLinearScale (this.x)) {	// only if different scale type is required
+		if (setAsLogScale === this.isLinearScale (this.x)) {	// only if different scale type is required
 			this.x = setAsLogScale ? d3.scale.log() : d3.scale.linear();
 			this.xAxis.scale (this.x);
 			this.brush.x (this.x);
@@ -445,7 +445,7 @@
 	},
 		
 	makeYAxisType: function (setAsLogScale) {
-		if (setAsLogScale !== this.isLinearScale (this.y)) {	// only if different scale type is required
+		if (setAsLogScale === this.isLinearScale (this.y)) {	// only if different scale type is required
 			this.y = setAsLogScale ? d3.scale.log() : d3.scale.linear();
 			this.yAxis.scale (this.y);
 			this.brush.y (this.y);
