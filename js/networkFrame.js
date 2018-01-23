@@ -255,7 +255,7 @@ CLMSUI.init.views = function () {
         el: "#viewDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
-            title: "View",
+            title: "Views",
             menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
         }
     })
@@ -282,31 +282,24 @@ CLMSUI.init.views = function () {
     });
 
     // Generate buttons for load dropdown
-    var buttonData = [
-        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName: "pdbShow"},
-        {id: "csvUploadPlaceholder", label: "Cross-Links (CSV)", eventName: "csvShow"},
-        {id: "linkMetaUploadPlaceholder", label: "Cross-Link Metadata", eventName: "linkMetaShow"},
-		{id: "proteinMetaUploadPlaceholder", label: "Protein Metadata", eventName: "proteinMetaShow"},
+    var loadButtonData = [
+        {name: "PDB Data", eventName: "pdbShow"},
+        {name: "Cross-Links (CSV)", eventName: "csvShow"},
+        {name: "Cross-Link Metadata", eventName: "linkMetaShow"},
+		{name: "Protein Metadata", eventName: "proteinMetaShow"},
     ];
-    buttonData.forEach (function (bdata) {
-        var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
-        $("#loadDropdownPlaceholder").append(bView.$el);
+    loadButtonData.forEach (function (bdata) {
+		bdata.func = function () { CLMSUI.vent.trigger (bdata.eventName, true); };
     });
     new CLMSUI.DropDownMenuViewBB ({
         el: "#loadDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
             title: "Load",
-            menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
+			menu: loadButtonData
         }
     });
 	
-	new CLMSUI.utils.FilterModelStateShareButton ({
-		el: "#sharePlaceholder",
-		myOptions: {
-			eventName: "shareURL",
-		}
-	});
 	
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
@@ -508,9 +501,11 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Data-Download",
             menu: [
-                {name: "Links", func: downloadLinks},
-                {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount}
+                {name: "Filtered Links", func: downloadLinks},
+                {name: "Filtered Matches", func: downloadMatches},
+                {name: "Filtered Residues", func: downloadResidueCount},
+				{name: "Share Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
+				//{id: "sharePlaceholder", label: "Share URL", eventName: "shareURL", func: function() { CLMSUI.vent.trigger (this.options.eventName, true); }},
             ]
         }
     });
@@ -640,10 +635,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
     });
-
-    // This is all done outside the matrix view itself as we may not always want a matrix view to have this
-    // functionality. Plus the views don't know about each other now.
-    // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
 
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync

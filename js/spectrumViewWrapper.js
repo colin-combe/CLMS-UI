@@ -13,11 +13,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
 
     initialize: function (options) {
         SpectrumViewWrapper.__super__.initialize.apply (this, arguments);
-        
-        var defaultOptions = {
-            canBringToTop: true
-        };
-        this.options = _.extend ({}, this.options, defaultOptions, options.myOptions);
 
         var _html = "" // i think its a mistake (of mine, I think - cc) to use id's in following instaed of classes... its a backbone thing
             //~ +"<div id='spectrum'>"

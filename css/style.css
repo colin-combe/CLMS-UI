@@ -431,6 +431,7 @@ A.btn {
     shape-rendering: crispEdges;
 }
 
+
 .sectionTable .tableShown {
     background: #ccc;
 }
@@ -438,6 +439,64 @@ A.btn {
 .sectionTable .tableShown svg {
     transform: rotate(90deg);
 }
+
+.sectionTable h2 {
+    width: 100%;
+    cursor: pointer;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
+}
+
+.sectionTable h2 svg {
+    margin-right: 1em;
+    width: 16px;
+    height: 16px;
+    fill: white;
+    stroke: #888;
+	shape-rendering: crispedges;
+    vertical-align: sub;
+}
+
+.sectionTable h2:hover {
+    background: white;
+	border-bottom: 1px solid black;
+	border-top: 1px solid black;
+}
+
+.sectionTable table td:first-child, .sectionTable table th {
+    text-transform: capitalize;
+}
+
+.sectionTable tbody tr > td {
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid transparent;
+}
+
+.sectionTable tbody tr:hover td {
+	color: #777;
+    background: inherit;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    transition: none;
+    /*border-top-color: #444;
+    border-bottom-color: #444;*/
+}
+
+.sectionTable table {
+	border-collapse: separate;
+}
+
+.sectionTable table table {
+    border: 1px solid gray;
+}
+
+.expectedFormatPanel .sectionTable tbody td:first-child {
+    background: #ddd;
+}
+
+
 
 .toolbar:first-child {
     margin-bottom: 0.15em;
@@ -455,4 +514,21 @@ A.btn {
 
 .toolbar > * {
     display: inline-block;
+}
+
+/* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
+DIV[class='messagebar']:not(:last-of-type) {
+	margin-bottom: 0.15em;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
+}
+
+.expectedFormatPanel {
+	margin-bottom: 0.15em;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
+}
+
+.expectedFormatPanel TABLE TBODY {
+	color: grey;
+	font-size: 0.7rem;
+	font-family: monospace;
 }

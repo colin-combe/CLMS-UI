@@ -32,8 +32,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Between", "id":"betweenLinks", tooltip: "Show cross-links between different proteins"},
             ],
             subsetNumberFilters: [
-                {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids"},
-                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids"},
+                {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"},
+                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
             ],
             validationStatusToggles: [
                 {"label":"A", "id":"A"},
@@ -45,11 +45,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},              
             ],
             navigationFilters: [
-                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links involving a peptide containing this sequence"},
-                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein containing this text. Separate with commas, join with hyphens i.e. RAT1-RAT2, RAT3"},
-                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state"},
-                {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links from this run index"},
-                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number"}
+                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links involving a peptide including this AA sequence e.g. FAKR"},
+                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein including this text. Separate with commas, specify both proteins with hyphens e.g. RAT3, RAT1-RAT2"},
+                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state e.g. 3"},
+                {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
+                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"}
             ],
         };
         this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
@@ -161,7 +161,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         sliderSection.selectAll("p.cutoffLabel")
             .attr ("title", function () { 
                 var isMinInput = d3.select(this).classed("vmin");
-                return "Filter out matches with scores "+(isMinInput ? "less than": "greater than")+" X";
+                return "Filter out matches with scores "+(isMinInput ? "less than": "greater than")+" X e.g. "+(isMinInput ? "8.0": "20.0");
             })
             .append("input")
             .attr({

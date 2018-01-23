@@ -121,8 +121,7 @@
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
         <script type="text/javascript" src="./js/CSVFileChooser.js"></script>
-        <script type="text/javascript" src="./js/linkMetaDataFileChooserBB.js"></script>
-		<script type="text/javascript" src="./js/proteinMetaDataFileChooserBB.js"></script>
+		<script type="text/javascript" src="./js/metaDataFileChoosers.js"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js"></script>
         <script type="text/javascript" src="./js/bioseq32.js"></script>
         <script type="text/javascript" src="./js/alignModelType.js"></script>
@@ -178,7 +177,6 @@
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
-					<p id="sharePlaceholder"></p>
                     <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
             </div>
 

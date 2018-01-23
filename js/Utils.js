@@ -223,16 +223,15 @@ CLMSUI.utils = {
     },
     
     declutterAxis: function (d3AxisElem) {
-        var last = Number.NEGATIVE_INFINITY;
+        var lastBounds = {left: -100, right: -100, top: -100, bottom: -100};
         d3AxisElem.selectAll(".tick text")
             .each (function () {
                 var text = d3.select(this);
                 var bounds = this.getBoundingClientRect();
-                var overlap = bounds.x < last;
-                //console.log ("bounds", bounds);
+                var overlap = !(bounds.right < lastBounds.left || bounds.left > lastBounds.right || bounds.bottom < lastBounds.top || bounds.top > lastBounds.bottom);
                 text.style ("visibility", overlap ? "hidden" : null);
                 if (!overlap) {
-                    last = bounds.x + bounds.width;
+                    lastBounds = bounds;
                 }
             })
         ;
@@ -405,35 +404,6 @@ CLMSUI.utils = {
         return newStr;
     },
 	
-	
-	FilterModelStateShareButton: Backbone.View.extend ({
-        tagName: "span",
-        className: "shareButton",
-        events: {
-            "click i": "buttonClicked"
-        },
-
-        initialize: function (viewOptions) {
-            var defaultOptions = {};
-            this.options = _.extend (defaultOptions, viewOptions.myOptions);
-
-            // this.el is the dom element this should be getting added to, replaces targetDiv
-            var sel = d3.select(this.el);
-            if (!sel.attr("id")) {
-                sel.attr("id", this.options.id);
-            }
-
-            sel.append("i")
-                .attr("class", "fa fa-xi fa-share")
-				.attr("title", CLMSUI.utils.commonLabels.shareLink)
-            ;
-        },
-
-        buttonClicked: function () {
-			CLMSUI.vent.trigger (this.options.eventName, true);
-        }
-    }),
-    
     
     // Function for making a colour key as an svg group element
     updateColourKey: function (model, svgElem) {
@@ -554,8 +524,8 @@ CLMSUI.utils = {
         initialize: function (viewOptions) {
 
             // window level options that don't depend on type of view
-            var defaultOptions = {canBringToTop: true};
-            this.options = _.extend (defaultOptions, viewOptions.myOptions);
+            var globalOptions = {canBringToTop: true};
+            this.options = _.extend (globalOptions, this.defaultOptions, viewOptions.myOptions);
             
             this.displayEventName = viewOptions.displayEventName;
 
@@ -808,8 +778,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     }
 });
 
-CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc) {
-    //console.log ("data", data, this, arguments);
+CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc, openSectionIndices) {
     var self = this;
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
@@ -838,10 +807,12 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 	newHeaders.append("span");
 	dataJoin.selectAll("h2 > span").text(headerFunc);	// name may have changed for existing tables too
 
-	
     newElems.append("table")
         .html("<thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
         .attr("id", function(d) { return idPrefix+d.id; })
+		.style("display", function (d,i) {
+			return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
+		})
     ;
 	var tables = dataJoin.selectAll("table");
 
@@ -867,11 +838,14 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
     var arrayExpandFunc = function (d, entries) {
         var expandKeys = self.options.expandTheseKeys;
         var newEntries = entries.map (function (entry) {
+			var subTableVals = d[entry.key];
+			if ($.isPlainObject (subTableVals)) {	// convert object into array of objects that'll have Key/Value as headings
+				subTableVals = d3.entries (subTableVals);
+			}
             return (expandKeys && expandKeys.has(entry.key)) ?
-                {key: entry.key, value: makeTable237 (d[entry.key])} : entry
+                {key: entry.key, value: makeTable237 (subTableVals)} : entry
             ;
         });
-		//console.log ("newEntries", newEntries);
         return newEntries;
     };
 

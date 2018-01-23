@@ -72,7 +72,7 @@
 		renderTab: function (indAlignModel) {
 			var list = d3.select(this.el).select("DIV.checkHolder");
 			var indTab = list.selectAll("span.alignTab").filter (function (d) {
-				return d.id = indAlignModel.get("id");	
+				return (d.id = indAlignModel.get("id"));	
 			});
 			var self = this;
 			indTab.select("label").html(self.setTabContents);

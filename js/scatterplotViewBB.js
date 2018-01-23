@@ -21,36 +21,32 @@
         "click .jitter": "toggleJitter",
       });
     },
+		
+	defaultOptions: {
+		xlabel: "Axis 1",
+		ylabel: "Axis 2",
+		chartTitle: "Scatterplot",
+		selectedColour: "#ff0",
+		highlightedColour: "#f80",
+		background: "#eee",
+		jitter: true,
+		chartMargin: 10,
+		pointSize: 4,
+		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		standardTickFormat: d3.format(",d"),
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.ScatterplotViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
 
-        var defaultOptions = {
-            xlabel: "Axis 1",
-            ylabel: "Axis 2",
-            chartTitle: "Scatterplot",
-            selectedColour: "#ff0",
-            highlightedColour: "#f80",
-            background: "#eee",
-            jitter: true,
-            chartMargin: 10,
-            pointSize: 4,
-            attributeOptions: CLMSUI.modelUtils.attributeOptions,
-			standardTickFormat: d3.format(",d"),
-        };
-        
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-        
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
             right:  20,
             bottom: this.options.xlabel ? 40 : 25,
             left:   this.options.ylabel ? 70 : 50
         };
-        
-        this.displayEventName = viewOptions.displayEventName;
         
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
@@ -235,8 +231,9 @@
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
-        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
             //console.log ("HELLO", arguments);
+			var columns = metaMetaData.columns;
             var newOptions = columns.map (function (column) {
                 return {
                     id: column, label: column, decimalPlaces: 2, matchLevel: false, 
@@ -385,7 +382,15 @@
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
         var data = this.getData (funcMeta, filteredFlag, optionalLinks);
-        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false, tickFormat: funcMeta.valueFormat || this.options.standardTickFormat};
+        return {
+			label: funcMeta ? funcMeta.label : "?", 
+			data: data, 
+			zeroBased: !funcMeta.nonZeroBased, 
+			matchLevel: funcMeta.matchLevel || false, 
+			tickFormat: funcMeta.valueFormat || this.options.standardTickFormat,
+			canLogAxes: funcMeta.logAxis,
+			logStart: funcMeta.logStart
+		};
     },
         
     getBothAxesMetaData: function () {
@@ -393,6 +398,32 @@
             return this.getSelectedOption (axisLetter);
         }, this);    
     },
+		
+	isLinearScale: function (scale) {
+		return scale(20) - scale(10) === scale(10);	
+	},
+		
+	setValidEmptyBrushExtent: function () {
+		this.brush.extent ([[this.x.domain()[0], this.y.domain()[0]], [this.x.domain()[0], this.y.domain()[0]]]);
+	},
+		
+	resetXAxisType: function (setAsLogScale) {
+		if (setAsLogScale !== this.isLinearScale (this.x)) {
+			this.x = setAsLogScale ? d3.scale.log() : d3.scale.linear();
+			this.xAxis.scale (this.x);
+			this.brush.x (this.x);
+			this.setValidEmptyBrushExtent();
+		}
+	},
+		
+	resetYAxisType: function (setAsLogScale) {
+		if (setAsLogScale !== this.isLinearScale (this.y)) {
+			this.y = setAsLogScale ? d3.scale.log() : d3.scale.linear();
+			this.yAxis.scale (this.y);
+			this.brush.y (this.y);
+			this.setValidEmptyBrushExtent();
+		}
+	},
         
     axisChosen: function () { 
         var dataX = this.getAxisData ("X", false);
@@ -400,9 +431,12 @@
 		
 		this.xAxis.tickFormat (dataX.tickFormat);
 		this.yAxis.tickFormat (dataY.tickFormat);
+		
+		// swap out log or linear scales if current scale is different to incoming scale type
+		this.resetXAxisType (dataX.canLogAxes);
+		this.resetYAxisType (dataY.canLogAxes);
         
         this.scaleAxes (dataX, dataY);
-        //console.log ("data", dataX, dataY);
         
         // Update x/y labels and axes tick formats
         this.vis.selectAll("g.label text").data([dataX, dataY])
@@ -434,11 +468,16 @@
             dom = dom.map (function (v, i) { 
                 return _.isNumber(v) ? Math[i === 0 ? "floor": "ceil"](v) : v; 
             });
+			
+			var log = direction.dataDetails.canLogAxes;
+			if (log) {
+				dom[0] = direction.dataDetails.logStart;
+			}
             //var leeway = Math.ceil (Math.abs(dom[1] - dom[0]) / 10) / 2;
             //dom[0] -= xLeeway; // 0.5;
             //dom[1] += 0.5;
             direction.scale.domain (dom);
-            //console.log ("DOM", dom, direction.scale, direction.scale.domain());
+            console.log ("DOM", dom, direction.scale, direction.scale.domain());
         }); 
         
         this.calcJitterRanges();
@@ -703,26 +742,28 @@
                     }
                     var x = this.x (coord[0]) + xjr - halfPointSize;
                     var y = this.y (coord[1]) + yjr - halfPointSize;
-                    x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
-                    y = Math.round (y);
-                    if (decoy) {
-                        //var offset = Math.floor (halfPointSize);
-                        ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
-                        //ctx.fillRect (x, y + offset, pointSize + 1, 1);
-                        //ctx.fillRect (x + offset, y, 1, pointSize + 1);
-                    } else {
-                        ctx.fillRect (x, y, pointSize, pointSize);
-                        if (high || selected) {
-                            ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
-                        }
-                        
-                        if (countable) {
-                            if (linkDomainInd === undefined) {
-                                linkDomainInd = counts.length - 1;
-                            }
-                            counts[linkDomainInd]++;
-                        }
-                    }
+					if (x === x && y === y) {	// Quick test for either of x or y being a NaN
+						x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
+						y = Math.round (y);
+						if (decoy) {
+							//var offset = Math.floor (halfPointSize);
+							ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+							//ctx.fillRect (x, y + offset, pointSize + 1, 1);
+							//ctx.fillRect (x + offset, y, 1, pointSize + 1);
+						} else {
+							ctx.fillRect (x, y, pointSize, pointSize);
+							if (high || selected) {
+								ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+							}
+
+							if (countable) {
+								if (linkDomainInd === undefined) {
+									linkDomainInd = counts.length - 1;
+								}
+								counts[linkDomainInd]++;
+							}
+						}
+					}
                 }, this);
             }, this);
             
@@ -807,7 +848,9 @@
         this.y.range([sizeData.height - chartMargin, chartMargin]); // y-scale (inverted domain)
         
         // https://stackoverflow.com/questions/32720469/d3-updating-brushs-scale-doesnt-update-brush
+		
         this.brush.extent (extent); // old extent restored
+		console.log ("BRUISH EXTENT", extent);
         this.scatg.select(".brush").call(this.brush);   // recall brush binding so background rect is resized and brush redrawn
 
         this.xAxis.ticks (Math.round ((sizeData.width - (chartMargin * 2)) / 40)).outerTickSize(0);
@@ -834,6 +877,7 @@
         ;
         
         CLMSUI.utils.declutterAxis (this.vis.select(".x"));
+		CLMSUI.utils.declutterAxis (this.vis.select(".y"));
         
         return this;
     },

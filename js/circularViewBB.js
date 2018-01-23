@@ -104,56 +104,54 @@
               "click .hideLinkless": "flipLinklessVisibility",
           });
         },
+		
+		defaultOptions: {
+			nodeWidth: 10,  // this is a percentage measure
+			tickWidth: 23,
+			tickLabelCycle: 5,  // show label every nth tick
+			gap: 5,
+			linkParse: function (link) {
+				// turn toPos and fromPos to zero-based index
+				return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
+						toPos: link.toResidue - 1, toNodeID: link.toProtein.id};
+			},
+			intraOutside: true,
+			showResLabels: true,
+			sort: "best",
+			sortDir: 1,
+			hideLinkless: false,
+		},
 
         initialize: function (viewOptions) {
-            CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
-
             var self = this;
-            var defaultOptions = {
-                nodeWidth: 10,  // this is a percentage measure
-                tickWidth: 23,
-                tickLabelCycle: 5,  // show label every nth tick
-                gap: 5,
-                linkParse: function (link) {
-                    // turn toPos and fromPos to zero-based index
-                    return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
-                            toPos: link.toResidue - 1, toNodeID: link.toProtein.id};
-                },
-                featureParse: function (feature, nodeid) {
-                    // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
-                    if (feature.start == undefined) {
-                        feature.start = +feature.begin;
-                    }
-                    var convStart = +feature.start;
-                    var convEnd = +feature.end;
-                    var type = feature.type.toLowerCase();
-                    var protAlignModel = self.model.get("alignColl").get(nodeid);
-                    if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
-                        var alignmentID = feature.alignmentID || "Canonical";
-                        convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
-                        convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
-                        if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
-                        if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
-                    }
-                    convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
-                    if (isNaN(convEnd) || convEnd === undefined) {
-                        convEnd = +feature.end;
-                    }
-                    //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
-                    // e.g. a feature that starts/stops at some point has length of 1, not 0
+			this.defaultOptions.featureParse = function (feature, nodeid) {
+				// feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
+				if (feature.start == undefined) {
+					feature.start = +feature.begin;
+				}
+				var convStart = +feature.start;
+				var convEnd = +feature.end;
+				var type = feature.type.toLowerCase();
+				var protAlignModel = self.model.get("alignColl").get(nodeid);
+				if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
+					var alignmentID = feature.alignmentID || "Canonical";
+					convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
+					convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
+					if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
+					if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
+				}
+				convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
+				if (isNaN(convEnd) || convEnd === undefined) {
+					convEnd = +feature.end;
+				}
+				//convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
+				// e.g. a feature that starts/stops at some point has length of 1, not 0
 
-                    CLMSUI.utils.xilog (feature, "convStart", +feature.start, convStart, "convEnd", +feature.end, convEnd, protAlignModel);
-                    return {fromPos: convStart, toPos: convEnd};
-                },
-                intraOutside: true,
-                showResLabels: true,
-                sort: "best",
-                sortDir: 1,
-                hideLinkless: false,
-            };
-            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
-            this.displayEventName = viewOptions.displayEventName;
+				CLMSUI.utils.xilog (feature, "convStart", +feature.start, convStart, "convEnd", +feature.end, convEnd, protAlignModel);
+				return {fromPos: convStart, toPos: convEnd};
+			};
+			
+			CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
@@ -307,10 +305,11 @@
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
-                if (self.options.hideLinkless) {
+				// filtering can change node and thus feature positioning too if proteins are hidden or rearranged by sorting
+                if (self.options.hideLinkless || self.options.sort === "best") {
                     self.render();
                 } else {
-                    renderPartial (["links"]);
+                    renderPartial (["links", "nodes"]);
                 }   
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccented ("selection"); });
