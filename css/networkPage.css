@@ -2,8 +2,14 @@
  * in this new file, rather than add more to style.css.
  * Might help tidy up style.css*/
 
-#xiNetControlsDropdownPlaceholder{
+#xiNetControlsButton{
 	float: right;
+}
+
+#xiNetControlsPanel {
+    /* right:0px; */
+		width: 600px;
+		text-transform: none;
 }
 
 #toggles_decoys {

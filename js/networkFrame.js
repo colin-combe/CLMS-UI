@@ -218,7 +218,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -300,26 +300,6 @@ CLMSUI.init.views = function () {
         }
     });
 
-    new CLMSUI.DropDownMenuViewBB ({
-			el: "#xiNetControlsDropdownPlaceholder",
-			model: CLMSUI.compositeModelInst.get("clmsModel"),
-			myOptions: {
-				title: "xiNET Controls",
-				menu: [
-          {name: "Layouts", func: self.autoLayout, context: self},
-          // {name: "Load Layout", func: self.loadLayout, context: self},
-          // {name: "Save Layout", func: self.saveLayout, context: self},
-          {name: "Drag to Pan", func: self.setClickModePan, context: self},
-          {name: "Drag to Select", func: self.setClickModeSelect, context: self},
-          {name: CLMSUI.utils.commonLabels.downloadImg+"SVG", func: self.downloadSVG, context: self},
-          //~ {name: "Help", func: self.autoLayout, context: self},
-					//~ {name: "Expand All", func: self.autoLayout, context: self},
-					//~ {name: "Collapse All", func: self.saveLayout, context: self},
-				]
-			}
-		});
-
-
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
 		model: CLMSUI.compositeModelInst.get("filterModel"),
@@ -344,6 +324,35 @@ CLMSUI.init.views = function () {
         })
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
+
+    new CLMSUI.xiNetControlsViewBB ({
+          el: "#xiNetControlsPanel",
+          model: CLMSUI.compositeModelInst,
+          displayEventName: "xiNetControlsShow",
+    });
+
+    // new CLMSUI.DropDownMenuViewBB ({
+		// 	el: "#xiNetControlsDropdownPlaceholder",
+		// 	model: CLMSUI.compositeModelInst.get("clmsModel"),
+		// 	myOptions: {
+		// 		title: "xiNET Controls",
+		// 		menu: [
+    //       {name: "Layouts", func: self.autoLayout, context: self},
+    //       // {name: "Load Layout", func: self.loadLayout, context: self},
+    //       // {name: "Save Layout", func: self.saveLayout, context: self},
+    //       {name: "Drag to Pan", func: self.setClickModePan, context: self},
+    //       {name: "Drag to Select", func: self.setClickModeSelect, context: self},
+    //       {name: CLMSUI.utils.commonLabels.downloadImg+"SVG", func: self.downloadSVG, context: self},
+    //       //~ {name: "Help", func: self.autoLayout, context: self},
+		// 			//~ {name: "Expand All", func: self.autoLayout, context: self},
+		// 			//~ {name: "Collapse All", func: self.saveLayout, context: self},
+		// 		]
+		// 	}
+		// });
+    //
+    //
+
+
 };
 
 

@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '?v='.microtime(true);
+    $cacheBuster = '?v=0';//microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -118,7 +118,7 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/CSVFileChooser.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
@@ -136,7 +136,8 @@
         <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
-		    <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
@@ -176,7 +177,7 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
-                    <p id="xiNetControlsDropdownPlaceholder"></p>
+                    <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
             <div class="mainContent">
