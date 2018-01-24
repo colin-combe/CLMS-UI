@@ -12,6 +12,10 @@
 		text-transform: none;
 }
 
+#autoLayoutButton{
+	margin-left: 0px;
+}
+
 #toggles_decoys {
 	display: none;
 }

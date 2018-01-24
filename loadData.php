@@ -83,7 +83,7 @@ if (count($_GET) > 0) {
         $randId = implode('-' , array_slice($dashSeperated, 1 , 4));
         $id = $dashSeperated[0];
 
-        $searchDataQuery = "SELECT s.id AS id, s.name, s.private, 
+        $searchDataQuery = "SELECT s.id AS id, s.name, s.private,
 			s.submit_date, s.notes, s.random_id, paramset_id,
 			ps.enzyme_chosen AS enzyme_chosen, ps.customsettings
 			FROM search s
@@ -94,14 +94,14 @@ if (count($_GET) > 0) {
         $res = pg_query($searchDataQuery)
                     or die('Query failed: ' . pg_last_error());
         $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-        
+
         if (count($dashSeperated) == 6){
             $line["group"] = $dashSeperated[5];
         } else {
             $line["group"] = "'NA'";
         }
         $line["random_id"] = $randId;
-		
+
 		//sequence files
         $seqFileQuery = "SELECT search_id, name, file_name, decoy_file, file_path, notes, upload_date,
 			 user_name AS uploaded_by
@@ -110,7 +110,7 @@ if (count($_GET) > 0) {
 			 ON search_sequencedb.seqdb_id = sequence_file.id
 			 INNER JOIN users
 			 ON sequence_file.uploadedby = users.id
-			 WHERE search_sequencedb.search_id = '".$id."';";        
+			 WHERE search_sequencedb.search_id = '".$id."';";
         $sequenceFileResult = pg_query($seqFileQuery)
                     or die('Query failed: ' . pg_last_error());
 		$sequenceFiles = [];
@@ -120,10 +120,10 @@ if (count($_GET) > 0) {
 		$line["sequenceFiles"] = $sequenceFiles;
 		// Free resultset
 		pg_free_result($sequenceFileResult);
-    
-			
-			
-        //runs        
+
+
+
+        //runs
 		$runQuery = "SELECT *
 			FROM search_acquisition sa
 			INNER JOIN (
@@ -138,7 +138,7 @@ if (count($_GET) > 0) {
 				INNER JOIN users ON acquisition.uploadedby = users.id
 				) r
 			ON sa.run_id = r.run_id AND sa.acq_id = r.acq_id
-        WHERE sa.search_id = '".$id."';";              
+        WHERE sa.search_id = '".$id."';";
         $runResult = pg_query($dbconn, $runQuery)
                     or die('Query failed: ' . pg_last_error());
 		$runs = [];
@@ -148,10 +148,10 @@ if (count($_GET) > 0) {
 		$line["runs"] = $runs;
         // Free resultset
 		pg_free_result($runResult);
-    
+
 		//enzymes - xiDB only supports 1 enzyme at moment, xiUI will get it as array containing 1 element
-		//	since it should change to multiple enzymes at some future point,  
-		$enzymeQuery = "SELECT * FROM enzyme e WHERE e.id = '".$line["enzyme_chosen"]."';";              
+		//	since it should change to multiple enzymes at some future point,
+		$enzymeQuery = "SELECT * FROM enzyme e WHERE e.id = '".$line["enzyme_chosen"]."';";
         $enzymeResult = pg_query($dbconn, $enzymeQuery)
                     or die('Query failed: ' . pg_last_error());
 		$enzymes = [];
@@ -161,13 +161,13 @@ if (count($_GET) > 0) {
 		$line["enzymes"] = $enzymes;
 		// Free resultset
 		pg_free_result($enzymeResult);
-    
+
 		//need paramater_set id for modification, crosslinkers & losses
 		$psId =$line["paramset_id"];
-				
+
 		//modifications
-		$modQuery = "SELECT * FROM chosen_modification cm INNER JOIN modification m ON cm.mod_id = m.id  
-		 WHERE cm.paramset_id = '".$psId."';";              
+		$modQuery = "SELECT * FROM chosen_modification cm INNER JOIN modification m ON cm.mod_id = m.id
+		 WHERE cm.paramset_id = '".$psId."';";
         $modResult = pg_query($dbconn, $modQuery)
                     or die('Query failed: ' . pg_last_error());
 		$mods = [];
@@ -177,10 +177,10 @@ if (count($_GET) > 0) {
 		$line["modifications"] = $mods;
 		// Free resultset
 		pg_free_result($modResult);
-		
+
 		//cross-linkers
-		$crosslinkerQuery = "SELECT * FROM chosen_crosslinker cc INNER JOIN crosslinker cl ON cc.crosslinker_id = cl.id  
-		 WHERE cc.paramset_id = '".$psId."';";              
+		$crosslinkerQuery = "SELECT * FROM chosen_crosslinker cc INNER JOIN crosslinker cl ON cc.crosslinker_id = cl.id
+		 WHERE cc.paramset_id = '".$psId."';";
         $crosslinkerResult = pg_query($dbconn, $crosslinkerQuery)
                     or die('Query failed: ' . pg_last_error());
 		$crosslinkers = [];
@@ -190,11 +190,11 @@ if (count($_GET) > 0) {
 		$line["crosslinkers"] = $crosslinkers;
 		// Free resultset
 		pg_free_result($crosslinkerResult);
-		
-	
+
+
 		//losses
-		$lossesQuery = "SELECT * FROM chosen_losses closs INNER JOIN loss ON closs.loss_id = loss.id  
-		 WHERE closs.paramset_id = '".$psId."';";              
+		$lossesQuery = "SELECT * FROM chosen_losses closs INNER JOIN loss ON closs.loss_id = loss.id
+		 WHERE closs.paramset_id = '".$psId."';";
         $lossesResult = pg_query($dbconn, $lossesQuery)
                     or die('Query failed: ' . pg_last_error());
 		$losses = [];
@@ -204,11 +204,11 @@ if (count($_GET) > 0) {
 		$line["losses"] = $losses;
 		//free result set
 		pg_free_result($lossesResult);
-		
+
 		//now take out some untidy looking attributes
 		unset($line["enzyme_chosen"]);
         unset($line["paramset_id"]);
-        
+
         $searchId_metaData[$id] = $line;
         $searchId_randomId[$id] = $randId;
     }
@@ -226,7 +226,7 @@ if (count($_GET) > 0) {
 	while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
 		echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
 	}
-    
+
     //load data -
     $WHERE_spectrumMatch = ' ( ( '; //WHERE clause for spectrumMatch table
     $WHERE_matchedPeptide = ' ( ';//WHERE clause for matchedPeptide table
@@ -240,12 +240,12 @@ if (count($_GET) > 0) {
         $randId = $value;
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.'(search_id = '.$id.' AND random_id = \''.$randId.'\''.') ';
         $WHERE_matchedPeptide = $WHERE_matchedPeptide.'search_id = '.$id.'';
-        
-        $i++; 
+
+        $i++;
     }
     $WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) AND score >= '.$lowestScore.') ';
-    $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';	
-	
+    $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
+
     if ($decoys == false){
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND (NOT is_decoy) ';
     }
@@ -263,8 +263,6 @@ if (count($_GET) > 0) {
     else {
         $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND dynamic_rank ';
     }
-	
-	error_log (print_r ($WHERE_spectrumMatch, true));
 
     // MJG. 06/09/16. Changed query 'cos it crashed when using old db
     $isNewQuery = pg_query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'spectrum_source'");
@@ -474,7 +472,7 @@ if (count($_GET) > 0) {
             $proteinIdField = "accession_number";
         }
 
-        $query = "SELECT ".$proteinIdField." AS id, protein.id as real_id, 
+        $query = "SELECT ".$proteinIdField." AS id, protein.id as real_id,
                 CASE WHEN name IS NULL OR name = '' OR name = 'REV_' OR name = 'RAN_' THEN accession_number
                 ELSE name END AS name,
                 description, accession_number, sequence, is_decoy
@@ -500,9 +498,9 @@ if (count($_GET) > 0) {
                     . '"seq_mods":"' .$line["sequence"] . '",'
                     . '"is_decoy":' .$isDecoy
                     . "}";
-                    
+
                 $interactorAccs[$line["accession_number"]] = 1;
-                
+
                 $line = pg_fetch_array($res, null, PGSQL_ASSOC);
                 if ($line) {echo ",\n";}
             }
@@ -515,7 +513,7 @@ if (count($_GET) > 0) {
         try {
             // @ stops pg_connect echo'ing out failure messages that knacker the returned data
             $interactorDbConn = @pg_connect($interactionConnection);// or die('Could not connect: ' . pg_last_error());
-            
+
             if ($interactorDbConn) {
                 $interactorResult = pg_query($interactorQuery);// or die('Query failed: ' . pg_last_error());
                 echo "\"interactors\":{\n";
@@ -533,8 +531,8 @@ if (count($_GET) > 0) {
             //error_log (print_r ("UNIPROT ERR ".$e, true));
             echo "\"interactors\":{},\n";
         }
-        
-        
+
+
 
         echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
         echo "}\n";
