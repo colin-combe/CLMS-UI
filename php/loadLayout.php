@@ -20,13 +20,32 @@
 include('../../connectionString.php');
 $dbconn = pg_connect($connectionString)
         or die('Could not connect: ' . pg_last_error());
+
+    //Stored layouts
+	$layoutQuery = "SELECT t1.layout AS l "
+			. " FROM layouts AS t1 "
+			. " WHERE t1.search_id LIKE '$1' "
+			. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
+			. " WHERE t1.search_id LIKE '$1' );";
+  //
+	// $layoutResult = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+	// while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
+	// 	echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
+	// }
+
 // Prepare a query for execution
-pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_id, layout, description) VALUES ($1, -1, $2, $3)');
+pg_prepare($dbconn, "my_query", 'SELECT * FROM layouts WHERE search_id = $1;');
 // Execute the prepared query
 $sid = $_POST["sid"];
-$layout = addslashes($_POST["layout"]);
-$name = addslashes($_POST["name"]);//stores in field called 'description'
-$result = pg_execute($dbconn, "my_query", [$sid, $layout, $name])or die('Query failed: ' . pg_last_error());
+$result = pg_execute($dbconn, "my_query", [$sid])or die('Query failed: ' . pg_last_error());
+
+$myarray = array();
+while ($row = pg_fetch_row($result)) {
+  $myarray[] = $row;
+}
+
+echo json_encode($myarray);
+
 // Free resultset
 pg_free_result($result);
 // Closing connection

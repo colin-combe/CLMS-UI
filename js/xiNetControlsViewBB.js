@@ -34,6 +34,44 @@
             },
 
             loadLayout: function (){
+                function load() {
+                  //dialog.dialog( "close" );
+                  // alert(name.val());
+
+                  var xmlhttp = new XMLHttpRequest();
+                  var url = "./php/loadLayout.php";
+                  xmlhttp.open("POST", url, true);
+                  //Send the proper header information along with the request
+                  xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                  xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+                      if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                          console.log("load layout " + xmlhttp.responseText, true);
+                          //alert("Layout Saved");
+                      }
+                  };
+                var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+                var params =  "sid=" + sid;
+                xmlhttp.send(params);
+
+                //CLMSUI.vent.trigger ("xiNetLoadLayout", layout);
+
+              };
+
+              load();
+                // //Stored layouts
+              	// $layoutQuery = "SELECT t1.layout AS l "
+              	// 		. " FROM layouts AS t1 "
+              	// 		. " WHERE t1.search_id LIKE '" . $sid . "' "
+              	// 		. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
+              	// 		. " WHERE t1.search_id LIKE '" . $sid . "' );";
+                //
+              	// $layoutResult = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
+              	// while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
+              	// 	echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
+              	// }
+
+
+
                 //   function addUser() {};
                 //
                 //
@@ -64,10 +102,9 @@
             },
 
             saveLayout: function (){
-                function save() {
-                  dialog.dialog( "close" );
-                  // alert(name.val());
-                  var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+
+                  var name = d3.select("#name").attr("value");
+                  console.log("Name:", name);
 
                   var callback = function (layoutJson) {
                           var xmlhttp = new XMLHttpRequest();
@@ -81,42 +118,44 @@
                                   alert("Layout Saved");
                               }
                           };
-                        var params =  "sid=" + sid + "&layout="+encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g,"") + "&name="+name.val());
+                        var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+                        var params =  "sid=" + sid
+                                    + "&layout="+encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g,""))
+                                    + "&name="+encodeURIComponent(d3.select("#name").attr("value"));
                         xmlhttp.send(params);
-
                 };
 
-                CLMSUI.vent.trigger ("xiNetSvgDownload", callback);
-              };
+                // CLMSUI.vent.trigger ("xiNetSaveLayout", callback);
 
-      var dialog, form
-      , name = $( "#name" ),
-      // allFields = $( [] ).add( name );
 
-                dialog = $( "#save-dialog" ).dialog({
-                  autoOpen: false,
-                  height: 400,
-                  width: 350,
-                  modal: true,
-                  buttons: {
-                    "Save": save,
-                    Cancel: function() {
-                      dialog.dialog( "close" );
-                    }
-                  },
-                  close: function() {
-                    form[ 0 ].reset();
-                    // allFields.removeClass( "ui-state-error" );
-                  }
-                });
-
-                form = dialog.find( "form" ).on( "submit", function( event ) {
-                  event.preventDefault();
-                  addUser();
-                });
-
-                dialog.dialog( "open" );
-                // CLMSUI.vent.trigger ("xiNetSvgDownload", true);
+      // var dialog, form
+      // , name = $( "#name" ),
+      // // allFields = $( [] ).add( name );
+      //
+      //           dialog = $( "#save-dialog" ).dialog({
+      //             autoOpen: false,
+      //             height: 400,
+      //             width: 350,
+      //             modal: true,
+      //             buttons: {
+      //               "Save": save,
+      //               Cancel: function() {
+      //                 dialog.dialog( "close" );
+      //               }
+      //             },
+      //             close: function() {
+      //               form[ 0 ].reset();
+      //               // allFields.removeClass( "ui-state-error" );
+      //             }
+      //           });
+      //
+      //           form = dialog.find( "form" ).on( "submit", function( event ) {
+      //             event.preventDefault();
+      //             addUser();
+      //           });
+      //
+      //           dialog.dialog( "open" );
+      //           // CLMSUI.vent.trigger ("xiNetSvgDownload", true);
             },
 
             initialize: function (viewOptions) {
@@ -154,7 +193,7 @@
                           //   "<td>Click and drag on background.</td>" +
                           // "</tr>" +
                           "<tr>" +
-                            "<td>Move protein(s)</td>" +
+                            "<td>Move proteins</td>" +
                             "<td>Click and drag on protein</td>" +
                           "</tr>" +
                           "<tr>" +
@@ -173,26 +212,20 @@
                       "</table>" +
                     "</div>" +
                     "<div class='xinetButtonBar'>" +
-                        "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto Layout</button>" +
-                        "<button class='btn btn-1 btn-1a loadLayoutButton'>Load Layout</button>" +
-                        "<button class='btn btn-1 btn-1a saveLayoutButton'>Save Layout</button>" +
-                    "</div>" +
-                    "<div class='xinetButtonBar'>" +
-                        "<label class='panOrSelect'><span>DRAG TO PAN</span><input type='radio' name='clickMode' class='clickToPan' checked></label>" +
-                        "<label class='panOrSelect'><span>DRAG TO SELECT</span><input type='radio' name='clickMode' class='clickToSelect'></label>" +
-                        "<button class='btn btn-1 btn-1a downloadButton'>"+CLMSUI.utils.commonLabels.downloadImg+"SVG</button>" +
-                    "</div>" +
-                    "<div id='save-dialog' title='Set Layout Name'>" +
-                     "<form>" +
-                        "<fieldset>" +
+                          "<label class='panOrSelect'><span>DRAG TO PAN</span><input type='radio' name='clickMode' class='clickToPan' checked></label>" +
+                          "<label class='panOrSelect'><span>DRAG TO SELECT</span><input type='radio' name='clickMode' class='clickToSelect'></label>" +
+                          "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto Layout</button>" +
+                          "<button class='btn btn-1 btn-1a loadLayoutButton'>Load Layout</button>" +
+                    // "</div>" +
+                    // "<div class='xinetButtonBar'>" +
                           "<label for='name'> Layout Name: </label>" +
-                          "<input type='text' name='name' id='name' value='New layout' class='text ui-widget-content ui-corner-all'>" +
-
-                          <!-- Allow form submission with keyboard without duplicating the dialog button -->
-                          "<input type='submit' tabindex='-1' style='position:absolute; top:-1000px'>" +
-                        "</fieldset>" +
-                      "</form>" +
-                "</div>");
+                          "<input type='text' name='name' id='name' value='New layout'>" +
+                          "<button class='btn btn-1 btn-1a saveLayoutButton'>Save Layout</button>" +
+                    // "</div>" +
+                    // "<div class='xinetButtonBar'>" +
+                        "<button class='btn btn-1 btn-1a downloadButton'>"+CLMSUI.utils.commonLabels.downloadImg+"SVG</button>" +
+                    "</div>"
+                  );
 
 
 
