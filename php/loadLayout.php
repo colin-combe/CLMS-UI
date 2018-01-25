@@ -22,29 +22,43 @@ $dbconn = pg_connect($connectionString)
         or die('Could not connect: ' . pg_last_error());
 
     //Stored layouts
-	$layoutQuery = "SELECT t1.layout AS l "
-			. " FROM layouts AS t1 "
-			. " WHERE t1.search_id LIKE '$1' "
-			. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
-			. " WHERE t1.search_id LIKE '$1' );";
+	// $layoutQuery = "SELECT t1.layout AS l "
+	// 		. " FROM layouts AS t1 "
+	// 		. " WHERE t1.search_id LIKE '$1' "
+	// 		. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
+	// 		. " WHERE t1.search_id LIKE '$1' );";
   //
+
+  	$layoutQuery = "SELECT t1.layout AS layout, t1.description AS name FROM layouts AS t1  WHERE t1.search_id = $1 AND t1.time IN (SELECT max(t1.time) FROM layouts AS t1  WHERE t1.search_id = $1 GROUP BY t1.description);";
+
+
 	// $layoutResult = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
 	// while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
 	// 	echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
 	// }
 
 // Prepare a query for execution
-pg_prepare($dbconn, "my_query", 'SELECT * FROM layouts WHERE search_id = $1;');
+pg_prepare($dbconn, "my_query", $layoutQuery);
 // Execute the prepared query
 $sid = $_POST["sid"];
 $result = pg_execute($dbconn, "my_query", [$sid])or die('Query failed: ' . pg_last_error());
 
-$myarray = array();
-while ($row = pg_fetch_row($result)) {
-  $myarray[] = $row;
-}
+//echo json_encode($data); trouble with escaping
 
-echo json_encode($myarray);
+$i = 0;
+echo '{';
+while ($row = pg_fetch_array($result)) {
+  $name = $row["name"];
+  if ($name != "{}" && $name != ""){
+    if ($i > 0) echo ',';
+    echo '"'.$name.'":'.stripslashes($row["layout"]);
+    $i++;
+    //echo $name;
+  }
+}
+echo '}';
+
+//echo $data;
 
 // Free resultset
 pg_free_result($result);

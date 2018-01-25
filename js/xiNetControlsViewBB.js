@@ -45,8 +45,10 @@
                   xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                   xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
                       if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                          console.log("load layout " + xmlhttp.responseText, true);
+                          console.log("layout>" + xmlhttp.responseText, true);
                           //alert("Layout Saved");
+
+                         var layouts = JSON.parse(xmlhttp.responseText);
                       }
                   };
                 var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
@@ -58,76 +60,8 @@
               };
 
               load();
-                // //Stored layouts
-              	// $layoutQuery = "SELECT t1.layout AS l "
-              	// 		. " FROM layouts AS t1 "
-              	// 		. " WHERE t1.search_id LIKE '" . $sid . "' "
-              	// 		. " AND t1.time = (SELECT max(t1.time) FROM layouts AS t1 "
-              	// 		. " WHERE t1.search_id LIKE '" . $sid . "' );";
-                //
-              	// $layoutResult = pg_query($layoutQuery) or die('Query failed: ' . pg_last_error());
-              	// while ($line = pg_fetch_array($layoutResult, null, PGSQL_ASSOC)) {
-              	// 	echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
-              	// }
-
-
 
                 //   function addUser() {};
-                //
-                //
-                //   dialog = $( "#dialog" ).dialog({
-                //   autoOpen: false,
-                //   height: 400,
-                //   width: 350,
-                //   modal: true,
-                //   buttons: {
-                //     "Create an account": addUser,
-                //     Cancel: function() {
-                //       dialog.dialog( "close" );
-                //     }
-                //   },
-                //   close: function() {
-                //     form[ 0 ].reset();
-                //     //allFields.removeClass( "ui-state-error" );
-                //   }
-                // });
-                //
-                // form = dialog.find( "form" ).on( "submit", function( event ) {
-                //   event.preventDefault();
-                //   addUser();
-                // });
-                //
-                // dialog.dialog( "open" );
-                // CLMSUI.vent.trigger ("xiNetSvgDownload", true);
-            },
-
-            saveLayout: function (){
-
-                  var name = d3.select("#name").attr("value");
-                  console.log("Name:", name);
-
-                  var callback = function (layoutJson) {
-                          var xmlhttp = new XMLHttpRequest();
-                          var url = "./php/saveLayout.php";
-                          xmlhttp.open("POST", url, true);
-                          //Send the proper header information along with the request
-                          xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                          xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
-                              if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                                  console.log("Saved layout " + xmlhttp.responseText, true);
-                                  alert("Layout Saved");
-                              }
-                          };
-                        var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
-                        var params =  "sid=" + sid
-                                    + "&layout="+encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g,""))
-                                    + "&name="+encodeURIComponent(d3.select("#name").attr("value"));
-                        xmlhttp.send(params);
-                };
-
-                // CLMSUI.vent.trigger ("xiNetSaveLayout", callback);
-
-
       // var dialog, form
       // , name = $( "#name" ),
       // // allFields = $( [] ).add( name );
@@ -156,6 +90,29 @@
       //
       //           dialog.dialog( "open" );
       //           // CLMSUI.vent.trigger ("xiNetSvgDownload", true);
+                },
+
+            saveLayout: function (){
+                var callback = function (layoutJson) {
+                          var xmlhttp = new XMLHttpRequest();
+                          var url = "./php/saveLayout.php";
+                          xmlhttp.open("POST", url, true);
+                          //Send the proper header information along with the request
+                          xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                          xmlhttp.onreadystatechange = function() {//Call a function when the state changes.
+                              if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                                  console.log("Saved layout " + xmlhttp.responseText, true);
+                                  alert("Layout Saved");
+                              }
+                          };
+                        var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+                        var params =  "sid=" + sid
+                                    + "&layout="+encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g,""))
+                                    + "&name="+encodeURIComponent(d3.select("#name").property("value"));
+                        xmlhttp.send(params);
+                };
+
+                CLMSUI.vent.trigger ("xiNetSaveLayout", callback);
             },
 
             initialize: function (viewOptions) {
@@ -188,10 +145,6 @@
                             "<td>Zoom</td>" +
                             "<td>Mouse wheel</td>" +
                           "</tr>" +
-                          // "<tr>" +
-                          //   "<td>Pan</td>" +
-                          //   "<td>Click and drag on background.</td>" +
-                          // "</tr>" +
                           "<tr>" +
                             "<td>Move proteins</td>" +
                             "<td>Click and drag on protein</td>" +
