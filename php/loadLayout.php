@@ -45,6 +45,7 @@ $result = pg_execute($dbconn, "my_query", [$sid])or die('Query failed: ' . pg_la
 
 //echo json_encode($data); trouble with escaping
 
+//yes, this is a mess
 $i = 0;
 echo '{';
 while ($row = pg_fetch_array($result)) {
