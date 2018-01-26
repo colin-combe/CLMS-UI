@@ -331,28 +331,6 @@ CLMSUI.init.views = function () {
           displayEventName: "xiNetControlsShow",
     });
 
-    // new CLMSUI.DropDownMenuViewBB ({
-		// 	el: "#xiNetControlsDropdownPlaceholder",
-		// 	model: CLMSUI.compositeModelInst.get("clmsModel"),
-		// 	myOptions: {
-		// 		title: "xiNET Controls",
-		// 		menu: [
-    //       {name: "Layouts", func: self.autoLayout, context: self},
-    //       // {name: "Load Layout", func: self.loadLayout, context: self},
-    //       // {name: "Save Layout", func: self.saveLayout, context: self},
-    //       {name: "Drag to Pan", func: self.setClickModePan, context: self},
-    //       {name: "Drag to Select", func: self.setClickModeSelect, context: self},
-    //       {name: CLMSUI.utils.commonLabels.downloadImg+"SVG", func: self.downloadSVG, context: self},
-    //       //~ {name: "Help", func: self.autoLayout, context: self},
-		// 			//~ {name: "Expand All", func: self.autoLayout, context: self},
-		// 			//~ {name: "Collapse All", func: self.saveLayout, context: self},
-		// 		]
-		// 	}
-		// });
-    //
-    //
-
-
 };
 
 

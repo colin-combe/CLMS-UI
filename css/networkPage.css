@@ -8,12 +8,16 @@
 
 #xiNetControlsPanel {
     /* right:0px; */
-		width: 600px;
+		width: 710px;
 		text-transform: none;
 }
 
 #autoLayoutButton{
 	margin-left: 0px;
+}
+
+#loadLayoutButton{
+	display: inline-block;
 }
 
 #toggles_decoys {
