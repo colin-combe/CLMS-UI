@@ -66,3 +66,7 @@
     display: inline-block;
     margin-left: 2px;
 }
+
+.dynDiv .dropdown DIV HR {
+	background: #091d42;
+}

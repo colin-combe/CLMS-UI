@@ -101,7 +101,8 @@
               "click .niceButton": "reOrderAndRender",
               "click .flipIntraButton": "flipIntra",
               "click .showResLabelsButton": "showResLabelsIfRoom",
-              "click .hideLinkless": "flipLinklessVisibility",
+              "click .showLinkless": "toggleLinklessVisibility",
+			  "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
           });
         },
 		
@@ -117,9 +118,10 @@
 			},
 			intraOutside: true,
 			showResLabels: true,
+			homomOpposite: true,
 			sort: "best",
 			sortDir: 1,
-			hideLinkless: false,
+			showLinkless: true,
 		},
 
         initialize: function (viewOptions) {
@@ -168,8 +170,8 @@
             
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
-                {class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
-                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
+                //{class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
+                //{class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
             var toolbar = mainDivSel.select("div.toolbar");
@@ -178,14 +180,13 @@
             
             // DROPDOWN STARTS
             // Various view options set up, then put in a dropdown menu
-            var toggleButtonData = [
-                {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio", group: "sort"},
-                {class: "circRadio", label: "Size", id: "size", type: "radio", group: "sort"},
-                {class: "circRadio", label: "Link Crossings", id: "best", type: "radio", group: "sort"},
-                {class: "niceButton", label: "ReLayout", id: "nice", type: "button"},
-                {class: "hideLinkless", label: "Hide Linkless Proteins", id: "hideLinkless", type: "checkbox", inputFirst: true, initialState: this.options.hideLinkless}
-            ];
-            toggleButtonData
+            var orderOptionsButtonData = [
+                {class: "circRadio", label: "Alphabetically", id: "alpha", type: "radio", group: "sort"},
+                {class: "circRadio", label: "By Length", id: "size", type: "radio", group: "sort"},
+                {class: "circRadio", label: "To Reduce Link Crossings", id: "best", type: "radio", group: "sort", sectionEnd: true},
+                {class: "niceButton", label: "Redo Current Ordering", id: "nice", type: "button"},
+			];
+            orderOptionsButtonData
                 .filter (function(d) { return d.type === "radio"; })
                 .forEach (function (d) {
                     d.initialState = this.options.sort === d.id;
@@ -196,17 +197,43 @@
                     };
                 }, this)
             ;
-            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
-
-            
-            var optid = this.el.id+"Options";
-            toolbar.append("p").attr("id", optid);
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, orderOptionsButtonData);
+   
+            var orderoptid = this.el.id+"OrderOptions";
+            toolbar.append("p").attr("id", orderoptid);
             new CLMSUI.DropDownMenuViewBB ({
-                el: "#"+optid,
+                el: "#"+orderoptid,
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Order Proteins ▼",
-                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    menu: orderOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null, sectionEnd: d.sectionEnd}; }),
+                    closeOnClick: false,
+                }
+            });
+			
+			
+			var showOptionsButtonData = [
+                {class: "showLinkless", label: "Linkless Proteins", id: "showLinkless", initialState: this.options.showLinkless},
+                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space"},
+				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside},
+				{class: "toggleHomomOpposition", label: "Homomultimers Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite},
+			];
+			showOptionsButtonData
+                .forEach (function (d) {
+					d.type = "checkbox";
+					d.inputFirst = true;
+				})
+			;
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, showOptionsButtonData);
+			
+			var showoptid = this.el.id+"ShowOptions";
+            toolbar.append("p").attr("id", showoptid);
+            new CLMSUI.DropDownMenuViewBB ({
+                el: "#"+showoptid,
+                model: CLMSUI.compositeModelInst.get("clmsModel"),
+                myOptions: {
+                    title: "Show ▼",
+                    menu: showOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
                     closeOnClick: false,
                 }
             });
@@ -306,7 +333,7 @@
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
 				// filtering can change node and thus feature positioning too if proteins are hidden or rearranged by sorting
-                if (self.options.hideLinkless || self.options.sort === "best") {
+                if (!self.options.showLinkless || self.options.sort === "best") {
                     self.render();
                 } else {
                     renderPartial (["links", "nodes"]);
@@ -369,8 +396,13 @@
             this.render();      
         },
         
-        flipLinklessVisibility : function () {
-            this.options.hideLinkless = !this.options.hideLinkless;
+        toggleLinklessVisibility : function () {
+            this.options.showLinkless = !this.options.showLinkless;
+            this.render();
+        },
+		
+		toggleHomomOppositeIntra : function () {
+            this.options.homomOpposite = !this.options.homomOpposite;
             this.render();
         },
 
@@ -409,13 +441,14 @@
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
             var intraOutside = this.options.intraOutside;
+			var homomOpposite = this.options.homomOpposite;
             var bowOutMultiplier = 1.2;
 
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
                 var homom = xlink.confirmedHomomultimer; // TODO: need to deal with this changing
                 var intra = xlink.toProtein.id === xlink.fromProtein.id;
-                var out = intraOutside ? intra && !homom : homom;
+                var out = intraOutside ? intra && (homomOpposite ? !homom : true) : (homomOpposite ? homom : false);
                 var rad = out ? rad2 : rad1;
                 var bowRadius = out ? rad2 * bowOutMultiplier: 0;
                 
@@ -457,9 +490,9 @@
 
         filterInteractors: function (interactors) {
             var filteredInteractors = [];
-            var hideLinkless = this.options.hideLinkless;
+            var showLinkless = this.options.showLinkless;
             interactors.forEach (function (value) {
-                if (!value.is_decoy && (!hideLinkless || !value.hidden)) {
+                if (!value.is_decoy && (showLinkless || !value.hidden)) {
                     filteredInteractors.push (value);
                 }
             });
@@ -956,11 +989,11 @@
             var abbvMap = {
                 showResLabels: "RESLBLS",
                 intraOutside: "SELFOUTER",
-                hideLinkless: "HIDEIFNOLINKS",
+                showLinkless: "SHOWIFNOLINKS",
             };
             var fields = ["showResLabels"];   
             if (this.model.get("clmsModel").realProteinCount > 1) {
-                fields.push ("intraOutside", "hideLinkLess", "sort");
+                fields.push ("intraOutside", "showLinkLess", "sort");
             }
             
             var str = CLMSUI.utils.objectStateToAbbvString (this.options, fields, d3.set(), abbvMap);

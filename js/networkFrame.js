@@ -499,11 +499,11 @@ CLMSUI.init.viewsEssential = function (options) {
         el: "#expDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
-            title: "Data-Download",
+            title: "Export",
             menu: [
-                {name: "Download Filtered Links as CSV", func: downloadLinks},
-                {name: "Download Filtered Matches as CSV", func: downloadMatches},
-                {name: "Download Filtered Residues as CSV", func: downloadResidueCount},
+                {name: "Filtered Links as CSV", func: downloadLinks},
+                {name: "Filtered Matches as CSV", func: downloadMatches},
+                {name: "Filtered Residues as CSV", func: downloadResidueCount, sectionEnd: true},
 				{name: "Make Filtered Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
 				//{id: "sharePlaceholder", label: "Share URL", eventName: "shareURL", func: function() { CLMSUI.vent.trigger (this.options.eventName, true); }},
             ]
