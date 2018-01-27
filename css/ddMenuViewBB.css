@@ -1,5 +1,6 @@
 .dropdown DIV {
-    position: absolute;
+    /* position: absolute; */
+	position: fixed;
     z-index: 5000;
     background: #091D42;
     padding: 0.2em 1em 0.2em 1em;
@@ -64,4 +65,8 @@
     width: 0.8em;
     display: inline-block;
     margin-left: 2px;
+}
+
+.dynDiv .dropdown DIV HR {
+	background: #091d42;
 }

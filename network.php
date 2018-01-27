@@ -171,9 +171,8 @@
                     <p id="loadDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="proteinSelectionDropdownPlaceholder"></p>
-                    <p id="annotationsDropdownPlaceholder"></p>
-                    <p id="expDropdownPlaceholder"></p>
-                    <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
+                    <p id="annotationsDropdownPlaceholder"></p>                    <p id="expDropdownPlaceholder"></p>
+                    <p id="helpDropdownPlaceholder"></p>
                     <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 

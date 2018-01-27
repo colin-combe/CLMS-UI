@@ -83,3 +83,9 @@ svg.circularView {
     font-size: 1em;
      pointer-events: none;
 }
+
+.niceButton {
+	margin-left: 13px;
+	margin-right: 0;
+	padding-right: 0;
+}
