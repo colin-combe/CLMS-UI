@@ -50,18 +50,18 @@
 
             initialize: function (viewOptions) {
               var myDefaults = {
-        				buttonText: "Select Protein MetaData CSV File",
-        				loadedEventName: "proteinMetadataUpdated",
-        				parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes for <%= itemCount %> Identified Proteins",
         				expectedFormat: {
-        					header: "Accession,{MetaData1 Name}*,{MetaData2 Name} etc",
-        					data: "{Protein Accession Number},{number or string},{number or string}",
-        					example: [
-        						{"csv file": ["Accession", "Name", "Value"]},
-        						{csv: ["P02768-A,Human Protein,0.79"]},
-        						{csv: ["G3RE98,Gorilla Protein,0.58"]},
-        					],
-        					notes: "*If a MetaData column name is 'Name' it will change displayed protein names"
+                  "Select links":
+                    "LEFT click on link; CTRL or SHIFT and LEFT click to add/remove links from selection. (The spectra matches supporting the selected links will appear in the table below xiNET.)",
+                  "Select protein":
+                    "LEFT click on protein; CTRL or SHIFT and LEFT click to add/remove proteins from selection. (Selected proteins can be moved around together.)",
+                  "Toggle protein between bar and circle":
+                    "RIGHT click on protein",
+                  "Zoom":"Mouse wheel",
+                  "Move proteins":"Click and drag on protein",
+                  "Expand bar (increases bar length until sequence is visible)":"SHIFT and RIGHT click on protein",
+                  "Rotate bar":"Click and drag on handles that appear at end of bar",
+                  "Flip self-links":"RIGHT-click on self-link",
         				}
         			};
         			viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
@@ -78,44 +78,6 @@
                 ;
 
                 wrapperPanel.html(
-                    // "<div class='sectionTable expectedFormatPanel'>" + //
-                    // "<table>" +
-                    //     "<tbody>" +
-                    //       "<tr>" +
-                    //         "<td>Select links</td>" +
-                    //         "<td>LEFT click on link; CTRL or SHIFT and LEFT click to add/remove links from selection. (The spectra matches supporting the selected links will appear in the table below xiNET.)</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Select protein</td>" +
-                    //         "<td>LEFT click on protein; CTRL or SHIFT and LEFT click to add/remove proteins from selection. (Selected proteins can be moved around together.)</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Toggle protein between bar and circle</td>" +
-                    //         "<td>RIGHT click on protein</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Zoom</td>" +
-                    //         "<td>Mouse wheel</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Move proteins</td>" +
-                    //         "<td>Click and drag on protein</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Expand bar <br>(increases bar length until sequence is visible)</td>" +
-                    //         "<td>SHIFT and RIGHT click on protein</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Rotate bar</td>" +
-                    //         "<td>Click and drag on handles that appear at end of bar</td>" +
-                    //       "</tr>" +
-                    //       "<tr>" +
-                    //         "<td>Flip self-links</td>" +
-                    //         "<td>RIGHT-click on self-link</td>" +
-                    //       "</tr>" +
-                    //     "</tbody>" +
-                    //   "</table>" +
-                    // "</div>" +
                     "<div class='xinetButtonBar'>" +
                         "<label for='name'> Layout Name: </label>" +
                         "<input type='text' name='name' id='name' value='New layout'>" +
@@ -134,8 +96,7 @@
 
 
                   var sectionData = [this.options.expectedFormat];
-                  sectionData[0].id = "ExpectedFormat";
-                  sectionData[0].sectionName = "Expected CSV Format";
+                  sectionData[0].sectionName = "Show mouse & keyboard controls";
 
                   var headerFunc = function(d) { return d.sectionName; };
                   var rowFilterFunc = function(d) {
@@ -147,7 +108,7 @@
                   };
                   var cellFunc = function (d) { d3.select(this).html (d.value); };
 
-                  CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc, []);
+                  CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Action", "Control"], headerFunc, rowFilterFunc, cellFunc, []);
 
 
 
