@@ -75,15 +75,17 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     //~ var filteredMatches_pp = crossLink.filteredMatches_pp;
                     crossLink.filteredMatches_pp = [];
                     var filteredMatchCount = filteredMatches_pp.length;
+					
                     for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
-                        var fm_pp = filteredMatches_pp[fm_pp];
+                        //var fm_pp = filteredMatches_pp[fm_pp];
+						var fm = filteredMatches_pp[fm_pp];
                         //set its fdr pass att to true even though it may not be in final results 
-                        fm_pp.match.fdrPass = true;
+                        fm.match.fdrPass = true;
                         //check its not manually hidden and meets navigation filter
                         if (crossLink.fromProtein.manuallyHidden != true 
                             && (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true)
-                            && filterModel.navigationFilter(fm_pp.match)) {
-                            crossLink.filteredMatches_pp.push(fm_pp);
+                            && filterModel.navigationFilter(fm.match) ) {
+                            crossLink.filteredMatches_pp.push(fm);
                         }
                     }
                 } else {
