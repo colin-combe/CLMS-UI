@@ -77,31 +77,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 //self-links? - if self links's not selected and match is self link return false
                 // possible an ambiguous self link will still get displayed
-                var hideSelfLinks = !this.get("selfLinks");
-                var hideBetweenLinks = !this.get("betweenLinks");
-                if ((hideSelfLinks || hideBetweenLinks) && !linear) { // we don't test linears here
-                    var isSelfLink = true;
-                    var prots = match.matchedPeptides[0].prt;
-                    var p1 = prots[0];
-                    for (var i = 1; i < prots.length; i++) {
-                        // not enough to match id's, one might be decoy protein, the other real
-                        if (!matchingProteinPairFunc(prots[i], p1)) {
-                            isSelfLink = false;
-                            break;
-                        }
-                    }
-                    prots = match.matchedPeptides[1].prt;
-                    for (var i = 0; i < prots.length; i++) {
-                        // not enough to match id's, one might be decoy protein, the other real
-                        if (!matchingProteinPairFunc(prots[i], p1)) {
-                            isSelfLink = false;
-                            break;
-                        }
-                    }
-                    if ((isSelfLink && hideSelfLinks) || (!isSelfLink && hideBetweenLinks)) {
+                var showSelfLinks = this.get("selfLinks");
+                var showBetweenLinks = this.get("betweenLinks");
+                // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
+                    
+                    if (!((match.couldBelongToSelfLink == true && showSelfLinks) 
+                        || (match.couldBelongToBetweenLink == true && showBetweenLinks))) {
                         return false;
                     }
-                }
+                
+                // }
 
                 //temp
                 var aaApart = +this.get("aaApart");

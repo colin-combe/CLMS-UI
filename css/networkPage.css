@@ -1,6 +1,24 @@
 /* martin - i'm putting css changes for the network /results page
  * in this new file, rather than add more to style.css.
- * Might help tidy up style.css*/ 
+ * Might help tidy up style.css*/
+
+#xiNetControlsButton{
+	float: right;
+}
+
+#xiNetControlsPanel {
+    /* right:0px; */
+		width: 710px;
+		text-transform: none;
+}
+
+#autoLayoutButton{
+	margin-left: 0px;
+}
+
+#loadLayoutButton{
+	display: inline-block;
+}
 
 #toggles_decoys {
 	display: none;

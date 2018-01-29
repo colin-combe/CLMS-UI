@@ -21,7 +21,7 @@
         },
 
         initialize: function (viewOptions) {
-            CLMSUI.PDBFileChooserBB.__super__.initialize.apply (this, arguments);
+            CLMSUI.CSVFileChooserBB.__super__.initialize.apply (this, arguments);
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
