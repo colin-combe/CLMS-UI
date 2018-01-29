@@ -505,7 +505,19 @@ CLMSUI.init.viewsEssential = function (options) {
                 {name: "Filtered Matches as CSV", func: downloadMatches},
                 {name: "Filtered Residues as CSV", func: downloadResidueCount, sectionEnd: true},
 				{name: "Make Filtered Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
-				//{id: "sharePlaceholder", label: "Share URL", eventName: "shareURL", func: function() { CLMSUI.vent.trigger (this.options.eventName, true); }},
+            ]
+        }
+    });
+	
+	// Generate help drop down
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#helpDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Help",
+            menu: [
+                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }},
+				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, title: "GitHub issue tracker (You must be logged in to GitHub to view.)"},
             ]
         }
     });
