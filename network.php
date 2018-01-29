@@ -165,15 +165,17 @@
                     <i class="fa fa-home fa-xi"
                         onclick="window.location = '../history/history.html';"
                         title="Return to search history / Login"></i>
-                    <i class="fa fa-github fa-xi"
-                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');"
+					<!--
+                    <i class="fa fa-github fa-xi" 
+                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
                         title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
+					-->
                     <p id="loadDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
-                    <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
+                    <p id="helpDropdownPlaceholder"></p>
                     <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
@@ -186,7 +188,7 @@
             </div>
 
             <div id='hiddenProteinsMessage'>
-                <p id='hiddenProteinsText'>Maunally Hidden Message</p>
+                <p id='hiddenProteinsText'>Manually Hidden Message</p>
                 <!-- not very backbone but its only a button -->
                 <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
             </div>"

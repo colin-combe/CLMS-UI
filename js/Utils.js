@@ -32,6 +32,11 @@ CLMSUI.utils = {
         downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906
 		shareLink: "Share Search Link with Current Filter State",
     },
+	
+	commonTemplates: {
+		downloadImg: _.template("Download Image As <%=fileType%>"),
+		downloadCSV: _.template("Download Filtered <%=items> as CSV"),
+	},
 
     addFourCorners: function (d3DivSelection) {
         var classNames = ["dynDiv_resizeDiv_tl", "dynDiv_resizeDiv_tr", "dynDiv_resizeDiv_bl", "dynDiv_resizeDiv_br"];
