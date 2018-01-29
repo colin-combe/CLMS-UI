@@ -153,7 +153,7 @@ CLMSUI.init.modelsEssential = function (options) {
     });
 
 	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
-		
+
 	// Anonymiser for screen shots / videos. MJG 17/05/17
     if (urlChunkMap["anon"]) {
         clmsModelInst.get("participants").forEach (function (prot, i) {
@@ -218,7 +218,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -286,7 +286,7 @@ CLMSUI.init.views = function () {
         {name: "PDB Data", eventName: "pdbShow"},
         {name: "Cross-Links (CSV)", eventName: "csvShow"},
         {name: "Cross-Link Metadata", eventName: "linkMetaShow"},
-		{name: "Protein Metadata", eventName: "proteinMetaShow"},
+		    {name: "Protein Metadata", eventName: "proteinMetaShow"},
     ];
     loadButtonData.forEach (function (bdata) {
 		bdata.func = function () { CLMSUI.vent.trigger (bdata.eventName, true); };
@@ -299,8 +299,7 @@ CLMSUI.init.views = function () {
 			menu: loadButtonData
         }
     });
-	
-	
+
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
 		model: CLMSUI.compositeModelInst.get("filterModel"),
@@ -325,6 +324,13 @@ CLMSUI.init.views = function () {
         })
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
+
+    new CLMSUI.xiNetControlsViewBB ({
+          el: "#xiNetControlsPanel",
+          model: CLMSUI.compositeModelInst,
+          displayEventName: "xiNetControlsShow",
+    });
+
 };
 
 
@@ -680,7 +686,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
         displayEventName: "linkMetaShow",
     });
-	
+
 	new CLMSUI.ProteinMetaDataFileChooserBB ({
         el: "#proteinMetaLoadPanel",
         model: CLMSUI.compositeModelInst,

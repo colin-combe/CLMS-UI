@@ -76,16 +76,13 @@
         <script type="text/javascript" src="./vendor/split_new.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
-<!--
-        <script type="text/javascript" src="./vendor/zepto.js"></script>
--->
         <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
-<!--
-        arrg, jquerys got in it, it for the json tree view, which we may not keep
--->
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
+        <link rel="stylesheet" href="./vendor/jquery-ui-1.12.1.custom/jquery-ui.min.css<?php echo $cacheBuster ?>">
+        <script type="text/javascript" src="./vendor/jquery-ui-1.12.1.custom/jquery-ui.min.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
@@ -118,7 +115,7 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/CSVFileChooser.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
@@ -137,6 +134,7 @@
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
@@ -164,8 +162,8 @@
         <div id="main">
 
             <div class="page-header">
-                    <i class="fa fa-home fa-xi" 
-                        onclick="window.location = '../history/history.html';" 
+                    <i class="fa fa-home fa-xi"
+                        onclick="window.location = '../history/history.html';"
                         title="Return to search history / Login"></i>
 					<!--
                     <i class="fa fa-github fa-xi" 
@@ -177,7 +175,8 @@
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
-					<p id="helpDropdownPlaceholder"></p>
+                    <p id="helpDropdownPlaceholder"></p>
+                    <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
             <div class="mainContent">

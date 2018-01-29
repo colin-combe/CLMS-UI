@@ -214,7 +214,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     },
 
     updateTable: function () {
-         this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
+        this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
             // map to reduce filtered matches to selected matches only
              .map (function (xlink) {
                 var selectedMatches = this.getMatches (xlink);
@@ -299,7 +299,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var selectedXLinkCount = this.matchCountIndices.length;
         panelHeading.text (
             commaFormat(lower) + " - " + commaFormat(upper) + " of " +
-            commaFormat(totalSelectedFilteredMatches) + " Match"+((totalSelectedFilteredMatches != 1) ? "es" : "")
+            commaFormat(totalSelectedFilteredMatches) + " Selected Match"+((totalSelectedFilteredMatches != 1) ? "es" : "")
             + " across "+
             commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
         );
@@ -324,7 +324,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var niceCrossLinkName = function (crosslink /*, i */ ) {
             var matchCount = crosslink.runningTotalEnd - crosslink.runningTotalStart;
             crosslink = crosslink.link;
-            return /*(i+1)+". "+*/ matchCount+" Matches for " + crosslink.fromProtein.name + ", " +
+            return /*(i+1)+". "+*/ matchCount+" Selected Match"+(matchCount > 1 ? "es" : "")+" for " + crosslink.fromProtein.name + ", " +
                 (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue + " --- " +
                     crosslink.toProtein.name + ", " + crosslink.toResidue));
         };
@@ -490,5 +490,5 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         return this;
     },
 
-    identifier: "Match Table",
+    identifier: "Selected Match Table",
 });

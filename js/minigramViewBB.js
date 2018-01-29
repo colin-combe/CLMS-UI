@@ -89,7 +89,7 @@
                         show: true,
                         padding: {
                           left: 0,
-                          right: 0,
+                          right: 1,
                         },
 						//extent: [self.model.get("domainStart"), self.model.get("domainEnd")],
                     }
@@ -206,7 +206,7 @@
             // get extents of all arrays, concatenate them, then get extent of that array
             var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
 
-            //var thresholds = d3.range (Math.min(0, Math.floor(extent[0])), Math.max (40, Math.ceil(extent[1])) + 1);
+			//  - which we need to make sure there's an empty bin at the end of the sequence
             var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX) + 2);
             if (thresholds.length === 0) {
                 thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
