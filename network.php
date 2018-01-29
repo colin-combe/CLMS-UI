@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '?v=0';//microtime(true);
+    $cacheBuster = '?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
