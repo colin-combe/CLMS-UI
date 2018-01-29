@@ -80,8 +80,6 @@
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-        <link rel="stylesheet" href="./vendor/jquery-ui-1.12.1.custom/jquery-ui.min.css<?php echo $cacheBuster ?>">
-        <script type="text/javascript" src="./vendor/jquery-ui-1.12.1.custom/jquery-ui.min.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
 
