@@ -101,6 +101,9 @@
                         ind.node().appendChild (targetNode);
                     }
                 }
+				if (d.title) {
+					ind.attr ("title", d.title);
+				}
             }); 
             
             choices
