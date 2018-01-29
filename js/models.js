@@ -79,13 +79,14 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 // possible an ambiguous self link will still get displayed
                 var showSelfLinks = this.get("selfLinks");
                 var showBetweenLinks = this.get("betweenLinks");
-                if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
+                // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
                     
                     if (!((match.couldBelongToSelfLink == true && showSelfLinks) 
                         || (match.couldBelongToBetweenLink == true && showBetweenLinks))) {
                         return false;
                     }
-                }
+                
+                // }
 
                 //temp
                 var aaApart = +this.get("aaApart");
