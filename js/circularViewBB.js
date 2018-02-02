@@ -119,7 +119,7 @@
 			intraOutside: true,
 			showResLabels: true,
 			homomOpposite: true,
-			sort: "best",
+			sort: "alpha",
 			sortDir: 1,
 			showLinkless: true,
 		},

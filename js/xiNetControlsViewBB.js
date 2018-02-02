@@ -21,6 +21,7 @@
                     "click .autoLayoutButton": function () {CLMSUI.vent.trigger ("xiNetAutoLayout", true);},//"autoLayout",
                   //  "click .loadLayoutButton": "loadLayout",
                     "click .saveLayoutButton": "saveLayout",
+                    "change .showXinetLabels": function () { CLMSUI.vent.trigger ("xiNetShowLabels", d3.select(".showXinetLabels").property("checked"));},//"autoLayout",
                 });
 
             },
@@ -41,7 +42,7 @@
                         var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
                         var params =  "sid=" + sid
                                     + "&layout="+encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g,""))
-                                    + "&name="+encodeURIComponent(d3.select("#name").property("value"));
+      .property("checked")                              + "&name="+encodeURIComponent(d3.select("#name").property("value"));
                         xmlhttp.send(params);
                 };
 
@@ -87,7 +88,7 @@
                         "<button class='btn btn-1 btn-1a downloadButton'>"+CLMSUI.utils.commonLabels.downloadImg+"SVG</button>" +
                         "<label class='panOrSelect'><span>DRAG TO PAN</span><input type='radio' name='clickMode' class='clickToPan' checked></label>" +
                         "<label class='panOrSelect'><span>DRAG TO SELECT</span><input type='radio' name='clickMode' class='clickToSelect'></label>" +
-                        // "<label class='showLabels'><span>SHOW LABELS</span><input type='checkbox' name='showLabels' class='showXinetLabels' checked></label>" +
+                        "<label class='showLabels'><span>SHOW LABELS</span><input type='checkbox' name='showLabels' class='showXinetLabels' checked></label>" +
                     "</div>"
                   );
 
@@ -109,8 +110,6 @@
                   var cellFunc = function (d) { d3.select(this).html (d.value); };
 
                   CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Action", "Control"], headerFunc, rowFilterFunc, cellFunc, []);
-
-
 
                 //hack to take out pan/select option in firefox
                 if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1){

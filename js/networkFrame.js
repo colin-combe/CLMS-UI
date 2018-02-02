@@ -257,14 +257,20 @@ CLMSUI.init.views = function () {
         myOptions: {
             title: "Views",
             menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
-        }
-    })
+            }
+        })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .filter (maybeViews, false)
         .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
+
+    d3.select("body").append("input")
+        .attr ("type", "text")
+        .attr ("id", "proteinSelectionFilter");
+
+    console.log(d3.select("#proteinSelectionFilter"));
 
     // Generate protein selection drop down
     var compModel = CLMSUI.compositeModelInst;
@@ -277,6 +283,7 @@ CLMSUI.init.views = function () {
                 {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
                 {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
                 {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
+                {id: "proteinSelectionFilter"}
             ]
         }
     });
