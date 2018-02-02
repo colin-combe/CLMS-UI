@@ -189,7 +189,9 @@ CLMSUI.init.modelsEssential = function (options) {
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
 	filterSettings = _.extend (filterSettings, urlFilterSettings);
 	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
+	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
+	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {scoreExtent: scoreExtentInstance});
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
