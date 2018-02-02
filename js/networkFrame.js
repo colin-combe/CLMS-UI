@@ -285,7 +285,7 @@ CLMSUI.init.views = function () {
                 {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
                 {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
                 {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
-                {id: "proteinSelectionFilter"}
+                {id: "proteinSelectionFilter", closeOnClick: false}
             ]
         }
     });
