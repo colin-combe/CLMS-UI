@@ -106,6 +106,18 @@ CLMSUI.fdr = function (crossLinksArr, options) {
 
         return {label: arrLabels[index], index: cutoffIndex, fdr: fdrScoreCutoff, totals: t, thresholdMet: fdr !== undefined && !(fdr > options.threshold)};
     });
+	
+	/*
+	var fcl = linkArrs.map (function (larr, i) {
+		return larr.slice(fdrResult[i].index, larr.length);
+	});
+	
+	var cids = fcl.map (function (farr) {
+		return farr.filter(function(link) { return !link.isDecoyLink(); }).map (function (link) { return link.id; });
+	})
+	
+	console.log ("fcl", fcl, cids);
+	*/
     
     return fdrResult;
 };
