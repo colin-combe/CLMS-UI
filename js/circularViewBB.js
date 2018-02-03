@@ -101,59 +101,59 @@
               "click .niceButton": "reOrderAndRender",
               "click .flipIntraButton": "flipIntra",
               "click .showResLabelsButton": "showResLabelsIfRoom",
-              "click .hideLinkless": "flipLinklessVisibility",
+              "click .showLinkless": "toggleLinklessVisibility",
+			  "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
           });
         },
+		
+		defaultOptions: {
+			nodeWidth: 10,  // this is a percentage measure
+			tickWidth: 23,
+			tickLabelCycle: 5,  // show label every nth tick
+			gap: 5,
+			linkParse: function (link) {
+				// turn toPos and fromPos to zero-based index
+				return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
+						toPos: link.toResidue - 1, toNodeID: link.toProtein.id};
+			},
+			intraOutside: true,
+			showResLabels: true,
+			homomOpposite: true,
+			sort: "alpha",
+			sortDir: 1,
+			showLinkless: true,
+		},
 
         initialize: function (viewOptions) {
-            CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
-
             var self = this;
-            var defaultOptions = {
-                nodeWidth: 10,  // this is a percentage measure
-                tickWidth: 23,
-                tickLabelCycle: 5,  // show label every nth tick
-                gap: 5,
-                linkParse: function (link) {
-                    // turn toPos and fromPos to zero-based index
-                    return {fromPos: link.fromResidue - 1, fromNodeID: link.fromProtein.id,
-                            toPos: link.toResidue - 1, toNodeID: link.toProtein.id};
-                },
-                featureParse: function (feature, nodeid) {
-                    // feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
-                    if (feature.start == undefined) {
-                        feature.start = +feature.begin;
-                    }
-                    var convStart = +feature.start;
-                    var convEnd = +feature.end;
-                    var type = feature.type.toLowerCase();
-                    var protAlignModel = self.model.get("alignColl").get(nodeid);
-                    if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
-                        var alignmentID = feature.alignmentID || "Canonical";
-                        convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
-                        convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
-                        if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
-                        if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
-                    }
-                    convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
-                    if (isNaN(convEnd) || convEnd === undefined) {
-                        convEnd = +feature.end;
-                    }
-                    //convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
-                    // e.g. a feature that starts/stops at some point has length of 1, not 0
+			this.defaultOptions.featureParse = function (feature, nodeid) {
+				// feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
+				if (feature.start == undefined) {
+					feature.start = +feature.begin;
+				}
+				var convStart = +feature.start;
+				var convEnd = +feature.end;
+				var type = feature.type.toLowerCase();
+				var protAlignModel = self.model.get("alignColl").get(nodeid);
+				if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
+					var alignmentID = feature.alignmentID || "Canonical";
+					convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
+					convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
+					if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
+					if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
+				}
+				convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
+				if (isNaN(convEnd) || convEnd === undefined) {
+					convEnd = +feature.end;
+				}
+				//convEnd--;    // commented out as convEnd must extend by 1 so length of displayed range is (end-start) + 1
+				// e.g. a feature that starts/stops at some point has length of 1, not 0
 
-                    CLMSUI.utils.xilog (feature, "convStart", +feature.start, convStart, "convEnd", +feature.end, convEnd, protAlignModel);
-                    return {fromPos: convStart, toPos: convEnd};
-                },
-                intraOutside: true,
-                showResLabels: true,
-                sort: "best",
-                sortDir: 1,
-                hideLinkless: false,
-            };
-            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
-            this.displayEventName = viewOptions.displayEventName;
+				CLMSUI.utils.xilog (feature, "convStart", +feature.start, convStart, "convEnd", +feature.end, convEnd, protAlignModel);
+				return {fromPos: convStart, toPos: convEnd};
+			};
+			
+			CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
@@ -170,8 +170,8 @@
             
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
-                {class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
-                {class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
+                //{class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
+                //{class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
             var toolbar = mainDivSel.select("div.toolbar");
@@ -180,14 +180,13 @@
             
             // DROPDOWN STARTS
             // Various view options set up, then put in a dropdown menu
-            var toggleButtonData = [
-                {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio", group: "sort"},
-                {class: "circRadio", label: "Size", id: "size", type: "radio", group: "sort"},
-                {class: "circRadio", label: "Link Crossings", id: "best", type: "radio", group: "sort"},
-                {class: "niceButton", label: "ReLayout", id: "nice", type: "button"},
-                {class: "hideLinkless", label: "Hide Linkless Proteins", id: "hideLinkless", type: "checkbox", inputFirst: true, initialState: this.options.hideLinkless}
-            ];
-            toggleButtonData
+            var orderOptionsButtonData = [
+                {class: "circRadio", label: "Alphabetically", id: "alpha", type: "radio", group: "sort"},
+                {class: "circRadio", label: "By Length", id: "size", type: "radio", group: "sort"},
+                {class: "circRadio", label: "To Reduce Link Crossings", id: "best", type: "radio", group: "sort", sectionEnd: true},
+                {class: "niceButton", label: "Redo Current Ordering", id: "nice", type: "button"},
+			];
+            orderOptionsButtonData
                 .filter (function(d) { return d.type === "radio"; })
                 .forEach (function (d) {
                     d.initialState = this.options.sort === d.id;
@@ -198,17 +197,43 @@
                     };
                 }, this)
             ;
-            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
-
-            
-            var optid = this.el.id+"Options";
-            toolbar.append("p").attr("id", optid);
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, orderOptionsButtonData);
+   
+            var orderoptid = this.el.id+"OrderOptions";
+            toolbar.append("p").attr("id", orderoptid);
             new CLMSUI.DropDownMenuViewBB ({
-                el: "#"+optid,
+                el: "#"+orderoptid,
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Order Proteins ▼",
-                    menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    menu: orderOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null, sectionEnd: d.sectionEnd}; }),
+                    closeOnClick: false,
+                }
+            });
+			
+			
+			var showOptionsButtonData = [
+                {class: "showLinkless", label: "Linkless Proteins", id: "showLinkless", initialState: this.options.showLinkless},
+                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space"},
+				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside},
+				{class: "toggleHomomOpposition", label: "Homomultimers Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite},
+			];
+			showOptionsButtonData
+                .forEach (function (d) {
+					d.type = "checkbox";
+					d.inputFirst = true;
+				})
+			;
+            CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, showOptionsButtonData);
+			
+			var showoptid = this.el.id+"ShowOptions";
+            toolbar.append("p").attr("id", showoptid);
+            new CLMSUI.DropDownMenuViewBB ({
+                el: "#"+showoptid,
+                model: CLMSUI.compositeModelInst.get("clmsModel"),
+                myOptions: {
+                    title: "Show ▼",
+                    menu: showOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
                     closeOnClick: false,
                 }
             });
@@ -307,10 +332,11 @@
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
-                if (self.options.hideLinkless) {
+				// filtering can change node and thus feature positioning too if proteins are hidden or rearranged by sorting
+                if (!self.options.showLinkless || self.options.sort === "best") {
                     self.render();
                 } else {
-                    renderPartial (["links"]);
+                    renderPartial (["links", "nodes"]);
                 }   
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccented ("selection"); });
@@ -322,6 +348,7 @@
             this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "change:selectedProteins", function () { renderPartial (["nodes"]); });
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             this.reOrderAndRender();
@@ -369,8 +396,13 @@
             this.render();      
         },
         
-        flipLinklessVisibility : function () {
-            this.options.hideLinkless = !this.options.hideLinkless;
+        toggleLinklessVisibility : function () {
+            this.options.showLinkless = !this.options.showLinkless;
+            this.render();
+        },
+		
+		toggleHomomOppositeIntra : function () {
+            this.options.homomOpposite = !this.options.homomOpposite;
             this.render();
         },
 
@@ -409,13 +441,14 @@
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
             var intraOutside = this.options.intraOutside;
+			var homomOpposite = this.options.homomOpposite;
             var bowOutMultiplier = 1.2;
 
             var newLinks = links.map (function (link) {
                 var xlink = xlinks.get (link.id);
                 var homom = xlink.confirmedHomomultimer; // TODO: need to deal with this changing
                 var intra = xlink.toProtein.id === xlink.fromProtein.id;
-                var out = intraOutside ? intra && !homom : homom;
+                var out = intraOutside ? intra && (homomOpposite ? !homom : true) : (homomOpposite ? homom : false);
                 var rad = out ? rad2 : rad1;
                 var bowRadius = out ? rad2 * bowOutMultiplier: 0;
                 
@@ -457,9 +490,9 @@
 
         filterInteractors: function (interactors) {
             var filteredInteractors = [];
-            var hideLinkless = this.options.hideLinkless;
+            var showLinkless = this.options.showLinkless;
             interactors.forEach (function (value) {
-                if (!value.is_decoy && (!hideLinkless || !value.hidden)) {
+                if (!value.is_decoy && (showLinkless || !value.hidden)) {
                     filteredInteractors.push (value);
                 }
             });
@@ -590,7 +623,7 @@
                      // draw features
                     this.drawFeatures (gRot, features);
                 }
-                if (!changed) {
+                if (!changed || changed.has("nodes")) {
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
@@ -692,7 +725,8 @@
                     .on("click", function(d) {
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.id, "selection", add);
-                        self.model.setSelectedProteins ([d], add);
+						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
+                        self.model.setSelectedProteins ([interactor], add);
                     })
             ;
 
@@ -844,8 +878,11 @@
                     .append("textPath")
                         .attr("startOffset", "50%")
                         .attr("xlink:href", function(d) { return "#" + pathId(d); })
-                        .text (function(d) { return d.name.replace("_", " "); })
+                        //.text (function(d) { return d.name.replace("_", " "); })
             ;
+			
+			// this lets names update for existing nodes
+			textJoin.select("text textPath").text (function(d) { return d.name.replace("_", " "); });
 
             return this;
         },
@@ -952,11 +989,11 @@
             var abbvMap = {
                 showResLabels: "RESLBLS",
                 intraOutside: "SELFOUTER",
-                hideLinkless: "HIDEIFNOLINKS",
+                showLinkless: "SHOWIFNOLINKS",
             };
             var fields = ["showResLabels"];   
             if (this.model.get("clmsModel").realProteinCount > 1) {
-                fields.push ("intraOutside", "hideLinkLess", "sort");
+                fields.push ("intraOutside", "showLinkLess", "sort");
             }
             
             var str = CLMSUI.utils.objectStateToAbbvString (this.options, fields, d3.set(), abbvMap);

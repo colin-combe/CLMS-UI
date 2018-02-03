@@ -66,33 +66,16 @@ changes there are automatically reflected in the legend
 
 .keyPanel tr {
     line-height: 1.3em;
-    border-bottom: 1px solid #eee;
+    border-top: 1px solid #eee;
 }
 
-.keyPanel tbody {
-    border-top: 1px solid #bbb;
-}
-
-.keyPanel section:not(:first-of-type) table {
-    display: none;
-}
-
-.keyPanel h2 {
-    width: 100%;
-    cursor: pointer;
-}
-
-.keyPanel h2 svg {
-    margin-right: 1em;
-    width: 16px;
-    height: 16px;
-    fill: white;
-    stroke: white;
-    vertical-align: sub;
-}
 
 .keyPanel input[type='color'] {
     cursor: pointer;
+}
+
+.keyPanel input[type='color']:hover {
+    border: 1px solid black;
 }
 
 #linkColourDropdownPlaceholder {

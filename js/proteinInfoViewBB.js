@@ -13,18 +13,15 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
             return _.extend({},parentEvents,{});
         },
+	
+		defaultOptions: {
+			fixedFontKeys: d3.set(["sequence", "seq"]),
+            removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
+            expandTheseKeys: d3.set (["uniprotFeatures", "meta"]),
+		},
 
         initialize: function (viewOptions) {
             CLMSUI.ProteinInfoViewBB.__super__.initialize.apply (this, arguments);
-            
-            var defaultOptions = {
-                fixedFontKeys: d3.set(["sequence", "seq"]),
-                removeTheseKeys: d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
-                expandTheseKeys: d3.set (["uniprotFeatures"]),
-            };
-            this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
-            this.displayEventName = viewOptions.displayEventName;
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
@@ -33,10 +30,11 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 .classed ("proteinInfoPanel", true)
                 .append("h1")
                     .attr("class", "infoHeader")
-                    .text("Selected Info for 0 Proteins")
+                    .text("Info for 0 Selected Proteins")
             ;
             
             this.listenTo (this.model, "change:selectedProteins", this.render);
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
             this.listenTo (this.model, "filteringDone", this.showState);
             this.listenTo (this.model, "change:selection", this.showState);
             this.listenTo (this.model, "change:highlights", this.showState);
@@ -53,7 +51,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
                 
-                tabs.select("h1.infoHeader").text("Selected Info for "+prots.length+" Protein"+(prots.length !== 1 ? "s" : ""));
+                tabs.select("h1.infoHeader").text("Info for "+prots.length+" Selected Protein"+(prots.length !== 1 ? "s" : ""));
                 
                 var self = this;
 
@@ -64,10 +62,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         if ($.isArray(entry.value)) {
                             entry.value = entry.value.length;
                         }
-                        if (entry.key === "sequence") {
+                        else if (entry.key === "sequence") {
                             entry.value =  self.makeInteractiveSeqString (d, d.sequence, d.crossLinks, true);
                         }
-                        return ! ($.isFunction(entry.value) || $.isPlainObject(entry.value) || (badKeys && badKeys.has(entry.key))); 
+                        return ! ($.isFunction(entry.value) || (badKeys && badKeys.has(entry.key))); 
                     });
                 };
                 
@@ -77,7 +75,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 
                 var headerFunc = function(d) { return d.name.replace("_", " "); };
                 
-                CLMSUI.utils.sectionTable.call (this, tabs, prots, "protInfo", ["Property", "Value"], headerFunc, rowFilterFunc, cellFunc);
+                CLMSUI.utils.sectionTable.call (this, tabs, prots, "protInfo", ["Property", "Value"], headerFunc, rowFilterFunc, cellFunc, [0]);
                 
                 tabs.selectAll("span.hit")
                     .on ("click", function() {

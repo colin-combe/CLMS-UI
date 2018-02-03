@@ -21,10 +21,14 @@ include('../../connectionString.php');
 $dbconn = pg_connect($connectionString)
         or die('Could not connect: ' . pg_last_error());
 // Prepare a query for execution
-$result = pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_id, layout, description) VALUES ($1, -1, $2, $3)');
+pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_id, layout, description) VALUES ($1, -1, $2, $3)');
 // Execute the prepared query
 $sid = $_POST["sid"];
 $layout = addslashes($_POST["layout"]);
-//$desc = addslashes($_POST["desc"]);
-$result = pg_execute($dbconn, "my_query", [$sid, $layout, $result])or die('Query failed: ' . pg_last_error());
+$name = addslashes($_POST["name"]);//stores in field called 'description'
+$result = pg_execute($dbconn, "my_query", [$sid, $layout, $name])or die('Query failed: ' . pg_last_error());
+// Free resultset
+pg_free_result($result);
+// Closing connection
+pg_close($dbconn);
 ?>

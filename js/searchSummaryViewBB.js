@@ -14,9 +14,6 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend ({
     initialize: function (viewOptions) {
         CLMSUI.KeyViewBB.__super__.initialize.apply (this, arguments);
         
-        var defaultOptions = {};
-        this.options = _.extend(defaultOptions, viewOptions.myOptions);
-        
         this.listenTo (this.model, "change:matches", this.render);
         
         d3.select(this.el).append("div").attr("class", "searchSummaryDiv panelInner");

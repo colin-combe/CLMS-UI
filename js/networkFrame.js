@@ -153,7 +153,7 @@ CLMSUI.init.modelsEssential = function (options) {
     });
 
 	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
-		
+
 	// Anonymiser for screen shots / videos. MJG 17/05/17
     if (urlChunkMap["anon"]) {
         clmsModelInst.get("participants").forEach (function (prot, i) {
@@ -218,7 +218,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "scatterplotPanel", "urlSearchBox"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
     // something funny happens if I do a data join and enter instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -255,7 +255,7 @@ CLMSUI.init.views = function () {
         el: "#viewDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
-            title: "View",
+            title: "Views",
             menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
         }
     })
@@ -282,31 +282,24 @@ CLMSUI.init.views = function () {
     });
 
     // Generate buttons for load dropdown
-    var buttonData = [
-        {id: "pdbChkBxPlaceholder", label: "PDB Data", eventName:"pdbShow"},
-        {id: "csvUploadPlaceholder", label: "CSV", eventName:"csvShow"},
-        {id: "linkMetaUploadPlaceholder", label: "Link Metadata", eventName:"linkMetaShow"},
+    var loadButtonData = [
+        {name: "PDB Data", eventName: "pdbShow"},
+        {name: "Cross-Links (CSV)", eventName: "csvShow"},
+        {name: "Cross-Link Metadata", eventName: "linkMetaShow"},
+		    {name: "Protein Metadata", eventName: "proteinMetaShow"},
     ];
-    buttonData.forEach (function (bdata) {
-        var bView = new CLMSUI.utils.buttonView ({myOptions: bdata});
-        $("#loadDropdownPlaceholder").append(bView.$el);
+    loadButtonData.forEach (function (bdata) {
+		bdata.func = function () { CLMSUI.vent.trigger (bdata.eventName, true); };
     });
     new CLMSUI.DropDownMenuViewBB ({
         el: "#loadDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
             title: "Load",
-            menu: buttonData.map (function(bdata) { return { id: bdata.id, sectionEnd: bdata.sectionEnd }; })
+			menu: loadButtonData
         }
     });
-	
-	new CLMSUI.utils.FilterModelStateShareButton ({
-		el: "#sharePlaceholder",
-		myOptions: {
-			eventName: "shareURL",
-		}
-	});
-	
+
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
 		model: CLMSUI.compositeModelInst.get("filterModel"),
@@ -331,6 +324,13 @@ CLMSUI.init.views = function () {
         })
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
+
+    new CLMSUI.xiNetControlsViewBB ({
+          el: "#xiNetControlsPanel",
+          model: CLMSUI.compositeModelInst,
+          displayEventName: "xiNetControlsShow",
+    });
+
 };
 
 
@@ -505,11 +505,25 @@ CLMSUI.init.viewsEssential = function (options) {
         el: "#expDropdownPlaceholder",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
-            title: "Data-Download",
+            title: "Export",
             menu: [
-                {name: "Links", func: downloadLinks},
-                {name:"Matches", func: downloadMatches},
-                {name: "Residues", func: downloadResidueCount}
+                {name: "Filtered Links as CSV", func: downloadLinks},
+                {name: "Filtered Matches as CSV", func: downloadMatches},
+                {name: "Filtered Residues as CSV", func: downloadResidueCount, sectionEnd: true},
+				{name: "Make Filtered Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
+            ]
+        }
+    });
+	
+	// Generate help drop down
+    new CLMSUI.DropDownMenuViewBB ({
+        el: "#helpDropdownPlaceholder",
+        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        myOptions: {
+            title: "Help",
+            menu: [
+                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }},
+				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, title: "GitHub issue tracker (You must be logged in to GitHub to view.)"},
             ]
         }
     });
@@ -640,10 +654,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "matrixShow",
     });
 
-    // This is all done outside the matrix view itself as we may not always want a matrix view to have this
-    // functionality. Plus the views don't know about each other now.
-    // We could set it up via a parent view which all it does is be a container to these two views if we think that approach is better.
-
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync
     // event that other views are waiting for.
@@ -665,7 +675,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "scatterplotShow",
     });
 
-	   new CLMSUI.CSVFileChooserBB ({
+	new CLMSUI.CSVFileChooserBB ({
         el: "#csvPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "csvShow",
@@ -675,6 +685,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         el: "#linkMetaLoadPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "linkMetaShow",
+    });
+
+	new CLMSUI.ProteinMetaDataFileChooserBB ({
+        el: "#proteinMetaLoadPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "proteinMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB ({

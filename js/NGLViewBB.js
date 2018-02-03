@@ -25,24 +25,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "mouseout canvas": "clearHighlighted",
         });
     },
+	
+	defaultOptions: {
+		labelVisible: false,
+		selectedOnly: false,
+		showResidues: true,
+		shortestLinksOnly: true,
+		chainRep: "cartoon",
+		colourScheme: "uniform",
+		showAllProteins: false,
+		showLongChainDescriptors: false,
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.NGLViewBB.__super__.initialize.apply (this, arguments);
         var self = this;
-
-        var defaultOptions = {
-            labelVisible: false,
-            selectedOnly: false,
-            showResidues: true,
-            shortestLinksOnly: true,
-            chainRep: "cartoon",
-            colourScheme: "uniform",
-            showAllProteins: false,
-			showLongChainDescriptors: false,
-        };
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-
-        this.displayEventName = viewOptions.displayEventName;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
@@ -63,9 +60,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
             {initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel"},
-            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Links Only", id: "selectedOnly"},
-            {initialState: this.options.showResidues, class: "showResiduesCB", label: "Residues", id: "showResidues"},
-            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Link Option Only", id: "shortestOnly"},
+            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Cross-Links Only", id: "selectedOnly"},
+            {initialState: this.options.showResidues, class: "showResiduesCB", label: "Cross-Linked Residues", id: "showResidues"},
+            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Cross-Link Option Only", id: "shortestOnly"},
             {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins"},
 			{initialState: this.options.showLongChainDescriptors, class: "showLongChainDescriptorsCB", label: "Verbose Chain Descriptors", id: "showLongChainDescriptors"},
         ];
@@ -92,7 +89,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // Protein view type dropdown
         var allReps = NGL.RepresentationRegistry.names.slice().sort();
-        var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation"];
+        var ignoreReps = ["axes", "base", "contact", "distance", "helixorient", "hyperball", "label", "rocket", "trace", "unitcell", "validation", "angle", "dihedral"];
         var mainReps = _.difference (allReps, ignoreReps);
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: toolbar,
@@ -204,6 +201,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.repopulate();
             });
         });
+		
+		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () {
+			if (this.xlRepr) {
+				this.xlRepr.redoChainLabels ();
+			}
+		});
 
     },
 
@@ -626,7 +629,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
 		comp.structure.eachChain (function (chainProxy) {
 			//console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
-			var description = chainProxy.entity.description;
+			var description = chainProxy.entity ? chainProxy.entity.description : "";
             var pid = chainIndexToProteinMap.get (chainProxy.index);
             if (pid && CLMSUI.modelUtils.isViableChain (chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
@@ -885,8 +888,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 	
 	redoChainLabels: function () {
-		var labelTexts = this.getLabelTexts();
-		this.labelRepr.setParameters ({labelText: labelTexts});		
+		this.labelRepr.setParameters ({labelText: this.getLabelTexts()});		
 	},
     
     setDisplayedResidues: function (residues) {

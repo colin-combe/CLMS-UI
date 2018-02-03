@@ -18,26 +18,24 @@
         "click canvas": "selectNeighbourhood",
       });
     },
+		
+	defaultOptions: {
+		xlabel: "Residue Index 1",
+		ylabel: "Residue Index 2",
+		chartTitle: "Cross-Link Matrix",
+		background: "#ccc",
+		chainBackground: "white",
+		matrixObj: null,
+		selectedColour: "#ff0",
+		highlightedColour: "#f80",
+		linkWidth: 5,
+		tooltipRange: 3,
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
-
-        var defaultOptions = {
-            xlabel: "Residue Index 1",
-            ylabel: "Residue Index 2",
-            chartTitle: "Cross-Link Matrix",
-            background: "#ccc",
-            chainBackground: "white",
-            matrixObj: null,
-            selectedColour: "#ff0",
-            highlightedColour: "#f80",
-            linkWidth: 5,
-            tooltipRange: 3,
-        };
-        
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
         
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
@@ -46,7 +44,6 @@
             left:   this.options.ylabel ? 60 : 40
         };
         
-        this.displayEventName = viewOptions.displayEventName;
         this.colourScaleModel = viewOptions.colourScaleModel;
         
         // targetDiv could be div itself or id of div - lets deal with that
@@ -213,7 +210,11 @@
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
         this.listenTo (this.model.get("clmsModel"), "change:matches", this.matchesChanged);  // New matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
-        
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () {
+			this.makeProteinPairingOptions();
+			this.updateAxisLabels();
+		});
+		
         var entries = this.makeProteinPairingOptions();
         var startPairing = entries && entries.length ? entries[0].value : undefined;
         this.setAndShowPairing (startPairing);
@@ -294,6 +295,15 @@
         ;
         return this;
     },
+		
+	updateAxisLabels : function () {
+		var protIDs = this.getCurrentProteinIDs(); 
+        this.vis.selectAll("g.label text").data(protIDs)
+        	.text (function(d) { return d.labelText; })
+        ;
+            
+    	this.makeChainOptions (protIDs);
+	},
         
     matrixChosen: function (proteinPairValue) {
         if (proteinPairValue) {
@@ -304,14 +314,10 @@
             this.y.domain([seqLengths.lengthB + 1, 1]);   
 
             // Update x/y labels and axes tick formats
-            var protIDs = this.getCurrentProteinIDs(); 
             this.xAxis.tickFormat (this.alignedIndexAxisFormat);
             this.yAxis.tickFormat (this.alignedIndexAxisFormat);
-            this.vis.selectAll("g.label text").data(protIDs)
-                .text (function(d) { return d.labelText; })
-            ;
-            
-            this.makeChainOptions (protIDs);
+			
+			this.updateAxisLabels();
         }
         
         return this;
@@ -342,7 +348,6 @@
         
         
     makeChainOptions: function (proteinIDs) {
-        
         var self = this;
         
         var clickFunc = function (d3target) {

@@ -19,38 +19,38 @@
         "mousemove .extent": "doHighlightAndTooltip",
         "mouseleave .background": "clearHighlightAndTooltip",
         "click .jitter": "toggleJitter",
+		"click .logX": "toggleLogX",
+		"click .logY": "toggleLogY",
       });
     },
+		
+	defaultOptions: {
+		xlabel: "Axis 1",
+		ylabel: "Axis 2",
+		chartTitle: "Scatterplot",
+		selectedColour: "#ff0",
+		highlightedColour: "#f80",
+		background: "#eee",
+		jitter: true,
+		chartMargin: 10,
+		pointSize: 4,
+		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		standardTickFormat: d3.format(",d"),
+		logX: false,
+		logY: false
+	},
 
     initialize: function (viewOptions) {
         CLMSUI.ScatterplotViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
 
-        var defaultOptions = {
-            xlabel: "Axis 1",
-            ylabel: "Axis 2",
-            chartTitle: "Scatterplot",
-            selectedColour: "#ff0",
-            highlightedColour: "#f80",
-            background: "#eee",
-            jitter: true,
-            chartMargin: 10,
-            pointSize: 4,
-            attributeOptions: CLMSUI.modelUtils.attributeOptions,
-			standardTickFormat: d3.format(",d"),
-        };
-        
-        this.options = _.extend ({}, this.options, defaultOptions, viewOptions.myOptions);
-        
         this.margin = {
             top:    this.options.chartTitle  ? 30 : 0,
             right:  20,
             bottom: this.options.xlabel ? 40 : 25,
             left:   this.options.ylabel ? 70 : 50
         };
-        
-        this.displayEventName = viewOptions.displayEventName;
         
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
@@ -81,7 +81,9 @@
         
         // Add jitter toggle checkbox
         var toggleButtonData = [
-            {class: "jitter", label: "Jitter", id: "jitter", type: "checkbox", inputFirst: true, initialState: this.options.jitter}
+            {class: "jitter", label: "Add Jitter", id: "jitter", type: "checkbox", inputFirst: true, initialState: this.options.jitter},
+			{class: "logX", label: "Log X Axis", id: "logx", type: "checkbox", inputFirst: true, initialState: this.options.logX},
+			{class: "logY", label: "Log Y Axis", id: "logy", type: "checkbox", inputFirst: true, initialState: this.options.logY}
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, toggleButtonData);
         
@@ -235,8 +237,9 @@
         this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
         this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
-        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (columns) {
+        this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
             //console.log ("HELLO", arguments);
+			var columns = metaMetaData.columns;
             var newOptions = columns.map (function (column) {
                 return {
                     id: column, label: column, decimalPlaces: 2, matchLevel: false, 
@@ -350,6 +353,24 @@
         this.render();
         return this;
     },
+		
+	toggleLogX: function (evt) {
+		var checked = d3.select(evt.target).property("checked");
+		this.options.logX = checked;
+		return this
+			.axisChosen()	// redo all axis information
+			.render()
+		;
+	},
+		
+	toggleLogY: function (evt) {
+		var checked = d3.select(evt.target).property("checked");
+		this.options.logY = checked;
+		return this
+			.axisChosen()	// redo all axis information
+			.render()
+		;
+	},
         
     getData: function (funcMeta, filteredFlag, optionalLinks) {
         var linkFunc = funcMeta ? (filteredFlag ? funcMeta.linkFunc : funcMeta.unfilteredLinkFunc) : undefined;
@@ -385,7 +406,15 @@
     getAxisData: function (axisLetter, filteredFlag, optionalLinks) {
         var funcMeta = this.getSelectedOption (axisLetter);  
         var data = this.getData (funcMeta, filteredFlag, optionalLinks);
-        return {label: funcMeta ? funcMeta.label : "?", data: data, zeroBased: !funcMeta.nonZeroBased, matchLevel: funcMeta.matchLevel || false, tickFormat: funcMeta.valueFormat || this.options.standardTickFormat};
+        return {
+			label: funcMeta ? funcMeta.label : "?", 
+			data: data, 
+			zeroBased: !funcMeta.nonZeroBased, 
+			matchLevel: funcMeta.matchLevel || false, 
+			tickFormat: funcMeta.valueFormat || this.options.standardTickFormat,
+			canLogAxis: funcMeta.logAxis || false,
+			logStart: funcMeta.logStart
+		};
     },
         
     getBothAxesMetaData: function () {
@@ -393,6 +422,36 @@
             return this.getSelectedOption (axisLetter);
         }, this);    
     },
+		
+	isLinearScale: function (scale) {
+		var domain = scale.domain();
+		var bottomVal = scale(domain[0]);
+		var fullRange = Math.abs (scale(domain[1]) - bottomVal);
+		var halfRange = Math.abs (scale(d3.mean (domain)) - bottomVal);
+		return (fullRange / halfRange) >= (2 - 0.001);	// -0.0001 for rounding
+	},
+		
+	setValidEmptyBrushExtent: function () {
+		this.brush.extent ([[this.x.domain()[0], this.y.domain()[0]], [this.x.domain()[0], this.y.domain()[0]]]);
+	},
+		
+	makeXAxisType: function (setAsLogScale) {
+		if (setAsLogScale === this.isLinearScale (this.x)) {	// only if different scale type is required
+			this.x = setAsLogScale ? d3.scale.log() : d3.scale.linear();
+			this.xAxis.scale (this.x);
+			this.brush.x (this.x);
+		}
+		return this;
+	},
+		
+	makeYAxisType: function (setAsLogScale) {
+		if (setAsLogScale === this.isLinearScale (this.y)) {	// only if different scale type is required
+			this.y = setAsLogScale ? d3.scale.log() : d3.scale.linear();
+			this.yAxis.scale (this.y);
+			this.brush.y (this.y);
+		}
+		return this;
+	},
         
     axisChosen: function () { 
         var dataX = this.getAxisData ("X", false);
@@ -400,13 +459,24 @@
 		
 		this.xAxis.tickFormat (dataX.tickFormat);
 		this.yAxis.tickFormat (dataY.tickFormat);
+		
+		// swap out log or linear scales if current scale is different to incoming scale type
+		this.makeXAxisType (dataX.canLogAxis && this.options.logX);
+		this.makeYAxisType (dataY.canLogAxis && this.options.logY);
+		
+		var rootid = "#"+d3.select(this.el).attr("id");
+		d3.select(this.el).select(rootid+"logx").style ("display", dataX.canLogAxis ? null : "none");
+		d3.select(this.el).select(rootid+"logy").style ("display", dataY.canLogAxis ? null : "none");
+		
+		// make brush extent empty when new axis chosen. Make sure it's a valid value i.e. no zeroes in a log scale
+		this.setValidEmptyBrushExtent();
         
         this.scaleAxes (dataX, dataY);
-        //console.log ("data", dataX, dataY);
         
         // Update x/y labels and axes tick formats
+		var self = this;
         this.vis.selectAll("g.label text").data([dataX, dataY])
-            .text (function(d) { return d.label; })
+            .text (function(d, i) { return (d.canLogAxis && self.options[i === 0 ? "logX": "logY"] ? "Log ": "") + d.label; })
         ;
         
         if (!this.brush.empty()) {
@@ -434,6 +504,11 @@
             dom = dom.map (function (v, i) { 
                 return _.isNumber(v) ? Math[i === 0 ? "floor": "ceil"](v) : v; 
             });
+			
+			var log = direction.dataDetails.canLogAxis;
+			if (log) {
+				dom[0] = direction.dataDetails.logStart;
+			}
             //var leeway = Math.ceil (Math.abs(dom[1] - dom[0]) / 10) / 2;
             //dom[0] -= xLeeway; // 0.5;
             //dom[1] += 0.5;
@@ -703,26 +778,28 @@
                     }
                     var x = this.x (coord[0]) + xjr - halfPointSize;
                     var y = this.y (coord[1]) + yjr - halfPointSize;
-                    x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
-                    y = Math.round (y);
-                    if (decoy) {
-                        //var offset = Math.floor (halfPointSize);
-                        ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
-                        //ctx.fillRect (x, y + offset, pointSize + 1, 1);
-                        //ctx.fillRect (x + offset, y, 1, pointSize + 1);
-                    } else {
-                        ctx.fillRect (x, y, pointSize, pointSize);
-                        if (high || selected) {
-                            ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
-                        }
-                        
-                        if (countable) {
-                            if (linkDomainInd === undefined) {
-                                linkDomainInd = counts.length - 1;
-                            }
-                            counts[linkDomainInd]++;
-                        }
-                    }
+					if (x === x && y === y) {	// Quick test for either of x or y being a NaN
+						x = Math.round (x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
+						y = Math.round (y);
+						if (decoy) {
+							//var offset = Math.floor (halfPointSize);
+							ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+							//ctx.fillRect (x, y + offset, pointSize + 1, 1);
+							//ctx.fillRect (x + offset, y, 1, pointSize + 1);
+						} else {
+							ctx.fillRect (x, y, pointSize, pointSize);
+							if (high || selected) {
+								ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+							}
+
+							if (countable) {
+								if (linkDomainInd === undefined) {
+									linkDomainInd = counts.length - 1;
+								}
+								counts[linkDomainInd]++;
+							}
+						}
+					}
                 }, this);
             }, this);
             
@@ -807,7 +884,9 @@
         this.y.range([sizeData.height - chartMargin, chartMargin]); // y-scale (inverted domain)
         
         // https://stackoverflow.com/questions/32720469/d3-updating-brushs-scale-doesnt-update-brush
+		
         this.brush.extent (extent); // old extent restored
+		//console.log ("BRUISH EXTENT", extent);
         this.scatg.select(".brush").call(this.brush);   // recall brush binding so background rect is resized and brush redrawn
 
         this.xAxis.ticks (Math.round ((sizeData.width - (chartMargin * 2)) / 40)).outerTickSize(0);
@@ -823,17 +902,18 @@
     },
         
     redrawAxes: function (sizeData) {
+		this.vis.select(".x")
+            .attr("transform", "translate(0," + (sizeData.height) + ")")
+            .call(this.xAxis)
+        ;
+		
         this.vis.select(".y")
             .attr("transform", "translate(-1,0)")
             .call(this.yAxis)
         ;
-        
-        this.vis.select(".x")
-            .attr("transform", "translate(0," + (sizeData.height) + ")")
-            .call(this.xAxis)
-        ;
-        
+
         CLMSUI.utils.declutterAxis (this.vis.select(".x"));
+		CLMSUI.utils.declutterAxis (this.vis.select(".y"));
         
         return this;
     },

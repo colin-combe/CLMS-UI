@@ -4,29 +4,15 @@
 
 .proteinInfoPanel section {
     margin-top: 5px;
-    border-bottom: 2px solid white;
-}
-
-.proteinInfoPanel section:not(:first-of-type) table {
-    display: none;
+    border-bottom: 1px solid grey;
 }
 
 .proteinInfoPanel table {
     table-layout: fixed;
-    border-collapse: separate;
-}
-
-.proteinInfoPanel table table {
-    border: 1px solid gray;
-}
-
-.proteinInfoPanel table th {
-    text-transform: capitalize;
 }
 
 .proteinInfoPanel table td:first-child, .proteinInfoPanel table th:first-child {
     width: 10em;
-    text-transform: capitalize;
 }
 
 .proteinInfoPanel tbody tr:nth-child(2n-1) {
@@ -36,31 +22,6 @@
 .proteinInfoPanel tbody td {
     word-wrap: break-word;
     line-height: 1.4em;
-    border-top: 1px solid transparent;
-    border-bottom: 1px solid transparent;
-}
-
-.proteinInfoPanel h2 {
-    width: 100%;
-    cursor: pointer;
-}
-
-.proteinInfoPanel h2 svg {
-    margin-right: 1em;
-    width: 16px;
-    height: 16px;
-    fill: white;
-    stroke: white;
-}
-
-.proteinInfoPanel h2 svg:hover {
-    fill: orange;
-    stroke: orange;
-}
-
-.proteinInfoPanel h2:hover {
-    fill: orange;
-    color: orange;
 }
 
 .proteinInfoPanel .hit {
@@ -100,18 +61,6 @@
     font-family: monospace;
     font-size: 1em;
     line-height: 1.2em;
-}
-
-.proteinInfoPanel tbody tr:hover td {
-    color: #666;
-    background: inherit;
-    -webkit-transition: none;
-    -moz-transition: none;
-    -ms-transition: none;
-    -o-transition: none;
-    transition: none;
-    border-top-color: #444;
-    border-bottom-color: #444;
 }
 
 .proteinInfoPanel tbody tr:hover td.fixedSizeFont {

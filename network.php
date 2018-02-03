@@ -19,6 +19,7 @@
 -->
 <?php
     session_start();
+    $cacheBuster = '?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -39,126 +40,119 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-        <link rel="stylesheet" href="./css/reset.css" />
-        <link rel="stylesheet" type="text/css" href="./css/byrei-dyndiv_0.5.css">
-        <link rel="stylesheet" href="./css/common.css" />
-        <link rel="stylesheet" href="./css/style.css" />
-        <link rel="stylesheet" href="./css/xiNET.css">
-        <link rel="stylesheet" href="./css/matrix.css">
-        <link rel="stylesheet" href="./css/tooltip.css">
-        <link rel="stylesheet" href="./css/c3.css">
-        <link rel="stylesheet" href="./css/distogram.css">
-        <link rel="stylesheet" href="./css/minigram.css">
-        <link rel="stylesheet" href="./css/ddMenuViewBB.css">
-        <link rel="stylesheet" href="./css/alignViewBB.css">
-        <link rel="stylesheet" href="./css/selectionViewBB.css">
-        <link rel="stylesheet" href="./css/circularViewBB.css">
-        <link rel="stylesheet" href="./css/spectrumViewWrapper.css">
-        <link rel="stylesheet" href="./css/validate.css">
-        <link rel="stylesheet" href="./css/proteinInfoViewBB.css">
-        <link rel="stylesheet" href="./css/key.css">
-        <link rel="stylesheet" href="./css/filter.css">
-        <link rel="stylesheet" href="./css/scatterplot.css">
-        <link rel="stylesheet" href="./css/nglViewBB.css">
-        <link rel="stylesheet" href="./css/networkPage.css">
-        <link rel="stylesheet" href="./css/csvUpload.css">
-        <link rel="stylesheet" href="./css/searchSummary.css">
-        <link rel="stylesheet" href="./css/jquery.jsonview.css">
-        <link rel="stylesheet" href="./css/threeColourSlider.css">
-		<link rel="stylesheet" href="./css/urlSearchBoxViewBB.css">
+        <link rel="stylesheet" href="./css/reset.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="./css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/common.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="./css/xiNET.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/matrix.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/tooltip.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/c3.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/distogram.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/minigram.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/ddMenuViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/alignViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/selectionViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/circularViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/spectrumViewWrapper.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/validate.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/proteinInfoViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/key.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/scatterplot.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/nglViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/networkPage.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/csvUpload.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/searchSummary.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
+		    <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
 
-        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
-        <script type="text/javascript" src="./vendor/d3.js"></script>
-        <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
-<!--
-        <script type="text/javascript" src="./vendor/rgbcolor.js"></script>
--->
-        <script type="text/javascript" src="./vendor/ngl_verbose.js"></script>
-        <script type="text/javascript" src="./vendor/c3.js"></script>
-        <script type="text/javascript" src="./vendor/split_new.js"></script>
-        <script type="text/javascript" src="./vendor/svgexp.js"></script>
-        <script type="text/javascript" src="./vendor/underscore.js"></script>
-<!--
-        <script type="text/javascript" src="./vendor/zepto.js"></script>
--->
-        <script type="text/javascript" src="./vendor/spin.js"></script>
-<!--
-        arrg, jquerys got in it, it for the json tree view, which we may not keep
--->
-        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js"></script>
-        <script type="text/javascript" src="./vendor/backbone.js"></script>
-        <script type="text/javascript" src="./vendor/jquery.jsonview.js"></script>
+        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/colorbrewer.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/c3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/split_new.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
 
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js"></script>
-        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js<?php echo $cacheBuster ?>"></script>
 
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js"></script>
-        <script type="text/javascript" src="../crosslink-viewer/vendor/cola.js"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/vendor/cola.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
-        <script type="text/javascript" src="./js/Utils.js"></script>
-        <script type="text/javascript" src="./js/circleArrange.js"></script>
-        <script type="text/javascript" src="./js/models.js"></script>
-        <script type="text/javascript" src="./js/annotationTypeModel.js"></script>
-        <script type="text/javascript" src="./js/compositeModelType.js"></script>
-        <script type="text/javascript" src="./js/modelUtils.js"></script>
-        <script type="text/javascript" src="./js/fdr.js"></script>
-        <script type="text/javascript" src="./js/distancesObj.js"></script>
-        <script type="text/javascript" src="./js/distogramViewBB.js"></script>
-        <script type="text/javascript" src="./js/threeColourSliderBB.js"></script>
-        <script type="text/javascript" src="./js/filterViewBB.js"></script>
-        <script type="text/javascript" src="./js/matrixViewBB.js"></script>
-        <script type="text/javascript" src="./js/tooltipViewBB.js"></script>
-        <script type="text/javascript" src="./js/minigramViewBB.js"></script>
-        <script type="text/javascript" src="./js/ddMenuViewBB.js"></script>
-        <script type="text/javascript" src="./js/NGLModelWrapperBB.js"></script>
-        <script type="text/javascript" src="./js/PDBFileChooser.js"></script>
-        <script type="text/javascript" src="./js/CSVFileChooser.js"></script>
-        <script type="text/javascript" src="./js/linkMetaDataFileChooserBB.js"></script>
-        <script type="text/javascript" src="./js/NGLViewBB.js"></script>
-        <script type="text/javascript" src="./js/bioseq32.js"></script>
-        <script type="text/javascript" src="./js/alignModelType.js"></script>
-        <script type="text/javascript" src="./js/alignViewBB3.js"></script>
-        <script type="text/javascript" src="./js/alignSettingsViewBB.js"></script>
-        <script type="text/javascript" src="./js/selectionTableViewBB.js"></script>
-        <script type="text/javascript" src="./js/circularViewBB.js"></script>
-        <script type="text/javascript" src="./js/linkColourAssignment.js"></script>
-        <script type="text/javascript" src="./js/spectrumViewWrapper.js"></script>
-        <script type="text/javascript" src="./js/validate.js"></script>
-        <script type="text/javascript" src="./js/proteinInfoViewBB.js"></script>
-        <script type="text/javascript" src="./js/keyViewBB.js"></script>
-        <script type="text/javascript" src="./js/scatterplotViewBB.js"></script>
-        <script type="text/javascript" src="./js/networkFrame.js"></script>
-        <script type="text/javascript" src="./js/downloads.js"></script>
-        <script type="text/javascript" src="./js/searchSummaryViewBB.js"></script>
-		<script type="text/javascript" src="./js/urlSearchBoxViewBB.js"></script>
+        <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/circleArrange.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/models.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/annotationTypeModel.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/fdr.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/distancesObj.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/distogramViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/threeColourSliderBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/filterViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/matrixViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/tooltipViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/minigramViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/alignModelType.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/alignViewBB3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/alignSettingsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/selectionTableViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/circularViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/proteinInfoViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/keyViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/scatterplotViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
-        <link rel="stylesheet" href="../spectrum/css/settings.css">
-        <link rel="stylesheet" href="../spectrum/css/dropdown.css">
-        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
-        <script type="text/javascript" src="../spectrum/vendor/datatables.min.js"></script>
-        <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js"></script>
-        <script type="text/javascript" src="../spectrum/vendor/js.cookie.js"></script>
-        <script type="text/javascript" src="../spectrum/src/model.js"></script>
-        <script type="text/javascript" src="../spectrum/src/SpectrumView2.js"></script>
-        <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/PepInputView.js"></script>
-        <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Graph.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Peak.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js"></script>
+        <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/dropdown.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css<?php echo $cacheBuster ?>">
+        <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/vendor/js.cookie.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/model.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/PepInputView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Graph.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Peak.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/Fragment.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js<?php echo $cacheBuster ?>"></script>
     </head>
 
     <body>
@@ -166,19 +160,21 @@
         <div id="main">
 
             <div class="page-header">
-                    <i class="fa fa-home fa-xi" 
-                        onclick="window.location = '../history/history.html';" 
+                    <i class="fa fa-home fa-xi"
+                        onclick="window.location = '../history/history.html';"
                         title="Return to search history / Login"></i>
+					<!--
                     <i class="fa fa-github fa-xi" 
                         onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
                         title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
+					-->
                     <p id="loadDropdownPlaceholder"></p>
                     <p id="viewDropdownPlaceholder"></p>
                     <p id="proteinSelectionDropdownPlaceholder"></p>
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
-					<p id="sharePlaceholder"></p>
-                    <p class="btn dropdown"><span class="menuTitle" onclick="window.open('http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/', '_blank');">HELP</span></p>
+                    <p id="helpDropdownPlaceholder"></p>
+                    <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
             <div class="mainContent">
@@ -190,7 +186,7 @@
             </div>
 
             <div id='hiddenProteinsMessage'>
-                <p id='hiddenProteinsText'>Maunally Hidden Message</p>
+                <p id='hiddenProteinsText'>Manually Hidden Message</p>
                 <!-- not very backbone but its only a button -->
                 <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
             </div>"
