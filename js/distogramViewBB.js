@@ -472,7 +472,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 		}
 
-		console.log ("togglelist", toggleList);
+		//console.log ("togglelist", toggleList);
 	},
 
 	// Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
