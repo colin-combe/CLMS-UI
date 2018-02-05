@@ -14,6 +14,11 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     initialize: function (options) {
         SpectrumViewWrapper.__super__.initialize.apply (this, arguments);
 
+        var defaultOptions = {
+            canBringToTop: true
+        };
+        this.options = _.extend ({}, this.options, defaultOptions, options.myOptions);
+
         var _html = "" // i think its a mistake (of mine, I think - cc) to use id's in following instaed of classes... its a backbone thing
             //~ +"<div id='spectrum'>"
             +"<div id='spectrumControls'>"
@@ -39,7 +44,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"<input id='lockZoom' type='checkbox' style='visibility: hidden;'>"
             +"</form>"
             +"<button id='toggleView' title='Click to toggle view'>QC</button>"
-            +"<button id='openSettings' title='Show Settings' class='btn btn-1a btn-topNav'>&#9881;</button>"
+            +"<button id='toggleSettings' title='Show Settings' class='btn btn-1a btn-topNav'>&#9881;</button>"
             +"</div>"
             +"</div>"
             +"<div class='heightFill'>"
