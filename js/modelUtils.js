@@ -11,6 +11,14 @@ CLMSUI.modelUtils = {
         return arrs;
     },
      
+	matchScoreRange: function (matches, integerise) {
+		var extent = d3.extent (matches, function (m) { return m.score; });
+		if (integerise) {
+			extent = extent.map(function (val, i) { return Math[i === 0 ? "ceil" : "floor"](val + (i === 0 ? -1 : 1)); });
+		}
+		return extent;
+	},
+	
     // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
     // the four 'nh ester' amino acids
     // lys = k, ser = s, thr = t, tyr = y

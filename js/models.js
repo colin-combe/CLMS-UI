@@ -35,13 +35,14 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 scanNumber: "",
             },
 
-            initialize: function () {
+            initialize: function (options, secondarySettings) {
                 // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 if (!this.get("matchScoreCutoff")) {
                     this.set("matchScoreCutoff", [0, 100]);
                 }
                 // scoreExtent used to restrain text input values
-                this.scoreExtent = this.get("matchScoreCutoff").slice(0);
+                this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
+				//this.scoreExtent = this.matches.extent (fu)
                 this.valMap = d3.map();
                 this.valMap.set("?", "Q");
                 this.textSet = d3.map();

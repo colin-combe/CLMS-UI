@@ -189,7 +189,9 @@ CLMSUI.init.modelsEssential = function (options) {
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
 	filterSettings = _.extend (filterSettings, urlFilterSettings);
 	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings);
+	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
+	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {scoreExtent: scoreExtentInstance});
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
@@ -257,14 +259,20 @@ CLMSUI.init.views = function () {
         myOptions: {
             title: "Views",
             menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
-        }
-    })
+            }
+        })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .filter (maybeViews, false)
         .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
+
+    // d3.select("body").append("input")
+    //     .attr ("type", "text")
+    //     .attr ("id", "proteinSelectionFilter");
+    //
+    // console.log(d3.select("#proteinSelectionFilter"));
 
     // Generate protein selection drop down
     var compModel = CLMSUI.compositeModelInst;
@@ -276,7 +284,8 @@ CLMSUI.init.views = function () {
             menu: [
                 {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
                 {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
-                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
+                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel}//,
+                // {id: "proteinSelectionFilter", closeOnClick: false}
             ]
         }
     });
@@ -514,7 +523,7 @@ CLMSUI.init.viewsEssential = function (options) {
             ]
         }
     });
-	
+
 	// Generate help drop down
     new CLMSUI.DropDownMenuViewBB ({
         el: "#helpDropdownPlaceholder",

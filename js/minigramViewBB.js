@@ -234,7 +234,7 @@
         brushRecalc: function () {
             //console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
             // Have to go via c3 chart internal properties as it isn't exposed via API
-			//console.log ("New Extent", [this.model.get("domainStart"), this.model.get("domainEnd")]);
+			
             this.chart.internal.brush
                 .clamp(true)
                 .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])

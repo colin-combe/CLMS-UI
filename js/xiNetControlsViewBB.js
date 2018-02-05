@@ -111,8 +111,6 @@
 
                   CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Action", "Control"], headerFunc, rowFilterFunc, cellFunc, []);
 
-
-
                 //hack to take out pan/select option in firefox
                 if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1){
                     // Do Firefox-related activities

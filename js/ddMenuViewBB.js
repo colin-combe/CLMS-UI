@@ -163,7 +163,10 @@
             }
             
             if (this.options.closeOnClick) {
-                this.hideVis();
+				var definitelyClose = d3target && d3target.datum() && d3target.datum().closeOnClick !== false;
+				if (definitelyClose) {
+                	this.hideVis();
+				}
             }
         },
     });
