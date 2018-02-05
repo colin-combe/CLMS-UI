@@ -268,11 +268,11 @@ CLMSUI.init.views = function () {
         })
     ;
 
-    d3.select("body").append("input")
-        .attr ("type", "text")
-        .attr ("id", "proteinSelectionFilter");
-
-    console.log(d3.select("#proteinSelectionFilter"));
+    // d3.select("body").append("input")
+    //     .attr ("type", "text")
+    //     .attr ("id", "proteinSelectionFilter");
+    //
+    // console.log(d3.select("#proteinSelectionFilter"));
 
     // Generate protein selection drop down
     var compModel = CLMSUI.compositeModelInst;
@@ -284,8 +284,8 @@ CLMSUI.init.views = function () {
             menu: [
                 {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
                 {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
-                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
-                {id: "proteinSelectionFilter", closeOnClick: false}
+                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel}//,
+                // {id: "proteinSelectionFilter", closeOnClick: false}
             ]
         }
     });
@@ -523,7 +523,7 @@ CLMSUI.init.viewsEssential = function (options) {
             ]
         }
     });
-	
+
 	// Generate help drop down
     new CLMSUI.DropDownMenuViewBB ({
         el: "#helpDropdownPlaceholder",
