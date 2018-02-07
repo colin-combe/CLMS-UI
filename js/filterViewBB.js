@@ -183,7 +183,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var cutoff = self.model.get("matchScoreCutoff");
                 var scoreExtent = self.model.scoreExtent;
                 // take new values, along with score extents, sort them and discard extremes for new cutoff settings
-                var newVals = [isMinInput ? val : cutoff[0], isMinInput ? cutoff[1] : val, scoreExtent[0], scoreExtent[1]]
+                var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]), 
+							   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val, 
+							   scoreExtent[0], scoreExtent[1]]
 					.filter (function (v) { return v !== undefined; })
                     .sort(function(a,b) { return a - b;})
 				;
