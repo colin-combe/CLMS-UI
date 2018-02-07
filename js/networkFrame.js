@@ -268,9 +268,9 @@ CLMSUI.init.views = function () {
         })
     ;
 
-    // d3.select("body").append("input")
-    //     .attr ("type", "text")
-    //     .attr ("id", "proteinSelectionFilter");
+    d3.select("body").append("input")
+        .attr ("type", "text")
+        .attr ("id", "proteinSelectionFilter");
     //
     // console.log(d3.select("#proteinSelectionFilter"));
 
@@ -284,8 +284,8 @@ CLMSUI.init.views = function () {
             menu: [
                 {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
                 {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
-                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel}//,
-                // {id: "proteinSelectionFilter", closeOnClick: false}
+                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
+                {id: "proteinSelectionFilter", func: compModel.proteinSelectionTextFilter, closeOnClick: false, context: compModel}
             ]
         }
     });

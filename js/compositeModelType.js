@@ -474,6 +474,20 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     },
 
+    proteinSelectionTextFilter: function () {
+        var toSelect = [];
+        var filterText = d3.select("#proteinSelectionFilter").property("value").trim().toLowerCase();
+        var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
+        var pCount = participantsArr.length;
+        for (var p =0; p < pCount; p++) {
+            var toSearch = participantsArr[p].name + " " + participantsArr[p].description;
+            if (toSearch.toLowerCase().indexOf(filterText) != -1) {
+                toSelect.push(participantsArr[p]);
+            }
+        }
+        this.setSelectedProteins(toSelect);
+    },
+
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
         distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
