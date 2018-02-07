@@ -2,7 +2,7 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
 CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
-    
+
     initialize: function () {
         this.set ({
             highlights: [],         // listen to these two for differences in highlighted selected links
@@ -14,7 +14,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             groupColours: null // will be d3.scale for colouring by search/group
         });
     },
-    
+
     applyFilter: function () {
         var filterModel = this.get("filterModel");
         var clmsModel = this.get("clmsModel");
@@ -75,14 +75,14 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     //~ var filteredMatches_pp = crossLink.filteredMatches_pp;
                     crossLink.filteredMatches_pp = [];
                     var filteredMatchCount = filteredMatches_pp.length;
-					
+
                     for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
                         //var fm_pp = filteredMatches_pp[fm_pp];
 						var fm = filteredMatches_pp[fm_pp];
-                        //set its fdr pass att to true even though it may not be in final results 
+                        //set its fdr pass att to true even though it may not be in final results
                         fm.match.fdrPass = true;
                         //check its not manually hidden and meets navigation filter
-                        if (crossLink.fromProtein.manuallyHidden != true 
+                        if (crossLink.fromProtein.manuallyHidden != true
                             && (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true)
                             && filterModel.navigationFilter(fm.match) ) {
                             crossLink.filteredMatches_pp.push(fm);
@@ -109,15 +109,15 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                             filterModel.scoreFilter (match) &&
                             filterModel.decoyFilter (match)
                         ;
-                        
+
                         // Either 1.
                         // this beforehand means navigation filters do affect ambiguous state of crosslinks
                         // pass = pass && filterModel.navigationFilter(match);
-                        
+
                         if (pass && match.crossLinks.length === 1) {
                             crossLink.ambiguous = false;
                         }
-                        
+
                         // Or 2.
                         // this afterwards means navigation filters don't affect ambiguous state of crosslinks
                         pass = pass && filterModel.navigationFilter(match);
@@ -133,10 +133,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-        
-        
+
+
         var a = performance.now();
-        
+
         for (var i = 0; i < clCount; ++i) {
             var crossLink = crossLinksArr[i];
             if (filterModel) {
@@ -149,7 +149,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var b = performance.now();
         console.log ("ser filtering time", (b-a), "ms");
 
-        
+
         this.filteredXLinks = {
             all: [],    // all filtered crosslinks
             targets: [],    // non-decoy non-linear links
@@ -160,7 +160,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         };
         // all = targets + linearTargets + decoysTD + decoysDD
         // count of decoy linears = linears - linearTargets
-        
+
 
         for (var i = 0; i < clCount; ++i) {
             var crossLink = crossLinksArr[i];
@@ -182,7 +182,35 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
 //        console.log ("xlinks", this.filteredXLinks);
 
-        //hiding linkless participants  
+        //hack for francis, take out protein-protein links with only one supporting cross-link
+        var uniqueResiduePairsPerPPI = this.get("filterModel").get("urpPpi");
+        if (uniqueResiduePairsPerPPI > 1) {
+            var ppiMap = new Map ();
+            var clmsModel = this.get("clmsModel");
+            var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
+            var clCount = crossLinksArr.length;
+            for (var c = 0; c < clCount; c++) {
+                var crossLink = crossLinkArr[c];
+                var key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
+                value = ppiMap.get(key);
+                if (typeof value == "undefined") {
+                    value = 1;
+                } else {
+                    value++;
+                }
+                ppiMap.set(key, value);
+            }
+            for (c = 0; c < clCount; c++) {
+                crossLink = crossLinkArr[c];
+                key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
+                value = ppiMap.get(key);
+                if (value < uniqueResiduePairsPerPPI) {
+                    crosslink.filteredMatches_pp = [];
+                }
+            }
+        }
+        
+        //hiding linkless participants
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
             participant.hidden = true;
             var partCls = participant.crossLinks;
@@ -196,7 +224,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         });
-        
+
         /*
         var cfilter = crossfilter (clmsModel.get("matches"));
         var subsetDimension = cfilter.dimension (function (match) {
@@ -205,13 +233,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         subsetDimension.filterExact (true);
         console.log (cfilter.allFiltered());
         */
-        
+
 
         this.trigger("filteringDone");
         this.trigger("hiddenChanged");
 
         return this;
-        
+
     },
 
     getFilteredCrossLinks: function (type) { // if type of crosslinks not declared, make it 'targets' by default
@@ -254,22 +282,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         return prots;
     },
-    
+
     getMarkedMatches: function (modelProperty) {
         return this.get("match_"+modelProperty);
     },
-    
+
     getMarkedCrossLinks: function (modelProperty) {
         return this.get(modelProperty);
     },
-    
+
     setMarkedMatches: function (modelProperty, matches, andAlternatives, add, dontForward) {
         if (matches) {  // if undefined nothing happens, to clear selection pass an empty array - []
             var type = "match_"+modelProperty;
             var map = add ? new d3.map (this.get(type).values(), function(d) { return d.id; }) : new d3.map();
             matches.forEach (function (match) {
                 var mmatch = match.match;
-                map.set (mmatch.id, mmatch);    
+                map.set (mmatch.id, mmatch);
             });
             this.set (type, map);
 
@@ -311,7 +339,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             if (andAlternatives) {
                 crossLinks.forEach(function (crossLink) {
                     if (crossLink.ambiguous) {
-                        //this.recurseAmbiguity (crossLink, crossLinkMap);                        
+                        //this.recurseAmbiguity (crossLink, crossLinkMap);
                         var filteredMatchesAndPeptidePositions = crossLink.filteredMatches_pp;
                         var fm_ppCount = filteredMatchesAndPeptidePositions.length;
                         for (var fm_pp = 0; fm_pp < fm_ppCount; fm_pp++) {
@@ -326,11 +354,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     }
                 }, this);
             }
-            
+
             // is d3 map, so .values always works, don't need to worry about whether ie11 supports Array.from (in fact ie11 gets keys/values wrong way round if we call CLMS.array...)
             var dedupedCrossLinks = crossLinkMap.values(); //CLMS.arrayFromMapValues(crossLinkMap);
             this.set (modelProperty, dedupedCrossLinks);
-            
+
             if (!dontForward) {
                 var matches = [];
                 dedupedCrossLinks.forEach (function (clink) {
@@ -338,16 +366,16 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 });
                 //console.log (modelProperty, "matches", matches);
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
-                
+
                 var linksChanged = this.changedAttributes();
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
                 this.triggerFinalMatchLinksChange (modelProperty, linksChanged);
             }
-            
+
             //this.set (modelProperty, dedupedCrossLinks);
         }
     },
-    
+
     triggerFinalMatchLinksChange: function (modelProperty, penultimateSetOfChanges) {
         // if either of the last two backbone sets did have a change then trigger an event
         // so views waiting for both links and matches to finish updating can act
@@ -372,9 +400,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-        this.set("selectedProteins", toSelect);//the array.slice() clones the array so this triggers a change   
+        this.set("selectedProteins", toSelect);//the array.slice() clones the array so this triggers a change
     },
-    
+
     invertSelectedProteins: function () {
         var toSelect = [];
         var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
@@ -388,8 +416,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
         this.setSelectedProteins(toSelect);
     },
-    
-    hideSelectedProteins: function () {     
+
+    hideSelectedProteins: function () {
         var selectedArr = this.get("selectedProteins");
         var selectedCount = selectedArr.length;
         for (var s = 0; s < selectedCount; s++) {
@@ -398,21 +426,21 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
         this.setSelectedProteins([]);
         this.get("filterModel").trigger("change");
-             
+
     },
-    
-    showHiddenProteins: function () {       
+
+    showHiddenProteins: function () {
         var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
         var participantCount = participantsArr.length;
         for (var p = 0; p < participantCount; p++) {
             participantsArr[p].manuallyHidden = false;
         }
-        
+
         this.get("filterModel").trigger("change");
     },
 
-    
-    stepOutSelectedProteins: function () {      
+
+    stepOutSelectedProteins: function () {
         var selectedArr = this.get("selectedProteins");
         var selectedCount = selectedArr.length;
         var toSelect = new Set ();
@@ -431,12 +459,12 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
                         var toProtein = crossLink.toProtein;
                         toProtein.manuallyHidden = false;
-                        toSelect.add(toProtein);                  
+                        toSelect.add(toProtein);
                     }
                 }
             }
         }
-                    
+
         //this.get("filterModel").trigger("change");
         //~ this.setSelectedProteins(CLMS.arrayFromMapValues(idsToSelect));//todo: IE
         this.setSelectedProteins(Array.from(toSelect));//todo: IE
