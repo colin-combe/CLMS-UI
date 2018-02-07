@@ -42,15 +42,18 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"?", "id":"Q"},
                 {"label":"Auto", "id":"AUTO", tooltip: "Show autovalidated cross-links"},
                 {"label":"Unval.", "id":"unval", tooltip: "Show unvalidated cross-links"},
-                {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},              
+                {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},
             ],
             navigationFilters: [
                 {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links involving a peptide including this AA sequence e.g. FAKR"},
                 {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein including this text. Separate with commas, specify both proteins with hyphens e.g. RAT3, RAT1-RAT2"},
                 {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state e.g. 3"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
-                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"}
-            ],
+                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"},
+            ],            
+            navigationNumberFilters: [
+                {"label":"Residue Pairs per PPI", "id":"urpPpi", min: 1, max: 99, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
+            ]
         };
         this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
 
@@ -102,14 +105,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("type", "checkbox")
             .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
         ;
-		
-		
+
+
         var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
             .data(this.options.subsetNumberFilters, function(d) { return d.id; })
             .enter()
             .append ("div")
             .attr ("class", "toggles subsetNumberFilterDiv")
-            .attr("id", function(d) { return "toggles_" + d.id; })
+            //.attr("id", function(d) { return "toggles_" + d.id; }) // not a toggle, change id?
             .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
             .append ("label")
         ;
@@ -118,7 +121,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
         subsetNumberFilters.append("p").classed("cutoffLabel",true).text (">");
         subsetNumberFilters.append ("input")
-            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number", 
+            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
             .property ("value", function(d) { return self.model.get(d.id); })
         ;
@@ -159,7 +162,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
 		// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
         sliderSection.selectAll("p.cutoffLabel")
-            .attr ("title", function () { 
+            .attr ("title", function () {
                 var isMinInput = d3.select(this).classed("vmin");
                 return "Filter out matches with scores "+(isMinInput ? "less than": "greater than")+" X e.g. "+(isMinInput ? "8.0": "20.0");
             })
@@ -213,7 +216,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .append("div")
             .attr("class", "textFilters")
             .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label") 
+            .append ("label")
         ;
         textFilters.append("span")
             .text (function(d) { return d.label; })
@@ -225,7 +228,32 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("size", function(d) { return d.chars; })
 			.property ("value", function(d) { return self.model.get(d.id); })
         ;
-        
+
+        var navNumberDivSel = mainDivSel.append ("div")
+            .attr("class", "filterControlGroup")
+            .attr("id", "navNumberFilters")
+		;
+        var navigationNumberFilters = navNumberDivSel.selectAll("div.navNumberFilterDiv")
+            .data(this.options.navigationNumberFilters, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "navNumberFilterDiv")
+            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+            .append ("label")
+        ;
+        navigationNumberFilters.append ("span")
+            .style("display", "block")
+            .text (function(d) { return d.label; })
+        ;
+        navigationNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        navigationNumberFilters.append ("input")
+            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
+                        min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+            .property ("value", function(d) { return self.model.get(d.id); })
+        ;
+
+
+
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
             var entries = d3.entries(this.options.hide);
@@ -236,7 +264,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 .style ("display", "none")
             ;
         }
-        
+
         this.displayEventName = viewOptions.displayEventName;
 
         this.listenTo (this.model, "change:matchScoreCutoff", function(model, val) {
@@ -248,7 +276,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.listenTo (this.model, "change:unval", function  (model, val) {
 			mainDivSel.select("#unval").property("checked", Boolean (val));
 		});
-        
+
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
         this.modeChanged();
@@ -283,7 +311,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     subsetNumberFilter: function (evt) {
 		var target = evt.target;
-        var id = target.id; 
+        var id = target.id;
         var value = target.value;
         if (this.model.get (id) != value) {
 			console.log ("subsetNumberFilter:", id, value);
@@ -306,7 +334,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
 CLMSUI.FDRViewBB = Backbone.View.extend  ({
     initialize: function () {
-        
+
         var chartDiv = d3.select(this.el);
         //var tpl = _.template (("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
         chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
@@ -331,7 +359,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                         self.model.set("fdrThreshold", d);
                     })
         ;
-		
+
         chartDiv.select("span")
             .append("label")
             .attr("class", "horizontalFlow")
@@ -361,7 +389,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         var targetTemplateString = "Post-Filter: <strong><%= targets %></strong> Cross-links";
         this.targetTemplate = _.template (targetTemplateString);
         this.allTemplate = _.template (targetTemplateString+" ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)");
-        
+
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
@@ -393,9 +421,9 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
             .append("p")
             .attr("class", function(d) { return d+"Elem"; })
         ;
-        
-        this.pctFormat = d3.format("%"); 
- 
+
+        this.pctFormat = d3.format("%");
+
         this.listenTo (this.model, "filteringDone", this.render)
             .render()
         ;
@@ -403,17 +431,17 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
 
     render: function () {
         var fdrTypes = {"interFdrCut": "Between", "intraFdrCut": "Within"};
-        
+
         var filterModel = this.model.get("filterModel");
         var threshold = filterModel.get("fdrThreshold");
         var fdrMode = filterModel.get("fdrMode");
-        
+
         var clmsModel = this.model.get("clmsModel");
         var singleRealProtein = clmsModel.realProteinCount < 2;
         var decoysPresent = clmsModel.get("decoysPresent");
 
         var self = this;
-        
+
         d3.select(this.el).selectAll("p")
             .text (function (d, i) {
                 if (fdrMode) {
@@ -432,7 +460,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
                 return decoysPresent && d === "interFdrCut" && singleRealProtein ? "none" : null;
             })
         ;
-        
+
         return this;
     },
 });
