@@ -150,6 +150,37 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         console.log ("ser filtering time", (b-a), "ms");
 
 
+        //hack for francis, take out protein-protein links with only one supporting cross-link
+        var uniqueResiduePairsPerPPI = this.get("filterModel").get("urpPpi");
+        if (uniqueResiduePairsPerPPI > 1) {
+            var ppiMap = new Map ();
+            var clmsModel = this.get("clmsModel");
+            var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
+            var clCount = crossLinksArr.length;
+            for (var c = 0; c < clCount; c++) {
+                var crossLink = crossLinksArr[c];
+                if (crossLink.filteredMatches_pp.length) {
+                    var key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
+                    value = ppiMap.get(key);
+                    if (typeof value == "undefined") {
+                        value = 1;
+                    } else {
+                        value++;
+                    }
+                    ppiMap.set(key, value);
+                }
+            }
+            for (c = 0; c < clCount; c++) {
+                crossLink = crossLinksArr[c];
+                key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
+                value = ppiMap.get(key);
+                if (value < uniqueResiduePairsPerPPI) {
+                    crossLink.filteredMatches_pp = [];
+                }
+            }
+        }
+
+
         this.filteredXLinks = {
             all: [],    // all filtered crosslinks
             targets: [],    // non-decoy non-linear links
@@ -181,34 +212,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
         }
 //        console.log ("xlinks", this.filteredXLinks);
-
-        //hack for francis, take out protein-protein links with only one supporting cross-link
-        var uniqueResiduePairsPerPPI = this.get("filterModel").get("urpPpi");
-        if (uniqueResiduePairsPerPPI > 1) {
-            var ppiMap = new Map ();
-            var clmsModel = this.get("clmsModel");
-            var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
-            var clCount = crossLinksArr.length;
-            for (var c = 0; c < clCount; c++) {
-                var crossLink = crossLinkArr[c];
-                var key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
-                value = ppiMap.get(key);
-                if (typeof value == "undefined") {
-                    value = 1;
-                } else {
-                    value++;
-                }
-                ppiMap.set(key, value);
-            }
-            for (c = 0; c < clCount; c++) {
-                crossLink = crossLinkArr[c];
-                key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
-                value = ppiMap.get(key);
-                if (value < uniqueResiduePairsPerPPI) {
-                    crosslink.filteredMatches_pp = [];
-                }
-            }
-        }
         
         //hiding linkless participants
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
@@ -233,7 +236,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         subsetDimension.filterExact (true);
         console.log (cfilter.allFiltered());
         */
-
 
         this.trigger("filteringDone");
         this.trigger("hiddenChanged");

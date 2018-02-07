@@ -49,9 +49,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein including this text. Separate with commas, specify both proteins with hyphens e.g. RAT3, RAT1-RAT2"},
                 {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state e.g. 3"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
-                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"}
-                {"label":"Residue Pairs per PPI", "id":"urpPpi", "chars":2, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
-            ],
+                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"},
+            ],            
+            navigationNumberFilters: [
+                {"label":"Residue Pairs per PPI", "id":"urpPpi", min: 1, max: 99, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
+            ]
         };
         this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
 
@@ -110,7 +112,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .enter()
             .append ("div")
             .attr ("class", "toggles subsetNumberFilterDiv")
-            .attr("id", function(d) { return "toggles_" + d.id; })
+            //.attr("id", function(d) { return "toggles_" + d.id; }) // not a toggle, change id?
             .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
             .append ("label")
         ;
@@ -226,6 +228,31 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr ("size", function(d) { return d.chars; })
 			.property ("value", function(d) { return self.model.get(d.id); })
         ;
+
+        var navNumberDivSel = mainDivSel.append ("div")
+            .attr("class", "filterControlGroup")
+            .attr("id", "navNumberFilters")
+		;
+        var navigationNumberFilters = navNumberDivSel.selectAll("div.navNumberFilterDiv")
+            .data(this.options.navigationNumberFilters, function(d) { return d.id; })
+            .enter()
+            .append ("div")
+            .attr ("class", "navNumberFilterDiv")
+            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+            .append ("label")
+        ;
+        navigationNumberFilters.append ("span")
+            .style("display", "block")
+            .text (function(d) { return d.label; })
+        ;
+        navigationNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        navigationNumberFilters.append ("input")
+            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
+                        min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+            .property ("value", function(d) { return self.model.get(d.id); })
+        ;
+
+
 
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
