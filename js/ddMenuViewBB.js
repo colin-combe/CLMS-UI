@@ -6,6 +6,9 @@
             "mouseenter .menuTitle": "switchVis",
             "click .menuTitle": "toggleVis",
             "click li": "menuSelection",
+            // martin - i had to add another event here to listen to key presses in the text input, 
+            // or we do without refreshes on key presses, or maybe theres a better way you know of...
+            "keyup li > input": "menuSelection",
         },
         
         initialize: function (viewOptions) {
@@ -99,6 +102,10 @@
                             targetNode.parentElement.removeChild (targetNode);
                         }
                         ind.node().appendChild (targetNode);
+
+                        if (targetSel.datum() == undefined) {
+                            ind.select("#"+d.id.replace(/ /g, "_"));//martin magic
+                        }
                     }
                 }
 				if (d.title) {
@@ -154,7 +161,7 @@
                 this.toggleVis();
             }
         },
-        
+
         menuSelection: function (evt) {  
             var d3target = d3.select (evt.target);
             if (d3target && d3target.datum() && d3target.datum().func) {
@@ -168,7 +175,7 @@
                 	this.hideVis();
 				}
             }
-        },
+        }
     });
 
 

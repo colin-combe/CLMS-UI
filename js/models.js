@@ -14,7 +14,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 betweenLinks: true,
                 ambig: true,
                 aaApart: 0,
-                pepLength: 0,
+                pepLength: 6,
                 //validation status
                 A: true,
                 B: true,
@@ -33,6 +33,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 charge: "",
                 runName: "",
                 scanNumber: "",
+                urpPpi: 1,
             },
 
             initialize: function (options, secondarySettings) {
@@ -81,12 +82,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var showSelfLinks = this.get("selfLinks");
                 var showBetweenLinks = this.get("betweenLinks");
                 // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
-                    
-                    if (!((match.couldBelongToSelfLink == true && showSelfLinks) 
+
+                    if (!((match.couldBelongToSelfLink == true && showSelfLinks)
                         || (match.couldBelongToBetweenLink == true && showBetweenLinks))) {
                         return false;
                     }
-                
+
                 // }
 
                 //temp
@@ -114,14 +115,14 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 return true;
             },
-            
+
             scoreFilter: function (match) {
                 var msc = this.get("matchScoreCutoff");
                 //defend against not having a score (from a CSV file without such a column)
                 if (!match.score) {return true;}
                 return (msc[0] == undefined || match.score >= msc[0]) && (msc[1] == undefined || match.score <= msc[1]);	// == undefined cos shared links get undefined json'ified to null
             },
-            
+
             decoyFilter: function (match) {
                return !match.isDecoy() || this.get("decoys");
             },
@@ -190,7 +191,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 /*
                 if (searchString) {
                     var searchStringLower = searchString.toLowerCase();
-                    
+
 
                     var nameStrings = searchString.split('-');
                     var nameStringCount = nameStrings.length;
@@ -232,7 +233,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                                     }
                                 }
                             }
-                            if (found === false) return false;					
+                            if (found === false) return false;
                         }
                     }
                 }
@@ -324,8 +325,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return true;
                 }
             },
-			
-			
+
+
 
             stateString: function () {
                 // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
@@ -368,23 +369,23 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);
                 return str;
             },
-			
+
 			generateUrlString: function () {
 				// make url parts from current filter attributes
 				var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
-				
+
 				// return parts of current url query string that aren't filter flags or values
 				var search = window.location.search.slice(1);
 				var nonFilterKeys = d3.set (["sid", "decoys", "unval", "lowestScore", "anon"]);
 				var nonFilterParts = search.split("&").filter (function (nfpart) {
-					return nonFilterKeys.has (nfpart.split("=")[0]);	
+					return nonFilterKeys.has (nfpart.split("=")[0]);
 				});
 				// and queue them to be at the start of new url query string (before filter attributes)
 				parts = nonFilterParts.concat (parts);
-				
+
 				return window.location.origin + window.location.pathname + "?" + parts.join("&");
 			},
-			
+
 			getFilterUrlSettings: function (urlChunkMap) {
 				var urlChunkKeys = d3.keys (urlChunkMap).filter(function(key) {
 					return key[0] === "F";
