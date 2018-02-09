@@ -330,6 +330,7 @@
 
             var alignCall = 0;
             var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
+			
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
 				// filtering can change node and thus feature positioning too if proteins are hidden or rearranged by sorting
@@ -339,15 +340,15 @@
                     renderPartial (["links", "nodes"]);
                 }   
             });
-            this.listenTo (this.model, "change:selection", function () { this.showAccented ("selection"); });
-            this.listenTo (this.model, "change:highlights", function () { this.showAccented ("highlights"); });
+            this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
+            this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
                 CLMSUI.utils.xilog (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
                 renderPartial (["features"]);
             });
             this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
             this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
-            this.listenTo (this.model, "change:selectedProteins", function () { renderPartial (["nodes"]); });
+            this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
 			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
@@ -408,12 +409,12 @@
 
         idFunc: function (d) { return d.id; },
 
-        showAccented: function (accentType) {
-            this.showAccentOnTheseElements (d3.select(this.el).selectAll(".circleGhostLink"), accentType);
+        showAccentedLinks: function (accentType) {
+            this.showAccentOnTheseLinks (d3.select(this.el).selectAll(".circleGhostLink"), accentType);
             return this;
         },
 
-        showAccentOnTheseElements: function (d3Selection, accentType) {
+        showAccentOnTheseLinks: function (d3Selection, accentType) {
             var accentedLinkList = this.model.getMarkedCrossLinks(accentType);
             if (accentedLinkList) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
@@ -423,6 +424,22 @@
             }
             return this;
         },
+		
+		showAccentedNodes: function (accentType) {
+			this.showAccentOnTheseNodes (d3.select(this.el).selectAll(".circleNode"), accentType);
+		},
+		
+		showAccentOnTheseNodes: function (d3Selection, accentType) {
+			var accentedNodeList = this.model.get("selectedProteins");
+            if (accentedNodeList) {
+                var linkType = {"selection": "selected", "highlights": "highlighted"};
+                var accentedLinkIDs = _.pluck (accentedNodeList, "id");
+                var idset = d3.set (accentedLinkIDs);
+                d3Selection.classed (linkType[accentType], function(d) { return idset.has(d.id); });
+            }
+            return this;
+		},
+			
 
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
             //var crossLinks = this.model.get("clmsModel").get("crossLinks");
@@ -556,7 +573,8 @@
                 var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
                 
                 // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
-                if (interactors.size !== this.interactorOrder.length) {    // interactors is map so size, interactorOrder is array so length
+                if (filteredInteractors.length !== this.interactorOrder.length) {    // interactors is map so size, interactorOrder is array so length
+					console.log ("REORDERING OK", filteredInteractors.length, this.interactorOrder.length)
                     this.reOrder();
                 }
                 
@@ -692,7 +710,7 @@
                         self.model.setMarkedCrossLinks ("selection", [crossLinks.get(d.id)], false, add);
                     })
                     .call (function () {
-                        self.showAccentOnTheseElements.call (self, this, "selection");
+                        self.showAccentOnTheseLinks.call (self, this, "selection");
                     })
             ;
             ghostLinkJoin
@@ -732,15 +750,9 @@
 
             nodeJoin
                 .attr("d", this.arc)
-                .classed ("selected", function(d) {
-                    //~ var map = self.model.get("selectedProteins");
-                    //~ return map && map.has(d.id);
-                    var id = d.id;
-                    //does selectedProteins contain a protein with that id
-                    var filtered = self.model.get("selectedProteins").filter(function (p) {return p.id == id;});
-                    return filtered.length > 0;
-                })
             ;
+			
+			this.showAccentOnTheseNodes (nodeJoin, "selected");
 
             return this;
         },
