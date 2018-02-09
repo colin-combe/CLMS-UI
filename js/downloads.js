@@ -62,7 +62,7 @@ function download(content, contentType, fileName) {
     form.appendChild(hiddenFilenameField);
 
     document.body.appendChild(form);
-    form.submit();
+	form.submit();
     document.body.removeChild(form);
 }
 
