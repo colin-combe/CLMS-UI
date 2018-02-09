@@ -366,7 +366,7 @@
             //var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
             var prots = CLMS.arrayFromMapValues (this.filterInteractors (this.model.get("clmsModel").get("participants")));
             var proteinSort = function (field) {
-                var numberSort = !isNaN(prots[0][field]);
+                var numberSort = prots.length ? !isNaN(prots[0][field]) : false;	// stop undefined 'prots[0].field' bug when no prots
                 var sortDir = this.options.sortDir;
                 prots.sort (function (a, b) {
                     return (numberSort ? (+a[field]) - (+b[field]) : a[field].localeCompare(b[field])) * sortDir;
