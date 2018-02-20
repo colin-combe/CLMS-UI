@@ -383,6 +383,12 @@ if (count($_GET) > 0) {
     /*
      * PEPTIDES
      */
+
+// SELECT (array_agg(p.seq_mods))[1] as seq_mods, (array_agg(p.link_site))[1] as link_site,
+// (array_agg(pe.start)) as pos,(array_agg(pe.dbsequence_ref)) as prt
+// FROM peptides p JOIN (select * from peptide_evidences where upload_id = 1) pe on p.id = pe.peptide_ref
+// WHERE p.upload_id = 1 group by p.id;
+
      $query = "SELECT * FROM peptides WHERE upload_id = ".$sid.";";
      $startTime = microtime(true);
      $res = pg_query($query) or die('Query failed: ' . pg_last_error());
