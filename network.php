@@ -164,8 +164,8 @@
                         onclick="window.location = '../history/history.html';"
                         title="Return to search history / Login"></i>
 					<!--
-                    <i class="fa fa-github fa-xi" 
-                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
+                    <i class="fa fa-github fa-xi"
+                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');"
                         title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
 					-->
                     <p id="loadDropdownPlaceholder"></p>
@@ -240,7 +240,7 @@
                 }
             };
 
-            var url = "./loadData.php" + window.location.search;
+            var url = "./loadData_xiUI_DB.php" + window.location.search;
 
             d3.text (url, function (error, text) {
                 if (!error) {
