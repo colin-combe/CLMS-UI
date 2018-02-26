@@ -603,9 +603,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return series.every (function (aSeries) { return !aSeries.length; });
 	},
 
-	getBinThresholds: function (series) {
+	getBinThresholds: function (series, accessor) {
+		accessor = accessor || function (d) { return d; };	// return object/variable/number as is as standard accessor
 		// get extents of all arrays, concatenate them, then get extent of that array
-		var extent = d3.extent ([].concat.apply([], series.map (function(item) { return item ? d3.extent(item, function (d) { return d[1]; }) : [0,1]; })));
+		var extent = d3.extent ([].concat.apply([], series.map (function(singleSeries) { return singleSeries ? d3.extent (singleSeries, accessor) : [0,1]; })));
 		var min = d3.min ([0, Math.floor(extent[0])]);
 		var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
 		var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
@@ -624,7 +625,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 	aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
 
-		var thresholds = this.getBinThresholds (series);
+		var thresholds = this.getBinThresholds (series, function (d) { return d[1]; });
 		//console.log ("precalcs", precalcedDistributions, seriesNames);
 		this.currentBins = [];
 
