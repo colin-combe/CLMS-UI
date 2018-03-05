@@ -214,7 +214,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.utils.xilog ("REPOPULATE", this.model, this.model.get("stageModel"));
         var pdbID = this.model.get("stageModel").get("pdbBaseSeqID");
         var overText = "PDB File: " + (pdbID.length === 4 ?
-            "<A class='outsideLink' target='_blank' href='http://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID)
+            "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID)
 			+" - "+this.model.get("stageModel").get("structureComp").structure.title
         ;      
         this.chartDiv.select("div.overlayInfo").html(overText);

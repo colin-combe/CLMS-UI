@@ -390,7 +390,7 @@ CLMSUI.modelUtils = {
     // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
     // Therefore, current default is to use sequence matching to detect similarities
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
-        $.get("http://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
+        $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
             function (data, status, xhr) {   
                 //console.log ("data", data, arguments);
                 if (status === "success" && data.xmlVersion) {  // data is an xml fragment
@@ -533,7 +533,7 @@ CLMSUI.modelUtils = {
             ;
             var encodedXmlString = encodeURIComponent (xmlString);
 
-            $.post("http://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, successFunc);
+            $.post("https://www.rcsb.org/pdb/rest/search/?req=browser&sortfield=Release Date", encodedXmlString, successFunc);
         }
     },
     
