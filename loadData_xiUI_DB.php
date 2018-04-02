@@ -427,7 +427,7 @@ if (count($_GET) > 0) {
               echo "{"
                   . '"pep_id":"' . $line["peptide_ref"] . '",'
                   . '"seq_id":"' . $line["dbsequence_ref"] . '",'
-                  . '"start":' . $line["start"]//. ','
+                  . '"start":' . $line["pep_start"]//. ','
                   // . '"isDecoy":' . $line["is_decoy"]
                   . "}";
               $line = pg_fetch_array($res, null, PGSQL_ASSOC);
