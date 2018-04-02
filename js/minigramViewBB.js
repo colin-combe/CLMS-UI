@@ -41,7 +41,7 @@
             this.chart = c3.generate({
                 bindto: bid,
                 data: {
-                    //x: 'x',
+                    x: 'x',	// x is now declared as a column to account for possible negative values in x
                     columns: [
                         [this.options.seriesName],
                     ],
@@ -105,6 +105,8 @@
                         var roundDomain = domain.map (function (v) { 
                             return +((Math.round (v/interval) * interval).toFixed(1)); 
                         });
+						
+						console.log ("domain", domain);
                         //console.log ("roundDomain", roundDomain[0], roundDomain[1]);
 
                         // We want these rounded values to be communicated to the model and onwards,
@@ -167,7 +169,9 @@
             
             // aggregate data into bar chart friendly form
             var seriesLengths = _.pluck (dataSeries, "length");
-            var countArrays = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
+            var aggregates = this.aggregate (dataSeries, seriesLengths, this.precalcedDistributions);
+			var countArrays = aggregates.counts;
+			var thresholds = aggregates.thresholds;
 
             var maxY = d3.max(countArrays[0]);  // max calced on real data only
             // if max y needs to be calculated across all series
@@ -177,15 +181,16 @@
 
             // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
             countArrays.forEach (function (countArray,i) { countArray.unshift (self.options.seriesNames[i]); });
-
+			thresholds.unshift ("x");
+			countArrays.push (thresholds);
+			//console.log ("thresholds", thresholds);
+			
             var curMaxY = this.chart.axis.max().y;
             if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
                 this.chart.axis.max ({y: maxY});
             }
 
-            this.chart.load({
-                columns: countArrays
-            });
+            this.chart.load ({ columns: countArrays });
             
             //c3.chart.fn.enableRedraw(true, true);
             //console.log (this.chart);
@@ -201,16 +206,26 @@
             //console.log ("data", distArr, binnedData);
             return this;
         },
+		
+		getBinThresholds: function (series, accessor) {
+			accessor = accessor || function (d) { return d; };	// return object/variable/number as is as standard accessor
+			// get extents of all arrays, concatenate them, then get extent of that array
+			var extent = d3.extent ([].concat.apply([], series.map (function (singleSeries) { return singleSeries ? d3.extent (singleSeries, accessor) : [0,1]; })));
+			var min = d3.min ([0, Math.floor(extent[0])]);
+			var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
+			var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
+			var thresholds = d3.range (min, max + (step * 2), step);
+			//console.log ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
+
+			//console.log ("Extent", extent, min, max);
+			if (thresholds.length === 0) {
+				thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
+			}
+			return thresholds;
+		},
 
         aggregate: function (series, seriesLengths, precalcedDistributions) {
-            // get extents of all arrays, concatenate them, then get extent of that array
-            var extent = d3.extent ([].concat.apply([], series.map (function(d) { return d3.extent(d); })));
-
-			//  - which we need to make sure there's an empty bin at the end of the sequence
-            var thresholds = d3.range (Math.min (0, Math.floor(extent[0])), Math.max (Math.ceil(extent[1]), this.options.maxX) + 2);
-            if (thresholds.length === 0) {
-                thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
-            }
+            var thresholds = this.getBinThresholds (series);
 
             var sIndex = this.options.seriesNames.indexOf (this.options.scaleOthersTo);
             var targetLength = sIndex >= 0 ? seriesLengths[sIndex] : 1;
@@ -227,8 +242,10 @@
                     return nestedArr.y * scale;
                 });
             }, this);
+			
+			console.log ("ca", countArrays);
 
-            return countArrays;
+            return {counts: countArrays, thresholds: thresholds};
         },
         
         brushRecalc: function () {
