@@ -19,10 +19,10 @@
 -->
 <?php
 session_start();
-if (!$_SESSION['session_name']) {
-    header("location:login.html");
-    exit;
-}
+// if (!$_SESSION['session_name']) {
+//     header("location:login.html");
+//     exit;
+// }
 header('Content-type: text/html; charset=utf-8');
 ?>
 
@@ -60,13 +60,13 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/validate.css">
         <link rel="stylesheet" href="./css/filter.css">
         <link rel="stylesheet" href="./css/validationPage.css">
-        
+
         <!-- Spectrum styles -->
         <link rel="stylesheet" href="../spectrum/css/settings.css">
         <link rel="stylesheet" href="../spectrum/css/dropdown.css">
         <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
 
-        
+
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="./vendor/d3.js"></script>
         <script type="text/javascript" src="./vendor/colorbrewer.js"></script>
@@ -102,8 +102,8 @@ header('Content-type: text/html; charset=utf-8');
 
         <script type="text/javascript" src="./js/networkFrame.js"></script>
         <script type="text/javascript" src="./js/downloads.js"></script>
-        
-        
+
+
 
 
         <!-- Spectrum view .js files -->
@@ -136,7 +136,7 @@ header('Content-type: text/html; charset=utf-8');
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
             </div> <!-- page-header -->
-			
+
             <div class="mainContent">
                 <div id="topDiv">
                 </div>
@@ -151,7 +151,7 @@ header('Content-type: text/html; charset=utf-8');
 
         <script>
         //<![CDATA[
-        
+
         //~ var windowLoaded = function () {
 			var CLMSUI = CLMSUI || {};
 			<?php
@@ -162,40 +162,40 @@ header('Content-type: text/html; charset=utf-8');
                     include('../xiSpecConfig.php');
                 }
 			?>
-			
+
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
-					
+
             var success = function (text) {
-                spinner.stop(); // stop spinner on request returning 
-				var json = JSON.parse (text);	
+                spinner.stop(); // stop spinner on request returning
+				var json = JSON.parse (text);
 				CLMSUI.init.modelsEssential(json);
-                
+
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-                document.title = "Validate " + CLMS.arrayFromMapKeys(searches).join();	
+                document.title = "Validate " + CLMS.arrayFromMapKeys(searches).join();
 				CLMSUI.split = Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
 						sizes: [60,40], minSize: [200,10],
 							onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-				} });	
-                
+				} });
+
                 // need to make #spectrumSettingsWrapper before we can turn it into a backbone view later. mjg 27/11/17
                 d3.select("body").append("div")
                     .attr("id", "spectrumSettingsWrapper")
                     .attr("class", "dynDiv")
-                ;						
+                ;
 				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
                 CLMSUI.vent.trigger ("spectrumShow", true);
-                
+
 				var allCrossLinks = CLMS.arrayFromMapValues(
                     CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks")
                 );
 				//CLMSUI.compositeModelInst.set("selection", allCrossLinks);
-                CLMSUI.compositeModelInst.setMarkedCrossLinks ("selection", allCrossLinks, false, false);			
+                CLMSUI.compositeModelInst.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
 
                 // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
                 // so we run it again here, doesn't do any harm
                 ByRei_dynDiv.init.main();
-                
+
 				var resize = function(event) {
 					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
 					var alts = d3.select("#alternatives");
@@ -208,16 +208,16 @@ header('Content-type: text/html; charset=utf-8');
 				resize();
 			};
 
-			var url = "./loadData.php" + window.location.search;
-			
-         
+			var url = "./loadData_xiUI_DB.php" + window.location.search;
+
+
             d3.text (url, function (error, text) {
                 if (!error) {
                     success (text);
                 }
             });
-        
-           
+
+
         //]]>
         </script>
 
