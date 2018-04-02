@@ -93,7 +93,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 				function (data) {
 					var ids = data.split("\n");
 					var lastID = ids[ids.length - 2];   // -2 'cos last is actually an empty string after last \n
-					newtab.location = "http://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
+					newtab.location = "https://www.rcsb.org/pdb/results/results.do?qrid="+lastID;
 				}
 			); 
 		} else {
