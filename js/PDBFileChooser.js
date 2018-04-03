@@ -42,11 +42,11 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		;
 
 		toolbar.append("span")
-			.attr("class", "btn")
-			.text("or Enter 4-character PDB Code")
+			.attr("class", "btn verticalLine nopadLeft")
+			.text("or Enter 4-character PDB ID")
 			.append("input")
 				.attr({
-					type: "text", class: "inputPDBCode", maxlength: 4, pattern: CLMSUI.utils.commonRegexes.pdbPattern, size: 4, title: "Four letter alphanumeric PDB code"
+					type: "text", class: "inputPDBCode", maxlength: 4, pattern: CLMSUI.utils.commonRegexes.pdbPattern, size: 4, title: "Enter a PDB ID here e.g. 1AO6"
 				})
 				.property ("required", true)
 		;

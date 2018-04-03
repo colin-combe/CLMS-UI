@@ -32,24 +32,27 @@ var allDataLoaded = _.after (3, function() {
     var annotationTypes = [];
 
     //add option for showing digestible residues
-	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type:"Digestible"}
-	);
+		type:"Digestible",
+		tooltip: "Mark Digestible Residues"
+	});
 	annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
-	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type:"Cross-linkable"}
-	);
+		type:"Cross-linkable",
+		tooltip: "Mark Cross-Linkable residues"
+	});
 	annotationTypes.push(crosslinkableAnnotationType);
 
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
 		category: "Alignment",
-		type:"PDB aligned region"}
-	);
+		type:"PDB aligned region",
+		tooltip: "Show regions that align to currently loaded PDB Data"
+	});
 	annotationTypes.push(alignedAnnotationType);
 
 	//get uniprot feature types
@@ -235,31 +238,29 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes for view dropdown
     var checkBoxData = [
-        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow"},
-        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow"},
-        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow"},
-        {id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow"},
-        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", sectionEnd: true},
-        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", sectionEnd: true},
-        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow"},
+        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circularly, with Cross-Links drawn in-between"},
+        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "Spectrum view for a chosen match"},
+        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow", tooltip: "Configurable view for comparing two variables"},
+		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one variable"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
+        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata for currently selected proteins"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", tooltip: "Shows alignments between Canonical/PDB/Uniprot sequences per protein", sectionEnd: true},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Requires a relevant PDB File to be loaded [Load > PDB Data]", sectionEnd: true},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", sectionEnd: true, tooltip: "Explains and allows changing of current colour scheme"},
+        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow", tooltip: "Shows metadata for loaded searches"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
+		var options = $.extend ({labelFirst: false}, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: options});
         $("#viewDropdownPlaceholder").append(cbView.$el);
-    });
+    }, this);
 
     // Add them to a drop-down menu (this rips them away from where they currently are)
     var maybeViews = ["#nglChkBxPlaceholder"/*, "#distoChkBxPlaceholder"*/];
     new CLMSUI.DropDownMenuViewBB ({
-        el: "#viewDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
-        myOptions: {
-            title: "Views",
-            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
-            }
+			el: "#viewDropdownPlaceholder",
+			model: CLMSUI.compositeModelInst.get("clmsModel"),
+			myOptions: {title: "Views", menu: checkBoxData, tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")}
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .filter (maybeViews, false)
@@ -292,10 +293,10 @@ CLMSUI.init.views = function () {
 
     // Generate buttons for load dropdown
     var loadButtonData = [
-        {name: "PDB Data", eventName: "pdbShow"},
-        {name: "Cross-Links (CSV)", eventName: "csvShow"},
-        {name: "Cross-Link Metadata", eventName: "linkMetaShow"},
-		    {name: "Protein Metadata", eventName: "proteinMetaShow"},
+        {name: "PDB Data", eventName: "pdbShow", tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure"},
+        {name: "Cross-Links (CSV)", eventName: "csvShow", tooltip: "Load Cross-Links from a local CSV File"},
+        {name: "Cross-Link Metadata", eventName: "linkMetaShow", tooltip: "Load Cross-Link Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"},
+		{name: "Protein Metadata", eventName: "proteinMetaShow", tooltip: "Load Protein Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"},
     ];
     loadButtonData.forEach (function (bdata) {
 		bdata.func = function () { CLMSUI.vent.trigger (bdata.eventName, true); };
@@ -305,7 +306,8 @@ CLMSUI.init.views = function () {
         model: CLMSUI.compositeModelInst.get("clmsModel"),
         myOptions: {
             title: "Load",
-			menu: loadButtonData
+			menu: loadButtonData,
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 
@@ -516,11 +518,12 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Export",
             menu: [
-                {name: "Filtered Links as CSV", func: downloadLinks},
+                {name: "Filtered Links as CSV", func: downloadLinks, tooltip: "Produces a CSV File of filtered Cross-Link data"},
                 {name: "Filtered Matches as CSV", func: downloadMatches},
                 {name: "Filtered Residues as CSV", func: downloadResidueCount, sectionEnd: true},
 				{name: "Make Filtered Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
-            ]
+            ],
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 
@@ -531,9 +534,10 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Help",
             menu: [
-                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }},
-				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, title: "GitHub issue tracker (You must be logged in to GitHub to view.)"},
-            ]
+                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }, tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"},
+				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"},
+            ],
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 
@@ -578,6 +582,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             groupByAttribute: "category",
             labelByAttribute: "type",
             toggleAttribute: "shown",
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 
