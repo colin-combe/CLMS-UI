@@ -318,10 +318,13 @@ if (count($_GET) > 0) {
             echo "{"
                 . '"id":' . $line["id"] . ','
             //     . '"ty":' . $line["match_type"] . ','
-                . '"pi2":"' . $line["pep1_id"] . '",'
-                . '"pi2":"' . $line["pep2_id"] . '",'
+                . '"pi1":' . $line["pep1_id"] . ',';
+
+            if ($line["pep2_id"]) {
+                echo '"pi2":' . $line["pep2_id"] . ',';
+            }
             //     . '"lp":'. $line["link_position"]. ','
-                . '"spec":' . $line["spectrum_id"] . ','
+            echo '"spec":' . $line["spectrum_id"] . ','
             //     . '"sc":' . round($line["score"], 2) . ','
                 . '"si":' . $line["upload_id"] . ','
                 . '"r":' . $line["rank"] . ','
@@ -389,7 +392,7 @@ if (count($_GET) > 0) {
 // FROM peptides p JOIN (select * from peptide_evidences where upload_id = 1) pe on p.id = pe.peptide_ref
 // WHERE p.upload_id = 1 group by p.id;
 
-     $query = "SELECT * FROM peptides WHERE upload_id = ".$sid.";";
+     $query = "SELECT * FROM peptides as p left join (select peptide_ref, array_agg(dbsequence_ref) as proteins, array_agg(pep_start) as positions, array_agg(is_decoy) as is_decoy from peptide_evidences where upload_id = " . $sid . " group by peptide_ref) as pe on pe.peptide_ref = p.id WHERE upload_id = ".$sid.";";
      $startTime = microtime(true);
      $res = pg_query($query) or die('Query failed: ' . pg_last_error());
      $endTime = microtime(true);
@@ -399,10 +402,15 @@ if (count($_GET) > 0) {
      echo "\"peptides\":[\n";
      $line = pg_fetch_array($res, null, PGSQL_ASSOC);
      while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+             $proteins = $line["proteins"];
+             $proteinsArray = explode(",",substr($proteins, 1, strlen($proteins) - 2));
+             $positions = $line['positions'];
              echo "{"
                  . '"id":"' . $line["id"] . '",'
                  . '"seq_mods":"' . $line["seq_mods"] . '",'
-                 . '"linkSite":' . $line["link_site"]
+                 . '"linkSite":"' . $line["link_site"]. '",'
+                 . '"prt":["' . implode($proteinsArray, '","') . '"],'
+                 . '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']'
                  . "}";
              $line = pg_fetch_array($res, null, PGSQL_ASSOC);
              if ($line) {echo ",\n";}
@@ -414,27 +422,27 @@ if (count($_GET) > 0) {
      /*
       * PEPTIDE EVIDENCES
       */
-      $query = "SELECT * FROM peptide_evidences WHERE upload_id = ".$sid.";";
-      $startTime = microtime(true);
-      $res = pg_query($query) or die('Query failed: ' . pg_last_error());
-      $endTime = microtime(true);
-      //~ echo '/*db time: '.($endTime - $startTime)."ms\n";
-      //~ echo '/*rows:'.pg_num_rows($res)."\n";
-      $startTime = microtime(true);
-      echo "\"peptide_evidences\":[\n";
-      $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-      while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-              echo "{"
-                  . '"pep_id":"' . $line["peptide_ref"] . '",'
-                  . '"seq_id":"' . $line["dbsequence_ref"] . '",'
-                  . '"start":' . $line["pep_start"]//. ','
-                  // . '"isDecoy":' . $line["is_decoy"]
-                  . "}";
-              $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-              if ($line) {echo ",\n";}
-      }
-      echo "\n],\n";
-      $endTime = microtime(true);
+      // $query = "SELECT * FROM peptide_evidences WHERE upload_id = ".$sid.";";
+      // $startTime = microtime(true);
+      // $res = pg_query($query) or die('Query failed: ' . pg_last_error());
+      // $endTime = microtime(true);
+      // //~ echo '/*db time: '.($endTime - $startTime)."ms\n";
+      // //~ echo '/*rows:'.pg_num_rows($res)."\n";
+      // $startTime = microtime(true);
+      // echo "\"peptide_evidences\":[\n";
+      // $line = pg_fetch_array($res, null, PGSQL_ASSOC);
+      // while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
+      //         echo "{"
+      //             . '"pep_id":"' . $line["peptide_ref"] . '",'
+      //             . '"seq_id":"' . $line["dbsequence_ref"] . '",'
+      //             . '"start":' . $line["pep_start"]//. ','
+      //             // . '"isDecoy":' . $line["is_decoy"]
+      //             . "}";
+      //         $line = pg_fetch_array($res, null, PGSQL_ASSOC);
+      //         if ($line) {echo ",\n";}
+      // }
+      // echo "\n],\n";
+      // $endTime = microtime(true);
       //~ echo '/*php time: '.($endTime - $startTime)."ms\n\n";
 
     /*
@@ -509,7 +517,7 @@ if (count($_GET) > 0) {
 
 
 
-    echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?
+    echo '"oldDB":'.("\"false\""); // Is this from the old db?
     echo "}\n";
     $endTime = microtime(true);
     //~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
