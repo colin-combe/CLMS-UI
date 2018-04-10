@@ -482,8 +482,31 @@ CLMSUI.init.viewsEssential = function (options) {
 
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
-    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
-    var errorIntensityPlot = new ErrorIntensityPlotView ({model: spectrumModel, el:"#spectrumPanel"});
+    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
+
+    var QCwrapper = new QCwrapperView({
+        el: '#QCdiv',
+        splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],
+        showOnStartUp: false,
+    });
+
+    var errorIntPlot = new ErrorPlotView({
+        model: spectrumModel,
+        el:"#subViewContent-left",
+        xData: 'Intensity',
+        margin: {top: 10, right: 30, bottom: 20, left: 65},
+        svg: "#errIntSVG",
+        showOnStartUp: false,
+    });
+    var errorMzPlot = new ErrorPlotView({
+        model: spectrumModel,
+        el:"#subViewContent-right",
+        xData: 'm/z',
+        margin: {top: 10, right: 30, bottom: 20, left: 65},
+        svg: "#errMzSVG",
+        showOnStartUp: false,
+    });
+
     var spectrumSettingsViewer = new SpectrumSettingsView ({
       model: settingsSpectrumModel,
       el:"#spectrumSettingsWrapper",
@@ -496,6 +519,12 @@ CLMSUI.init.viewsEssential = function (options) {
     });
     fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
+    });
+    errorMzPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.render();
+    });
+    errorIntPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.render();
     });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
