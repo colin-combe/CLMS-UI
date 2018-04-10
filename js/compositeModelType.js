@@ -299,8 +299,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             var type = "match_"+modelProperty;
             var map = add ? new d3.map (this.get(type).values(), function(d) { return d.id; }) : new d3.map();
             matches.forEach (function (match) {
-                var mmatch = match.match;
-                map.set (mmatch.id, mmatch);
+                if (match.match) match = match.match;
+                map.set (match.id, match);
             });
             this.set (type, map);
 
