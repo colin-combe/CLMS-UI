@@ -73,7 +73,7 @@
         <script type="text/javascript" src="./vendor/colorbrewer.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/split_new.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./vendor/split.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
@@ -136,7 +136,9 @@
 
         <!-- Spectrum view files -->
         <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../spectrum/css/dropdown.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
         <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css<?php echo $cacheBuster ?>">
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
@@ -145,14 +147,14 @@
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../spectrum/src/ErrorIntensityPlotView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/QCwrapperView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/ErrorPlotView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/PepInputView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Peak.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Fragment.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../spectrum/src/graph/IsotopeCluster.js<?php echo $cacheBuster ?>"></script>
     </head>
 
     <body>
@@ -164,8 +166,8 @@
                         onclick="window.location = '../history/history.html';"
                         title="Return to search history / Login"></i>
 					<!--
-                    <i class="fa fa-github fa-xi" 
-                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');" 
+                    <i class="fa fa-github fa-xi"
+                        onclick="window.open('https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues', '_blank');"
                         title="GitHub issue tracker (You must be logged in to GitHub to view.)"></i>
 					-->
                     <p id="loadDropdownPlaceholder"></p>
@@ -227,7 +229,7 @@
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
-                    CLMSUI.split = Split (["#topDiv", "#bottomDiv"],
+                    Split (["#topDiv", "#bottomDiv"],
                         { direction: "vertical", sizes: [80,20], minSize: [200,10],
                             onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
                         }
