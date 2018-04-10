@@ -547,10 +547,10 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Export",
             menu: [
-                {name: "Filtered Links as CSV", func: downloadLinks, tooltip: "Produces a CSV File of filtered Cross-Link data"},
-                {name: "Filtered Matches as CSV", func: downloadMatches},
-                {name: "Filtered Residues as CSV", func: downloadResidueCount, sectionEnd: true},
-				{name: "Make Filtered Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
+                {name: "Filtered Links as CSV", func: downloadLinks, tooltip: "Produces a CSV File of Filtered Cross-Link data"},
+                {name: "Filtered Matches as CSV", func: downloadMatches, tooltip: "Produces a CSV File of Filtered Matches data"},
+                {name: "Filtered Residues as CSV", func: downloadResidueCount, tooltip: "Produces a CSV File of Count of Filtered Residues ", sectionEnd: true},
+				{name: "Make Filtered XI URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }, tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility"},
             ],
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
