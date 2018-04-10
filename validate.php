@@ -187,12 +187,9 @@ header('Content-type: text/html; charset=utf-8');
 				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
                 CLMSUI.vent.trigger ("spectrumShow", true);
-
-				var allCrossLinks = CLMS.arrayFromMapValues(
-                    CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks")
-                );
-				//CLMSUI.compositeModelInst.set("selection", allCrossLinks);
-                CLMSUI.compositeModelInst.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
+        
+        var allMatches = CLMSUI.compositeModelInst.get("clmsModel").get("matches")
+        CLMSUI.compositeModelInst.setMarkedMatches ("selection", allMatches);			
 
                 // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
                 // so we run it again here, doesn't do any harm
