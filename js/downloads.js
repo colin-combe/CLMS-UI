@@ -78,14 +78,20 @@ function download(content, contentType, fileName, modernWeb) {
 		  return new Blob([new Uint8Array(array)], {type: "image/svg+xml;charset=utf-8"});
 		}
 
-		var a = document.createElement('a');
-		a.href = window.URL.createObjectURL(dataURItoBlob(content));
-		// Give filename you wish to download
-		a.download = fileName;
-		a.style.display = 'none';
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+		var blob = dataURItoBlob(content);
+		
+		if (navigator.msSaveOrOpenBlob) {
+			navigator.msSaveOrOpenBlob (blob, fileName);
+		} else {
+			var a = document.createElement('a');
+			a.href = window.URL.createObjectURL(blob);
+			// Give filename you wish to download
+			a.download = fileName;
+			a.style.display = 'none';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+		}
 	}
 }
 
