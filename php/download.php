@@ -17,12 +17,17 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
 $contentType = $_POST["contentType"];
 $fileName = $_POST["fileName"];
 $data = base64_decode ($_POST["content"], true);
 
+//error_log (print_r ("xi3 ".$fileName, true));
+
 header('Content-Type:'.$contentType);
-header('Content-Disposition: attachment; filename='.$fileName);
+header('Content-Disposition: attachment; filename="'.$fileName.'"');	// https://www.abeautifulsite.net/forcing-file-downloads-in-php - quotes for safari
 header('Pragma: no-cache');
 echo $data;
+
 ?>
