@@ -64,6 +64,7 @@ svg.circularView {
 
 .circularView .tick line {
     stroke: #000;
+	stroke-width: 1px;
 }
 
 .justifyTick {
