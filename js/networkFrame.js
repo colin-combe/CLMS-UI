@@ -441,7 +441,7 @@ CLMSUI.init.viewsEssential = function (options) {
 		var json_data_copy = jQuery.extend({}, t.JSONdata);
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
 	});
-
+	
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -485,7 +485,7 @@ CLMSUI.init.viewsEssential = function (options) {
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
-
+	
     var QCwrapper = new QCwrapperView({
         el: '#QCdiv',
         splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],

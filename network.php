@@ -225,7 +225,6 @@
                     var json = {};
                     if (text) { json = JSON.parse (text);}
                     CLMSUI.init.models (json);
-
                     var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                     document.title = CLMS.arrayFromMapKeys(searches).join();
 
