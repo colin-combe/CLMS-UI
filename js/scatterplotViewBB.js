@@ -231,11 +231,9 @@
         ;
         
         // Listen to these events (and generally re-render in some fashion)
-        this.listenTo (this.model, "selectionMatchesLinksChanged", this.recolourCrossLinks);
-        this.listenTo (this.model, "highlightsMatchesLinksChanged", this.recolourCrossLinks);
+		// if highlighted/selection matches change, or colour model change, then recolour cross links
+        this.listenTo (this.model, "selectionMatchesLinksChanged highlightsMatchesLinksChanged change:linkColourAssignment currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model, "filteringDone", function() { this.renderCrossLinks ({isFiltering: true}); });
-        this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
-        this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
         this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
             //console.log ("HELLO", arguments);

@@ -97,12 +97,9 @@ CLMSUI.init.models = function (options) {
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
-
         CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, clmsModel);
-
+		console.log ("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
-
-        console.log ("ASYNC. uniprot sequences poked to collection", this);
     });
 
 
@@ -141,11 +138,11 @@ CLMSUI.init.models = function (options) {
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
 
-    // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
         "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
     );
 
+	// This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
     //console.log ("options", options);
     clmsModelInst.parseJSON(options);
@@ -157,7 +154,7 @@ CLMSUI.init.modelsEssential = function (options) {
 
 	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
 
-	// Anonymiser for screen shots / videos. MJG 17/05/17
+	// Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
     if (urlChunkMap["anon"]) {
         clmsModelInst.get("participants").forEach (function (prot, i) {
             prot.name = "Protein "+(i+1);
@@ -170,7 +167,6 @@ CLMSUI.init.modelsEssential = function (options) {
     clmsModelInst.get("searches").forEach (function (value, key) {
        value.participantIDSet = searchMap[key];
     });
-    //console.log ("smap", searchMap);
 
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
@@ -190,14 +186,15 @@ CLMSUI.init.modelsEssential = function (options) {
         //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
     };
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
-	filterSettings = _.extend (filterSettings, urlFilterSettings);
+	filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
 	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
 	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
-	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);
+	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);	// make scoreExtent min zero, if existing min isn't negative
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {scoreExtent: scoreExtentInstance});
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
+	// overarching model
     CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
         clmsModel: clmsModelInst,
         filterModel: filterModelInst,
@@ -210,8 +207,8 @@ CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
     // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
-    // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
-    // the views are only notified once the changed data is ready.
+    // and then tell the views that filtering has occurred via a custom event ("filtering Done") in applyFilter().
+	// This ordering means the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
 		//console.log("filterChange");
         this.applyFilter();
@@ -220,11 +217,15 @@ CLMSUI.init.modelsEssential = function (options) {
 };
 
 CLMSUI.init.views = function () {
+	
+	var compModel = CLMSUI.compositeModelInst;
+	console.log ("MODEL", compModel);
+	
 	//todo: only if there is validated {
-    CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
+    compModel.get("filterModel").set("unval", false);
 
     var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
-    // something funny happens if I do a data join and enter instead
+    // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
     windowIds.forEach (function (winid) {
@@ -255,39 +256,38 @@ CLMSUI.init.views = function () {
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
-    // Add them to a drop-down menu (this rips them away from where they currently are)
+    // Add them to a drop-down menu (this rips them away from where they currently are - document)
     var maybeViews = ["#nglChkBxPlaceholder"/*, "#distoChkBxPlaceholder"*/];
     new CLMSUI.DropDownMenuViewBB ({
 			el: "#viewDropdownPlaceholder",
-			model: CLMSUI.compositeModelInst.get("clmsModel"),
-			myOptions: {title: "Views", menu: checkBoxData, tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")}
+			model: compModel.get("clmsModel"),
+			myOptions: {title: "Views", menu: checkBoxData, tooltipModel: compModel.get("tooltipModel")}
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .filter (maybeViews, false)
-        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
+        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
 
-    d3.select("body").append("input")
-        .attr ("type", "text")
-        .attr ("id", "proteinSelectionFilter");
-    //
-    // console.log(d3.select("#proteinSelectionFilter"));
 
     // Generate protein selection drop down
-    var compModel = CLMSUI.compositeModelInst;
+	d3.select("body").append("input")
+        .attr ("type", "text")
+        .attr ("id", "proteinSelectionFilter")
+	;
     new CLMSUI.DropDownMenuViewBB ({
         el: "#proteinSelectionDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        model: compModel.get("clmsModel"),
         myOptions: {
             title: "Protein-Selection",
             menu: [
-                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
-                {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
-                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
-                {id: "proteinSelectionFilter", func: compModel.proteinSelectionTextFilter, closeOnClick: false, context: compModel}
-            ]
+                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel, tooltip: "Switch selected and unselected proteins"},
+                {name: "Hide", func: compModel.hideSelectedProteins, context: compModel, tooltip: "Hide selected proteins"},
+                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel, tooltip: "Select proteins which are cross-linked to already selected proteins"},
+                {id: "proteinSelectionFilter", func: compModel.proteinSelectionTextFilter, closeOnClick: false, context: compModel, label: "Protein Selection by Description",tooltip: "Select proteins whose descriptions include input text"}
+            ],
+			tooltipModel: compModel.get("tooltipModel")
         }
     });
 
@@ -303,23 +303,22 @@ CLMSUI.init.views = function () {
     });
     new CLMSUI.DropDownMenuViewBB ({
         el: "#loadDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        model: compModel.get("clmsModel"),
         myOptions: {
             title: "Load",
 			menu: loadButtonData,
-			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+			tooltipModel: compModel.get("tooltipModel"),
         }
     });
 
+	
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
-		model: CLMSUI.compositeModelInst.get("filterModel"),
+		model: compModel.get("filterModel"),
 		displayEventName: "shareURL",
 		myOptions: {}
 	});
 
-    console.log ("MODEL", CLMSUI.compositeModelInst);
-    //var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
 
     new CLMSUI.ThreeColourSliderBB ({
         el: "#sliderDiv",
@@ -330,18 +329,18 @@ CLMSUI.init.views = function () {
         title: "Distance Cutoffs",
     })
         .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
-        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
+        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
         })
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
 
+	
     new CLMSUI.xiNetControlsViewBB ({
           el: "#xiNetControlsPanel",
-          model: CLMSUI.compositeModelInst,
+          model: compModel,
           displayEventName: "xiNetControlsShow",
     });
-
 };
 
 
@@ -420,7 +419,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
     // 2. Event A in spectrumWrapper fires event B
     // 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
-    // 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
+    // 4. Thus selectionViewer must do its routine for event A before spectrumWrapper, so we initialise it first
     var selectionViewer = new CLMSUI.SelectionTableViewBB ({
         el: "#bottomDiv",
         model: CLMSUI.compositeModelInst,

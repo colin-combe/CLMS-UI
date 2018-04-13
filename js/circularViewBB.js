@@ -170,8 +170,6 @@
             
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
-                //{class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
-                //{class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
             var toolbar = mainDivSel.select("div.toolbar");
@@ -183,7 +181,7 @@
             var orderOptionsButtonData = [
                 {class: "circRadio", label: "Alphabetically", id: "alpha", type: "radio", group: "sort"},
                 {class: "circRadio", label: "By Length", id: "size", type: "radio", group: "sort"},
-                {class: "circRadio", label: "To Reduce Link Crossings", id: "best", type: "radio", group: "sort", sectionEnd: true},
+                {class: "circRadio", label: "To Reduce Link Crossings", id: "best", type: "radio", group: "sort", sectionEnd: true, tooltip: "Order proteins to reduce visual link intersections - making it easier to comprehend"},
                 {class: "niceButton", label: "Redo Current Ordering", id: "nice", type: "button"},
 			];
             orderOptionsButtonData
@@ -206,17 +204,18 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Order Proteins ▼",
-                    menu: orderOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null, sectionEnd: d.sectionEnd}; }),
+                    menu: orderOptionsButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
                     closeOnClick: false,
+					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
                 }
             });
 			
 			
 			var showOptionsButtonData = [
-                {class: "showLinkless", label: "Linkless Proteins", id: "showLinkless", initialState: this.options.showLinkless},
-                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space"},
-				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside},
-				{class: "toggleHomomOpposition", label: "Homomultimers Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite},
+                {class: "showLinkless", label: "All Proteins", id: "showLinkless", initialState: this.options.showLinkless, tooltip: "Keep showing proteins with no current cross-links for a steadier layout"},
+                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
+				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside, tooltip: "Flips the display of Self cross-links between inside and outside"},
+				{class: "toggleHomomOpposition", label: "Homomultimers Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite, tooltip: "Show homomultimers on the opposite side (in/out) to other self cross-links"},
 			];
 			showOptionsButtonData
                 .forEach (function (d) {
@@ -233,8 +232,9 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Show ▼",
-                    menu: showOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    menu: showOptionsButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
                     closeOnClick: false,
+					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
                 }
             });
             
@@ -342,13 +342,12 @@
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
+			this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
                 CLMSUI.utils.xilog (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
                 renderPartial (["features"]);
             });
-            this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
-            this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
-            this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
+            this.listenTo (this.model, "change:linkColourAssignment currentColourModelChanged", function () { renderPartial (["links"]); }); // either colour change or new colour model
 			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);

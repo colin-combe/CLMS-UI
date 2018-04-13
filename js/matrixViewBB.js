@@ -200,11 +200,8 @@
                 .attr("dy", function(d) { return d.dy; })
         ;
          
-        this.listenTo (this.model, "change:selection", this.renderCrossLinks);
-        this.listenTo (this.model, "change:highlights", this.renderCrossLinks);
-        //this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-        this.listenTo (this.model, "filteringDone", this.renderCrossLinks);    // listen to custom filteringDone event from model - only need to update svg now, so only renderCrossLinks called
-        this.listenTo (this.model, "currentColourModelChanged", this.renderCrossLinks);
+		// rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
+        this.listenTo (this.model, "change:selection change:highlights filteringDone currentColourModelChanged", this.renderCrossLinks);
         this.listenTo (this.model, "change:linkColourAssignment", this.render);
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
