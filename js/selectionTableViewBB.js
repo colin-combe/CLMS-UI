@@ -11,27 +11,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView verticalFlexContainer");
         holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
-        // redraw table on filter change if crosslinks selected (matches may have changed)
-        this.listenTo(this.model, "filteringDone", function () {
+        // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
+        this.listenTo (this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function () {
             //~ if (this.model.get("selection").length > 0) {
             this.render();
             //~ }
         });
 
-        // rerender if a match's validation details have changed
-        this.listenTo(this.model, "matchValidationStateUpdated", function () {
-            //~ if (this.model.get("selection").length > 0) {
-            this.render();
-            //~ }
-        });
-
-        this.listenTo(this.model, "selectionMatchesLinksChanged" /*"change:selection"*/, function () {
-            //~ if (this.model.get("selection").length > 0) {
-            this.render();
-            //~ }
-        });
-
-        // highlight selected match table row (or not if nothing selected)
+        // emphasise selected match table row (or not if nothing selected)
         this.listenTo(this.model, "change:lastSelectedMatch", function (model, selMatch) {
             this.clearCurrentRowHighlight();
             if (selMatch && selMatch.match) {
@@ -39,6 +26,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }
         });
         
+		// emphasise highlighted (brushed) match table rows
         this.listenTo (this.model, "change:match_highlights", function (model, highlightedMatches) {
             this.setTableHighlights (highlightedMatches.values());
         });
