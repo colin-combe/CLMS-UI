@@ -11,6 +11,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             match_selection: d3.map(),  // listen to event selection/highlights+"MatchesLinksChanged" to run when both have been fully updated
             annotationTypes: null,
             selectedProteins: [],
+			highlightedProteins: [],
             groupColours: null // will be d3.scale for colouring by search/group
         });
     },
@@ -386,6 +387,12 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (penultimateSetOfChanges || lastSetOfChanges) {
             this.trigger (modelProperty+"MatchesLinksChanged", this);
         }
+    },
+	
+	setHighlightedProteins: function (pArr, add) {
+        var toHighlight = add ? pArr.concat(this.get("highlightedProteins")) : pArr;
+		toHighlight = d3.map(toHighlight, function(d) { return d.id; }).values();	// remove any duplicates and returns a new array, so setting fires a change
+        this.set ("highlightedProteins", toHighlight);
     },
 
     setSelectedProteins: function (pArr, add) {

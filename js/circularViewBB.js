@@ -343,6 +343,7 @@
             this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
 			this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
+			this.listenTo (this.model, "change:highlightedProteins", function () { this.showAccentedNodes ("highlights"); });
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
                 CLMSUI.utils.xilog (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
                 renderPartial (["features"]);
@@ -429,7 +430,7 @@
 		},
 		
 		showAccentOnTheseNodes: function (d3Selection, accentType) {
-			var accentedNodeList = this.model.get("selectedProteins");
+			var accentedNodeList = this.model.get (accentType === "selected" ? "selectedProteins" : "highlightedProteins");
             if (accentedNodeList) {
                 var linkType = {"selection": "selected", "highlights": "highlighted"};
                 var accentedLinkIDs = _.pluck (accentedNodeList, "id");
@@ -734,9 +735,12 @@
                     .on("mouseenter", function(d) {
                         self.nodeTip (d);
                         self.actionNodeLinks (d.id, "highlights", false);
+						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
+						self.model.setHighlightedProteins ([interactor]);
                     })
                     .on("mouseleave", function() {
                         self.clearTip ();
+						self.model.setHighlightedProteins ([]);
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
