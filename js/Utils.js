@@ -130,6 +130,8 @@ CLMSUI.utils = {
             },
 
             initialize: function (viewOptions) {
+				
+				console.log ("this", this.model);
                 var defaultOptions = {
                     labelFirst: true
                 };
@@ -150,7 +152,7 @@ CLMSUI.utils = {
                 ;
                 var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
                 labelText.text (this.options.label);
-
+				
                 // Remember to listen to changes to model or global event state that come from outside the view (keeps it in sync with models)
                 if (this.model && this.options.toggleAttribute) {
                     this.listenTo (this.model, "change:"+this.options.toggleAttribute, this.showState);

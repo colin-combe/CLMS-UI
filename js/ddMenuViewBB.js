@@ -63,6 +63,7 @@
                     var cbdata = ({
                         id: model.get("id") || (model.get(self.options.labelByAttribute)+"Placeholder"),   // ids may not contain spaces 
                         label: model.get(self.options.labelByAttribute),
+						tooltip: model.get("tooltip"),
                     });
                     if (adata.length && lastCat !== cat) {  // have to access last datum to say it's the last in its category
                         adata[adata.length - 1].sectionEnd = true; 
@@ -70,14 +71,19 @@
                     adata.push (cbdata);
                     lastCat = cat;
 
+					var options = $.extend ({toggleAttribute: self.options.toggleAttribute, labelFirst: self.options.labelFirst}, cbdata);
+					if (self.options.tooltipModel) {
+						options.tooltipModel = self.options.tooltipModel;
+					}
+					console.log ("dfjgkdfgkd", options);
                     var cbView = new CLMSUI.utils.checkBoxView ({
                         model: model,
-                        myOptions: {id: cbdata.id, label: cbdata.label, toggleAttribute: self.options.toggleAttribute, labelFirst: self.options.labelFirst}
+                        myOptions: options,
                     });
                     self.$el.append(cbView.$el);
                 }); 
                 
-                this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd}; });
+                this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, label: cbdata.label, sectionEnd: cbdata.sectionEnd, tooltip: cbdata.tooltip}; });
             }  
             return this;
         },
@@ -89,6 +95,8 @@
             ;
             
             choices.exit().remove();
+			
+			var ttm = this.options.tooltipModel;
             
             choices.enter().append("li").each (function (d) {
                 var ind = d3.select(this);
@@ -108,10 +116,27 @@
                         }
                     }
                 }
-				if (d.title) {
-					ind.attr ("title", d.title);
+				
+				console.log ("tt d", d);
+				
+				// if tooltip data provided, add either as title attribute or if the tooltipmodel passed as an option, use that
+				if (d.tooltip) {
+					if (ttm) {
+						ind.on ("mouseover", function () {
+							ttm
+								.set ("header", d.name || d.label)
+								.set ("contents", d.tooltip+".")
+								.set ("location", d3.event)
+							;
+							ttm.trigger ("change:location");
+						}).on ("mouseout", function () {
+							ttm.set ("contents", null);
+						});
+					} else {
+						ind.attr ("title", d.tooltip || d.title);
+					}
 				}
-            }); 
+            }, this); 
             
             choices
                 .filter(function(d) { return d.sectionEnd; })

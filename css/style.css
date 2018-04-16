@@ -391,6 +391,16 @@ A.btn {
     text-decoration: none;
 }
 
+.verticalLine {
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.nopadLeft {
+	padding-left: 0;
+}
+
+
+
 /* For use with Split.js */
 
 .gutter {

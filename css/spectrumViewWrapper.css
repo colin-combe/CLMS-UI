@@ -19,7 +19,7 @@
     vertical-align: text-top;
     line-height: normal;
 }
-     
+
 #spectrumControls form {
     vertical-align: top;
     display: inline-block;
@@ -53,6 +53,22 @@
 #spectrumSVG {
     width: 100%;
     height: 100%;
+    flex-grow: 1;
+}
+.spectrumPlotsDiv {
+    display: flex;
+    flex-direction: column;
+    flex-grow:  1;
+    flex-shrink: 1;	/* otherwise it never shrinks and kicks alternative table out of view */
+    height: calc(100% - 200px);
+    position: relative;
+}
+
+#spectrumMainPlotDiv {
+    display: flex;
+    flex-flow: column;
+    flex-grow: 1;
+    min-height: 150px;
 }
 
 #measureTooltip {
@@ -83,7 +99,8 @@
 }
 
 #alternatives {
-    height:200px;
+    /* height:200px; */
+	max-height: 200px;
     flex-shrink: 0;
 }
 

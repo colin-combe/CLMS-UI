@@ -32,24 +32,27 @@ var allDataLoaded = _.after (3, function() {
     var annotationTypes = [];
 
     //add option for showing digestible residues
-	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type:"Digestible"}
-	);
+		type:"Digestible",
+		tooltip: "Mark Digestible Residues"
+	});
 	annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
-	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
+	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type:"Cross-linkable"}
-	);
+		type:"Cross-linkable",
+		tooltip: "Mark Cross-Linkable residues"
+	});
 	annotationTypes.push(crosslinkableAnnotationType);
 
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
 		category: "Alignment",
-		type:"PDB aligned region"}
-	);
+		type:"PDB aligned region",
+		tooltip: "Show regions that align to currently loaded PDB Data"
+	});
 	annotationTypes.push(alignedAnnotationType);
 
 	//get uniprot feature types
@@ -94,12 +97,9 @@ CLMSUI.init.models = function (options) {
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
-
         CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, clmsModel);
-
+		console.log ("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
-
-        console.log ("ASYNC. uniprot sequences poked to collection", this);
     });
 
 
@@ -138,11 +138,11 @@ CLMSUI.init.models = function (options) {
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
 
-    // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
         "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
     );
 
+	// This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
     //console.log ("options", options);
     clmsModelInst.parseJSON(options);
@@ -154,7 +154,7 @@ CLMSUI.init.modelsEssential = function (options) {
 
 	var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
 
-	// Anonymiser for screen shots / videos. MJG 17/05/17
+	// Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
     if (urlChunkMap["anon"]) {
         clmsModelInst.get("participants").forEach (function (prot, i) {
             prot.name = "Protein "+(i+1);
@@ -167,7 +167,6 @@ CLMSUI.init.modelsEssential = function (options) {
     clmsModelInst.get("searches").forEach (function (value, key) {
        value.participantIDSet = searchMap[key];
     });
-    //console.log ("smap", searchMap);
 
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
@@ -187,14 +186,15 @@ CLMSUI.init.modelsEssential = function (options) {
         //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
     };
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
-	filterSettings = _.extend (filterSettings, urlFilterSettings);
+	filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
 	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
 	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
-	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);
+	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);	// make scoreExtent min zero, if existing min isn't negative
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {scoreExtent: scoreExtentInstance});
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
 
+	// overarching model
     CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType ({
         clmsModel: clmsModelInst,
         filterModel: filterModelInst,
@@ -207,8 +207,8 @@ CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 
     // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
-    // and then tell the views that filtering has occurred via a custom event ("filtering Done"). The ordering means
-    // the views are only notified once the changed data is ready.
+    // and then tell the views that filtering has occurred via a custom event ("filtering Done") in applyFilter().
+	// This ordering means the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo (filterModelInst, "change", function() {
 		//console.log("filterChange");
         this.applyFilter();
@@ -217,11 +217,15 @@ CLMSUI.init.modelsEssential = function (options) {
 };
 
 CLMSUI.init.views = function () {
+	
+	var compModel = CLMSUI.compositeModelInst;
+	console.log ("MODEL", compModel);
+	
 	//todo: only if there is validated {
-    CLMSUI.compositeModelInst.get("filterModel").set("unval", false);
+    compModel.get("filterModel").set("unval", false);
 
     var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
-    // something funny happens if I do a data join and enter instead
+    // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
     windowIds.forEach (function (winid) {
@@ -235,89 +239,86 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes for view dropdown
     var checkBoxData = [
-        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow"},
-        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow"},
-        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow"},
-        {id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow"},
-        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", sectionEnd: true},
-        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", sectionEnd: true},
-        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow"},
+        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circularly, with Cross-Links drawn in-between"},
+        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "Spectrum view for a chosen match"},
+        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow", tooltip: "Configurable view for comparing two variables"},
+		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one variable"},
+        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
+        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata for currently selected proteins"},
+        {id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", tooltip: "Shows alignments between Canonical/PDB/Uniprot sequences per protein", sectionEnd: true},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Requires a relevant PDB File to be loaded [Load > PDB Data]", sectionEnd: true},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", sectionEnd: true, tooltip: "Explains and allows changing of current colour scheme"},
+        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow", tooltip: "Shows metadata for loaded searches"},
     ];
     checkBoxData.forEach (function (cbdata) {
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: {id: cbdata.id, label: cbdata.label, eventName: cbdata.eventName, labelFirst: false}});
+		var options = $.extend ({labelFirst: false}, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: options});
         $("#viewDropdownPlaceholder").append(cbView.$el);
-    });
+    }, this);
 
-    // Add them to a drop-down menu (this rips them away from where they currently are)
+    // Add them to a drop-down menu (this rips them away from where they currently are - document)
     var maybeViews = ["#nglChkBxPlaceholder"/*, "#distoChkBxPlaceholder"*/];
     new CLMSUI.DropDownMenuViewBB ({
-        el: "#viewDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
-        myOptions: {
-            title: "Views",
-            menu: checkBoxData.map (function(cbdata) { return { id: cbdata.id, sectionEnd: cbdata.sectionEnd }; })
-            }
+			el: "#viewDropdownPlaceholder",
+			model: compModel.get("clmsModel"),
+			myOptions: {title: "Views", menu: checkBoxData, tooltipModel: compModel.get("tooltipModel")}
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .filter (maybeViews, false)
-        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
+        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.filter (maybeViews, !!newDistancesObj);
         })
     ;
 
-    d3.select("body").append("input")
-        .attr ("type", "text")
-        .attr ("id", "proteinSelectionFilter");
-    //
-    // console.log(d3.select("#proteinSelectionFilter"));
 
     // Generate protein selection drop down
-    var compModel = CLMSUI.compositeModelInst;
+	d3.select("body").append("input")
+        .attr ("type", "text")
+        .attr ("id", "proteinSelectionFilter")
+	;
     new CLMSUI.DropDownMenuViewBB ({
         el: "#proteinSelectionDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        model: compModel.get("clmsModel"),
         myOptions: {
             title: "Protein-Selection",
             menu: [
-                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel},
-                {name: "Hide", func: compModel.hideSelectedProteins, context: compModel},
-                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel},
-                {id: "proteinSelectionFilter", func: compModel.proteinSelectionTextFilter, closeOnClick: false, context: compModel}
-            ]
+                {name: "Invert", func: compModel.invertSelectedProteins, context: compModel, tooltip: "Switch selected and unselected proteins"},
+                {name: "Hide", func: compModel.hideSelectedProteins, context: compModel, tooltip: "Hide selected proteins"},
+                {name: "+Neighbours", func: compModel.stepOutSelectedProteins, context: compModel, tooltip: "Select proteins which are cross-linked to already selected proteins"},
+                {id: "proteinSelectionFilter", func: compModel.proteinSelectionTextFilter, closeOnClick: false, context: compModel, label: "Protein Selection by Description",tooltip: "Select proteins whose descriptions include input text"}
+            ],
+			tooltipModel: compModel.get("tooltipModel")
         }
     });
 
     // Generate buttons for load dropdown
     var loadButtonData = [
-        {name: "PDB Data", eventName: "pdbShow"},
-        {name: "Cross-Links (CSV)", eventName: "csvShow"},
-        {name: "Cross-Link Metadata", eventName: "linkMetaShow"},
-		    {name: "Protein Metadata", eventName: "proteinMetaShow"},
+        {name: "PDB Data", eventName: "pdbShow", tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure"},
+        {name: "Cross-Links (CSV)", eventName: "csvShow", tooltip: "Load Cross-Links from a local CSV File"},
+        {name: "Cross-Link Metadata", eventName: "linkMetaShow", tooltip: "Load Cross-Link Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"},
+		{name: "Protein Metadata", eventName: "proteinMetaShow", tooltip: "Load Protein Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"},
     ];
     loadButtonData.forEach (function (bdata) {
 		bdata.func = function () { CLMSUI.vent.trigger (bdata.eventName, true); };
     });
     new CLMSUI.DropDownMenuViewBB ({
         el: "#loadDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        model: compModel.get("clmsModel"),
         myOptions: {
             title: "Load",
-			menu: loadButtonData
+			menu: loadButtonData,
+			tooltipModel: compModel.get("tooltipModel"),
         }
     });
 
+	
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
-		model: CLMSUI.compositeModelInst.get("filterModel"),
+		model: compModel.get("filterModel"),
 		displayEventName: "shareURL",
 		myOptions: {}
 	});
 
-    console.log ("MODEL", CLMSUI.compositeModelInst);
-    //var interactors = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
 
     new CLMSUI.ThreeColourSliderBB ({
         el: "#sliderDiv",
@@ -328,18 +329,18 @@ CLMSUI.init.views = function () {
         title: "Distance Cutoffs",
     })
         .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
-        .listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
+        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
             this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
         })
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
 
+	
     new CLMSUI.xiNetControlsViewBB ({
           el: "#xiNetControlsPanel",
-          model: CLMSUI.compositeModelInst,
+          model: compModel,
           displayEventName: "xiNetControlsShow",
     });
-
 };
 
 
@@ -418,7 +419,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // 1. Both listen to event A, selectionViewer to build table, spectrumWrapper to do other stuff
     // 2. Event A in spectrumWrapper fires event B
     // 3. selectionViewer listens for event B to highlight row in table - which means it must have built the table
-    // 4. Thus selectionViewer must do it's routine for event A before spectrumWrapper, so we initialise it first
+    // 4. Thus selectionViewer must do its routine for event A before spectrumWrapper, so we initialise it first
     var selectionViewer = new CLMSUI.SelectionTableViewBB ({
         el: "#bottomDiv",
         model: CLMSUI.compositeModelInst,
@@ -439,7 +440,7 @@ CLMSUI.init.viewsEssential = function (options) {
 		var json_data_copy = jQuery.extend({}, t.JSONdata);
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
 	});
-
+	
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -482,8 +483,31 @@ CLMSUI.init.viewsEssential = function (options) {
 
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
-    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumPanel"});
-    var errorIntensityPlot = new ErrorIntensityPlotView ({model: spectrumModel, el:"#spectrumPanel"});
+    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
+	
+    var QCwrapper = new QCwrapperView({
+        el: '#QCdiv',
+        splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],
+        showOnStartUp: false,
+    });
+
+    var errorIntPlot = new ErrorPlotView({
+        model: spectrumModel,
+        el:"#subViewContent-left",
+        xData: 'Intensity',
+        margin: {top: 10, right: 30, bottom: 20, left: 65},
+        svg: "#errIntSVG",
+        showOnStartUp: false,
+    });
+    var errorMzPlot = new ErrorPlotView({
+        model: spectrumModel,
+        el:"#subViewContent-right",
+        xData: 'm/z',
+        margin: {top: 10, right: 30, bottom: 20, left: 65},
+        svg: "#errMzSVG",
+        showOnStartUp: false,
+    });
+
     var spectrumSettingsViewer = new SpectrumSettingsView ({
       model: settingsSpectrumModel,
       el:"#spectrumSettingsWrapper",
@@ -496,6 +520,12 @@ CLMSUI.init.viewsEssential = function (options) {
     });
     fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
+    });
+    errorMzPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.render();
+    });
+    errorIntPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        this.render();
     });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
@@ -516,11 +546,12 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Export",
             menu: [
-                {name: "Filtered Links as CSV", func: downloadLinks},
-                {name: "Filtered Matches as CSV", func: downloadMatches},
-                {name: "Filtered Residues as CSV", func: downloadResidueCount, sectionEnd: true},
-				{name: "Make Filtered Xi URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }},
-            ]
+                {name: "Filtered Links as CSV", func: downloadLinks, tooltip: "Produces a CSV File of Filtered Cross-Link data"},
+                {name: "Filtered Matches as CSV", func: downloadMatches, tooltip: "Produces a CSV File of Filtered Matches data"},
+                {name: "Filtered Residues as CSV", func: downloadResidueCount, tooltip: "Produces a CSV File of Count of Filtered Residues ", sectionEnd: true},
+				{name: "Make Filtered XI URL", func: function() { CLMSUI.vent.trigger ("shareURL", true); }, tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility"},
+            ],
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 
@@ -531,9 +562,10 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Help",
             menu: [
-                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }},
-				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, title: "GitHub issue tracker (You must be logged in to GitHub to view.)"},
-            ]
+                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }, tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"},
+				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"},
+            ],
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 
@@ -578,6 +610,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             groupByAttribute: "category",
             labelByAttribute: "type",
             toggleAttribute: "shown",
+			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
 

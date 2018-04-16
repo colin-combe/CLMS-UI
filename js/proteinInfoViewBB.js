@@ -33,11 +33,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .text("Info for 0 Selected Proteins")
             ;
             
-            this.listenTo (this.model, "change:selectedProteins", this.render);
-			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
-            this.listenTo (this.model, "filteringDone", this.showState);
-            this.listenTo (this.model, "change:selection", this.showState);
-            this.listenTo (this.model, "change:highlights", this.showState);
+            this.listenTo (this.model, "change:selectedProteins proteinMetadataUpdated", this.render);
+            this.listenTo (this.model, "filteringDone change:selection change:highlights", this.showState);
                 
             return this;
         },
