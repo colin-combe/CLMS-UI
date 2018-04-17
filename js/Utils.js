@@ -855,9 +855,10 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
             assocTable.style("display", tableIsHidden ? "table" : "none");
             setArrow.call (this, d);
         })
-        .on ("mouseover", function(d) {
-            // eventually backbone shared highlighting code to go here
-        })
+        //.on ("mouseover", function(d) {
+            // eventually backbone shared highlighting code to go here?
+			// except it's data specific, one table may show per protein, another links, another something else, so not doable here
+        //})
     ;
     newHeaders.append("svg")
         .append("polygon")

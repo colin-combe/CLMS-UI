@@ -2,7 +2,7 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     events: {
-        "mouseover tr.matchRow": "highlight",
+        "mouseenter tr.matchRow": "highlight",
         "mouseleave table": "highlight",
     },
 

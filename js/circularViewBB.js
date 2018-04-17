@@ -329,7 +329,6 @@
             this.interactorOrder = _.pluck (CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")), "id");
 
             var alignCall = 0;
-            var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
 			
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
@@ -337,19 +336,20 @@
                 if (!self.options.showLinkless || self.options.sort === "best") {
                     self.render();
                 } else {
-                    renderPartial (["links", "nodes"]);
+                    self.renderPartial (["links", "nodes"]);
                 }   
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
 			this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
+			this.listenTo (this.model, "change:highlightedProteins", function () { this.showAccentedNodes ("highlights"); });
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
                 CLMSUI.utils.xilog (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
-                renderPartial (["features"]);
+                self.renderPartial (["features"]);
             });
-            this.listenTo (this.model, "change:linkColourAssignment currentColourModelChanged", function () { renderPartial (["links"]); }); // either colour change or new colour model
-			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
-            this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
+            this.listenTo (this.model, "change:linkColourAssignment currentColourModelChanged", function () { self.renderPartial (["links"]); }); // either colour change or new colour model
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { self.renderPartial (["nodes"]); });
+            this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { self.renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             this.reOrderAndRender();
             
@@ -388,12 +388,12 @@
 
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
-            this.render();
+            this.renderPartial (["links"]);
         },
         
         showResLabelsIfRoom: function () {      
             this.options.showResLabels = !this.options.showResLabels;       
-            this.render();      
+            this.renderPartial (["linkLabels"]);      
         },
         
         toggleLinklessVisibility : function () {
@@ -403,7 +403,7 @@
 		
 		toggleHomomOppositeIntra : function () {
             this.options.homomOpposite = !this.options.homomOpposite;
-            this.render();
+            this.renderPartial (["links"]);
         },
 
         idFunc: function (d) { return d.id; },
@@ -415,7 +415,7 @@
 
         showAccentOnTheseLinks: function (d3Selection, accentType) {
             var accentedLinkList = this.model.getMarkedCrossLinks(accentType);
-            if (accentedLinkList) {
+            if (accentedLinkList && this.isVisible()) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
                 var accentedLinkIDs = _.pluck (accentedLinkList, "id");
                 var idset = d3.set (accentedLinkIDs);
@@ -429,8 +429,8 @@
 		},
 		
 		showAccentOnTheseNodes: function (d3Selection, accentType) {
-			var accentedNodeList = this.model.get("selectedProteins");
-            if (accentedNodeList) {
+			var accentedNodeList = this.model.get (accentType === "selection" ? "selectedProteins" : "highlightedProteins");
+            if (accentedNodeList && this.isVisible()) {
                 var linkType = {"selection": "selected", "highlights": "highlighted"};
                 var accentedLinkIDs = _.pluck (accentedNodeList, "id");
                 var idset = d3.set (accentedLinkIDs);
@@ -542,6 +542,8 @@
                 return featureFilterSet.has (f.type);
             }, this) : [];
         },
+		
+		renderPartial: function (renderPartArr) { this.render ({changed: d3.set (renderPartArr)}); },
 
         render: function (options) {
 
@@ -644,7 +646,7 @@
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
-                if (!changed || changed.has("links")) {     
+                if (!changed || changed.has("links") || changed.has("linkLabels")) {     
                     this.drawResidueLetters (gRot, linkCoords);     
                 }
             }
@@ -734,9 +736,12 @@
                     .on("mouseenter", function(d) {
                         self.nodeTip (d);
                         self.actionNodeLinks (d.id, "highlights", false);
+						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
+						self.model.setHighlightedProteins ([interactor]);
                     })
                     .on("mouseleave", function() {
                         self.clearTip ();
+						self.model.setHighlightedProteins ([]);
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
@@ -751,7 +756,7 @@
                 .attr("d", this.arc)
             ;
 			
-			this.showAccentOnTheseNodes (nodeJoin, "selected");
+			this.showAccentOnTheseNodes (nodeJoin, "selection");
 
             return this;
         },

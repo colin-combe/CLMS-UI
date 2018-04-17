@@ -99,7 +99,7 @@
             
             pspans.append("label")
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
-                .on ("mouseover", function(d) {
+                .on ("mouseenter", function(d) {
                     self.tooltipModel
                         .set ("header", d.get("displayLabel"))
                         .set("contents", [
