@@ -22,7 +22,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
 			"click .showLongChainDescriptorsCB": "toggleShowLongChainDescriptors",
-            "mouseout canvas": "clearHighlighted",
+            "mouseleave canvas": "clearHighlighted",
         });
     },
 	
