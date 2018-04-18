@@ -239,16 +239,16 @@ CLMSUI.init.views = function () {
 
     // Generate checkboxes for view dropdown
     var checkBoxData = [
-        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circularly, with Cross-Links drawn in-between"},
-        {id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "Spectrum view for a chosen match"},
-        {id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow", tooltip: "Configurable view for comparing two variables"},
-		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one variable"},
-        {id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
-        {id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata for currently selected proteins"},
-        {id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", tooltip: "Shows alignments between Canonical/PDB/Uniprot sequences per protein", sectionEnd: true},
-        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Requires a relevant PDB File to be loaded [Load > PDB Data]", sectionEnd: true},
-        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", sectionEnd: true, tooltip: "Explains and allows changing of current colour scheme"},
-        {id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow", tooltip: "Shows metadata for loaded searches"},
+        {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between"},
+        {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Spatial view of protein complexes and Cross-Links. Requires a relevant PDB File to be loaded [Load > PDB Data]"},
+		{id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
+		{id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata and Cross-Link annotated sequences for currently selected proteins"},
+		{id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Cross-Links)", sectionEnd: true},
+		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"},
+		{id: "scatterplotChkBxPlaceholder", label: "Scatterplot", eventName: "scatterplotShow", tooltip: "Configurable view for comparing two Cross-Link/Match properties", sectionEnd: true},
+		{id: "alignChkBxPlaceholder", label: "Alignment", eventName: "alignShow", tooltip: "Shows alignments between Canonical/PDB/Uniprot sequences per protein"},
+		{id: "searchSummaryChkBxPlaceholder", label: "Search Summaries", eventName: "searchesShow", tooltip: "Shows metadata for current searches", sectionEnd: true},
+        {id: "keyChkBxPlaceholder", label: "Legend", eventName: "keyShow", tooltip: "Explains and allows changing of current colour scheme"},
     ];
     checkBoxData.forEach (function (cbdata) {
 		var options = $.extend ({labelFirst: false}, cbdata);
@@ -293,7 +293,7 @@ CLMSUI.init.views = function () {
 
     // Generate buttons for load dropdown
     var loadButtonData = [
-        {name: "PDB Data", eventName: "pdbShow", tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure"},
+        {name: "PDB Data", eventName: "pdbShow", tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure and of distance background in Matrix View"},
         {name: "Cross-Links (CSV)", eventName: "csvShow", tooltip: "Load Cross-Links from a local CSV File"},
         {name: "Cross-Link Metadata", eventName: "linkMetaShow", tooltip: "Load Cross-Link Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"},
 		{name: "Protein Metadata", eventName: "proteinMetaShow", tooltip: "Load Protein Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"},

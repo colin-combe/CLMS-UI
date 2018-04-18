@@ -391,10 +391,6 @@ A.btn {
     text-decoration: none;
 }
 
-.verticalLine {
-	border-right: 1px solid rgba(0,0,0,0.5);
-}
-
 .nopadLeft {
 	padding-left: 0;
 }
@@ -530,6 +526,12 @@ A.btn {
 	padding-right: 0.5em;
 }
 
+.toolbar > .sectionDivider2 {
+	border-right: 1px solid rgba(0,0,0,0.5);
+	margin-right: 0.5em;
+	padding-right: 1em;
+}
+
 .toolbar > .sectionDividerLeft {
 	border-left: 1px solid rgba(0,0,0,0.5);
 	margin-left: 0.5em;
@@ -553,3 +555,43 @@ DIV[class='messagebar']:not(:last-of-type) {
 	font-family: monospace;
 }
 
+
+/* tweaks to jsonview */
+
+.jsonview {
+	line-height: 1.2em;
+}
+
+.jsonview ul ul ul ul {
+	background: #ccc;
+}
+
+.jsonview ul ul ul ul ul ul {
+	background: #bbb;
+}
+
+.jsonview ul.array {
+	list-style:decimal;
+	list-style-position: inside;
+}
+
+.jsonview .collapser {
+	top: 0;
+}
+
+.jsonview .collapser:hover {
+	background: white;
+	font-weight: normal;
+}
+
+.jsonview .collapser + .prop:hover {
+	background: white;
+}
+
+.jsonview .prop {
+	cursor: default;
+}
+
+.jsonview .collapser + .prop {
+	cursor: pointer;
+}
