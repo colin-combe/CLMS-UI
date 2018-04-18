@@ -42,7 +42,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		;
 
 		toolbar.append("span")
-			.attr("class", "btn verticalLine nopadLeft")
+			.attr("class", "btn sectionDivider2 nopadLeft")
 			.text("or Enter 4-character PDB ID")
 			.append("input")
 				.attr({
