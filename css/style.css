@@ -506,7 +506,7 @@ A.btn {
 
 
 
-.toolbar:first-child {
+.toolbar {
     margin-bottom: 0.15em;
     border-bottom: 1px solid rgba(0,0,0,0.5);
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
@@ -522,6 +522,18 @@ A.btn {
 
 .toolbar > * {
     display: inline-block;
+}
+
+.toolbar > .sectionDivider {
+	border-right: 1px solid rgba(0,0,0,0.5);
+	margin-right: 0.5em;
+	padding-right: 0.5em;
+}
+
+.toolbar > .sectionDividerLeft {
+	border-left: 1px solid rgba(0,0,0,0.5);
+	margin-left: 0.5em;
+	padding-left: 0.5em;
 }
 
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
@@ -540,3 +552,4 @@ DIV[class='messagebar']:not(:last-of-type) {
 	font-size: 0.7rem;
 	font-family: monospace;
 }
+

@@ -1,5 +1,5 @@
 #proteinInfoPanel .panelInner {
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .proteinInfoPanel .sectionTable h2.highlighted {
