@@ -103,6 +103,7 @@
               "click .showResLabelsButton": "showResLabelsIfRoom",
               "click .showLinkless": "toggleLinklessVisibility",
 			  "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
+			  "click .backdrop": "clearSelection",
           });
         },
 		
@@ -158,7 +159,7 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner circleDiv' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner backdrop' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "verticalFlexContainer")
                 .html(
@@ -167,6 +168,8 @@
                     })
                 )
             ;
+			
+			mainDivSel.select(".backdrop").style("background-color", this.options.background);	// can replace .backdrop class colouring with this option if defined
             
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
@@ -453,6 +456,11 @@
             this.model.setMarkedCrossLinks (actionType, matchLinks, actionType === "highlights", add);
             //this.model.set (actionType, matchLinks);
         },
+		
+		clearSelection: function (evt) {
+			console.log ("evt", evt);
+			this.model.setMarkedCrossLinks ("selection", [], false, false);
+		},
 
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
@@ -707,6 +715,7 @@
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on ("click", function (d) {
+						d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.model.setMarkedCrossLinks ("selection", [crossLinks.get(d.id)], false, add);
                     })
@@ -745,6 +754,7 @@
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
+						d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.id, "selection", add);
 						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
@@ -929,6 +939,7 @@
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
+						d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.nodeID, "selection", add, d.fstart, d.fend);
                     })
