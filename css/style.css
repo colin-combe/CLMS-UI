@@ -4,6 +4,12 @@
     stroke: #fdc086;
 }
 
+/* class not named .background as that clashes with d3 brush stuff */
+.backdrop {
+	background: #eee;
+	background-color: #eee;
+}
+
 
 #hiddenProteinsMessage{
   display: none;
