@@ -562,7 +562,7 @@
         if (this.nearest && this.nearest.link) {
             var tipExtra = isMatchLevel ? CLMSUI.modelUtils.makeTooltipContents.match (this.nearest.match)
                 : CLMSUI.modelUtils.makeTooltipContents.link (this.nearest.link);
-            tooltipData = tooltipData.concat([["&nbsp;"],["Nearest "+(isMatchLevel ? "Match" : "Link")]]).concat (tipExtra);
+            tooltipData = tooltipData.concat([["&nbsp;"],["Nearest "+(isMatchLevel ? "Match" : "Cross-Link")]]).concat (tipExtra);
         }
         
         if (!this.nearest.link) {

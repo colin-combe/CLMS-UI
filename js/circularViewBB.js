@@ -459,7 +459,12 @@
 		
 		clearSelection: function (evt) {
 			console.log ("evt", evt);
-			this.model.setMarkedCrossLinks ("selection", [], false, false);
+			// don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
+			// this is also logically consistent as it's adding 'nothing' to the existing selection
+			if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
+				this.model.setMarkedCrossLinks ("selection", [], false, false);
+				this.model.setSelectedProteins ([], false);
+			}
 		},
 
         convertLinks: function (links, rad1, rad2) {

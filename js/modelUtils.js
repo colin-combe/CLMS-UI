@@ -62,13 +62,17 @@ CLMSUI.modelUtils = {
     
     makeTooltipContents: {
         maxRows: 25,
+		
+		residueString: function (singleLetterCode) {
+			return singleLetterCode + " (" + CLMSUI.modelUtils.amino1to3Map [singleLetterCode] + ")";
+		},
         
         link: function (xlink, extras) {
             var linear = xlink.isLinearLink();
             var info = [
-                ["From", xlink.fromResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, false)], xlink.fromProtein.name],
-                linear ? ["To", "---", "---", "Linear"]
-                    : ["To", xlink.toResidue, CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, true)], xlink.toProtein.name],
+                ["From", xlink.fromProtein.name, xlink.fromResidue, CLMSUI.modelUtils.makeTooltipContents.residueString (CLMSUI.modelUtils.getDirectionalResidueType(xlink, false))],
+                linear ? ["To", "Linear", "---", "---"]
+                    : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString (CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
                 ["Matches", xlink.filteredMatches_pp.length],
 				["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
@@ -94,11 +98,11 @@ CLMSUI.modelUtils = {
             var ttinfo = xlinks.map (function (xlink) {
                 var linear = xlink.isLinearLink();
                 var startIsTo = !linear && (xlink.toProtein.id === interactorId && xlink.toResidue === residueIndex);
-                var threeLetterCode = linear ? "---" : CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(xlink, !startIsTo)];
+                var residueCode = linear ? "---" : CLMSUI.modelUtils.makeTooltipContents.residueString (CLMSUI.modelUtils.getDirectionalResidueType(xlink, !startIsTo));
                 if (startIsTo) {
-                    return [xlink.fromResidue, threeLetterCode, xlink.fromProtein.name, xlink.filteredMatches_pp.length]; 
+                    return [xlink.fromProtein.name, xlink.fromResidue, residueCode, xlink.filteredMatches_pp.length]; 
                 } else {
-                    return [linear ? "---" : xlink.toResidue, threeLetterCode, linear ? "Linear" : xlink.toProtein.name, xlink.filteredMatches_pp.length];
+                    return [linear ? "Linear" : xlink.toProtein.name, linear ? "---" : xlink.toResidue, residueCode, xlink.filteredMatches_pp.length];
                 }
             });
 			
@@ -109,19 +113,22 @@ CLMSUI.modelUtils = {
 				});
 			});
 			
-            var sortFields = [3, 0]; // sort by matches, then res index
-            var sortDirs = [1, -1];
+            var sortFields = [3, 0, 1]; // sort by matches, then protein name, then res index
+            var sortDirs = [1, -1, -1];
             ttinfo.sort (function(a, b) { 
                 var diff = 0;
                 for (var s = 0; s < sortFields.length && diff === 0; s++) {
                     var field = sortFields[s];
                     diff = (b[field] - a[field]) * sortDirs[s]; 
+					if (isNaN(diff)) {
+						diff = b[field].localeCompare(a[field]) * sortDirs[s];
+					}
                 }
                 return diff;
             });
 			
 			
-			var headers = ["Pos", "Residue", "Protein", "Matches"];
+			var headers = ["Protein", "Pos", "Residue", "Matches"];
 			extraEntries.forEach (function (extraEntry) {
 				headers.push (extraEntry.key);	
 			});
@@ -150,8 +157,8 @@ CLMSUI.modelUtils = {
             var extraEntries = d3.entries (extras);
             var fromProtein, toProtein;
             var details = linkList.map (function (crossLink, i) {
-                var from3LetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false)];
-                var to3LetterCode = CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true)];
+                var from3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString (CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false));
+                var to3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString (CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true));
                 fromProtein = crossLink.fromProtein.name;
                 toProtein = crossLink.toProtein.name;
                 var row = [crossLink.fromResidue+" "+from3LetterCode, crossLink.toResidue+" "+to3LetterCode];
@@ -192,8 +199,8 @@ CLMSUI.modelUtils = {
         link: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },   
         interactor: function (interactor) { return interactor.name.replace("_", " "); }, 
         residue: function (interactor, residueIndex, residueExtraInfo) {
-            return residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " + 
-                CLMSUI.modelUtils.amino1to3Map [CLMSUI.modelUtils.getResidueType (interactor, residueIndex)] + " " + interactor.name;
+            return interactor.name + ":" + residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " + 
+                CLMSUI.modelUtils.makeTooltipContents.residueString (CLMSUI.modelUtils.getResidueType (interactor, residueIndex));
         },   
         feature: function () { return "Feature"; },
         linkList: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },   
