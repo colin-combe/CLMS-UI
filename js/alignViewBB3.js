@@ -389,12 +389,13 @@
                 .attr("class", "seqLabel")
                 .on ("mouseenter", function (d) {
 					var seqInfo = d.seqInfo;
+					console.log ("ADDDDD", d);
                     self.tooltipModel
                         .set ("header", self.model.get("displayLabel"))
                         .set("contents", [
                             ["Align Sequence", seqInfo.label],
                             ["Search Length", nformat(seqInfo.convertFromRef.length)], 
-                            [d.label+" Length", nformat(seqInfo.convertToRef.length)], 
+                            ["Align Sequence Length", nformat(seqInfo.convertToRef.length)], 
                             ["Align Score", scoreFormat(seqInfo.score)],
                         ])
                         .set("location", d3.event)
