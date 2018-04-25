@@ -389,7 +389,6 @@
                 .attr("class", "seqLabel")
                 .on ("mouseenter", function (d) {
 					var seqInfo = d.seqInfo;
-					console.log ("ADDDDD", d);
                     self.tooltipModel
                         .set ("header", self.model.get("displayLabel"))
                         .set("contents", [
