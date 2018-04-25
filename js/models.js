@@ -107,8 +107,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var pepLengthFilter = +this.get("pepLength");
                 if (!isNaN(pepLengthFilter)) {
                     var seq1length = match.matchedPeptides[0].sequence.length;
-                    if (seq1length > 0 && (seq1length <= pepLengthFilter ||
-                            (!linear && match.matchedPeptides[1].sequence.length <= pepLengthFilter))) {
+                    if (seq1length > 0 && (seq1length <= pepLengthFilter //||
+                        //    (!linear && match.matchedPeptides[1].sequence.length <= pepLengthFilter)
+                        )) {
                         return false;
                     }
                 }

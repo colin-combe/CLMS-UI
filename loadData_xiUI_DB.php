@@ -459,7 +459,7 @@ if (count($_GET) > 0) {
     //         ELSE name END AS name,
     //         description, accession_number, sequence, is_decoy
     //         FROM protein WHERE id IN ('".implode(array_keys($dbIds), "','")."')";
-/*
+
     $query = "SELECT * FROM db_sequences WHERE upload_id = ".$sid.";";
 
     $startTime = microtime(true);
@@ -476,7 +476,7 @@ if (count($_GET) > 0) {
                 . '"id":"' . $pId . '",'
                 // . '"real_id":"' . $line["real_id"] . '",'
                 . '"name":"' . $line["name"] . '",'
-                . '"description":"' . $line["description"] . '",'
+                . '"description":"",'// . $line["description"] . '",'
                 . '"accession":"' .$line["accession"]  . '",'
                 . '"seq_mods":"' .$line["sequence"] . '"'
                 // . '"is_decoy":' .$isDecoy
@@ -488,7 +488,7 @@ if (count($_GET) > 0) {
             if ($line) {echo ",\n";}
         }
     echo "\n],";
-*/
+
 	//interactors
 	// $interactorQuery = "SELECT * FROM uniprot WHERE accession IN ('"
 	// 		.implode(array_keys($interactorAccs), "','")."');";

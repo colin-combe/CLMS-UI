@@ -20,10 +20,10 @@
 <?php
 session_start();
 $cacheBuster = '?v='.microtime(true);
-if (!$_SESSION['session_name']) {
-    header("location:login.html");
-    exit;
-}
+// if (!$_SESSION['session_name']) {
+//     header("location:login.html");
+//     exit;
+// }
 header('Content-type: text/html; charset=utf-8');
 ?>
 
