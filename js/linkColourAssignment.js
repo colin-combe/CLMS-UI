@@ -261,7 +261,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
-        range.splice (1, 0, "white");
+        range.splice (1, 0, "#aaa");
     }
     
     var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).values();
