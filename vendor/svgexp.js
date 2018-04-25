@@ -95,8 +95,11 @@ CLMSUI.svgUtils = {
         }
 
         cloneSVG.setAttribute ("version", "1.1");
-        cloneSVG.setAttribute ("xmlns", "http://www.w3.org/2000/svg");    // XMLSerializer does this
-        cloneSVG.setAttribute ("xmlns:xlink", "http://www.w3.org/1999/xlink");  // when I used setAttributeNS it ballsed up
+        //cloneSVG.setAttribute ("xmlns", "http://www.w3.org/2000/svg");    // XMLSerializer does this
+        //cloneSVG.setAttribute ("xmlns:xlink", "http://www.w3.org/1999/xlink");  // when I used setAttributeNS it ballsed up
+		// however using these attributeNS calls work, and stops errors in IE11. Win.
+		cloneSVG.setAttributeNS ("http://www.w3.org/2000/xmlns/", "xmlns", "http://www.w3.org/2000/svg");    // XMLSerializer does this
+        cloneSVG.setAttributeNS ("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");  // when I used setAttributeNS it ballsed up
 
 
         var styleElem = ownerDoc.createElement ("style");
@@ -212,8 +215,15 @@ CLMSUI.svgUtils = {
         var CSSSheets = ownerDoc.styleSheets;
 
         for(var j=0; j < CSSSheets.length; j++){
-            if (CSSSheets[j].cssRules == null)  // skip empty sheets as it crashes the loop
-                continue;
+			// stop accessing empty style sheets (1.15), catch security exceptions (1.20)
+			try{
+				if (CSSSheets[j].cssRules == null) {
+					continue;
+				}
+			} catch (err) {
+				continue;
+			}
+			
             for(var i=0; i < CSSSheets[j].cssRules.length; i++){
                 rule = CSSSheets[j].cssRules[i];
                 var match = false;

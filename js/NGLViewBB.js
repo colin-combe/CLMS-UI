@@ -22,7 +22,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
 			"click .showLongChainDescriptorsCB": "toggleShowLongChainDescriptors",
-            "mouseout canvas": "clearHighlighted",
+            "mouseleave canvas": "clearHighlighted",
         });
     },
 	
@@ -59,12 +59,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
-            {initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel"},
-            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Cross-Links Only", id: "selectedOnly"},
-            {initialState: this.options.showResidues, class: "showResiduesCB", label: "Cross-Linked Residues", id: "showResidues"},
-            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Cross-Link Option Only", id: "shortestOnly"},
-            {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins"},
-			{initialState: this.options.showLongChainDescriptors, class: "showLongChainDescriptorsCB", label: "Verbose Chain Descriptors", id: "showLongChainDescriptors"},
+            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Cross-Links Only", id: "selectedOnly", tooltip: "Only show selected cross-links"},
+            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Possible Cross-Links Only", id: "shortestOnly", tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"},
+			{initialState: this.options.showResidues, class: "showResiduesCB", label: "Cross-Linked Residues", id: "showResidues", tooltip: "Show cross-linked residues on protein representations"},
+            {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins", tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"},
+			{initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel", tooltip: "Show distance labels on displayed cross-links"},
+			{initialState: this.options.showLongChainDescriptors, class: "showLongChainDescriptorsCB", label: "Verbose Chain Labels", id: "showLongChainDescriptors", tooltip: "Show chain descriptor labels with more verbose content if available"},
         ];
         toggleButtonData
             .forEach (function (d) {
@@ -81,8 +81,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
                 title: "Show ▼",
-                menu: toggleButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                menu: toggleButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
                 closeOnClick: false,
+				tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
             }
         });
 
@@ -168,8 +169,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.chartDiv.append("div").attr("class","overlayInfo").html("No PDB File Loaded"); 
 
         this.listenTo (this.model.get("filterModel"), "change", this.showFiltered);    // any property changing in the filter model means rerendering this view
-        this.listenTo (this.model, "change:linkColourAssignment", this.rerenderColours);   // if colour model used is swapped for new one
-        this.listenTo (this.model, "currentColourModelChanged", this.rerenderColours); // if current colour model used changes internally
+        this.listenTo (this.model, "change:linkColourAssignment currentColourModelChanged", this.rerenderColours);   // if colour model changes internally, or is swapped for new one
         this.listenTo (this.model, "change:selection", this.showSelectedLinks);
         this.listenTo (this.model, "change:highlights", this.showHighlightedLinks);
 
@@ -751,7 +751,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
                     crosslinkData.getModel().get("tooltipModel")
-                        .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
+                        .set("header", "Cross-Linked with "+CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex, {"Distance (Å)": distances}))
                         .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                     ;

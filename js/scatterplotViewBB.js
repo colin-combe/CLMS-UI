@@ -30,7 +30,6 @@
 		chartTitle: "Scatterplot",
 		selectedColour: "#ff0",
 		highlightedColour: "#f80",
-		background: "#eee",
 		jitter: true,
 		chartMargin: 10,
 		pointSize: 4,
@@ -231,11 +230,9 @@
         ;
         
         // Listen to these events (and generally re-render in some fashion)
-        this.listenTo (this.model, "selectionMatchesLinksChanged", this.recolourCrossLinks);
-        this.listenTo (this.model, "highlightsMatchesLinksChanged", this.recolourCrossLinks);
+		// if highlighted/selection matches change, or colour model change, then recolour cross links
+        this.listenTo (this.model, "selectionMatchesLinksChanged highlightsMatchesLinksChanged change:linkColourAssignment currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model, "filteringDone", function() { this.renderCrossLinks ({isFiltering: true}); });
-        this.listenTo (this.model, "change:linkColourAssignment", this.recolourCrossLinks);
-        this.listenTo (this.model, "currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
         this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
             //console.log ("HELLO", arguments);
@@ -565,7 +562,7 @@
         if (this.nearest && this.nearest.link) {
             var tipExtra = isMatchLevel ? CLMSUI.modelUtils.makeTooltipContents.match (this.nearest.match)
                 : CLMSUI.modelUtils.makeTooltipContents.link (this.nearest.link);
-            tooltipData = tooltipData.concat([["&nbsp;"],["Nearest "+(isMatchLevel ? "Match" : "Link")]]).concat (tipExtra);
+            tooltipData = tooltipData.concat([["&nbsp;"],["Nearest "+(isMatchLevel ? "Match" : "Cross-Link")]]).concat (tipExtra);
         }
         
         if (!this.nearest.link) {
@@ -728,8 +725,8 @@
                         
             var canvasNode = this.canvas.node();
             var ctx = canvasNode.getContext("2d");       
-            ctx.fillStyle = this.options.background;
-            ctx.fillRect (0, 0, canvasNode.width, canvasNode.height);
+            //ctx.fillStyle = this.options.background;
+            ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
             ctx.imageSmoothingEnabled = false;
             
             var datax = this.getAxisData ("X", true, sortedFilteredCrossLinks);
@@ -875,6 +872,7 @@
         this.canvas
             .attr("width",  sizeData.width)
             .attr("height", sizeData.height)
+			.attr("class", "backdrop")
         ;
 
         var extent = this.brush.extent(); // extent saved before x and y ranges updated

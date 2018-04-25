@@ -11,7 +11,10 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             if(_.isFunction(parentEvents)){
                 parentEvents = parentEvents();
             }
-            return _.extend({},parentEvents,{});
+            return _.extend({
+				"mouseenter .sectionTable h2": "highlightProteins",
+				"mouseleave .sectionTable h2": "unhighlightProteins",
+			},parentEvents,{});
         },
 	
 		defaultOptions: {
@@ -33,11 +36,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     .text("Info for 0 Selected Proteins")
             ;
             
-            this.listenTo (this.model, "change:selectedProteins", this.render);
-			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
-            this.listenTo (this.model, "filteringDone", this.showState);
-            this.listenTo (this.model, "change:selection", this.showState);
-            this.listenTo (this.model, "change:highlights", this.showState);
+            this.listenTo (this.model, "change:selectedProteins proteinMetadataUpdated", this.render);
+            this.listenTo (this.model, "filteringDone change:selection change:highlights", this.showCrossLinksState);
+			this.listenTo (this.model, "change:highlightedProteins", this.showProteinHighlightsState);
                 
             return this;
         },
@@ -51,7 +52,9 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 prots.sort (function(a,b) { return a.name.localeCompare (b.name); });
                 var tabs = d3.select(this.el).select("div.panelInner");
                 
-                tabs.select("h1.infoHeader").text("Info for "+prots.length+" Selected Protein"+(prots.length !== 1 ? "s" : ""));
+                tabs.select("h1.infoHeader")
+					.text("Info for "+prots.length+" Selected Protein"+(prots.length !== 1 ? "s" : ""))
+				;
                 
                 var self = this;
 
@@ -87,13 +90,12 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                         //console.log ("model", self.model);
                         var d3sel = d3.select(this);
                         var idArray = self.splitDataAttr (d3sel, "data-linkids");
-                        //console.log ("idarry", idArray);
                         var crossLinks = self.getCrossLinksFromIDs (idArray, true);
                         var posData = self.splitDataAttr (d3sel, "data-pos", "_");
                         var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
 
                         self.model.get("tooltipModel")
-                            .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (interactor, +posData[1]))
+                            .set("header", "Cross-Linked with "+CLMSUI.modelUtils.makeTooltipTitle.residue (interactor, +posData[1]))
                             .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (crossLinks, posData[0], +posData[1]))
                             .set("location", {pageX: d3.event.pageX, pageY: d3.event.pageY})
                         ;
@@ -105,13 +107,13 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
                     })
                 ;
                 
-                this.showState();
+                this.showCrossLinksState();
             }
 
             return this;
         },
     
-        showState: function () {
+        showCrossLinksState: function () {
             var self = this;
             //console.log ("in prot info filter");
             if (this.isVisible()) {
@@ -148,6 +150,24 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
             return this;
         },
+	
+		showProteinHighlightsState: function () {
+			var highlightSet = d3.set (_.pluck (this.model.get("highlightedProteins"), "id"));
+			d3.select(this.el).selectAll(".sectionTable h2")
+				.classed ("highlighted", function (d) { return highlightSet.has (d.id); })	
+			;
+			return this;
+		},
+	
+		highlightProteins: function (evt) {
+			this.model.setHighlightedProteins ([d3.select(evt.target).datum()]);
+			return this;
+		},
+	
+		unhighlightProteins: function () {
+			this.model.setHighlightedProteins ([]);		
+			return this;
+		},
     
         splitDataAttr: function (d3sel, dataAttrName, splitChar) {
             var ids = d3sel.attr(dataAttrName);

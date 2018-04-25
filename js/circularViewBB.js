@@ -103,6 +103,7 @@
               "click .showResLabelsButton": "showResLabelsIfRoom",
               "click .showLinkless": "toggleLinklessVisibility",
 			  "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
+			  "click .backdrop": "clearSelection",
           });
         },
 		
@@ -158,7 +159,7 @@
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var mainDivSel = d3.select(this.el);
             // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-            var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner circleDiv' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+            var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner backdrop' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
             mainDivSel.append("div")
                 .attr ("class", "verticalFlexContainer")
                 .html(
@@ -167,11 +168,11 @@
                     })
                 )
             ;
+			
+			mainDivSel.select(".backdrop").style("background-color", this.options.background);	// can replace .backdrop class colouring with this option if defined
             
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
-                //{class: "flipIntraButton", label: "Flip Self Links", type: "button", id: "flip"},
-                //{class: "showResLabelsButton", label: "Show Residue Labels If Few", type: "checkbox", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space", noBreak: false},
             ];
             
             var toolbar = mainDivSel.select("div.toolbar");
@@ -183,7 +184,7 @@
             var orderOptionsButtonData = [
                 {class: "circRadio", label: "Alphabetically", id: "alpha", type: "radio", group: "sort"},
                 {class: "circRadio", label: "By Length", id: "size", type: "radio", group: "sort"},
-                {class: "circRadio", label: "To Reduce Link Crossings", id: "best", type: "radio", group: "sort", sectionEnd: true},
+                {class: "circRadio", label: "To Reduce Link Crossings", id: "best", type: "radio", group: "sort", sectionEnd: true, tooltip: "Order proteins to reduce visual link intersections - making it easier to comprehend"},
                 {class: "niceButton", label: "Redo Current Ordering", id: "nice", type: "button"},
 			];
             orderOptionsButtonData
@@ -206,17 +207,18 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Order Proteins ▼",
-                    menu: orderOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null, sectionEnd: d.sectionEnd}; }),
+                    menu: orderOptionsButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
                     closeOnClick: false,
+					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
                 }
             });
 			
 			
 			var showOptionsButtonData = [
-                {class: "showLinkless", label: "Linkless Proteins", id: "showLinkless", initialState: this.options.showLinkless},
-                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, title: "Depends on space"},
-				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside},
-				{class: "toggleHomomOpposition", label: "Homomultimers Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite},
+                {class: "showLinkless", label: "All Proteins", id: "showLinkless", initialState: this.options.showLinkless, tooltip: "Keep showing proteins with no current cross-links for a steadier layout"},
+                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
+				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside, tooltip: "Flips the display of Self cross-links between inside and outside"},
+				{class: "toggleHomomOpposition", label: "Homomultimers Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite, tooltip: "Show homomultimers on the opposite side (in/out) to other self cross-links"},
 			];
 			showOptionsButtonData
                 .forEach (function (d) {
@@ -233,8 +235,9 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Show ▼",
-                    menu: showOptionsButtonData.map (function(d) { return {id: self.el.id + d.id, func: null}; }),
+                    menu: showOptionsButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
                     closeOnClick: false,
+					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
                 }
             });
             
@@ -329,7 +332,6 @@
             this.interactorOrder = _.pluck (CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")), "id");
 
             var alignCall = 0;
-            var renderPartial = function (renderPartArr) { self.render ({changed: d3.set (renderPartArr), }); };
 			
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
@@ -337,20 +339,20 @@
                 if (!self.options.showLinkless || self.options.sort === "best") {
                     self.render();
                 } else {
-                    renderPartial (["links", "nodes"]);
+                    self.renderPartial (["links", "nodes"]);
                 }   
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
+			this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
+			this.listenTo (this.model, "change:highlightedProteins", function () { this.showAccentedNodes ("highlights"); });
             this.listenTo (this.model.get("alignColl"), "bulkAlignChange", function () {
                 CLMSUI.utils.xilog (++alignCall, ". CIRCULAR VIEW AWARE OF ALIGN CHANGES", arguments);
-                renderPartial (["features"]);
+                self.renderPartial (["features"]);
             });
-            this.listenTo (this.model, "change:linkColourAssignment", function () { renderPartial (["links"]); });
-            this.listenTo (this.model, "currentColourModelChanged", function () { renderPartial (["links"]); });
-            this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
-			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { renderPartial (["nodes"]); });
-            this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { renderPartial (["features"]); });
+            this.listenTo (this.model, "change:linkColourAssignment currentColourModelChanged", function () { self.renderPartial (["links"]); }); // either colour change or new colour model
+			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { self.renderPartial (["nodes"]); });
+            this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { self.renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             this.reOrderAndRender();
             
@@ -389,12 +391,12 @@
 
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
-            this.render();
+            this.renderPartial (["links"]);
         },
         
         showResLabelsIfRoom: function () {      
             this.options.showResLabels = !this.options.showResLabels;       
-            this.render();      
+            this.renderPartial (["linkLabels"]);      
         },
         
         toggleLinklessVisibility : function () {
@@ -404,7 +406,7 @@
 		
 		toggleHomomOppositeIntra : function () {
             this.options.homomOpposite = !this.options.homomOpposite;
-            this.render();
+            this.renderPartial (["links"]);
         },
 
         idFunc: function (d) { return d.id; },
@@ -416,7 +418,7 @@
 
         showAccentOnTheseLinks: function (d3Selection, accentType) {
             var accentedLinkList = this.model.getMarkedCrossLinks(accentType);
-            if (accentedLinkList) {
+            if (accentedLinkList && this.isVisible()) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
                 var accentedLinkIDs = _.pluck (accentedLinkList, "id");
                 var idset = d3.set (accentedLinkIDs);
@@ -430,8 +432,8 @@
 		},
 		
 		showAccentOnTheseNodes: function (d3Selection, accentType) {
-			var accentedNodeList = this.model.get("selectedProteins");
-            if (accentedNodeList) {
+			var accentedNodeList = this.model.get (accentType === "selection" ? "selectedProteins" : "highlightedProteins");
+            if (accentedNodeList && this.isVisible()) {
                 var linkType = {"selection": "selected", "highlights": "highlighted"};
                 var accentedLinkIDs = _.pluck (accentedNodeList, "id");
                 var idset = d3.set (accentedLinkIDs);
@@ -454,6 +456,16 @@
             this.model.setMarkedCrossLinks (actionType, matchLinks, actionType === "highlights", add);
             //this.model.set (actionType, matchLinks);
         },
+		
+		clearSelection: function (evt) {
+			console.log ("evt", evt);
+			// don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
+			// this is also logically consistent as it's adding 'nothing' to the existing selection
+			if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
+				this.model.setMarkedCrossLinks ("selection", [], false, false);
+				this.model.setSelectedProteins ([], false);
+			}
+		},
 
         convertLinks: function (links, rad1, rad2) {
             var xlinks = this.model.get("clmsModel").get("crossLinks");
@@ -543,6 +555,8 @@
                 return featureFilterSet.has (f.type);
             }, this) : [];
         },
+		
+		renderPartial: function (renderPartArr) { this.render ({changed: d3.set (renderPartArr)}); },
 
         render: function (options) {
 
@@ -645,7 +659,7 @@
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
-                if (!changed || changed.has("links")) {     
+                if (!changed || changed.has("links") || changed.has("linkLabels")) {     
                     this.drawResidueLetters (gRot, linkCoords);     
                 }
             }
@@ -706,6 +720,7 @@
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on ("click", function (d) {
+						d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.model.setMarkedCrossLinks ("selection", [crossLinks.get(d.id)], false, add);
                     })
@@ -735,12 +750,16 @@
                     .on("mouseenter", function(d) {
                         self.nodeTip (d);
                         self.actionNodeLinks (d.id, "highlights", false);
+						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
+						self.model.setHighlightedProteins ([interactor]);
                     })
                     .on("mouseleave", function() {
                         self.clearTip ();
+						self.model.setHighlightedProteins ([]);
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
+						d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.id, "selection", add);
 						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
@@ -752,7 +771,7 @@
                 .attr("d", this.arc)
             ;
 			
-			this.showAccentOnTheseNodes (nodeJoin, "selected");
+			this.showAccentOnTheseNodes (nodeJoin, "selection");
 
             return this;
         },
@@ -925,6 +944,7 @@
                         self.model.setMarkedCrossLinks ("highlights", [], false, false);
                     })
                     .on("click", function(d) {
+						d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.actionNodeLinks (d.nodeID, "selection", add, d.fstart, d.fend);
                     })

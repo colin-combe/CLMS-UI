@@ -1,8 +1,3 @@
-#circularPanel DIV.circleDiv {
-    background-color: #eee;
-    height: 100%;
-}
-
 svg.circularView {
     width: 100%;
     height: 100%;
@@ -24,10 +19,12 @@ svg.circularView {
     pointer-events: stroke;
 }
 
+
 .circleGhostLink:hover {
     stroke-opacity: 0.5;
     stroke: #fdc086;
 }
+
 
 .selectedCircleLink {
     stroke-opacity: 0.5;
@@ -47,6 +44,11 @@ svg.circularView {
     stroke: #ff0;
 }
 
+.circleNode.highlighted {
+	stroke: #fdc086;
+	fill: #dde;
+}
+
 .circleFeature {
     fill-opacity: 0.5;
 }
@@ -64,6 +66,7 @@ svg.circularView {
 
 .circularView .tick line {
     stroke: #000;
+	stroke-width: 1px;
 }
 
 .justifyTick {

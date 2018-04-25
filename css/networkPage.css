@@ -37,3 +37,14 @@
 	display: none;
 }
 */
+
+/* xinetcontrol panel */
+.xinetButtonBar {
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.layoutLabel {
+	letter-spacing: 1px;
+	margin-left: 0.5em;
+}

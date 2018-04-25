@@ -32,38 +32,67 @@ function downloadResidueCount(){
     download(csv, 'text/csv', filename);
 }
 
-function download(content, contentType, fileName) {
+function download(content, contentType, fileName, modernWeb) {
     //var b64svg = window.btoa(content);
-    // because btoa borks on unicode characters > 1 byte. http://ecmanaut.blogspot.co.uk/2006/07/encoding-decoding-utf8-in-javascript.html
-    var b64svg = window.btoa(unescape(encodeURIComponent(content)));
-    var path = "./php/download.php";
-    var method = method || "post"; // Set method to post by default if not specified.
+	console.log ("svg filename", fileName, modernWeb);
+	
+	if (!modernWeb) {
+		// because btoa borks on unicode characters > 1 byte. http://ecmanaut.blogspot.co.uk/2006/07/encoding-decoding-utf8-in-javascript.html
+		var b64svg = window.btoa(unescape(encodeURIComponent(content)));
+		var path = "./php/download.php";
+		var method = method || "post"; // Set method to post by default if not specified.
 
-    var form = document.createElement("form");
-    form.setAttribute("method", method);
-    form.setAttribute("action", path);
 
-    var hiddenContentField = document.createElement("input");
-    hiddenContentField.setAttribute("type", "hidden");
-    hiddenContentField.setAttribute("name", "content");
-    hiddenContentField.setAttribute("value", b64svg);
-    form.appendChild(hiddenContentField);
+		var form = document.createElement("form");
+		form.setAttribute("method", method);
+		form.setAttribute("action", path);
 
-    var hiddenContentTypeField = document.createElement("input");
-    hiddenContentTypeField.setAttribute("type", "hidden");
-    hiddenContentTypeField.setAttribute("name", "contentType");
-    hiddenContentTypeField.setAttribute("value", contentType);
-    form.appendChild(hiddenContentTypeField);
+		var hiddenContentField = document.createElement("input");
+		hiddenContentField.setAttribute("type", "hidden");
+		hiddenContentField.setAttribute("name", "content");
+		hiddenContentField.setAttribute("value", b64svg);
+		form.appendChild(hiddenContentField);
 
-    var hiddenFilenameField = document.createElement("input");
-    hiddenFilenameField.setAttribute("type", "hidden");
-    hiddenFilenameField.setAttribute("name", "fileName");
-    hiddenFilenameField.setAttribute("value", fileName);
-    form.appendChild(hiddenFilenameField);
+		var hiddenContentTypeField = document.createElement("input");
+		hiddenContentTypeField.setAttribute("type", "hidden");
+		hiddenContentTypeField.setAttribute("name", "contentType");
+		hiddenContentTypeField.setAttribute("value", contentType);
+		form.appendChild(hiddenContentTypeField);
 
-    document.body.appendChild(form);
-	form.submit();
-    document.body.removeChild(form);
+		var hiddenFilenameField = document.createElement("input");
+		hiddenFilenameField.setAttribute("type", "hidden");
+		hiddenFilenameField.setAttribute("name", "fileName");
+		hiddenFilenameField.setAttribute("value", fileName);
+		form.appendChild(hiddenFilenameField);
+
+		document.body.appendChild(form);
+		form.submit();
+		document.body.removeChild(form);
+	}
+	else {
+		function dataURItoBlob(binary) {
+			var array = [];
+		  for (var i = 0; i < binary.length; i++) {
+			 array.push(binary.charCodeAt(i));
+		  }
+		  return new Blob([new Uint8Array(array)], {type: "image/svg+xml;charset=utf-8"});
+		}
+
+		var blob = dataURItoBlob(content);
+		
+		if (navigator.msSaveOrOpenBlob) {
+			navigator.msSaveOrOpenBlob (blob, fileName);
+		} else {
+			var a = document.createElement('a');
+			a.href = window.URL.createObjectURL(blob);
+			// Give filename you wish to download
+			a.download = fileName;
+			a.style.display = 'none';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+		}
+	}
 }
 
 function getMatchesCSV () {

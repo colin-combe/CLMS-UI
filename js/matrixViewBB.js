@@ -23,7 +23,6 @@
 		xlabel: "Residue Index 1",
 		ylabel: "Residue Index 2",
 		chartTitle: "Cross-Link Matrix",
-		background: "#ccc",
 		chainBackground: "white",
 		matrixObj: null,
 		selectedColour: "#ff0",
@@ -137,7 +136,11 @@
             .call(self.zoomStatus)
         ;
         
-        this.canvas = canvasViewport.append("canvas");
+        this.canvas = canvasViewport
+			.append("canvas")
+			.attr("class", "backdrop")
+			.style ("background", this.options.background)	// override standard background colour with option
+		;
 
         
         // SVG element
@@ -200,11 +203,8 @@
                 .attr("dy", function(d) { return d.dy; })
         ;
          
-        this.listenTo (this.model, "change:selection", this.renderCrossLinks);
-        this.listenTo (this.model, "change:highlights", this.renderCrossLinks);
-        //this.listenTo (this.model, "filteringDone", this.render);    // listen to custom filteringDone event from model
-        this.listenTo (this.model, "filteringDone", this.renderCrossLinks);    // listen to custom filteringDone event from model - only need to update svg now, so only renderCrossLinks called
-        this.listenTo (this.model, "currentColourModelChanged", this.renderCrossLinks);
+		// rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
+        this.listenTo (this.model, "change:selection change:highlights filteringDone currentColourModelChanged", this.renderCrossLinks);
         this.listenTo (this.model, "change:linkColourAssignment", this.render);
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
@@ -433,9 +433,11 @@
     },
         
     convertEvtToXY: function (evt) {
+		//console.log ("evt", evt, evt.offsetX);
         var sd = this.getSizeData();
         var x = evt.offsetX + 1;
         var y = (sd.lengthB - 1) - evt.offsetY;
+		
         return [x,y];
     },
         
@@ -575,8 +577,8 @@
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         var canvasNode = this.canvas.node();
         var ctx = canvasNode.getContext("2d");       
-        ctx.fillStyle = this.options.background;
-        ctx.fillRect (0, 0, canvasNode.width, canvasNode.height);
+        //ctx.fillStyle = this.options.background;
+        ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
         
         // only render background if distances available
         if (distancesObj) {
@@ -915,16 +917,25 @@
         var scale = baseScale * this.zoomStatus.scale();
         var scaleString = "scale("+scale+")";
         var translateString = "translate("+this.zoomStatus.translate()[0]+"px,"+ this.zoomStatus.translate()[1]+"px)";
-        var transformString = translateString + " " + scaleString;
+		var translateStringAttr = "translate("+this.zoomStatus.translate()[0]+","+ this.zoomStatus.translate()[1]+")";
+        var transformStrings = {attr: translateStringAttr + " " + scaleString, style: translateString + " " + scaleString};
         
-        [this.canvas, this.zoomGroup].forEach (function (d3sel) {
-            d3sel
-                .style("-ms-transform", transformString)
-                .style("-moz-transform", transformString)
-                .style("-o-transform", transformString)
-                .style("-webkit-transform", transformString)
-                .style("transform", transformString)
-            ;
+		// for some reason using a css transform style on an svg group doesn't play nice in firefox (i.e. wrong positions reported, offsetx/y mangled etc)
+		// , so use attr transform instead
+        [{elem: this.canvas, type: "style"}, {elem: this.zoomGroup, type: "attr"}].forEach (function (d3sel) {
+			if (d3sel.type === "attr") {
+				d3sel.elem.attr ("transform", transformStrings[d3sel.type])
+			}
+            else { 
+				var tString = transformStrings[d3sel.type];
+				d3sel.elem
+					.style("-ms-transform", tString)
+					.style("-moz-transform", tString)
+					.style("-o-transform", tString)
+					.style("-webkit-transform", tString)
+					.style("transform", tString)
+				;
+			}
         });
         
         // If bottom edge of canvas is higher up than bottom of viewport put the x axis beneath it

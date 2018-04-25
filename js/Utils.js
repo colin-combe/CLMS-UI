@@ -130,6 +130,8 @@ CLMSUI.utils = {
             },
 
             initialize: function (viewOptions) {
+				
+				console.log ("this", this.model);
                 var defaultOptions = {
                     labelFirst: true
                 };
@@ -150,7 +152,7 @@ CLMSUI.utils = {
                 ;
                 var labelText = this.options.labelFirst ? labs.insert("span", ":first-child") : labs.append("span");
                 labelText.text (this.options.label);
-
+				
                 // Remember to listen to changes to model or global event state that come from outside the view (keeps it in sync with models)
                 if (this.model && this.options.toggleAttribute) {
                     this.listenTo (this.model, "change:"+this.options.toggleAttribute, this.showState);
@@ -266,13 +268,39 @@ CLMSUI.utils = {
         }
     },
 
-    convertCanvasToImage: function (canvas, image, callback) {
+    convertCanvasToImage: function (d3canvas, image, callback) {	// d3canvas is a canvas wrapped in a d3 selection
         image
-            .attr ("width", canvas.attr("width"))
-            .attr ("height", canvas.attr("height"))
-            .attr ("transform", canvas.style("transform"))
+            .attr ("width", d3canvas.attr("width"))
+            .attr ("height", d3canvas.attr("height"))
+            .attr ("transform", d3canvas.style("transform"))
             .attr ("xlink:href", function () {
-                return canvas.node().toDataURL ("image/png");
+				// from https://stackoverflow.com/a/19539048/368214
+				// use dummy canvas and fill with background colour so exported png is not transparent
+				var destinationCanvas = document.createElement("canvas");
+				destinationCanvas.width = d3canvas.attr("width");
+				destinationCanvas.height = d3canvas.attr("height");
+
+				var destCtx = destinationCanvas.getContext('2d');
+
+				//create a rectangle with the desired color
+				var background = d3canvas.style("background-color");
+				console.log ("background", background, d3canvas);
+				// convert if background style string in rgb() format
+				if (background && background[0] !== '#') {
+					var rgb = d3.rgb (background);
+					background = rgb.toString();
+				}
+				//console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
+				destCtx.fillStyle = background;
+				destCtx.fillRect (0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
+
+				//draw the original canvas onto the destination canvas
+				destCtx.drawImage (d3canvas.node(), 0, 0);
+			
+                var url = destinationCanvas.toDataURL ("image/png");
+				//var url = d3canvas.node().toDataURL ("image/png");
+				//destinationCanvas.dispose();
+				return url;
             })
             //.attr ("xlink:href", "http://www.spayaware.ie/images/cat.png")
         ;
@@ -581,7 +609,10 @@ CLMSUI.utils = {
         initialize: function (viewOptions) {
 
             // window level options that don't depend on type of view
-            var globalOptions = {canBringToTop: true};
+            var globalOptions = {
+				canBringToTop: true,
+				background: null,
+			};
             this.options = _.extend (globalOptions, this.defaultOptions, viewOptions.myOptions);
 
             this.displayEventName = viewOptions.displayEventName;
@@ -853,9 +884,10 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
             assocTable.style("display", tableIsHidden ? "table" : "none");
             setArrow.call (this, d);
         })
-        .on ("mouseover", function(d) {
-            // eventually backbone shared highlighting code to go here
-        })
+        //.on ("mouseover", function(d) {
+            // eventually backbone shared highlighting code to go here?
+			// except it's data specific, one table may show per protein, another links, another something else, so not doable here
+        //})
     ;
     newHeaders.append("svg")
         .append("polygon")
