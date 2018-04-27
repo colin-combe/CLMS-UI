@@ -16,7 +16,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		return _.extend ({}, parentEvents, {
 			"click .pdbWindowButton": "launchExternalPDBWindow",
 			"change .selectPdbButton": "selectPDBFile",
-			"keyup .inputPDBCode": "usePDBCode",
+			"keyup .inputPDBCode": "enteringPDBCode",
+			"click button.PDBSubmit": "loadPDBCode",
 		});
 	},
 
@@ -32,34 +33,42 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 
 		var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
 
-		toolbar.append("label")
-			.attr("class", "btn btn-1 btn-1a fakeButton")
-			.append("span")
-				//.attr("class", "noBreak")
-				.text("Select Local PDB File")
-				.append("input")
-				.attr({type: "file", accept: ".txt,.cif,.pdb", class: "selectPdbButton"})
+		toolbar.append("span")
+			.attr("class", "btn nopadLeft nopadRight sectionDivider2")
+			.text("Either")
+			.append ("div")
+			.append("label")
+				.attr("class", "btn btn-1 btn-1a fakeButton")
+				.append("span")
+					//.attr("class", "noBreak")
+					.text("Select Local PDB File")
+					.append("input")
+					.attr({type: "file", accept: ".txt,.cif,.pdb", class: "selectPdbButton"})
+			;
 		;
 
-		toolbar.append("span")
+		var pdbCodeSpan = toolbar.append("span")
 			.attr("class", "btn sectionDivider2 nopadLeft")
 			.text("or Enter 4-character PDB ID")
-			.append("input")
-				.attr({
-					type: "text", class: "inputPDBCode", maxlength: 4, pattern: CLMSUI.utils.commonRegexes.pdbPattern, size: 4, title: "Enter a PDB ID here e.g. 1AO6"
-				})
-				.property ("required", true)
+			.append("div")
+		;
+		
+		pdbCodeSpan.append("input")
+			.attr({
+				type: "text", class: "inputPDBCode", maxlength: 4, pattern: CLMSUI.utils.commonRegexes.pdbPattern, size: 6, title: "Enter a PDB ID here e.g. 1AO6"
+			})
+			.property ("required", true)
+		;
+		
+		pdbCodeSpan.append("button")
+			.attr ("class", "PDBSubmit btn btn-1 btn-1a")
+			.text ("Enter")
+			.property ("disabled", true)
 		;
 
-		var pushButtonData = [
-			{klass: "pdbWindowButton", label: "Show Possible PDBs @ RCSB.Org"},
-		];
-
-		toolbar.selectAll("button").data(pushButtonData)
-			.enter()
-			.append("button")
-			.attr("class", function(d) { return "btn btn-1 btn-1a "+d.klass; })
-			.text (function(d) { return d.label; })
+		toolbar.append("button")
+			.attr ("class", "pdbWindowButton btn btn-1 btn-1a")
+			.text ("Show Possible PDBs @ RCSB.Org")
 		;
 
 
@@ -120,14 +129,23 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		});    
 	},
 
-  	usePDBCode: function (evt) {
-		if (evt.keyCode === 13) {   // when return key pressed
-			var pdbCode = evt.target.value;
-			if (pdbCode && pdbCode.length === 4) {
-				this.setStatusText ("Please Wait...");
-				CLMSUI.modelUtils.repopulateNGL ({pdbCode: pdbCode, stage: this.stage, bbmodel: this.model});
-			}
+  	enteringPDBCode: function (evt) {
+		var valid = this.isPDBCodeValid();
+		d3.select(this.el).select(".PDBSubmit").property("disabled", !valid);
+		if (valid && evt.keyCode === 13) {   // if return key pressed do same as pressing 'Enter' button
+			this.loadPDBCode();
 		}
+	},
+	
+	loadPDBCode: function () {
+		var pdbCode = d3.select(this.el).select(".inputPDBCode").property("value");
+		this.setStatusText ("Please Wait...");
+		CLMSUI.modelUtils.repopulateNGL ({pdbCode: pdbCode, stage: this.stage, bbmodel: this.model});
+	},
+	
+	isPDBCodeValid: function () {
+		var elem = d3.select(this.el).select(".inputPDBCode");
+		return elem.node().checkValidity();
 	},
 
   	identifier: "PDB File Chooser",

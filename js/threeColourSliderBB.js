@@ -26,6 +26,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 			extent: [40, 60],
 			domain: [0, 100],
 			margin: {},
+			orientation: "vertical",
         };
         this.options = _.extend ({}, defaultOptions, viewOptions);
         
