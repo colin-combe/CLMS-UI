@@ -397,6 +397,10 @@ A.btn {
     text-decoration: none;
 }
 
+.nopadRight {
+	padding-right: 0;
+}
+
 .nopadLeft {
 	padding-left: 0;
 }
@@ -526,7 +530,7 @@ A.btn {
     display: inline-block;
 }
 
-.toolbar > .sectionDivider {
+.toolbar > .sectionDividerRight {
 	border-right: 1px solid rgba(0,0,0,0.5);
 	margin-right: 0.5em;
 	padding-right: 0.5em;
@@ -542,6 +546,10 @@ A.btn {
 	border-left: 1px solid rgba(0,0,0,0.5);
 	margin-left: 0.5em;
 	padding-left: 0.5em;
+}
+
+.pdbWindowButton {
+	vertical-align: text-bottom;
 }
 
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
