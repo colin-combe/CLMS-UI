@@ -43,15 +43,15 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         };
         
         var texts = {
-            clinkp: "Cross-link(s) between different proteins",
-            ambigp: "Ambiguous",
+            clinkp: "Cross-Link(s) between different proteins",
+            ambigp: "Ambiguous Cross-Link(s)",
             multip: "Multiple Linkage Sites",
-            selflinkp: "Self Link(s); could include links between two different molecules of same protein",
-            selflinkpc: "Self Link(s); definitely includes links between two different molecules of same protein",
-            clinkr: "Cross-link between different proteins",
-            ambigr: "Ambiguous",
-            selflinkr: "Self Link in same protein (could link either same or two different molecules)",
-            homom: "Homomultimeric Self Link (definitely links two different molecules of same protein)",
+            selflinkp: "Self Cross-Link(s); could include Cross-Links not between the same molecule of same protein",
+            selflinkpc: "Self Cross-Link(s); definitely includes Cross-Links not between the same molecule of same protein",
+            clinkr: "Cross Link between different proteins",
+            ambigr: "Ambiguous Cross-Link",
+            selflinkr: "Self Cross-Link in same protein. Could link either same or two different molecules",
+            homom: "Self Cross-Link with Overlapping Peptides. Cannot be the same molecule, so either between two different molecules of same protein (Homomultimeric) or a mis-identification",
             selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide)",
             linkmodpep: "Linker modified peptide (unfilled = ambiguous)",
             highlight: "Highlighted linked peptide",

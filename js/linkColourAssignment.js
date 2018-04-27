@@ -53,7 +53,7 @@ CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
 CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
         this
-            .set("labels", this.get("colScale").copy().range(["Self Link", "Homomultimer Link", "Between Protein Link"]))
+            .set("labels", this.get("colScale").copy().range(["Self Cross-Links", "Self Cross-Links (Overlapping Peptides)", "Between Protein Cross-Links"]))
         ;
     },
     getValue: function (crossLink) {
