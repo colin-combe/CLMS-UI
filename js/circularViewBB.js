@@ -391,7 +391,7 @@
 
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
-            this.renderPartial (["links"]);
+            this.render ();	// nodes move position too (radially)
         },
         
         showResLabelsIfRoom: function () {      
