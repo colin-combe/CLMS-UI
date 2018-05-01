@@ -211,7 +211,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
-        colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']),
+        colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61','#FDB863','#9970AB']),
         title: "Distance",
         id: "Distance",
     });

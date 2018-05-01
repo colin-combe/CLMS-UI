@@ -3,13 +3,26 @@
 .threeColourSlider.verticalFlexContainer {
     height: calc(100% - 70px);
     width: 90px;
-    position: absolute;
+}
+
+.threeColourSlider.horizontalFlexContainer {
+    height: 90px;
+    width: 100%;
+	flex-flow: row-reverse;
+}
+
+.threeColourSlider.absolutePosition {
+	position: absolute;
     top: 50px;
     right: 0;
 }
 
-.threeColourSlider > * {
+.threeColourSlider.verticalFlexContainer > * {
     margin-bottom: 0.5em;
+}
+
+.threeColourSlider.horizontalFlexContainer > * {
+    margin-right: 0.5em;
 }
 
 .threeColourSlider input {
