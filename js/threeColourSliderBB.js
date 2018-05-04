@@ -24,10 +24,11 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		var defaultOptions = {
 			unitText: "",
 			extent: this.model.get("colScale").domain() || [40, 60],
-			domain: [0, 100],
+			domain: this.model.get("superDomain") || [0, 100],
 			margin: {},
 			orientation: "vertical",
 			absolutePosition: true,
+			sliderThickness: 50,
         };
         this.options = _.extend ({}, defaultOptions, viewOptions);
         
@@ -50,7 +51,6 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         });
 
         var margin = _.extend ({top: 50, right: 50, bottom: 50, left: 50}, this.options.margin);
-        var sliderThickness = 50;
         
         this.height = this.el.clientHeight - margin.top - margin.bottom;
 		this.width = this.el.clientWidth - margin.left - margin.right;
@@ -100,8 +100,8 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         ;
         
         // upper brush rectangles with colours from underlying scale
-        this.upperRange = svg.append("rect").attr(perpOrientCoord, 0).attr(orientCoord, /*-10*/ 0).attr(thicknessDim, sliderThickness);
-        this.lowerRange = svg.append("rect").attr(perpOrientCoord, 0).attr(thicknessDim, sliderThickness);
+        this.upperRange = svg.append("rect").attr(perpOrientCoord, 0).attr(orientCoord, /*-10*/ 0).attr(thicknessDim, this.options.sliderThickness);
+        this.lowerRange = svg.append("rect").attr(perpOrientCoord, 0).attr(thicknessDim, this.options.sliderThickness);
         this.textFormat = d3.format(".2f");
         
         var brushg = svg.append("g")
@@ -113,7 +113,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         var triHandle = brushg.selectAll(".resize")
 			.append ("g")
 			.attr ("class", "triangleHandle")
-			.attr("transform", "translate("+(isVert ? sliderThickness+",0)" : "0, "+sliderThickness+") rotate(90)"))
+			.attr("transform", "translate("+(isVert ? this.options.sliderThickness+",0)" : "0, "+this.options.sliderThickness+") rotate(90)"))
 		;
         
 		triHandle.append("path")
@@ -137,7 +137,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         ;
         
         brushg.selectAll("rect")
-            .attr(thicknessDim, 50);
+            .attr(thicknessDim, this.options.sliderThickness);
         
         this.brushg = brushg;
         
@@ -145,7 +145,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         
         
         svg.append("text")
-            .attr ("transform", isVert ? "rotate(90) translate(0,-"+(sliderThickness+2)+")" : "translate(0,"+(sliderThickness+12)+")")
+            .attr ("transform", isVert ? "rotate(90) translate(0,-"+(this.options.sliderThickness+2)+")" : "translate(0,"+(this.options.sliderThickness+12)+")")
             .attr ("class", "threeColourSliderTitle")
             .text (self.options.title)
         ;
@@ -160,13 +160,19 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
         return this;
     },
     
-    resize: function () {
-        var d3el = d3.select(this.el);
-        
-        // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
+	resetStretchDimension: function () {
+		var d3el = d3.select(this.el);
+		// Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
         var jqElem = $(d3el.select("svg").node());
-        this.height = jqElem.height(); //this.svg.node().clientHeight;
-        
+		var stretchDim = this.isVerticallyOriented() ? "height" : "width";
+        this[stretchDim] = jqElem[stretchDim]();	//this.svg.node().clientHeight;
+		return this;
+	},
+	
+    resize: function () {
+		this.resetStretchDimension();
+  		var d3el = d3.select(this.el);
+		
         // changing y range automatically adjusts the extent, but we want to keep the same extent
         var oldExtent = this.brush.extent();
         this.majorDim.range (this.isVerticallyOriented() ? [this.height, 0] : [0, this.width]);
@@ -184,9 +190,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		this.brush.extent (s); 
         d3el.select("svg g.brush").call(this.brush);   // recall brush binding so background rect is resized and brush redrawn
     
-        // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
-        var jqElem = $(d3el.select("svg").node());
-        this.height = jqElem.height(); //this.svg.node().clientHeight;
+        this.resetStretchDimension();
 
         var colRange = this.model.get("colScale").range();
 		var isVert = this.isVerticallyOriented();
@@ -195,7 +199,11 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		
         this.upperRange.attr(orientDim1, this.majorDim(s[1]) /*+ 10*/).style("fill", colRange[isVert ? 2 : 0]);
         this.brushg.select(".extent").style ("fill", colRange[1]);
-        this.lowerRange.attr(orientDim1, this[orientDim1] - this.majorDim(s[0])).attr(orientDim2, this.majorDim(s[0])).style("fill", colRange[isVert ? 0 : 2]);
+        this.lowerRange
+			.attr(orientDim1, Math.max (0, this[orientDim1] - this.majorDim(s[0])))
+			.attr(orientDim2, this.majorDim(s[0]))
+			.style("fill", colRange[isVert ? 0 : 2])
+		;
 
         var self = this;
         d3el.selectAll(".brushValueText")

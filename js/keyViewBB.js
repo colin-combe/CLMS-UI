@@ -149,14 +149,24 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             colourAssign.setRange (colScale.range());
         }
     },
+	
+	relayout: function () {
+		console.log ("dragend fired");
+		var colourAssign = this.model.get("linkColourAssignment");
+		if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubView) {
+			this.sliderSubView.resize().render();
+		}
+		return this;
+	},
     
     render: function () {
+		
         var colourSection =[{
             header: "Link Colour Scheme",
             rows: []
         }];
         
-        console.log ("RERENDER COLOUR KEYS");
+        //console.log ("RERENDER COLOUR KEYS", arguments);
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
@@ -185,30 +195,33 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 .html (function(d) { return d; })
             ;
 			
-			/*
-			if (colourAssign.type === "threshold") {
-				new CLMSUI.ThreeColourSliderBB ({
-					el: "#colourKeySlider",
+			// always remove old sliderSubView if present
+			if (this.sliderSubView) {
+				this.sliderSubView.remove();
+			}
+	
+			// add in new sliderview if appropriate
+			if (colourAssign.get("type") === "threshold") {		
+				var pid = this.el.id;
+				var tcs = updateSection.select(".threecs");
+				if (tcs.empty()) {
+					updateSection.append("div").attr("id", pid+"3cs").attr("class", "threecs");
+				}
+				
+				this.sliderSubView = new CLMSUI.ThreeColourSliderBB ({
+					el: "#"+pid+"3cs",
 					model: colourAssign,
-					//domain: [0,35],
-					//extent: [15,25],
 					unitText: " Å",
 					title: "Distance Cutoffs",
 					orientation: "horizontal",
+					absolutePosition: false,
+					sliderThickness: 25,
 				})
-					.show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
-					.listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
-						var isDistanceColourScheme = CLMSUI.compositeModelInst.get("linkColourAssignment").get("title") === "Distance";
-						this.show (!!newDistancesObj && isDistanceColourScheme);  // show view when data becomes available ('this' is view)
-					})
-					.listenTo (compModel, "change:linkColourAssignment", function (model, newColourScheme) {
-						var distancesLoaded = !!model.get("clmsModel").get("distancesObj");
-						this.show (distancesLoaded && newColourScheme.get("title") === "Distance");  // show view when data becomes available ('this' is view)
-					})
-					.listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
+					.show (true)
 				;
+				
+				d3.select("#"+pid).selectAll(".brushValueText").style("display", "none");
 			}
-			*/
         }
         
         return this;

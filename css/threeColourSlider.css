@@ -6,7 +6,7 @@
 }
 
 .threeColourSlider.horizontalFlexContainer {
-    height: 90px;
+    height: 50px;
     width: 100%;
 	flex-flow: row-reverse;
 }

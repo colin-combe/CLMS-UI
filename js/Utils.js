@@ -511,7 +511,17 @@ CLMSUI.utils = {
 
             var colScale = colourAssign.get("colScale");
             var labels = colourAssign.get("labels");
+			var domain = colScale.domain(); 
             var pairUp = d3.zip (colScale.range(), labels.range());
+			
+			if (colourAssign.get("type") === "threshold") {
+				pairUp.forEach (function (pair, i) {
+					var d1 = i > 0 ? ">"+domain[i-1] : undefined;
+					var d2 = i < domain.length ? "<"+domain[i] : undefined;
+					var dp = [d1,d2].filter(function(d) { return d !== undefined; });
+					pair[1] += " (" + dp.join(" & ") + ")";
+				});
+			}
 
             var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
             colourElems.exit().remove();
@@ -531,7 +541,6 @@ CLMSUI.utils = {
             colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
             colourElems.select("text").text(function (d, i) { return d[1]; });
         }
-
     },
 
 
