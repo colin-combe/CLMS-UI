@@ -160,12 +160,13 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 	},
     
     render: function () {
+		
         var colourSection =[{
             header: "Link Colour Scheme",
             rows: []
         }];
         
-        console.log ("RERENDER COLOUR KEYS");
+        //console.log ("RERENDER COLOUR KEYS", arguments);
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
@@ -194,23 +195,22 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 .html (function(d) { return d; })
             ;
 			
+			// always remove old sliderSubView if present
+			if (this.sliderSubView) {
+				this.sliderSubView.remove();
+			}
 	
-			if (colourAssign.get("type") === "threshold") {
-				if (this.sliderSubView) {
-					this.sliderSubView.remove();
-				}
-				
+			// add in new sliderview if appropriate
+			if (colourAssign.get("type") === "threshold") {		
 				var pid = this.el.id;
 				var tcs = updateSection.select(".threecs");
 				if (tcs.empty()) {
 					updateSection.append("div").attr("id", pid+"3cs").attr("class", "threecs");
 				}
 				
-				var compModel = this.model;
 				this.sliderSubView = new CLMSUI.ThreeColourSliderBB ({
 					el: "#"+pid+"3cs",
 					model: colourAssign,
-					domain: [0,35],
 					unitText: " Å",
 					title: "Distance Cutoffs",
 					orientation: "horizontal",
@@ -218,18 +218,10 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 					sliderThickness: 25,
 				})
 					.show (true)
-					.listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
-						var isDistanceColourScheme = CLMSUI.compositeModelInst.get("linkColourAssignment").get("title") === "Distance";
-						this.show (!!newDistancesObj && isDistanceColourScheme);  // show view when data becomes available ('this' is view)
-					})
-					.listenTo (compModel, "change:linkColourAssignment", function (model, newColourScheme) {
-						var distancesLoaded = !!model.get("clmsModel").get("distancesObj");
-						this.show (distancesLoaded && newColourScheme.get("title") === "Distance");  // show view when data becomes available ('this' is view)
-					})
-					.listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
 				;
+				
+				d3.select("#"+pid).selectAll(".brushValueText").style("display", "none");
 			}
-			
         }
         
         return this;

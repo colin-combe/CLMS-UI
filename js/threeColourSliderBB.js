@@ -24,7 +24,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		var defaultOptions = {
 			unitText: "",
 			extent: this.model.get("colScale").domain() || [40, 60],
-			domain: [0, 100],
+			domain: this.model.get("superDomain") || [0, 100],
 			margin: {},
 			orientation: "vertical",
 			absolutePosition: true,
@@ -199,7 +199,11 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		
         this.upperRange.attr(orientDim1, this.majorDim(s[1]) /*+ 10*/).style("fill", colRange[isVert ? 2 : 0]);
         this.brushg.select(".extent").style ("fill", colRange[1]);
-        this.lowerRange.attr(orientDim1, this[orientDim1] - this.majorDim(s[0])).attr(orientDim2, this.majorDim(s[0])).style("fill", colRange[isVert ? 0 : 2]);
+        this.lowerRange
+			.attr(orientDim1, Math.max (0, this[orientDim1] - this.majorDim(s[0])))
+			.attr(orientDim2, this.majorDim(s[0]))
+			.style("fill", colRange[isVert ? 0 : 2])
+		;
 
         var self = this;
         d3el.selectAll(".brushValueText")

@@ -213,6 +213,7 @@ CLMSUI.linkColour.setupColourModels = function () {
         colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61','#FDB863','#9970AB']),
         title: "Distance",
         id: "Distance",
+		superDomain: [0, 35],	// superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
     });
 
     // add distanceColoursBB to this collection later if needed

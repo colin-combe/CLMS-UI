@@ -541,7 +541,6 @@ CLMSUI.utils = {
             colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
             colourElems.select("text").text(function (d, i) { return d[1]; });
         }
-
     },
 
 
