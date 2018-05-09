@@ -212,7 +212,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 					el: "#"+pid+"3cs",
 					model: colourAssign,
 					unitText: " Å",
-					title: "Distance Cutoffs",
+					title: colourAssign.get("title")+" Cutoffs",
 					orientation: "horizontal",
 					absolutePosition: false,
 					sliderThickness: 25,
