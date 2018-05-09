@@ -117,19 +117,17 @@
                     }
                 }
 				
-				console.log ("tt d", d);
-				
 				// if tooltip data provided, add either as title attribute or if the tooltipmodel passed as an option, use that
 				if (d.tooltip) {
 					if (ttm) {
-						ind.on ("mouseover", function () {
+						ind.on ("mouseenter", function () {
 							ttm
 								.set ("header", d.name || d.label)
 								.set ("contents", d.tooltip+".")
 								.set ("location", d3.event)
 							;
 							ttm.trigger ("change:location");
-						}).on ("mouseout", function () {
+						}).on ("mouseleave", function () {
 							ttm.set ("contents", null);
 						});
 					} else {

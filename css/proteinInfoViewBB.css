@@ -1,5 +1,11 @@
 #proteinInfoPanel .panelInner {
-    overflow-y: scroll;
+    overflow-y: auto;
+}
+
+.proteinInfoPanel .sectionTable h2.highlighted {
+	background: #fdc086;
+	border-bottom: 1px solid black;
+	border-top: 1px solid black;
 }
 
 .proteinInfoPanel section {

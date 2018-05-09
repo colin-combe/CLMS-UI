@@ -42,7 +42,7 @@
                         var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
                         var params =  "sid=" + sid
                                     + "&layout="+encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g,""))
-      .property("checked")                              + "&name="+encodeURIComponent(d3.select("#name").property("value"));
+      								+ "&name="+encodeURIComponent(d3.select("#name").property("value"));
                         xmlhttp.send(params);
                 };
 
@@ -80,17 +80,41 @@
 
                 wrapperPanel.html(
                     "<div class='xinetButtonBar'>" +
-                        "<label for='name'> Layout Name: </label>" +
-                        "<input type='text' name='name' id='name' value='New layout'>" +
-                        "<button class='btn btn-1 btn-1a saveLayoutButton'>Save Layout</button>" +
-                        "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto Layout</button>" +
-                        "<p id='loadLayoutButton' class=class='btn btn-1 btn-1a'></p>" +
-                        "<button class='btn btn-1 btn-1a downloadButton'>"+CLMSUI.utils.commonLabels.downloadImg+"SVG</button>" +
-                        "<label class='panOrSelect'><span>DRAG TO PAN</span><input type='radio' name='clickMode' class='clickToPan' checked></label>" +
-                        "<label class='panOrSelect'><span>DRAG TO SELECT</span><input type='radio' name='clickMode' class='clickToSelect'></label>" +
-                        "<label class='showLabels'><span>SHOW LABELS</span><input type='checkbox' name='showLabels' class='showXinetLabels' checked></label>" +
+						"<div class='toolbar'>" +
+					    	"<button class='btn btn-1 btn-1a downloadButton'>"+CLMSUI.utils.commonLabels.downloadImg+"SVG</button>" +
+					    	"<label class='showLabels btn'>Show Labels<input type='checkbox' name='showLabels' class='showXinetLabels' checked></label>" +
+							"<span class='noBreak sectionDividerLeft'>" +
+								"<span>Drag To </span>" +
+                        		"<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
+                        		"<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
+							"</span>" +
+						"</div>" +
+						"<div class='toolbar'>" +
+							"<span class='layoutLabel'>Layout</span>" +
+					        "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>" +
+							"<span class='noBreak sectionDividerLeft sectionDividerRight'>" +
+                        		"<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
+                        		"<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>" +
+							"</span>" +
+                        	"<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
+						"</div>" +
                     "</div>"
                   );
+				
+				  var tooltips = {
+					  autoLayoutButton: 'Automatically relayout network of displayed proteins',
+					  saveLayoutButton: 'Save the current layout for later',
+					  loadLayoutButton: 'Load a previously saved layout',
+				  };
+					d3.entries(tooltips).forEach (function (entry) {
+						var elem = d3.select(this.el).select("."+entry.key);
+						if (!elem.empty()) {
+							elem.attr("title", entry.value);	
+						} else {
+							elem = d3.select(this.el).select("#"+entry.key);
+							elem.attr ("title", entry.value);
+						}
+					}, this);
 
 
                   var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
@@ -122,7 +146,7 @@
                     el: "#loadLayoutButton",
                     model: CLMSUI.compositeModelInst,
                     myOptions: {
-                        title: "Load-Layout ▼",
+                        title: "Load ▼",
                     }
                 });
 

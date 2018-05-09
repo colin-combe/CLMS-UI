@@ -95,6 +95,11 @@ div.toggles:not(:last-child) {
     color: #00f;
 }
 
+#filterReportPlaceholder strong {
+	transform: scale(1.1);
+}
+
+
 .filterResultGroup {
     position: absolute;
     left: 0;

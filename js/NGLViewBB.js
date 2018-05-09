@@ -22,7 +22,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
 			"click .showLongChainDescriptorsCB": "toggleShowLongChainDescriptors",
-            "mouseout canvas": "clearHighlighted",
+            "mouseleave canvas": "clearHighlighted",
         });
     },
 	
@@ -217,6 +217,22 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId="+pdbID+"'>"+pdbID+"</A>" : pdbID)
 			+" - "+this.model.get("stageModel").get("structureComp").structure.title
         ;      
+		
+		var interactors = Array.from (this.model.get("clmsModel").get("participants").values());
+		var alignColl = this.model.get("alignColl");
+        var pdbLengthsPerProtein = interactors.map (function (inter) {
+        	var pdbFeatures = alignColl.getAlignmentsAsFeatures (inter.id);
+			var contigPDBFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (pdbFeatures);
+			var totalLength = d3.sum (contigPDBFeatures, function (d) { return d.end - d.begin + 1; });
+			//console.log ("protein", inter, pdbFeatures, contigPDBFeatures, totalLength);
+			return totalLength;
+        }, this);
+		var totalPDBLength = d3.sum (pdbLengthsPerProtein);
+		var totalProteinLength = CLMSUI.modelUtils.totalProteinLength (interactors);
+		var pcent = d3.format(".0%")(totalPDBLength / totalProteinLength);
+		var commaFormat = d3.format(",");
+		
+		overText += " - covers approx "+commaFormat(totalPDBLength)+" of "+commaFormat(totalProteinLength)+" AAs ("+pcent+")";	
         this.chartDiv.select("div.overlayInfo").html(overText);
 
         this.xlRepr = new CLMSUI.CrosslinkRepresentation (
@@ -751,7 +767,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
                     crosslinkData.getModel().get("tooltipModel")
-                        .set("header", CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
+                        .set("header", "Cross-Linked with "+CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex, {"Distance (Å)": distances}))
                         .set("location", this.makeTooltipCoords (pickingData.canvasPosition))
                     ;

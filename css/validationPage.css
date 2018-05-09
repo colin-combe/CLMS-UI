@@ -26,6 +26,8 @@
 #spectrumControlsTop, #spectrumControlsBottom {
     background-color: #091D42;
 	display: inline-block;
+	z-index: 51;
+	position: relative;
 }
 
 .pageHeader, #spectrumControls > div {

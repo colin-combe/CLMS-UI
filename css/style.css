@@ -4,6 +4,12 @@
     stroke: #fdc086;
 }
 
+/* class not named .background as that clashes with d3 brush stuff */
+.backdrop {
+	background: #eee;
+	background-color: #eee;
+}
+
 
 #hiddenProteinsMessage{
   display: none;
@@ -336,9 +342,14 @@
 .verticalFlexContainer {
     height: 100%;
     display: flex;
-    flex-direction: column
+    flex-direction: column;
 }
 
+.horizontalFlexContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
 
 .dynTitle {
     position: relative;
@@ -391,8 +402,8 @@ A.btn {
     text-decoration: none;
 }
 
-.verticalLine {
-	border-right: 1px solid rgba(0,0,0,0.5);
+.nopadRight {
+	padding-right: 0;
 }
 
 .nopadLeft {
@@ -506,7 +517,7 @@ A.btn {
 
 
 
-.toolbar:first-child {
+.toolbar {
     margin-bottom: 0.15em;
     border-bottom: 1px solid rgba(0,0,0,0.5);
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
@@ -524,6 +535,28 @@ A.btn {
     display: inline-block;
 }
 
+.toolbar > .sectionDividerRight {
+	border-right: 1px solid rgba(0,0,0,0.5);
+	margin-right: 0.5em;
+	padding-right: 0.5em;
+}
+
+.toolbar > .sectionDivider2 {
+	border-right: 1px solid rgba(0,0,0,0.5);
+	margin-right: 0.5em;
+	padding-right: 1em;
+}
+
+.toolbar > .sectionDividerLeft {
+	border-left: 1px solid rgba(0,0,0,0.5);
+	margin-left: 0.5em;
+	padding-left: 0.5em;
+}
+
+.pdbWindowButton {
+	vertical-align: text-bottom;
+}
+
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
 DIV[class='messagebar']:not(:last-of-type) {
 	margin-bottom: 0.15em;
@@ -539,4 +572,45 @@ DIV[class='messagebar']:not(:last-of-type) {
 	color: grey;
 	font-size: 0.7rem;
 	font-family: monospace;
+}
+
+
+/* tweaks to jsonview */
+
+.jsonview {
+	line-height: 1.2em;
+}
+
+.jsonview ul ul ul ul {
+	background: #ccc;
+}
+
+.jsonview ul ul ul ul ul ul {
+	background: #bbb;
+}
+
+.jsonview ul.array {
+	list-style:decimal;
+	list-style-position: inside;
+}
+
+.jsonview .collapser {
+	top: 0;
+}
+
+.jsonview .collapser:hover {
+	background: white;
+	font-weight: normal;
+}
+
+.jsonview .collapser + .prop:hover {
+	background: white;
+}
+
+.jsonview .prop {
+	cursor: default;
+}
+
+.jsonview .collapser + .prop {
+	cursor: pointer;
 }
