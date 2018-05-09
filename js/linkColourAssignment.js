@@ -4,6 +4,7 @@ CLMSUI.linkColour = CLMSUI.linkColour || {};
 CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     defaults: {
         title: undefined,
+		type: "linear",
     },
     setDomain: function (newDomain) {
         this.get("colScale").domain(newDomain);
@@ -17,15 +18,13 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     },
     getDomainIndex: function (crossLink) {
         var val = this.getValue(crossLink);
-        return val != undefined ? (this.type !== "ordinal" ? d3.bisect (this.get("colScale").domain(), val) : 
-                this.get("colScale").domain().indexOf (val)) : undefined
+		var dom = this.get("colScale").domain();
+        return val != undefined ? (this.get("type") !== "ordinal" ? d3.bisect (dom, val) : dom.indexOf (val)) : undefined
         ;
     },
     getDomainCount: function () {
         var domain = this.get("colScale").domain();
-        return !this.isCategorical() ? domain[1] - domain[0] + 1 : 
-            (this.type === "threshold" ? domain.length + 1 : domain.length)
-        ;
+        return this.isCategorical() ? (this.get("type") === "threshold" ? domain.length + 1 : domain.length) : domain[1] - domain[0] + 1; 
     },
     getColour: function (crossLink) {
         var val = this.getValue (crossLink);
@@ -40,9 +39,8 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
             this.collection.trigger ("aColourModelChanged", this, obj);
         }
     },
-    isCategorical: function () { return this.type !== "linear"; },
+    isCategorical: function () { return this.get("type") !== "linear"; },
     undefinedColour: "#888",
-    type: "ordinal",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
@@ -53,7 +51,8 @@ CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
 CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
         this
-            .set("labels", this.get("colScale").copy().range(["Self Link", "Homomultimer Link", "Between Protein Link"]))
+            .set("labels", this.get("colScale").copy().range(["Self Cross-Links", "Self Cross-Links (Overlapping Peptides)", "Between Protein Cross-Links"]))
+			.set("type", "ordinal")
         ;
     },
     getValue: function (crossLink) {
@@ -100,8 +99,9 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
             labelRange = ["Multiple Group", "Single Group"];
         }
         this
-            .set("colScale", colScale)
-            .set("labels", this.get("colScale").copy().range(labelRange))
+            .set ("colScale", colScale)
+            .set ("labels", this.get("colScale").copy().range(labelRange))
+			.set ("type", "ordinal")
         ;
     },
     getValue: function (crossLink) {    
@@ -150,9 +150,9 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
 
 CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function () {
-        this.type = "threshold";
         this
-            .set("labels", this.get("colScale").copy().range(["Within Distance", "Borderline", "Overlong"]))
+			.set ("type", "threshold")
+            .set ("labels", this.get("colScale").copy().range(["Within Distance", "Borderline", "Overlong"]))
         ;
     },
     getValue: function (crossLink) {
@@ -163,22 +163,21 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 
 CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function (properties, options) {
-        this.type = options.type || "linear";
         var domain = this.get("colScale").domain();
         var labels;
-        if (!this.isCategorical()) {
-            labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
-            domain.map (function (domVal, i) {
-                labels[i] += " (" + domVal + ")";
-            });
-        } else {
-            labels = domain.map (function (domVal) { 
+        if (this.isCategorical()) {
+			labels = domain.map (function (domVal) { 
                 return String(domVal)
                     .toLowerCase()
                     .replace(/\b[a-z](?=[a-z]{2})/g, function(letter) {
                         return letter.toUpperCase(); 
                     })
                 ;
+            });
+        } else {
+            labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
+            domain.map (function (domVal, i) {
+                labels[i] += " (" + domVal + ")";
             });
         }
         
@@ -211,9 +210,10 @@ CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
-        colScale: d3.scale.threshold().domain([0,1]).range(['#5AAE61','#FDB863','#9970AB']),
+        colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61','#FDB863','#9970AB']),
         title: "Distance",
         id: "Distance",
+		superDomain: [0, 35],	// superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
     });
 
     // add distanceColoursBB to this collection later if needed
@@ -261,7 +261,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
-        range.splice (1, 0, "white");
+        range.splice (1, 0, "#aaa");
     }
     
     var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).values();
@@ -278,9 +278,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
             id: label,
             title: label || field,
             field: field,
-        },
-        {
-            type: isCategorical ? "ordinal" : "linear",
+			type: isCategorical ? "ordinal" : "linear",
         }
     );
     

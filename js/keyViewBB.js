@@ -43,15 +43,15 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         };
         
         var texts = {
-            clinkp: "Cross-link(s) between different proteins",
-            ambigp: "Ambiguous",
+            clinkp: "Cross-Link(s) between different proteins",
+            ambigp: "Ambiguous Cross-Link(s)",
             multip: "Multiple Linkage Sites",
-            selflinkp: "Self Link(s); could include links between two different molecules of same protein",
-            selflinkpc: "Self Link(s); definitely includes links between two different molecules of same protein",
-            clinkr: "Cross-link between different proteins",
-            ambigr: "Ambiguous",
-            selflinkr: "Self Link in same protein (could link either same or two different molecules)",
-            homom: "Homomultimeric Self Link (definitely links two different molecules of same protein)",
+            selflinkp: "Self Cross-Link(s); could include Cross-Links not between the same molecule of same protein",
+            selflinkpc: "Self Cross-Link(s); definitely includes Cross-Links not between the same molecule of same protein",
+            clinkr: "Cross Link between different proteins",
+            ambigr: "Ambiguous Cross-Link",
+            selflinkr: "Self Cross-Link in same protein. Could link either same or two different molecules",
+            homom: "Self Cross-Link with Overlapping Peptides. Cannot be the same molecule, so either between two different molecules of same protein (Homomultimeric) or a mis-identification",
             selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide)",
             linkmodpep: "Linker modified peptide (unfilled = ambiguous)",
             highlight: "Highlighted linked peptide",
@@ -98,6 +98,13 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         };
         
         CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0]);
+		
+		/*
+		chartDiv.select("#keyInfocolourKey tbody").append("tr")
+			.attr ("colspan", 2)
+			.attr ("id", "colourKeySlider")
+		;
+		*/
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var notLinear = function () { return false; };
@@ -142,14 +149,24 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             colourAssign.setRange (colScale.range());
         }
     },
+	
+	relayout: function () {
+		console.log ("dragend fired");
+		var colourAssign = this.model.get("linkColourAssignment");
+		if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubView) {
+			this.sliderSubView.resize().render();
+		}
+		return this;
+	},
     
     render: function () {
+		
         var colourSection =[{
             header: "Link Colour Scheme",
             rows: []
         }];
         
-        console.log ("RERENDER COLOUR KEYS");
+        //console.log ("RERENDER COLOUR KEYS", arguments);
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
@@ -177,6 +194,34 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 .append("td")
                 .html (function(d) { return d; })
             ;
+			
+			// always remove old sliderSubView if present
+			if (this.sliderSubView) {
+				this.sliderSubView.remove();
+			}
+	
+			// add in new sliderview if appropriate
+			if (colourAssign.get("type") === "threshold") {		
+				var pid = this.el.id;
+				var tcs = updateSection.select(".threecs");
+				if (tcs.empty()) {
+					updateSection.append("div").attr("id", pid+"3cs").attr("class", "threecs");
+				}
+				
+				this.sliderSubView = new CLMSUI.ThreeColourSliderBB ({
+					el: "#"+pid+"3cs",
+					model: colourAssign,
+					unitText: " Å",
+					title: "Distance Cutoffs",
+					orientation: "horizontal",
+					absolutePosition: false,
+					sliderThickness: 25,
+				})
+					.show (true)
+				;
+				
+				d3.select("#"+pid).selectAll(".brushValueText").style("display", "none");
+			}
         }
         
         return this;

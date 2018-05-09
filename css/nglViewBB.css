@@ -3,6 +3,7 @@
     color: #666;
 	padding: 0 0.5em;
 	background: rgba(255, 255, 255, 0.7);
+	z-index: 1; /* to overlay ngl div which is now position:relative */
 }
 
 .outsideLink {

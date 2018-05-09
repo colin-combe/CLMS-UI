@@ -319,22 +319,25 @@ CLMSUI.init.views = function () {
 		myOptions: {}
 	});
 
-
+	/*
     new CLMSUI.ThreeColourSliderBB ({
         el: "#sliderDiv",
         model: CLMSUI.linkColour.distanceColoursBB,
-        domain: [0,35],
-        extent: [15,25],
 		unitText: " Å",
         title: "Distance Cutoffs",
     })
         .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
         .listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
-            this.show (!!newDistancesObj);  // show view when data becomes available ('this' is view)
+			var isDistanceColourScheme = CLMSUI.compositeModelInst.get("linkColourAssignment").get("title") === "Distance";
+            this.show (!!newDistancesObj && isDistanceColourScheme);  // show view when data becomes available ('this' is view)
+        })
+	    .listenTo (compModel, "change:linkColourAssignment", function (model, newColourScheme) {
+			var distancesLoaded = !!model.get("clmsModel").get("distancesObj");
+            this.show (distancesLoaded && newColourScheme.get("title") === "Distance");  // show view when data becomes available ('this' is view)
         })
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
-
+	*/
 	
     new CLMSUI.xiNetControlsViewBB ({
           el: "#xiNetControlsPanel",

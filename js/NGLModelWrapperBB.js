@@ -40,10 +40,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         this.setLinkList (filteredCrossLinks);
         var distancesObj = this.makeDistances ();   
         
-        var distObjPreExists = clmsModel.get("distancesObj");
-        var oldpdbid = distObjPreExists ? distObjPreExists.pdbBaseSeqID : undefined;
-        clmsModel.set ("distancesObj", distancesObj);
-        if (distObjPreExists && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
+        var existingDistObj = clmsModel.get("distancesObj");
+        var oldpdbid = existingDistObj ? existingDistObj.pdbBaseSeqID : undefined;
+		
+		// silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
+        clmsModel.set ("distancesObj", distancesObj, {silent: true});
+		clmsModel.trigger ("change:distancesObj", clmsModel, distancesObj);
+		
+        if (existingDistObj && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
             console.log ("FORCE DISTANCES CHANGE EVENT");
             CLMSUI.vent.trigger ("distancesAdjusted");
         }

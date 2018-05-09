@@ -900,6 +900,10 @@ CLMSUI.modelUtils = {
 		});
 		return parts;
 	},
+	
+	totalProteinLength: function (interactors) {
+		return d3.sum (interactors, function (d) { return d.size; })	
+	},
     
     attributeOptions: [
         {

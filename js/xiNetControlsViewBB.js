@@ -92,7 +92,7 @@
 						"<div class='toolbar'>" +
 							"<span class='layoutLabel'>Layout</span>" +
 					        "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>" +
-							"<span class='noBreak sectionDividerLeft sectionDivider'>" +
+							"<span class='noBreak sectionDividerLeft sectionDividerRight'>" +
                         		"<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
                         		"<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>" +
 							"</span>" +

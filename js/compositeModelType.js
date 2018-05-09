@@ -299,9 +299,17 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (matches) {  // if undefined nothing happens, to clear selection pass an empty array - []
             var type = "match_"+modelProperty;
             var map = add ? new d3.map (this.get(type).values(), function(d) { return d.id; }) : new d3.map();
+			var potentialToggle = (modelProperty === "selection");
             matches.forEach (function (match) {
                 if (match.match) match = match.match;
-                map.set (match.id, match);
+				var id = match.id;
+				// add new matches. If adding to pre-selected matches, toggle new matches depending on whether the match is already selected or not
+				if (potentialToggle && add && map.has (id)) {
+					map.remove (id);
+				} else {
+					map.set (id, match);
+				}
+
             });
             this.set (type, map);
 
@@ -334,7 +342,18 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, dontForward) {
         if (crossLinks) { // if undefined nothing happens, to clear selection pass an empty array - []
             if (add) {
-                crossLinks = crossLinks.concat (this.get(modelProperty));
+				var potentialToggle = (modelProperty === "selection");
+				var preSelected = d3.map (this.get(modelProperty), function (d) { return d.id; });
+				// add new cross-links. If adding to pre-selected cross-links, toggle new cross-links depending on whether the cross-link is already selected or not
+				crossLinks.forEach (function (xlink) {
+					var id = xlink.id;
+					if (potentialToggle && preSelected.has (id)) {
+						preSelected.remove (id);
+					} else {
+						preSelected.set (id, xlink);
+					}
+				});
+                crossLinks = preSelected.values();
             }
             var crossLinkMap = d3.map (crossLinks, function (d) {
                 return d.id;
