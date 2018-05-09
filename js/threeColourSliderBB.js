@@ -83,8 +83,8 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
             .attr ({
                 class: function(d) { return "subsetNumberFilter "+d.class; }, 
                 type: "number",
-                min: self.options.extent[0],
-                max: self.options.extent[1],
+                min: self.options.domain[0],
+                max: self.options.domain[1],
                 step: 0.01,
             })
 		;
@@ -117,13 +117,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		;
         
 		triHandle.append("path")
-        	.attr("d", "M0 0 L20 20 L20 -20 z")
-        ;
-        
-        // triangle highlighting bevel
-        triHandle.append("path")
-        	.attr ("class", "bevel")
-            .attr("d", "M0 0 L20 -20")
+        	.attr("d", "M 0 0 l 10.5 10.5 l 8 0 l 0 -21 l -8 0 Z")
         ;
         
         // text values in bar
