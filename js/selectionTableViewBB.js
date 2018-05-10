@@ -62,7 +62,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "expMass": "Exp Mass",
             "matchMZ": "Match M/Z",
             "matchMass": "Match Mass",
-            "massError": "Mass Error",
+            "massError": "Mass Error (ppm)",
             "precursorIntensity": "Intensity",
             "elutionStart": "Elut.Start",
             "elutionEnd": "Elut.End",
