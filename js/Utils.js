@@ -875,7 +875,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     }
 });
 
-CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc, openSectionIndices) {
+CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc, openSectionIndices, clickFunc) {
     var self = this;
     var setArrow = function (d) {
         var assocTable = d3.select("#"+idPrefix+d.id);
@@ -891,6 +891,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
             var assocTable = d3.select("#"+idPrefix+d.id);
             var tableIsHidden = (assocTable.style("display") == "none");
             assocTable.style("display", tableIsHidden ? "table" : "none");
+			if (clickFunc) { clickFunc (tableIsHidden, d); }
             setArrow.call (this, d);
         })
         //.on ("mouseover", function(d) {

@@ -17,14 +17,6 @@
     right: 0;
 }
 
-.threeColourSlider.verticalFlexContainer > * {
-    margin-bottom: 0.5em;
-}
-
-.threeColourSlider.horizontalFlexContainer > * {
-    margin-right: 0.5em;
-}
-
 .threeColourSlider input {
     flex-shrink: 0;
 }

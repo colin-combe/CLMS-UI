@@ -211,7 +211,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
         colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61','#FDB863','#9970AB']),
-        title: "Distance",
+        title: "Distance (Å)",
         id: "Distance",
 		superDomain: [0, 35],	// superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
     });
