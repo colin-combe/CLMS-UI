@@ -452,7 +452,7 @@ CLMSUI.init.viewsEssential = function (options) {
         displayEventName: "spectrumShow",
         myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
-        .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+    /*    .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
             if (match) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "./loadData.php?sid="
@@ -483,7 +483,7 @@ CLMSUI.init.viewsEssential = function (options) {
             } else {
                 //~ //this.model.clear();
             }
-        })
+        })*/
     ;
 
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
@@ -537,7 +537,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
+            var randId = 0;//CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
             CLMSUI.loadSpectra (match, randId, this.model);
         } else {
             this.model.clear();

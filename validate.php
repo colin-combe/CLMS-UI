@@ -19,7 +19,7 @@
 -->
 <?php
 session_start();
-$cacheBuster = '?v='.microtime(true);
+$cacheBuster = '';//'?v='.microtime(true);
 // if (!$_SESSION['session_name']) {
 //     header("location:login.html");
 //     exit;
@@ -100,7 +100,7 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./js/selectionTableViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/loadSpectra.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>

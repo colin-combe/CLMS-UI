@@ -343,12 +343,13 @@ if (count($_GET) > 0) {
             // }
             // echo '"src":"' . $sourceId. '",'
                 // . '"sn":' . $line["scan_number"]. ','
-                . '"pc_c":' . $line["charge_state"]
-            //     . '"pc_mz":' . $line["precursor_mz"] . ','
-            //     . '"cm":' . $line["calc_mass"] . ','
-            //     . '"pc_i":' . $line["precursor_intensity"] . ','
-            //     . '"e_s":' . $line["elution_time_start"] . ','
-            //     . '"e_e":' . $line["elution_time_end"]
+                . '"ions":"' . $line["ions"] .'",'
+                . '"pc_c":' . $line["charge_state"] . ','
+                . '"e_mz":' . $line["exp_mz"] . ','
+                . '"c_mz":' . $line["calc_mz"] // . ','
+                // . '"pc_i":' . $line["precursor_intensity"] . ','
+                // . '"e_s":' . $line["elution_time_start"] . ','
+                // . '"e_e":' . $line["elution_time_end"]
                 . "}";
             $line = pg_fetch_array($res, null, PGSQL_ASSOC);
             if ($line) {echo ",\n";}
@@ -373,7 +374,8 @@ if (count($_GET) > 0) {
             echo "{"
                 . '"id":' . $line["id"] . ','
                 . '"file":"' . $line["peak_list_file_name"] . '",'
-                . '"sn":' . $line["scan_id"]
+                . '"sn":' . $line["scan_id"] . ','
+                . '"ft":"' . $line["frag_tol"]. '"'
                 . "}";
             $line = pg_fetch_array($res, null, PGSQL_ASSOC);
             if ($line) {echo ",\n";}
@@ -409,6 +411,7 @@ if (count($_GET) > 0) {
                  . '"id":"' . $line["id"] . '",'
                  . '"seq_mods":"' . $line["seq_mods"] . '",'
                  . '"linkSite":"' . $line["link_site"]. '",'
+                 . '"clModMass":"' . $line["crosslinker_modmass"]. '",'
                  . '"prt":["' . implode($proteinsArray, '","') . '"],'
                  . '"pos":[' . substr($positions, 1, strlen($positions) - 2) . ']'
                  . "}";
@@ -475,7 +478,7 @@ if (count($_GET) > 0) {
             echo '{'
                 . '"id":"' . $pId . '",'
                 // . '"real_id":"' . $line["real_id"] . '",'
-                . '"name":"' . $line["name"] . '",'
+                //. '"name":"' . $line["name"] . '",'
                 . '"description":"",'// . $line["description"] . '",'
                 . '"accession":"' .$line["accession"]  . '",'
                 . '"seq_mods":"' .$line["sequence"] . '"'

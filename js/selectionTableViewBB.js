@@ -60,8 +60,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "precursorCharge": "Charge",
             "expMZ": "Exp M/Z",
             "expMass": "Exp Mass",
-            "matchMZ": "Match M/Z",
-            "matchMass": "Match Mass",
+            "matchMZ": "Calc M/Z",
+            "matchMass": "Calc Mass",
             "massError": "Mass Error",
             "precursorIntensity": "Intensity",
             "elutionStart": "Elut.Start",
@@ -83,11 +83,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             //~ "pepPos1": function () { return false; },
             //~ "pepPos2": function () { return false; },
             "autovalidated": function () {
-                return CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
+                return false;//CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
             },
             "validated": function () {
-                return true;
-            } //CLMS.model.manualValidatedFound; },
+                return false;
+            }, //CLMS.model.manualValidatedFound; },
+            "precursorIntensity": function () {return false;},
+            "elutionStart": function () {return false;},
+            "elutionEnd": function () {return false;}
         };
 
         this.filteredProps = tableDataPropOrder.filter(
@@ -145,16 +148,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }, //temp hack//twoZeroPadder (d.score); },
 
             "expMZ": function (d) {
-                return massZeroPadder(d.expMZ());
+                return massZeroPadder(d.expMZ);
             },
             "expMass": function (d) {
                 return massZeroPadder(d.expMass());
             },
             "matchMZ": function (d) {
-                return massZeroPadder(d.matchMZ());
+                return massZeroPadder(d.calcMZ);
             },
             "matchMass": function (d) {
-                return massZeroPadder(d.matchMass());
+                return massZeroPadder(d.calcMass());
             },
             "massError": function (d) {
                 return massZeroPadder(d.massError());
