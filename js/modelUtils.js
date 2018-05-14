@@ -399,7 +399,7 @@ CLMSUI.modelUtils = {
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
         $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
             function (data, status, xhr) {   
-                //console.log ("data", data, arguments);
+                //console.log ("match pdb data", nglSequences, data, arguments);
 			
                 if (status === "success" && data.contentType === "text/xml") {  // data is an xml fragment
                     var map = d3.map();

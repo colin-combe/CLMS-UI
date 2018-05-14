@@ -56,19 +56,21 @@
                 var tofrom = _options.featureParse (feature, nodeID);
                 //CLMSUI.utils.xilog ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
                 //CLMSUI.utils.xilog ("ORIG FEATURE", feature);
-                featureCoords.push ({
-                    id: feature.category + fid.toString(),
-                    description: feature.description,
-                    category: feature.category,
-                    type: feature.type,
-                    name: feature.name,
-                    nodeID: nodeID,
-                    fstart: tofrom.fromPos + 1,
-                    fend: tofrom.toPos,
-                    start: scale (tofrom.fromPos + nodeCoord.rawStart),
-                    end: scale (tofrom.toPos + nodeCoord.rawStart),
-                });
-                fid++;
+				if (tofrom) {
+					featureCoords.push ({
+						id: feature.category + fid.toString(),
+						description: feature.description,
+						category: feature.category,
+						type: feature.type,
+						name: feature.name,
+						nodeID: nodeID,
+						fstart: tofrom.fromPos + 1,
+						fend: tofrom.toPos,
+						start: scale (tofrom.fromPos + nodeCoord.rawStart),
+						end: scale (tofrom.toPos + nodeCoord.rawStart),
+					});
+					fid++;
+				}
             });
         });
         //CLMSUI.utils.xilog ("CONV FEATURES", featureCoords);
@@ -127,6 +129,7 @@
 
         initialize: function (viewOptions) {
             var self = this;
+			
 			this.defaultOptions.featureParse = function (feature, nodeid) {
 				// feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
 				if (feature.start == undefined) {
@@ -136,12 +139,19 @@
 				var convEnd = +feature.end;
 				var type = feature.type.toLowerCase();
 				var protAlignModel = self.model.get("alignColl").get(nodeid);
+				
 				if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
 					var alignmentID = feature.alignmentID || "Canonical";
+					/*
 					convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
 					convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
 					if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
 					if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
+					*/
+					var convertedRange = protAlignModel.rangeToSearch (alignmentID, convStart, convEnd);
+					if (!convertedRange) { return null; }
+					convStart = convertedRange[0];
+					convEnd = convertedRange[1];
 				}
 				convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
 				if (isNaN(convEnd) || convEnd === undefined) {
