@@ -158,14 +158,16 @@
 		rangeToSearch: function (seqName, index1, index2) {
 			var i1 = this.mapToSearch (seqName, index1);
 			var i2 = this.mapToSearch (seqName, index2);
-			/*
-			var seqLength = this.getCompSequence(seqName)[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
+			var seqLength = this.getCompSequence(seqName).convertFromRef.length;
 			
-			if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
-                    alignPos = null;    // null can be added / subtracted to without NaNs, which undefined causes
-                }
-                else if (alignPos < 0 && !keepNegativeValue) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find 
-			*/
+			if ((i1 === 0 && i2 === 0) || (i1 <= -seqLength && i2 <= -seqLength)) {
+				return null;	// both points outside (and same side) of sequence we attempted to match to
+			}
+			
+			if (i1 <= 0) { i1 = -i1; }   // <= 0 indicates no equal index match, do the - to find nearest index
+			if (i2 <= 0) { i2 = -i2; }   // <= 0 indicates no equal index match, do the - to find nearest index
+			
+			return [i1, i2];
 		},
 		
         // find the first and last residues in a sequence that map to existing residues in the search sequence (i.e aren't
