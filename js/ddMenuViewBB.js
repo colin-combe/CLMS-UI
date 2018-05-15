@@ -20,6 +20,7 @@
                 groupByAttribute: "group",
                 labelByAttribute: "name",
                 toggleAttribute: "state",
+				sectionHeader: function (d) { return ""; },
             };
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
             var self = this;
@@ -58,15 +59,18 @@
                 var lastCat = null;
                 var adata = [];
                 this.collection.each (function (model) {
-                    //console.log ("model", model);
-                    var cat = model.get(self.options.groupByAttribute);
-                    var cbdata = ({
+					var cbdata = model.toJSON();	// doesn't actually make json, just copies model attributes to object that can then be jsonified (or overwritten safely)
+                    $.extend (cbdata, {
                         id: model.get("id") || (model.get(self.options.labelByAttribute)+"Placeholder"),   // ids may not contain spaces 
                         label: model.get(self.options.labelByAttribute),
 						tooltip: model.get("tooltip"),
                     });
-                    if (adata.length && lastCat !== cat) {  // have to access last datum to say it's the last in its category
-                        adata[adata.length - 1].sectionEnd = true; 
+					var cat = model.get (self.options.groupByAttribute);
+                    if (lastCat !== cat) {  // have to access last datum to say it's the last in its category
+						if (adata.length) {	// ignore sectionEnd for first item
+                        	adata[adata.length - 1].sectionEnd = true;
+						}
+						cbdata.sectionBegin = true; 
                     }
                     adata.push (cbdata);
                     lastCat = cat;
@@ -82,7 +86,7 @@
                     self.$el.append(cbView.$el);
                 }); 
                 
-                this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, label: cbdata.label, sectionEnd: cbdata.sectionEnd, tooltip: cbdata.tooltip}; });
+                this.options.menu = adata;
             }  
             return this;
         },
@@ -111,7 +115,7 @@
                         ind.node().appendChild (targetNode);
 
                         if (targetSel.datum() == undefined) {
-                            ind.select("#"+d.id.replace(/ /g, "_"));//martin magic
+                            ind.select("#"+d.id.replace(/ /g, "_"));	//martin magic
                         }
                     }
                 }
@@ -135,11 +139,17 @@
 				}
             }, this); 
             
+			var self = this;
             choices
                 .filter(function(d) { return d.sectionEnd; })
-                .insert ("hr")
+				.style ("border-bottom", "1px dotted white")
             ;
-            
+			
+			choices
+                .filter(function(d) { return d.sectionBegin; })
+                .insert ("span", ":first-child").attr("class", "ddSectionHeader").text (self.options.sectionHeader)
+            ;
+
             return this;
         },
         
@@ -215,7 +225,6 @@
         initialize: function () {
             CLMSUI.AnnotationDropDownMenuViewBB.__super__.initialize.apply (this, arguments);
             
-            //CLMSUI.domainColours.range(['#000000', '#e69f00', '#56b4e9', '#2b9f78', '#f0e442', '#0072b2', '#d55e00', '#cc79a7']);
             d3.select("#annotationsDropdownPlaceholder").selectAll("li label")
                 .insert ("span", ":first-child")
                 .attr ("class", "colourSwatchSquare")
@@ -233,7 +242,8 @@
                 .filter (function(d) { return d.id === featureTypeModel.id; })
                 .select(".colourSwatchSquare")
                 .style ("background", function (d) { 
-                    var col = CLMSUI.domainColours(d.id.toUpperCase());
+                    //var col = CLMSUI.domainColours(d.id.toUpperCase());
+					var col = CLMSUI.domainColours(d.category, d.type);
                     var scale = d3.scale.linear().domain([0,1]);
                     scale.range(["white", col]);
                     return shown ? scale (0.5) : "transparent";

@@ -274,13 +274,6 @@
                 .call (drag)
             ;
 
-            // Cycle colours through features
-             //i think this can go?
-            //~ this.color = d3.scale.ordinal()
-                //~ .domain([0,2])
-                //~ .range(["#beb", "#ebb" , "#bbe"])
-            //~ ;
-
             // for internal circle paths
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")

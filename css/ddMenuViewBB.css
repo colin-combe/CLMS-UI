@@ -70,3 +70,9 @@
 .dynDiv .dropdown DIV HR {
 	background: #091d42;
 }
+
+.dropdown .ddSectionHeader {
+	opacity: 0.5;
+	text-transform: lowercase;
+	font-variant: small-caps;
+}
