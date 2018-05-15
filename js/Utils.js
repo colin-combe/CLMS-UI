@@ -131,7 +131,7 @@ CLMSUI.utils = {
 
             initialize: function (viewOptions) {
 				
-				console.log ("this", this.model);
+				//console.log ("this", this.model);
                 var defaultOptions = {
                     labelFirst: true
                 };

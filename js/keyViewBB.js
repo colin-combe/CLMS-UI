@@ -151,7 +151,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     },
 	
 	relayout: function () {
-		console.log ("dragend fired");
+		//console.log ("dragend fired");
 		var colourAssign = this.model.get("linkColourAssignment");
 		if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubView) {
 			this.sliderSubView.resize().render();

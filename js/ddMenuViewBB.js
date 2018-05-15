@@ -75,7 +75,6 @@
 					if (self.options.tooltipModel) {
 						options.tooltipModel = self.options.tooltipModel;
 					}
-					console.log ("dfjgkdfgkd", options);
                     var cbView = new CLMSUI.utils.checkBoxView ({
                         model: model,
                         myOptions: options,
