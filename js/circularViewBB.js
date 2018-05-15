@@ -54,8 +54,7 @@
             var nodeCoord = nodeCoordMap.get (nodeID);
             farr.forEach (function (feature) {
                 var tofrom = _options.featureParse (feature, nodeID);
-                //CLMSUI.utils.xilog ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
-                //CLMSUI.utils.xilog ("ORIG FEATURE", feature);
+                //CLMSUI.utils.xilog (nodeArr[i].name, "nc", nodeCoord, farr, tofrom, "ORIG FEATURE", feature);
 				if (tofrom) {
 					featureCoords.push ({
 						id: feature.category + fid.toString(),
@@ -469,7 +468,6 @@
         },
 		
 		clearSelection: function (evt) {
-			console.log ("evt", evt);
 			// don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
 			// this is also logically consistent as it's adding 'nothing' to the existing selection
 			if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
