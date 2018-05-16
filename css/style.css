@@ -614,3 +614,19 @@ DIV[class='messagebar']:not(:last-of-type) {
 .jsonview .collapser + .prop {
 	cursor: pointer;
 }
+
+svg.temp {
+	text-transform: initial;	/* reset text-transforms for temporary svgs */
+	letter-spacing: 0;
+	font-family: "Helvetica";
+}
+
+svg.temp .keyTitle {
+	font-style: italic;
+}
+
+svg.temp .keyPoint rect {
+	shape-rendering: crispedges;
+	stroke-width: 1px;
+	stroke: black;
+}

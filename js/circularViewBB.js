@@ -957,7 +957,7 @@
             featureJoin
                 .order()
                 .attr("d", this.featureArc)
-                .style("fill", function(d) { return CLMSUI.domainColours((d.category + "-" + d.type).toUpperCase()); })
+                .style("fill", function(d) { return CLMSUI.domainColours (d.category,d.type); /*((d.category + "-" + d.type).toUpperCase())*/; })
             ;
 
             return this;

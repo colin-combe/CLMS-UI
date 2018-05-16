@@ -129,54 +129,6 @@ CLMSUI.init.models = function (options) {
 
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch();
-
-    CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Set1[7]);//.slice().reverse());
-	
-	
-	CLMSUI.domainColours = function (catName, typeName) {
-		var cols = [];
-		catName = catName.toLocaleLowerCase();
-		
-		var baseScale =  d3.scale.ordinal()
-			.range(colorbrewer.Set3[11])
-			.domain (["aa", "alignment", "molecule processing", "regions", "sites", "amino acids modifications", "natural variations", "experimental info", "secondary structure", "undefined"])
-		;
-		console.log ("baseScale", baseScale);
-		
-		var dict = {
-			"domains and sites": "sites",
-			"structural": "secondary structure",
-			"variants": "natural variations",
-			"ptm": "amino acid modifications",
-			"mutagenesis": "experimental info",
-			"sequence information": "experimental info",
-		}
-		
-		catName = dict[catName] || catName;
-		var id = catName+"-"+typeName;
-		
-		if (!cols[id]) {
-			var catColour = baseScale (catName);
-			var hash = 0, i, chr;
-			if (typeName) {
-				for (i = 0; i < typeName.length; i++) {
-					chr   = typeName.charCodeAt(i);
-					hash  = ((hash << 5) - hash) + chr;
-					hash |= 0; // Convert to 32bit integer
-				}
-			}
-			
-			var shade = hash / (Math.pow(2,32));
-			shade = (shade * 0.6) + 0.2;
-			console.log (catName, "shade", shade, hash);
-			var hsl = d3.hsl(catColour);
-			console.log ("hsl", hsl, catColour);
-			var newHsl = d3.hsl (hsl.h, shade, hsl.l);
-			cols[id] = newHsl.toString(); 
-		}
-		console.log ("cols", cols[id]);
-		return cols[id];
-	};
 };
 
 
