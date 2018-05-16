@@ -322,7 +322,6 @@ CLMSUI.modelUtils = {
                 // This is asynchronous so we use a callback
                 if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
                     CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-                        //console.log ("pdb's pdbUniProtMap", pdbUniProtMap);
                         if (!pdbUniProtMap.length) {    // no matches, fall back to aligning
                             matchByAlignment();
                         } else {
@@ -404,12 +403,12 @@ CLMSUI.modelUtils = {
                 if (status === "success" && data.contentType === "text/xml") {  // data is an xml fragment
                     var map = d3.map();
 
-                    $(data).find("block").each (function(i,b) { 
+                    $(data).find("block").each (function (i, b) { 
                         var segArr = $(this).find("segment[intObjectId]"); 
                         for (var n = 0; n < segArr.length; n += 2) {
                             var id1 = $(segArr[n]).attr("intObjectId");
                             var id2 = $(segArr[n+1]).attr("intObjectId");
-                            var pdbis1 = _.includes(id1, ".") || id1.charAt(0) !== 'P';
+                            var pdbis1 = _.includes(id1, ".") || !id1.match (CLMSUI.utils.commonRegexes.uniprotAccession);
                             var unipdb = pdbis1 ? {pdb: id1, uniprot: id2} : {pdb: id2, uniprot: id1};
                             map.set (unipdb.pdb+"-"+unipdb.uniprot, unipdb);
                         }
@@ -434,7 +433,8 @@ CLMSUI.modelUtils = {
                             mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
                         });
 
-                        mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none"; });
+                        mapArr = mapArr.filter (function (mapping) { return mapping.id !== "none" && mapping.seqObj; });
+						console.log ("mapArr", mapArr);
                         callback (mapArr);
                     }
                 }

@@ -490,7 +490,7 @@ CLMSUI.utils = {
     },
 
 
-    // Function for making a colour key as an svg group element
+    // Function for making a cross-link colour key as an svg group element
     updateColourKey: function (model, svgElem) {
         var keyGroup = svgElem.select("g.key");
         if (keyGroup.empty()) {
@@ -505,7 +505,6 @@ CLMSUI.utils = {
         if (colourAssign) {
             keyGroup.select("text.keyTitle")
                 .attr("y", 12)
-                .attr("text-decoration", "underline")
                 .text ("Key: "+colourAssign.get("title"))
             ;
 
@@ -527,12 +526,14 @@ CLMSUI.utils = {
             colourElems.exit().remove();
             var newElems = colourElems.enter().append("g")
                 .attr("class", "keyPoint")
-                .attr("transform", function(d,i) { return "translate(0,"+((i+1)*15)+")"; })
+                .attr("transform", function(d,i) { return "translate(0,"+(3+((i+1)*15))+")"; })
             ;
             newElems.append("rect")
-                .attr("width", 16)
                 .attr("height", 4)
+				.attr ("width", "1em")
+				.attr("x", 1)
                 .attr("y", 5)
+				.style ("stroke", "none")
             ;
             newElems.append("text")
                 .attr("x", 19)
@@ -541,6 +542,53 @@ CLMSUI.utils = {
             colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
             colourElems.select("text").text(function (d, i) { return d[1]; });
         }
+    },
+	
+	updateAnnotationColourKey: function (bbModelArray, svgElem, myOptions) {
+		var defaults = {
+			colour: function (d) { return d.colour; },
+			label: function (d) { return d.label || d.name; },
+			title: "Key",
+		};
+		var options = $.extend ({}, defaults, myOptions);
+		
+        var keyGroup = svgElem.select("g.key");
+        if (keyGroup.empty()) {
+            svgElem
+                .append("g")
+					.attr("class", "key")
+                    .append("text").attr("class", "keyTitle")
+            ;
+        }
+        keyGroup = svgElem.select("g.key");
+
+		keyGroup.select("text.keyTitle")
+			.attr("y", 12)
+			.text ("Key: "+options.title)
+		;
+
+		var pairUp = bbModelArray.map (function (model) {
+			var modelJSON = model.toJSON();
+			return [options.colour (modelJSON), options.label (modelJSON)];
+		})
+
+		var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
+		colourElems.exit().remove();
+		var newElems = colourElems.enter().append("g")
+			.attr("class", "keyPoint")
+			.attr("transform", function(d,i) { return "translate(0,"+(3+((i+1)*15))+")"; })
+		;
+		newElems.append("rect")
+			.attr("x", 1)
+			.attr("width", "1em")
+			.attr("height", "1em")
+		;
+		newElems.append("text")
+			.attr("x", 19)
+			.attr("y", 12)
+		;
+		colourElems.select("rect").style("fill", function (d) { return d[0]; });
+		colourElems.select("text").text(function (d) { return d[1]; });
     },
 
 

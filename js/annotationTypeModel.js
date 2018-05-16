@@ -1,5 +1,4 @@
 var CLMSUI = CLMSUI || {};
-CLMSUI.linkColour = CLMSUI.linkColour || {};
 
 CLMSUI.BackboneModelTypes.AnnotationType = Backbone.Model.extend ({
     defaults: {

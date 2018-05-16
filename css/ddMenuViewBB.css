@@ -61,12 +61,23 @@
 }
 
 .colourSwatchSquare {
-    height: 0.8em;
-    width: 0.8em;
+    height: 1em;
+    width: 1em;
     display: inline-block;
     margin-left: 2px;
+	border: 1px solid black;
 }
 
 .dynDiv .dropdown DIV HR {
 	background: #091d42;
+}
+
+.dropdown .ddSectionHeader {
+	opacity: 0.5;
+	text-transform: lowercase;
+	font-variant: small-caps;
+}
+
+.dropdown .sectionEnd {
+	border-bottom: 1px dotted white;
 }
