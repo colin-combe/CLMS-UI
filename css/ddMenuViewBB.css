@@ -76,6 +76,8 @@
 	opacity: 0.5;
 	text-transform: lowercase;
 	font-variant: small-caps;
+	display: block;
+	line-height: 1.2em;
 }
 
 .dropdown .sectionEnd {
