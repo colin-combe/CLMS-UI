@@ -243,7 +243,13 @@ if (count($_GET) > 0) {
 
         $i++;
     }
-    $WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) AND score >= '.$lowestScore.') ';
+    $WHERE_spectrumMatch = $WHERE_spectrumMatch.' ) AND score >= '.$lowestScore;
+    if (isset($_GET['highestScore'])) {
+        $WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND score <= '.((float) $_GET['highestScore']).') ';
+    }
+    else {
+            $WHERE_spectrumMatch = $WHERE_spectrumMatch.') ';
+    }
     $WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
 
     if ($decoys == false){
