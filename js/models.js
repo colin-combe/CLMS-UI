@@ -14,7 +14,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 betweenLinks: true,
                 ambig: true,
                 aaApart: 0,
-                pepLength: 6,
+                pepLength: 5,
                 //validation status
                 A: true,
                 B: true,

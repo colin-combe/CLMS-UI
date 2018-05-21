@@ -17,14 +17,6 @@
     right: 0;
 }
 
-.threeColourSlider.verticalFlexContainer > * {
-    margin-bottom: 0.5em;
-}
-
-.threeColourSlider.horizontalFlexContainer > * {
-    margin-right: 0.5em;
-}
-
 .threeColourSlider input {
     flex-shrink: 0;
 }
@@ -39,15 +31,14 @@
 }
 
 .threeColourSlider .resize path {
-  fill: #888;
+  fill: #aaa;
   stroke: #000;
-  stroke-width: 1.5px;
+  stroke-width: 0.5px;
+	shape-rendering: crispEdges;
 }
 
-.threeColourSlider .resize path.bevel {
-    fill: none;
-    stroke: #ccc;
-    stroke-width: 2.5px;
+.threeColourSlider .resize path:hover {
+	fill: white;
 }
 
 .threeColourSliderTitle {

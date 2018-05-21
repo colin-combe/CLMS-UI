@@ -96,15 +96,15 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 sel.text (d.value);
             }
         };
-        
-        CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0]);
 		
-		/*
-		chartDiv.select("#keyInfocolourKey tbody").append("tr")
-			.attr ("colspan", 2)
-			.attr ("id", "colourKeySlider")
-		;
-		*/
+		var self = this;
+		var clickFunc = function (showSection, d) {
+			if (showSection && d.header === "Link Colour Scheme" && self.sliderSubView) {
+				self.sliderSubView.show (true);
+			}
+		}
+        
+        CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], clickFunc);
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var notLinear = function () { return false; };
@@ -151,7 +151,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     },
 	
 	relayout: function () {
-		console.log ("dragend fired");
+		//console.log ("dragend fired");
 		var colourAssign = this.model.get("linkColourAssignment");
 		if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubView) {
 			this.sliderSubView.resize().render();
@@ -183,7 +183,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.get("title"); });
 
             var rowSel = updateSection.select("tbody").selectAll("tr")
-                .data(function(d) { return d.rows; }, function (d) { return d.join(","); }) // key function = all fields joined
+                .data(function(d) { return d.rows; }, function (d) { return !d.rows ? d.join(",") : ""; }) // key function = all fields joined
             ;
             rowSel.exit().remove();
             rowSel.enter().append("tr");
@@ -198,6 +198,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 			// always remove old sliderSubView if present
 			if (this.sliderSubView) {
 				this.sliderSubView.remove();
+				this.sliderSubView = null;
 			}
 	
 			// add in new sliderview if appropriate
@@ -205,14 +206,19 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 				var pid = this.el.id;
 				var tcs = updateSection.select(".threecs");
 				if (tcs.empty()) {
-					updateSection.append("div").attr("id", pid+"3cs").attr("class", "threecs");
+					updateSection.select("table tbody").append("tr").append("td")
+						.attr("colspan", 2)
+						.append("div")
+							.attr("id", pid+"3cs")
+							.attr("class", "threecs")
+					;
 				}
 				
 				this.sliderSubView = new CLMSUI.ThreeColourSliderBB ({
 					el: "#"+pid+"3cs",
 					model: colourAssign,
 					unitText: " Å",
-					title: "Distance Cutoffs",
+					title: colourAssign.get("title")+" Cutoffs",
 					orientation: "horizontal",
 					absolutePosition: false,
 					sliderThickness: 25,
