@@ -373,7 +373,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
 					self.model
 						.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
-						.trigger ("change:lastSelectedMatch", self.model)
+						.trigger ("change:lastSelectedMatch", self.model, self.model.get("selectedMatch"))
 					;
                 }
             });
