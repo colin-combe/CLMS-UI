@@ -257,7 +257,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             prots = {};
         crossLinks.forEach(function (crossLink) {
             crossLink.filteredMatches_pp.forEach(function (matchAndPepPos) {
-                console.log("match", match);
                 var smatch = matchAndPepPos.match;
                 var prot1 = smatch.matchedPeptides[0].prt[0];
                 var prot2 = smatch.matchedPeptides[1].prt[0];

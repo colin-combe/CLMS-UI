@@ -54,21 +54,22 @@
             var nodeCoord = nodeCoordMap.get (nodeID);
             farr.forEach (function (feature) {
                 var tofrom = _options.featureParse (feature, nodeID);
-                //CLMSUI.utils.xilog ("nc", nodeCoord, farr, tofrom.fromPos, tofrom.toPos);
-                //CLMSUI.utils.xilog ("ORIG FEATURE", feature);
-                featureCoords.push ({
-                    id: feature.category + fid.toString(),
-                    description: feature.description,
-                    category: feature.category,
-                    type: feature.type,
-                    name: feature.name,
-                    nodeID: nodeID,
-                    fstart: tofrom.fromPos + 1,
-                    fend: tofrom.toPos,
-                    start: scale (tofrom.fromPos + nodeCoord.rawStart),
-                    end: scale (tofrom.toPos + nodeCoord.rawStart),
-                });
-                fid++;
+                //CLMSUI.utils.xilog (nodeArr[i].name, "nc", nodeCoord, farr, tofrom, "ORIG FEATURE", feature);
+				if (tofrom) {
+					featureCoords.push ({
+						id: feature.category + fid.toString(),
+						description: feature.description,
+						category: feature.category,
+						type: feature.type,
+						name: feature.name,
+						nodeID: nodeID,
+						fstart: tofrom.fromPos + 1,
+						fend: tofrom.toPos,
+						start: scale (tofrom.fromPos + nodeCoord.rawStart),
+						end: scale (tofrom.toPos + nodeCoord.rawStart),
+					});
+					fid++;
+				}
             });
         });
         //CLMSUI.utils.xilog ("CONV FEATURES", featureCoords);
@@ -127,6 +128,7 @@
 
         initialize: function (viewOptions) {
             var self = this;
+			
 			this.defaultOptions.featureParse = function (feature, nodeid) {
 				// feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
 				if (feature.start == undefined) {
@@ -136,12 +138,19 @@
 				var convEnd = +feature.end;
 				var type = feature.type.toLowerCase();
 				var protAlignModel = self.model.get("alignColl").get(nodeid);
+				
 				if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
 					var alignmentID = feature.alignmentID || "Canonical";
+					/*
 					convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
 					convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
 					if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
 					if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
+					*/
+					var convertedRange = protAlignModel.rangeToSearch (alignmentID, convStart, convEnd);
+					if (!convertedRange) { return null; }
+					convStart = convertedRange[0];
+					convEnd = convertedRange[1];
 				}
 				convStart = Math.max (0, convStart - 1);    // subtract one, but don't have negative values
 				if (isNaN(convEnd) || convEnd === undefined) {
@@ -264,13 +273,6 @@
             var svg = mainDivSel.select("svg")
                 .call (drag)
             ;
-
-            // Cycle colours through features
-             //i think this can go?
-            //~ this.color = d3.scale.ordinal()
-                //~ .domain([0,2])
-                //~ .range(["#beb", "#ebb" , "#bbe"])
-            //~ ;
 
             // for internal circle paths
             this.line = d3.svg.line.radial()
@@ -459,7 +461,6 @@
         },
 		
 		clearSelection: function (evt) {
-			console.log ("evt", evt);
 			// don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
 			// this is also logically consistent as it's adding 'nothing' to the existing selection
 			if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
@@ -956,7 +957,7 @@
             featureJoin
                 .order()
                 .attr("d", this.featureArc)
-                .style("fill", function(d) { return CLMSUI.domainColours((d.category + "-" + d.type).toUpperCase()); })
+                .style("fill", function(d) { return CLMSUI.domainColours (d.category,d.type); /*((d.category + "-" + d.type).toUpperCase())*/; })
             ;
 
             return this;

@@ -155,6 +155,21 @@
             return compSeq ? indices.map (function(i) { return compSeq.convertFromRef [i - 1] + 1; }) : undefined;
         },
         
+		rangeToSearch: function (seqName, index1, index2) {
+			var i1 = this.mapToSearch (seqName, index1);
+			var i2 = this.mapToSearch (seqName, index2);
+			var seqLength = this.getCompSequence(seqName).convertFromRef.length;
+			
+			if ((i1 === 0 && i2 === 0) || (i1 <= -seqLength && i2 <= -seqLength)) {
+				return null;	// both points outside (and same side) of sequence we attempted to match to
+			}
+			
+			if (i1 <= 0) { i1 = -i1; }   // <= 0 indicates no equal index match, do the - to find nearest index
+			if (i2 <= 0) { i2 = -i2; }   // <= 0 indicates no equal index match, do the - to find nearest index
+			
+			return [i1, i2];
+		},
+		
         // find the first and last residues in a sequence that map to existing residues in the search sequence (i.e aren't
         // opening or trailing gaps), and return these coordinates in terms of the search sequence
         getSearchRangeIndexOfMatches: function (seqName) {
@@ -213,15 +228,22 @@
             var alignPos = resIndex;
             
             if (protAlignModel) {
+				// seqLength attribution NOT wrong way round.
+				// we use seqLength to determine whether a negative (no direct match) index is somewhere within the matched-to sequence or outside of it altogether
+				// e.g. pairing sequences, ref = ABCDEFGHI, nonRef = CDFG
+				// cfr = [-1, -1, 0, 1, -2, 2, 3, -5, -5]    
+				// ctr = [2, 3, 5, 6]
+				// when say going from 'E' in ref to nonref (fromSearch, cfr to ctr) , value for cfr index is -2, which is bigger than -4 (neg length of ctr) so value is within
+				// when say going from 'H' in ref to nonref (fromSearch, cfr to ctr) , value for cfr index is -5, which is smaller than/equal to -4 (neg length of ctr) so value is outside
                 var seqLength = protAlignModel.getCompSequence(sequenceID)[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
                 alignPos = toSearchSeq ? protAlignModel.mapToSearch (sequenceID, resIndex) : protAlignModel.mapFromSearch (sequenceID, resIndex);
-                //console.log (resIndex, "->", alignPos, protAlignModel);
+                //console.log (resIndex, "->", alignPos, "toSearch: ", toSearchSeq, seqLength);
                 // if alignPos == 0 then before seq, if alignpos <== -seqlen then after seq
                 //console.log (pdbChainSeqId, "seqlen", seqLength);
                 if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
                     alignPos = null;    // null can be added / subtracted to without NaNs, which undefined causes
                 }
-                if (alignPos < 0 && !keepNegativeValue) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
+                else if (alignPos < 0 && !keepNegativeValue) { alignPos = -alignPos; }   // otherwise < 0 indicates no equal index match, but is within the target, do the - to find nearest index
             }
             
             return alignPos;    //this will be 1-indexed or null

@@ -20,6 +20,7 @@
                 groupByAttribute: "group",
                 labelByAttribute: "name",
                 toggleAttribute: "state",
+				sectionHeader: function (d) { return ""; },
             };
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
             var self = this;
@@ -58,15 +59,18 @@
                 var lastCat = null;
                 var adata = [];
                 this.collection.each (function (model) {
-                    //console.log ("model", model);
-                    var cat = model.get(self.options.groupByAttribute);
-                    var cbdata = ({
+					var cbdata = model.toJSON();	// doesn't actually make json, just copies model attributes to object that can then be jsonified (or overwritten safely)
+                    $.extend (cbdata, {
                         id: model.get("id") || (model.get(self.options.labelByAttribute)+"Placeholder"),   // ids may not contain spaces 
                         label: model.get(self.options.labelByAttribute),
 						tooltip: model.get("tooltip"),
                     });
-                    if (adata.length && lastCat !== cat) {  // have to access last datum to say it's the last in its category
-                        adata[adata.length - 1].sectionEnd = true; 
+					var cat = model.get (self.options.groupByAttribute);
+                    if (lastCat !== cat) {  // have to access last datum to say it's the last in its category
+						if (adata.length) {	// ignore sectionEnd for first item
+                        	adata[adata.length - 1].sectionEnd = true;
+						}
+						cbdata.sectionBegin = true; 
                     }
                     adata.push (cbdata);
                     lastCat = cat;
@@ -75,7 +79,6 @@
 					if (self.options.tooltipModel) {
 						options.tooltipModel = self.options.tooltipModel;
 					}
-					console.log ("dfjgkdfgkd", options);
                     var cbView = new CLMSUI.utils.checkBoxView ({
                         model: model,
                         myOptions: options,
@@ -83,7 +86,7 @@
                     self.$el.append(cbView.$el);
                 }); 
                 
-                this.options.menu = adata.map (function(cbdata) { return { id: cbdata.id, label: cbdata.label, sectionEnd: cbdata.sectionEnd, tooltip: cbdata.tooltip}; });
+                this.options.menu = adata;
             }  
             return this;
         },
@@ -112,7 +115,7 @@
                         ind.node().appendChild (targetNode);
 
                         if (targetSel.datum() == undefined) {
-                            ind.select("#"+d.id.replace(/ /g, "_"));//martin magic
+                            ind.select("#"+d.id.replace(/ /g, "_"));	//martin magic
                         }
                     }
                 }
@@ -136,11 +139,14 @@
 				}
             }, this); 
             
-            choices
-                .filter(function(d) { return d.sectionEnd; })
-                .insert ("hr")
+			var self = this;
+            choices.classed ("sectionEnd", function(d) { return d.sectionEnd; });
+			
+			choices
+                .filter(function(d) { return d.sectionBegin; })
+                .insert ("span", ":first-child").attr("class", "ddSectionHeader").text (self.options.sectionHeader)
             ;
-            
+
             return this;
         },
         
@@ -209,37 +215,118 @@
                 parentEvents = parentEvents();
             }
             return _.extend ({}, parentEvents, {
-                //"click li label": "showColour",
+				"click .colourSwatchSquare" : "transmitToInput",
+				"click button.downloadAnnotationKey" : "downloadKey",
             });
         },
 
         initialize: function () {
             CLMSUI.AnnotationDropDownMenuViewBB.__super__.initialize.apply (this, arguments);
+			var self = this;
             
-            //CLMSUI.domainColours.range(['#000000', '#e69f00', '#56b4e9', '#2b9f78', '#f0e442', '#0072b2', '#d55e00', '#cc79a7']);
-            d3.select("#annotationsDropdownPlaceholder").selectAll("li label")
-                .insert ("span", ":first-child")
+            var labels = d3.select(this.el).selectAll("li");
+			labels.select("label")	// .select pushes data to label
+                .insert ("span", ":first-child")	// which pushes it to the appended element
                 .attr ("class", "colourSwatchSquare")
-                .style ("background", "transparent")
+				.style ("visibility", function(d) {
+					return self.collection.get(d.id).get("shown") ? null : "hidden";
+				})
+				.attr ("title", "Press to change colour")
             ;
+			
+			// add colour input widgets, but hide them and call them when pressing the colour swatch
+			labels.select("label")
+                .append ("input")
+                .attr ("type", "color")
+				.style ("display", "none")	// hide 'cos ugly
+				.property ("value", function(d) { return CLMSUI.domainColours (d.category, d.type); })
+				.on ("change", function(d) {
+					var value = d3.select(this).property("value");
+					CLMSUI.domainColours.set (d.category, d.type, value);
+					var model = self.collection.get (d.id);	// d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
+					self.collection.trigger ("change:shown", model, model.get("shown"));
+				})
+            ;
+			
+			d3.select(this.el).select("div")
+				.append("button")
+				.text("Download Selected Annotation Key as SVG")
+				.classed ("btn btn-1 btn-1a downloadAnnotationKey", true)
+			;
+			
+			this.decideSVGButtonEnabled();
             
             // listen to a checkbox on one of this collection's models getting clicked and firing a change in the model
             this.listenTo (this.collection, "change:shown", function (featureTypeModel, shown) { 
                 this.setColour (featureTypeModel, shown);
             });
         },
+		
+		decideSVGButtonEnabled: function () {
+			var shownCount = this.collection.where({shown:true}).length;
+			d3.select(this.el).select("Button.downloadAnnotationKey").property("disabled", shownCount === 0);
+		},
         
         setColour: function (featureTypeModel, shown) {
-            d3.select("#annotationsDropdownPlaceholder").selectAll("li")
+            d3.select(this.el).selectAll("li")
                 .filter (function(d) { return d.id === featureTypeModel.id; })
                 .select(".colourSwatchSquare")
+				.style ("visibility", shown ? null : "hidden")
                 .style ("background", function (d) { 
-                    var col = CLMSUI.domainColours(d.id.toUpperCase());
-                    var scale = d3.scale.linear().domain([0,1]);
-                    scale.range(["white", col]);
-                    return shown ? scale (0.5) : "transparent";
+					var col = CLMSUI.domainColours (d.category, d.type);
+                    var scale = d3.scale.linear().domain([0,1]).range(["white", col]);
+                    return shown ? scale (0.5) : "none";
                 })
             ;
+			
+			this.decideSVGButtonEnabled();
+        },
+		
+		transmitToInput: function (evt) {	// click hidden color input when colourswatch clicked
+			var data = d3.select(evt.target).datum();
+			var model = this.collection.get (data.id);
+			if (model && model.get("shown")) {
+				d3.select(evt.target.parentNode).select("input[type='color']").node().click();
+				evt.preventDefault();
+			}
+		},
+		
+		downloadKey: function () {
+			var tempSVG = d3.select(this.el).append("svg").attr("class", "temp").style("text-transform", "capitalize");
+			CLMSUI.utils.updateAnnotationColourKey (
+				this.collection.where({shown: true}), 
+				tempSVG, 
+				{
+					colour: function (d) { return CLMSUI.domainColours (d.category, d.type); },
+					label: function (d) { return (d.category ? d.category.replace(/_/g, " ")+": " : "") + d.type; },
+					title: this.identifier,
+				}
+			);
+			var contentsSize = tempSVG.select("g").node().getBoundingClientRect();
+			tempSVG.attr("width", contentsSize.width).attr("height", contentsSize.height);	// make svg adjust to contents
+			this.downloadSVG (null, tempSVG);
+			tempSVG.remove();
+		},
+		
+		// use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
+        downloadSVG: function (event, thisSVG) {
+            var svgSel = thisSVG || d3.select(this.el).selectAll("svg");
+            var svgArr = [svgSel.node()];
+            var svgStrings = CLMSUI.svgUtils.capture (svgArr);
+            var svgXML = CLMSUI.svgUtils.makeXMLStr (new XMLSerializer(), svgStrings[0]);
+
+            var fileName = this.filenameStateString().substring (0,240);
+            download (svgXML, 'application/svg', fileName+".svg");
+        },
+		
+		// return any relevant view states that can be used to label a screenshot etc
+        optionsToString: function () {
+            return "";
+        },
+		
+		identifier: "Sequence Annotations",
+
+        filenameStateString: function () {
+            return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString()+"--"+this.identifier);
         },
     });
-
