@@ -404,7 +404,7 @@ if (count($_GET) > 0) {
      echo "\"peptides\":[\n";
      $line = pg_fetch_array($res, null, PGSQL_ASSOC);
      while ($line){// = pg_fetch_array($res, null, PGSQL_ASSOC)) {
-             $proteins = $line["proteins"];
+             $proteins = str_replace('"', '',  $line["proteins"]);
              $proteinsArray = explode(",",substr($proteins, 1, strlen($proteins) - 2));
              $positions = $line['positions'];
              echo "{"

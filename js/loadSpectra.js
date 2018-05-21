@@ -11,15 +11,15 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     peptides[0] = CLMSUI.arrayifyPeptide(match.matchedPeptides[0].seq_mods);
     linkSites[0] = {"id":0, "peptideId":0, "linkSite": match.linkPos1}
     if (match.matchedPeptides[1]) {
-        peptide[1] = CLMSUI.arrayifyPeptide(match.matchedPeptides[1].seq_mods);    
+        peptide[1] = CLMSUI.arrayifyPeptide(match.matchedPeptides[1].seq_mods);
         linkSites[1] = {"id":0, "peptideId":1, "linkSite": match.linkPos2}
     }
-    
+
     annotationRequest.Peptides = peptides;
     annotationRequest.LinkSite = linkSites;
-    
+
     annotationRequest.annotation = {};
-    
+
     var ionTypes = match.ions.split(";");
     var ionTypeCount = ionTypes.length;
     var ions = [];
@@ -29,13 +29,13 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     }
     annotationRequest.annotation.ions = ions;
     annotationRequest.annotation.fragmentTolerance = match.spectrum.ft;
-    
+
     var crossLinker = {};
-    crossLinker.modMass = match.matchedPeptides[0].clModMass;
+    crossLinker.modMass = +match.matchedPeptides[0].clModMass;
     annotationRequest.annotation["cross-linker"] = crossLinker; // yuk
-    
-    annotationRequest.annotation.precursorCharge = match.precursorCharge;
-    annotationRequest.annotation.precursorMZ = match.expMZ;
+
+    annotationRequest.annotation.precursorCharge = +match.precursorCharge;
+    annotationRequest.annotation.precursorMZ = +match.expMZ;
     //todo modifications
     annotationRequest.annotation.modifications = [];
     annotationRequest.annotation.custom = [];
@@ -57,12 +57,13 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
                 var peak = peaks[p].trim();
                 if (peak != ""){
                     peakParts = peak.split(/\s+/);
-                    peakJson.push({"mz":peakParts[0], "intensity":peakParts[1]})
+                    peakJson.push({"mz":+peakParts[0], "intensity":+peakParts[1]})
                 }
             }
-            annotationRequest.peaks = peakJson; 
-            
-            //annotationRequestJson = JSON.stringify(annotationRequest)
+            annotationRequest.peaks = peakJson;
+
+            annotationRequestJson = JSON.stringify(annotationRequest)
+            console.log(annotationRequestJson);
 
     		var response = $.ajax({
     			type: "POST",
@@ -91,7 +92,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
             /*var url = xiAnnotRoot + "annotate/" + annotationRequestJson;
 
             console.log("URL!:", url)
-            
+
             d3.json (url, function(error, json) {
                 if (error) {
                     console.log ("error", error, "for", url);
@@ -99,13 +100,13 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
                     spectrumModel.clear();
                 } else {
                     d3.select("#range-error").text ("");
-                    spectrumModel.set ({JSONdata: json, match: match, randId: randId}); 
+                    spectrumModel.set ({JSONdata: json, match: match, randId: randId});
                 }
             });
             */
         }
     });
-}; 
+};
 /*
 xiSPEC.convert_to_json_request = function (data) {
 
@@ -191,7 +192,7 @@ CLMSUI.arrayifyPeptide = function (seq_mods) {
     return peptide;
 }
 
-/*			
+/*
 CLMSUI.validate = function (matchId, validationStatus, randId, successCallBack) {
     $.ajax ({
         type: "POST",

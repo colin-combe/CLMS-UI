@@ -133,7 +133,7 @@ header('Content-type: text/html; charset=utf-8');
             <div class="page-header">
                 <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
                 <span class="headerLabel">
-                    <?php echo $_SESSION['session_name'] ?>
+                    <!-- <?php echo $_SESSION['session_name'] ?> -->
                 </span>
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
@@ -187,9 +187,9 @@ header('Content-type: text/html; charset=utf-8');
 				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
                 CLMSUI.vent.trigger ("spectrumShow", true);
-        
+
         var allMatches = CLMSUI.compositeModelInst.get("clmsModel").get("matches")
-        CLMSUI.compositeModelInst.setMarkedMatches ("selection", allMatches);			
+        CLMSUI.compositeModelInst.setMarkedMatches ("selection", allMatches);
 
                 // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
                 // so we run it again here, doesn't do any harm
