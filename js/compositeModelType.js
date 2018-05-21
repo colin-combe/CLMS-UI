@@ -298,16 +298,20 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (matches) {  // if undefined nothing happens, to clear selection pass an empty array - []
             var type = "match_"+modelProperty;
             var map = add ? new d3.map (this.get(type).values(), function(d) { return d.id; }) : new d3.map();
+			//console.log ("MAP", map.values());
 			var potentialToggle = (modelProperty === "selection");
             matches.forEach (function (match) {
                 if (match.match) match = match.match;
 				var id = match.id;
+				// can't delete individual matches as existing/new matches are mixed in already
 				// add new matches. If adding to pre-selected matches, toggle new matches depending on whether the match is already selected or not
+				/*
 				if (potentialToggle && add && map.has (id)) {
 					map.remove (id);
 				} else {
+				*/
 					map.set (id, match);
-				}
+				//}
 
             });
             this.set (type, map);
@@ -370,7 +374,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
                             for (var cl = 0; cl < clCount; cl++) {
                                 var mCrossLink = crossLinks[cl];
-                                crossLinkMap.set(mCrossLink.id, mCrossLink);
+                                crossLinkMap.set (mCrossLink.id, mCrossLink);
                             }
                         }
                     }
@@ -386,8 +390,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 dedupedCrossLinks.forEach (function (clink) {
                     matches = matches.concat (clink.filteredMatches_pp);
                 });
-                //console.log (modelProperty, "matches", matches);
-                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+                //this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
 
                 var linksChanged = this.changedAttributes();
                 this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);

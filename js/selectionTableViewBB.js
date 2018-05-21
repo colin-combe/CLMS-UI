@@ -189,7 +189,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     },
 
     updateTable: function (options) {
-		
 		options = options || {};
 		
         this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
