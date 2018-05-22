@@ -142,7 +142,7 @@ CLMSUI.init.modelsEssential = function (options) {
 
 	// This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
-    //console.log ("options", options);
+    //console.log ("options", options, JSON.stringify(options));
     clmsModelInst.parseJSON(options);
 
     // some proteins have no size, i.e. ambiguous placeholders, and lack of size property is breaking things later on. MJG 17/05/17
