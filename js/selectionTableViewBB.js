@@ -26,12 +26,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 d3.select(this.el).select("tr#match" + selMatch.match.id).classed("spectrumShown2", true);
             }
         });
-        
+
 		// emphasise highlighted (brushed) match table rows
         this.listenTo (this.model, "change:match_highlights", function (model, highlightedMatches) {
             this.setTableHighlights (highlightedMatches.values());
         });
-        
+
 
         var tableDataPropOrder = [
                 "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
@@ -61,8 +61,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "precursorCharge": "Charge (Z)",
             "expMZ": "Exp M/Z",
             "expMass": "Exp Mass",
-            "matchMZ": "Match M/Z",
-            "matchMass": "Match Mass",
+            "matchMZ": "Calc M/Z",
+            "matchMass": "Calc Mass",
             "massError": "Mass Error (ppm)",
             "precursorIntensity": "Intensity",
             "elutionStart": "Elut.Start",
@@ -178,7 +178,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     render: function () {
         this.updateTable ({topMatchesOnly: this.viewStateModel.get("topOnly"), topCount: this.viewStateModel.get("topCount")});
     },
-    
+
     getMatches: function (xlink) {
         var selectedMatches = this.model.getMarkedMatches("selection");
         return _.pluck(xlink.filteredMatches_pp, "match")
@@ -221,7 +221,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             count += selLinkMatchData.matches.length;
             selLinkMatchData.runningTotalEnd = count;
         });
-        
+
         var selectedXLinkCount = this.matchCountIndices.length;
 
         var self = this;
@@ -259,11 +259,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.page = pg;
         var input = d3.select(this.el).select(".pager>input");
         input.property("value", pg);
-              
+
         var limit = totalSelectedFilteredMatches; // selectedXLinkCount;
         var lower = (limit === 0) ? 0 : ((pg - 1) * this.pageSize) + 1;
         var upper = Math.min (pg * this.pageSize, limit);
-        
+
         var lowerPageCount = (this.page - 1) * this.pageSize;
         var upperPageCount = lowerPageCount + this.pageSize;
         var bisect = d3.bisector (function(d) { return d.runningTotalEnd; });
@@ -277,7 +277,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             matchBounds.endMatch = upperPageCount - mci[upperLink].runningTotalStart;
         }
         //console.log ("bisect", mci, lowerLink, upperLink, matchBounds);
-        
+
         var panelHeading = d3.select(this.el).select(".crossLinkTotal");
         var commaFormat = d3.format(",");
         var selectedXLinkCount = this.matchCountIndices.length;
@@ -287,7 +287,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             + " across "+
             commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
         );
-        
+
         var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
         this.addRows (tablePage, this.filteredProps, matchBounds);
     },
@@ -340,7 +340,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             // paging by matches means we may begin part way through a link's matches and end partway through a link's matches
             if (i === 0 || i === selectedLinkArray.length - 1) {
                 md = md.slice (
-                    i === 0 ? firstLastLinkMatchBounds.startMatch || 0 : 0, 
+                    i === 0 ? firstLastLinkMatchBounds.startMatch || 0 : 0,
                     i === selectedLinkArray.length - 1 ? firstLastLinkMatchBounds.endMatch || md.length : md.length
                 );
             }
@@ -383,7 +383,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return lsm && lsm.match ? lsm.match.id === d.id : false;
             });
 
-        
+
         // Within each row, match cells up to individual pieces of match information
         var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth"];
         var cellJoin = tjoin.selectAll("TD").data(filteredProps /*, function(d) { return d; }*/ );
@@ -424,7 +424,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             })
             .classed ("monospaced", function(d) {
                 return self.monospacedColumns.has(d),
-                
+
             })
             .classed ("maxWidth", function (d) {
                 return self.maxWidthColumns.has (d);
@@ -453,12 +453,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             this.render();
         }
     },
-    
+
     clearCurrentRowHighlight: function () {
         d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
         return this;
     },
-    
+
     setTableHighlights: function (highlightedMatches) {
         var highlightedMatchIDs = d3.set (_.pluck (highlightedMatches, "id"));
         d3.select(this.el).selectAll("tr.matchRow").classed("highlighted", function(d) {
@@ -466,7 +466,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         });
         return this;
     },
-    
+
     // this is called when mouse moved over a row
     // and should via the backbone models and events eventually call setTableHighlights above too
     highlight: function (evt) {
