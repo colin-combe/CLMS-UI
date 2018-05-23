@@ -305,32 +305,27 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 				var id = match.id;
 				// can't delete individual matches as existing/new matches are mixed in already
 				// add new matches. If adding to pre-selected matches, toggle new matches depending on whether the match is already selected or not
-				/*
+				
 				if (potentialToggle && add && map.has (id)) {
 					map.remove (id);
 				} else {
-				*/
 					map.set (id, match);
-				//}
-
+				}
             });
             this.set (type, map);
 
             if (!dontForward) {
-                var clinkset = d3.set();
-                var crossLinks = [];
+				// calculate crosslinks from selected matches
+                var clinkMap = d3.map();
                 var dedupedMatches = map.values();
                 dedupedMatches.forEach (function (match) {
                     var clinks = match.crossLinks;
                     for (var c = 0; c < clinks.length; c++) {
                         var clink = clinks[c];
-                        var clinkid = clink.id;
-                        if (!clinkset.has(clinkid)) {
-                            clinkset.add (clinkid);
-                            crossLinks.push (clink);
-                        }
+                        clinkMap.set (clink.id, clink);
                     }
                 });
+				var crossLinks = clinkMap.values();
 
                 var matchesChanged = this.changedAttributes();
                 // add = false on this call, 'cos crosslinks from existing marked matches will already be picked up in this routine if add is true
@@ -344,23 +339,28 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     // to fill in the model
     setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, dontForward) {
         if (crossLinks) { // if undefined nothing happens, to clear selection pass an empty array - []
+			var removedLinks = d3.map();
+			var newlyAddedLinks = d3.map();
+			
+			// If adding to existing crosslinks, make crossLinkMap from the existing crosslinks and add or remove the new array of crosslinks from it.
+			// Otherwise just make crossLinkMap from the new array of crosslinks
+			var crossLinkMap = d3.map (add ? this.get(modelProperty) : crossLinks, function (d) { return d.id; });
             if (add) {
 				var potentialToggle = (modelProperty === "selection");
-				var preSelected = d3.map (this.get(modelProperty), function (d) { return d.id; });
+				
 				// add new cross-links. If adding to pre-selected cross-links, toggle new cross-links depending on whether the cross-link is already selected or not
 				crossLinks.forEach (function (xlink) {
 					var id = xlink.id;
-					if (potentialToggle && preSelected.has (id)) {
-						preSelected.remove (id);
+					if (potentialToggle && crossLinkMap.has (id)) {
+						crossLinkMap.remove (id);
+						removedLinks.set (id, xlink);
 					} else {
-						preSelected.set (id, xlink);
+						crossLinkMap.set (id, xlink);
+						newlyAddedLinks.set (id, xlink);
 					}
 				});
-                crossLinks = preSelected.values();
+                crossLinks = crossLinkMap.values();
             }
-            var crossLinkMap = d3.map (crossLinks, function (d) {
-                return d.id;
-            });
 
             if (andAlternatives) {
                 crossLinks.forEach(function (crossLink) {
@@ -382,27 +382,34 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
 
             // is d3 map, so .values always works, don't need to worry about whether ie11 supports Array.from (in fact ie11 gets keys/values wrong way round if we call CLMS.array...)
-            var dedupedCrossLinks = crossLinkMap.values(); //CLMS.arrayFromMapValues(crossLinkMap);
+            var dedupedCrossLinks = crossLinkMap.values();	// CLMS.arrayFromMapValues(crossLinkMap);
             this.set (modelProperty, dedupedCrossLinks);
 
             if (!dontForward) {
-                var matches = [];
-                dedupedCrossLinks.forEach (function (clink) {
-                    matches = matches.concat (clink.filteredMatches_pp);
+				// calculate matches from existing and newly selected crosslinks
+                var existingMatches = add ? this.get("match_"+modelProperty).values() : [];
+				var newMatchesFromTheseLinks = add ? newlyAddedLinks.values() : dedupedCrossLinks;
+                var newMatchArray = newMatchesFromTheseLinks.map (function (clink) {
+                    return _.pluck (clink.filteredMatches_pp, "match");
                 });
-                //this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
-
-                var linksChanged = this.changedAttributes();
-                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+				newMatchArray.push (existingMatches);
+				var allMatches = d3.merge (newMatchArray);
+				
+				if (add) {
+					var removedMatches = d3.merge (removedLinks.values().map (function (clink) { return _.pluck(clink.filteredMatches_pp, "match"); }));
+					allMatches = _.difference (allMatches, removedMatches);					   
+				}
+				
+				//console.log ("matches", allMatches);
+                var linksChanged = this.changedAttributes();	// did setting links property prompt changes in backbone?
+                this.setMarkedMatches (modelProperty, allMatches, andAlternatives, false, true);
                 this.triggerFinalMatchLinksChange (modelProperty, linksChanged);
-            }
-
-            //this.set (modelProperty, dedupedCrossLinks);
+            } 
         }
     },
 
     triggerFinalMatchLinksChange: function (modelProperty, penultimateSetOfChanges) {
-        // if either of the last two backbone sets did have a change then trigger an event
+        // if either of the last two backbone set operations did cause a change then trigger an event
         // so views waiting for both links and matches to finish updating can act
         var lastSetOfChanges = this.changedAttributes();
         if (penultimateSetOfChanges || lastSetOfChanges) {
