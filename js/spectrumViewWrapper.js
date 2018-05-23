@@ -236,7 +236,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     },
 
     triggerSpectrumViewer: function (match, forceShow) {
-        console.log ("MATCH selected", match, forceShow);
+        //console.log ("MATCH selected", match, forceShow);
         if (this.isVisible() || forceShow) {
             this.newestSelectionShown = true;
             var visible = !!match;

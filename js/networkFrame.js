@@ -451,10 +451,9 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-            alert('individualMatchSelected' + match);
             /*if (match) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
-                var url = "./loadData.php?sid="
+                var url = "./loadData_xiUI_DB.php?uid="
                         + this.model.get("clmsModel").get("sid")
                         + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
                 var self = this;

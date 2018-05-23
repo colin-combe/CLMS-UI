@@ -63,7 +63,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "expMass": "Exp Mass",
             "matchMZ": "Calc M/Z",
             "matchMass": "Calc Mass",
-            "massError": "Mass Error",
+            "massError": "Mass Error (ppm)",
             "precursorIntensity": "Intensity",
             "elutionStart": "Elut.Start",
             "elutionEnd": "Elut.End",
@@ -388,13 +388,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 } else {
                     d3.select(".validationControls").style("display", "block");
                 }
-                if (d.src) { // if the src att is missing its from a csv file
+                //if (d.src) { // if the src att is missing its from a csv file
 					// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
 					self.model
 						.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
 						.trigger ("change:lastSelectedMatch", self.model, self.model.get("selectedMatch"))
 					;
-                }
+                //}
             });
         tjoin.order();
         tjoin

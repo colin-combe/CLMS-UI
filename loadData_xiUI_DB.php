@@ -488,8 +488,8 @@ if (count($_GET) > 0) {
             echo '{'
                 . '"id":"' . $pId . '",'
                 // . '"real_id":"' . $line["real_id"] . '",'
-                //. '"name":"' . $line["name"] . '",'
-                . '"description":"",'// . $line["description"] . '",'
+                . '"name":"' . $line["protein_name"] . '",'
+                . '"description":' . $line["description"] . ','
                 . '"accession":"' .$line["accession"]  . '",'
                 . '"seq_mods":"' .$line["sequence"] . '"'
                 // . '"is_decoy":' .$isDecoy
@@ -500,7 +500,7 @@ if (count($_GET) > 0) {
             $line = pg_fetch_array($res, null, PGSQL_ASSOC);
             if ($line) {echo ",\n";}
         }
-    echo "\n],";
+    echo "\n]";
 
 	//interactors
 	// $interactorQuery = "SELECT * FROM uniprot WHERE accession IN ('"
@@ -530,7 +530,6 @@ if (count($_GET) > 0) {
 
 
 
-    echo '"oldDB":'.("\"false\""); // Is this from the old db?
     echo "}\n";
     $endTime = microtime(true);
     //~ echo '/*php time: '.($endTime - $startTime)."ms*/\n\n";
