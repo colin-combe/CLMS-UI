@@ -25,7 +25,7 @@ if (count($_GET) > 0) {
     include('../connectionString.php');
     $dbconn = pg_connect($connectionString) or die('Could not connect: ' . pg_last_error());
 
-    $sid = urldecode($_GET["sid"]);
+    $sid = urldecode($_GET["uid"]);
     //SQL injection defense
     $pattern = '/[^0-9,\-]/';
     if (preg_match($pattern, $sid)){
@@ -227,10 +227,20 @@ if (count($_GET) > 0) {
 		echo "\"xiNETLayout\":" . stripslashes($line["l"]) . ",\n\n";
 	}
 */
-    $query = "SELECT * FROM uploads WHERE id = ".$sid.";";
+    // $query = "SELECT * FROM uploads WHERE id = ".$sid.";";
+    // $res = pg_query($query) or die('Query failed: ' . pg_last_error());
+    // $line = pg_fetch_array($res, null, PGSQL_ASSOC);
+    // echo "\"searches\":".json_encode($line). ",\n";
+    // 
+    $query = "SELECT * FROM modifications WHERE upload_id = ".$sid.";";
     $res = pg_query($query) or die('Query failed: ' . pg_last_error());
     $line = pg_fetch_array($res, null, PGSQL_ASSOC);
-    // echo "\"searches\":".json_encode($line). ",\n";
+    $modifications = [];
+    while ($line) {
+        array_push($modifications, $line);
+        $line = pg_fetch_array($res, null, PGSQL_ASSOC);
+    }
+    echo "\"modifications\":".json_encode($modifications). ",\n";
 
     //load data -
 /*    $WHERE_spectrumMatch = ' ( ( '; //WHERE clause for spectrumMatch table

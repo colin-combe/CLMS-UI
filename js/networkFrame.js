@@ -450,8 +450,9 @@ CLMSUI.init.viewsEssential = function (options) {
         displayEventName: "spectrumShow",
         myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
-    /*    .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-            if (match) {
+        .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+            alert('individualMatchSelected' + match);
+            /*if (match) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "./loadData.php?sid="
                         + this.model.get("clmsModel").get("sid")
@@ -480,8 +481,8 @@ CLMSUI.init.viewsEssential = function (options) {
                 });
             } else {
                 //~ //this.model.clear();
-            }
-        })*/
+            }*/
+        })
     ;
 
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});

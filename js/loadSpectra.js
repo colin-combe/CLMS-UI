@@ -18,8 +18,8 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     annotationRequest.Peptides = peptides;
     annotationRequest.LinkSite = [];//linkSites;
 
-    // annotationRequest.annotation = {};
-    annotationRequest.annotation =  {
+    annotationRequest.annotation = {};
+    /*annotationRequest.annotation =  {
                                 // "fragmentTolerance":{"tolerance":"0.01","unit":"Da"},
                                 // "modifications":[
                                 //     {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"}
@@ -36,12 +36,13 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
                                 // "precursorMZ":1102.9017300194,
                                 // "custom":[""]
                             };
-
+*/
     var fragTolArr = match.spectrum.ft.split(" ");
     annotationRequest.annotation.fragmentTolerance = {"tolerance":+fragTolArr[0], "unit":fragTolArr[1]};
 
     // //todo modifications
-//    annotationRequest.annotation.modifications = [
+    annotationRequest.annotation.modifications = CLMSUI.compositeModelInst.get('clmsModel').get('modifications');
+//[
     //    {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"}
     //     //{"aminoAcids":["C"],"id":"carbamidomethyl","mass":"57.021465"},
     //     //{"aminoAcids":["Q"],"id":"ammonia-loss","mass":"-17.026548"},
@@ -79,7 +80,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
             d3.select("#range-error").text ("Cannot load spectra from URL");
             spectrumModel.clear();
         } else {
-            console.log ("peakList:", text);
+            //console.log ("peakList:", text);
             var peakJson = [];
             var peaks = text.split('\n');
             var peakCount = peaks.length;
