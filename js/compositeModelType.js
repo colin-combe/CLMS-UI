@@ -298,17 +298,20 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (matches) {  // if undefined nothing happens, to clear selection pass an empty array - []
             var type = "match_"+modelProperty;
             var map = add ? new d3.map (this.get(type).values(), function(d) { return d.id; }) : new d3.map();
+			//console.log ("MAP", map.values());
 			var potentialToggle = (modelProperty === "selection");
             matches.forEach (function (match) {
                 if (match.match) match = match.match;
 				var id = match.id;
+				// can't delete individual matches as existing/new matches are mixed in already
 				// add new matches. If adding to pre-selected matches, toggle new matches depending on whether the match is already selected or not
+				
 				if (potentialToggle && add && map.has (id)) {
 					map.remove (id);
 				} else {
+				
 					map.set (id, match);
 				}
-
             });
             this.set (type, map);
 
@@ -340,6 +343,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     // to fill in the model
     setMarkedCrossLinks: function (modelProperty, crossLinks, andAlternatives, add, dontForward) {
         if (crossLinks) { // if undefined nothing happens, to clear selection pass an empty array - []
+			var removed = d3.map();
+			var newlyAdded = d3.map();
             if (add) {
 				var potentialToggle = (modelProperty === "selection");
 				var preSelected = d3.map (this.get(modelProperty), function (d) { return d.id; });
@@ -348,8 +353,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 					var id = xlink.id;
 					if (potentialToggle && preSelected.has (id)) {
 						preSelected.remove (id);
+						removed.set (id, xlink);
 					} else {
 						preSelected.set (id, xlink);
+						newlyAdded.set (id, xlink);
 					}
 				});
                 crossLinks = preSelected.values();
@@ -370,7 +377,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
                             for (var cl = 0; cl < clCount; cl++) {
                                 var mCrossLink = crossLinks[cl];
-                                crossLinkMap.set(mCrossLink.id, mCrossLink);
+                                crossLinkMap.set (mCrossLink.id, mCrossLink);
                             }
                         }
                     }
@@ -382,24 +389,26 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             this.set (modelProperty, dedupedCrossLinks);
 
             if (!dontForward) {
-                var matches = [];
-                dedupedCrossLinks.forEach (function (clink) {
-                    matches = matches.concat (clink.filteredMatches_pp);
+                var matches = add ? this.get("match_"+modelProperty).values() : [];
+				var addFromTheseLinks = add ? newlyAdded.values() : dedupedCrossLinks;
+                addFromTheseLinks.forEach (function (clink) {
+                    matches = matches.concat (_.pluck(clink.filteredMatches_pp, "match"));
                 });
-                //console.log (modelProperty, "matches", matches);
-                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
-
-                var linksChanged = this.changedAttributes();
-                this.setMarkedMatches (modelProperty, matches, andAlternatives, add, true);
+				if (add) {
+					var removedMatches = d3.merge (removed.values().map (function (clink) { return _.pluck(clink.filteredMatches_pp, "match"); }));
+					matches = _.difference (matches, removedMatches);					   
+				}
+				
+				console.log ("matches", matches);
+                var linksChanged = this.changedAttributes();	// did setting links property prompt changes in backbone?
+                this.setMarkedMatches (modelProperty, matches, andAlternatives, false, true);
                 this.triggerFinalMatchLinksChange (modelProperty, linksChanged);
-            }
-
-            //this.set (modelProperty, dedupedCrossLinks);
+            } 
         }
     },
 
     triggerFinalMatchLinksChange: function (modelProperty, penultimateSetOfChanges) {
-        // if either of the last two backbone sets did have a change then trigger an event
+        // if either of the last two backbone set operations did cause a change then trigger an event
         // so views waiting for both links and matches to finish updating can act
         var lastSetOfChanges = this.changedAttributes();
         if (penultimateSetOfChanges || lastSetOfChanges) {

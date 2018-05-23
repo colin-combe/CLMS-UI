@@ -121,3 +121,7 @@
     transition: initial;
 }
 
+.selectView .rightSpan {
+	float: right;
+}
+
