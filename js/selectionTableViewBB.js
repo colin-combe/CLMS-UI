@@ -161,7 +161,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 			initialize: function () {
                 this.listenTo (this, "change:topOnly", function() { self.render.call(self); });
             },
-		}))({topOnly: false});
+		}))({topOnly: false, topCount: 2});
 
 		new CLMSUI.utils.checkBoxView ({
 			el: d3.select(self.el).select(".rightSpan").node(),
@@ -169,14 +169,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 			myOptions: {
 				toggleAttribute: "topOnly",
 				id: self.el.id +"TopOnly",
-				label: "Only Show Top-Scoring Matches per Link"
+				label: "Only Show "+this.viewStateModel.get("topCount")+" Top-Scoring Matches per Link"
 			},
 		});
 
     },
 
     render: function () {
-        this.updateTable ({topMatchesOnly: this.viewStateModel.get("topOnly")});
+        this.updateTable ({topMatchesOnly: this.viewStateModel.get("topOnly"), topCount: this.viewStateModel.get("topCount")});
     },
     
     getMatches: function (xlink) {
@@ -210,7 +210,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		// filter to top match per link if requested
 		if (options.topMatchesOnly) {
 			this.matchCountIndices.forEach (function (mci) {
-				mci.matches = mci.matches.slice(0,1);
+				mci.matches = mci.matches.slice (0, options.topCount || 1);
 			});
 		}
         

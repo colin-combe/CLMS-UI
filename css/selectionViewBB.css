@@ -125,3 +125,7 @@
 	float: right;
 }
 
+.dynDiv .rightSpan label:hover {
+    background: inherit;
+}
+
