@@ -207,6 +207,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         });
 
         this.listenTo (this.model, "change:lastSelectedMatch", function (model, selectedMatch) {
+			selectedMatch = selectedMatch || model.get("lastSelectedMatch");
             this.triggerSpectrumViewer (selectedMatch.match, selectedMatch.directSelection);
         });
 

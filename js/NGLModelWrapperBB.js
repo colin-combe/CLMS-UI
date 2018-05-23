@@ -44,8 +44,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var oldpdbid = existingDistObj ? existingDistObj.pdbBaseSeqID : undefined;
 		
 		// silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
-        clmsModel.set ("distancesObj", distancesObj, {silent: true});
-		clmsModel.trigger ("change:distancesObj", clmsModel, distancesObj);
+        clmsModel
+			.set ("distancesObj", distancesObj, {silent: true})
+			.trigger ("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
+		;
 		
         if (existingDistObj && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
             console.log ("FORCE DISTANCES CHANGE EVENT");

@@ -9,7 +9,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     initialize: function (options) {
         this.options = options || {};
         var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView verticalFlexContainer");
-        holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
+        holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span><span class='rightSpan'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
         // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
         this.listenTo (this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function () {
@@ -19,7 +19,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         });
 
         // emphasise selected match table row (or not if nothing selected)
-        this.listenTo(this.model, "change:lastSelectedMatch", function (model, selMatch) {
+        this.listenTo (this.model, "change:lastSelectedMatch", function (model) {
+			var selMatch = model.get("lastSelectedMatch");
             this.clearCurrentRowHighlight();
             if (selMatch && selMatch.match) {
                 d3.select(this.el).select("tr#match" + selMatch.match.id).classed("spectrumShown2", true);
@@ -57,7 +58,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "group": "Group",
             "runName": "Run Name",
             "scanNumber": "Scan Number",
-            "precursorCharge": "Charge",
+            "precursorCharge": "Charge (Z)",
             "expMZ": "Exp M/Z",
             "expMass": "Exp Mass",
             "matchMZ": "Calc M/Z",
@@ -112,27 +113,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return d.matchedPeptides[0].prt.length *
                     ((d.matchedPeptides[1].prt.length != 0) ? d.matchedPeptides[1].prt.length : 1);
             },
-            "protein1": function (d) {
-                return CLMSUI.utils.proteinConcat(d, 0, self.model.get("clmsModel"));
-            },
-            "protein2": function (d) {
-                return CLMSUI.utils.proteinConcat(d, 1, self.model.get("clmsModel"));
-            },
-            "runName": function (d) {
-                return d.runName();
-            },
-            "group": function (d) {
-                return d.group();
-            },
-            "pepPos1": function (d) {
-                return CLMSUI.utils.pepPosConcat(d, 0);
-            },
-            "pepPos2": function (d) {
-                return CLMSUI.utils.pepPosConcat(d, 1);
-            },
-            "pepSeq1raw": function (d) {
-                return d.matchedPeptides[0].seq_mods;
-            },
+            "protein1": function (d) { return CLMSUI.utils.proteinConcat (d, 0, self.model.get("clmsModel")); },
+            "protein2": function (d) { return CLMSUI.utils.proteinConcat (d, 1, self.model.get("clmsModel")); },
+            "runName": function (d) { return d.runName(); },
+            "group": function (d) { return d.group(); },
+            "pepPos1": function (d) { return CLMSUI.utils.pepPosConcat (d, 0); },
+            "pepPos2": function (d) { return CLMSUI.utils.pepPosConcat (d, 1); },
+            "pepSeq1raw": function (d) { return d.matchedPeptides[0].seq_mods; },
             "pepSeq2raw": function (d) {
                 var dmp1 = d.matchedPeptides[1];
                 return dmp1 ? dmp1.seq_mods : "";
@@ -189,10 +176,27 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         }
 
         d3.select(this.el).select(".controlBar").insert("span", ":first-child").text(this.identifier);
+		
+		this.viewStateModel = new (Backbone.Model.extend ({
+			initialize: function () {
+                this.listenTo (this, "change:topOnly", function() { self.render.call(self); });
+            },
+		}))({topOnly: false});
+
+		new CLMSUI.utils.checkBoxView ({
+			el: d3.select(self.el).select(".rightSpan").node(),
+			model: this.viewStateModel,
+			myOptions: {
+				toggleAttribute: "topOnly",
+				id: self.el.id +"TopOnly",
+				label: "Only Show Top-Scoring Matches per Link"
+			},
+		});
+
     },
 
     render: function () {
-        this.updateTable();
+        this.updateTable ({topMatchesOnly: this.viewStateModel.get("topOnly")});
     },
 
     getMatches: function (xlink) {
@@ -204,7 +208,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         ;
     },
 
-    updateTable: function () {
+    updateTable: function (options) {
+		options = options || {};
+		
         this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
             // map to reduce filtered matches to selected matches only
              .map (function (xlink) {
@@ -215,12 +221,19 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             .filter(function (selLinkMatchData) {
                 return selLinkMatchData.matches.length;
             })
-            // Then sort links by top remaining match score for each link
+           // Then sort links by top remaining match score for each link
             .sort(function (a, b) {
                 return b.matches[0].score - a.matches[0].score;
             })
         ;
-
+		
+		// filter to top match per link if requested
+		if (options.topMatchesOnly) {
+			this.matchCountIndices.forEach (function (mci) {
+				mci.matches = mci.matches.slice(0,1);
+			});
+		}
+        
         var count = 0;
         // add count metadata to matchCountIndices
         this.matchCountIndices.forEach (function (selLinkMatchData) {
@@ -376,15 +389,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                     d3.select(".validationControls").style("display", "block");
                 }
                 if (d.src) { // if the src att is missing its from a csv file
-                    self.model.trigger("change:lastSelectedMatch", self.model, {
-                        match: d,
-                        directSelection: true
-                    });
+					// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
+					self.model
+						.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
+						.trigger ("change:lastSelectedMatch", self.model, self.model.get("selectedMatch"))
+					;
                 }
             });
         tjoin.order();
         tjoin
-            .classed("spectrumShown2", function (d) {
+            .classed("spectrumShown2", function (d, i) {
                 var lsm = self.model.get("lastSelectedMatch");
                 return lsm && lsm.match ? lsm.match.id === d.id : false;
             });
