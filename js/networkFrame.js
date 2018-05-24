@@ -136,7 +136,7 @@ CLMSUI.init.models = function (options) {
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
 
-    CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
+    CLMSUI.utils.displayError (function() { return !options.identifications || !options.identifications.length; },
         "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
     );
 
@@ -162,7 +162,7 @@ CLMSUI.init.modelsEssential = function (options) {
 
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
     // cc temp hack
-    // var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
+    // var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.identifications);
     // clmsModelInst.get("searches").forEach (function (value, key) {
     //    value.participantIDSet = searchMap[key];
     // });
@@ -217,10 +217,10 @@ CLMSUI.init.modelsEssential = function (options) {
 };
 
 CLMSUI.init.views = function () {
-	
+
 	var compModel = CLMSUI.compositeModelInst;
 	console.log ("MODEL", compModel);
-	
+
 	//todo: only if there is validated {
     compModel.get("filterModel").set("unval", false);
 
@@ -311,7 +311,7 @@ CLMSUI.init.views = function () {
         }
     });
 
-	
+
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
 		model: compModel.get("filterModel"),
@@ -338,7 +338,7 @@ CLMSUI.init.views = function () {
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
 	*/
-	
+
     new CLMSUI.xiNetControlsViewBB ({
           el: "#xiNetControlsPanel",
           model: compModel,
@@ -443,7 +443,7 @@ CLMSUI.init.viewsEssential = function (options) {
 		var json_data_copy = jQuery.extend({}, t.JSONdata);
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
 	});
-	
+
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -451,11 +451,11 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-            /*if (match) {
+            if (match) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
-                var url = "./loadData_xiUI_DB.php?uid="
+                var url = "../CLMS-model/php/identifications.php?upload="
                         + this.model.get("clmsModel").get("sid")
-                        + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
+                        + "&spectrum="  + match.spectrumId;
                 var self = this;
                 d3.json (url, function(error, json) {
                     if (error) {
@@ -480,14 +480,14 @@ CLMSUI.init.viewsEssential = function (options) {
                 });
             } else {
                 //~ //this.model.clear();
-            }*/
+            }
         })
     ;
 
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
-	
+
     var QCwrapper = new QCwrapperView({
         el: '#QCdiv',
         splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],

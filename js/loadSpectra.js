@@ -74,7 +74,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
 
     //var annotationRequest = CLMSUI.convert_to_json_request(match);
 
-    d3.text ('./php/getPeakList.php?uid='+match.searchId+'&spid='+match.spectrumId, function(error, text) {
+    d3.text ('../CLMS-model/php/peakList.php?uid='+match.searchId+'&spid='+match.spectrumId, function(error, text) {
         if (error) {
             console.log ("error getting peak list", error);
             d3.select("#range-error").text ("Cannot load spectra from URL");
