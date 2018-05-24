@@ -84,11 +84,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             //~ "pepPos1": function () { return false; },
             //~ "pepPos2": function () { return false; },
             "autovalidated": function () {
-                return CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
+                return false;//CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
             },
             "validated": function () {
-                return true;
-            } //CLMS.model.manualValidatedFound; },
+                return false;
+            }, //CLMS.model.manualValidatedFound; },
+            "precursorIntensity": function () {return false;},
+            "elutionStart": function () {return false;},
+            "elutionEnd": function () {return false;}
         };
 
         this.filteredProps = tableDataPropOrder.filter(
@@ -121,14 +124,31 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 var dmp1 = d.matchedPeptides[1];
                 return dmp1 ? dmp1.seq_mods : "";
             },
-            "linkPos1": function (d) { return d.linkPos1; },
-            "linkPos2": function (d) { return d.linkPos2; },
-            "score": function (d) { return twoZeroPadder (d.score); },
-            "expMZ": function (d) { return massZeroPadder (d.expMZ()); },
-            "expMass": function (d) { return massZeroPadder (d.expMass()); },
-            "matchMZ": function (d) { return massZeroPadder (d.matchMZ()); },
-            "matchMass": function (d) { return massZeroPadder (d.matchMass()); },
-            "massError": function (d) { return massZeroPadder (d.massError()); },
+            "linkPos1": function (d) {
+                return d.linkPos1;
+            },
+            "linkPos2": function (d) {
+                return d.linkPos2;
+            },
+            "score": function (d) {
+                return twoZeroPadder(d.score);
+            }, //temp hack//twoZeroPadder (d.score); },
+
+            "expMZ": function (d) {
+                return massZeroPadder(d.expMZ);
+            },
+            "expMass": function (d) {
+                return massZeroPadder(d.expMass());
+            },
+            "matchMZ": function (d) {
+                return massZeroPadder(d.calcMZ);
+            },
+            "matchMass": function (d) {
+                return massZeroPadder(d.calcMass());
+            },
+            "massError": function (d) {
+                return massZeroPadder(d.massError());
+            },
             "precursorIntensity": function(d) { return scientific (d.precursor_intensity); },
             "elutionStart": function(d) { return d.elution_time_start; },
             "elutionEnd": function(d) { return d.elution_time_end; },
@@ -368,13 +388,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 } else {
                     d3.select(".validationControls").style("display", "block");
                 }
-                if (d.src) { // if the src att is missing its from a csv file
+                //if (d.src) { // if the src att is missing its from a csv file
 					// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
 					self.model
 						.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
 						.trigger ("change:lastSelectedMatch", self.model, self.model.get("selectedMatch"))
 					;
-                }
+                //}
             });
         tjoin.order();
         tjoin

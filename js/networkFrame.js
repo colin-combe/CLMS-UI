@@ -161,10 +161,12 @@ CLMSUI.init.modelsEssential = function (options) {
     }
 
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
-    var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
-    clmsModelInst.get("searches").forEach (function (value, key) {
-       value.participantIDSet = searchMap[key];
-    });
+    // cc temp hack
+    // var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
+    // clmsModelInst.get("searches").forEach (function (value, key) {
+    //    value.participantIDSet = searchMap[key];
+    // });
+    //console.log ("smap", searchMap);
 
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
@@ -449,9 +451,9 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {wrapperID: "spectrumPanel", canBringToTop: options.spectrumToTop}
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
-            if (match) {
+            /*if (match) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
-                var url = "./loadData.php?sid="
+                var url = "./loadData_xiUI_DB.php?uid="
                         + this.model.get("clmsModel").get("sid")
                         + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
                 var self = this;
@@ -478,7 +480,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 });
             } else {
                 //~ //this.model.clear();
-            }
+            }*/
         })
     ;
 
@@ -533,7 +535,7 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
+            var randId = 0;//CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
             CLMSUI.loadSpectra (match, randId, this.model);
         } else {
             this.model.clear();

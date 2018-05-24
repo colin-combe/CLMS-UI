@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '?v='.microtime(true);
+    $cacheBuster = '';//?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -236,7 +236,7 @@
                 }
             };
 
-            var url = "./loadData.php" + window.location.search;
+            var url = "./loadData_xiUI_DB.php" + window.location.search;
 
             d3.text (url, function (error, text) {
                 if (!error) {
