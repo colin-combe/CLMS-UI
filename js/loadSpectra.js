@@ -41,13 +41,13 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     annotationRequest.annotation.fragmentTolerance = {"tolerance":+fragTolArr[0], "unit":fragTolArr[1]};
 
     // //todo modifications
-    annotationRequest.annotation.modifications = CLMSUI.compositeModelInst.get('clmsModel').get('modifications');
-//[
-    //    {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"}
-    //     //{"aminoAcids":["C"],"id":"carbamidomethyl","mass":"57.021465"},
-    //     //{"aminoAcids":["Q"],"id":"ammonia-loss","mass":"-17.026548"},
-    //     //{"aminoAcids":["A"],"id":"acetyl","mass":"42.010567"}
-//];
+    annotationRequest.annotation.modifications =// CLMSUI.compositeModelInst.get('clmsModel').get('modifications');
+[
+       {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"},
+        {"aminoAcids":["C"],"id":"carbamidomethyl","mass":"57.021465"},
+        {"aminoAcids":["Q"],"id":"ammonia-loss","mass":"-17.026548"},
+        {"aminoAcids":["A"],"id":"acetyl","mass":"42.010567"}
+];
 
 
 
