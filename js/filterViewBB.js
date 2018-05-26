@@ -50,7 +50,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state e.g. 3"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
                 {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"},
-            ],            
+            ],
             navigationNumberFilters: [
                 {"label":"Residue Pairs per PPI", "id":"urpPpi", min: 1, max: 99, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
             ]
@@ -185,8 +185,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var cutoff = self.model.get("matchScoreCutoff");
                 var scoreExtent = self.model.scoreExtent;
                 // take new values, along with score extents, sort them and discard extremes for new cutoff settings
-                var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]), 
-							   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val, 
+                var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]),
+							   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val,
 							   scoreExtent[0], scoreExtent[1]]
 					.filter (function (v) { return v !== undefined; })
                     .sort(function(a,b) { return a - b;})
@@ -279,7 +279,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        this.modeChanged();
+        //this.modeChanged();
     },
 
     filter: function (evt) {
@@ -319,12 +319,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		}
     },
 
-    modeChanged: function () {
-		var fdrMode = d3.select("#fdrMode").node().checked;
-        d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
-        d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
-		this.model.set ("fdrMode", fdrMode);
-    },
+    // modeChanged: function () {
+	// 	var fdrMode = d3.select("#fdrMode").node().checked;
+    //     d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
+    //     d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
+	// 	this.model.set ("fdrMode", fdrMode);
+    // },
 
     render: function () {
         return this;

@@ -129,14 +129,14 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
             validationStatusFilter: function (match) {
-                var vChar = match.validated;
-                if (vChar != 'R') {
-                    if (this.get(vChar) || this.get(this.valMap.get(vChar))) return true;
-                    if (match.autovalidated && this.get("AUTO")) return true;
-                    if (!match.autovalidated && !vChar && this.get("unval")) return true;
-                }
+                // var vChar = match.validated;
+                // if (vChar != 'R') {
+                //     if (this.get(vChar) || this.get(this.valMap.get(vChar))) return true;
+                //     if (match.autovalidated && this.get("AUTO")) return true;
+                //     if (!match.autovalidated && !vChar && this.get("unval")) return true;
+                // }
 
-                return false;
+                return true;
             },
 
             proteinNameCheck: function (match, searchString) {
@@ -447,18 +447,18 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }, this);
             },
         }),
-	
+
 		ConsensusModel: Backbone.Model.extend ({
 			initialize: function (modelOptions) {
-				
+
 			},
-			
+
 			fromSequences: function (sequences, categoryCount) {
 				var max = d3.max (sequences, function (seq) { return seq.length; });
 				var maxRange = d3.range (0, max);
 				var baseCounts = maxRange.map (function() { return {}; });
 				var seqCounts = maxRange.map (function() { return 0; });
-				
+
 				for (var i = 0; i < max; i++) {
 					sequences.forEach (function (seq) {
 						var letter = seq[i];
@@ -471,23 +471,23 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 						}
 					});
 				};
-				
+
 				var approxCounts = seqCounts.map (function (seqCount) {
 					 return (1 / Math.log(2)) * ((categoryCount - 1) / (2 * seqCount));
 				});
-				
+
 				var uncertainties = baseCounts.map (function (bc, i) {
 					var total = seqCounts[i];
-					return d3.sum (d3.values(bc), function(d) { 
+					return d3.sum (d3.values(bc), function(d) {
 						var relFreq = d / total;
-						return - (relFreq * Math.log2(relFreq)); 
+						return - (relFreq * Math.log2(relFreq));
 					});
 				});
-				
+
 				var information = uncertainties.map (function (unc, i) {
 					return Math.log2(categoryCount) - (unc + approxCounts[i]);
 				});
-				
+
 				var heights = baseCounts.map (function (baseCount, i) {
 					var entries = d3.entries(baseCount);
 					var height = {};
@@ -496,7 +496,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 					});
 					return height;
 				});
-				
+
 				this.set ("heights", heights);
 				console.log ("bb", baseCounts, seqCounts, approxCounts, uncertainties, information, heights);
 			},

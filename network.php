@@ -66,7 +66,8 @@
         <link rel="stylesheet" href="./css/searchSummary.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
-		    <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
@@ -113,7 +114,6 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
@@ -124,7 +124,7 @@
         <script type="text/javascript" src="./js/circularViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/proteinInfoViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/keyViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/scatterplotViewBB.js<?php echo $cacheBuster ?>"></script>
@@ -236,7 +236,7 @@
                 }
             };
 
-            var url = "./loadData_xiUI_DB.php" + window.location.search;
+            var url = "../CLMS-model/php/identifications.php" + window.location.search;
 
             d3.text (url, function (error, text) {
                 if (!error) {

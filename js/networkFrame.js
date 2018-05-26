@@ -721,12 +721,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "scatterplotShow",
     });
 
-	new CLMSUI.CSVFileChooserBB ({
-        el: "#csvPanel",
-        model: CLMSUI.compositeModelInst,
-        displayEventName: "csvShow",
-    });
-
     new CLMSUI.LinkMetaDataFileChooserBB ({
         el: "#linkMetaLoadPanel",
         model: CLMSUI.compositeModelInst,
