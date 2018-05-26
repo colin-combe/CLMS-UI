@@ -9,34 +9,17 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     var peptides = [];
     var linkSites = [];
     peptides[0] = CLMSUI.arrayifyPeptide(match.matchedPeptides[0].seq_mods);
-    linkSites[0] = {"id":0, "peptideId":0, "linkSite": match.linkPos1}
+    linkSites[0] = {"id":0, "peptideId":0, "linkSite": match.linkPos1 - 1};
     if (match.matchedPeptides[1]) {
-        peptide[1] = CLMSUI.arrayifyPeptide(match.matchedPeptides[1].seq_mods);
-        linkSites[1] = {"id":0, "peptideId":1, "linkSite": match.linkPos2}
+        peptides[1] = CLMSUI.arrayifyPeptide(match.matchedPeptides[1].seq_mods);
+        linkSites[1] = {"id":0, "peptideId":1, "linkSite": match.linkPos2 - 1}
     }
 
     annotationRequest.Peptides = peptides;
-    annotationRequest.LinkSite = [];//linkSites;
+    annotationRequest.LinkSite = linkSites;
 
     annotationRequest.annotation = {};
-    /*annotationRequest.annotation =  {
-                                // "fragmentTolerance":{"tolerance":"0.01","unit":"Da"},
-                                // "modifications":[
-                                //     {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"}
-                                //     //{"aminoAcids":["C"],"id":"carbamidomethyl","mass":"57.021465"},
-                                //     //{"aminoAcids":["Q"],"id":"ammonia-loss","mass":"-17.026548"},
-                                //     //{"aminoAcids":["A"],"id":"acetyl","mass":"42.010567"}
-                                // ],
-                                // "ions":[
-                                //     {"type":"PeptideIon"},
-                                //     {"type":"BIon"},
-                                //     {"type":"YIon"}],
-                                // "cross-linker":{"modMass":0},
-                                // "precursorCharge":3,
-                                // "precursorMZ":1102.9017300194,
-                                // "custom":[""]
-                            };
-*/
+
     var fragTolArr = match.spectrum.ft.split(" ");
     annotationRequest.annotation.fragmentTolerance = {"tolerance":+fragTolArr[0], "unit":fragTolArr[1]};
 
@@ -44,7 +27,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     annotationRequest.annotation.modifications =// CLMSUI.compositeModelInst.get('clmsModel').get('modifications');
 [
        {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"},
-        {"aminoAcids":["C"],"id":"carbamidomethyl","mass":"57.021465"},
+        {"aminoAcids":["C"],"id":"cm","mass":"57.021465"},
         {"aminoAcids":["Q"],"id":"ammonia-loss","mass":"-17.026548"},
         {"aminoAcids":["A"],"id":"acetyl","mass":"42.010567"}
 ];
@@ -70,6 +53,23 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
     annotationRequest.annotation.precursorMZ = +match.expMZ;
     annotationRequest.annotation.custom = [""];
 
+    // annotationRequest.annotation =  {
+    //                             "fragmentTolerance":{"tolerance":"0.01","unit":"Da"},
+    //                             "modifications":[
+    //                                 {"aminoAcids":["M"],"id":"oxidation","mass":"15.994915"}
+    //                                 //{"aminoAcids":["C"],"id":"carbamidomethyl","mass":"57.021465"},
+    //                                 //{"aminoAcids":["Q"],"id":"ammonia-loss","mass":"-17.026548"},
+    //                                 //{"aminoAcids":["A"],"id":"acetyl","mass":"42.010567"}
+    //                             ],
+    //                             "ions":[
+    //                                 {"type":"PeptideIon"},
+    //                                 {"type":"BIon"},
+    //                                 {"type":"YIon"}],
+    //                             "cross-linker":{"modMass":0},
+    //                             "precursorCharge":3,
+    //                             "precursorMZ":1102.9017300194,
+    //                             "custom":[""]
+    //                         };
 
 
     //var annotationRequest = CLMSUI.convert_to_json_request(match);
