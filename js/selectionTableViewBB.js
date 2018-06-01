@@ -9,7 +9,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     initialize: function (options) {
         this.options = options || {};
         var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView verticalFlexContainer");
-        holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span><span class='rightSpan'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
+        holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span><span class='rightSpan'></span><span class='rightSpan'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
         // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
         this.listenTo (this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function () {
@@ -160,16 +160,32 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		this.viewStateModel = new (Backbone.Model.extend ({
 			initialize: function () {
                 this.listenTo (this, "change:topOnly", function() { self.render.call(self); });
+				this.listenTo (this, "change:hidden", function (model, val) {
+					d3.select(self.el).selectAll("table").style("display", val ? "none" : null);
+					if (self.options.mainModel) {
+						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+					}
+				});
             },
-		}))({topOnly: false, topCount: 2});
+		}))({topOnly: false, topCount: 2, hidden: false});
 
 		new CLMSUI.utils.checkBoxView ({
-			el: d3.select(self.el).select(".rightSpan").node(),
+			el: d3.select(self.el).select(".rightSpan:last-child").node(),
 			model: this.viewStateModel,
 			myOptions: {
 				toggleAttribute: "topOnly",
 				id: self.el.id +"TopOnly",
 				label: "Only Show "+this.viewStateModel.get("topCount")+" Top-Scoring Matches per Link"
+			},
+		});
+		
+		new CLMSUI.utils.checkBoxView ({
+			el: d3.select(self.el).select(".rightSpan").node(),
+			model: this.viewStateModel,
+			myOptions: {
+				toggleAttribute: "hidden",
+				id: self.el.id +"HideToggle",
+				label: "Hide",
 			},
 		});
 
