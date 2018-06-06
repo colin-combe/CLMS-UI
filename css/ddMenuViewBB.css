@@ -19,10 +19,6 @@
     user-select: none;
 }
 
-span.menuTitle{
-	vertical-align: top;
-}
-
 .dropdown .menuTitle:hover {
     color: #091D42;
     background: #fff;
