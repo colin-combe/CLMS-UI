@@ -136,8 +136,17 @@ CLMSUI.init.models = function (options) {
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
 
-    CLMSUI.utils.displayError (function() { return !options.rawMatches || !options.rawMatches.length; },
-        "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
+	var arrIsPopulated = function (arr) {
+		return arr && arr.length;
+	}
+	var hasMissing = arrIsPopulated (options.missingSearchIDs);
+	var hasIncorrect = arrIsPopulated (options.incorrectSearchIDs);
+	
+    CLMSUI.utils.displayError (function() { return options.missingSearchIDs || options.incorrectSearchIDs || !options.rawMatches || !options.rawMatches.length; },
+		(hasMissing ? "Cannot find Search ID"+(options.missingSearchIDs.length > 1 ? "s " : " ")+options.missingSearchIDs.join(", ")+".<br>" : "") +
+		(hasIncorrect ? "Wrong ID Key for Search ID"+(options.incorrectSearchIDs.length > 1 ? "s " : " ")+options.incorrectSearchIDs.join(", ")+".<br>" : "") +
+		(!hasMissing && !hasIncorrect && !arrIsPopulated(options.rawMatches) ? "No cross-links detected for this search.<br>" : "") +
+        "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
     );
 
 	// This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
