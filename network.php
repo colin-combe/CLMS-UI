@@ -171,7 +171,7 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
-                    <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
+                    <p id="xiNetControlsPanel"></p>
             </div>
 
             <div class="mainContent">

@@ -141,7 +141,7 @@ CLMSUI.init.modelsEssential = function (options) {
 	}
 	var hasMissing = arrIsPopulated (options.missingSearchIDs);
 	var hasIncorrect = arrIsPopulated (options.incorrectSearchIDs);
-	
+
     CLMSUI.utils.displayError (function() { return options.missingSearchIDs || options.incorrectSearchIDs || !options.rawMatches || !options.rawMatches.length; },
 		(hasMissing ? "Cannot find Search ID"+(options.missingSearchIDs.length > 1 ? "s " : " ")+options.missingSearchIDs.join(", ")+".<br>" : "") +
 		(hasIncorrect ? "Wrong ID Key for Search ID"+(options.incorrectSearchIDs.length > 1 ? "s " : " ")+options.incorrectSearchIDs.join(", ")+".<br>" : "") +
@@ -224,14 +224,14 @@ CLMSUI.init.modelsEssential = function (options) {
 };
 
 CLMSUI.init.views = function () {
-	
+
 	var compModel = CLMSUI.compositeModelInst;
 	console.log ("MODEL", compModel);
-	
+
 	//todo: only if there is validated {
     compModel.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetHelpPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -318,7 +318,7 @@ CLMSUI.init.views = function () {
         }
     });
 
-	
+
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
 		model: compModel.get("filterModel"),
@@ -345,11 +345,17 @@ CLMSUI.init.views = function () {
         .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
     ;
 	*/
-	
+
     new CLMSUI.xiNetControlsViewBB ({
           el: "#xiNetControlsPanel",
           model: compModel,
           displayEventName: "xiNetControlsShow",
+    });
+
+    new CLMSUI.xiNetHelpViewBB ({
+          el: "#xiNetHelpPanel",
+          model: compModel,
+          displayEventName: "xiNetHelpShow",
     });
 };
 
@@ -450,7 +456,7 @@ CLMSUI.init.viewsEssential = function (options) {
 		var json_data_copy = jQuery.extend({}, t.JSONdata);
 		settingsSpectrumModel.set({JSONdata: json_data_copy});
 	});
-	
+
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -494,7 +500,7 @@ CLMSUI.init.viewsEssential = function (options) {
     var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
     var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
     var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
-	
+
     var QCwrapper = new QCwrapperView({
         el: '#QCdiv',
         splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],

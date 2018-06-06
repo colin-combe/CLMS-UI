@@ -19,6 +19,10 @@
     user-select: none;
 }
 
+span.menuTitle{
+	vertical-align: top;
+}
+
 .dropdown .menuTitle:hover {
     color: #091D42;
     background: #fff;
@@ -32,7 +36,7 @@
     font-size: inherit;
     /*display: table-cell;*/
     display: inline-block;
-    width: 100%; 
+    width: 100%;
     text-align: left;
     margin-top: 0;
     margin-bottom: 0;
