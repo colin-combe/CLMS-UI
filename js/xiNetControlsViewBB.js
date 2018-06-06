@@ -81,35 +81,22 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        // var wrapperPanel = mainDivSel.append("div")
-        //     .attr ("class", "panelInner")
-        // ;
-
         mainDivSel.html(
-            // "<div class='xinetButtonBar'>" +
-            // "<div class='toolbar'>" +
-            "<p>xiNET:</p>" +
+            // "<p>xiNET:</p>" +
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto Layout</button>" +
             "<span class='noBreak sectionDividerLeft sectionDividerRight'>" +
             "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
             "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>" +
             "</span>" +
             "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
-            "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>" +
+            "<button class='btn btn-1 btn-1a downloadButton'>" /*+ CLMSUI.utils.commonLabels.downloadImg*/ + "DOWNLOAD IMAGE</button>" +
             "<label class='showLabels btn'>Show Labels<input type='checkbox' name='showLabels' class='showXinetLabels' checked></label>" +
             "<span class='noBreak sectionDividerLeft'>" +
-            "<span>DRAG TO: </span>" +
+            // "<span>DRAG TO: </span>" +
             "<label>PAN<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
-            "<label>OR SELECT<input type='radio' name='clickMode' class='clickToSelect'></label>" +
+            "<label>SELECT<input type='radio' name='clickMode' class='clickToSelect'></label>" +
             "</span>" +
-            "<p class='btn dropdown' id='xiNetHelpButton'><span class='menuTitle' onclick=\"CLMSUI.vent.trigger ('xiNetHelpShow', true);\">SHOW xiNET CONTROLS</span></p>"
-
-            // "</div>" +
-            // "<div class='toolbar'>" +
-            //	"<span class='layoutLabel'>Layout</span>" +
-            //+
-            // "</div>" +
-            // "</div>"
+            "<p class='btn dropdown' id='xiNetHelpButton'><span class='menuTitle' onclick=\"CLMSUI.vent.trigger ('xiNetHelpShow', true);\">SHOW CONTROLS</span></p>"
         );
 
         var tooltips = {
