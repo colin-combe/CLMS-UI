@@ -8,8 +8,11 @@
 
 #xiNetControlsPanel {
     /* right:0px; */
-		width: 710px;
-		text-transform: none;
+	/* width: 710px;
+	text-transform: none; */
+	border-left: 1px solid #eee;
+	float: right;
+    background-color: #091D42;
 }
 
 #autoLayoutButton{
