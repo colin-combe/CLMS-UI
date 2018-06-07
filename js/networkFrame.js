@@ -465,6 +465,8 @@ CLMSUI.init.viewsEssential = function (options) {
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
             if (match) {
+				this.lastRequestedID = match.id;	// async catch
+				//console.log ("MATCH ID", this, match.id);
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "./loadData.php?sid="
                         + this.model.get("clmsModel").get("sid")
@@ -474,21 +476,26 @@ CLMSUI.init.viewsEssential = function (options) {
                     if (error) {
                         console.log ("error", error, "for", url);
                     } else {
-                        var altModel = new window.CLMS.model.SearchResultsModel ();
-                        altModel.parseJSON(json);
-                        var allCrossLinks = CLMS.arrayFromMapValues(altModel.get("crossLinks"));
-                        // empty selection first
-                        // (important or it will crash coz selection contains links to proteins not in clms model)
-                        self.alternativesModel
-                            .set("selection", [])
-                            .set("clmsModel", altModel)
-                            .applyFilter()
-                            .set ("lastSelectedMatch", {match: match, directSelection: true})
-                        ;
-                        d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
-                        //self.alternativesModel.set("selection", allCrossLinks);
-                        self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
-                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+						var thisSpecID = json.rawMatches && json.rawMatches[0] ? json.rawMatches[0].id : -1;
+						//console.log ("json", json, self.lastRequestedID, thisSpecID);
+						if (thisSpecID === self.lastRequestedID) {
+							//console.log (":-)", json, self.lastRequestedID, thisSpecID);
+							var altModel = new window.CLMS.model.SearchResultsModel ();
+							altModel.parseJSON(json);
+							var allCrossLinks = CLMS.arrayFromMapValues(altModel.get("crossLinks"));
+							// empty selection first
+							// (important or it will crash coz selection contains links to proteins not in clms model)
+							self.alternativesModel
+								.set("selection", [])
+								.set("clmsModel", altModel)
+								.applyFilter()
+								.set ("lastSelectedMatch", {match: match, directSelection: true})
+							;
+							d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
+							//self.alternativesModel.set("selection", allCrossLinks);
+							self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
+							CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+						}
                     }
                 });
             } else {
@@ -549,7 +556,7 @@ CLMSUI.init.viewsEssential = function (options) {
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
-            CLMSUI.loadSpectra (match, randId, this.model);
+            CLMSUI.loadSpectra (match, randId, this.model, true);
         } else {
             this.model.clear();
         }
