@@ -171,7 +171,7 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
-                    <p id="xiNetControlsPanel"></p>
+                    <div id="xiNetControlsPanel"></div>
             </div>
 
             <div class="mainContent">
@@ -211,38 +211,39 @@
                 include('../xiSpecConfig.php');
             }
         ?>
-            var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
+		
+		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
 
-            var success = function (text) {
-                spinner.stop(); // stop spinner on request returning
+		var success = function (text) {
+			spinner.stop(); // stop spinner on request returning
 
-                try {
-                    var json = {};
-                    if (text) { json = JSON.parse (text);}
-                    CLMSUI.init.models (json);
-                    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-                    document.title = CLMS.arrayFromMapKeys(searches).join();
+			try {
+				var json = {};
+				if (text) { json = JSON.parse (text);}
+				CLMSUI.init.models (json);
+				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+				document.title = CLMS.arrayFromMapKeys(searches).join();
 
-                    Split (["#topDiv", "#bottomDiv"],
-                        { direction: "vertical", sizes: [80,20], minSize: [200,10],
-                            onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
-                        }
-                    );
+				Split (["#topDiv", "#bottomDiv"],
+					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
+						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+					}
+				);
 
-                    CLMSUI.init.views();
-                    allDataLoaded ();
-                } catch (err) {
-                    console.error ("Error", err, text.substring(0, 1000));
-                }
-            };
+				CLMSUI.init.views();
+				allDataLoaded ();
+			} catch (err) {
+				console.error ("Error", err, text.substring (0, 1000));
+			}
+		};
 
-            var url = "./loadData.php" + window.location.search;
+		var url = "./loadData.php" + window.location.search;
 
-            d3.text (url, function (error, text) {
-                if (!error) {
-                    success (text);
-                }
-            });
+		d3.text (url, function (error, text) {
+			if (!error) {
+				success (text);
+			}
+		});
 
     //]]>
     </script>

@@ -4,11 +4,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     events: {
         "mouseenter tr.matchRow": "highlight",
         "mouseleave table": "highlight",
+		"mouseenter table": "focusTable",
+		"keydown table": "selectByKey",
     },
 
     initialize: function (options) {
         this.options = options || {};
-        var holdingDiv = d3.select(this.el).append("DIV").attr("class", "selectView verticalFlexContainer");
+		
+		var d3el = d3.select(this.el);
+		
+        var holdingDiv = d3el.append("DIV").attr("class", "selectView verticalFlexContainer");
         holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span><span class='rightSpan'></span><span class='rightSpan'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
         // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
@@ -136,7 +141,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         this.page = 1;
         this.pageSize = this.options.pageSize || 20;
-        var pager = d3.select(this.el).select(".pager");
+        var pager = d3el.select(".pager");
         if (!self.options.mainModel) {
             pager.append("span").text("Page:");
 
@@ -155,7 +160,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             pager.append("span").text("Alternative Explanations");
         }
 
-        d3.select(this.el).select(".controlBar").insert("span", ":first-child").text(this.identifier);
+        d3el.select(".controlBar").insert("span", ":first-child").text(this.identifier);
+		
+		d3el.select("table").attr("tabindex", 0);	// so table can capture key events
 		
 		this.viewStateModel = new (Backbone.Model.extend ({
 			initialize: function () {
@@ -170,7 +177,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		}))({topOnly: false, topCount: 2, hidden: false});
 
 		new CLMSUI.utils.checkBoxView ({
-			el: d3.select(self.el).select(".rightSpan:last-child").node(),
+			el: d3el.select(".rightSpan:last-child").node(),
 			model: this.viewStateModel,
 			myOptions: {
 				toggleAttribute: "topOnly",
@@ -180,7 +187,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		});
 		
 		new CLMSUI.utils.checkBoxView ({
-			el: d3.select(self.el).select(".rightSpan").node(),
+			el: d3el.select(".rightSpan").node(),
 			model: this.viewStateModel,
 			myOptions: {
 				toggleAttribute: "hidden",
@@ -269,8 +276,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var mci = this.matchCountIndices;
         var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
 
-        //var pageCount = Math.floor(this.selectedXLinkArray.length / this.pageSize) + 1;
-        var pageCount = Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;
+        var pageCount = this.getPageCount();
         pg = Math.max (Math.min (pg, pageCount), 1);
         this.page = pg;
         var input = d3.select(this.el).select(".pager>input");
@@ -307,6 +313,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
         this.addRows (tablePage, this.filteredProps, matchBounds);
     },
+	
+	getPageCount: function () {
+		var mci = this.matchCountIndices;
+        var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
+        return Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;	
+	},
 
     // code that maintains the rows in the table
     addRows: function (selectedLinkArray, filteredProps, firstLastLinkMatchBounds) {
@@ -369,32 +381,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return 'match' + d.id;
             }) // since we key the rows on d.id this won't change, so we can set it for all time in enter()
             .on("click", function (d) {
-                var mainModel = self.options.mainModel;
-                if (mainModel) {
-                    //TODO: fix?
-                    //~ if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
-                    //~ d3.select(".validationControls").style("display", "block");
-                    //~ } else {
-                    //~ d3.select(".validationControls").style("display", "none");
-                    //~ }
-                    mainModel.set("lastSelectedMatch", {
-                        match: d,
-                        directSelection: true
-                    });
-                } else {
-                    d3.select(".validationControls").style("display", "block");
-                }
-                if (d.src) { // if the src att is missing its from a csv file
-					// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
-					self.model
-						.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
-						.trigger ("change:lastSelectedMatch", self.model, self.model.get("selectedMatch"))
-					;
-                }
+                self.select (d);
             });
         tjoin.order();
         tjoin
-            .classed("spectrumShown2", function (d, i) {
+            .classed("spectrumShown2", function (d) {
                 var lsm = self.model.get("lastSelectedMatch");
                 return lsm && lsm.match ? lsm.match.id === d.id : false;
             });
@@ -487,9 +478,104 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     // and should via the backbone models and events eventually call setTableHighlights above too
     highlight: function (evt) {
         var datum = d3.select(evt.currentTarget).datum();
+        return this.highlightFromDatum (datum, evt);
+    },
+	
+	highlightFromDatum: function (datum, evt) {
         this.model.setMarkedMatches ("highlights", datum ? [{match: datum}] : [], true, evt.ctrlKey || evt.shiftKey);
         return this;
     },
+	
+	focusTable: function () {
+		this.el.focus();	
+	},
+	
+	selectByKey: function (evt) {
+		var kcode = evt.keyCode;
+		
+		if (kcode === 38 || kcode === 40 || kcode === 13) {
+			var currentWithinPageIndex = -1;
+			
+			d3.select(this.el).selectAll("tr.matchRow")
+				.each (function (d, i) {
+					if ((d3.select(this).classed("spectrumShown2") && currentWithinPageIndex === -1) || d3.select(this).classed("highlighted")) {
+						currentWithinPageIndex = i;
+					}
+				})
+			;
+			
+			//console.log ("cwpi", currentWithinPageIndex);
+			
+			if (currentWithinPageIndex >= 0) {
+				var newIndex = currentWithinPageIndex + (kcode === 40 ? 1 : 0) + (kcode === 38 ? -1 : 0);
+				//console.log ("NI", newIndex);
+				var isNew = true;
+				if (newIndex < 0) {
+					if (this.page > 0) {
+						this.page--;
+						this.setPage (this.page);
+						newIndex = this.pageSize - 1;
+					} else {
+						isNew = false;
+					}
+				}
+				else if (newIndex >= this.pageSize) {
+					if (this.page >= this.getPageCount()) {
+						this.page++;
+						this.setPage (this.page);
+						newIndex = 0;
+					} else {
+						isNew = false;
+					}
+				}
+				
+				
+				if (isNew) {
+					var self = this;
+					d3.select(this.el).selectAll("tr.matchRow")
+						.filter (function (d, i) {
+							return i === newIndex;
+						})
+						.each (function (d) {
+							if (kcode === 13) {
+								self.select (d);
+							} else {
+								self.highlightFromDatum (d, evt);
+							}
+						})
+					;
+				}
+			}
+			
+			//console.log ("CI", currentWithinPageIndex);
+		}
+	},
+	
+	select: function (d) {
+		console.log ("this", this);
+		var mainModel = this.options.mainModel;
+		if (mainModel) {
+			//TODO: fix?
+			//~ if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
+			//~ d3.select(".validationControls").style("display", "block");
+			//~ } else {
+			//~ d3.select(".validationControls").style("display", "none");
+			//~ }
+			mainModel.set("lastSelectedMatch", {
+				match: d,
+				directSelection: true
+			});
+		} else {
+			d3.select(".validationControls").style("display", "block");
+		}
+		if (d.src) { // if the src att is missing its from a csv file
+			// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
+			this.model
+				.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
+				.trigger ("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"))
+			;
+		}
+	},
 
     identifier: "Selected Match Table",
 });

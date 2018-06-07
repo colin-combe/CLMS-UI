@@ -1,5 +1,13 @@
 /* Styles specific to xi3 visualisation page */
 
+span {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
 .highlighted {
     stroke: #fdc086;
 }
@@ -93,7 +101,7 @@
     left: 0;
     right: 0;
     overflow:hidden;
-    /*z-index:-1;*/
+    z-index:0;
 }
 
 #main .mainContent {
