@@ -171,7 +171,7 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
-                    <p id="xiNetControlsPanel"></p>
+                    <div id="xiNetControlsPanel"></div>
             </div>
 
             <div class="mainContent">
