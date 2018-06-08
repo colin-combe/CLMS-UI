@@ -231,7 +231,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     compModel.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -249,6 +249,7 @@ CLMSUI.init.views = function () {
         {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between"},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Spatial view of protein complexes and Cross-Links. Requires a relevant PDB File to be loaded [Load > PDB Data]"},
 		{id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
+		{id: "listChkBxPlaceholder", label: "List", eventName: "listShow", tooltip: "Sortable list of cross-links"},
 		{id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata and Cross-Link annotated sequences for currently selected proteins"},
 		{id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Cross-Links)", sectionEnd: true},
 		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"},
@@ -466,10 +467,11 @@ CLMSUI.init.viewsEssential = function (options) {
                         + this.model.get("clmsModel").get("sid")
                         + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
                 var self = this;
-                d3.json (url, function(error, json) {
+                var jd = d3.json (url, function(error, json) {
                     if (error) {
                         console.log ("error", error, "for", url);
                     } else {
+						// this works if first item in array has the same id, might in future send matchid to php to return for reliability
 						var thisSpecID = json.rawMatches && json.rawMatches[0] ? json.rawMatches[0].id : -1;
 						//console.log ("json", json, self.lastRequestedID, thisSpecID);
 						if (thisSpecID === self.lastRequestedID) {
@@ -492,6 +494,7 @@ CLMSUI.init.viewsEssential = function (options) {
 						}
                     }
                 });
+				console.log ("jd", jd);
             } else {
                 //~ //this.model.clear();
             }
@@ -712,6 +715,14 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
+    });
+	
+	// This makes a list viewer
+    new CLMSUI.ListViewBB ({
+        el: "#listPanel",
+        model: CLMSUI.compositeModelInst,
+        colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
+        displayEventName: "listShow",
     });
 
     // Make new ngl view with pdb dataset

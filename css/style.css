@@ -275,7 +275,7 @@
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox , #xiNetControlsPanel {
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox , #xiNetControlsPanel, #listPanel {
     display:none;
     top:80px;
 }
@@ -283,6 +283,12 @@
     left:10px;
     height: 25em;
     width: 30em;
+}
+
+#listPanel {
+	left: 2em;
+	height: 25em;
+	width: 50em;
 }
 
 #searchSummaryPanel{

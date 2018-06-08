@@ -67,6 +67,7 @@
         <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
 		    <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
+		<link rel="stylesheet" href="./vendor/d3table.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
@@ -80,6 +81,7 @@
         <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./vendor/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
+		<script type="text/javascript" src="./vendor/d3table.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
 
@@ -133,6 +135,7 @@
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">

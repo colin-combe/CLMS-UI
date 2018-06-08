@@ -1,0 +1,107 @@
+TABLE.d3table {
+	table-layout: fixed;
+	min-width: 60em;
+	font-size: 0.75em;
+	width: 100%;
+}
+
+TABLE.d3table tbody tr td, TABLE.d3table tr th {
+    color:#aaa;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    min-width: 5em;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+TABLE.d3table thead input {
+	line-height: 1.2em;
+	vertical-align: top;
+}
+
+TABLE.d3table thead th {
+    color: #a40;
+    font-size: 1.1em;
+    background: #f8f8ff;
+	text-transform: capitalize;
+}
+
+TABLE.d3table thead th div > * {
+    box-sizing: border-box;
+}
+
+TABLE.d3table tbody tr {
+    border-top: 1px dotted #ddd;
+}
+
+
+TABLE.d3table thead th:not(:first-child) {
+    padding-left: 0;
+    padding-right: 0;
+} 
+
+TABLE.d3table svg.d3table-arrow {
+	width: 16px;
+	height: 16px;
+	border: 1px solid grey;
+	background: white;
+	margin: 0 2px;
+	transform: rotate(90deg);
+	vertical-align: top;
+}
+
+TABLE.d3table svg.d3table-arrow.d3table-active {
+	background: #bbf;
+}
+
+TABLE.d3table svg.d3table-arrow:hover, TABLE.d3table SVG.d3table-arrow.d3table-active:hover {
+	background: #ff8;
+	border-color: #444;
+}
+
+TABLE.d3table svg.d3table-arrow path {
+	stroke: none;
+	fill: darkgrey;
+	shape-rendering: crispedges;
+}
+
+TABLE.d3table svg.d3table-arrow.d3table-active path, TABLE.d3table svg.d3table-arrow:hover path {
+	fill: black
+}
+
+span.d3table-pageInput:before {
+    content: "Page Number ";
+}
+span.d3table-pageInput:after {
+    content: " of ";
+}
+
+.d3tableControls {
+	margin: 0.25em;
+}
+
+.d3tableControls, .d3table input {
+	font-size: 0.9rem;
+}
+
+.d3tableControls input[type='number'] {
+    max-width: 3.5em;
+	font-size: 1em;
+}
+
+.d3table-flex-header {
+	display: flex;
+	flex-direction: row;
+}
+
+.d3table-flex-header input.d3table-filterInput {
+	flex-shrink: 1;
+	flex-grow: 1;
+	min-width: 0;	/* https://bugzilla.mozilla.org/show_bug.cgi?id=1088586 */
+	width: 3em; /* otherwise default input width is about 150px and stretches table width massively */
+}
+
+.d3table-flex-header svg {
+	flex-shrink: 0;
+	flex-grow: 0;
+}
