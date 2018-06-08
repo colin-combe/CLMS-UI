@@ -450,6 +450,13 @@ CLMSUI.CrosslinkRepresentation = function (nglModelWrapper, params) {
 
     this.stage.signals.clicked.add (this._selectionPicking, this);
     this.stage.signals.hovered.add (this._highlightPicking, this);
+	this.stage.mouseControls.add('clickPick-left', function (stage, pickingProxy) {
+		// so calls that reach here are those left clicks without ctrl
+		if (!pickingProxy) {	// and if no pickingProxy i.e. nothing was clicked on
+			// then blank the current selection
+			nglModelWrapper.getModel().setMarkedCrossLinks ("selection", [], false, false);
+		}
+	});
 };
 
 CLMSUI.CrosslinkRepresentation.prototype = {
@@ -731,9 +738,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var crosslinkData = this.crosslinkData;
         //CLMSUI.utils.xilog ("Picking Data", pickingData);
         var pdtrans = {residue: undefined, links: undefined, xlinks: undefined};
-        var add = (false || (pickingData && pickingData.ctrlKey)) && (pickType === 'selection');  // should selection add to current selection?
+        var add = (false || (pickingData && (pickingData.ctrlKey || pickingData.shiftKey))) && (pickType === 'selection');  // should selection add to current selection?
         
-        console.log ("pickingData", pickingData);
+        console.log ("pickingData", pickingData, pickType, add);
         
         if (pickingData) {
             var atom = pickingData.atom;
