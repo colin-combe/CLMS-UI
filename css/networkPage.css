@@ -2,18 +2,14 @@
  * in this new file, rather than add more to style.css.
  * Might help tidy up style.css*/
 
-#xiNetControlsButton{
+#xiNetControlsButton, .autoLayoutButton{
 	float: right;
 }
 
 #xiNetControlsPanel {
     /* right:0px; */
-	/* width: 710px;
-	text-transform: none; */
-	border-left: 1px solid #eee;
-	float: right;
-    background-color: #091D42;
-	z-index: -1;
+		width: 710px;
+		text-transform: none;
 }
 
 #autoLayoutButton{
