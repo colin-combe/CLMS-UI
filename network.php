@@ -171,7 +171,9 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
-                    <div id="xiNetControlsPanel"></div>
+                    <button class='btn btn-1 btn-1a autoLayoutButton' onclick="CLMSUI.vent.trigger ('xiNetAutoLayout', true);">AUTO LAYOUT</button>
+ 
+                    <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
             <div class="mainContent">
