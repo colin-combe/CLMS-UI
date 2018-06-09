@@ -199,7 +199,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     },
 
     render: function () {
-        this.updateTable ({topMatchesOnly: this.viewStateModel.get("topOnly"), topCount: this.viewStateModel.get("topCount")});
+        this.updateTable ({
+			topMatchesOnly: this.viewStateModel.get("topOnly"), 
+			topCount: this.viewStateModel.get("topCount")
+		});
     },
 
     getMatches: function (xlink) {
@@ -508,21 +511,22 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 			
 			if (currentWithinPageIndex >= 0) {
 				var newIndex = currentWithinPageIndex + (kcode === 40 ? 1 : 0) + (kcode === 38 ? -1 : 0);
-				//console.log ("NI", newIndex);
+				//console.log ("NI", newIndex, this.page, this.getPageCount());
 				var isNew = true;
 				if (newIndex < 0) {
-					if (this.page > 0) {
+					if (this.page > 1) {
 						this.page--;
-						this.setPage (this.page);
+						this.render();
 						newIndex = this.pageSize - 1;
 					} else {
 						isNew = false;
 					}
 				}
 				else if (newIndex >= this.pageSize) {
-					if (this.page >= this.getPageCount()) {
+					if (this.getPageCount() > this.page) {
 						this.page++;
-						this.setPage (this.page);
+						console.log ("next page", this.page, this);
+						this.render();
 						newIndex = 0;
 					} else {
 						isNew = false;

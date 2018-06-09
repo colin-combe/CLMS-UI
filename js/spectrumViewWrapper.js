@@ -191,9 +191,10 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             selection.forEach (function (selCrossLink) {
                 var filteredMatches_pp = selCrossLink.filteredMatches_pp;
                 // DB query orders by score
-                var filteredSelectedMatches = filteredMatches_pp.filter (function (match) {
+				//console.log ("fpp", filteredMatches_pp);
+                var filteredSelectedMatches = filteredMatches_pp ? filteredMatches_pp.filter (function (match) {
                     return selectedMatches.get(match.match.id);
-                });
+                }) : [];
                 if (filteredSelectedMatches.length) {
                     var match = filteredSelectedMatches[0].match;
                     //console.log ("match", match, selectedMatches.get(match.id));
