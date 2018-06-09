@@ -67,7 +67,7 @@
         <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
 		    <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="../vendor/js/d3table.css<?php echo $cacheBuster ?>">
+		<link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
