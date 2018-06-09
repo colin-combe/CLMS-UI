@@ -67,23 +67,23 @@
         <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
 		    <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./vendor/d3table.css<?php echo $cacheBuster ?>">
+		<link rel="stylesheet" href="../vendor_js/d3table.css<?php echo $cacheBuster ?>">
 
-        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/colorbrewer.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/split.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="./vendor/d3table.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
-        <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
+        <script type="text/javascript" src="../vendor_js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/d3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/c3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/split.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/svgexp.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/underscore.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/spin.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/backbone.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
+		<script type="text/javascript" src="../vendor_js/d3table.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="../vendor_js/zepto.js"></script> -->
+        <!-- <script type="text/javascript" src="../vendor_js/crossfilter.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -175,7 +175,7 @@
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
                     <button class='btn btn-1 btn-1a autoLayoutButton' onclick="CLMSUI.vent.trigger ('xiNetAutoLayout', true);">AUTO LAYOUT</button>
- 
+
                     <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
@@ -216,7 +216,7 @@
                 include('../xiSpecConfig.php');
             }
         ?>
-		
+
 		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
 
 		var success = function (text) {
