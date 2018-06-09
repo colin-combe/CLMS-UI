@@ -82,6 +82,7 @@
         <script type="text/javascript" src="../vendor_js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor_js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
 		<script type="text/javascript" src="../vendor_js/d3table.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor_js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
         <!-- <script type="text/javascript" src="../vendor_js/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="../vendor_js/crossfilter.js"></script> -->
 
@@ -95,7 +96,6 @@
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/vendor/cola.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
