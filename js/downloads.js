@@ -70,12 +70,18 @@ function download(content, contentType, fileName, modernWeb) {
 		document.body.removeChild(form);
 	}
 	else {
+		var oldToNewTypes = {
+			"application/svg" : "image/svg+xml;charset=utf-8",
+			"plain/text": "plain/text;charset=utf-8",
+		};
+		var newContentType = oldToNewTypes[contentType] || contentType;
+		
 		function dataURItoBlob(binary) {
 			var array = [];
 		  for (var i = 0; i < binary.length; i++) {
 			 array.push(binary.charCodeAt(i));
 		  }
-		  return new Blob([new Uint8Array(array)], {type: "image/svg+xml;charset=utf-8"});
+		  return new Blob([new Uint8Array(array)], {type: newContentType});
 		}
 
 		var blob = dataURItoBlob(content);
