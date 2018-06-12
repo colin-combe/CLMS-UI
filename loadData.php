@@ -87,12 +87,16 @@ if (count($_GET) > 0) {
         $id = $dashSeperated[0];
 
         $searchDataQuery = "SELECT s.id AS id, s.name, s.private,
-			s.submit_date, s.notes, s.random_id, paramset_id,
+			s.submit_date, s.notes, s.random_id, xv.version, paramset_id,
+			ps.missed_cleavages as missedCleavages, ps.ms_tol as msTolerance, ps.ms_tol_unit as msToleranceUnits,
+			ps.ms2_tol as ms2Tolerance, ps.ms2_tol_unit as ms2ToleranceUnits,
 			ps.enzyme_chosen AS enzyme_chosen, ps.customsettings
 			FROM search s
 			INNER JOIN parameter_set ps ON s.paramset_id = ps.id
 			INNER JOIN users u ON s.uploadedby = u.id
+			LEFT JOIN xiversions xv ON xv.id = s.xiversion
 			WHERE s.id = '".$id."';";
+		// left join return null values if xiversion not stated, inner join blanks result
 
         $res = pg_query($searchDataQuery)
                     or die('Query failed: ' . pg_last_error());
@@ -212,6 +216,7 @@ if (count($_GET) > 0) {
 			$line["losses"] = $losses;
 			//free result set
 			pg_free_result($lossesResult);
+			
 
 			//now take out some untidy looking attributes
 			unset($line["enzyme_chosen"]);

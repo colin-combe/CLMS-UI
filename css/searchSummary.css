@@ -2,4 +2,6 @@
 	background:#ddd;
 	color:#888;
 	overflow:auto;
+	flex-grow: 1;
+	flex-shrink: 1;
 }

@@ -249,7 +249,7 @@ CLMSUI.init.views = function () {
         {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between"},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Spatial view of protein complexes and Cross-Links. Requires a relevant PDB File to be loaded [Load > PDB Data]"},
 		{id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
-		{id: "listChkBxPlaceholder", label: "List", eventName: "listShow", tooltip: "Sortable list of cross-links"},
+		//{id: "listChkBxPlaceholder", label: "List", eventName: "listShow", tooltip: "Sortable list of cross-links"},
 		{id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata and Cross-Link annotated sequences for currently selected proteins"},
 		{id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Cross-Links)", sectionEnd: true},
 		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"},
@@ -718,12 +718,14 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     });
 	
 	// This makes a list viewer
+	/*
     new CLMSUI.ListViewBB ({
         el: "#listPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "listShow",
     });
+	*/
 
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync
