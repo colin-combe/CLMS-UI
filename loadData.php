@@ -39,12 +39,12 @@ if (count($_GET) > 0) {
         }
     }
 
-    $decoys = false;
-    if (isset($_GET['decoys'])){
-        if ($_GET['decoys'] === '1' || $_GET['decoys'] === '0'){
-            $decoys = (bool) $_GET['decoys'];
-        }
-    }
+    // $decoys = false;
+    // if (isset($_GET['decoys'])){
+    //     if ($_GET['decoys'] === '1' || $_GET['decoys'] === '0'){
+    //         $decoys = (bool) $_GET['decoys'];
+    //     }
+    // }
 
     $linears = false;
     if (isset($_GET['linears'])) {
@@ -277,9 +277,9 @@ if (count($_GET) > 0) {
 		}
 		$WHERE_matchedPeptide = $WHERE_matchedPeptide.' ) ';
 
-		if ($decoys == false){
-			$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND (NOT is_decoy) ';
-		}
+		// if ($decoys == false){
+		// 	$WHERE_spectrumMatch = $WHERE_spectrumMatch.' AND (NOT is_decoy) ';
+		// }
 
 		if ($unval == false){
 			$WHERE_spectrumMatch = $WHERE_spectrumMatch." AND ((sm.autovalidated = true AND (sm.rejected != true OR sm.rejected is null)) OR

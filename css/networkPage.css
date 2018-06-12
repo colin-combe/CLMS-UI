@@ -2,7 +2,7 @@
  * in this new file, rather than add more to style.css.
  * Might help tidy up style.css*/
 
-#xiNetControlsButton{
+#xiNetControlsButton, .autoLayoutButton{
 	float: right;
 }
 
