@@ -57,6 +57,11 @@ if (count($_GET) > 0) {
     if (isset($_GET['spectrum'])) {
         $spectrum= (string) $_GET['spectrum'];
     }
+	
+	$matchid = '';
+    if (isset($_GET['matchid'])) {
+        $matchid = (string) $_GET['matchid'];
+    }
 
     $lowestScore = 0;
     if (isset($_GET['lowestScore'])) {
@@ -556,6 +561,10 @@ if (count($_GET) > 0) {
 			} catch (Exception $e) {
 				//error_log (print_r ("UNIPROT ERR ".$e, true));
 				echo "\"interactors\":{},\n";
+			}
+			
+			if ($matchid !== "") {	// send matchid back for sync purposes
+				echo "\"matchid\":\"".$matchid."\",\n";
 			}
 
 			echo '"oldDB":'.($oldDB == 1 ? "true" : "false"); // Is this from the old db?

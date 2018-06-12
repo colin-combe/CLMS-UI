@@ -465,16 +465,18 @@ CLMSUI.init.viewsEssential = function (options) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "./loadData.php?sid="
                         + this.model.get("clmsModel").get("sid")
-                        + "&unval=1&decoys=1&linears=1&spectrum="  + match.spectrumId;
+                        + "&unval=1&decoys=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
                 var jd = d3.json (url, function(error, json) {
                     if (error) {
-                        console.log ("error", error, "for", url);
+                        console.log ("error", error, "for", url, arguments);
                     } else {
 						// this works if first item in array has the same id, might in future send matchid to php to return for reliability
-						var thisSpecID = json.rawMatches && json.rawMatches[0] ? json.rawMatches[0].id : -1;
-						//console.log ("json", json, self.lastRequestedID, thisSpecID);
-						if (thisSpecID === self.lastRequestedID) {
+						//var thisMatchID = json.rawMatches && json.rawMatches[0] ? json.rawMatches[0].id : -1;
+						var returnedMatchID = json.matchid;
+						
+						//console.log ("json", json, self.lastRequestedID, thisMatchID, returnedMatchID);
+						if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
 							//console.log (":-)", json, self.lastRequestedID, thisSpecID);
 							var altModel = new window.CLMS.model.SearchResultsModel ();
 							altModel.parseJSON(json);
