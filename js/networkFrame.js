@@ -447,9 +447,7 @@ CLMSUI.init.viewsEssential = function (options) {
     settingsSpectrumModel.otherModel = spectrumModel;
 
     settingsSpectrumModel.listenTo(spectrumModel, "change:JSONdata", function(t){
-
-		var json_data_copy = jQuery.extend({}, t.JSONdata);
-		settingsSpectrumModel.set({JSONdata: json_data_copy});
+		settingsSpectrumModel.set({JSONdata: t.JSONdata});
 	});
 
     new SpectrumViewWrapper ({
@@ -474,7 +472,7 @@ CLMSUI.init.viewsEssential = function (options) {
 						// this works if first item in array has the same id, might in future send matchid to php to return for reliability
 						//var thisMatchID = json.rawMatches && json.rawMatches[0] ? json.rawMatches[0].id : -1;
 						var returnedMatchID = json.matchid;
-						
+
 						//console.log ("json", json, self.lastRequestedID, thisMatchID, returnedMatchID);
 						if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
 							//console.log (":-)", json, self.lastRequestedID, thisSpecID);
@@ -718,7 +716,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
     });
-	
+
 	// This makes a list viewer
 	/*
     new CLMSUI.ListViewBB ({
