@@ -274,6 +274,7 @@ CLMSUI.modelUtils = {
         "ARG": "R",
         "SER": "S",
         "THR": "T",
+		"SEC": "U",
         "VAL": "V",
         "TRP": "W",
         "X": "X",
@@ -281,6 +282,34 @@ CLMSUI.modelUtils = {
         "GLX": "Z",
         "*": "*" ,
     },
+	
+	aminoNameto1Map : {
+		Alanine: "A",
+		Arginine: "R",
+		Asparagine: "N",
+		Aspartate: "D",
+		Cysteine: "C",
+		Glutamate: "E",
+		Glutamine: "Q",
+		Glycine: "G",
+		Histidine: "H",
+		Isoleucine: "I",
+		Leucine: "L",
+		Lysine: "K",
+		Methionine: "M",
+		Phenylalanine: "F",
+		Proline: "P",
+		Selenocysteine: "U",
+		Serine: "S",
+		Threonine: "T",
+		Tryptophan: "W",
+		Tyrosine: "Y",
+		Valine: "V",
+		All: "*",
+		_All: "X",
+		C_Terminal: "CTERM",
+		N_Terminal: "NTERM"
+	},
     
     
     repopulateNGL: function (pdbInfo) {
@@ -966,3 +995,4 @@ CLMSUI.modelUtils = {
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);
+CLMSUI.modelUtils.amino1toNameMap = _.invert (CLMSUI.modelUtils.aminoNameto1Map);

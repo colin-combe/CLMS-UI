@@ -70,18 +70,18 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
         <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
 
-        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/colorbrewer.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
 
-        <script type="text/javascript" src="./vendor/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/split.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
-        <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
+        <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>

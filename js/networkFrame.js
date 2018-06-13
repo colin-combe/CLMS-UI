@@ -135,10 +135,20 @@ CLMSUI.init.models = function (options) {
 //only inits stuff required by validation page
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
+/*
+	var arrIsPopulated = function (arr) {
+		return arr && arr.length;
+	}
+	var hasMissing = arrIsPopulated (options.missingSearchIDs);
+	var hasIncorrect = arrIsPopulated (options.incorrectSearchIDs);
 
-    CLMSUI.utils.displayError (function() { return !options.identifications || !options.identifications.length; },
-        "No cross-links detected for this search.<br>Please return to the search history page.<br><br>You can still upload CSV files via the LOAD menu."
+    CLMSUI.utils.displayError (function() { return options.missingSearchIDs || options.incorrectSearchIDs || !options.rawMatches || !options.rawMatches.length; },
+		(hasMissing ? "Cannot find Search ID"+(options.missingSearchIDs.length > 1 ? "s " : " ")+options.missingSearchIDs.join(", ")+".<br>" : "") +
+		(hasIncorrect ? "Wrong ID Key for Search ID"+(options.incorrectSearchIDs.length > 1 ? "s " : " ")+options.incorrectSearchIDs.join(", ")+".<br>" : "") +
+		(!hasMissing && !hasIncorrect && !arrIsPopulated(options.rawMatches) ? "No cross-links detected for this search.<br>" : "") +
+        "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
     );
+*/
 
 	// This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel ();
@@ -224,7 +234,7 @@ CLMSUI.init.views = function () {
 	//todo: only if there is validated {
     compModel.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "xiNetControlsPanel", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -242,6 +252,7 @@ CLMSUI.init.views = function () {
         {id: "circularChkBxPlaceholder", label: "Circular", eventName: "circularShow", tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between"},
         {id: "nglChkBxPlaceholder", label: "3D (NGL)", eventName: "nglShow", tooltip: "Spatial view of protein complexes and Cross-Links. Requires a relevant PDB File to be loaded [Load > PDB Data]"},
 		{id: "matrixChkBxPlaceholder", label: "Matrix", eventName: "matrixShow", tooltip: "AKA Contact Map. Relevant PDB File required for distance background"},
+		//{id: "listChkBxPlaceholder", label: "List", eventName: "listShow", tooltip: "Sortable list of cross-links"},
 		{id: "proteinInfoChkBxPlaceholder", label: "Protein Info", eventName: "proteinInfoShow", tooltip: "Shows metadata and Cross-Link annotated sequences for currently selected proteins"},
 		{id: "spectrumChkBxPlaceholder", label: "Spectrum", eventName: "spectrumShow", tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Cross-Links)", sectionEnd: true},
 		{id: "distoChkBxPlaceholder", label: CLMSUI.DistogramBB.prototype.identifier, eventName: "distoShow", tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"},
@@ -439,9 +450,7 @@ CLMSUI.init.viewsEssential = function (options) {
     settingsSpectrumModel.otherModel = spectrumModel;
 
     settingsSpectrumModel.listenTo(spectrumModel, "change:JSONdata", function(t){
-
-		var json_data_copy = jQuery.extend({}, t.JSONdata);
-		settingsSpectrumModel.set({JSONdata: json_data_copy});
+		settingsSpectrumModel.set({JSONdata: t.JSONdata});
 	});
 
     new SpectrumViewWrapper ({
@@ -452,32 +461,43 @@ CLMSUI.init.viewsEssential = function (options) {
     })
         .listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
             if (match) {
+				this.lastRequestedID = match.id;	// async catch
+				//console.log ("MATCH ID", this, match.id);
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "../CLMS-model/php/identifications.php?upload="
                         + this.model.get("clmsModel").get("sid")
-                        + "&spectrum="  + match.spectrumId;
+                        + "&unval=1&decoys=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
-                d3.json (url, function(error, json) {
+                var jd = d3.json (url, function(error, json) {
                     if (error) {
-                        console.log ("error", error, "for", url);
+                        console.log ("error", error, "for", url, arguments);
                     } else {
-                        var altModel = new window.CLMS.model.SearchResultsModel ();
-                        altModel.parseJSON(json);
-                        var allCrossLinks = CLMS.arrayFromMapValues(altModel.get("crossLinks"));
-                        // empty selection first
-                        // (important or it will crash coz selection contains links to proteins not in clms model)
-                        self.alternativesModel
-                            .set("selection", [])
-                            .set("clmsModel", altModel)
-                            .applyFilter()
-                            .set ("lastSelectedMatch", {match: match, directSelection: true})
-                        ;
-                        d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
-                        //self.alternativesModel.set("selection", allCrossLinks);
-                        self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
-                        CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+						// this works if first item in array has the same id, might in future send matchid to php to return for reliability
+						//var thisMatchID = json.rawMatches && json.rawMatches[0] ? json.rawMatches[0].id : -1;
+						var returnedMatchID = json.matchid;
+
+						//console.log ("json", json, self.lastRequestedID, thisMatchID, returnedMatchID);
+						//if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
+							//console.log (":-)", json, self.lastRequestedID, thisSpecID);
+							var altModel = new window.CLMS.model.SearchResultsModel ();
+							altModel.parseJSON(json);
+							var allCrossLinks = CLMS.arrayFromMapValues(altModel.get("crossLinks"));
+							// empty selection first
+							// (important or it will crash coz selection contains links to proteins not in clms model)
+							self.alternativesModel
+								.set("selection", [])
+								.set("clmsModel", altModel)
+								.applyFilter()
+								.set ("lastSelectedMatch", {match: match, directSelection: true})
+							;
+							d3.select("#alternatives").style("display", altModel.get("matches").length === 1 ? "none" : "block");
+							//self.alternativesModel.set("selection", allCrossLinks);
+							self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
+							CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+						//}
                     }
                 });
+				console.log ("jd", jd);
             } else {
                 //~ //this.model.clear();
             }
@@ -536,7 +556,7 @@ CLMSUI.init.viewsEssential = function (options) {
     spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = 0;//CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
-            CLMSUI.loadSpectra (match, randId, this.model);
+            CLMSUI.loadSpectra (match, randId, this.model);//, true);
         } else {
             this.model.clear();
         }
@@ -699,6 +719,16 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
     });
+
+	// This makes a list viewer
+	/*
+    new CLMSUI.ListViewBB ({
+        el: "#listPanel",
+        model: CLMSUI.compositeModelInst,
+        colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
+        displayEventName: "listShow",
+    });
+	*/
 
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync

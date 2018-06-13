@@ -67,22 +67,25 @@
         <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
-        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/colorbrewer.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/split.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
-        <!-- <script type="text/javascript" src="./vendor/crossfilter.js"></script> -->
+        <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
+		<script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
+        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
+        <!-- <script type="text/javascript" src="../vendor/js/crossfilter.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -94,7 +97,6 @@
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/vendor/cola.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
@@ -133,6 +135,7 @@
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
@@ -171,6 +174,7 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
+                    <button class='btn btn-1 btn-1a autoLayoutButton' onclick="CLMSUI.vent.trigger ('xiNetAutoLayout', true);">AUTO LAYOUT</button>
                     <p class="btn dropdown" id="xiNetControlsButton"><span class="menuTitle" onclick="CLMSUI.vent.trigger ('xiNetControlsShow', true);">xiNET Controls</span></p>
             </div>
 
@@ -211,38 +215,39 @@
                 include('../xiSpecConfig.php');
             }
         ?>
-            var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
-            var success = function (text) {
-                spinner.stop(); // stop spinner on request returning
+		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
 
-                try {
-                    var json = {};
-                    if (text) { json = JSON.parse (text);}
-                    CLMSUI.init.models (json);
-                    var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-                    document.title = CLMS.arrayFromMapKeys(searches).join();
+		var success = function (text) {
+			spinner.stop(); // stop spinner on request returning
 
-                    Split (["#topDiv", "#bottomDiv"],
-                        { direction: "vertical", sizes: [80,20], minSize: [200,10],
-                            onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
-                        }
-                    );
+			try {
+				var json = {};
+				if (text) { json = JSON.parse (text);}
+				CLMSUI.init.models (json);
+				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+				document.title = CLMS.arrayFromMapKeys(searches).join();
 
-                    CLMSUI.init.views();
-                    allDataLoaded ();
-                } catch (err) {
-                    console.error ("Error", err, text.substring(0, 1000));
-                }
-            };
+				Split (["#topDiv", "#bottomDiv"],
+					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
+						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+					}
+				);
 
-            var url = "../CLMS-model/php/identifications.php" + window.location.search;
+				CLMSUI.init.views();
+				allDataLoaded ();
+			} catch (err) {
+				console.error ("Error", err, text.substring (0, 1000));
+			}
+		};
 
-            d3.text (url, function (error, text) {
-                if (!error) {
-                    success (text);
-                }
-            });
+		var url = "../CLMS-model/php/identifications.php" + window.location.search;
+
+		d3.text (url, function (error, text) {
+			if (!error) {
+				success (text);
+			}
+		});
 
     //]]>
     </script>
