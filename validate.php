@@ -48,10 +48,10 @@ header('Content-type: text/html; charset=utf-8');
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-        <link rel="stylesheet" href="./css/reset.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
-        <link rel="stylesheet" href="./css/common.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/tooltip.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/c3.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/minigram.css<?php echo $cacheBuster ?>">
