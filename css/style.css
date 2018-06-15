@@ -95,7 +95,7 @@ span, label {
 #main {
     height:100vh;
     width:100vw;
-    position: absolute;
+    /* position: absolute; */ /* because this stops menus overlaying views */
     top: 0;
     bottom: 0;
     left: 0;
@@ -290,7 +290,7 @@ span, label {
 #keyPanel{
     left:10px;
     height: 25em;
-    width: 30em;
+    width: 40em;
 }
 
 #listPanel {
@@ -317,7 +317,7 @@ span, label {
 #spectrumSettingsWrapper{
   left: 200px;
   top: 100px;
-  width: 600px;
+  width: 720px;
   height: 550px;
   min-width: 550px;
   min-height: 530px;
