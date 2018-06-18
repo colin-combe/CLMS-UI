@@ -29,7 +29,7 @@ if (count($_GET) > 0) {
     //SQL injection defense
     $pattern = '/[^0-9,\-]/';
     if (preg_match($pattern, $sid)){
-        exit;
+        exit();
     }
 
     $unval = false;

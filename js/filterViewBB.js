@@ -28,12 +28,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Linear", "id":"linears", tooltip: "Show linear peptides"},
                 {"label":"Cross-links", "id":"crosslinks", tooltip: "Show cross-links"},
                 {"label":"Ambig.", "id":"ambig", tooltip: "Show ambiguous cross-links"},
-                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
                 {"label":"Between", "id":"betweenLinks", tooltip: "Show cross-links between different proteins"},
+                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
+                {"label":"Homomult.", "id":"homomultimericLinks", tooltip: "Show cross-links with overlapping linked peptides "},
             ],
             subsetNumberFilters: [
                 {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"},
-                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
+                {"label":"Pep. length", "id":"pepLength", min: 1, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
             ],
             validationStatusToggles: [
                 {"label":"A", "id":"A"},
@@ -119,7 +120,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         subsetNumberFilters.append ("span")
             .text (function(d) { return d.label; })
         ;
-        subsetNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        subsetNumberFilters.append("p").classed("cutoffLabel",true).html("&ge;");
         subsetNumberFilters.append ("input")
             .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
