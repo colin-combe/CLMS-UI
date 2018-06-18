@@ -32,7 +32,7 @@ function downloadResidueCount(){
     download(csv, 'text/csv', filename);
 }
 
-function download(content, contentType, fileName, modernWeb) {
+function download (content, contentType, fileName, modernWeb) {
     //var b64svg = window.btoa(content);
 	console.log ("svg filename", fileName, modernWeb);
 	
@@ -99,6 +99,9 @@ function download(content, contentType, fileName, modernWeb) {
 			document.body.removeChild(a);
 		}
 	}
+	
+	//var fileType = fileName.split(".").slice(-1).pop() || "";	// fancy way of getting last element in array without lots of a = arr, a.length-1 etc
+	//CLMSUI.utils.displayError (function() { return true; }, "Downloaded "+fileType.toUpperCase()+" File:<br>"+fileName, "#091d42", 0.6);
 }
 
 function getMatchesCSV () {
