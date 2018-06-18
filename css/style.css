@@ -311,13 +311,13 @@ span, label {
 }
 #spectrumPanelWrapper{
     left: 280px;
-    width:600px;
-    height: 580px;
+    width: 750px;
+    height: 600px;
 }
 #spectrumSettingsWrapper{
   left: 200px;
   top: 100px;
-  width: 720px;
+  width: 600px;
   height: 550px;
   min-width: 550px;
   min-height: 530px;
@@ -643,4 +643,11 @@ svg.temp .keyPoint rect {
 	shape-rendering: crispedges;
 	stroke-width: 1px;
 	stroke: black;
+}
+
+.errorCloseButton {
+	position: absolute;
+	top: 0;
+	right: -0.7em;
+	color: grey;
 }
