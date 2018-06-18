@@ -28,8 +28,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Linear", "id":"linears", tooltip: "Show linear peptides"},
                 {"label":"Cross-links", "id":"crosslinks", tooltip: "Show cross-links"},
                 {"label":"Ambig.", "id":"ambig", tooltip: "Show ambiguous cross-links"},
-                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
                 {"label":"Between", "id":"betweenLinks", tooltip: "Show cross-links between different proteins"},
+                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
+                {"label":"Homomult.", "id":"homomultimericLinks", tooltip: "Show cross-links with overlapping linked peptides "},
             ],
             subsetNumberFilters: [
                 {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"},
