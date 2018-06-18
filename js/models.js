@@ -10,8 +10,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //subset
                 linears: true,
                 crosslinks: true,
-                selfLinks: true,
                 betweenLinks: true,
+                selfLinks: true,
+                homomultimericLinks: true,
                 ambig: true,
                 aaApart: 0,
                 pepLength: 1,
@@ -81,10 +82,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 // possible an ambiguous self link will still get displayed
                 var showSelfLinks = this.get("selfLinks");
                 var showBetweenLinks = this.get("betweenLinks");
+                var showHomomultimericLinks = this.get("homomultimericLinks");
                 // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
 
-                    if (!((match.couldBelongToSelfLink == true && showSelfLinks)
-                        || (match.couldBelongToBetweenLink == true && showBetweenLinks))) {
+                    if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer)
+                        || (match.couldBelongToBetweenLink == true && showBetweenLinks)
+                        || (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
                         return false;
                     }
 
