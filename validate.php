@@ -31,14 +31,12 @@ header('Content-type: text/html; charset=utf-8');
 <html>
     <head>
         <?php
-            $sid = urldecode($_GET["sid"]);
-
-            $pattern = '/[^0-9,\-]/';
-            if (preg_match($pattern, $sid)){
-                header();
-                echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
-                exit;
-            }
+            // $sid = urldecode($_GET["upload"]);
+            //
+            // $pattern = '/[^0-9,\-]/';
+            // if (preg_match($pattern, $sid)){
+            //     exit();
+            // }
             $pageName = "Validation";
         ?>
         <title><?php echo $pageName ?></title>
@@ -62,7 +60,7 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
-        
+
         <!-- Spectrum styles -->
         <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">

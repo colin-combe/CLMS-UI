@@ -1,6 +1,9 @@
 #validationStatus{
     display: none;
 }
+#filterModeDiv{
+    display: none;
+}
 #fdrPanel{
     display: none;
 }

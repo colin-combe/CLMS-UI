@@ -464,9 +464,11 @@ CLMSUI.init.viewsEssential = function (options) {
 				this.lastRequestedID = match.id;	// async catch
 				//console.log ("MATCH ID", this, match.id);
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
+                var searches = this.model.get("clmsModel").get("searches");
+                var randId = searches.get(match.searchId).random_id
                 var url = "../CLMS-model/php/identifications.php?upload="
-                        + this.model.get("clmsModel").get("sid")
-                        + "&unval=1&decoys=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
+                        + match.searchId + "-" + randId
+                        + "&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
                 var jd = d3.json (url, function(error, json) {
                     if (error) {
