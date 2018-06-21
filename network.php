@@ -42,13 +42,13 @@
 
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
+		<link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>">
 		
-		<link rel="stylesheet" href="./css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/xiNET.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/matrix.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/tooltip.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="./css/c3.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../vendor/css/c3.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/distogram.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/minigram.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css<?php echo $cacheBuster ?>">
@@ -65,10 +65,11 @@
         <link rel="stylesheet" href="./css/networkPage.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/csvUpload.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/searchSummary.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="./css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/threeColourSlider.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
+
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>

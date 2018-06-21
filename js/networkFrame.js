@@ -587,8 +587,9 @@ CLMSUI.init.viewsEssential = function (options) {
         myOptions: {
             title: "Help",
             menu: [
-                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xigui/", "_blank"); }, tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"},
+                {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank"); }, tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"},
 				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"},
+				{name: "About Xi View", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank"); }, tooltip: "About Xi View (opens external web page)"},
             ],
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
