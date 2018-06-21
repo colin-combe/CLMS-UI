@@ -28,12 +28,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Linear", "id":"linears", tooltip: "Show linear peptides"},
                 {"label":"Cross-links", "id":"crosslinks", tooltip: "Show cross-links"},
                 {"label":"Ambig.", "id":"ambig", tooltip: "Show ambiguous cross-links"},
-                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
                 {"label":"Between", "id":"betweenLinks", tooltip: "Show cross-links between different proteins"},
+                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
+                {"label":"Homomult.", "id":"homomultimericLinks", tooltip: "Show cross-links with overlapping linked peptides "},
             ],
             subsetNumberFilters: [
                 {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"},
-                {"label":"Pep. length", "id":"pepLength", min: 0, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
+                {"label":"Pep. length", "id":"pepLength", min: 1, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
             ],
             validationStatusToggles: [
                 {"label":"A", "id":"A"},
@@ -50,7 +51,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state e.g. 3"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
                 {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"},
-            ],            
+            ],
             navigationNumberFilters: [
                 {"label":"Residue Pairs per PPI", "id":"urpPpi", min: 1, max: 99, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
             ]
@@ -119,7 +120,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         subsetNumberFilters.append ("span")
             .text (function(d) { return d.label; })
         ;
-        subsetNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        subsetNumberFilters.append("p").classed("cutoffLabel",true).html("&ge;");
         subsetNumberFilters.append ("input")
             .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
@@ -185,8 +186,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var cutoff = self.model.get("matchScoreCutoff");
                 var scoreExtent = self.model.scoreExtent;
                 // take new values, along with score extents, sort them and discard extremes for new cutoff settings
-                var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]), 
-							   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val, 
+                var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]),
+							   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val,
 							   scoreExtent[0], scoreExtent[1]]
 					.filter (function (v) { return v !== undefined; })
                     .sort(function(a,b) { return a - b;})
@@ -245,7 +246,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .style("display", "block")
             .text (function(d) { return d.label; })
         ;
-        navigationNumberFilters.append("p").classed("cutoffLabel",true).text (">");
+        navigationNumberFilters.append("p").classed("cutoffLabel",true).html ("&ge;");
         navigationNumberFilters.append ("input")
             .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
                         min: function(d) { return d.min; }, max: function(d) { return d.max; }})
@@ -279,7 +280,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        this.modeChanged();
+        //this.modeChanged();
     },
 
     filter: function (evt) {
@@ -319,12 +320,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		}
     },
 
-    modeChanged: function () {
-		var fdrMode = d3.select("#fdrMode").node().checked;
-        d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
-        d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
-		this.model.set ("fdrMode", fdrMode);
-    },
+    // modeChanged: function () {
+	// 	var fdrMode = d3.select("#fdrMode").node().checked;
+    //     d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
+    //     d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
+	// 	this.model.set ("fdrMode", fdrMode);
+    // },
 
     render: function () {
         return this;

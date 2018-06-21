@@ -1,0 +1,21 @@
+#validationStatus{
+    display: none;
+}
+#filterModeDiv{
+    display: none;
+}
+#fdrPanel{
+    display: none;
+}
+#AA-Cross-linkable{
+    display: none;
+}
+#AA-Digestible{
+    display: none;
+}
+#navNumberFilters{
+    display: none;
+}
+.validationControls{
+    display: none;
+}

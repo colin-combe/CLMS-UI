@@ -254,16 +254,31 @@ CLMSUI.utils = {
         return val / pow;
     },
 
-    displayError: function (condition, message) {
+    displayError: function (condition, message, borderColour, scale) {
         if (condition()) {
             var box = d3.select("#clmsErrorBox");
             if (box.empty()) {
                 box = d3.select("body").append("div").attr("id", "clmsErrorBox");
+				box.append("div");
+				box.append ("i")
+					.attr("class", "fa fa-times-circle errorCloseButton closeButton")
+					.attr ("title", "Close Dialog")
+					.on ("click", function () { box.style ("display", "none"); })
+				;
             }
 
             box
+				.style ("opacity", 0)
                 .style ("display", "block")
+				.style ("border-color", borderColour || null)
+				.style ("transform", "scale("+(scale || "1")+")")
+				.select ("div")
                 .html (message)
+			;
+			box
+				.transition()
+				.duration(500)
+				.style ("opacity", 1)
             ;
         }
     },

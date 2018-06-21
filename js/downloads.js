@@ -32,7 +32,7 @@ function downloadResidueCount(){
     download(csv, 'text/csv', filename);
 }
 
-function download(content, contentType, fileName, modernWeb) {
+function download (content, contentType, fileName, modernWeb) {
     //var b64svg = window.btoa(content);
 	console.log ("svg filename", fileName, modernWeb);
 	
@@ -70,12 +70,18 @@ function download(content, contentType, fileName, modernWeb) {
 		document.body.removeChild(form);
 	}
 	else {
+		var oldToNewTypes = {
+			"application/svg" : "image/svg+xml;charset=utf-8",
+			"plain/text": "plain/text;charset=utf-8",
+		};
+		var newContentType = oldToNewTypes[contentType] || contentType;
+		
 		function dataURItoBlob(binary) {
 			var array = [];
 		  for (var i = 0; i < binary.length; i++) {
 			 array.push(binary.charCodeAt(i));
 		  }
-		  return new Blob([new Uint8Array(array)], {type: "image/svg+xml;charset=utf-8"});
+		  return new Blob([new Uint8Array(array)], {type: newContentType});
 		}
 
 		var blob = dataURItoBlob(content);
@@ -93,6 +99,9 @@ function download(content, contentType, fileName, modernWeb) {
 			document.body.removeChild(a);
 		}
 	}
+	
+	//var fileType = fileName.split(".").slice(-1).pop() || "";	// fancy way of getting last element in array without lots of a = arr, a.length-1 etc
+	//CLMSUI.utils.displayError (function() { return true; }, "Downloaded "+fileType.toUpperCase()+" File:<br>"+fileName, "#091d42", 0.6);
 }
 
 function getMatchesCSV () {

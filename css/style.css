@@ -1,5 +1,13 @@
 /* Styles specific to xi3 visualisation page */
 
+span, label {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
 .highlighted {
     stroke: #fdc086;
 }
@@ -87,13 +95,13 @@
 #main {
     height:100vh;
     width:100vw;
-    position: absolute;
+    /* position: absolute; */ /* because this stops menus overlaying views */
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
     overflow:hidden;
-    /*z-index:-1;*/
+    z-index:0;
 }
 
 #main .mainContent {
@@ -275,14 +283,20 @@
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox , #xiNetControlsPanel {
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox , #xiNetControlsPanel, #listPanel {
     display:none;
     top:80px;
 }
 #keyPanel{
     left:10px;
     height: 25em;
-    width: 30em;
+    width: 40em;
+}
+
+#listPanel {
+	left: 2em;
+	height: 25em;
+	width: 50em;
 }
 
 #searchSummaryPanel{
@@ -297,8 +311,8 @@
 }
 #spectrumPanelWrapper{
     left: 280px;
-    width:600px;
-    height: 580px;
+    width: 750px;
+    height: 600px;
 }
 #spectrumSettingsWrapper{
   left: 200px;
@@ -629,4 +643,11 @@ svg.temp .keyPoint rect {
 	shape-rendering: crispedges;
 	stroke-width: 1px;
 	stroke: black;
+}
+
+.errorCloseButton {
+	position: absolute;
+	top: 0;
+	right: -0.7em;
+	color: grey;
 }

@@ -31,14 +31,12 @@ header('Content-type: text/html; charset=utf-8');
 <html>
     <head>
         <?php
-            $sid = urldecode($_GET["sid"]);
-
-            $pattern = '/[^0-9,\-]/';
-            if (preg_match($pattern, $sid)){
-                header();
-                echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
-                exit;
-            }
+            // $sid = urldecode($_GET["upload"]);
+            //
+            // $pattern = '/[^0-9,\-]/';
+            // if (preg_match($pattern, $sid)){
+            //     exit();
+            // }
             $pageName = "Validation";
         ?>
         <title><?php echo $pageName ?></title>
@@ -48,10 +46,10 @@ header('Content-type: text/html; charset=utf-8');
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-        <link rel="stylesheet" href="./css/reset.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
-        <link rel="stylesheet" href="./css/common.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/tooltip.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/c3.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/minigram.css<?php echo $cacheBuster ?>">
@@ -61,6 +59,7 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/validate.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <!-- Spectrum styles -->
         <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
@@ -69,18 +68,18 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
         <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
 
-        <script type="text/javascript" src="./vendor/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/d3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/colorbrewer.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
 
-        <script type="text/javascript" src="./vendor/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/split.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/svgexp.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/underscore.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./vendor/zepto.js"></script> -->
-        <script type="text/javascript" src="./vendor/backbone.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./vendor/spin.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
+        <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -100,7 +99,7 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./js/selectionTableViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/loadSpectra.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
@@ -207,7 +206,7 @@ header('Content-type: text/html; charset=utf-8');
 				resize();
 			};
 
-			var url = "./loadData_xiUI_DB.php" + window.location.search;
+			var url = "../CLMS-model/php/identifications.php" + window.location.search;
 
 
             d3.text (url, function (error, text) {
