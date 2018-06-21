@@ -439,22 +439,9 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    // var spectrumModel_vars = {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot};
-    //
-    // var spectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
-    // var settingsSpectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
-    // spectrumModel.otherModel = settingsSpectrumModel;
-    // settingsSpectrumModel.otherModel = spectrumModel;
-    //
-    // settingsSpectrumModel.listenTo(spectrumModel, "change:JSONdata", function(t){
-    //
-	// 	var json_data_copy = jQuery.extend({}, t.JSONdata);
-	// 	settingsSpectrumModel.set({JSONdata: json_data_copy});
-	// });
-
     xiSPEC.init(options.specWrapperDiv, CLMSUI.xiSpecBaseDir, CLMSUI.xiAnnotRoot);
 
-    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.spectrumModel, "change:JSONdata", function(t){
+    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
 		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.JSONdata});
 	});
 
@@ -508,41 +495,6 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         })
     ;
-
-    // var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
-    // var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
-    // var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
-	//
-    // var QCwrapper = new QCwrapperView({
-    //     el: '#QCdiv',
-    //     splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],
-    //     showOnStartUp: false,
-    // });
-    //
-    // var errorIntPlot = new ErrorPlotView({
-    //     model: spectrumModel,
-    //     el:"#subViewContent-left",
-    //     xData: 'Intensity',
-    //     margin: {top: 10, right: 30, bottom: 20, left: 65},
-    //     svg: "#errIntSVG",
-    //     showOnStartUp: false,
-    // });
-    // var errorMzPlot = new ErrorPlotView({
-    //     model: spectrumModel,
-    //     el:"#subViewContent-right",
-    //     xData: 'm/z',
-    //     margin: {top: 10, right: 30, bottom: 20, left: 65},
-    //     svg: "#errMzSVG",
-    //     showOnStartUp: false,
-    // });
-    //
-    // var spectrumSettingsViewer = new SpectrumSettingsView ({
-    //   model: settingsSpectrumModel,
-    //   el:"#spectrumSettingsWrapper",
-    //   displayEventName: "spectrumSettingsShow",
-    // });
-
-
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
