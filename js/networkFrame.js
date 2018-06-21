@@ -83,7 +83,9 @@ var allDataLoaded = _.after (3, function() {
 
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
+
     ByRei_dynDiv.init.main();
+	//ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 
     CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 });
@@ -238,7 +240,7 @@ CLMSUI.init.views = function () {
     windowIds.forEach (function (winid) {
         d3.select("body").append("div")
             .attr("id", winid)
-            .attr("class", "dynDiv")
+            .attr("class", "dynDiv dynDiv_bodyLimit")
         ;
     });
 
