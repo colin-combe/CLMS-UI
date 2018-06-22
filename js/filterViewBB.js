@@ -120,7 +120,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         subsetNumberFilters.append ("span")
             .text (function(d) { return d.label; })
         ;
-        subsetNumberFilters.append("p").classed("cutoffLabel",true).html("&ge;");
+        subsetNumberFilters.append("p").classed("cutoffLabel",true).append("span").html("&ge;");
         subsetNumberFilters.append ("input")
             .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
@@ -159,7 +159,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<div><span>Match score</span><P class='vmin cutoffLabel'>&gt;</P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'>&lt;</P></div>");
+        var tpl = _.template ("<div><span>Match score</span><P class='vmin cutoffLabel'><span>&gt;</span></P></div><div id='<%= eid %>'></div><div><span>&nbsp;</span><P class='cutoffLabel vmax'><span>&lt;</span></P></div>");
         sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
 		// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
         sliderSection.selectAll("p.cutoffLabel")
@@ -246,7 +246,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .style("display", "block")
             .text (function(d) { return d.label; })
         ;
-        navigationNumberFilters.append("p").classed("cutoffLabel",true).html ("&ge;");
+        navigationNumberFilters.append("p").classed("cutoffLabel",true).append("span").html ("&ge;");
         navigationNumberFilters.append ("input")
             .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
                         min: function(d) { return d.min; }, max: function(d) { return d.max; }})

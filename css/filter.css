@@ -66,11 +66,14 @@ div.toggles:not(:last-child) {
  }
 */
 .cutoffLabel {
-   display: inline-block;
-/*
-   min-width: 3em;
-*/
+	display: inline-block;
 }
+
+.cutoffLabel > span {
+	display: inline-block;
+	transform: scaleY(1.4);
+}
+
 .scoreSlider .cutoffLabel.vmin {
     text-align: right;
 }
