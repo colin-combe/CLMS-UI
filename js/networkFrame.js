@@ -386,7 +386,7 @@ CLMSUI.init.viewsEssential = function (options) {
         model: CLMSUI.compositeModelInst,
     });
 
-    if (CLMSUI.compositeModelInst.get("clmsModel").get("decoysPresent") === false) {
+    if (CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent") === false) {
 		d3.select("#filterModeDiv").style("display","none");
 	}
 

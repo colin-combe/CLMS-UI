@@ -10,11 +10,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //subset
                 linears: true,
                 crosslinks: true,
-                selfLinks: true,
                 betweenLinks: true,
+                selfLinks: true,
+                homomultimericLinks: true,
                 ambig: true,
                 aaApart: 0,
-                pepLength: 0,
+                pepLength: 1,
                 //validation status
                 A: true,
                 B: true,
@@ -81,10 +82,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 // possible an ambiguous self link will still get displayed
                 var showSelfLinks = this.get("selfLinks");
                 var showBetweenLinks = this.get("betweenLinks");
+                var showHomomultimericLinks = this.get("homomultimericLinks");
                 // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
 
-                    if (!((match.couldBelongToSelfLink == true && showSelfLinks)
-                        || (match.couldBelongToBetweenLink == true && showBetweenLinks))) {
+                    if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer)
+                        || (match.couldBelongToBetweenLink == true && showBetweenLinks)
+                        || (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
                         return false;
                     }
 
@@ -94,10 +97,10 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var aaApart = +this.get("aaApart");
                 if (!isNaN(aaApart)) {
                     // if not homomultimer and not ambig and is a selfLink
-                    if (!match.confirmedHomomultimer && !ambig && match.crossLinks[0].isSelfLink()) {
+                    if (/*!match.confirmedHomomultimer &&*/ !ambig && match.crossLinks[0].isSelfLink()) {
                         // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
                         var unambigCrossLink = match.crossLinks[0];
-                        var calc = Math.abs (unambigCrossLink.toResidue - unambigCrossLink.fromResidue) - 1;
+                        var calc = Math.abs (unambigCrossLink.toResidue - unambigCrossLink.fromResidue);
                         if (calc < aaApart) {
                             return false;
                         }
@@ -107,8 +110,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var pepLengthFilter = +this.get("pepLength");
                 if (!isNaN(pepLengthFilter)) {
                     var seq1length = match.matchedPeptides[0].sequence.length;
-                    if (seq1length > 0 && (seq1length <= pepLengthFilter ||
-                            (!linear && match.matchedPeptides[1].sequence.length <= pepLengthFilter))) {
+                    if (seq1length > 0 && (seq1length < pepLengthFilter ||
+                            (!linear && match.matchedPeptides[1].sequence.length < pepLengthFilter))) {
                         return false;
                     }
                 }
@@ -446,18 +449,18 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }, this);
             },
         }),
-	
+
 		ConsensusModel: Backbone.Model.extend ({
 			initialize: function (modelOptions) {
-				
+
 			},
-			
+
 			fromSequences: function (sequences, categoryCount) {
 				var max = d3.max (sequences, function (seq) { return seq.length; });
 				var maxRange = d3.range (0, max);
 				var baseCounts = maxRange.map (function() { return {}; });
 				var seqCounts = maxRange.map (function() { return 0; });
-				
+
 				for (var i = 0; i < max; i++) {
 					sequences.forEach (function (seq) {
 						var letter = seq[i];
@@ -470,23 +473,23 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 						}
 					});
 				};
-				
+
 				var approxCounts = seqCounts.map (function (seqCount) {
 					 return (1 / Math.log(2)) * ((categoryCount - 1) / (2 * seqCount));
 				});
-				
+
 				var uncertainties = baseCounts.map (function (bc, i) {
 					var total = seqCounts[i];
-					return d3.sum (d3.values(bc), function(d) { 
+					return d3.sum (d3.values(bc), function(d) {
 						var relFreq = d / total;
-						return - (relFreq * Math.log2(relFreq)); 
+						return - (relFreq * Math.log2(relFreq));
 					});
 				});
-				
+
 				var information = uncertainties.map (function (unc, i) {
 					return Math.log2(categoryCount) - (unc + approxCounts[i]);
 				});
-				
+
 				var heights = baseCounts.map (function (baseCount, i) {
 					var entries = d3.entries(baseCount);
 					var height = {};
@@ -495,7 +498,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 					});
 					return height;
 				});
-				
+
 				this.set ("heights", heights);
 				console.log ("bb", baseCounts, seqCounts, approxCounts, uncertainties, information, heights);
 			},
