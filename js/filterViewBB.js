@@ -120,7 +120,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         subsetNumberFilters.append ("span")
             .text (function(d) { return d.label; })
         ;
+
         subsetNumberFilters.append("p").classed("cutoffLabel",true).append("span").html("&ge;");
+
         subsetNumberFilters.append ("input")
             .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
