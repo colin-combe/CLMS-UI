@@ -5,11 +5,21 @@
 .filterControlGroup {
 	vertical-align:top;
     display: inline-block;
-    border-right: 1px solid #bbb;
-    padding: 0em 0.7em;
-    margin-top:auto;
-    margin-bottom:auto;
+    padding: 0 0.35em 0 0;
+	border-right: 1px solid #bbb;
+	margin: auto 0.35em auto 0;
     height: 65px;
+}
+
+/*
+.filterControlGroup > div {
+	margin-left: 0.5em;
+}
+*/
+
+.filterControlGroup > div > label, .filterControlGroup div.scoreSlider {
+	padding-left: 0.25em;
+	padding-right: 0.25em;
 }
 
 .filterControlGroup input {
@@ -17,40 +27,36 @@
 	color: #091D42;
 }
 
-#filterPlaceholder > .filterControlGroup:first-of-type {
-    padding-left: 0;
+.filterControlGroup input[type=checkbox] {
+    margin-left: 0;
 }
 
-input.filterTypeText {
-    margin-right: 5px;
+
+div.filterControlGroup label {
+	display: block;
 }
 
-div.textFilters, div.toggles, div.numberFilters, div.scoreSlider > div {
+div.filterControlGroup label:hover {
+	background-color: white;
+}
+
+
+div.textFilters, div.toggles, div.scoreSlider > div {
     display: inline-block;
     vertical-align: top;
 }
 
-div.toggles input[type=checkbox] {
-    margin-left: 0;
-}
 
-.textFilters span:after, .numberFilters span:after, .toggles span:after, .scoreSlider span:after {
+.textFilters span:after, .toggles span:after, .scoreSlider span:after {
     content: ' ';
     display: block;
 }
 
 
-div.textFilters:not(:first-child), div.numberFilters {
-    margin-left: 0.5em;
-}
-
-div.toggles:not(:last-child) {
-    margin-right: 0.5em;
-}
-
 .subsetNumberFilter {
     width: 4em;
 }
+
 
 .scoreSlider  {
     display: inline-block;
@@ -61,10 +67,7 @@ div.toggles:not(:last-child) {
     margin: 0em 0.5em;
 */
 }
-/*
-.scoreSlider p {
- }
-*/
+
 .cutoffLabel {
 	display: inline-block;
 }

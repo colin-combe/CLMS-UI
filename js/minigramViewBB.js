@@ -100,14 +100,14 @@
                         // eventually do snapping: http://bl.ocks.org/mbostock/6232620
 
                         // the below fires one change:domainStart event, one change:domainEnd event and one change event (if we want to process both changes together)
-                        //console.log ("minigram domain", domain[0], domain[1]);
+                        //CLMSUI.utils.xilog ("minigram domain", domain[0], domain[1]);
                         var interval = 0.1;
                         var roundDomain = domain.map (function (v) { 
                             return +((Math.round (v/interval) * interval).toFixed(1)); 
                         });
 						
-						console.log ("domain", domain);
-                        //console.log ("roundDomain", roundDomain[0], roundDomain[1]);
+						CLMSUI.utils.xilog ("domain", domain);
+                        //CLMSUI.utils.xilog ("roundDomain", roundDomain[0], roundDomain[1]);
 
                         // We want these rounded values to be communicated to the model and onwards,
                         // but we don't want them bouncing back to the brush (which it should if the model values are obtained from elsewhere)
@@ -144,7 +144,6 @@
 			this.runOnce = true;
 
             this.chart.internal.main.style("display", "none");
-            //this.chart.internal.axes.x.style("display", "none");    // hacky, but hiding x axis and showing subchart x axis loses numbers in subchart axis
 
             var brush = d3.select(this.el).selectAll("svg .c3-brush");
             var flip = {"e":1, "w":-1};
@@ -156,7 +155,6 @@
             this.listenTo (this.model, "change", this.redrawBrush);
             this.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render);
             
-            //this.relayout();
             this.render();
 
             return this;
@@ -173,27 +171,29 @@
 			var countArrays = aggregates.counts;
 			var thresholds = aggregates.thresholds;
 
-            var maxY = d3.max(countArrays[0]);  // max calced on real data only
+            var maxY = d3.max(countArrays[0]);  // max calced on real data only (a-ha, why decoys sometimes exceed height)
             // if max y needs to be calculated across all series
-            //var maxY = d3.max(countArrays, function(array) {
-            //    return d3.max(array);
-            //});
+			/*
+            var maxY = d3.max(countArrays, function(array) {
+                return d3.max(array);
+            });
+			*/
 
             // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
             countArrays.forEach (function (countArray,i) { countArray.unshift (self.options.seriesNames[i]); });
 			thresholds.unshift ("x");
 			countArrays.push (thresholds);
-			//console.log ("thresholds", thresholds);
+			//CLMSUI.utils.xilog ("thresholds", thresholds);
 			
             var curMaxY = this.chart.axis.max().y;
             if (curMaxY === undefined || curMaxY < maxY) {   // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
                 this.chart.axis.max ({y: maxY});
             }
+			
+			this.chart.load ({ columns: countArrays });
 
-            this.chart.load ({ columns: countArrays });
-            
             //c3.chart.fn.enableRedraw(true, true);
-            //console.log (this.chart);
+            //CLMSUI.utils.xilog (this.chart);
             //this.chart.internal.redraw ();
 
             // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
@@ -203,7 +203,7 @@
             
             d3.select(this.el).select(".c3-brush").attr("clip-path", "");
 
-            //console.log ("data", distArr, binnedData);
+            //CLMSUI.utils.xilog ("data", distArr, binnedData);
             return this;
         },
 		
@@ -215,9 +215,9 @@
 			var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
 			var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
 			var thresholds = d3.range (min, max + (step * 2), step);
-			//console.log ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
+			//CLMSUI.utils.xilog ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
 
-			//console.log ("Extent", extent, min, max);
+			//CLMSUI.utils.xilog ("Extent", extent, min, max);
 			if (thresholds.length === 0) {
 				thresholds = [0, 1]; // need at least 1 so empty data gets represented as 1 empty bin
 			}
@@ -243,13 +243,13 @@
                 });
             }, this);
 			
-			console.log ("ca", countArrays);
+			CLMSUI.utils.xilog ("ca", countArrays);
 
             return {counts: countArrays, thresholds: thresholds};
         },
         
         brushRecalc: function () {
-            //console.log ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
+            //CLMSUI.utils.xilog ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
             // Have to go via c3 chart internal properties as it isn't exposed via API
 			
             this.chart.internal.brush
@@ -257,7 +257,7 @@
                 .extent ([this.model.get("domainStart"), this.model.get("domainEnd")])
                 .update()
             ;
-            //console.log ("extent", this.chart.internal.brush.extent());
+            //CLMSUI.utils.xilog ("extent", this.chart.internal.brush.extent());
         },
         
         redrawBrush: function () {
