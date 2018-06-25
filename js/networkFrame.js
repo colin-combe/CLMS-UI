@@ -439,7 +439,7 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    xiSPEC.init(options.specWrapperDiv, CLMSUI.xiSpecBaseDir, CLMSUI.xiAnnotRoot);
+    xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
 
     xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
 		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.JSONdata});
