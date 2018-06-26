@@ -203,6 +203,8 @@
                     <div id="fdrSummaryPlaceholder"></div>
                 </div>
             </div>
+			
+			<div id="subPanelLimiter"></div>
         </div><!-- MAIN -->
 
 

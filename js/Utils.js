@@ -55,7 +55,7 @@ CLMSUI.utils = {
     addDynDivParentBar: function (d3DivSelection) {
         var parentBar = d3DivSelection
             .append("div")
-            .attr("class", "dynDiv_moveParentDiv")
+            .attr("class", "dynDiv_moveParentDiv dynDiv_bodyLimit")
         ;
 
         parentBar

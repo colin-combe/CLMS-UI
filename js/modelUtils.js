@@ -429,7 +429,7 @@ CLMSUI.modelUtils = {
             function (data, status, xhr) {   
                 //console.log ("match pdb data", nglSequences, data, arguments);
 			
-                if (status === "success" && data.contentType === "text/xml") {  // data is an xml fragment
+                if (status === "success" && (data.contentType === "text/xml" || data.contentType === "application/xml")) {  // data is an xml fragment
                     var map = d3.map();
 
                     $(data).find("block").each (function (i, b) { 

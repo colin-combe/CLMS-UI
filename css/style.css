@@ -651,3 +651,12 @@ svg.temp .keyPoint rect {
 	right: -0.7em;
 	color: grey;
 }
+
+#subPanelLimiter {
+	position: absolute;
+	pointer-events: none;
+	top: 39px;
+	bottom: 65px;
+	left: 0;
+	right: 0;
+}
