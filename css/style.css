@@ -412,6 +412,11 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
     content: " ";
 }
 
+#pdbPanel span.prompt {
+	font-size: 20px;
+	vertical-align: middle;
+}
+
 A.btn {
     text-decoration: none;
 }
