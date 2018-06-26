@@ -120,7 +120,7 @@ span, label {
 
 
 #topDiv {
-    overflow:hidden;
+    /*overflow:hidden; */
     position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
