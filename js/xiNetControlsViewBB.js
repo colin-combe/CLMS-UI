@@ -60,7 +60,6 @@
                     "RIGHT click on protein",
                   "Zoom":"Mouse wheel",
                   "Move proteins":"Click and drag on protein",
-                  "Expand bar (increases bar length until sequence is visible)":"SHIFT and RIGHT click on protein",
                   "Rotate bar":"Click and drag on handles that appear at end of bar",
                   "Flip self-links":"RIGHT-click on self-link",
         				}

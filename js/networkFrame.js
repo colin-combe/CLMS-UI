@@ -553,6 +553,11 @@ CLMSUI.init.viewsEssential = function (options) {
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
+	d3.select("#helpDropdownPlaceholder > div").append("img")
+		.attr ("class", "rappsilberImage")
+		.attr ("src", "./images/logos/rappsilber-lab-small.png")
+		.on ("click", function() { window.open ("http://rappsilberlab.org", "_blank"); })
+	;
 
 
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});

@@ -17,7 +17,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")
-            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
+            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div>")
         ;         
         this.controlDiv = topDiv.select(".toolbar");
         this.controlDiv.append("button")
@@ -60,7 +60,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         var sectionData = [
             {
                 id: "colourKey",
-                header: "Link Colour Scheme",
+                header: "Current Link Colour Scheme",
                 rows: []
             },
             {
@@ -99,7 +99,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 		
 		var self = this;
 		var clickFunc = function (showSection, d) {
-			if (showSection && d.header === "Link Colour Scheme" && self.sliderSubView) {
+			if (showSection && d.id === "colourKey" && self.sliderSubView) {
 				self.sliderSubView.show (true);
 			}
 		}
@@ -162,7 +162,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     render: function () {
 		
         var colourSection =[{
-            header: "Link Colour Scheme",
+            header: "Current Link Colour Scheme",
             rows: []
         }];
         
