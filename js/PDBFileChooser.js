@@ -60,7 +60,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			.property ("required", true)
 		;
 		
-		pdbCodeSpan.append("span").attr("class", "prompt").text("▶");
+		pdbCodeSpan.append("span").attr("class", "prompt").text("→");
 		
 		pdbCodeSpan.append("button")
 			.attr ("class", "PDBSubmit btn btn-1 btn-1a")

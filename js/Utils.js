@@ -882,8 +882,11 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
     initialize: function (options) {
         var self = this;
         d3.select(this.el)
-            .append("span")
-            .text("Choose Link Colour Scheme ")
+            .append("label")
+			.attr ("class", "btn")
+				.append ("span")
+				.attr ("class", "noBreak")
+            	.text("Change Link Colour Scheme")
         ;
 
         var addOptions = function (selectSel) {
@@ -899,7 +902,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
             ;
         };
 
-        d3.select(this.el)
+        d3.select(this.el).select("span.noBreak")
             .append("select")
             .attr("id", "linkColourSelect")
             .on ("change", function () {
