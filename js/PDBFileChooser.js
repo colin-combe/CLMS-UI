@@ -60,6 +60,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			.property ("required", true)
 		;
 		
+		pdbCodeSpan.append("span").attr("class", "prompt").text("→");
+		
 		pdbCodeSpan.append("button")
 			.attr ("class", "PDBSubmit btn btn-1 btn-1a")
 			.text ("Enter")
@@ -81,7 +83,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		this.listenTo (this.model, "3dsync", function (sequences) {
 			var count = sequences && sequences.length ? sequences.length : 0;
 			var success = count > 0;
-			var msg = success ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file."
+			var msg = success ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file. Loading completed."
 				: sequences.failureReason || "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
 			this.setStatusText (msg, success);    
 		});

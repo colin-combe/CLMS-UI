@@ -78,6 +78,10 @@ changes there are automatically reflected in the legend
     border: 1px solid black;
 }
 
+.keyPanel .toolbar {
+	margin-bottom: 1em;
+}
+
 #linkColourDropdownPlaceholder {
     margin-bottom: 0.4em;
 }

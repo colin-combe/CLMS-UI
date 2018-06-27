@@ -77,9 +77,10 @@ div.textFilters, div.toggles, div.scoreSlider > div {
 	transform: scaleY(1.4);
 }
 
-.scoreSlider .cutoffLabel.vmin {
-    text-align: right;
+.scoreSlider P:not(.cutoffLabel):last-child {
+    line-height: 1.2em;
 }
+
 .scoreSlider .cutoffLabel input {
     width: 4em;
     color: black;
