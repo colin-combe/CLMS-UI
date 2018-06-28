@@ -7,7 +7,9 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
       if(_.isFunction(parentEvents)){
           parentEvents = parentEvents();
       }
-      return _.extend({},parentEvents,{});
+      return _.extend({
+          'click #clearHighlights' : 'clearSpectrumHighlights',
+      },parentEvents,{});
     },
 
 
@@ -55,21 +57,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         d3.select(this.el).selectAll("label")
             .classed ("btn", true)
         ;
-
-        var colOptions = [
-            {value: "RdBu", text: "Red & Blue"},
-            {value: "BrBG", text: "Brown & Teal"},
-            {value: "PiYG", text: "Pink & Green"},
-            {value: "PRGn", text: "Purple & Green"},
-            {value: "PuOr", text: "Orange & Purple"},
-        ];
-        d3.select("#colorSelector").selectAll("option").data(colOptions)
-            .enter()
-            .append("option")
-            .attr ("value", function(d) { return d.value; })
-            .text (function(d) { return d.text; })
-        ;
-
 
         if (CLMSUI.loggedIn) {
             this.validationMap = {A: "A", B: "B", C: "C", "?": "Q", R: "R"};
@@ -304,4 +291,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     filenameStateString: function () {
         return CLMSUI.utils.makeLegalFileName (this.identifier+"-"+this.optionsToString());
     },
+
+    clearSpectrumHighlights: function() {
+        CLMSUI.vent.trigger('clearSpectrumHighlights');
+    }
 });
