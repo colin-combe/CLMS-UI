@@ -49,11 +49,20 @@ header('Content-type: text/html; charset=utf-8');
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
-        <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
-        <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
 		<link rel="stylesheet" href="../vendor/css/c3.css<?php echo $cacheBuster ?>">
-		
+
+        <!-- Spectrum Viewer styles  -->
+        <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/dropdown.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
+        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css<?php echo $cacheBuster ?>">
+
+        <link rel="stylesheet" href="./css/xispecAdjust.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/tooltip.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/minigram.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css<?php echo $cacheBuster ?>">
@@ -62,13 +71,6 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/validate.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
-
-        <!-- Spectrum styles -->
-        <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="../spectrum/css/dropdown.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css">
-        <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
@@ -102,6 +104,7 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
@@ -110,6 +113,7 @@ header('Content-type: text/html; charset=utf-8');
 
 
         <!-- Spectrum view .js files -->
+        <script type="text/javascript" src="../spectrum/src/Wrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/js.cookie.js<?php echo $cacheBuster ?>"></script>
