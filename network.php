@@ -137,6 +137,7 @@
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/proteinInfoViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/keyViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/scatterplotViewBB.js<?php echo $cacheBuster ?>"></script>

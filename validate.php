@@ -104,6 +104,7 @@ header('Content-type: text/html; charset=utf-8');
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
