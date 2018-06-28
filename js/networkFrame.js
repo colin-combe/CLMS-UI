@@ -496,7 +496,7 @@ CLMSUI.init.viewsEssential = function (options) {
     xiSPEC.init('modular_xispec', {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
 
     xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
-		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.JSONdata});
+		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.get('JSONdata')});
 	});
 
     // Update spectrum view when external resize event called
