@@ -63,3 +63,35 @@ svg {
 .xinetAxisLabel{
     pointer-events: none;
 }
+
+.custom-menu {
+  display: none;
+  z-index: 10000;
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid #CCC;
+  white-space: nowrap;
+/*
+  font-family: sans-serif;
+*/
+  background: #FFF;
+  color: #333;
+  list-style: none;
+  padding:0;
+  margin: 0;
+}
+
+.custom-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+    
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.custom-menu li:hover {
+  background-color: #DEF;
+}

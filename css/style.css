@@ -120,7 +120,7 @@ span, label {
 
 
 #topDiv {
-    overflow:hidden;
+    /*overflow:hidden; */
     position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
@@ -412,6 +412,12 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
     content: " ";
 }
 
+#pdbPanel .prompt {
+	font-size: 1.4em;
+	vertical-align: middle;
+	padding: 0 0.5em;
+}
+
 A.btn {
     text-decoration: none;
 }
@@ -650,4 +656,25 @@ svg.temp .keyPoint rect {
 	top: 0;
 	right: -0.7em;
 	color: grey;
+}
+
+#subPanelLimiter {
+	position: absolute;
+	pointer-events: none;
+	top: 39px;
+	bottom: 65px;
+	left: 0;
+	right: 0;
+}
+
+.rappsilberImage {
+	display: block;
+	border-top: 1px solid white;
+	padding: 0.5em 0;
+}
+
+.rappsilberImage:hover {
+	-webkit-filter: invert(1);
+	filter: invert(1);
+	background: black;
 }

@@ -17,14 +17,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")
-            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div><img src='./images/logos/rappsilber-lab-small.png'/>")
+            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div>")
         ;         
         this.controlDiv = topDiv.select(".toolbar");
         this.controlDiv.append("button")
             .attr ("class", "downloadButton3 btn btn-1 btn-1a")
             .text ("Download Link Colour Scheme as SVG")
         ;
-        this.controlDiv.append("p").attr("id", "linkColourDropdownPlaceholder");
+        this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
         
         var chartDiv = topDiv.select(".panelInner");
         var svgs = {
@@ -43,37 +43,37 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         };
         
         var texts = {
-            clinkp: "Cross-Link(s) between different proteins",
-            ambigp: "Ambiguous Cross-Link(s)",
-            multip: "Multiple Linkage Sites",
-            selflinkp: "Self Cross-Link(s); could include Cross-Links not between the same molecule of same protein",
-            selflinkpc: "Self Cross-Link(s); definitely includes Cross-Links not between the same molecule of same protein",
-            clinkr: "Cross Link between different proteins",
-            ambigr: "Ambiguous Cross-Link",
-            selflinkr: "Self Cross-Link in same protein. Could link either same or two different molecules",
-            homom: "Self Cross-Link with Overlapping Peptides. Cannot be the same molecule, so either between two different molecules of same protein (Homomultimeric) or a mis-identification",
-            selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide)",
-            linkmodpep: "Linker modified peptide (unfilled = ambiguous)",
-            highlight: "Highlighted linked peptide",
+            clinkp: "Cross-Link(s) between different proteins.",
+            ambigp: "Ambiguous Cross-Link(s).",
+            multip: "Multiple Linkage Sites.",
+            selflinkp: "Self Cross-Link(s); could include Cross-Links not between the same molecule of same protein.",
+            selflinkpc: "Self Cross-Link(s); definitely includes Cross-Links not between the same molecule of same protein.",
+            clinkr: "Cross Link between different proteins.",
+            ambigr: "Ambiguous Cross-Link.",
+            selflinkr: "Self Cross-Link in same protein. Could link either the same or two different molecules of the same protein.",
+            homom: "Self Cross-Link with Overlapping Peptides. Cannot be the same molecule, so it's either between two different molecules of the same protein (Homomultimeric) or a mis-identification.",
+            selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide).",
+            linkmodpep: "Linker modified peptide (unfilled = ambiguous).",
+            highlight: "Highlighted linked peptide.",
         };
         
         var sectionData = [
             {
                 id: "colourKey",
-                header: "Link Colour Scheme",
+                header: "Current Link Colour Scheme",
                 rows: []
             },
             {
                 id: "proteinKey",
                 header: "Protein-Protein Level",
-                rows: ["clinkp", "ambigp", "multip", "selflinkp", "selflinkpc"].map (function(row) {
+                rows: ["clinkp", "multip", "selflinkp", "selflinkpc", "ambigp"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
             {
                 id: "residueKey",
                 header: "Residue Level",
-                rows: ["clinkr", "ambigr", "selflinkr", "homom", /*"selflinkinter", "linkmodpep",*/ "highlight"].map (function(row) {
+                rows: ["clinkr", "selflinkr", "homom", "ambigr", /*"selflinkinter", "linkmodpep",*/ "highlight"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
@@ -99,7 +99,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 		
 		var self = this;
 		var clickFunc = function (showSection, d) {
-			if (showSection && d.header === "Link Colour Scheme" && self.sliderSubView) {
+			if (showSection && d.id === "colourKey" && self.sliderSubView) {
 				self.sliderSubView.show (true);
 			}
 		}
@@ -162,7 +162,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     render: function () {
 		
         var colourSection =[{
-            header: "Link Colour Scheme",
+            header: "Current Link Colour Scheme",
             rows: []
         }];
         
