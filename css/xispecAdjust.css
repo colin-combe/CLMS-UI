@@ -35,3 +35,6 @@
 .xispec_multiSelect_dropdown-content {
     background-color: #091d42;
 }
+.xispec_form-control:focus {
+  border-color: #091d42;
+}
