@@ -1,0 +1,37 @@
+#xispec_spectrumControls {
+	background-color: #091d42;
+	color: #000;
+}
+#xispec_dl_spectrum_SVG{
+    display: none;
+}
+.xispec_subViewHeader{
+  background: rgb(9, 29, 66);
+}
+.xispec_settings_menu{
+    margin: -2px -9px;
+}
+.xispec_settings_menu .xispec_btn{
+      background: #e3e3e3!important;
+      color: #091d42;
+}
+.xispec_dynDiv_moveParentDiv {
+    border: none;
+}
+.xispec_settings_menu .xispec_btn:hover{
+      background: #fff!important;
+}
+.xispec_settings_menu .xispec_active{
+  background: rgba(192,206,224,1)!important;
+}
+.xispec_settings_menu .xispec_active:hover{
+  background: rgba(192,206,224,1)!important;
+  color: #091d42;
+}
+.xispec_settings-bottom .xispec_btn-1 {
+    border: 1px solid #091d42;
+    color: #091d42;
+}
+.xispec_multiSelect_dropdown-content {
+    background-color: #091d42;
+}

@@ -173,7 +173,7 @@ span, label {
     margin:0px!important;
 }
 
-.dynDiv{
+.dynDiv, .xispec_dynDiv{
     padding:20px 10px;
     /*background: rgba(9, 29, 66, 0.9);*/
     overflow: hidden;
@@ -187,7 +187,7 @@ span, label {
     height:400px;
 */
 }
-.dynDiv_moveParentDiv{
+.dynDiv_moveParentDiv, .xispec_dynDiv_moveParentDiv{
     height:20px;
     background:#091D42;
 }
@@ -365,7 +365,7 @@ span, label {
     flex-direction: row;
 }
 
-.dynTitle {
+.dynTitle, .xispec_dynTitle {
     position: relative;
     left: 30px;
     top: -2px;

@@ -44,6 +44,15 @@
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
 		<link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>">
 
+        <!-- Spectrum Viewer styles  -->
+        <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../spectrum/css/dropdown.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
+        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css<?php echo $cacheBuster ?>">
+
+        <link rel="stylesheet" href="./css/xispecAdjust.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/xiNET.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/matrix.css<?php echo $cacheBuster ?>">
@@ -139,13 +148,6 @@
         <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
-        <!-- <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css"/> -->
-        <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="../spectrum/css/settings.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="../spectrum/css/QC.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="../spectrum/css/dropdown.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" type="text/css" href="../spectrum/css/font-awesome.min.css"/>
-        <link rel="stylesheet" href="../spectrum/vendor/dt-1.10.12_datatables.min.css<?php echo $cacheBuster ?>">
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/js.cookie.js<?php echo $cacheBuster ?>"></script>
