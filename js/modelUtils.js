@@ -328,6 +328,7 @@ CLMSUI.modelUtils = {
             .catch (function (reason) {
                 var emptySequenceMap = [];
                 emptySequenceMap.failureReason = pdbInfo.baseSeqId+" not found... ("+reason+")";
+				emptySequenceMap.pdbid = pdbInfo.baseSeqId;
                 bbmodel.trigger ("3dsync", emptySequenceMap);
             })
             .then (function (structureComp) {
@@ -367,6 +368,7 @@ CLMSUI.modelUtils = {
 
                     //console.log ("seqmpa", sequenceMap);
                     //if (sequenceMap && sequenceMap.length) {
+						sequenceMap.pdbid = pdbInfo.baseSeqId;
                         var chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
                             pMatch.data = pMatch.seqObj.data;

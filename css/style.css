@@ -543,6 +543,12 @@ A.btn {
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
+div.toolbar[disabled], label.fakeButton[disabled] {
+	color: grey;
+	pointer-events: none;
+	border-color: grey;
+}
+
 .toolbar button {
     margin-bottom: 0.2em;
 }
@@ -567,6 +573,10 @@ A.btn {
 	padding-right: 1em;
 }
 
+.toolbar > .dashedBorder {
+	border-right-style: dashed;
+}
+
 .toolbar > .sectionDividerLeft {
 	border-left: 1px solid rgba(0,0,0,0.5);
 	margin-left: 0.5em;
@@ -575,6 +585,11 @@ A.btn {
 
 .pdbWindowButton {
 	vertical-align: text-bottom;
+}
+
+DIV.messagebar {
+	font-size: 1.4em;
+	height: 3em;
 }
 
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
