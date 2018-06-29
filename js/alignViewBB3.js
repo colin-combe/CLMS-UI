@@ -34,7 +34,7 @@
             this.alignViewBlosumSelector = new CLMSUI.CollectionAsSelectViewBB ({
                 el:"#"+modelViewID+"Controls2",
                 collection: CLMSUI.blosumCollInst,
-                label: "Score Matrix",
+                label: "Set Score Matrix",
                 name: "BlosumSelector",
             });
             

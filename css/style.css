@@ -332,7 +332,7 @@ span, label {
 }
 #distoPanel{
     left: 40px;
-    width:500px;
+    width:600px;
     height:360px;
 }
 
@@ -346,6 +346,12 @@ span, label {
     left: 40px;
     width: 40em;
     height: 25em;
+}
+
+#scatterplotPanel {
+	left: 40px;
+	width: 45em;
+	height: 40em;
 }
 
 #urlSearchBox {
@@ -543,6 +549,12 @@ A.btn {
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
+div.toolbar[disabled], label.fakeButton[disabled] {
+	color: grey;
+	pointer-events: none;
+	border-color: grey;
+}
+
 .toolbar button {
     margin-bottom: 0.2em;
 }
@@ -567,6 +579,10 @@ A.btn {
 	padding-right: 1em;
 }
 
+.toolbar > .dashedBorder {
+	border-right-style: dashed;
+}
+
 .toolbar > .sectionDividerLeft {
 	border-left: 1px solid rgba(0,0,0,0.5);
 	margin-left: 0.5em;
@@ -575,6 +591,11 @@ A.btn {
 
 .pdbWindowButton {
 	vertical-align: text-bottom;
+}
+
+DIV.messagebar {
+	font-size: 1.4em;
+	height: 3em;
 }
 
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
@@ -677,4 +698,20 @@ svg.temp .keyPoint rect {
 	-webkit-filter: invert(1);
 	filter: invert(1);
 	background: black;
+}
+
+select {
+	color: #091d42;
+	border-color: #091d42;
+	font-family: Lato-Bold;
+}
+
+label.selectHolder select {
+	margin-top: 0.8em;
+	margin-bottom: 0.8em;
+}
+
+input {
+	color: #091d42;
+	font-family: Lato-Bold;
 }
