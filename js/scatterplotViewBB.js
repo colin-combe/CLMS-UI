@@ -73,7 +73,7 @@
             addToElem: this.controlDiv, 
             selectList: ["X", "Y"], 
             optionList: this.options.attributeOptions, 
-            selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+            selectLabelFunc: function (d) { return "Show Cross-Link/Match Data ("+d+") ►"; }, 
             optionLabelFunc: function (d) { return d.label; }, 
             changeFunc: function () { self.axisChosen().render(); },
         });
@@ -252,7 +252,7 @@
                 selectList: ["X", "Y"], 
                 optionList: newOptions, 
                 keepOldOptions: true,
-                selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+                selectLabelFunc: function (d) { return "Show Cross-Link/Match Data ("+d+") ►"; }, 
                 optionLabelFunc: function (d) { return d.label; }, 
                 changeFunc: function () { self.axisChosen().render(); },
             });

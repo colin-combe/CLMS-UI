@@ -66,12 +66,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var toolbar = mainDivSel.select("div.toolbar");
 		CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
+		//var toolbar = mainDivSel.select("div.toolbar:last");
 		// Add a select widget for picking axis data type
 		CLMSUI.utils.addMultipleSelectControls ({
 			addToElem: toolbar,
 			selectList: ["X"],
 			optionList: this.options.attributeOptions,
-			selectLabelFunc: function (d) { return d+" Axis Attribute"; },
+			selectLabelFunc: function (d) { return "Show Cross-Link Match Data ►"; },
 			optionLabelFunc: function (d) { return d.label; },
 			changeFunc: function () { self.render(); },
 		});
@@ -264,7 +265,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				selectList: ["X"], 
 				optionList: newOptions, 
 				keepOldOptions: true,
-				selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+				selectLabelFunc: function (d) { return "Show Cross-Link Match Data ►"; }, 
 				optionLabelFunc: function (d) { return d.label; }, 
 				changeFunc: function () { self.render(); },
 			});

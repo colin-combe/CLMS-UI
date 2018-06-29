@@ -70,10 +70,10 @@
         };
     
         this.controlDiv.append("label")
-            .attr("class", "btn")
+            .attr("class", "btn selectHolder")
             .append ("span")
                 .attr("class", "noBreak")
-                .text("Select Protein Pairing")
+                .text("Show Protein Pairing ►")
                 .append("select")
                     .attr("id", mainDivSel.attr("id")+"chainSelect")
                     .on ("change", function (d) {
@@ -87,6 +87,26 @@
                         setSelectTitleString (selElem);
                     })
         ;
+		
+		/*
+		CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: this.controlDiv, 
+            selectList: ["Show Protein Pairing"], 
+            optionList: [], 
+            selectLabelFunc: function (d) { return "Show Protein Pairing"; }, 
+            optionLabelFunc: function (d) { return d.label; }, 
+            changeFunc: function (d) {
+				var value = this.value;
+				var selectedDatum = d3.select(this).selectAll("option")
+					.filter(function(d) { return d3.select(this).property("selected"); })
+					.datum()
+				;
+				self.setAndShowPairing (selectedDatum.value);
+				var selElem = d3.select(d3.event.target);
+				setSelectTitleString (selElem);
+			},
+        });
+		*/
         
         // Various view options set up, then put in a dropdown menu
         this.chainDropdowns = ["prot1", "prot2"].map (function (prot) {

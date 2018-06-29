@@ -323,80 +323,89 @@ CLMSUI.modelUtils = {
         var bbmodel = pdbInfo.bbmodel;
         
         stage.removeAllComponents();   // necessary to remove old stuff so old sequences don't pop up in sequence finding
+		
+		function returnFailure (reason) {
+			var emptySequenceMap = [];
+            emptySequenceMap.failureReason = "Error for "+pdbInfo.baseSeqId+", "+reason;
+			emptySequenceMap.pdbid = pdbInfo.baseSeqId;
+            bbmodel.trigger ("3dsync", emptySequenceMap);
+		}
         
         stage.loadFile (uri, params)
             .catch (function (reason) {
-                var emptySequenceMap = [];
-                emptySequenceMap.failureReason = pdbInfo.baseSeqId+" not found... ("+reason+")";
-                bbmodel.trigger ("3dsync", emptySequenceMap);
+                returnFailure (reason);
             })
             .then (function (structureComp) {
 			
 				console.log ("structureComp", structureComp);
-                // match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
-                function matchByAlignment () {
-                    var protAlignCollection = bbmodel.get("alignColl");
-                    var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
-                        function(sObj) { return sObj.data; }
-                    );
-                    //console.log ("our pdbUniProtMap", pdbUniProtMap);
-                    sequenceMapsAvailable (pdbUniProtMap);
-                }
+				if (structureComp) {
+					// match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
+					function matchByAlignment () {
+						var protAlignCollection = bbmodel.get("alignColl");
+						var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
+							function(sObj) { return sObj.data; }
+						);
+						sequenceMapsAvailable (pdbUniProtMap);
+					}
 
-                var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
-                var interactorMap = bbmodel.get("clmsModel").get("participants");
-                var interactorArr = CLMS.arrayFromMapValues(interactorMap);
+					var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
+					var interactorMap = bbmodel.get("clmsModel").get("participants");
+					var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
-                // If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
-                // This is asynchronous so we use a callback
-                if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
-                    CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-                        if (!pdbUniProtMap.length) {    // no matches, fall back to aligning
-                            matchByAlignment();
-                        } else {
-                            sequenceMapsAvailable (pdbUniProtMap);
-                        }
-                    });
-                }
-                else {  // without access to pdb codes have to match comparing all proteins against all chains
-                    matchByAlignment();
-                }
+					// If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
+					// This is asynchronous so we use a callback
+					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
+						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
+							if (pdbUniProtMap.fail) {
+								returnFailure ("No valid data returned");
+							} else if (!pdbUniProtMap.length) {    // no matches, fall back to aligning
+								matchByAlignment();
+							} else {
+								sequenceMapsAvailable (pdbUniProtMap);
+							}
+						});
+					}
+					else {  // without access to pdb codes have to match comparing all proteins against all chains
+						matchByAlignment();
+					}
 
-                // bit to continue onto after ngl protein chain to clms protein matching has been done
-                function sequenceMapsAvailable (sequenceMap) {
+					// bit to continue onto after ngl protein chain to clms protein matching has been done
+					function sequenceMapsAvailable (sequenceMap) {
 
-                    //console.log ("seqmpa", sequenceMap);
-                    //if (sequenceMap && sequenceMap.length) {
-                        var chainMap = {};
-                        sequenceMap.forEach (function (pMatch) {
-                            pMatch.data = pMatch.seqObj.data;
-                            pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
-                            chainMap[pMatch.id] = chainMap[pMatch.id] || [];
-                            chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
-                            pMatch.otherAlignSettings = {semiLocal: true};
-                        });
-                        console.log ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
+						//console.log ("seqmpa", sequenceMap);
+						//if (sequenceMap && sequenceMap.length) {
+							sequenceMap.pdbid = pdbInfo.baseSeqId;
+							var chainMap = {};
+							sequenceMap.forEach (function (pMatch) {
+								pMatch.data = pMatch.seqObj.data;
+								pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
+								chainMap[pMatch.id] = chainMap[pMatch.id] || [];
+								chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
+								pMatch.otherAlignSettings = {semiLocal: true};
+							});
+							console.log ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
 
-                        if (bbmodel.get("stageModel")) {
-                             bbmodel.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
-                        }
-                        bbmodel.trigger ("3dsync", sequenceMap);
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
+							if (bbmodel.get("stageModel")) {
+								 bbmodel.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
+							}
+							bbmodel.trigger ("3dsync", sequenceMap);
+							// Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)      
 
-                        // Make a new model and set of data ready for the ngl viewer
-                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
-                        crosslinkData.set({
-                            structureComp: structureComp, 
-                            chainMap: chainMap, 
-                            pdbBaseSeqID: pdbInfo.baseSeqId, 
-                            masterModel: bbmodel,
-                        });
-                        bbmodel.set ("stageModel", crosslinkData);
-                        // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
-                        // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
-                        // changed:linklist event is received. (i.e. it broke the other way round)
-                        crosslinkData.setupLinks (bbmodel.get("clmsModel"));
-                }
+							// Make a new model and set of data ready for the ngl viewer
+							var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB (); 
+							crosslinkData.set({
+								structureComp: structureComp, 
+								chainMap: chainMap, 
+								pdbBaseSeqID: pdbInfo.baseSeqId, 
+								masterModel: bbmodel,
+							});
+							bbmodel.set ("stageModel", crosslinkData);
+							// important that the new stagemodel is set first ^^^ before we setupLinks() on the model
+							// otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
+							// changed:linklist event is received. (i.e. it broke the other way round)
+							crosslinkData.setupLinks (bbmodel.get("clmsModel"));
+					}
+				}
             })
         ;
     },
@@ -427,9 +436,8 @@ CLMSUI.modelUtils = {
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
         $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
             function (data, status, xhr) {   
-                //console.log ("match pdb data", nglSequences, data, arguments);
 			
-                if (status === "success" && data.contentType === "text/xml") {  // data is an xml fragment
+                if (status === "success" && (data.contentType === "text/xml" || data.contentType === "application/xml")) {  // data is an xml fragment
                     var map = d3.map();
 
                     $(data).find("block").each (function (i, b) { 
@@ -466,7 +474,11 @@ CLMSUI.modelUtils = {
 						console.log ("mapArr", mapArr);
                         callback (mapArr);
                     }
-                }
+                } else {	// usually some kind of error if reached here as we didn't detect xml
+					var emptySequenceMap = [];
+					emptySequenceMap.fail = true;
+					callback (emptySequenceMap);
+				}
             }
         ); 
     },
@@ -989,7 +1001,7 @@ CLMSUI.modelUtils = {
         {
             linkFunc: function (link, option) { return link.isLinearLink() ? [] : [this.model.getSingleCrosslinkDistance (link, null, null, option)]; }, 
             unfilteredLinkFunc: function (link, option) { return link.isLinearLink() ? [] : [this.model.getSingleCrosslinkDistance (link, null, null, option)]; },
-            id: "Distance", label: "Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90,
+            id: "Distance", label: "Cross-Link Cα-Cα Distance (Å)", decimalPlaces: 2, maxVal: 90,
         }, 
     ],
 };

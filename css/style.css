@@ -120,7 +120,7 @@ span, label {
 
 
 #topDiv {
-    overflow:hidden;
+    /*overflow:hidden; */
     position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
@@ -173,7 +173,7 @@ span, label {
     margin:0px!important;
 }
 
-.dynDiv{
+.dynDiv, .xispec_dynDiv{
     padding:20px 10px;
     /*background: rgba(9, 29, 66, 0.9);*/
     overflow: hidden;
@@ -187,7 +187,7 @@ span, label {
     height:400px;
 */
 }
-.dynDiv_moveParentDiv{
+.dynDiv_moveParentDiv, .xispec_dynDiv_moveParentDiv{
     height:20px;
     background:#091D42;
 }
@@ -332,7 +332,7 @@ span, label {
 }
 #distoPanel{
     left: 40px;
-    width:500px;
+    width:600px;
     height:360px;
 }
 
@@ -346,6 +346,12 @@ span, label {
     left: 40px;
     width: 40em;
     height: 25em;
+}
+
+#scatterplotPanel {
+	left: 40px;
+	width: 45em;
+	height: 40em;
 }
 
 #urlSearchBox {
@@ -365,7 +371,7 @@ span, label {
     flex-direction: row;
 }
 
-.dynTitle {
+.dynTitle, .xispec_dynTitle {
     position: relative;
     left: 30px;
     top: -2px;
@@ -410,6 +416,12 @@ span.noBreak select {
 /* and then put spaces after labels to give a known place for content to break */
 label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::before, .matrixView label.btn::before, .scatterplotView label.btn::before {
     content: " ";
+}
+
+#pdbPanel .prompt {
+	font-size: 1.4em;
+	vertical-align: middle;
+	padding: 0 0.5em;
 }
 
 A.btn {
@@ -537,6 +549,12 @@ A.btn {
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
+div.toolbar[disabled], label.fakeButton[disabled] {
+	color: grey;
+	pointer-events: none;
+	border-color: grey;
+}
+
 .toolbar button {
     margin-bottom: 0.2em;
 }
@@ -561,6 +579,10 @@ A.btn {
 	padding-right: 1em;
 }
 
+.toolbar > .dashedBorder {
+	border-right-style: dashed;
+}
+
 .toolbar > .sectionDividerLeft {
 	border-left: 1px solid rgba(0,0,0,0.5);
 	margin-left: 0.5em;
@@ -569,6 +591,11 @@ A.btn {
 
 .pdbWindowButton {
 	vertical-align: text-bottom;
+}
+
+DIV.messagebar {
+	font-size: 1.4em;
+	height: 3em;
 }
 
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
@@ -650,4 +677,41 @@ svg.temp .keyPoint rect {
 	top: 0;
 	right: -0.7em;
 	color: grey;
+}
+
+#subPanelLimiter {
+	position: absolute;
+	pointer-events: none;
+	top: 39px;
+	bottom: 65px;
+	left: 0;
+	right: 0;
+}
+
+.rappsilberImage {
+	display: block;
+	border-top: 1px solid white;
+	padding: 0.5em 0;
+}
+
+.rappsilberImage:hover {
+	-webkit-filter: invert(1);
+	filter: invert(1);
+	background: black;
+}
+
+select {
+	color: #091d42;
+	border-color: #091d42;
+	font-family: Lato-Bold;
+}
+
+label.selectHolder select {
+	margin-top: 0.8em;
+	margin-bottom: 0.8em;
+}
+
+input {
+	color: #091d42;
+	font-family: Lato-Bold;
 }

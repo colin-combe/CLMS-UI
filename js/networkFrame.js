@@ -83,7 +83,9 @@ var allDataLoaded = _.after (3, function() {
 
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
+
     ByRei_dynDiv.init.main();
+	//ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 
     CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
 });
@@ -241,7 +243,7 @@ CLMSUI.init.views = function () {
     windowIds.forEach (function (winid) {
         d3.select("body").append("div")
             .attr("id", winid)
-            .attr("class", "dynDiv")
+            .attr("class", "dynDiv dynDiv_bodyLimit")
         ;
     });
 
@@ -442,17 +444,6 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    var spectrumModel_vars = {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot};
-
-    var spectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
-    var settingsSpectrumModel = new AnnotatedSpectrumModel(spectrumModel_vars);
-    spectrumModel.otherModel = settingsSpectrumModel;
-    settingsSpectrumModel.otherModel = spectrumModel;
-
-    settingsSpectrumModel.listenTo(spectrumModel, "change:JSONdata", function(t){
-		settingsSpectrumModel.set({JSONdata: t.JSONdata});
-	});
-
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -506,56 +497,30 @@ CLMSUI.init.viewsEssential = function (options) {
         })
     ;
 
-    var spectrumViewer = new SpectrumView ({model: spectrumModel, el:"#spectrumPanel"});
-    var InfoView = new PrecursorInfoView ({model: spectrumModel, el:"#spectrumPanel"});
-    var fragKey = new FragmentationKeyView ({model: spectrumModel, el:"#spectrumMainPlotDiv"});
+    // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
+    xiSPEC.init('modular_xispec', {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
 
-    var QCwrapper = new QCwrapperView({
-        el: '#QCdiv',
-        splitIds: ['#spectrumMainPlotDiv', '#QCdiv'],
-        showOnStartUp: false,
-    });
-
-    var errorIntPlot = new ErrorPlotView({
-        model: spectrumModel,
-        el:"#subViewContent-left",
-        xData: 'Intensity',
-        margin: {top: 10, right: 30, bottom: 20, left: 65},
-        svg: "#errIntSVG",
-        showOnStartUp: false,
-    });
-    var errorMzPlot = new ErrorPlotView({
-        model: spectrumModel,
-        el:"#subViewContent-right",
-        xData: 'm/z',
-        margin: {top: 10, right: 30, bottom: 20, left: 65},
-        svg: "#errMzSVG",
-        showOnStartUp: false,
-    });
-
-    var spectrumSettingsViewer = new SpectrumSettingsView ({
-      model: settingsSpectrumModel,
-      el:"#spectrumSettingsWrapper",
-      displayEventName: "spectrumSettingsShow",
-    });
+    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
+		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.get('JSONdata')});
+	});
 
     // Update spectrum view when external resize event called
-    spectrumViewer.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+    xiSPEC.Spectrum.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
-    fragKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+    xiSPEC.FragmentationKey.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.resize();
     });
-    errorMzPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+    xiSPEC.ErrorIntensityPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.render();
     });
-    errorIntPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
+    xiSPEC.ErrorMzPlot.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
         this.render();
     });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
-    spectrumViewer.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
+    xiSPEC.Spectrum.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = 0;//CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
             CLMSUI.loadSpectra (match, randId, this.model);//, true);
@@ -594,6 +559,11 @@ CLMSUI.init.viewsEssential = function (options) {
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
+	d3.select("#helpDropdownPlaceholder > div").append("img")
+		.attr ("class", "rappsilberImage")
+		.attr ("src", "./images/logos/rappsilber-lab-small.png")
+		.on ("click", function() { window.open ("http://rappsilberlab.org", "_blank"); })
+	;
 
 
     d3.select("body").append("div").attr({"id": "tooltip2", "class": "CLMStooltip"});
