@@ -10,8 +10,8 @@
         initialize: function (viewOptions) {         
             var controls = d3.select(this.el);
             var inputArray = [
-                {label: "Gap Open Penalty", prop:"gapOpenScore", type:"number", min: 0, max: 99},
-                {label: "Gap Extend Penalty", prop:"gapExtendScore", type:"number", min: 0, max: 99},
+                {label: "Set Gap Open Penalty", prop:"gapOpenScore", type:"number", min: 0, max: 99},
+                {label: "Set Gap Extend Penalty", prop:"gapExtendScore", type:"number", min: 0, max: 99},
                 //{label: "Score Matrix", prop:"scoreMatrix", type:"select", options: this.model.scoreMatrices },
             ];
             var inputSel = controls.selectAll("div.controlBlock")

@@ -89,9 +89,10 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			var success = count > 0;
 			this.setCompletedEffect ();
 
-			var msg = "Completed Loading "+sanitise(sequences.pdbid)+".<br>";
-			msg += success ? "✓ Success! "+count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the pdb file."
-				: sanitise ("x "+(sequences.failureReason || "No sequence matches found between this search and the pdb file. Please check the pdb file or code is correct."));
+			var msg = sequences.failureReason ? "" : "Completed Loading "+sanitise(sequences.pdbid)+".<br>";
+			msg += success ? "✓ Success! "+count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the PDB file."
+				: sanitise ((sequences.failureReason || "No sequence matches found between this search and the PDB file") +
+							". Please check the PDB file or code is correct.");
 			this.setStatusText (msg, success);    
 		});
 	},

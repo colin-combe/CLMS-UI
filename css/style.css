@@ -332,7 +332,7 @@ span, label {
 }
 #distoPanel{
     left: 40px;
-    width:500px;
+    width:600px;
     height:360px;
 }
 
@@ -346,6 +346,12 @@ span, label {
     left: 40px;
     width: 40em;
     height: 25em;
+}
+
+#scatterplotPanel {
+	left: 40px;
+	width: 45em;
+	height: 40em;
 }
 
 #urlSearchBox {
@@ -692,4 +698,20 @@ svg.temp .keyPoint rect {
 	-webkit-filter: invert(1);
 	filter: invert(1);
 	background: black;
+}
+
+select {
+	color: #091d42;
+	border-color: #091d42;
+	font-family: Lato-Bold;
+}
+
+label.selectHolder select {
+	margin-top: 0.8em;
+	margin-bottom: 0.8em;
+}
+
+input {
+	color: #091d42;
+	font-family: Lato-Bold;
 }
