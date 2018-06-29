@@ -72,7 +72,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			addToElem: toolbar,
 			selectList: ["X"],
 			optionList: this.options.attributeOptions,
-			selectLabelFunc: function (d) { return "Show Cross-Link/Match Data"; },
+			selectLabelFunc: function (d) { return "Show Cross-Link Match Data ►"; },
 			optionLabelFunc: function (d) { return d.label; },
 			changeFunc: function () { self.render(); },
 		});
@@ -265,7 +265,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				selectList: ["X"], 
 				optionList: newOptions, 
 				keepOldOptions: true,
-				selectLabelFunc: function (d) { return d+" Axis Attribute"; }, 
+				selectLabelFunc: function (d) { return "Show Cross-Link Match Data ►"; }, 
 				optionLabelFunc: function (d) { return d.label; }, 
 				changeFunc: function () { self.render(); },
 			});

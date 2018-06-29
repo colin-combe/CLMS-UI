@@ -73,7 +73,7 @@
             .attr("class", "btn selectHolder")
             .append ("span")
                 .attr("class", "noBreak")
-                .text("Show Protein Pairing")
+                .text("Show Protein Pairing ►")
                 .append("select")
                     .attr("id", mainDivSel.attr("id")+"chainSelect")
                     .on ("change", function (d) {
