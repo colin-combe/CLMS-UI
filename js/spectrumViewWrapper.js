@@ -7,7 +7,9 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
       if(_.isFunction(parentEvents)){
           parentEvents = parentEvents();
       }
-      return _.extend({},parentEvents,{});
+      return _.extend({
+          'click #clearHighlights' : 'clearSpectrumHighlights',
+      },parentEvents,{});
     },
 
 
@@ -28,41 +30,11 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             +"</button>"
             +"<button id='clearHighlights'>Clear Highlights</button>"
             +"</div>"
-            +"<div id='spectrumControlsBottom'>"
-            // +"<label id='colorSelectorLabel'>Colour scheme:</label>"
-            // +"<select id='colorSelector'></select>"
-//             +"<label>Lossy Labels<input id='lossyChkBx' type='checkbox'></label>"
-            +"<label class='movePeakLabels'>Move Labels<input id='moveLabels' type='checkbox'></label>"
-            +"<label>Measure<input id='measuringTool' type='checkbox'></label>"
-            +"<form id='setrange'><label>m/z Range:</label>"
-             +"<input type='text' id='xleft' size='7'><span>to</span>"
-             +"<input type='text' id='xright' size='7'>"
-             +"<label for='lockZoom' title='Lock current zoom level' id='lock'>&#128275;</label>"
-             +"<input type='submit' id='rangeSubmit' value='Set'>"
-             +"<span id='range-error'></span>"
-            +"<button id='reset' title='Reset to initial zoom level'>All</button>"
-            +"<input id='lockZoom' type='checkbox' style='visibility: hidden;'>"
-            +"</form>"
-            // +"<button id='toggleView' title='Click to toggle view'>QC</button>"
-            +"<button id='toggleSettings' title='Show Settings' class='btn btn-1a btn-topNav'>&#9881;</button>"
             +"</div>"
-            +"</div>"
-            +"<div class='spectrumPlotsDiv'>"
-            +"  <div id='spectrumMainPlotDiv'>"
-            +"      <svg id='spectrumSVG'></svg>"
-            +"      <div id='measureTooltip'></div>"
-            +"  </div>"
-            +"  <div id='QCdiv'>"
-            +"      <div class='subViewHeader'></div>"
-            +"      <div class='subViewContent'>"
-            +"          <div class='subViewContent-plot' id='subViewContent-left'><svg id='errIntSVG' class='errSVG'></svg></div>"
-            +"          <div class='subViewContent-plot' id='subViewContent-right'><svg id='errMzSVG' class='errSVG'></svg></div>"
-            +"      </div>"
-            +"  </div>"
+            +"<div id='modular_xispec' class='spectrumPlotsDiv'>"
             +"</div>"
             +"<div class='validationControls'>"
             +"</div>"
-            //~ +"</div>"
             +"<div id='alternatives'>"
             +"</div>"
         ;
@@ -85,21 +57,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         d3.select(this.el).selectAll("label")
             .classed ("btn", true)
         ;
-
-        var colOptions = [
-            {value: "RdBu", text: "Red & Blue"},
-            {value: "BrBG", text: "Brown & Teal"},
-            {value: "PiYG", text: "Pink & Green"},
-            {value: "PRGn", text: "Purple & Green"},
-            {value: "PuOr", text: "Orange & Purple"},
-        ];
-        d3.select("#colorSelector").selectAll("option").data(colOptions)
-            .enter()
-            .append("option")
-            .attr ("value", function(d) { return d.value; })
-            .text (function(d) { return d.text; })
-        ;
-
 
         if (CLMSUI.loggedIn) {
             this.validationMap = {A: "A", B: "B", C: "C", "?": "Q", R: "R"};
@@ -334,4 +291,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     filenameStateString: function () {
         return CLMSUI.utils.makeLegalFileName (this.identifier+"-"+this.optionsToString());
     },
+
+    clearSpectrumHighlights: function() {
+        CLMSUI.vent.trigger('clearSpectrumHighlights');
+    }
 });

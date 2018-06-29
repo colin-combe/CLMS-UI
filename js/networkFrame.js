@@ -441,12 +441,6 @@ CLMSUI.init.viewsEssential = function (options) {
     selectionViewer.lastCount = 1;
     selectionViewer.render();
 
-    xiSPEC.init(options.specWrapperDiv, CLMSUI.xiSpecBaseDir, CLMSUI.xiAnnotRoot);
-
-    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
-		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.JSONdata});
-	});
-
     new SpectrumViewWrapper ({
         el:options.specWrapperDiv,
         model: CLMSUI.compositeModelInst,
@@ -497,6 +491,13 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         })
     ;
+
+    // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
+    xiSPEC.init('modular_xispec', {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
+
+    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
+		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.get('JSONdata')});
+	});
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
