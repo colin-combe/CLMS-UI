@@ -884,7 +884,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         d3.select(this.el).attr ("class", "btn selectHolder")
 			.append ("span")
 			.attr ("class", "noBreak")
-			.text("Change Cross-Link Colour Scheme")
+			.text("Change Cross-Link Colour Scheme ►")
         ;
 
         var addOptions = function (selectSel) {
