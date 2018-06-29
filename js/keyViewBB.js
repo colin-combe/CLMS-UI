@@ -22,7 +22,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         this.controlDiv = topDiv.select(".toolbar");
         this.controlDiv.append("button")
             .attr ("class", "downloadButton3 btn btn-1 btn-1a")
-            .text ("Download Link Colour Scheme as SVG")
+            .text ("Download Cross-Link Colour Scheme as SVG")
         ;
         this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
         
@@ -60,7 +60,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         var sectionData = [
             {
                 id: "colourKey",
-                header: "Current Link Colour Scheme",
+                header: "Current Cross-Link Colour Scheme",
                 rows: []
             },
             {
@@ -162,7 +162,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
     render: function () {
 		
         var colourSection =[{
-            header: "Current Link Colour Scheme",
+            header: "Current Cross-Link Colour Scheme",
             rows: []
         }];
         

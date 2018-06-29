@@ -34,7 +34,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
 
 		toolbar.append("span")
-			.attr("class", "btn nopadLeft nopadRight sectionDivider2")
+			.attr("class", "btn nopadLeft nopadRight sectionDivider2 dashedBorder")
 			.text("Either")
 			.append ("div")
 			.append("label")
@@ -74,17 +74,25 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		;
 
 
-		wrapperPanel.append("div").attr("class", "messagebar").style("display", "none");
+		wrapperPanel.append("div").attr("class", "messagebar").html("&nbsp;");//.style("display", "none");
 
 		this.stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white", tooltip: false});
 		console.log ("STAGE", this.stage);
 		// populate 3D network viewer if hard-coded pdb id present
 
+		function sanitise (str) {
+			return str.replace(/[^a-z0-9 ,.?!]/ig, '');
+		}
+		
 		this.listenTo (this.model, "3dsync", function (sequences) {
 			var count = sequences && sequences.length ? sequences.length : 0;
 			var success = count > 0;
-			var msg = success ? count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the loaded pdb file. Loading completed."
-				: sequences.failureReason || "No sequence matches found between this search and the loaded pdb file. Please check the pdb file or code is correct.";
+			this.setCompletedEffect ();
+
+			var msg = sequences.failureReason ? "" : "Completed Loading "+sanitise(sequences.pdbid)+".<br>";
+			msg += success ? "✓ Success! "+count+" sequence"+(count > 1 ? "s": "")+" mapped between this search and the PDB file."
+				: sanitise ((sequences.failureReason || "No sequence matches found between this search and the PDB file") +
+							". Please check the PDB file or code is correct.");
 			this.setStatusText (msg, success);    
 		});
 	},
@@ -111,24 +119,36 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			newtab.document.body.innerHTML = "No legal Accession IDs are in the current dataset. These are required to query the PDB service.";
 		}
 	},
+	
+	setWaitingEffect: function () {
+		this.setStatusText ("Please Wait...");
+		d3.select(this.el).selectAll(".toolbar, .fakeButton").property("disabled", true).attr("disabled", true);
+		d3.select(this.el).selectAll(".toolbar .btn").property("disabled", true);
+	},
+	
+	setCompletedEffect: function () {
+		d3.select(this.el).selectAll(".toolbar, .fakeButton").property("disabled", false).attr("disabled", null);
+		d3.select(this.el).selectAll(".toolbar .btn").property("disabled", false);
+	},
 
   	setStatusText : function (msg, success) {
-		var mbar = d3.select(this.el).select(".messagebar").style("display", null);
-		var t = mbar.text(msg).transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
+		var mbar = d3.select(this.el).select(".messagebar");//.style("display", null);
+		var t = mbar.html(msg).transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
 		if (success !== undefined) {
 			t.transition().duration(5000).style("color", "#091d42");
 		}
 	},
 
   	selectPDBFile: function (evt) {
+		this.setWaitingEffect();
 		var self = this;
 		var fileObj = evt.target.files[0];
-		this.setStatusText ("Please Wait...");
+
 		CLMSUI.modelUtils.loadUserFile (fileObj, function (pdbFileContents) {
 			var blob = new Blob ([pdbFileContents], {type : 'application/text'});
 			var fileExtension = fileObj.name.substr (fileObj.name.lastIndexOf('.') + 1);
 			CLMSUI.modelUtils.repopulateNGL ({pdbFileContents: blob, ext: fileExtension, name: fileObj.name, stage: self.stage, bbmodel: self.model});
-		});    
+		});   
 	},
 
   	enteringPDBCode: function (evt) {
@@ -141,7 +161,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 	
 	loadPDBCode: function () {
 		var pdbCode = d3.select(this.el).select(".inputPDBCode").property("value");
-		this.setStatusText ("Please Wait...");
+		this.setWaitingEffect();
 		CLMSUI.modelUtils.repopulateNGL ({pdbCode: pdbCode, stage: this.stage, bbmodel: this.model});
 	},
 	
