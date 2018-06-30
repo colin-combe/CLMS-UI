@@ -324,16 +324,16 @@ span, label {
 }
 #nglPanel{
     left: 40px;
-    width:700px;
-    height:400px;
+    width:800px;
+    height:500px;
 }
 #pdbPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel {
     left: 40px;
 }
 #distoPanel{
     left: 40px;
-    width:600px;
-    height:360px;
+    width:50em;
+    height:35em;
 }
 
 #circularPanel {
@@ -350,7 +350,7 @@ span, label {
 
 #scatterplotPanel {
 	left: 40px;
-	width: 45em;
+	width: 50em;
 	height: 40em;
 }
 
