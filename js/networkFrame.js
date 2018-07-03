@@ -457,7 +457,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var searches = this.model.get("clmsModel").get("searches");
                 var randId = searches.get(match.searchId).random_id
-                var url = "../CLMS-model/php/identifications.php?upload="
+                var url = "../CLMS-model/php/spectrumMatches.php?upload="
                         + match.searchId + "-" + randId
                         + "&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;

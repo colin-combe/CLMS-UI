@@ -206,7 +206,7 @@
                     <div id="fdrSummaryPlaceholder"></div>
                 </div>
             </div>
-			
+
 			<div id="subPanelLimiter"></div>
         </div><!-- MAIN -->
 
@@ -250,7 +250,7 @@
 			}
 		};
 
-		var url = "../CLMS-model/php/identifications.php" + window.location.search;
+		var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
 
 		d3.text (url, function (error, text) {
 			if (!error) {

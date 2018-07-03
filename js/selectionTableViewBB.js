@@ -140,16 +140,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }, //temp hack//twoZeroPadder (d.score); },
 
             "expMZ": function (d) {
-                return massZeroPadder(d.expMZ);
+                return massZeroPadder(d.expMZ());
             },
             "expMass": function (d) {
                 return massZeroPadder(d.expMass());
             },
             "matchMZ": function (d) {
-                return massZeroPadder(d.calcMZ);
+                return massZeroPadder(d.matchMZ());
             },
             "matchMass": function (d) {
-                return massZeroPadder(d.calcMass());
+                return massZeroPadder(d.matchMass());
             },
             "massError": function (d) {
                 return massZeroPadder(d.massError());

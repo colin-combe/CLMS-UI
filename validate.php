@@ -211,7 +211,7 @@ header('Content-type: text/html; charset=utf-8');
 				resize();
 			};
 
-			var url = "../CLMS-model/php/identifications.php" + window.location.search;
+			var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
 
 
             d3.text (url, function (error, text) {

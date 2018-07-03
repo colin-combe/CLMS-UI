@@ -1,6 +1,12 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
+//TODO - rename to loadSpectrum
+CLMSUI.loadSpectra = function (match, randId, spectrumModel, ignoreResultUnlessLastRequested) {
+
+    console.log("loadSpectra match:" + match.id);
+    console.log("fragmentTolerance:", match.fragmentTolerance());
+    console.log("ionTypes:", match.ionTypes());
+    console.log("crossLinkerModMass:", match.crossLinkerModMass());
 
     var xiAnnotRoot = CLMSUI.xiAnnotRoot || "";
 
@@ -20,8 +26,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
 
     annotationRequest.annotation = {};
 
-    var fragTolArr = match.spectrum.ft.split(" ");
-    annotationRequest.annotation.fragmentTolerance = {"tolerance":+fragTolArr[0], "unit":fragTolArr[1]};
+    annotationRequest.annotation.fragmentTolerance = match.fragmentTolerance();
 
     // //todo modifications
     annotationRequest.annotation.modifications = CLMSUI.compositeModelInst.get('clmsModel').get('modifications');
@@ -36,17 +41,10 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
 
     //annotationRequest.annotation.modifications = [{aminoAcids: ["M"], id: "oxidation", mass: "15.994915"}];
 
-    var ionTypes = match.ions.split(";");
-    var ionTypeCount = ionTypes.length;
-    var ions = [];
-    for (var it = 0; it < ionTypeCount; it++) {
-        var ionType = ionTypes[it];
-        ions.push({"type": (ionType.charAt(0).toUpperCase() + ionType.slice(1) + "Ion")});
-    }
-    annotationRequest.annotation.ions = ions;
+    annotationRequest.annotation.ions = match.ions;
 
     var crossLinker = {};
-    crossLinker.modMass = 0;//+match.matchedPeptides[0].clModMass;
+    crossLinker.modMass = match.crossLinkerModMass();
     annotationRequest.annotation["cross-linker"] = crossLinker; // yuk
     //
     annotationRequest.annotation.precursorCharge = +match.precursorCharge;
@@ -138,68 +136,7 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel) {
         }
     });
 };
-/*
-xiSPEC.convert_to_json_request = function (data) {
 
-    // defaults
-    if(data.ionTypes === undefined){
-        data.ionTypes = "peptide;b;y";
-    }
-    if(data.crossLinkerModMass === undefined){
-        data.crossLinkerModMass = 0;
-    }
-    if(data.modifications === undefined){
-        data.modifications = [];
-    }
-    if(data.fragmentTolerance === undefined){
-        data.fragmentTolerance = {"tolerance": '20.0', 'unit': 'ppm'};
-    }
-
-
-    var annotationRequest = {};
-    var peptides = [];
-    var linkSites = [];
-    peptides[0] = CLMSUI.arrayifyPeptide(data.sequence1);
-
-    if(data.linkPos1 !== undefined){
-        linkSites[0] = {"id":0, "peptideId":0, "linkSite": data.linkPos1};
-    }
-    if (data.sequence2 !== undefined) {
-        peptide[1] = xiSPEC.arrayifyPeptide(data.sequence2);
-        linkSites[1] = {"id":0, "peptideId":1, "linkSite": data.linkPos1}
-    }
-
-    var peaks = [];
-    for (var i = 0; i < data.peaklist.length; i++) {
-        peaks.push(
-            {"intensity": data.peaklist[i][1], "mz": data.peaklist[i][0]}
-        );
-    }
-
-    annotationRequest.Peptides = peptides;
-    annotationRequest.LinkSite = linkSites;
-    annotationRequest.peaks = peaks;
-    annotationRequest.annotation = {};
-
-    var ionTypes = data.ionTypes.split(";");
-    var ionTypeCount = ionTypes.length;
-    var ions = [];
-    for (var it = 0; it < ionTypeCount; it++) {
-        var ionType = ionTypes[it];
-        ions.push({"type": (ionType.charAt(0).toUpperCase() + ionType.slice(1) + "Ion")});
-    }
-    annotationRequest.annotation.fragmentTolerance = data.fragmentTolerance;
-    annotationRequest.annotation.modifications = data.modifications;
-    annotationRequest.annotation.ions = ions;
-    annotationRequest.annotation["cross-linker"] = {'modMass': data.crossLinkerModMass}; // yuk
-    annotationRequest.annotation.precursorMZ = data.precursorMZ;
-    annotationRequest.annotation.precursorCharge = data.precursorCharge;
-    annotationRequest.annotation.custom = [];
-
-    console.log("request", annotationRequest);
-    return annotationRequest;
-
-};*/
 
 CLMSUI.arrayifyPeptide = function (seq_mods) {
     var peptide = {};
@@ -222,18 +159,3 @@ CLMSUI.arrayifyPeptide = function (seq_mods) {
     }
     return peptide;
 }
-
-/*
-CLMSUI.validate = function (matchId, validationStatus, randId, successCallBack) {
-    $.ajax ({
-        type: "POST",
-        url: "./php/validateMatch.php",
-        data: "mid=" + matchId + "&val=" + validationStatus + "&randId="+randId,
-        contentType: "application/x-www-form-urlencoded",
-        success: function (data, status, xhr){
-            console.log ("SUCCESS VALIDATION", data, status, xhr.responseText);
-            successCallBack();
-        },
-    });
-};
-*/
