@@ -105,7 +105,7 @@ function download (content, contentType, fileName, modernWeb) {
 }
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein 1","SeqPos 1","PepPos 1","PepSeq 1","LinkPos 1","Protein 2","SeqPos 2","PepPos 2","PepSeq 2","LinkPos 2","Score","Charge","Exp m/z","ExpMass","Match m/z","MatchMass","MassError","AutoValidated","Validated","Search","RunName","ScanNumber"\r\n';
+    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpM/Z","ExpMass","CalcM/Z","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var matches = clmsModel.get("matches");
     var matchCount = matches.length;
@@ -135,9 +135,10 @@ function getMatchesCSV () {
                 + '","' + pp2 + '","'
                 + (match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "") + '","' + match.linkPos2 + '","'
                 + match.score + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","' 
-                + match.matchMZ() + '","' + match.matchMass() + '","' + match.massError() + '","' 
+                + match.calcMZ() + '","' + match.calcMass() + '","' + match.massError() + '","' 
                 + match.autovalidated + '","' + match.validated + '","'
-                + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '"\r\n';
+                + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '","' + match.scanIndex + '","'
+                + match.crossLinkerModMass() + '","' + match.fragmentToleranceString() + '","' + match.ionTypesString() + '"\r\n';
         }
     }
     return csv;
@@ -147,7 +148,7 @@ function getMatchesCSV () {
 function getLinksCSV(){
     var validatedTypes = ["A", "B", "C", "?", "R"];
     
-    var headerArray = ["Protein 1","SeqPos 1","LinkedRes 1","Protein 2","SeqPos 2","LinkedRes 2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance","From Chain","To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
+    var headerArray = ["Protein1","SeqPos1","LinkedRes1","Protein2","SeqPos2","LinkedRes2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance","From Chain","To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
     var searchIds = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys());
     for (var i = 0; i < searchIds.length; i++ ) {
         headerArray.push ("Search_"+searchIds[i]);
