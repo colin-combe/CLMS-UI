@@ -78,7 +78,14 @@
                     show: false    // minidist is too small, tooltip obscures everything
                 },
                 legend: {
-                    show: false
+                    show: true,
+					position: "inset",
+					inset: {
+						anchor: "top-left",
+						x: 0,
+						y: 0,
+						step: undefined
+					}
                 },
                 axis: {
                     y: {
@@ -137,6 +144,19 @@
 						if (self.model.get("domainStart") != undefined) {
 							self.brushRecalc();
 						}
+						
+						var svg = d3.select(this.api.element).select("svg");
+						svg.append("text")
+							.attr ("class", "legendToggler")
+							.attr ("y", svg.attr("height") / 2)
+							.attr ("x", svg.attr("width") - 7)
+							.text("?")
+							.on ("click", function() { self.toggleLegend.call (self); })
+							.append ("title")
+								.text ("Toggle Legend On/Off")
+						;
+						
+						self.toggleLegend.call (self);	// initially hide legend
 					}
 				}
             });
@@ -275,6 +295,19 @@
             this.chart.resize();
             return this;
         },
+		
+		toggleLegend: function () {
+			var curState = d3.select(this.el).select(".c3-legend-background").style("visibility");
+			if (curState === "hidden") {
+				this.chart.legend.show();
+			} else {
+				// need both
+				this.chart.legend.hide();	// hides labels, but not legend background
+				this.chart.legend.hide([]);	// hides legend background, not labels
+			}
+			return this;
+		},
+		
 
         // removes view
         // not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)

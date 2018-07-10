@@ -183,6 +183,8 @@ CLMSUI.init.modelsEssential = function (options) {
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
+	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
+	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);	// make scoreExtent min zero, if existing min isn't negative
 	var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
@@ -193,15 +195,13 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-		matchScoreCutoff: [undefined, undefined],
-        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined,
-        //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
+		//matchScoreCutoff: [undefined, undefined],
+        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
+		matchScoreCutoff: scoreExtentInstance.slice()
     };
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
 	filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
 	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
-	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);	// make scoreExtent min zero, if existing min isn't negative
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {scoreExtent: scoreExtentInstance});
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();

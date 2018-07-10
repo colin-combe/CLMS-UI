@@ -42,7 +42,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
                 "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score",
                 "autovalidated", "validated", "group", "runName", "scanNumber",
-                "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError",
+                "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
                 "precursorIntensity", "elutionStart", "elutionEnd",
             ];
 
@@ -66,15 +66,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "precursorCharge": "Charge (Z)",
             "expMZ": "Exp M/Z",
             "expMass": "Exp Mass",
-            "matchMZ": "Calc M/Z",
-            "matchMass": "Calc Mass",
+            "calcMZ": "Calc M/Z",
+            "calcMass": "Calc Mass",
             "massError": "Mass Error (ppm)",
             "precursorIntensity": "Intensity",
             "elutionStart": "Elut.Start",
             "elutionEnd": "Elut.End",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError", "precursorItensity", ]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -129,31 +129,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 var dmp1 = d.matchedPeptides[1];
                 return dmp1 ? dmp1.seq_mods : "";
             },
-            "linkPos1": function (d) {
-                return d.linkPos1;
-            },
-            "linkPos2": function (d) {
-                return d.linkPos2;
-            },
-            "score": function (d) {
-                return twoZeroPadder(d.score);
-            }, //temp hack//twoZeroPadder (d.score); },
-
-            "expMZ": function (d) {
-                return massZeroPadder(d.expMZ());
-            },
-            "expMass": function (d) {
-                return massZeroPadder(d.expMass());
-            },
-            "matchMZ": function (d) {
-                return massZeroPadder(d.matchMZ());
-            },
-            "matchMass": function (d) {
-                return massZeroPadder(d.matchMass());
-            },
-            "massError": function (d) {
-                return massZeroPadder(d.massError());
-            },
+            "linkPos1": function (d) { return d.linkPos1; },
+            "linkPos2": function (d) { return d.linkPos2; },
+            "score": function (d) { return twoZeroPadder (d.score); },
+            "expMZ": function (d) { return massZeroPadder (d.expMZ()); },
+            "expMass": function (d) { return massZeroPadder (d.expMass()); },
+            "calcMZ": function (d) { return massZeroPadder (d.calcMZ()); },
+            "calcMass": function (d) { return massZeroPadder (d.calcMass()); },
+            "massError": function (d) { return massZeroPadder (d.massError()); },
             "precursorIntensity": function(d) { return scientific (d.precursor_intensity); },
             "elutionStart": function(d) { return d.elution_time_start; },
             "elutionEnd": function(d) { return d.elution_time_end; },
@@ -590,7 +573,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 				directSelection: true
 			});
 		} else {
-			d3.select(".validationControls").style("display", "block");
+			//d3.select(".validationControls").style("display", "block");
 		}
 		//if (d.src) { // if the src att is missing its from a csv file
 			// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)

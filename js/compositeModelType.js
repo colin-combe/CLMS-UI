@@ -213,7 +213,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-        console.log ("xlinks", this.filteredXLinks);
+        //console.log ("xlinks", this.filteredXLinks);
 
         //hiding linkless participants
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
