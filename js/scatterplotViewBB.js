@@ -69,14 +69,7 @@
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
         // Add two select widgets for picking axes data types
-        CLMSUI.utils.addMultipleSelectControls ({
-            addToElem: this.controlDiv, 
-            selectList: ["X", "Y"], 
-            optionList: this.options.attributeOptions, 
-            selectLabelFunc: function (d) { return "Show Cross-Link/Match Data ("+d+") ►"; }, 
-            optionLabelFunc: function (d) { return d.label; }, 
-            changeFunc: function () { self.axisChosen().render(); },
-        });
+        this.setMultipleSelectControls (this.controlDiv, this.options.attributeOptions, false);
         
         // Add jitter toggle checkbox
         var toggleButtonData = [
@@ -247,19 +240,24 @@
             //console.log ("NEW OPTIONS", newOptions);
 
             var toolbar = mainDivSel.select("div.toolbar");
-            CLMSUI.utils.addMultipleSelectControls ({
-                addToElem: toolbar, 
-                selectList: ["X", "Y"], 
-                optionList: newOptions, 
-                keepOldOptions: true,
-                selectLabelFunc: function (d) { return "Show Cross-Link/Match Data ("+d+") ►"; }, 
-                optionLabelFunc: function (d) { return d.label; }, 
-                changeFunc: function () { self.axisChosen().render(); },
-            });
+			self.setMultipleSelectControls (toolbar, newOptions, true);
         });
         
         this.axisChosen().render();     // initial render with defaults
     },
+		
+	setMultipleSelectControls: function (elem, options, keepOld) {
+		var self = this;
+		CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: elem, 
+            selectList: ["X", "Y"], 
+            optionList: options, 
+			keepOldOptions: keepOld || false,
+            selectLabelFunc: function (d) { return "Plot This Data Along ("+d+") Axis ►"; }, 
+            optionLabelFunc: function (d) { return d.label; }, 
+            changeFunc: function () { self.axisChosen().render(); },
+        });
+	},
         
     // options.extent = area of selection in data coordinates if we're not picking it up from the brush
     // options.add = add to existing selections
