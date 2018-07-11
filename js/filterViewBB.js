@@ -461,7 +461,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
             })
             // Hide between protein score if only 1 real protein (will always be an undefined score)
             .style ("display", function(d) {
-                return decoysPresent && d === "interFdrCut" && singleRealProtein ? "none" : null;
+                return fdrMode && decoysPresent && d === "interFdrCut" && singleRealProtein ? "none" : null;
             })
         ;
 
