@@ -365,7 +365,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
 
         chartDiv.select("span")
             .append("label")
-            .attr("class", "horizontalFlow")
+            .attr("class", "horizontalFlow noBreak2")
                 .append ("span")
                 .attr ("class", "noBreak")
                 .text("Other %")
