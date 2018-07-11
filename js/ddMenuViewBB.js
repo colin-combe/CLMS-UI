@@ -217,6 +217,7 @@
             return _.extend ({}, parentEvents, {
 				"click .colourSwatchSquare" : "transmitToInput",
 				"click button.downloadAnnotationKey" : "downloadKey",
+				"change input[type='color']" : "colourChange2",
             });
         },
 
@@ -247,8 +248,8 @@
                 .attr ("type", "color")
 				.style ("display", "none")	// hide 'cos ugly
 				.property ("value", function(d) { return CLMSUI.domainColours (d.category, d.type); })
-				.on ("change", colourChange)
-				.on ("input", colourChange)
+				//.on ("change", colourChange)
+				//.on ("input", colourChange)
             ;
 			
 			d3.select(this.el).select("div")
@@ -264,6 +265,14 @@
                 this.setColour (featureTypeModel, shown);
             });
         },
+		
+		colourChange2: function (evt) {
+			var value = evt.target.value;
+            var d = d3.select(evt.target).datum();
+			CLMSUI.domainColours.set (d.category, d.type, value);
+			var model = this.collection.get (d.id);	// d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
+			this.collection.trigger ("change:shown", model, model.get("shown"));
+		},
 		
 		decideSVGButtonEnabled: function () {
 			var shownCount = this.collection.where({shown:true}).length;
