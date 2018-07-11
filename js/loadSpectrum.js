@@ -8,14 +8,13 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel, ignoreResultUnlessL
     console.log("ionTypes:", match.ionTypes());
     console.log("crossLinkerModMass:", match.crossLinkerModMass());
 
-    //TODO - protect peakList.php by requiring randId
-    d3.text ('../CLMS-model/php/peakList.php?sid='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
-            if (error) {
-                console.log ("error getting peak list", error);
-            } else {
-                console.log ("peakList:", text);
-            }
-    });
+//    d3.text ('../CLMS-model/php/peakList.php?sid='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
+//            if (error) {
+//                console.log ("error getting peak list", error);
+//            } else {
+//                console.log ("peakList:", text);
+//            }
+//    });
 
     var xiAnnotRoot = CLMSUI.xiAnnotRoot || "";
 

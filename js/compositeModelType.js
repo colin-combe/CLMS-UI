@@ -213,8 +213,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }
         }
-//        console.log ("xlinks", this.filteredXLinks);
-        
+        //console.log ("xlinks", this.filteredXLinks);
+
         //hiding linkless participants
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach (function (participant) {
             participant.hidden = true;
@@ -305,7 +305,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 				var id = match.id;
 				// can't delete individual matches as existing/new matches are mixed in already
 				// add new matches. If adding to pre-selected matches, toggle new matches depending on whether the match is already selected or not
-				
+
 				if (potentialToggle && add && map.has (id)) {
 					map.remove (id);
 				} else {
@@ -341,13 +341,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (crossLinks) { // if undefined nothing happens, to clear selection pass an empty array - []
 			var removedLinks = d3.map();
 			var newlyAddedLinks = d3.map();
-			
+
 			// If adding to existing crosslinks, make crossLinkMap from the existing crosslinks and add or remove the new array of crosslinks from it.
 			// Otherwise just make crossLinkMap from the new array of crosslinks
 			var crossLinkMap = d3.map (add ? this.get(modelProperty) : crossLinks, function (d) { return d.id; });
             if (add) {
 				var potentialToggle = (modelProperty === "selection");
-				
+
 				// add new cross-links. If adding to pre-selected cross-links, toggle new cross-links depending on whether the cross-link is already selected or not
 				crossLinks.forEach (function (xlink) {
 					var id = xlink.id;
@@ -394,17 +394,17 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 });
 				newMatchArray.push (existingMatches);
 				var allMatches = d3.merge (newMatchArray);
-				
+
 				if (add) {
 					var removedMatches = d3.merge (removedLinks.values().map (function (clink) { return _.pluck(clink.filteredMatches_pp, "match"); }));
-					allMatches = _.difference (allMatches, removedMatches);					   
+					allMatches = _.difference (allMatches, removedMatches);
 				}
-				
+
 				//console.log ("matches", allMatches);
                 var linksChanged = this.changedAttributes();	// did setting links property prompt changes in backbone?
                 this.setMarkedMatches (modelProperty, allMatches, andAlternatives, false, true);
                 this.triggerFinalMatchLinksChange (modelProperty, linksChanged);
-            } 
+            }
         }
     },
 
@@ -416,7 +416,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             this.trigger (modelProperty+"MatchesLinksChanged", this);
         }
     },
-	
+
 	setHighlightedProteins: function (pArr, add) {
         var toHighlight = add ? pArr.concat(this.get("highlightedProteins")) : pArr;
 		toHighlight = d3.map(toHighlight, function(d) { return d.id; }).values();	// remove any duplicates and returns a new array, so setting fires a change
