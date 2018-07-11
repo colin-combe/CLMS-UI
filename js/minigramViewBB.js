@@ -297,13 +297,16 @@
         },
 		
 		toggleLegend: function () {
-			var curState = d3.select(this.el).select(".c3-legend-background").style("visibility");
-			if (curState === "hidden") {
-				this.chart.legend.show();
-			} else {
-				// need both
-				this.chart.legend.hide();	// hides labels, but not legend background
-				this.chart.legend.hide([]);	// hides legend background, not labels
+			var legendBackground = d3.select(this.el).select(".c3-legend-background");
+			if (legendBackground.node()) {
+				var curState = legendBackground.style("visibility");
+				if (curState === "hidden") {
+					this.chart.legend.show();
+				} else {
+					// need both
+					this.chart.legend.hide();	// hides labels, but not legend background
+					this.chart.legend.hide([]);	// hides legend background, not labels
+				}
 			}
 			return this;
 		},
