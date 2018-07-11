@@ -66,16 +66,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var toolbar = mainDivSel.select("div.toolbar");
 		CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
-		//var toolbar = mainDivSel.select("div.toolbar:last");
 		// Add a select widget for picking axis data type
-		CLMSUI.utils.addMultipleSelectControls ({
-			addToElem: toolbar,
-			selectList: ["X"],
-			optionList: this.options.attributeOptions,
-			selectLabelFunc: function (d) { return "Show Cross-Link Match Data ►"; },
-			optionLabelFunc: function (d) { return d.label; },
-			changeFunc: function () { self.render(); },
-		});
+		this.setMultipleSelectControls (toolbar, this.options.attributeOptions, false);
 
 		var chartDiv = mainDivSel.select(".distoDiv")
 			.attr ("id", mainDivSel.attr("id")+"c3Chart")
@@ -259,16 +251,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			});
 			//console.log ("NEW OPTIONS", newOptions);
 
-			var toolbar = mainDivSel.select("div.toolbar");
-			CLMSUI.utils.addMultipleSelectControls ({
-				addToElem: toolbar,
-				selectList: ["X"], 
-				optionList: newOptions, 
-				keepOldOptions: true,
-				selectLabelFunc: function (d) { return "Show Cross-Link Match Data ►"; }, 
-				optionLabelFunc: function (d) { return d.label; }, 
-				changeFunc: function () { self.render(); },
-			});
+			self.setMultipleSelectControls (mainDivSel.select("div.toolbar"), newOptions, true);
 		});
 
 		if (this.model.get("clmsModel").get("distancesObj")) {
@@ -276,6 +259,19 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		}
 
 		return this;
+	},
+	
+	setMultipleSelectControls: function (elem, options, keepOld) {
+		var self = this;
+		CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: elem, 
+            selectList: ["X"], 
+            optionList: options, 
+			keepOldOptions: keepOld || false,
+            selectLabelFunc: function (d) { return "Plot This Data Along Axis ►"; }, 
+            optionLabelFunc: function (d) { return d.label; }, 
+            changeFunc: function () { self.render(); },
+        });
 	},
 
 	render: function (options) {

@@ -20,7 +20,7 @@
                 groupByAttribute: "group",
                 labelByAttribute: "name",
                 toggleAttribute: "state",
-				sectionHeader: function (d) { return ""; },
+				sectionHeader: function () { return ""; },
             };
             this.options = _.extend (defaultOptions, viewOptions.myOptions);
             var self = this;
