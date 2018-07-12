@@ -314,7 +314,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		} else {
 			panelHeading.text (
 				commaFormat(lower) + " - " + commaFormat(upper) + " of " +
-				(repeats > 1 ? commaFormat(totalSelectedFilteredMatches) + " combinations of " : "") +
+				(repeats > 0 ? commaFormat(totalSelectedFilteredMatches) + " combinations of " : "") +
 				commaFormat(TSFUniqueMatches) + " Selected Match"+((TSFUniqueMatches != 1) ? "es" : "") +
 				" shared across " +
 				commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
