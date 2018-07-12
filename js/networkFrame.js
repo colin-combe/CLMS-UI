@@ -34,24 +34,27 @@ var allDataLoaded = _.after (3, function() {
     //add option for showing digestible residues
 	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type:"Digestible",
-		tooltip: "Mark Digestible Residues"
+		type: "Digestible",
+		tooltip: "Mark Digestible Residues",
+		source: "Search",
 	});
 	annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
 	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type:"Cross-linkable",
-		tooltip: "Mark Cross-Linkable residues"
+		type: "Cross-linkable",
+		tooltip: "Mark Cross-Linkable residues",
+		source: "Search",
 	});
 	annotationTypes.push(crosslinkableAnnotationType);
 
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
 		category: "Alignment",
-		type:"PDB aligned region",
-		tooltip: "Show regions that align to currently loaded PDB Data"
+		type: "PDB aligned region",
+		tooltip: "Show regions that align to currently loaded PDB Data",
+		source: "PDB",
 	});
 	annotationTypes.push(alignedAnnotationType);
 
@@ -69,6 +72,7 @@ var allDataLoaded = _.after (3, function() {
 				var key = feature.category + "-" + feature.type;
 				if (uniprotFeatureTypes.has(key) === false){
 					var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
+					annotationType.set ("source", "Uniprot");
 					uniprotFeatureTypes.set(key, annotationType);
 				}
 			}
@@ -180,6 +184,8 @@ CLMSUI.init.modelsEssential = function (options) {
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
+	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
+	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);	// make scoreExtent min zero, if existing min isn't negative
 	var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true,//clmsModelInst.realProteinCount > 1,
@@ -190,15 +196,13 @@ CLMSUI.init.modelsEssential = function (options) {
         AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
-		matchScoreCutoff: [undefined, undefined],
-        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined,
-        //    Math.ceil(clmsModelInst.get("maxScore")) || undefined],
+		//matchScoreCutoff: [undefined, undefined],
+        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
+		matchScoreCutoff: scoreExtentInstance.slice()
     };
 	var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings (urlChunkMap);
 	filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
 	console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-	var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange (clmsModelInst.get("matches"), true);
-	scoreExtentInstance[0] = Math.min (0, scoreExtentInstance[0]);	// make scoreExtent min zero, if existing min isn't negative
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {scoreExtent: scoreExtentInstance});
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel ();
@@ -606,7 +610,10 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             labelByAttribute: "type",
             toggleAttribute: "shown",
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
-			sectionHeader: function (d) { return d.category ? d.category.replace(/_/g, " ") : undefined; },
+			sectionHeader: function (d) {
+				return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
+					(d.source ? " (" + d.source +")" : "");
+			},
         }
     });
 

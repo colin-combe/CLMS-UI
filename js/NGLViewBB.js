@@ -94,7 +94,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var mainReps = _.difference (allReps, ignoreReps);
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: toolbar,
-            selectList: ["Label Representation"], 
+            selectList: ["Draw Proteins As"], 
             optionList: mainReps, 
             changeFunc: function () {
                 if (self.xlRepr) {

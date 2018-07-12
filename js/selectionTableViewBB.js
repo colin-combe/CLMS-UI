@@ -10,9 +10,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
     initialize: function (options) {
         this.options = options || {};
-		
+
 		var d3el = d3.select(this.el);
-		
+
         var holdingDiv = d3el.append("DIV").attr("class", "selectView verticalFlexContainer");
         holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span><span class='rightSpan'></span><span class='rightSpan'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
@@ -42,7 +42,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
                 "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score",
                 "autovalidated", "validated", "group", "runName", "scanNumber",
-                "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError",
+                "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
                 "precursorIntensity", "elutionStart", "elutionEnd",
             ];
 
@@ -66,15 +66,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "precursorCharge": "Charge (Z)",
             "expMZ": "Exp M/Z",
             "expMass": "Exp Mass",
-            "matchMZ": "Calc M/Z",
-            "matchMass": "Calc Mass",
+            "calcMZ": "Calc M/Z",
+            "calcMass": "Calc Mass",
             "massError": "Mass Error (ppm)",
             "precursorIntensity": "Intensity",
             "elutionStart": "Elut.Start",
             "elutionEnd": "Elut.End",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "matchMZ", "matchMass", "massError", "precursorItensity", ]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -131,8 +131,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "score": function (d) { return twoZeroPadder (d.score); },
             "expMZ": function (d) { return massZeroPadder (d.expMZ()); },
             "expMass": function (d) { return massZeroPadder (d.expMass()); },
-            "matchMZ": function (d) { return massZeroPadder (d.matchMZ()); },
-            "matchMass": function (d) { return massZeroPadder (d.matchMass()); },
+            "calcMZ": function (d) { return massZeroPadder (d.calcMZ()); },
+            "calcMass": function (d) { return massZeroPadder (d.calcMass()); },
             "massError": function (d) { return massZeroPadder (d.massError()); },
             "precursorIntensity": function(d) { return scientific (d.precursor_intensity); },
             "elutionStart": function(d) { return d.elution_time_start; },
@@ -161,9 +161,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         }
 
         d3el.select(".controlBar").insert("span", ":first-child").text(this.identifier);
-		
+
 		d3el.select("table").attr("tabindex", 0);	// so table can capture key events
-		
+
 		this.viewStateModel = new (Backbone.Model.extend ({
 			initialize: function () {
                 this.listenTo (this, "change:topOnly", function() { self.render.call(self); });
@@ -185,7 +185,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 				label: "Only Show "+this.viewStateModel.get("topCount")+" Top-Scoring Matches per Link"
 			},
 		});
-		
+
 		new CLMSUI.utils.checkBoxView ({
 			el: d3el.select(".rightSpan").node(),
 			model: this.viewStateModel,
@@ -200,7 +200,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
     render: function () {
         this.updateTable ({
-			topMatchesOnly: this.viewStateModel.get("topOnly"), 
+			topMatchesOnly: this.viewStateModel.get("topOnly"),
 			topCount: this.viewStateModel.get("topCount")
 		});
     },
@@ -216,7 +216,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
     updateTable: function (options) {
 		options = options || {};
-		
+
         this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
             // map to reduce filtered matches to selected matches only
              .map (function (xlink) {
@@ -232,14 +232,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return b.matches[0].score - a.matches[0].score;
             })
         ;
-		
+
 		// filter to top match per link if requested
 		if (options.topMatchesOnly) {
 			this.matchCountIndices.forEach (function (mci) {
 				mci.matches = mci.matches.slice (0, options.topCount || 1);
 			});
 		}
-        
+
         var count = 0;
         // add count metadata to matchCountIndices
         this.matchCountIndices.forEach (function (selLinkMatchData) {
@@ -316,11 +316,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
         this.addRows (tablePage, this.filteredProps, matchBounds);
     },
-	
+
 	getPageCount: function () {
 		var mci = this.matchCountIndices;
         var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
-        return Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;	
+        return Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;
 	},
 
     // code that maintains the rows in the table
@@ -483,22 +483,22 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var datum = d3.select(evt.currentTarget).datum();
         return this.highlightFromDatum (datum, evt);
     },
-	
+
 	highlightFromDatum: function (datum, evt) {
         this.model.setMarkedMatches ("highlights", datum ? [{match: datum}] : [], true, evt.ctrlKey || evt.shiftKey);
         return this;
     },
-	
+
 	focusTable: function () {
-		this.el.focus();	
+		this.el.focus();
 	},
-	
+
 	selectByKey: function (evt) {
 		var kcode = evt.keyCode;
-		
+
 		if (kcode === 38 || kcode === 40 || kcode === 13) {
 			var currentWithinPageIndex = -1;
-			
+
 			d3.select(this.el).selectAll("tr.matchRow")
 				.each (function (d, i) {
 					if ((d3.select(this).classed("spectrumShown2") && currentWithinPageIndex === -1) || d3.select(this).classed("highlighted")) {
@@ -506,9 +506,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					}
 				})
 			;
-			
+
 			//console.log ("cwpi", currentWithinPageIndex);
-			
+
 			if (currentWithinPageIndex >= 0) {
 				var newIndex = currentWithinPageIndex + (kcode === 40 ? 1 : 0) + (kcode === 38 ? -1 : 0);
 				//console.log ("NI", newIndex, this.page, this.getPageCount());
@@ -532,8 +532,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 						isNew = false;
 					}
 				}
-				
-				
+
+
 				if (isNew) {
 					var self = this;
 					d3.select(this.el).selectAll("tr.matchRow")
@@ -550,11 +550,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					;
 				}
 			}
-			
+
 			//console.log ("CI", currentWithinPageIndex);
 		}
 	},
-	
+
 	select: function (d) {
 		console.log ("this", this);
 		var mainModel = this.options.mainModel;
