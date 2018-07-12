@@ -497,7 +497,11 @@ CLMSUI.init.viewsEssential = function (options) {
     ;
 
     // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
-    xiSPEC.init('modular_xispec', {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
+    xiSPEC.init('modular_xispec', {
+        baseDir: CLMSUI.xiSpecBaseDir,
+        xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
+        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications"
+    });
 
     xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
 		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.get('JSONdata')});
@@ -606,9 +610,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             labelByAttribute: "type",
             toggleAttribute: "shown",
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
-			sectionHeader: function (d) { 
-				return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") + 
-					(d.source ? " (" + d.source +")" : ""); 
+			sectionHeader: function (d) {
+				return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
+					(d.source ? " (" + d.source +")" : "");
 			},
         }
     });
