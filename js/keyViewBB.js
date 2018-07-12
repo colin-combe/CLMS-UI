@@ -90,7 +90,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             if (i === 0) {
                 sel.append("svg")
                     .attr ("class", "miniKey")
-                    .html (svgs[d.value])
+					.html (svgs[d.value])
                 ;       
             } else {
                 sel.text (d.value);
