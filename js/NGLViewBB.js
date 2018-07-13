@@ -21,7 +21,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
             "click .showAllProteinsCB": "toggleShowAllProteins",
-			"click .showLongChainDescriptorsCB": "toggleShowLongChainDescriptors",
+			"click .chainLabelLengthRB": "setChainLabelLength",
             "mouseleave canvas": "clearHighlighted",
         });
     },
@@ -34,7 +34,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 		chainRep: "cartoon",
 		colourScheme: "uniform",
 		showAllProteins: false,
-		showLongChainDescriptors: false,
+		chainLabelSetting: "Short",
 	},
 
     initialize: function (viewOptions) {
@@ -64,12 +64,18 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 			{initialState: this.options.showResidues, class: "showResiduesCB", label: "Cross-Linked Residues", id: "showResidues", tooltip: "Show cross-linked residues on protein representations"},
             {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins", tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"},
 			{initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel", tooltip: "Show distance labels on displayed cross-links"},
-			{initialState: this.options.showLongChainDescriptors, class: "showLongChainDescriptorsCB", label: "Verbose Chain Labels", id: "showLongChainDescriptors", tooltip: "Show chain descriptor labels with more verbose content if available"},
+			{class: "chainLabelLengthRB", label: "Long", id: "showLongChainLabels", tooltip: "Show protein chain labels with more verbose content if available", group: "chainLabelSetting", type: "radio", value: "Verbose", header: "Protein Chain Label Style"},
+			{class: "chainLabelLengthRB", label: "Short", id: "showShortChainLabels", tooltip: "Show protein chain labels with shorter content", group: "chainLabelSetting", type: "radio", value: "Short"},
+			{class: "chainLabelLengthRB", label: "None", id: "showNoChainLabels", tooltip: "Show no protein chain labels", group: "chainLabelSetting", type: "radio", value: "None"},
         ];
         toggleButtonData
             .forEach (function (d) {
-                d.type = "checkbox";
+                d.type = d.type || "checkbox";
+				d.value = d.value || d.label;
                 d.inputFirst = true;
+				if (d.initialState === undefined && d.group && d.value) {	// set initial values for radio button groups
+					d.initialState = (d.value === this.options[d.group]);
+				}
             }, this)
         ;
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
@@ -338,12 +344,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 	
-	toggleShowLongChainDescriptors: function (event) {
-		var bool = event.target.checked;
-        this.options.showAllProteins = bool;
-        if (this.xlRepr) {
-			this.xlRepr.options.showLongChainDescriptors = bool;
-			this.xlRepr.redoChainLabels ();
+	setChainLabelLength: function () {
+		var checkedElem = d3.select(this.el).select("input.chainLabelLengthRB:checked");
+		if (!checkedElem.empty()) {
+			var value = checkedElem.property("value");
+			this.options.chainLabelSetting = value;
+			if (this.xlRepr) {
+				this.xlRepr.options.chainLabelSetting = value;
+				this.xlRepr.redoChainLabels ();
+			}
 		}
 		return this;
 	},
@@ -641,7 +650,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 		var comp = this.structureComp;
 		var customText = {};
 		var self = this;
-		var verbose = this.options.showLongChainDescriptors;
+		var verboseSetting = this.options.chainLabelSetting;
 		
 		var chainIndexToProteinMap = d3.map();
         d3.entries(self.crosslinkData.get("chainMap")).forEach (function (cmapEntry) {
@@ -657,7 +666,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (pid && CLMSUI.modelUtils.isViableChain (chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
-                customText[chainProxy.atomOffset] = pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")" + (verbose ? " "+description : "");
+                customText[chainProxy.atomOffset] = (verboseSetting === "None" ? "" : (pname + ":" + chainProxy.chainname + "(" +chainProxy.index+ ")" + (verboseSetting === "Verbose" ? " "+description : "")));
             }
         });
 		
