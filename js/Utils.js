@@ -417,7 +417,7 @@ CLMSUI.utils = {
                 .attr("id", makeID)
         ;
 
-        var cboxes = targetDiv.selectAll("label.tempClass")
+        var cboxes = targetDiv.selectAll("label.tempClass")	// .tempClass ensures existing buttons aren't picked up, only new ones created
             .data (buttonData.filter(function(bd) { return bd.type === "checkbox" || bd.type === "radio"; }), function(d) { return d.id; })
             .enter()
             .append ("label")
@@ -425,7 +425,16 @@ CLMSUI.utils = {
                 .attr ("title", function(d) { return d.title; })
                 .attr ("id", makeID)
         ;
+		
+		// add header if asked for
+		cboxes
+            .filter (function(d) { return d.header; })
+            .append ("span")
+                .attr ("class", "ddSectionHeader")
+                .text (function(d) { return d.header; })
+        ;
 
+		// add text first if asked for
         cboxes
             .filter (function(d) { return !d.inputFirst; })
             .append ("span")
@@ -433,10 +442,12 @@ CLMSUI.utils = {
                 .text (function(d) { return d.label; })
         ;
 
+		// add input control
         cboxes.append ("input")
             .attr("type", function(d) { return d.type; })
             .attr("class", function(d) { return d.class; })
             .property ("checked", function(d) { return d.initialState; })
+			.property ("value", function (d) { return d.value; })
             .each (function(d) {
                 if (d.group) {
                     d3.select(this).attr("name", d.group);
@@ -444,6 +455,7 @@ CLMSUI.utils = {
             })
         ;
 
+		// add text last if asked for
         cboxes
             .filter (function(d) { return d.inputFirst; })
             .append ("span")

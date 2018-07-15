@@ -283,14 +283,16 @@ span, label {
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox , #xiNetControlsPanel, #listPanel {
-    display:none;
-    top:80px;
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox, #xiNetControlsPanel, #listPanel {
+    display: none;
+    top: 80px;
 }
 #keyPanel{
-    left:10px;
-    height: 25em;
+    left: 10px;
+    height: 35em;
     width: 40em;
+	min-height: 25em;
+	min-width: 40em;
 }
 
 #listPanel {
@@ -301,8 +303,10 @@ span, label {
 
 #searchSummaryPanel{
     left:10px;
-    width:600px;
-    height:600px;
+    width:40em;
+    height:40em;
+	min-width: 35em;
+	min-height: 20em;
 }
 
 #spectrumPanel{
@@ -324,8 +328,10 @@ span, label {
 }
 #nglPanel{
     left: 40px;
-    width:800px;
-    height:500px;
+    width: 60em;
+    height: 50em;
+	min-width: 45em;
+	min-height: 30em;
 }
 #pdbPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel {
     left: 40px;
@@ -334,24 +340,32 @@ span, label {
     left: 40px;
     width:50em;
     height:35em;
+	min-width: 40em;
+	min-height: 25em;
 }
 
 #circularPanel {
     left: 40px;
-    width: 500px;
-    height: 500px;
+    width: 40em;
+    height: 45em;
+	min-width: 20em;
+	min-height: 30em;
 }
 
 #proteinInfoPanel {
     left: 40px;
     width: 40em;
-    height: 25em;
+    height: 40em;
+	min-width: 30em;
+	min-height: 20em;
 }
 
 #scatterplotPanel {
 	left: 40px;
-	width: 50em;
-	height: 40em;
+	width: 45em;
+	height: 45em;
+	min-width: 35em;
+	min-height: 35em;
 }
 
 #urlSearchBox {
@@ -715,3 +729,5 @@ input {
 	color: #091d42;
 	font-family: Lato-Bold;
 }
+
+sup {font-size:xx-small; vertical-align:super;}

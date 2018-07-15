@@ -309,16 +309,46 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var panelHeading = d3.select(this.el).select(".crossLinkTotal");
         var commaFormat = d3.format(",");
         var selectedXLinkCount = this.matchCountIndices.length;
-        panelHeading.text (
-            commaFormat(lower) + " - " + commaFormat(upper) + " of " +
-            commaFormat(totalSelectedFilteredMatches) + " Selected Match"+((totalSelectedFilteredMatches != 1) ? "es" : "")
-            + " across "+
-            commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
-        );
+		var repeats = this.countRepeatedAmbiguousMatches (this.matchCountIndices);
+		var TSFUniqueMatches = totalSelectedFilteredMatches - repeats;
+
+		if (selectedXLinkCount === 0) {
+			panelHeading.html("Currently empty<sup>?</sup>").attr("title", "Select Cross-Links / Matches in other views to populate this table")
+		} else {
+			panelHeading.text (
+				commaFormat(lower) + " - " + commaFormat(upper) + " of " +
+				(repeats > 0 ? commaFormat(totalSelectedFilteredMatches) + " combinations of " : "") +
+				commaFormat(TSFUniqueMatches) + " Selected Match"+((TSFUniqueMatches != 1) ? "es" : "") +
+				" shared across " +
+				commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
+			);
+			panelHeading.attr ("title", "Combinations? Some matches may be ambiguous and associated with multiple Cross-Links");
+		}
 
         var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
         this.addRows (tablePage, this.filteredProps, matchBounds);
     },
+
+	countRepeatedAmbiguousMatches: function (arrayOfMatchLists) {
+		var ambigSet = d3.set();
+		var repeatedAmbigCount = 0;
+
+		arrayOfMatchLists.forEach (function (mci) {
+			mci.matches.forEach (function (match) {
+				var crossLinks = match.crossLinks;
+				if (crossLinks.length > 1) {
+					var mid = match.id;
+					if (ambigSet.has (mid)) {
+						repeatedAmbigCount++;
+					} else {
+						ambigSet.add (mid);
+					}
+				}
+			})
+		});
+
+		return repeatedAmbigCount;
+	},
 
 	getPageCount: function () {
 		var mci = this.matchCountIndices;

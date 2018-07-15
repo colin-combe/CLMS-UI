@@ -120,3 +120,7 @@ div.textFilters, div.toggles, div.scoreSlider > div {
 .decoysIrrelevant {
     display: none;
 }
+
+div.filterControlGroup label.noBreak2 {
+	display: inline-block;
+}
