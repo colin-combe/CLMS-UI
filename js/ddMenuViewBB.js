@@ -243,13 +243,13 @@
 			}
 			
 			// add colour input widgets, but hide them and call them when pressing the colour swatch
-			labels.select("label")
+			var colourChooser = labels.select("label")
                 .append ("input")
                 .attr ("type", "color")
 				.style ("display", "none")	// hide 'cos ugly
 				.property ("value", function(d) { return CLMSUI.domainColours (d.category, d.type); })
 				//.on ("change", colourChange)
-				//.on ("input", colourChange)
+				.on ("input", colourChange)
             ;
 			
 			d3.select(this.el).select("div")
