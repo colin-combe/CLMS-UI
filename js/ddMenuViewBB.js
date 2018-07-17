@@ -215,9 +215,7 @@
                 parentEvents = parentEvents();
             }
             return _.extend ({}, parentEvents, {
-				"click .colourSwatchSquare" : "transmitToInput",
 				"click button.downloadAnnotationKey" : "downloadKey",
-				"change input[type='color']" : "colourChange2",
             });
         },
 
@@ -225,15 +223,22 @@
             CLMSUI.AnnotationDropDownMenuViewBB.__super__.initialize.apply (this, arguments);
 			var self = this;
             
-            var labels = d3.select(this.el).selectAll("li");
-			labels.select("label")	// .select pushes data to label
-                .insert ("span", ":first-child")	// which pushes it to the appended element
-                .attr ("class", "colourSwatchSquare")
+            var items = d3.select(this.el).selectAll("li");
+			
+			var colourControls = items
+				.insert ("label", ":nth-last-child(1)")	// insert pushes data to label
+				.attr ("class", "colourSwatchLabel")
 				.style ("visibility", function(d) {
 					return self.collection.get(d.id).get("shown") ? null : "hidden";
 				})
-				.attr ("title", "Press to change colour")
+			; 
+			
+			colourControls
+                .append("span")
+                .attr ("class", "colourSwatchSquare")
+				.attr ("title", "Click to change colour")
             ;
+			
 			
 			function colourChange (d) {
 				var value = d3.select(this).property("value");
@@ -243,14 +248,17 @@
 			}
 			
 			// add colour input widgets, but hide them and call them when pressing the colour swatch
-			var colourChooser = labels.select("label")
+			colourControls
                 .append ("input")
                 .attr ("type", "color")
-				.style ("display", "none")	// hide 'cos ugly
+				.attr ("class", "hiddenColourInput")
 				.property ("value", function(d) { return CLMSUI.domainColours (d.category, d.type); })
-				//.on ("change", colourChange)
+				.on ("change", colourChange)
 				.on ("input", colourChange)
             ;
+			
+			
+			items.select(".buttonPlaceholder").classed("aaButtonPlaceholder", true).select("label")	// .select pushes data to label
 			
 			d3.select(this.el).select("div")
 				.append("button")
@@ -266,14 +274,6 @@
             });
         },
 		
-		colourChange2: function (evt) {
-			var value = evt.target.value;
-            var d = d3.select(evt.target).datum();
-			CLMSUI.domainColours.set (d.category, d.type, value);
-			var model = this.collection.get (d.id);	// d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
-			this.collection.trigger ("change:shown", model, model.get("shown"));
-		},
-		
 		decideSVGButtonEnabled: function () {
 			var shownCount = this.collection.where({shown:true}).length;
 			d3.select(this.el).select("Button.downloadAnnotationKey").property("disabled", shownCount === 0);
@@ -282,8 +282,9 @@
         setColour: function (featureTypeModel, shown) {
             d3.select(this.el).selectAll("li")
                 .filter (function(d) { return d.id === featureTypeModel.id; })
-                .select(".colourSwatchSquare")
+                .select(".colourSwatchLabel")
 				.style ("visibility", shown ? null : "hidden")
+				.select(".colourSwatchSquare")
                 .style ("background", function (d) { 
 					var col = CLMSUI.domainColours (d.category, d.type);
                     var scale = d3.scale.linear().domain([0,1]).range(["white", col]);
@@ -293,15 +294,6 @@
 			
 			this.decideSVGButtonEnabled();
         },
-		
-		transmitToInput: function (evt) {	// click hidden color input when colourswatch clicked
-			var data = d3.select(evt.target).datum();
-			var model = this.collection.get (data.id);
-			if (model && model.get("shown")) {
-				d3.select(evt.target.parentNode).select("input[type='color']").node().click();
-				evt.preventDefault();
-			}
-		},
 		
 		downloadKey: function () {
 			var tempSVG = d3.select(this.el).append("svg").attr("class", "temp").style("text-transform", "capitalize");
