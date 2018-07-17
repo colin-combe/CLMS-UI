@@ -217,6 +217,7 @@
             return _.extend ({}, parentEvents, {
 				"click .colourSwatchSquare" : "transmitToInput",
 				"click button.downloadAnnotationKey" : "downloadKey",
+				"change input[type='color']" : "colourChange2",
             });
         },
 
@@ -234,18 +235,21 @@
 				.attr ("title", "Press to change colour")
             ;
 			
+			function colourChange (d) {
+				var value = d3.select(this).property("value");
+				CLMSUI.domainColours.set (d.category, d.type, value);
+				var model = self.collection.get (d.id);	// d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
+				self.collection.trigger ("change:shown", model, model.get("shown"));
+			}
+			
 			// add colour input widgets, but hide them and call them when pressing the colour swatch
 			labels.select("label")
                 .append ("input")
                 .attr ("type", "color")
 				.style ("display", "none")	// hide 'cos ugly
 				.property ("value", function(d) { return CLMSUI.domainColours (d.category, d.type); })
-				.on ("change", function(d) {
-					var value = d3.select(this).property("value");
-					CLMSUI.domainColours.set (d.category, d.type, value);
-					var model = self.collection.get (d.id);	// d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
-					self.collection.trigger ("change:shown", model, model.get("shown"));
-				})
+				//.on ("change", colourChange)
+				//.on ("input", colourChange)
             ;
 			
 			d3.select(this.el).select("div")
@@ -261,6 +265,14 @@
                 this.setColour (featureTypeModel, shown);
             });
         },
+		
+		colourChange2: function (evt) {
+			var value = evt.target.value;
+            var d = d3.select(evt.target).datum();
+			CLMSUI.domainColours.set (d.category, d.type, value);
+			var model = this.collection.get (d.id);	// d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
+			this.collection.trigger ("change:shown", model, model.get("shown"));
+		},
 		
 		decideSVGButtonEnabled: function () {
 			var shownCount = this.collection.where({shown:true}).length;
