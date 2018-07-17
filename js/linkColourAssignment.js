@@ -160,6 +160,44 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
     },
 });
 
+CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
+    initialize: function (properties, options) {
+		var colScale;
+		var groupDomain = ["same"];
+		var labels = ["Same Protein"];
+		if (options.proteins && options.proteins.size < 5) {
+			var proteinIds = CLMS.arrayFromMapKeys (options.proteins);
+			for (var n = 0; n < proteinIds.length; n++) {
+				for (var m = n+1; m < proteinIds.length; m++) {
+					groupDomain.push (this.makeProteinPairKey (proteinIds[n], proteinIds[m]));
+					labels.push (options.proteins.get(proteinIds[n]).name+" - "+options.proteins.get(proteinIds[m]).name);
+				}
+			}
+			var colArr = colorbrewer.Paired[10];
+			colArr.unshift ("grey");
+            colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
+		} else {
+			colScale = d3.scale.ordinal().range(["blue", "grey"]).domain(["other", "same"]);
+			labels = ["Other", "Same"];
+		}
+
+        this
+			.set ("colScale", colScale)
+			.set ("labels", this.get("colScale").copy().range(labels))
+		;
+    },
+	
+	makeProteinPairKey: function (pid1, pid2) {
+		return pid1 < pid2 ? pid1 + "---" + pid2 : pid2 + "---" + pid1;
+	},
+	
+    getValue: function (crossLink) {
+		var id1 = crossLink.fromProtein.id;
+		var id2 = crossLink.toProtein ? crossLink.toProtein.id : undefined;
+		return (id2 === undefined || id1 === id2) ? "same" : this.makeProteinPairKey (id1, id2);
+    },
+});
+
 
 CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function (properties, options) {
@@ -208,6 +246,13 @@ CLMSUI.linkColour.setupColourModels = function () {
     };
     
     CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
+	
+	CLMSUI.linkColour.interProteinColoursBB = new CLMSUI.BackboneModelTypes.InterProteinColourModel ({
+        title: "Protein-Protein Colouring",
+        id: "InterProtein"
+	}, {
+		proteins: CLMSUI.compositeModelInst.get("clmsModel").get("participants")
+	});
     
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
         colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61','#FDB863','#9970AB']),
@@ -219,6 +264,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     // add distanceColoursBB to this collection later if needed
     CLMSUI.linkColour.Collection = new CLMSUI.BackboneModelTypes.ColourModelCollection ([
         CLMSUI.linkColour.defaultColoursBB,
+		CLMSUI.linkColour.interProteinColoursBB,
         CLMSUI.linkColour.groupColoursBB,
         CLMSUI.linkColour.distanceColoursBB,
     ]);

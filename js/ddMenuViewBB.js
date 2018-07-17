@@ -258,7 +258,7 @@
             ;
 			
 			
-			items.select(".buttonPlaceholder").classed("aaButtonPlaceholder", true).select("label")	// .select pushes data to label
+			items.select(".buttonPlaceholder").classed("aaButtonPlaceholder", true).select("label");	// .select pushes data to label
 			
 			d3.select(this.el).select("div")
 				.append("button")
@@ -284,12 +284,12 @@
                 .filter (function(d) { return d.id === featureTypeModel.id; })
                 .select(".colourSwatchLabel")
 				.style ("visibility", shown ? null : "hidden")
-				.select(".colourSwatchSquare")
-                .style ("background", function (d) { 
-					var col = CLMSUI.domainColours (d.category, d.type);
-                    var scale = d3.scale.linear().domain([0,1]).range(["white", col]);
-                    return shown ? scale (0.5) : "none";
-                })
+					.select(".colourSwatchSquare")
+					.style ("background", function (d) { 
+						var col = CLMSUI.domainColours (d.category, d.type);
+						var scale = d3.scale.linear().domain([0,1]).range(["white", col]);
+						return shown ? scale (0.5) : "none";
+					})
             ;
 			
 			this.decideSVGButtonEnabled();
