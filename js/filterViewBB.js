@@ -406,7 +406,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
             targets: commaFormat (model.getFilteredCrossLinks().length),
 			decoysTD: commaFormat (model.getFilteredCrossLinks("decoysTD").length),
 			decoysDD: commaFormat (model.getFilteredCrossLinks("decoysDD").length),
-			possible: model.get("TTCrossLinkCount")
+			possible: commaFormat (model.get("TTCrossLinkCount"))
 		};
 
         d3.select(this.el).html ((decoysPresent ? this.allTemplate : this.targetTemplate) (variables));
