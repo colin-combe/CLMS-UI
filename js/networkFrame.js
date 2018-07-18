@@ -375,8 +375,8 @@ CLMSUI.init.viewsEssential = function (options) {
 
 	var miniMod = filterModel.get("matchScoreCutoff");
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
-		domainStart: miniMod[0],
-		domainEnd: miniMod[1],
+		domainStart: miniMod[0] || 0,
+		domainEnd: miniMod[1] || 1,
 	});
     miniDistModelInst.data = function() {
         return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];

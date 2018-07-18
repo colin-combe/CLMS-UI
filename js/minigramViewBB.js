@@ -89,7 +89,8 @@
                 },
                 axis: {
                     y: {
-                        show: false
+                        show: false,
+						max: 1,
                     },
                     x: {
                         height: this.options.xAxisHeight,
@@ -191,7 +192,7 @@
 			var countArrays = aggregates.counts;
 			var thresholds = aggregates.thresholds;
 
-            var maxY = d3.max(countArrays[0]);  // max calced on real data only (a-ha, why decoys sometimes exceed height)
+            var maxY = d3.max(countArrays[0]) || 1;  // max calced on real data only (a-ha, why decoys sometimes exceed height)
             // if max y needs to be calculated across all series
 			/*
             var maxY = d3.max(countArrays, function(array) {

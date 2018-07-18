@@ -166,13 +166,17 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
     initialize: function (properties, options) {
 		var colScale;
 		var labels = ["Same Protein"];
-		if (options.proteins && options.proteins.size > 2 && options.proteins.size < 6) {
+		var proteinIDs = CLMS.arrayFromMapValues(options.proteins)
+			.filter (function(p) { return ! p.is_decoy; })
+			.map (function (p) { return p.id; })
+		;
+		
+		if (proteinIDs && proteinIDs.size > 2 && proteinIDs.size < 6) {
 			var groupDomain = ["same"];
-			var proteinIds = CLMS.arrayFromMapKeys (options.proteins);
-			for (var n = 0; n < proteinIds.length; n++) {
-				for (var m = n+1; m < proteinIds.length; m++) {
-					groupDomain.push (this.makeProteinPairKey (proteinIds[n], proteinIds[m]));
-					labels.push (options.proteins.get(proteinIds[n]).name+" - "+options.proteins.get(proteinIds[m]).name);
+			for (var n = 0; n < proteinIDs.length; n++) {
+				for (var m = n+1; m < proteinIDs.length; m++) {
+					groupDomain.push (this.makeProteinPairKey (proteinIDs[n], proteinIDs[m]));
+					labels.push (options.proteins.get(proteinIDs[n]).name+" - "+options.proteins.get(proteinIDs[m]).name);
 				}
 			}
 			var colArr = colorbrewer.Set3[10];
