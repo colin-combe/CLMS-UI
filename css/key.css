@@ -78,12 +78,13 @@ changes there are automatically reflected in the legend
     border: 1px solid black;
 }
 
-.keyPanel input[disabled]:hover {
-	border: 1px solid #a9a9a9;
-}
-
 .keyPanel input[disabled] {
 	background: #ccc;
+	opacity: 0.25;
+}
+
+.keyPanel input[disabled]:hover {
+	border: 1px solid #a9a9a9;
 }
 
 .keyPanel .toolbar {
