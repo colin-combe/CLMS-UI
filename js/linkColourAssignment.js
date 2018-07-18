@@ -258,7 +258,8 @@ CLMSUI.linkColour.setupColourModels = function () {
 	CLMSUI.linkColour.interProteinColoursBB = new CLMSUI.BackboneModelTypes.InterProteinColourModel ({
         title: "Protein-Protein Colouring",
 		longDescription: "Differentiate Cross-Links by the proteins they connect. Suitable for 3 to 5 proteins only.",
-        id: "InterProtein"
+        id: "InterProtein",
+		type: "ordinal"
 	}, {
 		proteins: CLMSUI.compositeModelInst.get("clmsModel").get("participants")
 	});
