@@ -12,8 +12,15 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             annotationTypes: null,
             selectedProteins: [],
 			highlightedProteins: [],
-            groupColours: null // will be d3.scale for colouring by search/group
+            groupColours: null, // will be d3.scale for colouring by search/group,
+			TTCrossLinkCount: 0
         });
+		
+		this.listenTo (this.get("clmsModel"), "change:matches", function () {
+			this.calcAndStoreTTCrossLinkCount();
+		});
+		
+		this.calcAndStoreTTCrossLinkCount();
     },
 
     applyFilter: function () {
@@ -249,6 +256,15 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredCrossLinks: function (type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
     },
+	
+	calcAndStoreTTCrossLinkCount: function () {
+		var clmsModel = this.get("clmsModel");
+		if (clmsModel) {
+			var crossLinks = clmsModel.get("crossLinks");
+			var ttCrossLinks = CLMS.arrayFromMapValues(crossLinks).filter (function (link) { return !link.isDecoyLink() && !link.isLinearLink(); });
+			this.set("TTCrossLinkCount", ttCrossLinks.length);
+		}
+	},
 
     collateMatchRegions: function (crossLinks) {
         var fromPeptides = [],
