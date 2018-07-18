@@ -441,8 +441,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	// only reset maxY (i.e. the chart scale) if necessary as it causes redundant repaint (given we load and repaint straight after)
 	// so only reset scale if maxY is bigger than current chart value or maxY is less than half of current chart value
 	resetMaxY: function (maxY) {
-		maxY = maxY || 1;
+		//maxY = maxY || 1;
 		var curMaxY = this.chart.axis.max().y;
+		console.log ("curMaxY", curMaxY, "my", maxY);
 		if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
 			console.log ("resetting axis max from", curMaxY, "to", maxY);
 			this.chart.axis.max({y: maxY});
