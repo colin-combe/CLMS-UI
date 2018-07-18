@@ -171,7 +171,7 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
 			.map (function (p) { return p.id; })
 		;
 		
-		if (proteinIDs && proteinIDs.size > 2 && proteinIDs.size < 6) {
+		if (proteinIDs && proteinIDs.length > 2 && proteinIDs.length < 6) {
 			var groupDomain = ["same"];
 			for (var n = 0; n < proteinIDs.length; n++) {
 				for (var m = n+1; m < proteinIDs.length; m++) {
