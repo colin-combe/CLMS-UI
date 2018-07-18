@@ -902,12 +902,14 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         var addOptions = function (selectSel) {
             var optionSel = selectSel
                 .selectAll("option")
-                .data (self.model.pluck("title"))   // this picks the title attribute from all models in BB collection, returned as array
+                .data (self.model.toJSON())
             ;
             optionSel.exit().remove();
             optionSel.enter().append("option");
             optionSel
-                .text (function (d) { return d; })
+                .text (function (d) { return d.title; })
+				.property ("value", function (d) { return d.id; })
+				.attr ("title", function (d) { return d.longDescription; })
                 .order()
             ;
         };
@@ -943,7 +945,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         d3.select(this.el)
             .selectAll("option")
             .property ("selected", function(d) {
-                return d === model.get("title");
+                return d.id === model.get("id");
             })
         ;
 
@@ -983,7 +985,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 	dataJoin.selectAll("h2 > span").text(headerFunc);	// name may have changed for existing tables too
 
     newElems.append("table")
-        .html("<thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
+        .html("<caption></caption><thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
         .attr("id", function(d) { return idPrefix+d.id; })
 		.style("display", function (d,i) {
 			return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";

@@ -4,7 +4,9 @@ CLMSUI.linkColour = CLMSUI.linkColour || {};
 CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
     defaults: {
         title: undefined,
+		longDescription: undefined,
 		type: "linear",
+		fixed: false,
     },
     setDomain: function (newDomain) {
         this.get("colScale").domain(newDomain);
@@ -163,9 +165,9 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
 CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
     initialize: function (properties, options) {
 		var colScale;
-		var groupDomain = ["same"];
 		var labels = ["Same Protein"];
-		if (options.proteins && options.proteins.size < 5) {
+		if (options.proteins && options.proteins.size > 2 && options.proteins.size < 6) {
+			var groupDomain = ["same"];
 			var proteinIds = CLMS.arrayFromMapKeys (options.proteins);
 			for (var n = 0; n < proteinIds.length; n++) {
 				for (var m = n+1; m < proteinIds.length; m++) {
@@ -173,7 +175,7 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
 					labels.push (options.proteins.get(proteinIds[n]).name+" - "+options.proteins.get(proteinIds[m]).name);
 				}
 			}
-			var colArr = colorbrewer.Paired[10];
+			var colArr = colorbrewer.Set3[10];
 			colArr.unshift ("grey");
             colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
 		} else {
@@ -233,12 +235,14 @@ CLMSUI.linkColour.setupColourModels = function () {
             "#9970ab", "#a50f15", "#35978f"
         ]),
         title: "Cross-Link Type",
+		longDescription: "Default colour scheme, differentiates self and between Cross-Links.",
         id: "Default"
     });
     
     var makeGroupColourModel = function () {
         return new CLMSUI.BackboneModelTypes.GroupColourModel ({
             title: "Group",
+			longDescription: "Differentiate Cross-Links by search group when multiple searches are viewed together.",
             id: "Group",
         }, {
             searchMap: CLMSUI.compositeModelInst.get("clmsModel").get("searches"),
@@ -249,6 +253,7 @@ CLMSUI.linkColour.setupColourModels = function () {
 	
 	CLMSUI.linkColour.interProteinColoursBB = new CLMSUI.BackboneModelTypes.InterProteinColourModel ({
         title: "Protein-Protein Colouring",
+		longDescription: "Differentiate Cross-Links by the proteins they connect. Suitable for 3 to 5 proteins only.",
         id: "InterProtein"
 	}, {
 		proteins: CLMSUI.compositeModelInst.get("clmsModel").get("participants")
@@ -257,6 +262,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel ({
         colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61','#FDB863','#9970AB']),
         title: "Distance (Å)",
+		longDescription: "Colour Cross-Links by adjustable distance category. Requires PDB file to be loaded (via Load -> PDB Data).",
         id: "Distance",
 		superDomain: [0, 35],	// superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
     });
@@ -303,31 +309,36 @@ CLMSUI.linkColour.setupColourModels = function () {
 
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var linkArr = CLMS.arrayFromMapValues (links);
+	// first attempt to treat as if numbers
     var extents = d3.extent (linkArr, function(link) { return link.meta ? link.meta[field] : undefined; });
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
         range.splice (1, 0, "#aaa");
     }
+	
+	// see if it is a list of colours
+	var hexRegex = CLMSUI.utils.commonRegexes.hexColour;
+	var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     
+	// if it isn't a list of colours and only a few uinique values, make it categorical
     var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).values();
     // if the values in this metadata form 6 or less distinct values count it as categorical
     var isCategorical = uniq.length < 7;
-    if (isCategorical) {
+    if (isCategorical && !dataIsColours) {
         extents.push (undefined);
-        range = colorbrewer.Dark2[5];
+        range = colorbrewer.Dark2[8];
     }
     
     var newColourModel = new CLMSUI.BackboneModelTypes.MetaDataColourModel ({
         colScale: (isCategorical ? d3.scale.ordinal() : d3.scale.linear()).domain(extents).range(range),
         id: label,
         title: label || field,
+		longDescription: (label || field) + ", " + (isCategorical ? "categorical" : "") + " data extracted from Cross-Link metadata.", 
         field: field,
 		type: isCategorical ? "ordinal" : "linear",
     });
     
-    var hexRegex = CLMSUI.utils.commonRegexes.hexColour;
-    var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     if (dataIsColours) {
         // if data is just a list of colours make this colour scale just return the value for getColour
         newColourModel.getColour = function (crossLink) {
@@ -335,6 +346,10 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
             return val !== undefined ? val : this.undefinedColour;
         };
         newColourModel.getColourByValue = function (val) { return val !== undefined ? val : this.undefinedColour; };
+		newColourModel
+			.set ("fixed", true)
+			.set ("longDescription", (label || field) + ", fixed colours per Cross-Link from metadata. Not editable.")
+		;
     }
     
     return newColourModel;
