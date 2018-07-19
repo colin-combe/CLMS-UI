@@ -476,15 +476,15 @@ CLMSUI.init.viewsEssential = function (options) {
     ;
 
     // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
-    xiSPEC.init('modular_xispec', {
+
+    var xiSPEC_model_vars = {
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications"
-    });
+        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+    }
 
-    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
-		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.get('JSONdata')});
-	});
+    xiSPEC.init('modular_xispec', xiSPEC_model_vars);
+
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
@@ -505,7 +505,7 @@ CLMSUI.init.viewsEssential = function (options) {
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
-            CLMSUI.loadSpectra (match, randId, this.model, true);
+            CLMSUI.loadSpectrum (match, randId, this.model);
         } else {
             this.model.clear();
         }
