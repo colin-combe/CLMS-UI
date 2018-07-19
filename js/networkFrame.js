@@ -505,7 +505,7 @@ CLMSUI.init.viewsEssential = function (options) {
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
-            CLMSUI.loadSpectra (match, randId, this.model, true);
+            CLMSUI.loadSpectrum (match, randId, this.model);
         } else {
             this.model.clear();
         }
