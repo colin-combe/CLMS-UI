@@ -729,3 +729,5 @@ input {
 	color: #091d42;
 	font-family: Lato-Bold;
 }
+
+sup {font-size:xx-small; vertical-align:super;}
