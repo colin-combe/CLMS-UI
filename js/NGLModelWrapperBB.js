@@ -101,6 +101,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
                 fromChainIndices.forEach (function (fromChainIndex) {
                     chainProxy.index = fromChainIndex;
+					
                     var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1;  // residues are 0-indexed in NGL so -1
 
                     if (fromResidue >= 0) {

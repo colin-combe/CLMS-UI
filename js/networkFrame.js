@@ -80,21 +80,20 @@ var allDataLoaded = _.after (3, function() {
     }
 	//add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
-    var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
+    var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection (annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
-
-    CLMSUI.init.viewsThatNeedAsyncData();
-
-    // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
-    // so we run it again here, doesn't do any harm
-
-    ByRei_dynDiv.init.main();
-	//ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
+	
+	CLMSUI.vent.trigger ("buildAsyncViews");
+    //CLMSUI.init.viewsThatNeedAsyncData();
 
     CLMSUI.compositeModelInst.applyFilter();   // do it first time so filtered sets aren't empty
+	
+	CLMSUI.vent.trigger ("initialSetupDone");	//	Message that models and views are ready for action, with filter set initially
 });
 
 CLMSUI.init = CLMSUI.init || {};
+
+CLMSUI.init.pretendLoad = function () { allDataLoaded(); };
 
 CLMSUI.init.models = function (options) {
 
@@ -110,7 +109,7 @@ CLMSUI.init.models = function (options) {
 
 
     // Collection of blosum matrices that will be fetched from a json file
-    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options.blosumOptions || {});	// options if we want to override defaults
+    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection ();	// options if we want to override defaults
 
     // when the blosum Collection is fetched (an async process), we select one of its models as being selected
     CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
@@ -128,13 +127,42 @@ CLMSUI.init.models = function (options) {
         });
     });
 
-    CLMSUI.init.modelsEssential(options);
+
+    CLMSUI.init.modelsEssential (options);
+	
+	// following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
+	
+	// this listener adds new sequences obtained from pdb files to existing alignment sequence models
+    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
+        if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
+            sequences.forEach (function (entry) {
+                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
+            }, this);
+            // this triggers an event to say loads has changed in the alignment collection
+            // more efficient to listen to that then redraw/recalc for every seq addition
+            this.bulkAlignChangeFinished ();
+
+            console.log ("3D sequences poked to collection", this);
+        }
+    });
+
+	
+    // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
+    // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
+     alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
+        CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, CLMSUI.compositeModelInst.get("clmsModel"));
+        // this triggers an event to say loads has changed in the alignment collection
+        // more efficient to listen to that then redraw/recalc for every seq addition
+        this.bulkAlignChangeFinished ();
+
+        console.log ("CSV sequences poked to collection", this);
+    });
 
     // Set up colour models, some (most) of which depend on data properties
     CLMSUI.linkColour.setupColourModels();
 
     // Start the asynchronous blosum fetching after the above events have been set up
-    CLMSUI.blosumCollInst.fetch();
+    CLMSUI.blosumCollInst.fetch (options.blosumOptions || {});
 };
 
 
@@ -337,6 +365,13 @@ CLMSUI.init.views = function () {
           model: compModel,
           displayEventName: "xiNetControlsShow",
     });
+	
+	// Set up a one-time event listener that is then called from allDataLoaded
+	// Once this is done, the views depending on async loading data (blosum, uniprot) can be set up
+	// Doing it here also means that we don't have to set up these views at all if these views aren't needed (e.g. for some testing or validation pages)
+	CLMSUI.compositeModelInst.listenToOnce (CLMSUI.vent, "buildAsyncViews", function() {
+		CLMSUI.init.viewsThatNeedAsyncData();
+	})
 };
 
 
@@ -631,6 +666,8 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
+	// moved to models()
+	/*
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
         if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
@@ -655,7 +692,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
         console.log ("CSV sequences poked to collection", this);
     });
-
+	*/
 
     new CLMSUI.DistogramBB ({
         el: "#distoPanel",
@@ -747,4 +784,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     //make sure things that should be hidden are hidden
     CLMSUI.compositeModelInst.trigger ("hiddenChanged");
+	
+	// ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
+    // so we run it again here, doesn't do any harm
+    ByRei_dynDiv.init.main();
+	//ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 };

@@ -1,6 +1,8 @@
 function callback (model) {
 	console.log ("model", model);
 	var clmsModel = model.get("clmsModel");
+	
+	QUnit.start();
 
 	QUnit.module ("Parsing");
 	QUnit.test("JSON to Model Parsing", function (assert) {
@@ -181,21 +183,49 @@ function callback (model) {
 		assert.deepEqual (_.pluck(model.getMarkedCrossLinks("selection"), "id").sort(), expectedLinkIDs, "Expected "+JSON.stringify(expectedLinkIDs)+" selected crosslinks, Passed!");
 		assert.deepEqual (_.pluck(model.getMarkedMatches("selection").values(), "id").sort(), expectedMatchIDs, "Expected "+JSON.stringify(expectedMatchIDs)+" selected matches, Passed!");
 	});
+	
+	
+	QUnit.module ("3D Distances");
+	
+	QUnit.test ("Mapping to PDB", function (assert) {
+		var crossLinks = clmsModel.get("crossLinks");
+		var singleCrossLink = crossLinks.get("2000171_415-2000171_497");
+		var expectedMapping = [411, 493];
+		
+		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+		var alignModel = alignCollection.get("2000171");
+		var actualMapping = alignModel.bulkMapFromSearch ("1AO6:A:0", [415, 497]);
+	
+		assert.deepEqual (actualMapping, expectedMapping, "Expected "+expectedMapping+" pdb mapping, Passed!");
+	});
+	
+	QUnit.test ("Single Cross-Link Distance", function (assert) {
+		var crossLinks = clmsModel.get("crossLinks");
+		var singleCrossLink = crossLinks.get("2000171_415-2000171_497");
+		var expectedDistance = 8.61;
+		
+		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+		var actualDistance = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj").getXLinkDistance (singleCrossLink, alignCollection);
+		
+		assert.deepEqual (actualDistance, expectedDistance, "Expected "+expectedDistance+" distance, Passed!");
+	});
 }
 
 function testSetupNew (cbfunc) {
 	d3.json ("10003.json", function (options) {
-		var allDataLoaded = _.after (2, function() {
-			console.log ("blee");
-			CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function () {
+		CLMSUI.vent.listenToOnce (CLMSUI.vent, "initialSetupDone", function () {
+			CLMSUI.compositeModelInst.get("clmsModel").listenToOnce (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function () {
+				console.log ("distances obj changed");
 				cbfunc (CLMSUI.compositeModelInst);
 			});
 		
 			var stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white", tooltip: false});
 			CLMSUI.modelUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
+			console.log ("here");
 		});
 		
 		options.blosumOptions = {url: "../R/blosums.json"};
+		CLMSUI.init.pretendLoad();	// add 1 to allDataLoaded bar (we aren't loading views here)
 		CLMSUI.init.models (options);
 	});
 }
@@ -208,4 +238,4 @@ function testSetup (cbfunc) {
 	});
 }
 
-testSetup (callback);
+testSetupNew (callback);
