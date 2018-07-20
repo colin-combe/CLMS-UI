@@ -43,16 +43,23 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var existingDistObj = clmsModel.get("distancesObj");
         var oldpdbid = existingDistObj ? existingDistObj.pdbBaseSeqID : undefined;
 		
-		// silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
-        clmsModel
-			.set ("distancesObj", distancesObj, {silent: true})
-			.trigger ("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
-		;
-		
-        if (existingDistObj && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
-            console.log ("FORCE DISTANCES CHANGE EVENT");
-            CLMSUI.vent.trigger ("distancesAdjusted");
-        }
+		//if (freshPDBLoaded) {
+			// silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
+			clmsModel
+				.set ("distancesObj", distancesObj, {silent: true})
+				.trigger ("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
+			;
+		//} else {
+		// comment out since change:distancesObj always gets called
+		// only difference is matrix has to regenerate a couple of drop-down menus with change:distancesObj
+		/*
+			console.log ("DD", existingDistObj, oldpdbid, clmsModel.get("distancesObj").pdbBaseSeqID);
+			if (existingDistObj && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
+				console.log ("FORCE DISTANCES CHANGE EVENT");
+				CLMSUI.vent.trigger ("distancesAdjusted");
+			}
+			*/
+		//}
     },
     
     makeDistances: function () {

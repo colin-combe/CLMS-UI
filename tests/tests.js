@@ -24,18 +24,18 @@ function callback (model) {
 			ambig: false,
 			linears: false,
 			matchScoreCutoff: [undefined, undefined],
-			pepLength: 5,
+			pepLength: 0,
 		});
 		// changes to filtermodel changes getFilteredCrossLinks contents via backbone event
 		assert.deepEqual(model.getFilteredCrossLinks().length, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" filtered crosslinks, Passed!");
 		
-		expectedLinks = 156;
+		expectedLinks = 162;
 		model.get("filterModel").set ({AUTO: true});
 		assert.deepEqual(model.getFilteredCrossLinks().length, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" filtered crosslinks with adding auto=true, Passed!");
 		
-		expectedLinks = 162;
-		model.get("filterModel").set ({pepLength: 0});
-		assert.deepEqual(model.getFilteredCrossLinks().length, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" filtered crosslinks with adding peplength=0, Passed!");
+		expectedLinks = 156;
+		model.get("filterModel").set ({pepLength: 6});
+		assert.deepEqual(model.getFilteredCrossLinks().length, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" filtered crosslinks with adding peplength=6, Passed!");
 	});
 	
 	
@@ -183,9 +183,27 @@ function callback (model) {
 	});
 }
 
+function testSetupNew (cbfunc) {
+	d3.json ("10003.json", function (options) {
+		var allDataLoaded = _.after (2, function() {
+			console.log ("blee");
+			CLMSUI.compositeModelInst.get("clmsModel").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:distancesObj", function () {
+				cbfunc (CLMSUI.compositeModelInst);
+			});
+		
+			var stage = new NGL.Stage ("ngl", {/*fogNear: 20, fogFar: 100,*/ backgroundColor: "white", tooltip: false});
+			CLMSUI.modelUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
+		});
+		
+		options.blosumOptions = {url: "../R/blosums.json"};
+		CLMSUI.init.models (options);
+	});
+}
+
 function testSetup (cbfunc) {
 	d3.json ("10003.json", function (options) {
 		CLMSUI.init.modelsEssential (options);
+		
 		cbfunc (CLMSUI.compositeModelInst);
 	});
 }

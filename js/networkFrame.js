@@ -110,7 +110,7 @@ CLMSUI.init.models = function (options) {
 
 
     // Collection of blosum matrices that will be fetched from a json file
-    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection();
+    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options.blosumOptions || {});	// options if we want to override defaults
 
     // when the blosum Collection is fetched (an async process), we select one of its models as being selected
     CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
