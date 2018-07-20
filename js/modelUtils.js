@@ -459,7 +459,7 @@ CLMSUI.modelUtils = {
                         mapArr.forEach (function (mapping) {
                             var dotIndex = mapping.pdb.indexOf(".");
                             var chainName = dotIndex >= 0 ? mapping.pdb.slice(dotIndex + 1) : mapping.pdb.slice(-1);    // bug fix 27/01/17
-                            var matchSeqs = nglSequences.filter (function (seqObj) {
+                            var matchSeqs = nglSequences.fCLMS-modelilter (function (seqObj) {
                                 return seqObj.chainName === chainName;    
                             });
                             mapping.seqObj = matchSeqs[0]; 
@@ -636,8 +636,8 @@ CLMSUI.modelUtils = {
     },
     
     crosslinkerSpecificityPerLinker: function (searchArray) {
-        
-        var linkableResSets = {};
+        return CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
+        /*var linkableResSets = {};
         searchArray.forEach (function (search) {
             var crosslinkers = search.crosslinkers || [];
             
@@ -676,7 +676,7 @@ CLMSUI.modelUtils = {
             });
         });
         console.log ("CROSS", linkableResSets);
-        return linkableResSets;
+        return linkableResSets;*/
     },
     
     // return indices of sequence whose letters match one in the residue set
