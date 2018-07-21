@@ -389,7 +389,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
     events: {},
 
     initialize: function () {
-        var targetTemplateString = "Post-Filter: <strong><%= targets %></strong> of <%= possible %> Cross-links";
+        var targetTemplateString = "Post-Filter: <strong><%= targets %></strong> of <%= possible %> TT Cross-Links";
         this.targetTemplate = _.template (targetTemplateString);
         this.allTemplate = _.template (targetTemplateString+" ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)");
 
@@ -404,12 +404,11 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         var decoysPresent = model.get("clmsModel").get("decoysPresent");
         var variables = {
             targets: commaFormat (model.getFilteredCrossLinks().length),
-			possible: commaFormat (model.get("clmsModel").get("crossLinks").size)
-        };
-        if (decoysPresent) {
-            variables.decoysTD = commaFormat (model.getFilteredCrossLinks("decoysTD").length);
-            variables.decoysDD = commaFormat (model.getFilteredCrossLinks("decoysDD").length);
-        }
+			decoysTD: commaFormat (model.getFilteredCrossLinks("decoysTD").length),
+			decoysDD: commaFormat (model.getFilteredCrossLinks("decoysDD").length),
+			possible: commaFormat (model.get("TTCrossLinkCount"))
+		};
+
         d3.select(this.el).html ((decoysPresent ? this.allTemplate : this.targetTemplate) (variables));
         return this;
     },

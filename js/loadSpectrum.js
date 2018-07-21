@@ -1,13 +1,9 @@
 var CLMSUI = CLMSUI || {};
+var xiSPEC = xiSPEC || {};
 
-//TODO - rename to loadSpectrum
-CLMSUI.loadSpectra = function (match, randId, spectrumModel, ignoreResultUnlessLastRequested) {
+CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
 
-    console.log("loadSpectra match:" + match.id);
-    console.log("fragmentTolerance:", match.fragmentTolerance());
-    console.log("ionTypes:", match.ionTypes());
-    console.log("crossLinkerModMass:", match.crossLinkerModMass());
-
+    var formatted_data = {};
     var xiAnnotRoot = CLMSUI.xiAnnotRoot || "";
 
     var annotationRequest = {};
@@ -49,7 +45,8 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel, ignoreResultUnlessL
     //
     annotationRequest.annotation.precursorCharge = +match.precursorCharge;
     annotationRequest.annotation.precursorMZ = +match.expMZ;
-    annotationRequest.annotation.custom = [""];
+//    annotationRequest.annotation.custom = [""];
+    annotationRequest.requestID = match.id;
 
     // annotationRequest.annotation =  {
     //                             "fragmentTolerance":{"tolerance":"0.01","unit":"Da"},
@@ -134,7 +131,38 @@ CLMSUI.loadSpectra = function (match, randId, spectrumModel, ignoreResultUnlessL
             });
             */
         }
+
+/*    formatted_data.sequence1 = match.matchedPeptides[0].seq_mods;
+    formatted_data.linkPos1 = match.linkPos1 - 1;
+    if (match.matchedPeptides[1]) {
+        formatted_data.sequence2 = match.matchedPeptides[1].seq_mods;
+        formatted_data.linkPos2 = match.linkPos2 - 1;
+    }
+    formatted_data.crossLinkerModMass = match.crossLinkerModMass()
+    formatted_data.modifications = xiSPEC.SpectrumModel.knownModifications;
+    formatted_data.precursorCharge = match.precursorCharge;
+    formatted_data.fragmentTolerance = match.fragmentTolerance();
+
+    var ions = match.ionTypes();
+    formatted_data.ionTypes = ions.map(function(ion){ return ion.type.replace("Ion", "")}).join(';')
+    formatted_data.precursorMZ = match.expMZ();
+    formatted_data.requestID = match.id;
+
+    console.log("loadSpectrum match:" + match.id);
+
+    //TODO: ignoreResultUnlessLastRequested reimplementation
+    d3.text ('../CLMS-model/php/peakList.php?sid='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
+            if (error) {
+                console.log ("error getting peak list", error);
+            } else {
+            	d3.select("#range-error").text ("");
+                formatted_data.peaklist = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
+                console.log(formatted_data);
+                xiSPEC.setData(formatted_data);
+            }
+>>>>>>> 629f7925d84843a6a6c933f94529d4fa9ddb71c9 */
     });
+
 };
 
 

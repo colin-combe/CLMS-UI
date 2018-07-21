@@ -83,3 +83,15 @@
 .dropdown .sectionEnd {
 	border-bottom: 1px dotted white;
 }
+
+.aaButtonPlaceholder {
+	display: inline-block;
+	width: calc(100% - 24px);
+}
+
+.hiddenColourInput {
+	margin: 0;
+	padding: 0;
+	visibility: hidden;
+	max-width: 0px;
+}
