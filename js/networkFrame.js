@@ -186,12 +186,10 @@ CLMSUI.init.modelsEssential = function (options) {
     }
 
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
-    // cc temp hack
-    // var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.identifications);
-    // clmsModelInst.get("searches").forEach (function (value, key) {
-    //    value.participantIDSet = searchMap[key];
-    // });
-    //console.log ("smap", searchMap);
+    var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
+    clmsModelInst.get("searches").forEach (function (value, key) {
+       value.participantIDSet = searchMap[key];
+    });
 
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
@@ -447,11 +445,9 @@ CLMSUI.init.viewsEssential = function (options) {
 				this.lastRequestedID = match.id;	// async catch
 				//console.log ("MATCH ID", this, match.id);
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
-                var searches = this.model.get("clmsModel").get("searches");
-                var randId = searches.get(match.searchId).random_id
-                var url = "../CLMS-model/php/spectrumMatches.php?upload="
-                        + match.searchId + "-" + randId
-                        + "&spectrum="+match.spectrumId+"&matchid="+match.id;
+                var url = "../CLMS-model/php/spectrumMatches.php?sid="
+                        + this.model.get("clmsModel").get("sid")
+                        + "&unval=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
                 var jd = d3.json (url, function(error, json) {
                     if (error) {
@@ -462,7 +458,7 @@ CLMSUI.init.viewsEssential = function (options) {
 						var returnedMatchID = json.matchid;
 
 						//console.log ("json", json, self.lastRequestedID, thisMatchID, returnedMatchID);
-						//if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
+						if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
 							//console.log (":-)", json, self.lastRequestedID, thisSpecID);
 							var altModel = new window.CLMS.model.SearchResultsModel ();
 							altModel.parseJSON(json);
@@ -479,7 +475,7 @@ CLMSUI.init.viewsEssential = function (options) {
 							//self.alternativesModel.set("selection", allCrossLinks);
 							self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
 							CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-						//}
+						}
                     }
                 });
 				console.log ("jd", jd);
@@ -518,8 +514,8 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = 0;//CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
-            CLMSUI.loadSpectrum (match, randId, this.model);//, true);
+            var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
+            CLMSUI.loadSpectrum (match, randId, this.model);
         } else {
             this.model.clear();
         }
