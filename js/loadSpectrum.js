@@ -19,7 +19,7 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
     var ions = match.ionTypes();
     formatted_data.ionTypes = ions.map(function(ion){ return ion.type.replace("Ion", "")}).join(';')
     formatted_data.precursorMZ = match.expMZ();
-    formatted_data.requestID = 1;//match.id;
+    formatted_data.requestID = match.id;
 
     console.log("loadSpectrum match:" + match.id);
 
