@@ -23,7 +23,6 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
 
     console.log("loadSpectrum match:" + match.id);
 
-    //TODO: ignoreResultUnlessLastRequested reimplementation
     d3.text ('../CLMS-model/php/peakList.php?upload='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
             if (error) {
                 console.log ("error getting peak list", error);
