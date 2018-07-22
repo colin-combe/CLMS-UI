@@ -446,7 +446,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "../CLMS-model/php/spectrumMatches.php?sid="
                         + this.model.get("clmsModel").get("sid")
-                        + "&unval=1&decoys=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
+                        + "&unval=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
                 var jd = d3.json (url, function(error, json) {
                     if (error) {

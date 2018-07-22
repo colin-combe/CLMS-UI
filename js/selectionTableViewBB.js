@@ -308,7 +308,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var selectedXLinkCount = this.matchCountIndices.length;
 		var repeats = this.countRepeatedAmbiguousMatches (this.matchCountIndices);
 		var TSFUniqueMatches = totalSelectedFilteredMatches - repeats;
-		
+
 		if (selectedXLinkCount === 0) {
 			panelHeading.html("Currently empty<sup>?</sup>").attr("title", "Select Cross-Links / Matches in other views to populate this table")
 		} else {
@@ -325,11 +325,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
         this.addRows (tablePage, this.filteredProps, matchBounds);
     },
-	
+
 	countRepeatedAmbiguousMatches: function (arrayOfMatchLists) {
 		var ambigSet = d3.set();
 		var repeatedAmbigCount = 0;
-		
+
 		arrayOfMatchLists.forEach (function (mci) {
 			mci.matches.forEach (function (match) {
 				var crossLinks = match.crossLinks;
@@ -338,12 +338,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					if (ambigSet.has (mid)) {
 						repeatedAmbigCount++;
 					} else {
-						ambigSet.add (mid); 
+						ambigSet.add (mid);
 					}
 				}
 			})
 		});
-		
+
 		return repeatedAmbigCount;
 	},
 
