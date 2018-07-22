@@ -19,17 +19,21 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
     var ions = match.ionTypes();
     formatted_data.ionTypes = ions.map(function(ion){ return ion.type.replace("Ion", "")}).join(';')
     formatted_data.precursorMZ = match.expMZ();
-    formatted_data.requestID = match.id;
+    formatted_data.requestID = 1;//match.id;
 
     console.log("loadSpectrum match:" + match.id);
 
     //TODO: ignoreResultUnlessLastRequested reimplementation
-    d3.text ('../CLMS-model/php/peakList.php?uid='+match.searchId+'&spid='+match.spectrumId, function(error, text) {
+    d3.text ('../CLMS-model/php/peakList.php?upload='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
             if (error) {
                 console.log ("error getting peak list", error);
             } else {
             	d3.select("#range-error").text ("");
-                formatted_data.peaklist = text;//JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; }); //TODO - HERE
+                peakArray = text.trim().split(/\r?\n/);
+                for (var p =0; p < peakArray.length; p++) {
+                    peakArray[p] = peakArray[p].split(/\s/);
+                }
+                formatted_data.peaklist = peakArray;//JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
                 console.log(formatted_data);
                 xiSPEC.setData(formatted_data);
             }
