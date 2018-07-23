@@ -41,13 +41,22 @@ var allDataLoaded = _.after (3, function() {
 	annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
-	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+	var crosslinkable1AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type: "Cross-linkable",
-		tooltip: "Mark Cross-Linkable residues",
+		type: "Cross-linkable-1",
+		tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
 		source: "Search",
 	});
-	annotationTypes.push(crosslinkableAnnotationType);
+	annotationTypes.push(crosslinkable1AnnotationType);
+
+    //add option for showing crosslinkable residues
+    var crosslinkable2AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+    	category: "AA",
+    	type: "Cross-linkable-2",
+    	tooltip: "Mark Cross-Linkable residues (second reative group if heterobifunctional cross-linker)",
+    	source: "Search",
+    });
+    annotationTypes.push(crosslinkable2AnnotationType);
 
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
@@ -177,12 +186,10 @@ CLMSUI.init.modelsEssential = function (options) {
     }
 
     // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
-    // cc temp hack
-    // var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.identifications);
-    // clmsModelInst.get("searches").forEach (function (value, key) {
-    //    value.participantIDSet = searchMap[key];
-    // });
-    //console.log ("smap", searchMap);
+    var searchMap = CLMSUI.modelUtils.getProteinSearchMap (options.peptides, options.rawMatches);
+    clmsModelInst.get("searches").forEach (function (value, key) {
+       value.participantIDSet = searchMap[key];
+    });
 
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
@@ -328,33 +335,12 @@ CLMSUI.init.views = function () {
         }
     });
 
-
 	new CLMSUI.URLSearchBoxViewBB ({
 		el: "#urlSearchBox",
 		model: compModel.get("filterModel"),
 		displayEventName: "shareURL",
 		myOptions: {}
 	});
-
-	/*
-    new CLMSUI.ThreeColourSliderBB ({
-        el: "#sliderDiv",
-        model: CLMSUI.linkColour.distanceColoursBB,
-		unitText: " Å",
-        title: "Distance Cutoffs",
-    })
-        .show (false)   // hide view to begin with (show returns 'this' so distanceSlider is still correctly referenced)
-        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function (model, newDistancesObj) {
-			var isDistanceColourScheme = CLMSUI.compositeModelInst.get("linkColourAssignment").get("title") === "Distance";
-            this.show (!!newDistancesObj && isDistanceColourScheme);  // show view when data becomes available ('this' is view)
-        })
-	    .listenTo (compModel, "change:linkColourAssignment", function (model, newColourScheme) {
-			var distancesLoaded = !!model.get("clmsModel").get("distancesObj");
-            this.show (distancesLoaded && newColourScheme.get("title") === "Distance");  // show view when data becomes available ('this' is view)
-        })
-        .listenTo (CLMSUI.vent, "splitPanelDragEnd", function() { this.resize().render(); })   // redraw this colour slider when split pane finished dragging
-    ;
-	*/
 
     new CLMSUI.xiNetControlsViewBB ({
           el: "#xiNetControlsPanel",
@@ -399,8 +385,8 @@ CLMSUI.init.viewsEssential = function (options) {
 
 	var miniMod = filterModel.get("matchScoreCutoff");
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel ({
-		domainStart: miniMod[0],
-		domainEnd: miniMod[1],
+		domainStart: miniMod[0] || 0,
+		domainEnd: miniMod[1] || 1,
 	});
     miniDistModelInst.data = function() {
         return CLMSUI.modelUtils.flattenMatches (CLMSUI.compositeModelInst.get("clmsModel").get("matches"));    // matches is now an array of arrays - [matches, []];
@@ -459,11 +445,9 @@ CLMSUI.init.viewsEssential = function (options) {
 				this.lastRequestedID = match.id;	// async catch
 				//console.log ("MATCH ID", this, match.id);
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
-                var searches = this.model.get("clmsModel").get("searches");
-                var randId = searches.get(match.searchId).random_id
                 var url = "../CLMS-model/php/spectrumMatches.php?upload="
-                        + match.searchId + "-" + randId
-                        + "&spectrum="+match.spectrumId+"&matchid="+match.id;
+                        + this.model.get("clmsModel").get("sid")
+                        + "&unval=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
                 var jd = d3.json (url, function(error, json) {
                     if (error) {
@@ -474,7 +458,7 @@ CLMSUI.init.viewsEssential = function (options) {
 						var returnedMatchID = json.matchid;
 
 						//console.log ("json", json, self.lastRequestedID, thisMatchID, returnedMatchID);
-						//if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
+						if (returnedMatchID == self.lastRequestedID) {	// == not === 'cos returnedMatchID is a atring and self.lastRequestedID is a number
 							//console.log (":-)", json, self.lastRequestedID, thisSpecID);
 							var altModel = new window.CLMS.model.SearchResultsModel ();
 							altModel.parseJSON(json);
@@ -491,7 +475,7 @@ CLMSUI.init.viewsEssential = function (options) {
 							//self.alternativesModel.set("selection", allCrossLinks);
 							self.alternativesModel.setMarkedCrossLinks ("selection", allCrossLinks, false, false);
 							CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-						//}
+						}
                     }
                 });
 				console.log ("jd", jd);
@@ -502,15 +486,15 @@ CLMSUI.init.viewsEssential = function (options) {
     ;
 
     // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
-    xiSPEC.init('modular_xispec', {
+
+    var xiSPEC_model_vars = {
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: false//CLMSUI.xiAnnotRoot + "annotate/knownModifications"
-    });
+        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+    }
 
-    xiSPEC.SettingsSpectrumModel.listenTo(xiSPEC.SpectrumModel, "change:JSONdata", function(t){
-		xiSPEC.SettingsSpectrumModel.set({JSONdata: t.get('JSONdata')});
-	});
+    xiSPEC.init('modular_xispec', xiSPEC_model_vars);
+
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "resizeSpectrumSubViews", function () {
@@ -530,8 +514,8 @@ CLMSUI.init.viewsEssential = function (options) {
     // used to transport one Match between views
     xiSPEC.Spectrum.listenTo (CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
-            var randId = 0;//CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
-            CLMSUI.loadSpectra (match, randId, this.model);//, true);
+            var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId (match);
+            CLMSUI.loadSpectrum (match, randId, this.model);
         } else {
             this.model.clear();
         }
@@ -561,7 +545,7 @@ CLMSUI.init.viewsEssential = function (options) {
             title: "Help",
             menu: [
                 {name: "Online Videos", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank"); }, tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"},
-				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank"); }, tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"},
+				{name: "Report Issue on Github", func: function() { window.open ("https://github.com/Rappsilber-Laboratory/xiView_container/issues", "_blank"); }, tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"},
 				{name: "About Xi View", func: function() { window.open ("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank"); }, tooltip: "About Xi View (opens external web page)"},
             ],
 			tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),

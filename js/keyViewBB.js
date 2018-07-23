@@ -170,30 +170,38 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
-            var colScale = colourAssign.get("colScale");
+			var colScale = colourAssign.get("colScale");
 
-            colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
-                var rgbCol = colScale.range()[i];
-                var rgbHex = d3.rgb(rgbCol).toString();
-                var span = "<input type='color' value='"+rgbHex+"' title='Press to change colour for "+val+"'/>";
-                return [span, val, i];
-            });
+			colourSection[0].rows = colourAssign.get("labels").range().map (function (val, i) {
+				var rgbCol = colScale.range()[i];
+				var rgbHex = d3.rgb(rgbCol).toString();
+				var span = "<input type='color' value='"+rgbHex+"' title='Press to change colour for "+val+"'/>";
+				return [span, val, i];
+			});
 
-            var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
-            updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.get("title"); });
+			var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) { return d.header; });
+			updateSection.select("h2 span").text(function(d) { return d.header+": "+colourAssign.get("title"); });
+				
+			var rowSel = updateSection.select("tbody").selectAll("tr")
+				.data(function(d) { return d.rows; }, function (d) { return !d.rows ? d.join(",") : ""; }) // key function = all fields joined
+			;
+			rowSel.exit().remove();
+			rowSel.enter().append("tr");
 
-            var rowSel = updateSection.select("tbody").selectAll("tr")
-                .data(function(d) { return d.rows; }, function (d) { return !d.rows ? d.join(",") : ""; }) // key function = all fields joined
-            ;
-            rowSel.exit().remove();
-            rowSel.enter().append("tr");
-
-            var cellSel = rowSel.selectAll("td").data(function(d) { return d.slice(0,2); });
-            cellSel
-                .enter()
-                .append("td")
-                .html (function(d) { return d; })
-            ;
+			var cellSel = rowSel.selectAll("td").data(function(d) { return d.slice(0,2); });
+			cellSel
+				.enter()
+				.append("td")
+				.html (function(d) { return d; })
+			;
+			
+			// hide / disable various pieces of the table if the color scheme is uneditable
+			var isFixed = colourAssign.get("fixed");
+			if (isFixed) {
+				updateSection.selectAll("input[type='color']").attr("title", "Not editable.");
+			}
+			updateSection.select("tbody").selectAll("input").property("disabled", isFixed);
+			updateSection.select("caption").text(isFixed ? "Colour scheme is active, but not editable." : "");
 			
 			// always remove old sliderSubView if present
 			if (this.sliderSubView) {

@@ -636,8 +636,8 @@ CLMSUI.modelUtils = {
     },
     
     crosslinkerSpecificityPerLinker: function (searchArray) {
-        
-        var linkableResSets = {};
+        return CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
+        /*var linkableResSets = {};
         searchArray.forEach (function (search) {
             var crosslinkers = search.crosslinkers || [];
             
@@ -676,7 +676,7 @@ CLMSUI.modelUtils = {
             });
         });
         console.log ("CROSS", linkableResSets);
-        return linkableResSets;
+        return linkableResSets;*/
     },
     
     // return indices of sequence whose letters match one in the residue set
@@ -719,17 +719,23 @@ CLMSUI.modelUtils = {
         });
         var first = true;
         var columns = [];
-        var dontStoreArray = ["linkID", "LinkID", "Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2"];
+        var dontStoreArray = ["linkID", "LinkID", "Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2", "Protein1", "Protein2", "SeqPos1", "SeqPos2"];
         var dontStoreSet = d3.set (dontStoreArray);
 		var matchedCrossLinkCount = 0;
+		function getValueN (ref, n, d) {
+			return d[ref+" "+n] || d[ref+n];
+		}
+		
         d3.csv.parse (metaDataFileContents, function (d) {
             var linkID = d.linkID || d.LinkID;
             var crossLinkEntry = crossLinks.get(linkID);
 
             // Maybe need to generate key from several columns
             if (!crossLinkEntry) {
-                var parts1 = d["Protein 1"] ? d["Protein 1"].split("|") : [];
-                var parts2 = d["Protein 2"] ? d["Protein 2"].split("|") : [];
+				var p1 = getValueN ("Protein", 1, d);
+				var p2 = getValueN ("Protein", 2, d);
+                var parts1 = p1 ? p1.split("|") : [];
+                var parts2 = p2 ? p2.split("|") : [];
                 var pkey1, pkey2;
                 parts1.forEach (function (part) {
                     pkey1 = pkey1 || protMap.get(part);
@@ -737,7 +743,7 @@ CLMSUI.modelUtils = {
                 parts2.forEach (function (part) {
                     pkey2 = pkey2 || protMap.get(part);
                 });
-                linkID = pkey1+"_"+d["SeqPos 1"]+"-"+pkey2+"_"+d["SeqPos 2"];
+                linkID = pkey1+"_"+getValueN("SeqPos", 1, d)+"-"+pkey2+"_"+getValueN("SeqPos", 2, d);
                 crossLinkEntry = crossLinks.get(linkID);
             }
             
