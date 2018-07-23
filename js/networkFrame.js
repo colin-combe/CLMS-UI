@@ -32,31 +32,31 @@ var allDataLoaded = _.after (3, function() {
     var annotationTypes = [];
 
     //add option for showing digestible residues
-	var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
-		category: "AA",
-		type: "Digestible",
-		tooltip: "Mark Digestible Residues",
-		source: "Search",
-	});
-	annotationTypes.push(digestibleAnnotationType);
+	// var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+	// 	category: "AA",
+	// 	type: "Digestible",
+	// 	tooltip: "Mark Digestible Residues",
+	// 	source: "Search",
+	// });
+	// annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
-	var crosslinkable1AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
-		category: "AA",
-		type: "Cross-linkable-1",
-		tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
-		source: "Search",
-	});
-	annotationTypes.push(crosslinkable1AnnotationType);
-
-    //add option for showing crosslinkable residues
-    var crosslinkable2AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
-    	category: "AA",
-    	type: "Cross-linkable-2",
-    	tooltip: "Mark Cross-Linkable residues (second reative group if heterobifunctional cross-linker)",
-    	source: "Search",
-    });
-    annotationTypes.push(crosslinkable2AnnotationType);
+	// var crosslinkable1AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+	// 	category: "AA",
+	// 	type: "Cross-linkable-1",
+	// 	tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
+	// 	source: "Search",
+	// });
+	// annotationTypes.push(crosslinkable1AnnotationType);
+    //
+    // //add option for showing crosslinkable residues
+    // var crosslinkable2AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+    // 	category: "AA",
+    // 	type: "Cross-linkable-2",
+    // 	tooltip: "Mark Cross-Linkable residues (second reative group if heterobifunctional cross-linker)",
+    // 	source: "Search",
+    // });
+    // annotationTypes.push(crosslinkable2AnnotationType);
 
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
