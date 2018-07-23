@@ -624,17 +624,6 @@ CLMSUI.modelUtils = {
         return matchChains[0] ? matchChains[0].name : undefined;
     },
     
-    // If distances matrix not fully populated
-    get3DDistance: function (compModel, res1Index, res2Index, chain1, chain2) {
-        if (compModel) {
-            var stageModel = compModel.get("stageModel");
-            if (stageModel) {
-                return stageModel.getSingleDistanceBetween2Residues (res1Index, res2Index, chain1, chain2);
-            }
-        }
-        return 0;
-    },
-    
     crosslinkerSpecificityPerLinker: function (searchArray) {
         
         var linkableResSets = {};
@@ -679,7 +668,7 @@ CLMSUI.modelUtils = {
         return linkableResSets;
     },
     
-    // return indices of sequence whose letters match one in the residue set
+    // return indices of sequence whose letters match one in the residue set. Index is to the array, not to any external factor
     filterSequenceByResidueSet: function (seq, residueSet, all) {
         var rmap = [];
         for (var m = 0; m < seq.length; m++) {

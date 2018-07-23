@@ -12,7 +12,7 @@ CLMSUI.DistancesObj.prototype = {
     
     getShortestLinks: function (links) {
         links.forEach (function (link) {
-            link.distance = this.getXLinkDistanceFromChainCoords (this.matrices, link.residueA.chainIndex, link.residueB.chainIndex, link.residueA.resindex, link.residueB.resindex);
+            link.distance = this.getXLinkDistanceFromChainCoords (this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex);
         }, this);
         
         var nestedLinks = d3.nest()
@@ -74,7 +74,7 @@ CLMSUI.DistancesObj.prototype = {
                         //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
                         
                         if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, chainIndex1, chainIndex2)) {
-                            var dist = this.getXLinkDistanceFromChainCoords (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2);
+                            var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
                             if (dist !== undefined) {
                                 if (average) {
                                     totalDist += dist;
@@ -108,7 +108,7 @@ CLMSUI.DistancesObj.prototype = {
     },
     
     // resIndex1 and 2 are 0-based
-    getXLinkDistanceFromChainCoords: function (matrices, chainIndex1, chainIndex2, resIndex1, resIndex2) {
+    getXLinkDistanceFromChainCoords: function (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var dist;
         var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
         var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
@@ -117,7 +117,7 @@ CLMSUI.DistancesObj.prototype = {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
             dist = distanceMatrix[minIndex][maxIndex];
         } else {
-            dist = CLMSUI.modelUtils.get3DDistance (CLMSUI.compositeModelInst, resIndex1, resIndex2, chainIndex1, chainIndex2);
+            dist = CLMSUI.compositeModelInst.getChainSpecificCrossLinkDistance (resIndex1, resIndex2, chainIndex1, chainIndex2);
         }
         //CLMSUI.utils.xilog ("dist", dist);
         return dist;
@@ -143,9 +143,7 @@ CLMSUI.DistancesObj.prototype = {
             return chainEntry.value.map (function (chain) {
                 var alignID = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chain.name, chain.index);
                 var range = alignCollBB.getSearchRangeIndexOfMatches (protID, alignID);
-                range.chainIndex = chain.index;
-                range.protID = protID;
-                range.alignID = alignID;
+				$.extend (range, {chainIndex: chain.index, protID: protID, alignID: alignID});
                 return range;
             }, this);
         }, this);
@@ -324,7 +322,7 @@ CLMSUI.DistancesObj.prototype = {
    
                             //CLMSUI.utils.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                             // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
+                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
                             // dist is zero if same residues getting linked, which isn't really a plausible scenario, or is it?
                             if (!isNaN(dist) && dist > 0) {
                                 randDists.push (dist);
@@ -359,7 +357,7 @@ CLMSUI.DistancesObj.prototype = {
                             */
                             //CLMSUI.utils.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
                             // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.chainIndex, res2.chainIndex, res1.resIndex - 1, res2.resIndex - 1);
+                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
                             if (!isNaN(dist) && dist > 0) {
                                 randDists.push (dist);
                             }

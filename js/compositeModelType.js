@@ -579,4 +579,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         return distArr;
     },
+	
+	// used if distanceObj matrix not fully populated, resIndex's are 0-indexed
+    getChainSpecificCrossLinkDistance: function (res1Index, res2Index, chain1, chain2) {
+        var stageModel = this.get("stageModel");
+        return stageModel ? stageModel.getSingleDistanceBetween2Residues (res1Index, res2Index, chain1, chain2) : 0;
+    },
 });

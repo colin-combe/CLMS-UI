@@ -98,6 +98,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             // loop through fromChainIndices / toChainIndices to pick out all possible links between two residues in different chains
             var fromChainIndices = _.pluck (chainMap[xlink.fromProtein.id], "index");
             var toChainIndices = _.pluck (chainMap[xlink.toProtein.id], "index");
+
             if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
                 fromChainIndices.forEach (function (fromChainIndex) {
                     chainProxy.index = fromChainIndex;
@@ -165,7 +166,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var residueIdToLinkIds = {};
         var linkIdMap = {};
         var residueIdMap = {};
-        var residueList = [];
 
         function insertResidue (residue, link) {
             var list = residueIdToLinkIds[residue.residueId];
@@ -183,9 +183,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             insertResidue (rl.residueB, rl);
         });
 
-        for (var residueId in residueIdMap){
-            residueList.push (residueIdMap [residueId]);
-        }
+		var residueList = d3.values (residueIdMap);
 
         this._residueIdToLinkIds = residueIdToLinkIds;
         this._linkIdMap = linkIdMap;
@@ -253,8 +251,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
     // generally at CLMSUI.modelUtils.get3DDistance
     getDistances: function () {
-        var resCount = 0;
-        var viableChainIndices = [];
+       	var chainInfo = this.getChainInfo();
+		this.calculateCAtomsAllResidues (chainInfo.viableChainIndices);
+        return this.getChainDistances (chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
+    },
+	
+	getChainInfo: function () {
+		var resCount = 0;
+		var viableChainIndices = [];
         var self = this;
         //console.log ("strcutcomp", this.get("structureComp").structure);
         this.get("structureComp").structure.eachChain (function (cp) {
@@ -264,17 +268,49 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 viableChainIndices.push (cp.index);
             }
         });
-        
-        console.log ("getDistances RESCOUNT", resCount, viableChainIndices);
-        
-        return this.getChainDistances (viableChainIndices, resCount > this.defaults.fullDistanceCalcCutoff);
+		return {"viableChainIndices": viableChainIndices, "resCount": resCount};
+	},
+	
+	calculateCAtomsAllResidues: function (chainIndices) {
+        var chainProxy = this.get("structureComp").structure.getChainProxy();
+        var atomProxy = this.get("structureComp").structure.getAtomProxy();
+        var sele = new NGL.Selection();
+        var chainCAtomIndices = {};
+        var self = this;
+		
+        if (chainIndices) {
+            chainIndices.forEach (function (ci) {
+                chainProxy.index = ci;
+                var atomIndices = chainCAtomIndices[ci] = [];
+                // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
+                
+                var sel = self.getCAlphaAtomSelectionForChain (chainProxy);
+                sele.setString (sel, true); // true = doesn't fire unnecessary dispatch events in ngl
+                var ai = this.get("structureComp").structure.getAtomIndices (sele);
+				
+                // Building a resmap in one loop and then running through available residues in another loop because some (errored) residues don't have c-alpha atoms
+                // This shouldn't happen, but it does i.e. 5taf, so a 1-to-1 loop between residues and atomIndices wouldn't work in all cases
+                var resMap = [];
+				ai.forEach (function (atomIndex) {
+                    atomProxy.index = atomIndex;
+                    resMap[atomProxy.resno] = atomIndex;
+                }, this);
+
+                chainProxy.eachResidue (function (rp) {
+                    var key = rp.resno + (ci !== undefined ? ":" + ci : "");   // chainIndex is unique across models
+                    var atomIndex = resMap[rp.resno];
+                    self.residueToAtomIndexMap[key] = atomIndex;
+                    atomIndices.push (atomIndex);
+                });
+            }, this);
+        }
+      
+		this.set ("chainCAtomIndices", chainCAtomIndices); // store for later
+        return chainCAtomIndices;
     },
     
-    getChainDistances: function (chainIndices, linksOnly) {
-        var chainCAtomIndices = this.getCAtomsAllResidues (chainIndices);
-        this.set ("chainCAtomIndices", chainCAtomIndices); // store for later
-        
-        console.log ("getChainDistances, residue atom indices", chainCAtomIndices);
+    getChainDistances: function (linksOnly) {
+        var chainCAtomIndices = this.get ("chainCAtomIndices");
         var keys = d3.keys (chainCAtomIndices);
         
         var matrixMap = {};
@@ -364,82 +400,43 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         return matrix;
     },
     
-    // resIndex1 and 2 are 0-indexed
+    // resIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
     getSingleDistanceBetween2Residues: function (resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var struc = this.get("structureComp").structure;
         var ap1 = struc.getAtomProxy();
         var ap2 = struc.getAtomProxy();
-        var ci1 = this.get("chainCAtomIndices")[chainIndex1];
-        var ci2 = this.get("chainCAtomIndices")[chainIndex2];
+		var cai = this.get("chainCAtomIndices");
+        var ci1 = cai[chainIndex1];
+        var ci2 = cai[chainIndex2];
         ap1.index = ci1[resIndex1];
         ap2.index = ci2[resIndex2];
         
+		/*
         if (ap1.index === ap2.index) {
-            //console.log ("same atom", chainIndex1, chainIndex2, resIndex1, resIndex2, this.get("chainCAtomIndices"));
+            console.log ("same atom", chainIndex1, chainIndex2, resIndex1, resIndex2, this.get("chainCAtomIndices"));
         }
+		*/
 
         return ap1.distanceTo(ap2);
     },
+	
+	getCAlphaAtomSelectionForChain: function (chainProxy) {
+		var min, max;
+        chainProxy.eachResidue (function (rp) {
+        	var rno = rp.resno;
+            if (!min || rno < min) {
+            	min = rno;
+            }
+            if (!max || rno > max) {
+				max = rno;
+            }
+		});
+                
+		// The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
+		var sel = ":"+chainProxy.chainname+ "/"+chainProxy.modelIndex+" AND "+min+"-"+max+".CA";
+		return sel;
+	},
     
-    getCAtomsAllResidues : function (chainIndices) {
-        var chainProxy = this.get("structureComp").structure.getChainProxy();
-        var atomProxy = this.get("structureComp").structure.getAtomProxy();
-        var sele = new NGL.Selection();
-        var chainCAtomIndices = {};
-        var self = this;
-        
-        if (chainIndices) {
-            chainIndices.forEach (function (ci) {
-                chainProxy.index = ci;
-                var atomIndices = chainCAtomIndices[ci] = [];
-                // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
-                
-                //var chainResList = [];
-                var min, max;
-                chainProxy.eachResidue (function (rp) {
-                    var rno = rp.resno;
-                    if (!min || rno < min) {
-                        min = rno;
-                    }
-                    if (!max || rno > max) {
-                        max = rno;
-                    }
-                    //chainResList.push ({resno: rp.resno, chainIndex: ci}); // - new  
-                });
-                
-                // The New Way - 0.5s vs 21.88s OLD
-                var resMap = [];
-                
-                var sel = ":"+chainProxy.chainname+ "/"+chainProxy.modelIndex+" AND "+min+"-"+max+".CA";
-                sele.setString (sel, true); // true = doesn't fire unnecessary dispatch events in ngl
-                var ai = this.get("structureComp").structure.getAtomIndices (sele);
-                
-                /*
-                var sel2 = this.getSelectionFromResidue (chainResList);
-                sele.setString (sel2, true); // true = doesn't fire unnecessary dispatch events in ngl
-                var ai2 = this.get("structureComp").structure.getAtomIndices (sele);
-                
-                console.log ("CAC", sel, sel2, ai,ai2, ai.toString() === ai2.toString());
-                */
-                
-                // Building a resmap in one loop and then running through available residues in another loop because some (errored) residues don't have c-alpha atoms
-                // This shouldn't happen, but it does i.e. 5taf, so a 1-to-1 loop between residues and atomIndices wouldn't work in all cases
-                ai.forEach (function (atomIndex) {
-                    atomProxy.index = atomIndex;
-                    resMap[atomProxy.resno] = atomIndex;
-                }, this);
-
-                chainProxy.eachResidue (function (rp) {
-                    var key = rp.resno + (ci !== undefined ? ":" + ci : "");   // chainIndex is unique across models
-                    var atomIndex = resMap[rp.resno];
-                    self.residueToAtomIndexMap[key] = atomIndex;
-                    atomIndices.push (atomIndex);
-                });
-            }, this);
-        }
-      
-        return chainCAtomIndices;
-    },
     
     getSelectionFromResidue: function (resnoList, options) {   // set allAtoms to true to not restrict selection to alpha carbon atoms
         // options are 
