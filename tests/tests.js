@@ -185,6 +185,72 @@ function callback (model) {
 	});
 	
 	
+	QUnit.module ("NGL Selection Language");
+	
+	QUnit.test ("Generate Selection with range", function (assert) {
+		var examples = [
+			{data: undefined, expected: undefined},
+			{data: [], expected: []},
+			{data: ["7"], expected: ["7"]},
+			{data: ["7", "9"], expected: ["7","9"]},
+			{data: ["10", "11", "12", "13", "14", "15"], expected: ["10-15"]},
+			{data: ["97", "98", "99", "100", "101"], expected: ["97-101"]},
+			{data: ["12", "13", "14", "19", "20", "21", "234", "235", "236"], expected: ["12-14","19-21","234-236"]},
+			{data: ["6", "22", "23", "24"], expected: ["6","22-24"]},
+			{data: ["6", "7", "8", "22"], expected: ["6-8","22"]},
+		];
+		
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		examples.forEach (function (example) {
+			var actualValue = stageModel.joinConsecutiveNumbersIntoRanges (example.data);
+			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when mapping from "+example.data);
+		})
+	});
+	
+	QUnit.test ("Generate Single Residue Selection", function (assert) {
+		
+		var examples = [
+			{data: {chainIndex: 0, resno: 282}, expected: "282:A.CA/0"},
+			{data: {chainIndex: 1, resno: 281}, expected: "281:B.CA/0"},
+		];
+		
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		var chainProxy = stageModel.get("structureComp").structure.getChainProxy();
+		examples.forEach (function (example) {
+			chainProxy.index = example.data.chainIndex;
+			var actualValue = stageModel.makeResidueSelectionString (example.data.resno, chainProxy);
+			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when mapping from "+JSON.stringify(example.data));
+		})
+	});
+	
+	QUnit.test ("Generate Nested Selection", function (assert) {
+		
+		var expectedValue = "(( /0 AND (( :A AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) ) OR ( :B AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) )) ) ) AND .CA";
+		var data = [
+			{"resindex":410,"residueId":0,"resno":415,"chainIndex":0,"structureId":null},{"resindex":492,"residueId":1,"resno":497,"chainIndex":0,"structureId":null},{"resindex":492,"residueId":2,"resno":497,"chainIndex":1,"structureId":null},{"resindex":410,"residueId":3,"resno":415,"chainIndex":1,"structureId":null},{"resindex":185,"residueId":4,"resno":190,"chainIndex":0,"structureId":null},{"resindex":420,"residueId":5,"resno":425,"chainIndex":0,"structureId":null},{"resindex":420,"residueId":6,"resno":425,"chainIndex":1,"structureId":null},{"resindex":185,"residueId":7,"resno":190,"chainIndex":1,"structureId":null},{"resindex":120,"residueId":8,"resno":125,"chainIndex":0,"structureId":null},{"resindex":156,"residueId":9,"resno":161,"chainIndex":0,"structureId":null},{"resindex":156,"residueId":10,"resno":161,"chainIndex":1,"structureId":null},{"resindex":120,"residueId":11,"resno":125,"chainIndex":1,"structureId":null},{"resindex":126,"residueId":12,"resno":131,"chainIndex":0,"structureId":null},{"resindex":157,"residueId":13,"resno":162,"chainIndex":0,"structureId":null},{"resindex":157,"residueId":14,"resno":162,"chainIndex":1,"structureId":null},{"resindex":126,"residueId":15,"resno":131,"chainIndex":1,"structureId":null},{"resindex":102,"residueId":16,"resno":107,"chainIndex":0,"structureId":null},{"resindex":461,"residueId":17,"resno":466,"chainIndex":0,"structureId":null},{"resindex":461,"residueId":18,"resno":466,"chainIndex":1,"structureId":null},{"resindex":102,"residueId":19,"resno":107,"chainIndex":1,"structureId":null}
+		];
+		
+		var expectedValue2 = "(( /0 AND (( 415:A ) OR ( 497:B )) ) ) AND .CA";
+		var expectedValue3 = "(( /0 AND (( 415:A ) OR ( 497:B )) ) )";
+		var expectedValue4 = "(( /0 AND (:A OR :B) ) )";
+		var data2 = [data[0], data[2]];
+		
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		
+		var actualValue = stageModel.getSelectionFromResidueList (data);
+		assert.deepEqual (actualValue, expectedValue, "Expected "+expectedValue+" when mapping from "+JSON.stringify(data));
+		
+		actualValue = stageModel.getSelectionFromResidueList (data2);
+		assert.deepEqual (actualValue, expectedValue2, "Expected "+expectedValue2+" when mapping from "+JSON.stringify(data2));
+		
+		actualValue = stageModel.getSelectionFromResidueList (data2, {allAtoms: true});
+		assert.deepEqual (actualValue, expectedValue3, "Expected "+expectedValue3+" when mapping from "+JSON.stringify(data2)+" with option allAtoms");
+		
+		actualValue = stageModel.getSelectionFromResidueList (data2, {chainsOnly: true});
+		assert.deepEqual (actualValue, expectedValue4, "Expected "+expectedValue4+" when mapping from "+JSON.stringify(data2)+" with option chainsOnly");
+	});
+	
+	
 	QUnit.module ("3D Distances");
 	
 	QUnit.test ("Mapping to PDB", function (assert) {
@@ -292,8 +358,12 @@ function callback (model) {
 		assert.deepEqual (list1, list2, "Expected "+list1.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
 	});
 	
+	
+	QUnit.module ("Random Distance Generation");
+	
 	QUnit.test ("Sequence Filtering by Cross-Linkable Residues", function (assert) {
 		var expected = [535, 536, 540, 552, 555, 559, 561, 568, 569, 574];	// last 10 KSTY
+		var expected2 = [568, 569, 570, 571, 572, 573, 574, 575, 576, 577];	// last 10 everything
 		CLMSUI.utils.debug = true;
 		
 		var searchArray = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
@@ -305,16 +375,30 @@ function callback (model) {
         var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
 		var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
 		filteredSubSeqIndices = filteredSubSeqIndices.slice(-10);	// last 10
-
-		console.log ("filteredSubSeqIndices", filteredSubSeqIndices);
 		
 		assert.deepEqual (filteredSubSeqIndices, expected, "Expected "+expected.join(", ")+" as KSTY cross-linkable filtered sequence, Passed!");
 		
-		var expected = [568, 569, 570, 571, 572, 573, 574, 575, 576, 577];	// last 10 everything
-		var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[0], false);	// 0 is everything
+		
+		filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[0], false);	// 0 is everything
 		filteredSubSeqIndices = filteredSubSeqIndices.slice(-10);	// last 10
 		
-		assert.deepEqual (filteredSubSeqIndices, expected, "Expected "+expected.join(", ")+" as everything cross-linkable filtered sequence, Passed!");
+		assert.deepEqual (filteredSubSeqIndices, expected2, "Expected "+expected2.join(", ")+" as everything cross-linkable filtered sequence, Passed!");
+	});
+	
+	
+	QUnit.test ("Include Terminal Indices", function (assert) {
+		var expected = {ntermList: [], ctermList: []};	// because pdb for 1ao6 is within the larger sequence so neither cterm nor nterm match
+		CLMSUI.utils.debug = true;
+		
+		var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
+		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
+        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
+		$.extend (seqRange, {alignID: alignID, chainIndex: 0, protID: "2000171"});
+		var seqMap = d3.map ();
+		seqMap.set ("2000171", {key: "2000171", values: [seqRange]});
+		var alignedTerminalIndices = clmsModel.get("distancesObj").calcAlignedTerminalIndices (seqMap, clmsModel, alignCollBB);
+		assert.deepEqual (alignedTerminalIndices, expected, "Expected "+JSON.stringify(expected)+" as end terminals out of PDB range, Passed!");
 	});
 	
 	
@@ -332,6 +416,7 @@ function callback (model) {
 		assert.deepEqual (randArr, expected, "Expected "+expected.join(", ")+" as random distances, Passed!");
 	});
 	*/
+	
 }
 
 function testSetupNew (cbfunc) {

@@ -36,34 +36,31 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     },
     
     setupLinks: function (clmsModel) {
-        var filteredCrossLinks = this.getModel().getFilteredCrossLinks();
-        this.setLinkList (filteredCrossLinks);
+        this.setLinkList (this.getModel().getFilteredCrossLinks());
         var distancesObj = this.makeDistances ();   
-        
-        var existingDistObj = clmsModel.get("distancesObj");
-        var oldpdbid = existingDistObj ? existingDistObj.pdbBaseSeqID : undefined;
 		
-		//if (freshPDBLoaded) {
-			// silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
-			clmsModel
-				.set ("distancesObj", distancesObj, {silent: true})
-				.trigger ("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
-			;
-		//} else {
-		// comment out since change:distancesObj always gets called
-		// only difference is matrix has to regenerate a couple of drop-down menus with change:distancesObj
-		/*
-			console.log ("DD", existingDistObj, oldpdbid, clmsModel.get("distancesObj").pdbBaseSeqID);
-			if (existingDistObj && oldpdbid === clmsModel.get("distancesObj").pdbBaseSeqID) {
-				console.log ("FORCE DISTANCES CHANGE EVENT");
-				CLMSUI.vent.trigger ("distancesAdjusted");
-			}
-			*/
-		//}
+		// silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
+		clmsModel
+			.set ("distancesObj", distancesObj, {silent: true})
+			.trigger ("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
+		;
     },
-    
-    makeDistances: function () {
-        return new CLMSUI.DistancesObj (this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
+	
+	setLinkList: function (crossLinks, filterFunc) {
+        var linkList = this.makeLinkList (crossLinks);
+        // NASTY HACK. A view can supply an extra filter usually to strip out long links, depending on view option.
+        // However, if setLinkList is called from a model rather than a view, we don't know the filter the view is using.
+        // Nasty hack is to use the last used filter.
+        // Ideally filtering should be done in view, but would then a) have to be done for every view rather than just once in the model
+        // and b) would require a lot of refiltering of residues etc that are calculated next in setLinkListWrapped
+        if (filterFunc) { 
+            this.set("lastFilterFunc", filterFunc);
+        }
+        if (this.get("lastFilterFunc")) {
+            linkList = this.get("lastFilterFunc")(linkList);
+        }
+        this.setLinkListWrapped (linkList);
+        return this;
     },
     
     // residueStore maps the NGL-indexed resides to PDB-index
@@ -144,23 +141,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         //console.log ("linklist", linkList);        
         return linkList;
     },
-    
-    setLinkList: function (crossLinkMap, filterFunc) {
-        var linkList = this.makeLinkList (crossLinkMap);
-        // NASTY HACK. A view can supply an extra filter usually to strip out long links, depending on view option.
-        // However, if setLinkList is called from a model rather than a view, we don't know the filter the view is using.
-        // Nasty hack is to use the last used filter.
-        // Ideally filtering should be done in view, but would then a) have to be done for every view rather than just once in the model
-        // and b) would require a lot of refiltering of residues etc that are calculated next in setLinkListWrapped
-        if (filterFunc) { 
-            this.set("lastFilterFunc", filterFunc);
-        }
-        if (this.get("lastFilterFunc")) {
-            linkList = this.get("lastFilterFunc")(linkList);
-        }
-        this.setLinkListWrapped (linkList);
-        return this;
-    },
 
     setLinkListWrapped: function (linkList) {
         var residueIdToLinkIds = {};
@@ -193,18 +173,13 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
 
         this.set ("linkList", linkList);
     },
-    
-    getResidueIdsFromLinkId: function (linkId) {
-        var link = this.get("linkList")(linkId);
-        return link ? [link.residueA.residueId, link.residueB.residueId] : undefined;
-    },
 
     getLinks: function (residue) {
         if (residue === undefined) {
             return this.get("linkList");
         } else {
             var linkIds = this._residueIdToLinkIds[residue.residueId];
-            return linkIds ? linkIds.map (function(l) {
+            return linkIds ? linkIds.map (function (l) {
                 return this._linkIdMap[l];
             }, this) : [];
         }
@@ -245,6 +220,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
 
     hasLink: function (link) {
         return this._linkIdMap[link.linkId] === undefined ? false : true;
+    },
+	
+	    
+	
+    makeDistances: function () {
+        return new CLMSUI.DistancesObj (this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
     },
     
     // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
@@ -438,7 +419,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
 	},
     
     
-    getSelectionFromResidue: function (resnoList, options) {   // set allAtoms to true to not restrict selection to alpha carbon atoms
+    getSelectionFromResidueList: function (resnoList, options) {   // set allAtoms to true to not restrict selection to alpha carbon atoms
         // options are 
         // allAtoms:true to not add on the AND .CA qualifier
         // chainsOnly:true when the resnoList only has chainIndices defined and no res
@@ -540,7 +521,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
         joinString = joinString || "-";
         
-        if (vals.length > 1) {
+        if (vals && vals.length > 1) {
             var newVals = [];
             var last = +vals[0], start = +vals[0], run = 1; // initialise variables to first value
             
@@ -552,14 +533,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                     run++;
                 } else {  // but if not consecutive to last number...
                     // add the previous numbers either as a sequence (if run > 1) or as a single value (last value was not part of a sequence itself)
-                    newVals.push (run > 1 ? start + joinString + last : last);
+                    newVals.push (run > 1 ? start + joinString + last : last.toString());
                     run = 1;    // then reset the run and start variables to begin at current value
                     start = v;
                 }
                 last = v;   // make last value the current value for next iteration of loop
             }
             
-            CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
+            //CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
             vals = newVals;
         }
         return vals;

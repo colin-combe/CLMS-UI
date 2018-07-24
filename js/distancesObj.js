@@ -122,6 +122,8 @@ CLMSUI.DistancesObj.prototype = {
         //CLMSUI.utils.xilog ("dist", dist);
         return dist;
     },
+	
+	
     
     // options - intraOnly:true for no cross-protein random links
     getRandomDistances: function (size, residueSets, options) {
@@ -153,36 +155,8 @@ CLMSUI.DistancesObj.prototype = {
         var seqsByProt = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(seqs), function (d) { return d.key; });
         CLMSUI.utils.xilog ("spp", seqsByProt);
         
-         
-        // n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
-        // add protein terminals if within pdb chain ranges to alignedTerminalIndices array
-        var alignedTerminalIndices = {ntermList: [], ctermList: []};
-        seqsByProt.entries().forEach (function (protEntry) {
-            var protKey = protEntry.key;
-            var participant = clmsModel.get("participants").get(protKey);
-            var seqValues = protEntry.value.values;
-            var termTypes = ["ntermList", "ctermList"];
-
-            [1, participant.size + 1].forEach (function (searchIndex, i) {
-                var alignedTerminalIndex = alignedTerminalIndices[termTypes[i]];
-                var alignedPos = undefined;
-                seqValues.forEach (function (seqValue) {
-                    if (searchIndex >= seqValue.first && searchIndex <= seqValue.last) {
-                        alignedPos = {
-                            searchIndex: searchIndex,
-                            resIndex: alignCollBB.getAlignedIndex (searchIndex, protKey, false, seqValue.alignID, false),
-                            chainIndex: seqValue.chainIndex,
-                            protID: seqValue.protID,
-                            resType: termTypes[i],
-                        };
-                    }    
-                });
-                if (alignedPos) {
-                    alignedTerminalIndex.push (alignedPos);
-                }
-            });
-        });
         
+        var alignedTerminalIndices = this.calcAlignedTerminalIndices (seqsByProt, clmsModel, alignCollBB);
         CLMSUI.utils.xilog ("ati", alignedTerminalIndices);
         
         
@@ -198,14 +172,15 @@ CLMSUI.DistancesObj.prototype = {
                 seqs.forEach (function (seq) {
                     CLMSUI.utils.xilog ("seq", seq);
                     var protID = seq.protID;
+					var alignID = seq.alignID;
                     var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
                     for (var m = 0; m < filteredSubSeqIndices.length; m++) {
                         var searchIndex = seq.first + filteredSubSeqIndices[m];
                         // assign if residue position has definite hit between search and pdb sequence, but not if it's a gap (even a single-letter gap).
                         // That's the same criteria we apply to saying a crosslink occurs in a pdb in the first place
                         // Justification: mapping hits between aaaa----------aaa and bbb-------bbb will map to nearest residue and give lots of zero
-                        // length distances when the residue is a '-'
-                        var resIndex = alignCollBB.getAlignedIndex (searchIndex, protID, false, seq.alignID, true);
+                        // length distances when both cross-link residues are '-'
+                        var resIndex = alignCollBB.getAlignedIndex (searchIndex, protID, false, alignID, true);
                         if (resIndex >= 0) {
                             var datum = {
                                 searchIndex: searchIndex, 
@@ -371,4 +346,37 @@ CLMSUI.DistancesObj.prototype = {
         CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION END ------");
         return randDists;
     },
+	
+	// n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
+    // add protein terminals if within pdb chain ranges to alignedTerminalIndices array
+	calcAlignedTerminalIndices: function (seqsByProt, clmsModel, alignCollBB) {
+        var alignedTerminalIndices = {ntermList: [], ctermList: []};
+        seqsByProt.entries().forEach (function (protEntry) {
+            var protKey = protEntry.key;
+            var participant = clmsModel.get("participants").get(protKey);
+            var seqValues = protEntry.value.values;
+            var termTypes = ["ntermList", "ctermList"];
+
+            [1, participant.size + 1].forEach (function (searchIndex, i) {
+                var alignedTerminalIndex = alignedTerminalIndices[termTypes[i]];
+                var alignedPos = undefined;
+                seqValues.forEach (function (seqValue) {
+                    if (searchIndex >= seqValue.first && searchIndex <= seqValue.last) {
+                        alignedPos = {
+                            searchIndex: searchIndex,
+                            resIndex: alignCollBB.getAlignedIndex (searchIndex, protKey, false, seqValue.alignID, false),
+                            chainIndex: seqValue.chainIndex,
+                            protID: seqValue.protID,
+                            resType: termTypes[i],
+                        };
+                    }    
+                });
+                if (alignedPos) {
+                    alignedTerminalIndex.push (alignedPos);
+                }
+            });
+        });
+		
+		return alignedTerminalIndices;
+	},
 };
