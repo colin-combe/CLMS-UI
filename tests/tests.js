@@ -324,7 +324,7 @@ function callback (model) {
 		assert.deepEqual (actualDistance, expectedDistance, "Expected "+expectedDistance+" distance (2 d.p.) for A chain 415-497 crosslink, Passed!");
 	});
 	
-	QUnit.test ("Same Cross-Link Distance, different indexing methods", function (assert) {
+	QUnit.test ("Same Cross-Link Distance, different indexing methods 1", function (assert) {
 		var crossLinks = clmsModel.get("crossLinks");
 		var singleCrossLink = crossLinks.get("2000171_415-2000171_497");
 		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
@@ -361,28 +361,19 @@ function callback (model) {
 	
 	QUnit.module ("Random Distance Generation");
 	
-	QUnit.test ("Sequence Filtering by Cross-Linkable Residues", function (assert) {
-		var expected = [535, 536, 540, 552, 555, 559, 561, 568, 569, 574];	// last 10 KSTY
-		var expected2 = [568, 569, 570, 571, 572, 573, 574, 575, 576, 577];	// last 10 everything
+	
+	QUnit.test ("Calc Distanceable Sequence MetaData", function (assert) {
+		var dseq = "SEVAHRFKDLGEENFKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLFFAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAVARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLKECCEKPLLEKSHCIAEVENDEMPADLPSLAADFVESKDVCKNYAEAKDVFLGMFLYEYARRHPDYSVVLLLRLAKTYETTLEKCCAAADPHECYAKVFDEFKPLVEEPQNLIKQNCELFEQLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVVLNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTLSEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLVAASQAA";
+		var expectedValue = [
+			{first: 5, last: 582, subSeq: dseq, chainIndex: 0, protID: "2000171", alignID: "1AO6:A:0"},
+			{first: 5, last: 582, subSeq: dseq, chainIndex: 1, protID: "2000171", alignID: "1AO6:B:1"}
+		];
 		CLMSUI.utils.debug = true;
 		
-		var searchArray = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
-		var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
-		var linkableResidues = residueSets["wrong mass SDA "].linkables;
+		var distObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
+		var actualValue = distObj.calcDistanceableSequenceData ();
 		
-		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
-		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
-        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
-		var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
-		filteredSubSeqIndices = filteredSubSeqIndices.slice(-10);	// last 10
-		
-		assert.deepEqual (filteredSubSeqIndices, expected, "Expected "+expected.join(", ")+" as KSTY cross-linkable filtered sequence, Passed!");
-		
-		
-		filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[0], false);	// 0 is everything
-		filteredSubSeqIndices = filteredSubSeqIndices.slice(-10);	// last 10
-		
-		assert.deepEqual (filteredSubSeqIndices, expected2, "Expected "+expected2.join(", ")+" as everything cross-linkable filtered sequence, Passed!");
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as distanceable sequence metadata, Passed!");
 	});
 	
 	
@@ -400,6 +391,84 @@ function callback (model) {
 		var alignedTerminalIndices = clmsModel.get("distancesObj").calcAlignedTerminalIndices (seqMap, clmsModel, alignCollBB);
 		assert.deepEqual (alignedTerminalIndices, expected, "Expected "+JSON.stringify(expected)+" as end terminals out of PDB range, Passed!");
 	});
+	
+	
+	QUnit.test ("Sequence Filtering by Cross-Linkable Residues", function (assert) {
+		var expected = [535, 536, 540, 552, 555, 559, 561, 568, 569, 574];	// last 10 KSTY
+		var expected2 = [568, 569, 570, 571, 572, 573, 574, 575, 576, 577];	// last 10 everything
+		CLMSUI.utils.debug = true;
+		
+		var searchArray = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
+		var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
+		var linkableResidues = residueSets["wrong mass SDA "].linkables;
+		
+		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
+		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
+        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
+		var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
+		filteredSubSeqIndices = filteredSubSeqIndices.slice(-10);	// last 10
+		
+		assert.deepEqual (filteredSubSeqIndices, expected, "Expected "+expected.join(", ")+" as last 10 KSTY cross-linkable filtered sequence indices, Passed!");
+		
+		
+		filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[0], false);	// 0 is everything
+		filteredSubSeqIndices = filteredSubSeqIndices.slice(-10);	// last 10
+		
+		assert.deepEqual (filteredSubSeqIndices, expected2, "Expected "+expected2.join(", ")+" as last 10 everything cross-linkable filtered sequence indices, Passed!");
+	});
+	
+	
+	QUnit.test ("Calc Filtered Residue Points from Cross-linker Specificity", function (assert) {
+		var expectedValue = [535, 536, 540, 552, 555, 559, 561, 568, 569, 574];	// last 10 KSTY
+		expectedValue = expectedValue.map (function (v) {
+			return {chainIndex: 1, protID: "2000171", resIndex: v+1, searchIndex: v+5}	// resindex 1-indexed, sdearchIndex 4 on from that, last 10 residues will be chain 1
+		});
+		CLMSUI.utils.debug = true;
+		
+		var searchArray = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
+		var crosslinkerSpecificityList = d3.values (CLMSUI.modelUtils.crosslinkerSpecificityPerLinker(searchArray));
+		var dseq = "SEVAHRFKDLGEENFKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLFFAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAVARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLKECCEKPLLEKSHCIAEVENDEMPADLPSLAADFVESKDVCKNYAEAKDVFLGMFLYEYARRHPDYSVVLLLRLAKTYETTLEKCCAAADPHECYAKVFDEFKPLVEEPQNLIKQNCELFEQLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVVLNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTLSEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLVAASQAA";
+		var distanceableSequences = [
+			{first: 5, last: 582, subSeq: dseq, chainIndex: 0, protID: "2000171", alignID: "1AO6:A:0"},
+			{first: 5, last: 582, subSeq: dseq, chainIndex: 1, protID: "2000171", alignID: "1AO6:B:1"}
+		];
+		var alignedTerminalIndices = {ntermList: [], ctermList: []};
+		
+		var distObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
+		var actualValue = distObj.calcFilteredSequenceResidues (crosslinkerSpecificityList[0], distanceableSequences, alignedTerminalIndices);
+				console.log ("actualValue", actualValue);
+		actualValue = actualValue[1]; // the KSTY & NTERM residues
+		actualValue = actualValue.slice(-10);	// The last 10 values
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as last 10 KSTY cross-linkable filtered residue points, Passed!");
+	});
+	
+	
+	
+	QUnit.test ("Random Distance Generation, 1 Search", function (assert) {
+		var expectedValue = [];
+		CLMSUI.utils.debug = true;
+		
+		var searchArray = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
+		var crosslinkerSpecificityList = d3.values (CLMSUI.modelUtils.crosslinkerSpecificityPerLinker(searchArray));
+		var dseq = "SEVAHRFKDLGEENFKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLFFAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAVARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLKECCEKPLLEKSHCIAEVENDEMPADLPSLAADFVESKDVCKNYAEAKDVFLGMFLYEYARRHPDYSVVLLLRLAKTYETTLEKCCAAADPHECYAKVFDEFKPLVEEPQNLIKQNCELFEQLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVVLNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTLSEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLVAASQAA";
+		var distanceableSequences = [
+			{first: 5, last: 582, subSeq: dseq, chainIndex: 0, protID: "2000171", alignID: "1AO6:A:0"},
+			{first: 5, last: 582, subSeq: dseq, chainIndex: 1, protID: "2000171", alignID: "1AO6:B:1"}
+		];
+		var alignedTerminalIndices = {ntermList: [], ctermList: []};
+		
+		var distObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
+		var filteredResidueMap = distObj.calcFilteredSequenceResidues (crosslinkerSpecificityList[0], distanceableSequences, alignedTerminalIndices);
+				console.log ("actualValue", actualValue);
+		var randomDists = [];
+		distObj.generateRandomDistancesBySearch (filteredResidueMap, randomDists, {hetero: true, perSearch: 100});
+		var actualValue = randomDists;
+		console.log ("randArr", actualValue);
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as random distances, Passed!");
+	});
+	
 	
 	
 	/*

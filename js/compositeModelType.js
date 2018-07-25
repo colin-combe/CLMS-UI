@@ -555,7 +555,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
         }
 
-        return distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+        return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, options) : undefined;
     },
 
     // includeUndefineds to true to preserve indexing of returned distances to input crosslinks
@@ -578,11 +578,5 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         //console.log ("distArr", distArr);
 
         return distArr;
-    },
-	
-	// used if distanceObj matrix not fully populated, resIndex's are 0-indexed
-    getChainSpecificCrossLinkDistance: function (res1Index, res2Index, chain1, chain2) {
-        var stageModel = this.get("stageModel");
-        return stageModel ? stageModel.getSingleDistanceBetween2Residues (res1Index, res2Index, chain1, chain2) : 0;
     },
 });

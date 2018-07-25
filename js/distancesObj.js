@@ -117,7 +117,8 @@ CLMSUI.DistancesObj.prototype = {
             var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
             dist = distanceMatrix[minIndex][maxIndex];
         } else {
-            dist = CLMSUI.compositeModelInst.getChainSpecificCrossLinkDistance (resIndex1, resIndex2, chainIndex1, chainIndex2);
+			var sm = CLMSUI.compositeModelInst.get("stageModel");
+            dist = sm ? sm.getSingleDistanceBetween2Residues (resIndex1, resIndex2, chainIndex1, chainIndex2) : 0;
         }
         //CLMSUI.utils.xilog ("dist", dist);
         return dist;
@@ -126,19 +127,68 @@ CLMSUI.DistancesObj.prototype = {
 	
     
     // options - intraOnly:true for no cross-protein random links
-    getRandomDistances: function (size, residueSets, options) {
+    getRandomDistances: function (randomLinkQuantity, crosslinkerSpecificityList, options) {
         options = options || {};
-        residueSets = residueSets || {name: "all", searches: new Set(), linkables: new Set()};
-        var stots = d3.sum (residueSets, function (rdata) { return rdata.searches.size; });
+        crosslinkerSpecificityList = crosslinkerSpecificityList || [{name: "all", searches: new Set(), linkables: new Set()}];
+        var specificitySearchTotal = d3.sum (crosslinkerSpecificityList, function (rdata) { return rdata.searches.size; });
         CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION CALCS ------");
-        CLMSUI.utils.xilog (residueSets, "STOTS", stots, this, this.matrices);
-        var perSearch = Math.ceil (size / stots);
+        CLMSUI.utils.xilog (crosslinkerSpecificityList, "STOTS", specificitySearchTotal, this, this.matrices);
+        var randomLinksPerSearch = Math.ceil (randomLinkQuantity / specificitySearchTotal);
         
         // Collect together sequence data that is available to do random 3d distances on, by mapping
         // the 3d sequences to the search sequences, and taking those sub-portions of the search sequence
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
-        //var peptideTerminalPositions = clmsModel.get("terminiPositions") || d3.map();
+        
+        var distanceableSequences = this.calcDistanceableSequenceData();
+        var distanceableSequencesByProtein = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(distanceableSequences), function (d) { return d.key; });
+        CLMSUI.utils.xilog ("dsp", distanceableSequencesByProtein);
+        
+        var alignedTerminalIndices = this.calcAlignedTerminalIndices (distanceableSequencesByProtein, clmsModel, alignCollBB);
+        CLMSUI.utils.xilog ("ati", alignedTerminalIndices);
+        
+        
+        var randDists = [];	// store for random distances
+        // For each crosslinker...
+        crosslinkerSpecificityList.forEach (function (crosslinkerSpecificity) {
+
+            var rmap = this.calcFilteredSequenceResidues (crosslinkerSpecificity, distanceableSequences, alignedTerminalIndices);
+                    
+            // Now loop through the searches that use this crosslinker...
+            crosslinkerSpecificity.searches.forEach (function (searchID) {
+                var search = clmsModel.get("searches").get(searchID);
+                var protIDs = search.participantIDSet;
+                
+                // Filter residue lists down to those that were in this search's proteins
+                var srmap = rmap.map (function (dirMap) { 
+                    return (clmsModel.get("searches").size > 1) ? dirMap.filter (function(res) { return protIDs.has (res.protID); }) : dirMap; 
+                });
+
+                // If crosslinker is homobifunctional then copy a second residue list same as the first
+                if (!crosslinkerSpecificity.heterobi) {
+                    srmap[1] = srmap[0];
+                }
+                CLMSUI.utils.xilog ("rr", searchID, srmap);
+
+                // Now pick lots of pairings from the remaining residues, one for each end of the crosslinker, so one from each residue list
+				var searchMeta = {hetero: crosslinkerSpecificity.heterobi, perSearch: randomLinksPerSearch};
+                if (options.intraOnly) {   // if intra links only allowed
+                	this.generateRandomIntraOnlyDistancesBySearch (srmap, randDists, searchMeta);
+                } else {    // inter and intra links allowed (simpler)
+                    this.generateRandomDistancesBySearch (srmap, randDists, searchMeta);
+                }
+            }, this);
+        }, this);
+        
+        CLMSUI.utils.xilog ("RANDOM", randDists, "avg:", d3.sum(randDists) / (randDists.length || 1));
+        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION END ------");
+        return randDists;
+    },
+	
+	// Collect together sequence data that is available to do random 3d distances on, by mapping
+    // the 3d sequences to the search sequences, and taking those sub-portions of the search sequence
+	calcDistanceableSequenceData: function () {
+        var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         
         var seqs = d3.entries(this.chainMap).map (function (chainEntry) {
             var protID = chainEntry.key;
@@ -149,208 +199,17 @@ CLMSUI.DistancesObj.prototype = {
                 return range;
             }, this);
         }, this);
-        seqs = d3.merge(seqs); // collapse nested arrays
+        seqs = d3.merge (seqs); // collapse nested arrays
         CLMSUI.utils.xilog ("seqs", seqs);
-        
-        var seqsByProt = d3.map (d3.nest().key(function(d) { return d.protID; }).entries(seqs), function (d) { return d.key; });
-        CLMSUI.utils.xilog ("spp", seqsByProt);
-        
-        
-        var alignedTerminalIndices = this.calcAlignedTerminalIndices (seqsByProt, clmsModel, alignCollBB);
-        CLMSUI.utils.xilog ("ati", alignedTerminalIndices);
-        
-        
-        var randDists = [];
-        // For each crosslinker...
-        residueSets.forEach (function (rdata) {
-            // Make one or two lists of residues that could map to each end of the crosslinker.
-            // If the crosslinker is not heterobifunctional we only do one as it'll be the same at both ends.
-            var linkableResidues = rdata.linkables;
-            var rmap = [[],[]];
-            for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
-                var all = linkableResidues[n].has ("*") || linkableResidues[n].has ("X") || linkableResidues[n].size === 0;
-                seqs.forEach (function (seq) {
-                    CLMSUI.utils.xilog ("seq", seq);
-                    var protID = seq.protID;
-					var alignID = seq.alignID;
-                    var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seq.subSeq, linkableResidues[n], all);
-                    for (var m = 0; m < filteredSubSeqIndices.length; m++) {
-                        var searchIndex = seq.first + filteredSubSeqIndices[m];
-                        // assign if residue position has definite hit between search and pdb sequence, but not if it's a gap (even a single-letter gap).
-                        // That's the same criteria we apply to saying a crosslink occurs in a pdb in the first place
-                        // Justification: mapping hits between aaaa----------aaa and bbb-------bbb will map to nearest residue and give lots of zero
-                        // length distances when both cross-link residues are '-'
-                        var resIndex = alignCollBB.getAlignedIndex (searchIndex, protID, false, alignID, true);
-                        if (resIndex >= 0) {
-                            var datum = {
-                                searchIndex: searchIndex, 
-                                chainIndex: seq.chainIndex,
-                                protID: protID,
-                                resIndex: resIndex,
-                            };
-                            rmap[n].push (datum);
-                        }
-                        /* 
-                        else {
-                            console.log ("< 0", resIndex, searchIndex, seq.protID, seq.alignID);
-                        }
-                        */
-                    }
-                }, this);
-                if (linkableResidues[n].has("CTERM")) {
-                    rmap[n].push.apply (rmap[n], alignedTerminalIndices.ctermList);
-                }
-                if (linkableResidues[n].has("NTERM")) {
-                    rmap[n].push.apply (rmap[n], alignedTerminalIndices.ntermList);
-                }
-            }
-            CLMSUI.utils.xilog ("rmap", rmap, linkableResidues);
-                    
-            // Now loop through the searches that use this crosslinker...
-            rdata.searches.forEach (function (searchID) {
-                var search = clmsModel.get("searches").get(searchID);
-                var protIDs = search.participantIDSet;
-                
-                // Filter residue lists down to those that were in this search's proteins
-                var srmap = rmap.map (function (dirMap) { 
-                    return (clmsModel.get("searches").size > 1) ? dirMap.filter (function(res) { return protIDs.has (res.protID); }) : dirMap; 
-                });
-
-                // If crosslinker is homobifunctional then copy a second residue list same as the first
-                if (!rdata.heterobi) {
-                    srmap[1] = srmap[0];
-                }
-                CLMSUI.utils.xilog ("rr", searchID, srmap);
-
-                
-                // Now pick lots of pairings from the remaining residues, one for each end of the crosslinker,
-                // so one from each residue list
-                if (options.intraOnly) {   // if intra links only allowed
-                    // Convenience: Divide into list per protein for selecting intra-protein randoms only
-                    var srmapPerProt = [{},{}];
-                    srmap.forEach (function (dirMap, i) {
-                        var perProtMap = srmapPerProt[i];
-                        
-                        dirMap.forEach (function (res) {
-                            var protID = res.protID;
-                            var perProtList = perProtMap[protID];
-                            if (!perProtList) {
-                                perProtMap[protID] = [res];
-                            } else {
-                                perProtList.push (res);
-                            }
-                        });
-                        //console.log ("dirMap", dirMap, perProtMap, d3.nest().key(function(d) { return d.protID; }).entries(dirMap));
-                    });
-                    if (!rdata.heterobi) {
-                        srmapPerProt[1] = srmapPerProt[0];
-                    }
-                    CLMSUI.utils.xilog ("intra", searchID, srmapPerProt);
-                    
-                    // make a list of counts of possible intra-protein residue links
-                    var total = 0;
-                    var counts = d3.entries(srmapPerProt[0])
-                        // Filter out proteins with no suitable residues at the other end
-                        .filter (function (protEntry) {
-                            return srmapPerProt[1][protEntry.key];
-                        })
-                        // make the counts of lower and upper bounds
-                        .map (function (protEntry) {
-                            var key = protEntry.key;
-                            var resCount1 = protEntry.value.length;
-                            var resCount2 = srmapPerProt[1][key].length;
-                            var combos = resCount1 * resCount2;
-                            var val = {protID: key, lowerBound: total};
-                            total += combos;
-                            val.upperBound = total - 1;
-                            return val;
-                        })
-                    ;
-                    
-                    var possibleLinks = total;
-                    CLMSUI.utils.xilog ("counts", counts, total);
-                    
-                    if (possibleLinks) {  // can't do this if no actual residues pairings left
-                        var hop = Math.max (1, possibleLinks / perSearch);
-                        var maxRuns = Math.min (possibleLinks, perSearch);
-                        var bisectCount = d3.bisector(function(d) { return d.upperBound; }).left;
-                        CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
-                        
-                        for (var n = 0; n < maxRuns; n++) {
-                            // This is Uniform
-                            var ni = Math.floor (n * hop);
-                            
-                            // Find the protein that corresponds to this index 'ni'
-                            var proteinIndex = bisectCount (counts, ni);
-                            // Then turn it into a residue pairing internal to that protein
-                            var count = counts[proteinIndex];
-                            var withinIndex = ni - count.lowerBound;
-                            var resList1 = srmapPerProt[0][count.protID];
-                            var resList2 = srmapPerProt[1][count.protID];
-                            var resIndex1 = Math.floor (withinIndex / resList2.length);
-                            var resIndex2 = withinIndex % resList2.length;
-                            var res1 = resList1[resIndex1];
-                            var res2 = resList2[resIndex2];
-                            if (!res1 || !res2) {
-                                CLMSUI.utils.xilog ("intra", ni, proteinIndex, withinIndex, resIndex1, resIndex2);
-                            }
-   
-                            //CLMSUI.utils.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
-                            // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
-                            // dist is zero if same residues getting linked, which isn't really a plausible scenario, or is it?
-                            if (!isNaN(dist) && dist > 0) {
-                                randDists.push (dist);
-                            }
-                        }
-                    }
-
-                } else {    // inter and intra links allowed (simpler)
-                    var possibleLinks = srmap[0].length * srmap[1].length;
-                    if (possibleLinks) {  // can't do this if no actual residues pairings left
-                        var hop = Math.max (1, possibleLinks / perSearch);
-                        var maxRuns = Math.min (possibleLinks, perSearch);
-                        CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
-
-                        for (var n = 0; n < maxRuns; n++) {
-                            // This is Uniform
-                            var ni = Math.floor (n * hop);
-                            var resFlatIndex1 = Math.floor (ni / srmap[1].length);
-                            var resFlatIndex2 = ni % srmap[1].length;
-                            /*
-                            // This is Random
-                            var resFlatIndex1 = Math.floor (Math.random() * srmap[0].length);
-                            var resFlatIndex2 = Math.floor (Math.random() * srmap[1].length);
-                            */
-                            var res1 = srmap[0][resFlatIndex1];
-                            var res2 = srmap[1][resFlatIndex2];
-
-                            /*
-                            if (res1.resIndex === res2.resIndex && res1.chainIndex === res2.chainIndex) {
-                                console.log ("same res", res1, res2, resFlatIndex1, resFlatIndex2, srmap[0], srmap[1]);
-                            }
-                            */
-                            //CLMSUI.utils.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
-                            // -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-                            var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
-                            if (!isNaN(dist) && dist > 0) {
-                                randDists.push (dist);
-                            }
-                        }
-                    }
-                }
-            }, this);
-        }, this);
-        
-        CLMSUI.utils.xilog ("RANDOM", randDists, "avg:", d3.sum(randDists) / (randDists.length || 1));
-        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION END ------");
-        return randDists;
-    },
+		
+		return seqs;
+	},
 	
 	// n-terms and c-terms occur at start/end of proteins not peptides (as proteins are digested/split after cross-linking). dur.
-    // add protein terminals if within pdb chain ranges to alignedTerminalIndices array
+    // Add protein terminals if within pdb chain ranges to alignedTerminalIndices array
 	calcAlignedTerminalIndices: function (seqsByProt, clmsModel, alignCollBB) {
         var alignedTerminalIndices = {ntermList: [], ctermList: []};
+		
         seqsByProt.entries().forEach (function (protEntry) {
             var protKey = protEntry.key;
             var participant = clmsModel.get("participants").get(protKey);
@@ -379,4 +238,169 @@ CLMSUI.DistancesObj.prototype = {
 		
 		return alignedTerminalIndices;
 	},
+	
+	
+	// Make one or two lists of residues from distanceableSequences that could map to each end of a crosslinker.
+    // If the crosslinker is not heterobifunctional we only do one as it'll be the same at both ends.
+	calcFilteredSequenceResidues: function (crosslinkerSpecificity, distanceableSequences, alignedTerminalIndices) {
+		var linkableResidues = crosslinkerSpecificity.linkables;
+        var rmap = [[],[]];
+		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
+		
+		for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
+			var all = linkableResidues[n].has ("*") || linkableResidues[n].has ("X") || linkableResidues[n].size === 0;
+			distanceableSequences.forEach (function (distSeq) {
+				CLMSUI.utils.xilog ("distSeq", distSeq);
+				var protID = distSeq.protID;
+				var alignID = distSeq.alignID;
+				var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (distSeq.subSeq, linkableResidues[n], all);
+				for (var m = 0; m < filteredSubSeqIndices.length; m++) {
+					var searchIndex = distSeq.first + filteredSubSeqIndices[m];
+					// assign if residue position has definite hit between search and pdb sequence, but not if it's a gap (even a single-letter gap).
+					// That's the same criteria we apply to saying a crosslink occurs in a pdb in the first place
+					// Justification: mapping hits between aaaa----------aaa and bbb-------bbb will map to nearest residue and give lots of zero
+					// length distances when both cross-link residues are '-'
+					var resIndex = alignCollBB.getAlignedIndex (searchIndex, protID, false, alignID, true);	// will be 1-indexed
+					if (resIndex >= 0) {
+						var datum = {
+							searchIndex: searchIndex, 
+							chainIndex: distSeq.chainIndex,
+							protID: protID,
+							resIndex: resIndex,
+						};
+						rmap[n].push (datum);
+					}
+				}
+			}, this);
+			if (linkableResidues[n].has("CTERM")) {
+				rmap[n].push.apply (rmap[n], alignedTerminalIndices.ctermList);
+			}
+			if (linkableResidues[n].has("NTERM")) {
+				rmap[n].push.apply (rmap[n], alignedTerminalIndices.ntermList);
+			}
+		}	
+		
+		CLMSUI.utils.xilog ("rmap", rmap, linkableResidues);
+		return rmap;
+	},
+	
+	generateRandomIntraOnlyDistancesBySearch: function (srmap, randDists, metaData) {
+		 // Convenience: Divide into list per protein for selecting intra-protein randoms only
+		var srmapPerProt = [{},{}];
+		srmap.forEach (function (dirMap, i) {
+			var perProtMap = srmapPerProt[i];
+
+			dirMap.forEach (function (res) {
+				var protID = res.protID;
+				var perProtList = perProtMap[protID];
+				if (!perProtList) {
+					perProtMap[protID] = [res];
+				} else {
+					perProtList.push (res);
+				}
+			});
+			//console.log ("dirMap", dirMap, perProtMap, d3.nest().key(function(d) { return d.protID; }).entries(dirMap));
+		});
+		if (!metaData.heterobi) {
+			srmapPerProt[1] = srmapPerProt[0];
+		}
+		CLMSUI.utils.xilog ("intra spp", srmapPerProt);
+
+		// make a list of counts of possible intra-protein residue links
+		var total = 0;
+		var counts = d3.entries(srmapPerProt[0])
+			// Filter out proteins with no suitable residues at the other end
+			.filter (function (protEntry) {
+				return srmapPerProt[1][protEntry.key];
+			})
+			// make the counts of lower and upper bounds
+			.map (function (protEntry) {
+				var key = protEntry.key;
+				var resCount1 = protEntry.value.length;
+				var resCount2 = srmapPerProt[1][key].length;
+				var combos = resCount1 * resCount2;
+				var val = {protID: key, lowerBound: total};
+				total += combos;
+				val.upperBound = total - 1;
+				return val;
+			})
+		;
+
+		var possibleLinks = total;
+		CLMSUI.utils.xilog ("counts", counts, total);
+
+		if (possibleLinks) {  // can't do this if no actual residues pairings left
+			var hop = Math.max (1, possibleLinks / metaData.perSearch);
+			var maxRuns = Math.min (possibleLinks, metaData.perSearch);
+			var bisectCount = d3.bisector(function(d) { return d.upperBound; }).left;
+			CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
+
+			for (var n = 0; n < maxRuns; n++) {
+				// This is Uniform
+				var ni = Math.floor (n * hop);
+
+				// Find the protein that corresponds to this index 'ni'
+				var proteinIndex = bisectCount (counts, ni);
+				// Then turn it into a residue pairing internal to that protein
+				var count = counts[proteinIndex];
+				var withinIndex = ni - count.lowerBound;
+				var resList1 = srmapPerProt[0][count.protID];
+				var resList2 = srmapPerProt[1][count.protID];
+				var resIndex1 = Math.floor (withinIndex / resList2.length);
+				var resIndex2 = withinIndex % resList2.length;
+				var res1 = resList1[resIndex1];
+				var res2 = resList2[resIndex2];
+				if (!res1 || !res2) {
+					CLMSUI.utils.xilog ("intra", ni, proteinIndex, withinIndex, resIndex1, resIndex2);
+				}
+
+				//CLMSUI.utils.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
+				// -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
+				var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
+				// dist is zero if same residues getting linked, which isn't really a plausible scenario, or is it?
+				if (!isNaN(dist) && dist > 0) {
+					randDists.push (dist);
+				}
+			}
+		}
+	},
+	
+	generateRandomDistancesBySearch: function (srmap, randDists, metaData) {
+		var possibleLinks = srmap[0].length * srmap[1].length;
+		if (possibleLinks) {  // can't do this if no actual residues pairings left
+			var hop = Math.max (1, possibleLinks / metaData.perSearch);
+			var maxRuns = Math.min (possibleLinks, metaData.perSearch);
+			CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
+
+			
+			for (var n = 0; n < maxRuns; n++) {
+				// This is Uniform
+				var ni = Math.floor (n * hop);
+				// could under some circulmstances every distance be zero, e.g. 100x100 square, increment by 101, means it's always res N against res N?
+				var resFlatIndex1 = Math.floor (ni / srmap[1].length);
+				var resFlatIndex2 = ni % srmap[1].length;
+				
+				console.log ("coords", resFlatIndex1, resFlatIndex2, (resFlatIndex1 * srmap[1].length) + resFlatIndex2);
+				/*
+				// This is Random
+				var resFlatIndex1 = Math.floor (Math.random() * srmap[0].length);
+				var resFlatIndex2 = Math.floor (Math.random() * srmap[1].length);
+				*/
+				var res1 = srmap[0][resFlatIndex1];
+				var res2 = srmap[1][resFlatIndex2];
+
+				/*
+				if (res1.resIndex === res2.resIndex && res1.chainIndex === res2.chainIndex) {
+					console.log ("same res", res1, res2, resFlatIndex1, resFlatIndex2, srmap[0], srmap[1]);
+				}
+				*/
+				//CLMSUI.utils.xilog ("inter", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
+				// -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
+				var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
+				if (!isNaN(dist) && dist > 0) {
+					randDists.push (dist);
+				}
+			}
+		}
+	}
 };

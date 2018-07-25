@@ -512,12 +512,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 	recalcRandomBinning: function (linkCount) {
 		var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
-		var residueSets = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
+		var crosslinkerSpecificityMap = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
 		//console.log ("ress", residueSets);
 		var distObj = this.model.get("clmsModel").get("distancesObj");
 		var randArr = distObj ? distObj.getRandomDistances (
 			Math.min ((linkCount * 100) || 10000, 100000), 
-			d3.values (residueSets),
+			d3.values (crosslinkerSpecificityMap),
 			{intraOnly: this.options.intraRandomOnly}
 		)
 		: [];
