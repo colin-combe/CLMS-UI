@@ -266,42 +266,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 		}
 	},
 
-    collateMatchRegions: function (crossLinks) {
-        var fromPeptides = [],
-            toPeptides = [],
-            regs = [],
-            prots = {};
-        crossLinks.forEach(function (crossLink) {
-            crossLink.filteredMatches_pp.forEach(function (matchAndPepPos) {
-                var smatch = matchAndPepPos.match;
-                var prot1 = smatch.matchedPeptides[0].prt[0];
-                var prot2 = smatch.matchedPeptides[1].prt[0];
-                prots[prot1] = prots[prot1] || [];
-                prots[prot2] = prots[prot2] || [];
-
-                var fromPepStart = matchAndPepPos.pepPos[0].start - 1;
-                var fromPepLength = matchAndPepPos.pepPos[0].length;
-                var toPepStart = matchAndPepPos.pepPos[1].start - 1;
-                var toPepLength = matchAndPepPos.pepPos[1].length;
-
-                prots[prot1].push({
-                    protein: prot1,
-                    start: fromPepStart,
-                    end: fromPepStart + fromPepStart
-                });
-                prots[prot2].push({
-                    protein: prot2,
-                    start: toPepStart,
-                    end: toPepStart + toPepLength
-                });
-            });
-        });
-
-        console.log("match regions", prots);
-
-        return prots;
-    },
-
     getMarkedMatches: function (modelProperty) {
         return this.get("match_"+modelProperty);
     },

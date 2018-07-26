@@ -283,7 +283,7 @@ span, label {
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox, #xiNetControlsPanel, #listPanel {
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox, #xiNetHelpPanel, #listPanel {
     display: none;
     top: 80px;
 }
