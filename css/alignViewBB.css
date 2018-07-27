@@ -93,7 +93,7 @@ DIV.checkHolder {
     padding-bottom: 1px;
     margin-bottom: 0;
     line-height: normal;
-    max-height: 10em;
+    /*max-height: 10em;*/
     overflow-y: auto;
 	/* this makes the tabs appear to fill from the bottom up */
 	display: flex;

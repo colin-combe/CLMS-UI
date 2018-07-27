@@ -624,17 +624,6 @@ CLMSUI.modelUtils = {
         return matchChains[0] ? matchChains[0].name : undefined;
     },
 
-    // If distances matrix not fully populated
-    get3DDistance: function (compModel, res1Index, res2Index, chain1, chain2) {
-        if (compModel) {
-            var stageModel = compModel.get("stageModel");
-            if (stageModel) {
-                return stageModel.getSingleDistanceBetween2Residues (res1Index, res2Index, chain1, chain2);
-            }
-        }
-        return 0;
-    },
-
     crosslinkerSpecificityPerLinker: function (searchArray) {
         return CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
         /*var linkableResSets = {};
@@ -645,7 +634,7 @@ CLMSUI.modelUtils = {
                 var crosslinkerDescription = crosslinker.description;
                 var crosslinkerName = crosslinker.name;
                 var linkedAARegex = /LINKEDAMINOACIDS:(.*?)(?:;|$)/g;   // capture both sets if > 1 set
-                console.log ("cld", crosslinkerDescription);
+                //console.log ("cld", crosslinkerDescription);
                 var resSet = linkableResSets[crosslinkerName];
 
                 if (!resSet) {
@@ -675,11 +664,12 @@ CLMSUI.modelUtils = {
                 resSet.heterobi = resSet.heterobi || (i > 1);
             });
         });
+
         console.log ("CROSS", linkableResSets);
         return linkableResSets;*/
     },
 
-    // return indices of sequence whose letters match one in the residue set
+    // return indices of sequence whose letters match one in the residue set. Index is to the array, not to any external factor
     filterSequenceByResidueSet: function (seq, residueSet, all) {
         var rmap = [];
         for (var m = 0; m < seq.length; m++) {
@@ -974,7 +964,7 @@ CLMSUI.modelUtils = {
             id: "Charge", label: "Match Precursor Charge (z)", decimalPlaces: 0,  matchLevel: true
         },
         {
-            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.calcMass(); }); }, 
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.calcMass(); }); },
             unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.calcMass(); }); },
             id: "CalcMass", label: "Match Calculated Mass (m)", decimalPlaces: 4, matchLevel: true
         },
