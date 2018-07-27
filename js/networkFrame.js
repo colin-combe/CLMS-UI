@@ -41,13 +41,22 @@ var allDataLoaded = _.after (3, function() {
 	annotationTypes.push(digestibleAnnotationType);
 
     //add option for showing crosslinkable residues
-	var crosslinkableAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+	var crosslinkable1AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
 		category: "AA",
-		type: "Cross-linkable",
-		tooltip: "Mark Cross-Linkable residues",
+		type: "Cross-linkable-1",
+		tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
 		source: "Search",
 	});
-	annotationTypes.push(crosslinkableAnnotationType);
+	annotationTypes.push(crosslinkable1AnnotationType);
+
+    //add option for showing crosslinkable residues
+    var crosslinkable2AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType ({
+    	category: "AA",
+    	type: "Cross-linkable-2",
+    	tooltip: "Mark Cross-Linkable residues (second reative group if heterobifunctional cross-linker)",
+    	source: "Search",
+    });
+    annotationTypes.push(crosslinkable2AnnotationType);
 
     //add option for showing PDB aligned regions
 	var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
@@ -472,7 +481,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 this.primaryMatch = match; // the 'dynamic_rank = true' match
                 var url = "../CLMS-model/php/spectrumMatches.php?sid="
                         + this.model.get("clmsModel").get("sid")
-                        + "&unval=1&decoys=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
+                        + "&unval=1&linears=1&spectrum="+match.spectrumId+"&matchid="+match.id;
                 var self = this;
                 var jd = d3.json (url, function(error, json) {
                     if (error) {
@@ -518,7 +527,7 @@ CLMSUI.init.viewsEssential = function (options) {
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
     }
 
-    xiSPEC.init('modular_xispec', xiSPEC_model_vars);
+    xiSPEC.init('modular_xispec', xiSPEC_model_vars, true);
 
 
     // Update spectrum view when external resize event called

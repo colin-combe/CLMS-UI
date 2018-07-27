@@ -625,8 +625,8 @@ CLMSUI.modelUtils = {
     },
     
     crosslinkerSpecificityPerLinker: function (searchArray) {
-        
-        var linkableResSets = {};
+        return CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
+        /*var linkableResSets = {};
         searchArray.forEach (function (search) {
             var crosslinkers = search.crosslinkers || [];
             
@@ -664,8 +664,9 @@ CLMSUI.modelUtils = {
                 resSet.heterobi = resSet.heterobi || (i > 1);
             });
         });
-        //console.log ("CROSS", linkableResSets);
-        return linkableResSets;
+
+        console.log ("CROSS", linkableResSets);
+        return linkableResSets;*/
     },
     
     // return indices of sequence whose letters match one in the residue set. Index is to the array, not to any external factor

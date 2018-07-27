@@ -38,3 +38,6 @@
 .xispec_form-control:focus {
   border-color: #091d42;
 }
+#xispec_settingsCustomCfgApply{
+	display: inline;
+}

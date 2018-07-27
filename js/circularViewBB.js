@@ -139,7 +139,7 @@
 				var type = feature.type.toLowerCase();
 				var protAlignModel = self.model.get("alignColl").get(nodeid);
 				
-				if (protAlignModel && (type !== "cross-linkable" && type !== "digestible")) {
+				if (protAlignModel && (type !== "cross-linkable-1" && type !== "cross-linkable-2" && type !== "digestible")) {
 					var alignmentID = feature.alignmentID || "Canonical";
 					/*
 					convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
@@ -546,8 +546,14 @@
                 features = d3.merge ([mergedFeatures, features]);
             }
             
-            if (featureFilterSet.has("Cross-linkable")) {
-                var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures (participant);
+            if (featureFilterSet.has("Cross-linkable-1")) {
+                var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures (participant, 1);
+                var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (crossLinkableFeatures);
+                features = d3.merge ([mergedFeatures, features]);
+            }
+            
+            if (featureFilterSet.has("Cross-linkable-2")) {
+                var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures (participant, 2);
                 var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (crossLinkableFeatures);
                 features = d3.merge ([mergedFeatures, features]);
             }
