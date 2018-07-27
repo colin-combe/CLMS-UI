@@ -11,7 +11,7 @@
   <div id="qunit-fixture"></div>
 
   <script src="https://code.jquery.com/qunit/qunit-2.6.1.js"></script>
-	        <script type="text/javascript" src="../../vendor/byrei-dyndiv_1.0rc1-src.js"></script>
+	        <script type="text/javascript" src="../../vendor/js/byrei-dyndiv_1.0rc1-src.js"></script>
         <script type="text/javascript" src="../../vendor/js/d3.js"></script>
         <script type="text/javascript" src="../../vendor/js/colorbrewer.js"></script>
         <script type="text/javascript" src="../../vendor/js/ngl_verbose.js"></script>
@@ -66,7 +66,7 @@
         <script type="text/javascript" src="../js/linkColourAssignment.js"></script>
         <script type="text/javascript" src="../js/spectrumViewWrapper.js"></script>
         <script type="text/javascript" src="../js/validate.js"></script>
-        <script type="text/javascript" src="./js/loadSpectrum.js"></script>
+        <script type="text/javascript" src="../js/loadSpectrum.js"></script>
         <script type="text/javascript" src="../js/proteinInfoViewBB.js"></script>
         <script type="text/javascript" src="../js/keyViewBB.js"></script>
         <script type="text/javascript" src="../js/scatterplotViewBB.js"></script>
@@ -76,6 +76,10 @@
         <script type="text/javascript" src="../js/urlSearchBoxViewBB.js"></script>
         <script type="text/javascript" src="../js/xiNetControlsViewBB.js"></script>
 
+	<script>
+		QUnit.config.autostart = false;
+	</script>
+	
   <script src="tests.js"></script>
 </body>
 </html>

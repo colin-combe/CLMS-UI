@@ -505,11 +505,6 @@
         
     getSingleLinkDistances: function (crossLink) {
 		return this.model.getSingleCrosslinkDistance (crossLink);
-		/*
-        var alignColl = this.model.get("alignColl");
-        var distanceObj = this.model.get("clmsModel").get("distancesObj");
-        return distanceObj ? distanceObj.getXLinkDistance (crossLink, alignColl) : undefined;
-		*/
     },
         
     invokeTooltip : function (evt, linkWrappers) {

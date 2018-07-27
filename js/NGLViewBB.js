@@ -559,8 +559,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initStructureRepr: function() {
 
         var comp = this.structureComp;
-        var resSele = this.crosslinkData.getSelectionFromResidue (this.crosslinkData.getResidues());
-        var resEmphSele = this.crosslinkData.getSelectionFromResidue ([]);
+        var resSele = this.crosslinkData.getSelectionFromResidueList (this.crosslinkData.getResidues());
+        var resEmphSele = this.crosslinkData.getSelectionFromResidueList ([]);
 
         this.replaceChainRepresentation (this.options.chainRep);
 
@@ -806,7 +806,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 var residuesB = crosslinkData.findResidues (rp2.resno, c2);
                 CLMSUI.utils.xilog ("res", ap1.residueIndex, ap2.residueIndex, c1, c2, residuesA, residuesB);
                 if (pickType === "selection") {
-                    var selectionSelection = this.crosslinkData.getSelectionFromResidue (residuesA.concat(residuesB));
+                    var selectionSelection = this.crosslinkData.getSelectionFromResidueList (residuesA.concat(residuesB));
                     CLMSUI.utils.xilog ("seleSele", selectionSelection);
                     this.structureComp.autoView (selectionSelection, 1000);
                 }
@@ -912,7 +912,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var chainList = chains.map (function (chainIndex) {
                 return {chainIndex: chainIndex};
             });
-            selectionString = this.crosslinkData.getSelectionFromResidue (chainList, {chainsOnly: true});
+            selectionString = this.crosslinkData.getSelectionFromResidueList (chainList, {chainsOnly: true});
         }
         
         //CLMSUI.utils.xilog ("CHAIN SELE", selectionString);
@@ -937,7 +937,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     setResidues: function (residues, residueRepr) {
         var availableResidues = this._getAvailableResidues (residues);
         residueRepr.setSelection (
-            this.crosslinkData.getSelectionFromResidue (availableResidues)
+            this.crosslinkData.getSelectionFromResidueList (availableResidues)
         );
     },
 
