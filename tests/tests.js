@@ -461,9 +461,9 @@ function callback (model) {
 		var distObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
 		var filteredResidueMap = distObj.calcFilteredSequenceResidues (crosslinkerSpecificityList[0], distanceableSequences, alignedTerminalIndices);
 				console.log ("actualValue", actualValue);
-		var randomDists = [];
-		distObj.generateRandomDistancesBySearch (filteredResidueMap, randomDists, {hetero: true, perSearch: 100});
-		var actualValue = randomDists;
+		var sampleDists = [];
+		distObj.generateSampleDistancesBySearch (filteredResidueMap[0], filteredResidueMap[1], sampleDists, 100);
+		var actualValue = sampleDists;
 		console.log ("randArr", actualValue);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as random distances, Passed!");
