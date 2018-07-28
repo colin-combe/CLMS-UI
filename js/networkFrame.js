@@ -402,12 +402,12 @@ CLMSUI.init.viewsEssential = function (options) {
         model: miniDistModelInst,
         myOptions: {
             maxX: 0,    // let data decide
-            seriesNames: ["Matches", "Decoys"],
+            seriesNames: ["Targets", "Decoys"],
             //scaleOthersTo: "Matches",
             xlabel: "Score",
             ylabel: "Count",
             height: 65,
-            colours: {"Matches":"blue", "Decoys":"red"}
+            colours: {"Targets":"blue", "Decoys":"red"}
         }
     })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
