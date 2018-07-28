@@ -440,7 +440,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
         var fdrMode = filterModel.get("fdrMode");
 
         var clmsModel = this.model.get("clmsModel");
-        var singleRealProtein = clmsModel.realProteinCount < 2;
+        var singleTargetProtein = clmsModel.targetProteinCount < 2;
         var decoysPresent = clmsModel.get("decoysPresent");
 
         var self = this;
@@ -460,7 +460,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
             })
             // Hide between protein score if only 1 real protein (will always be an undefined score)
             .style ("display", function(d) {
-                return fdrMode && decoysPresent && d === "interFdrCut" && singleRealProtein ? "none" : null;
+                return fdrMode && decoysPresent && d === "interFdrCut" && singleTargetProtein ? "none" : null;
             })
         ;
 
