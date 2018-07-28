@@ -6,13 +6,13 @@ CLMSUI.modelUtils = {
         var matchesLen = matchesArr.length;
         for (var m = 0; m < matchesLen; ++m) {
             var match = matchesArr[m];
-            arrs[match.isDecoy()? 1 : 0].push (match.score);
+            arrs[match.isDecoy()? 1 : 0].push (match.score());
         }
         return arrs;
     },
 
 	matchScoreRange: function (matches, integerise) {
-		var extent = d3.extent (matches, function (m) { return m.score; });
+		var extent = d3.extent (matches, function (m) { return m.score(); });
 		if (integerise) {
 			extent = extent.map(function (val, i) { return Math[i === 0 ? "ceil" : "floor"](val + (i === 0 ? -1 : 1)); });
 		}
@@ -188,7 +188,7 @@ CLMSUI.modelUtils = {
     },
 
     highestScore: function (crosslink) {
-		var scores = crosslink.filteredMatches_pp.map(function (m) {return +m.match.score;});
+		var scores = crosslink.filteredMatches_pp.map(function (m) {return +m.match.score();});
 		//~ console.log(scores);
 		var result = Math.max.apply(Math,scores);
 		//~ console.log(result);
@@ -949,8 +949,8 @@ CLMSUI.modelUtils = {
             id: "MatchCount", label: "Cross-Link Match Count", decimalPlaces: 0
         },
         {
-            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.score; }); },
-            unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.score; }); },
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.score(); }); },
+            unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.score(); }); },
             id: "Score", label: "Match Score", decimalPlaces: 2, matchLevel: true
         },
         {
