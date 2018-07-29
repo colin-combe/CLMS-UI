@@ -81,30 +81,25 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        var wrapperPanel = mainDivSel.append("div")
-            .attr("class", "panelInner");
+        wrapperPanelHtml = "<span class='noBreak'>" +
+                "<span>Drag To </span>" +
+                "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
+                "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
+                "</span>" +
+                "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
+                "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
-        wrapperPanel.html(
-            "<div class='xinetButtonBar'>" +
-            "<div class='toolbar'>" +
-            // "<label class='showLabels btn'>Show Labels<input type='checkbox' name='showLabels' class='showXinetLabels' checked></label>" +
-            "<span class='noBreak sectionDividerLeft'>" +
-            "<span>Drag To </span>" +
-            "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
-            "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
-            "</span>" +
-            // "</div>" +
-            // "<div class='toolbar'>" +
-            // "<span class='layoutLabel'>Layout</span>" +
-            "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto Layout</button>" +
-            "<span class='noBreak sectionDividerLeft sectionDividerRight'>" +
-            "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
-            "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>" +
-            "</span>" +
-            "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
-            "<button class='btn btn-1 btn-1a downloadButton'>IMAGE AS SVG</button>" +
-            "</div>" +
-            "</div>"
+        if (CLMSUI.loggedIn == true) {
+            wrapperPanelHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
+            "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>";// +
+        }
+
+        wrapperPanelHtml +="<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
+             "</span>" +
+                "<button class='btn btn-1 btn-1a downloadButton'>IMAGE AS SVG</button>";// +
+
+        mainDivSel.html(
+            wrapperPanelHtml
         );
 
         var tooltips = {
