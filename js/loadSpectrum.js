@@ -15,7 +15,7 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
     formatted_data.modifications = CLMSUI.compositeModelInst.get('clmsModel').get('modifications');
     formatted_data.precursorCharge = match.precursorCharge;
     formatted_data.fragmentTolerance = match.fragmentTolerance();
-    formatted_data.customConfig = CLMSUI.compositeModelInst.get("clmsModel").get("searches").get(match.searchId).customsettings.split('\n');
+    //formatted_data.customConfig = CLMSUI.compositeModelInst.get("clmsModel").get("searches").get(match.searchId).customsettings.split('\n');
 
     var ions = match.ionTypes();
     formatted_data.ionTypes = ions.map(function(ion){ return ion.type.replace("Ion", "")}).join(';')
