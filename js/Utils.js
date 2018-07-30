@@ -32,7 +32,7 @@ CLMSUI.utils = {
         downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906
 		shareLink: "Share Search Link with Current Filter State",
     },
-	
+
 	commonTemplates: {
 		downloadImg: _.template("Download Image As <%=fileType%>"),
 		downloadCSV: _.template("Download Filtered <%=items> as CSV"),
@@ -311,7 +311,7 @@ CLMSUI.utils = {
 
 				//draw the original canvas onto the destination canvas
 				destCtx.drawImage (d3canvas.node(), 0, 0);
-			
+
                 var url = destinationCanvas.toDataURL ("image/png");
 				//var url = d3canvas.node().toDataURL ("image/png");
 				//destinationCanvas.dispose();
@@ -425,7 +425,7 @@ CLMSUI.utils = {
                 .attr ("title", function(d) { return d.title; })
                 .attr ("id", makeID)
         ;
-		
+
 		// add header if asked for
 		cboxes
             .filter (function(d) { return d.header; })
@@ -537,9 +537,9 @@ CLMSUI.utils = {
 
             var colScale = colourAssign.get("colScale");
             var labels = colourAssign.get("labels");
-			var domain = colScale.domain(); 
+			var domain = colScale.domain();
             var pairUp = d3.zip (colScale.range(), labels.range());
-			
+
 			if (colourAssign.get("type") === "threshold") {
 				pairUp.forEach (function (pair, i) {
 					var d1 = i > 0 ? ">"+domain[i-1] : undefined;
@@ -570,7 +570,7 @@ CLMSUI.utils = {
             colourElems.select("text").text(function (d, i) { return d[1]; });
         }
     },
-	
+
 	updateAnnotationColourKey: function (bbModelArray, svgElem, myOptions) {
 		var defaults = {
 			colour: function (d) { return d.colour; },
@@ -578,7 +578,7 @@ CLMSUI.utils = {
 			title: "Key",
 		};
 		var options = $.extend ({}, defaults, myOptions);
-		
+
         var keyGroup = svgElem.select("g.key");
         if (keyGroup.empty()) {
             svgElem

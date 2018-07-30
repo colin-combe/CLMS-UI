@@ -482,7 +482,7 @@ CLMSUI.init.views = function() {
     // Doing it here also means that we don't have to set up these views at all if these views aren't needed (e.g. for some testing or validation pages)
     CLMSUI.compositeModelInst.listenToOnce(CLMSUI.vent, "buildAsyncViews", function() {
         CLMSUI.init.viewsThatNeedAsyncData();
-    })
+    });
 };
 
 
@@ -747,10 +747,8 @@ CLMSUI.init.viewsEssential = function(options) {
         el: "#tooltip2",
         model: CLMSUI.compositeModelInst.get("tooltipModel")
     });
-};
 
-CLMSUI.init.viewsThatNeedAsyncData = function() {
-
+    //for scatterplots, etc in val page
     // This generates the legend div, we don't keep a handle to it - the event object has one
     new CLMSUI.KeyViewBB({
         el: "#keyPanel",
@@ -762,32 +760,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#searchSummaryPanel",
         displayEventName: "searchesShow",
         model: CLMSUI.compositeModelInst.get("clmsModel"),
-    });
-
-    /* 'cos circle listens to annotation model which is formed from uniprot async data */
-    new CLMSUI.CircularViewBB({
-        el: "#circularPanel",
-        displayEventName: "circularShow",
-        model: CLMSUI.compositeModelInst,
-    });
-
-
-    // Make a drop down menu constructed from the annotations collection
-    new CLMSUI.AnnotationDropDownMenuViewBB({
-        el: "#annotationsDropdownPlaceholder",
-        collection: CLMSUI.compositeModelInst.get("annotationTypes"),
-        myOptions: {
-            title: "Annotations",
-            closeOnClick: false,
-            groupByAttribute: "category",
-            labelByAttribute: "type",
-            toggleAttribute: "shown",
-            tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
-            sectionHeader: function(d) {
-                return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
-                    (d.source ? " (" + d.source + ")" : "");
-            },
-        }
     });
 
 
@@ -813,49 +785,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
     );
 
-    new CLMS.xiNET.CrosslinkViewer({
-        el: "#networkDiv",
-        model: CLMSUI.compositeModelInst,
-        //     myOptions: {layout: storedLayout}
-    });
-
-
-    // Alignment View
-    new CLMSUI.AlignCollectionViewBB({
-        el: "#alignPanel",
-        collection: CLMSUI.compositeModelInst.get("alignColl"),
-        displayEventName: "alignShow",
-        tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
-    });
-
-    // moved to models()
-    /*
-    // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
-        if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
-            sequences.forEach (function (entry) {
-                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
-            }, this);
-            // this triggers an event to say loads has changed in the alignment collection
-            // more efficient to listen to that then redraw/recalc for every seq addition
-            this.bulkAlignChangeFinished ();
-
-            console.log ("3D sequences poked to collection", this);
-        }
-    });
-
-    // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
-    // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, CLMSUI.compositeModelInst.get("clmsModel"));
-        // this triggers an event to say loads has changed in the alignment collection
-        // more efficient to listen to that then redraw/recalc for every seq addition
-        this.bulkAlignChangeFinished ();
-
-        console.log ("CSV sequences poked to collection", this);
-    });
-	*/
-
     new CLMSUI.DistogramBB({
         el: "#distoPanel",
         model: CLMSUI.compositeModelInst,
@@ -867,6 +796,53 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
             chartTitle: "Histogram",
             seriesName: "Actual"
         }
+    });
+
+    new CLMSUI.ScatterplotViewBB({
+        el: "#scatterplotPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "scatterplotShow",
+    });
+};
+
+CLMSUI.init.viewsThatNeedAsyncData = function() {
+    /* 'cos circle listens to annotation model which is formed from uniprot async data */
+    new CLMSUI.CircularViewBB({
+        el: "#circularPanel",
+        displayEventName: "circularShow",
+        model: CLMSUI.compositeModelInst,
+    });
+
+    // Make a drop down menu constructed from the annotations collection
+    new CLMSUI.AnnotationDropDownMenuViewBB({
+        el: "#annotationsDropdownPlaceholder",
+        collection: CLMSUI.compositeModelInst.get("annotationTypes"),
+        myOptions: {
+            title: "Annotations",
+            closeOnClick: false,
+            groupByAttribute: "category",
+            labelByAttribute: "type",
+            toggleAttribute: "shown",
+            tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+            sectionHeader: function(d) {
+                return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
+                    (d.source ? " (" + d.source + ")" : "");
+            },
+        }
+    });
+
+    new CLMS.xiNET.CrosslinkViewer({
+        el: "#networkDiv",
+        model: CLMSUI.compositeModelInst,
+        //     myOptions: {layout: storedLayout}
+    });
+
+    // Alignment View
+    new CLMSUI.AlignCollectionViewBB({
+        el: "#alignPanel",
+        collection: CLMSUI.compositeModelInst.get("alignColl"),
+        displayEventName: "alignShow",
+        tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
     // This makes a matrix viewer
@@ -900,12 +876,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#pdbPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "pdbShow",
-    });
-
-    new CLMSUI.ScatterplotViewBB({
-        el: "#scatterplotPanel",
-        model: CLMSUI.compositeModelInst,
-        displayEventName: "scatterplotShow",
     });
 
     new CLMSUI.CSVFileChooserBB({

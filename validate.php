@@ -51,7 +51,6 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
-		<link rel="stylesheet" href="../vendor/css/c3.css<?php echo $cacheBuster ?>">
 
         <!-- Spectrum Viewer styles  -->
         <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
@@ -64,50 +63,70 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/xispecAdjust.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/style.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="./css/tooltip.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../vendor/css/c3.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/distogram.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/minigram.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/ddMenuViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/selectionViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/spectrumViewWrapper.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/validate.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/key.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
-        <link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/scatterplot.css<?php echo $cacheBuster ?>">
+        <!-- <link rel="stylesheet" href="./css/networkPage.css<?php echo $cacheBuster ?>"> -->
+        <link rel="stylesheet" href="./css/searchSummary.css<?php echo $cacheBuster ?>">
+	<link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
-
+        <script type="text/javascript" src="../vendor/js/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
-        <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
+	<script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
+
+        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js<?php echo $cacheBuster ?>"></script>
 
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/models.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/minigramViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/filterViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/fdr.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/distogramViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/filterViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/tooltipViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/minigramViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/alignModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
-
+        <script type="text/javascript" src="./js/keyViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/scatterplotViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/networkFrame.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/downloads.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
 
 
 
@@ -140,6 +159,7 @@ header('Content-type: text/html; charset=utf-8');
                 <span class="headerLabel">
                     <?php echo $_SESSION['session_name'] ?>
                 </span>
+                <p id="viewDropdownPlaceholder"></p>
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
             </div> <!-- page-header -->
@@ -175,7 +195,7 @@ header('Content-type: text/html; charset=utf-8');
             var success = function (text) {
                 spinner.stop(); // stop spinner on request returning
 				var json = JSON.parse (text);
-				CLMSUI.init.modelsEssential(json);
+				CLMSUI.init.models(json);
 
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                 document.title = "Validate " + CLMS.arrayFromMapKeys(searches).join();
@@ -184,17 +204,93 @@ header('Content-type: text/html; charset=utf-8');
 							onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
 				} });
 
-                // need to make #spectrumSettingsWrapper before we can turn it into a backbone view later. mjg 27/11/17
-                d3.select("body").append("div")
-                    .attr("id", "spectrumSettingsWrapper")
-                    .attr("class", "dynDiv")
-                ;
+                var windowIds = ["spectrumSettingsWrapper", "keyPanel", "distoPanel", "searchSummaryPanel", "scatterplotPanel", "urlSearchBox"];
+                // something funny happens if I do a data join and enter with d3 instead
+                // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
+                // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
+                windowIds.forEach(function(winid) {
+                    d3.select("body").append("div")
+                        .attr("id", winid)
+                        .attr("class", "dynDiv dynDiv_bodyLimit");
+                });
+
 				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
+                // Generate checkboxes for view dropdown
+                var checkBoxData = [
+                    {
+                        id: "distoChkBxPlaceholder",
+                        label: CLMSUI.DistogramBB.prototype.identifier,
+                        eventName: "distoShow",
+                        tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"
+                    },
+                    {
+                        id: "scatterplotChkBxPlaceholder",
+                        label: "Scatterplot",
+                        eventName: "scatterplotShow",
+                        tooltip: "Configurable view for comparing two Cross-Link/Match properties",
+                        sectionEnd: true
+                    },
+                    {
+                        id: "keyChkBxPlaceholder",
+                        label: "Legend",
+                        eventName: "keyShow",
+                        tooltip: "Explains and allows changing of current colour scheme"
+                    },
+                    {
+                        id: "searchSummaryChkBxPlaceholder",
+                        label: "Search Summaries",
+                        eventName: "searchesShow",
+                        tooltip: "Shows metadata for current searches",
+                        sectionEnd: true
+                    },
+                ];
+                checkBoxData.forEach(function(cbdata) {
+                    var options = $.extend({
+                        labelFirst: false
+                    }, cbdata);
+                    var cbView = new CLMSUI.utils.checkBoxView({
+                        myOptions: options
+                    });
+                    $("#viewDropdownPlaceholder").append(cbView.$el);
+                }, this);
+
+                var compModel = CLMSUI.compositeModelInst;
+                // Add them to a drop-down menu (this rips them away from where they currently are - document)
+                var maybeViews = ["#nglChkBxPlaceholder" /*, "#distoChkBxPlaceholder"*/ ];
+                new CLMSUI.DropDownMenuViewBB({
+                        el: "#viewDropdownPlaceholder",
+                        model: compModel.get("clmsModel"),
+                        myOptions: {
+                            title: "Views",
+                            menu: checkBoxData,
+                            tooltipModel: compModel.get("tooltipModel")
+                        }
+                    })
+                    // hide/disable view choices that depend on certain data being present until that data arrives
+                    .filter(maybeViews, false)
+                    .listenTo(compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
+                        this.filter(maybeViews, !!newDistancesObj);
+                });
+
+                function selectEverything(){
+                    var allMatches = CLMSUI.compositeModelInst.get("clmsModel").get("matches")
+                    CLMSUI.compositeModelInst.setMarkedMatches ("selection", allMatches);
+                }
+
+                selectEverything();
                 CLMSUI.vent.trigger ("spectrumShow", true);
 
-        var allMatches = CLMSUI.compositeModelInst.get("clmsModel").get("matches")
-        CLMSUI.compositeModelInst.setMarkedMatches ("selection", allMatches);
+                CLMSUI.compositeModelInst.listenTo(CLMSUI.vent, "scatterplotShow", function(arg) {
+                    if (arg == false){
+                        selectEverything();
+                    }
+                });
+                CLMSUI.compositeModelInst.listenTo(CLMSUI.vent, "distoShow", function(arg) {
+                    if (arg == false) {
+                        selectEverything();
+                    }
+                });
 
                 // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the SpectrumSettingsView is too late to be picked up
                 // so we run it again here, doesn't do any harm
@@ -220,6 +316,7 @@ header('Content-type: text/html; charset=utf-8');
                     success (text);
                 }
             });
+
 
 
         //]]>
