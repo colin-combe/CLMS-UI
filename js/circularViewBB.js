@@ -37,7 +37,7 @@
         totalLength += dgap * noOfGaps;
         var scale = d3.scale.linear().domain([0,totalLength]).range(range);
         var total = dgap / 2;   // start with half gap, so gap at top is symmetrical (like a double top)
-        
+
         var nodeCoordMap = d3.map();
         nodeArr.forEach (function (node) {
             var size = node.size || 1;  // again size is sometimes not there for some artificial protein (usually an ambiguous placeholder)
@@ -46,7 +46,7 @@
             total += size + dgap;
             //CLMSUI.utils.xilog ("prot", nodeCoordMap.get(node.id));
         });
-        
+
         var featureCoords = [];
         var fid = 0;
         featureArrs.forEach (function (farr, i) {
@@ -107,7 +107,7 @@
 			  "click .backdrop": "clearSelection",
           });
         },
-		
+
 		defaultOptions: {
 			nodeWidth: 10,  // this is a percentage measure
 			tickWidth: 23,
@@ -128,7 +128,7 @@
 
         initialize: function (viewOptions) {
             var self = this;
-			
+
 			this.defaultOptions.featureParse = function (feature, nodeid) {
 				// feature.start and .end are 1-indexed, and so are the returned convStart and convEnd values
 				if (feature.start == undefined) {
@@ -138,7 +138,7 @@
 				var convEnd = +feature.end;
 				var type = feature.type.toLowerCase();
 				var protAlignModel = self.model.get("alignColl").get(nodeid);
-				
+
 				if (protAlignModel && (type !== "cross-linkable-1" && type !== "cross-linkable-2" && type !== "digestible")) {
 					var alignmentID = feature.alignmentID || "Canonical";
 					/*
@@ -162,7 +162,7 @@
 				CLMSUI.utils.xilog (feature, "convStart", +feature.start, convStart, "convEnd", +feature.end, convEnd, protAlignModel);
 				return {fromPos: convStart, toPos: convEnd};
 			};
-			
+
 			CLMSUI.CircularViewBB.__super__.initialize.apply (this, arguments);
 
             // this.el is the dom element this should be getting added to, replaces targetDiv
@@ -177,17 +177,17 @@
                     })
                 )
             ;
-			
+
 			mainDivSel.select(".backdrop").style("background-color", this.options.background);	// can replace .backdrop class colouring with this option if defined
-            
+
             var buttonData = [
                 {class:"downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
             ];
-            
+
             var toolbar = mainDivSel.select("div.toolbar");
             CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
-            
+
             // DROPDOWN STARTS
             // Various view options set up, then put in a dropdown menu
             var orderOptionsButtonData = [
@@ -208,7 +208,7 @@
                 }, this)
             ;
             CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, orderOptionsButtonData);
-   
+
             var orderoptid = this.el.id+"OrderOptions";
             toolbar.append("p").attr("id", orderoptid);
             new CLMSUI.DropDownMenuViewBB ({
@@ -221,8 +221,8 @@
 					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
                 }
             });
-			
-			
+
+
 			var showOptionsButtonData = [
                 {class: "showLinkless", label: "All Proteins", id: "showLinkless", initialState: this.options.showLinkless, tooltip: "Keep showing proteins with no current cross-links for a steadier layout"},
                 {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
@@ -236,7 +236,7 @@
 				})
 			;
             CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, showOptionsButtonData);
-			
+
 			var showoptid = this.el.id+"ShowOptions";
             toolbar.append("p").attr("id", showoptid);
             new CLMSUI.DropDownMenuViewBB ({
@@ -249,8 +249,8 @@
 					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
                 }
             });
-            
-            
+
+
             // DROPDOWN ENDS
 
             var degToRad = Math.PI / 180;
@@ -281,7 +281,7 @@
                 .radius(function(d) { return d.rad; })
                 .angle(function(d) { return d.ang * degToRad; })
             ;
-            
+
             // 'bundle' intersects circle when trying to draw curves around circumference of circle between widely separated points
             this.outsideLine = d3.svg.line.radial()
                 .interpolate("basis")
@@ -334,7 +334,7 @@
             this.interactorOrder = _.pluck (CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")), "id");
 
             var alignCall = 0;
-			
+
             // listen to custom filteringDone event from model
             this.listenTo (this.model, "filteringDone", function () {
 				// filtering can change node and thus feature positioning too if proteins are hidden or rearranged by sorting
@@ -342,7 +342,7 @@
                     self.render();
                 } else {
                     self.renderPartial (["links", "nodes"]);
-                }   
+                }
             });
             this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
@@ -357,7 +357,7 @@
             this.listenTo (this.model.get("annotationTypes"), "change:shown", function () { self.renderPartial (["features"]); });
             //this.listenTo (this.model.get("clmsModel"), "change:matches", this.reOrder);
             this.reOrderAndRender();
-            
+
             return this;
         },
 
@@ -377,7 +377,7 @@
                 });
                 return _.pluck (prots, "id");
             };
-			
+
             var self = this;
             var sortFuncs = {
                 best: function () { return CLMSUI.utils.circleArrange (self.filterInteractors (this.model.get("clmsModel").get("participants"))); },
@@ -387,7 +387,7 @@
             this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : _.pluck (prots, "id");
             return this;
         },
-        
+
         reOrderAndRender: function (localOptions) {
             return this.reOrder(localOptions).render(localOptions);
         },
@@ -396,17 +396,17 @@
             this.options.intraOutside = !this.options.intraOutside;
             this.render ();	// nodes move position too (radially)
         },
-        
-        showResLabelsIfRoom: function () {      
-            this.options.showResLabels = !this.options.showResLabels;       
-            this.renderPartial (["linkLabels"]);      
+
+        showResLabelsIfRoom: function () {
+            this.options.showResLabels = !this.options.showResLabels;
+            this.renderPartial (["linkLabels"]);
         },
-        
+
         toggleLinklessVisibility : function () {
             this.options.showLinkless = !this.options.showLinkless;
             this.render();
         },
-		
+
 		toggleHomomOppositeIntra : function () {
             this.options.homomOpposite = !this.options.homomOpposite;
             this.renderPartial (["links"]);
@@ -429,11 +429,11 @@
             }
             return this;
         },
-		
+
 		showAccentedNodes: function (accentType) {
 			this.showAccentOnTheseNodes (d3.select(this.el).selectAll(".circleNode"), accentType);
 		},
-		
+
 		showAccentOnTheseNodes: function (d3Selection, accentType) {
 			var accentedNodeList = this.model.get (accentType === "selection" ? "selectedProteins" : "highlightedProteins");
             if (accentedNodeList && this.isVisible()) {
@@ -444,7 +444,7 @@
             }
             return this;
 		},
-			
+
 
         actionNodeLinks: function (nodeId, actionType, add, startPos, endPos) {
             //var crossLinks = this.model.get("clmsModel").get("crossLinks");
@@ -459,7 +459,7 @@
             this.model.setMarkedCrossLinks (actionType, matchLinks, actionType === "highlights", add);
             //this.model.set (actionType, matchLinks);
         },
-		
+
 		clearSelection: function (evt) {
 			// don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
 			// this is also logically consistent as it's adding 'nothing' to the existing selection
@@ -482,7 +482,7 @@
                 var out = intraOutside ? intra && (homomOpposite ? !homom : true) : (homomOpposite ? homom : false);
                 var rad = out ? rad2 : rad1;
                 var bowRadius = out ? rad2 * bowOutMultiplier: 0;
-                
+
                 var a1 = Math.min (link.start, link.end);
                 var a2 = Math.max (link.start, link.end);
                 var midang = (a1 + a2) / 2; //(a2 - a1 < 180) ? (a1 + a2) / 2 : ((a1 + a2 + 360) / 2) % 360; // mid-angle (bearing in mind it might be shorter to wrap round the circle)
@@ -531,39 +531,39 @@
         },
 
         filterFeatures: function (featureArrays, participant) {
-            
+
             var features = d3.merge (featureArrays.filter (function(arr) { return arr !== undefined; }));
             var annots = this.model.get("annotationTypes").where({shown: true});
             var featureFilterSet = d3.set (annots.map (function(annot) { return annot.get("type"); }));
             // 'cos some features report as upper case
             featureFilterSet.values().forEach (function (value) {
-                featureFilterSet.add (value.toUpperCase());    
+                featureFilterSet.add (value.toUpperCase());
             });
-            
+
             if (featureFilterSet.has("Digestible")) {
                 var digestFeatures = this.model.get("clmsModel").getDigestibleResiduesAsFeatures (participant);
                 var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (digestFeatures);
                 features = d3.merge ([mergedFeatures, features]);
             }
-            
+
             if (featureFilterSet.has("Cross-linkable-1")) {
                 var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures (participant, 1);
                 var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (crossLinkableFeatures);
                 features = d3.merge ([mergedFeatures, features]);
             }
-            
+
             if (featureFilterSet.has("Cross-linkable-2")) {
                 var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures (participant, 2);
                 var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures (crossLinkableFeatures);
                 features = d3.merge ([mergedFeatures, features]);
             }
-            
+
             CLMSUI.utils.xilog ("annots", annots, "f", features);
-            return features ? features.filter (function (f) { 
+            return features ? features.filter (function (f) {
                 return featureFilterSet.has (f.type);
             }, this) : [];
         },
-		
+
 		renderPartial: function (renderPartArr) { this.render ({changed: d3.set (renderPartArr)}); },
 
         render: function (options) {
@@ -581,25 +581,25 @@
 
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.model.getFilteredCrossLinks();    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
-                
+
                 // If only one protein hide some options, and make links go in middle
                 // make it so menu stays if we've filtered down to one protein, rather than just one protein in the search
-                
+
                 d3.select(this.el).selectAll("button.flipIntraButton,#"+this.el.id+"Options")
                     .style("display", (this.model.get("clmsModel").realProteinCount < 2) ? "none" : null)
                 ;
-                
+
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
                 //CLMSUI.utils.xilog ("fi", filteredInteractors, interactors);
-                
+
                 var fmap = d3.map (filteredInteractors, function(d) { return d.id; });
-                
+
                 // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
                 if (filteredInteractors.length !== this.interactorOrder.length) {    // interactors is map so size, interactorOrder is array so length
 					console.log ("REORDERING OK", filteredInteractors.length, this.interactorOrder.length)
                     this.reOrder();
                 }
-                
+
                 // reset filteredInteractors to same order as interactor order
                 filteredInteractors = this.interactorOrder
                     .filter (function (interactorId) {
@@ -630,11 +630,11 @@
                 var arcRadii = [
                     {arc: "arc", inner: innerNodeRadius, outer: tickRadius},
                     {arc: "featureArc", inner: innerFeatureRadius, outer: tickRadius}, // both radii same for textArc
-                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc      
-                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},        
-                 ];     
-                 arcRadii.forEach (function (arcData) {     
-                     this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);       
+                    {arc: "textArc", inner: textRadius, outer: textRadius}, // both radii same for textArc
+                    {arc: "resLabelArc", inner: innerNodeRadius, outer: textRadius},
+                 ];
+                 arcRadii.forEach (function (arcData) {
+                     this[arcData.arc].innerRadius(arcData.inner).outerRadius(arcData.outer);
                  }, this);
 
                 var nodes = layout.nodes;
@@ -667,14 +667,14 @@
                     // draw names on nodes
                     this.drawNodeText (gRot, nodes);
                 }
-                if (!changed || changed.has("links") || changed.has("linkLabels")) {     
-                    this.drawResidueLetters (gRot, linkCoords);     
+                if (!changed || changed.has("links") || changed.has("linkLabels")) {
+                    this.drawResidueLetters (gRot, linkCoords);
                 }
             }
 
             return this;
         },
-        
+
         addOrGetGroupLayer : function (g, layerClass) {
             var groupLayer = g.select("g."+layerClass);
             if (groupLayer.empty()) {
@@ -689,7 +689,7 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             //CLMSUI.utils.xilog ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
-            
+
             var lineCopy = {};  // make cache as linkJoin and ghostLinkJoin will have same 'd' paths for the same link
 
             // draw thin links
@@ -702,19 +702,19 @@
                     .attr("class", "circleLink")
             ;
             linkJoin
-                .attr("d", function(d) { 
-                    var path = (d.outside ? self.outsideLine : self.line)(d.coords); 
+                .attr("d", function(d) {
+                    var path = (d.outside ? self.outsideLine : self.line)(d.coords);
                     lineCopy[d.id] = path;
                     return path;
                 })
                 .style("stroke", function(d) { return colourScheme.getColour(crossLinks.get(d.id)); })
                 .classed ("ambiguous", function(d) { return crossLinks.get(d.id).ambiguous; })
             ;
-            
+
             // draw thick, invisible links (used for highlighting and mouse event capture)
             var ghostLayer = this.addOrGetGroupLayer (g, "ghostLayer");
             var ghostLinkJoin = ghostLayer.selectAll(".circleGhostLink").data(links, self.idFunc);
-            
+
             ghostLinkJoin.exit().remove();
             ghostLinkJoin.enter()
                 .append("path")
@@ -737,7 +737,7 @@
                     })
             ;
             ghostLinkJoin
-                .attr("d", function(d) { 
+                .attr("d", function(d) {
                     var path = lineCopy[d.id] || (d.outside ? self.outsideLine : self.line)(d.coords);
                     return path;
                 })
@@ -746,7 +746,7 @@
 
         drawNodes: function (g, nodes) {
             var self = this;
-            
+
             var nodeLayer = this.addOrGetGroupLayer (g, "nodeLayer");
             var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
 
@@ -778,7 +778,7 @@
             nodeJoin
                 .attr("d", this.arc)
             ;
-			
+
 			this.showAccentOnTheseNodes (nodeJoin, "selection");
 
             return this;
@@ -902,13 +902,13 @@
                     return pathd;
                 })
             ;
-            
+
             // add labels to layer, to ensure they 'float' above feature elements added directly to g
             var nodeLabelLayer = this.addOrGetGroupLayer (g, "nodeLabelLayer");
             var textJoin = nodeLabelLayer.selectAll("text.circularNodeLabel")
                 .data (tNodes, self.idFunc)
             ;
-            
+
             textJoin.exit().remove();
             textJoin.enter()
                 .append("text")
@@ -919,7 +919,7 @@
                         .attr("xlink:href", function(d) { return "#" + pathId(d); })
                         //.text (function(d) { return d.name.replace("_", " "); })
             ;
-			
+
 			// this lets names update for existing nodes
 			textJoin.select("text textPath").text (function(d) { return d.name.replace("_", " "); });
 
@@ -928,13 +928,13 @@
 
         drawFeatures : function (g, features) {
             var self = this;
-            
+
             // Sort so features are drawn biggest first, smallest last (trying to avoid small features being occluded)
             features.sort (function (a, b){
                 var diff = (b.end - b.start) - (a.end - a.start);
                 return (diff < 0 ? -1 : (diff > 0 ? 1 : 0));
             });
-            
+
             var featureLayer = this.addOrGetGroupLayer (g, "featureLayer");
             var featureJoin = featureLayer.selectAll(".circleFeature").data(features, self.idFunc);
 
@@ -957,9 +957,9 @@
                         self.actionNodeLinks (d.nodeID, "selection", add, d.fstart, d.fend);
                     })
             ;
-            
+
             //CLMSUI.utils.xilog ("FEATURES", features);
-            
+
             featureJoin
                 .order()
                 .attr("d", this.featureArc)
@@ -968,16 +968,16 @@
 
             return this;
         },
-        
-        
+
+
         drawResidueLetters : function (g, links) {
-            
+
             var circumference = this.resLabelArc.innerRadius()() * 2 * Math.PI;
             //CLMSUI.utils.xilog ("ff", this.resLabelArc, this.resLabelArc.innerRadius(), this.resLabelArc.innerRadius()(), circumference);
             if (circumference / links.length < 30 || !this.options.showResLabels) {    // arbitrary cutoff decided by me (mjg)
                 links = [];
             }
-            
+
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var resMap = d3.map();
             links.forEach (function (link) {
@@ -986,18 +986,18 @@
                 resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[link.coords.length - 1], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
             });
             var degToRad = Math.PI / 180;
-            
-            var letterLayer = this.addOrGetGroupLayer (g, "letterLayer");           
+
+            var letterLayer = this.addOrGetGroupLayer (g, "letterLayer");
             var resJoin = letterLayer.selectAll(".residueLetter").data(resMap.entries(), function(d) { return d.key; });
-            
+
             resJoin.exit().remove();
-            
+
             resJoin.enter()
                 .append("text")
                 .attr ("class", "residueLetter")
                 .text (function(d) { return d.value.res; })
             ;
-            
+
             resJoin
                 .attr("transform", function(d) {
                     var polar = d.value.polar;
@@ -1005,7 +1005,7 @@
                     var x = polar.rad * Math.cos (rang);
                     var y = polar.rad * Math.sin (rang);
                     var rot = (polar.ang < 90 || polar.ang > 270) ? polar.ang : polar.ang + 180;
-                    return "rotate ("+rot+" "+x+" "+y+") translate("+x+" "+y+")";   
+                    return "rotate ("+rot+" "+x+" "+y+") translate("+x+" "+y+")";
                 })
                 .attr ("dy", function(d) {
                     var polar = d.value.polar;
@@ -1015,27 +1015,27 @@
 
             return this;
         },
-        
+
         relayout: function (descriptor) {
             if (descriptor && descriptor.dragEnd) { // avoids doing two renders when view is being made visible
                 this.render();
             }
             return this;
         },
-        
+
         identifier: "Circular",
-        
+
         optionsToString: function () {
             var abbvMap = {
                 showResLabels: "RESLBLS",
                 intraOutside: "SELFOUTER",
                 showLinkless: "SHOWIFNOLINKS",
             };
-            var fields = ["showResLabels"];   
+            var fields = ["showResLabels"];
             if (this.model.get("clmsModel").realProteinCount > 1) {
                 fields.push ("intraOutside", "showLinkLess", "sort");
             }
-            
+
             var str = CLMSUI.utils.objectStateToAbbvString (this.options, fields, d3.set(), abbvMap);
             return str;
         },

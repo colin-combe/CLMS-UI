@@ -18,7 +18,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			"click .intraRandomButton": "reRandom",
 		});
 	},
-	
+
 	defaultOptions: {
 		xlabel: "X Value",
 		ylabel: "Count",
@@ -195,7 +195,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 						}
 						return c;
 					},
-				},  
+				},
 				contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
 					var text = this.getTooltipContent (d, defaultTitleFormat, defaultValueFormat, color);
 					return _.unescape (text);
@@ -212,9 +212,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			},
 			onrendered: function () {
 				if (firstRun) {
-					firstRun = false; 
+					firstRun = false;
 					this.api.hide ("Cross-Links", {withLegend: true});    // doesn't work properly if done in configuration above
-					if (! self.model.get("clmsModel").get("decoysPresent")) {   
+					if (! self.model.get("clmsModel").get("decoysPresent")) {
 						this.api.hide ("Decoys (TD-DD)", {withLegend: true}); // if no decoys, hide the decoy total series
 					}
 				}
@@ -260,16 +260,16 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 		return this;
 	},
-	
+
 	setMultipleSelectControls: function (elem, options, keepOld) {
 		var self = this;
 		CLMSUI.utils.addMultipleSelectControls ({
-            addToElem: elem, 
-            selectList: ["X"], 
-            optionList: options, 
+            addToElem: elem,
+            selectList: ["X"],
+            optionList: options,
 			keepOldOptions: keepOld || false,
-            selectLabelFunc: function (d) { return "Plot This Data Along Axis ►"; }, 
-            optionLabelFunc: function (d) { return d.label; }, 
+            selectLabelFunc: function (d) { return "Plot This Data Along Axis ►"; },
+            optionLabelFunc: function (d) { return d.label; },
             changeFunc: function () { self.render(); },
         });
 	},
@@ -284,7 +284,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			var curXLabel = this.chart.internal.config.axis_x_label;
 			var newX = (curXLabel !== funcMeta.label);
 			if (newX) {	// if a new attribute set on the x axis, change the x axis label and tick format if necessary
-				this.options.xCurrentTickFormat = funcMeta.valueFormat || this.options.xStandardTickFormat; 
+				this.options.xCurrentTickFormat = funcMeta.valueFormat || this.options.xStandardTickFormat;
 				this.chart.axis.labels ({x: funcMeta.label});
 			}
 			this.showRandomButton();
@@ -333,7 +333,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 			// Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
 			countArrays[TD].forEach (function (v, i) {
-				countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts  
+				countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts
 			});
 			countArrays.splice (DD,1);   // remove DD, its purpose is done
 			seriesNames.splice (DD,1);
@@ -343,7 +343,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			//var maxY = d3.max(countArrays[0]);  // max calced on real data only
 			// if max y needs to be calculated across all series
 			var maxY = d3.max(countArrays, function(array) {
-				return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array if not already removed as it's dumping ground for everything over last value 
+				return d3.max(removeCatchAllCategory ? array : array.slice (0, -1));  // ignore last element in array if not already removed as it's dumping ground for everything over last value
 			});
 			maxY = Math.max (maxY, 1);
 			//console.log ("maxY", maxY);
@@ -444,7 +444,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		//maxY = maxY || 1;
 		var curMaxY = this.chart.axis.max().y;
 		console.log ("curMaxY", curMaxY, "my", maxY);
-		if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {   
+		if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) {
 			console.log ("resetting axis max from", curMaxY, "to", maxY);
 			this.chart.axis.max({y: maxY});
 		}
@@ -460,7 +460,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			return (curHidden === active);
 		})
 		.map (function (fsseriesInfo) {
-			return fsseriesInfo.name;    
+			return fsseriesInfo.name;
 		});
 
 		if (toggleList.length) {
@@ -502,8 +502,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	getFilteredLinksByDecoyStatus: function () {
 		return {
 			links: [
-				this.model.getFilteredCrossLinks (), 
-				this.model.getFilteredCrossLinks ("decoysTD"), 
+				this.model.getFilteredCrossLinks (),
+				this.model.getFilteredCrossLinks ("decoysTD"),
 				this.model.getFilteredCrossLinks ("decoysDD")
 			],
 			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"]
@@ -516,7 +516,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		//console.log ("ress", residueSets);
 		var distObj = this.model.get("clmsModel").get("distancesObj");
 		var randArr = distObj ? distObj.getSampleDistances (
-			d3.median ([10000, linkCount * 100, 100000]), 
+			d3.median ([10000, linkCount * 100, 100000]),
 			d3.values (crosslinkerSpecificityMap),
 			{intraOnly: this.options.intraRandomOnly}
 		)
@@ -633,12 +633,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			var rescaleLength = 1;
 			if (rescaleToSeries) {
 				var rsIndex = seriesNames.indexOf (rescaleToSeries);
-				rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1; 
+				rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1;
 				//console.log ("rescale", aseriesName, rescaleToSeries, seriesNames, rsIndex, seriesLengths);
 			}
 
 			var pcd = this.getPrecalcedDistribution (aseriesName);
-			var binnedData = pcd ? pcd.data : 
+			var binnedData = pcd ? pcd.data :
 				d3.layout
 					.histogram()
 					.value (function (d) { return d[1]; })  // [1] is the actual value, [0] is the crosslink
@@ -688,7 +688,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		d3.select(this.el).select(".c3")
 			.style("max-height", "none")
 			.style ("position", null)
-		;   
+		;
 		//this.redrawColourRanges();
 		this.chart.resize();
 		CLMSUI.utils.declutterAxis (d3.select(this.el).select(".c3-axis-x"));
@@ -712,7 +712,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			colMap[subSeries] = colRange[i];
 		});
 		colMap["Unknown"] = colModel.undefinedColour;
-		return colMap; 
+		return colMap;
 	},
 
 	highlightOrSelect: function (type, c3Data, c3MouseData) {
@@ -749,7 +749,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	// removes view
 	// not really needed unless we want to do something extra on top of the prototype remove function (like destroy c3 view just to be sure)
 	remove: function () {
-		CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);    
+		CLMSUI.DistogramBB.__super__.remove.apply (this, arguments);
 		// this line destroys the c3 chart and it's events and points the this.chart reference to a dead end
 		this.chart = this.chart.destroy();
 	},
@@ -759,6 +759,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	optionsToString: function () {
 		var seriesIDs = _.pluck (this.chart.data.shown(), "id");
 		var funcMeta = this.getSelectedOption("X");
-		return funcMeta.label + "-" + seriesIDs.join("-").toUpperCase();    
+		return funcMeta.label + "-" + seriesIDs.join("-").toUpperCase();
 	},
 });

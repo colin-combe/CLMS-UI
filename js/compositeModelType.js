@@ -15,11 +15,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             groupColours: null, // will be d3.scale for colouring by search/group,
 			TTCrossLinkCount: 0
         });
-		
+
 		this.listenTo (this.get("clmsModel"), "change:matches", function () {
 			this.calcAndStoreTTCrossLinkCount();
 		});
-		
+
 		this.calcAndStoreTTCrossLinkCount();
     },
 
@@ -256,7 +256,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredCrossLinks: function (type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
     },
-	
+
 	calcAndStoreTTCrossLinkCount: function () {
 		var clmsModel = this.get("clmsModel");
 		if (clmsModel) {
