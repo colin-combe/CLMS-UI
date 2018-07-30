@@ -678,7 +678,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var funcMeta = this.getSelectedOption("X");
 		var extras = this.attrExtraOptions[funcMeta.id] || {};
 		d3.select(this.el).select("#distoPanelintraRandom")
-			.style ("display", self.model.get("clmsModel").realProteinCount > 1 && extras.showRandoms ? null : "none")
+			.style ("display", self.model.get("clmsModel").targetProteinCount > 1 && extras.showRandoms ? null : "none")
 		;
 	},
 

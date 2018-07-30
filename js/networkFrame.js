@@ -229,7 +229,7 @@ CLMSUI.init.modelsEssential = function(options) {
     scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
     var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
-        betweenLinks: true, //clmsModelInst.realProteinCount > 1,
+        betweenLinks: true, //clmsModelInst.targetProteinCount > 1,
         A: clmsModelInst.get("manualValidatedPresent"),
         B: clmsModelInst.get("manualValidatedPresent"),
         C: clmsModelInst.get("manualValidatedPresent"),
@@ -490,7 +490,7 @@ CLMSUI.init.views = function() {
 CLMSUI.init.viewsEssential = function(options) {
 
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var singleRealProtein = CLMSUI.compositeModelInst.get("clmsModel").realProteinCount < 2;
+    var singleTargetProtein = CLMSUI.compositeModelInst.get("clmsModel").targetProteinCount < 2;
     new CLMSUI.FilterViewBB({
         el: "#filterPlaceholder",
         model: filterModel,
@@ -499,13 +499,13 @@ CLMSUI.init.viewsEssential = function(options) {
                 //todo: reinstate sensible hiding of controls, need listeners on these attributes
                 //temp hack - dont hide anything, data may change when csv uploaded
                 /*
-                "selfLinks": singleRealProtein,
-                "betweenLinks": singleRealProtein,
+                "selfLinks": singleTargetProtein,
+                "betweenLinks": singleTargetProtein,
                 "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
                 "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
                 "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
                 "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
-                "protNames": singleRealProtein,
+                "protNames": singleTargetProtein,
                 */
             }
         }

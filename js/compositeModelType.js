@@ -512,10 +512,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         };
         if (options.calcDecoyProteinDistances) {
             if (xlink.fromProtein.is_decoy) {
-                options.realFromPid = xlink.fromProtein.realProteinID; //this.get("clmsModel").getRealProteinID(xlink.fromProtein.id);
+                options.realFromPid = xlink.fromProtein.targetProteinID;
             }
             if (xlink.toProtein.is_decoy) {
-                options.realToPid = xlink.toProtein.realProteinID; //this.get("clmsModel").getRealProteinID(xlink.toProtein.id);
+                options.realToPid = xlink.toProtein.targetProteinID;
             }
         }
 

@@ -586,7 +586,7 @@
                 // make it so menu stays if we've filtered down to one protein, rather than just one protein in the search
 
                 d3.select(this.el).selectAll("button.flipIntraButton,#"+this.el.id+"Options")
-                    .style("display", (this.model.get("clmsModel").realProteinCount < 2) ? "none" : null)
+                    .style("display", (this.model.get("clmsModel").targetProteinCount < 2) ? "none" : null)
                 ;
 
                 if (filteredInteractors.length < 2) { this.options.intraOutside = false; }
@@ -1032,7 +1032,7 @@
                 showLinkless: "SHOWIFNOLINKS",
             };
             var fields = ["showResLabels"];
-            if (this.model.get("clmsModel").realProteinCount > 1) {
+            if (this.model.get("clmsModel").targetProteinCount > 1) {
                 fields.push ("intraOutside", "showLinkLess", "sort");
             }
 
