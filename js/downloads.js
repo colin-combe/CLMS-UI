@@ -134,7 +134,7 @@ function getMatchesCSV () {
                 + '","' + (+pp2 + match.linkPos2 - 1)
                 + '","' + pp2 + '","'
                 + (match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "") + '","' + match.linkPos2 + '","'
-                + match.score + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","'
+                + match.score() + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","'
                 + match.calcMZ() + '","' + match.calcMass() + '","' + match.massError() + '","'
                 + match.autovalidated + '","' + match.validated + '","'
                 + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '","' + match.scanIndex + '","'
@@ -181,8 +181,8 @@ function getLinksCSV(){
         var validationStats = [];
         for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
             var match = filteredMatchesAndPepPos[fm_pp].match;
-            if (highestScore == null || match.score > highestScore) {
-                highestScore = match.score.toFixed(4);
+            if (highestScore == null || match.score() > highestScore) {
+                highestScore = match.score().toFixed(4);
             }
             if (match.autovalidated === true) {linkAutovalidated = true;}
             validationStats.push(match.validated);
@@ -232,8 +232,8 @@ function getLinksCSV(){
         var validationStats = [];
         for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
             var match = filteredMatchesAndPepPos[fm_pp].match;
-            if (highestScore == null || match.score > highestScore) {
-                highestScore = match.score.toFixed(4);
+            if (highestScore == null || match.score() > highestScore) {
+                highestScore = match.score().toFixed(4);
             }
             if (match.autovalidated === true) {linkAutovalidated = true;}
             validationStats.push(match.validated);

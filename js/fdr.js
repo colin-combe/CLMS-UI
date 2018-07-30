@@ -9,8 +9,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
                 return filterModel.subsetFilter (match_pp.match, proteinMatchFunc);
             })
         ;
-        //return Math.sqrt (d3.mean (filtered, function(match_pp) { return match_pp.match.score * match_pp.match.score; }) || 0);
-		return Math.sqrt (d3.sum (filtered, function(match_pp) { return match_pp.match.score * match_pp.match.score; }) || 0);
+        return Math.sqrt (d3.sum (filtered, function(match_pp) { return match_pp.match.score() * match_pp.match.score(); }) || 0);
     };
 
     // 'threshold' can be legitimately undefined to have no fdr

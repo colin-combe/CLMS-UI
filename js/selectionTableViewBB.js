@@ -128,7 +128,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             },
             "linkPos1": function (d) { return d.linkPos1; },
             "linkPos2": function (d) { return d.linkPos2; },
-            "score": function (d) { return twoZeroPadder (d.score); },
+            "score": function (d) { return twoZeroPadder (d.score()); },
             "expMZ": function (d) { return massZeroPadder (d.expMZ()); },
             "expMass": function (d) { return massZeroPadder (d.expMass()); },
             "calcMZ": function (d) { return massZeroPadder (d.calcMZ()); },
@@ -229,7 +229,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             })
            // Then sort links by top remaining match score for each link
             .sort(function (a, b) {
-                return b.matches[0].score - a.matches[0].score;
+                return b.matches[0].score() - a.matches[0].score();
             })
         ;
 
