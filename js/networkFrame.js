@@ -31,7 +31,7 @@ var allDataLoaded = _.after(3, function() {
     //init annotation types
     var annotationTypes = [];
 
-    // add option for showing digestible residues
+    //add option for showing digestible residues
     var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
         category: "AA",
         type: "Digestible",
@@ -538,13 +538,13 @@ CLMSUI.init.viewsEssential = function(options) {
             model: miniDistModelInst,
             myOptions: {
                 maxX: 0, // let data decide
-                seriesNames: ["Matches", "Decoys"],
+                seriesNames: ["Targets", "Decoys"],
                 //scaleOthersTo: "Matches",
                 xlabel: "Score",
                 ylabel: "Count",
                 height: 65,
                 colours: {
-                    "Matches": "blue",
+                    "Targets": "blue",
                     "Decoys": "red"
                 }
             }
@@ -905,6 +905,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#scatterplotPanel",
         model: CLMSUI.compositeModelInst,
         displayEventName: "scatterplotShow",
+    });
+
+    new CLMSUI.CSVFileChooserBB({
+        el: "#csvPanel",
+        model: CLMSUI.compositeModelInst,
+        displayEventName: "csvShow",
     });
 
     new CLMSUI.LinkMetaDataFileChooserBB({
