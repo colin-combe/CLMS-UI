@@ -964,8 +964,8 @@ CLMSUI.modelUtils = {
             id: "Charge", label: "Match Precursor Charge (z)", decimalPlaces: 0,  matchLevel: true
         },
         {
-            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.calc_mass; }); },
-            unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.calc_mass; }); },
+            linkFunc: function (link) { return link.filteredMatches_pp.map (function (m) { return m.match.calcMass(); }); },
+            unfilteredLinkFunc: function (link) { return link.matches_pp.map (function (m) { return m.match.calcMass(); }); },
             id: "CalcMass", label: "Match Calculated Mass (m)", decimalPlaces: 4, matchLevel: true
         },
         {
