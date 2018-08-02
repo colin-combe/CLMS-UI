@@ -521,13 +521,15 @@ CLMSUI.init.viewsEssential = function (options) {
 
     // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
 
-    var xiSPEC_model_vars = {
+    var xiSPEC_options = {
+        targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        showCustomConfig: true
     }
 
-    xiSPEC.init('modular_xispec', xiSPEC_model_vars, true);
+    xiSPEC.init(xiSPEC_options);
 
 
     // Update spectrum view when external resize event called
