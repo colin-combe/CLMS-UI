@@ -279,7 +279,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     compModel.get("filterModel").set("unval", false);
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -433,11 +433,11 @@ CLMSUI.init.views = function() {
             eventName: "pdbShow",
             tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure and of distance background in Matrix View"
         },
-        {
-            name: "Cross-Links (CSV)",
-            eventName: "csvShow",
-            tooltip: "Load Cross-Links from a local CSV File"
-        },
+        // {
+        //     name: "Cross-Links (CSV)",
+        //     eventName: "csvShow",
+        //     tooltip: "Load Cross-Links from a local CSV File"
+        // },
         {
             name: "Cross-Link Metadata",
             eventName: "linkMetaShow",
