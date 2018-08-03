@@ -26,12 +26,11 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             },
             "click .autoLayoutButton": function() {
                 CLMSUI.vent.trigger("xiNetAutoLayout", true);
-            }, //"autoLayout",
-            //  "click .loadLayoutButton": "loadLayout",
+            },
             "click .saveLayoutButton": "saveLayout",
             "change .showXinetLabels": function() {
                 CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXinetLabels").property("checked"));
-            }, //"autoLayout",
+            },
         });
 
     },
@@ -60,46 +59,34 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
     },
 
     initialize: function(viewOptions) {
-        var myDefaults = {
-            expectedFormat: {
-                "Select links": "LEFT click on link; CTRL or SHIFT and LEFT click to add/remove links from selection. (The spectra matches supporting the selected links will appear in the table below xiNET.)",
-                "Select protein": "LEFT click on protein; CTRL or SHIFT and LEFT click to add/remove proteins from selection. (Selected proteins can be moved around together.)",
-                "Toggle protein between bar and circle": "RIGHT click on protein",
-                "Zoom": "Mouse wheel",
-                "Move proteins": "Click and drag on protein",
-                "Expand bar (increases bar length until sequence is visible)": "SHIFT and RIGHT click on protein",
-                "Rotate bar": "Click and drag on handles that appear at end of bar",
-                "Flip self-links": "RIGHT-click on self-link",
-            }
-        };
+        var myDefaults = {};
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         // viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
         CLMSUI.xiNetControlsViewBB.__super__.initialize.apply(this, arguments);
 
         var self = this;
 
-        // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        wrapperPanelHtml = "<span class='noBreak'>" +
-                "<span>Drag To </span>" +
+        buttonHtml = "<span class='noBreak panOrSelect'>" +
+            "<span>Drag To </span>" +
                 "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
                 "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
-                "</span>" +
-                "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
+            "</span>" +
+            "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
                 "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
         if (CLMSUI.loggedIn == true) {
-            wrapperPanelHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
-            "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>";// +
+            buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
+                "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
         }
 
-        wrapperPanelHtml +="<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
-             "</span>" +
-                "<button class='btn btn-1 btn-1a downloadButton'>IMAGE AS SVG</button>";// +
+        buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
+            "</span>" +
+            "<button class='btn btn-1 btn-1a downloadButton'>IMAGE AS SVG</button>";
 
         mainDivSel.html(
-            wrapperPanelHtml
+            buttonHtml
         );
 
         var tooltips = {
@@ -117,30 +104,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             }
         }, this);
 
-/*
-        var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
-
-
-        var sectionData = [this.options.expectedFormat];
-        sectionData[0].sectionName = "Show mouse & keyboard controls";
-
-        var headerFunc = function(d) {
-            return d.sectionName;
-        };
-        var rowFilterFunc = function(d) {
-            var rows = d3.entries(d);
-            var badKeys = self.options.removeTheseKeys;
-            return rows.filter(function(row) {
-                return !badKeys || !badKeys.has(row.key);
-            });
-        };
-        var cellFunc = function(d) {
-            d3.select(this).html(d.value);
-        };
-
-        CLMSUI.utils.sectionTable.call(this, formatPanel, sectionData, mainDivSel.attr("id"), ["Action", "Control"], headerFunc, rowFilterFunc, cellFunc, []);
-*/
-        //hack to take out pan/select option in firefox
+        //hack to take out pan/select option in firefox TODO - change to detecting relevant feature (getIntersectionList)
         if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
             // Do Firefox-related activities
             d3.selectAll(".panOrSelect").style("display", "none");
@@ -220,6 +184,7 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
 
 });
 
+/*
 CLMSUI.xiNetHelpViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     events: function() {
@@ -241,7 +206,6 @@ CLMSUI.xiNetHelpViewBB = CLMSUI.utils.BaseFrameView.extend({
                 "Toggle protein between bar and circle": "RIGHT click on protein",
                 "Zoom": "Mouse wheel",
                 "Move proteins": "Click and drag on protein",
-                "Expand bar (increases bar length until sequence is visible)": "SHIFT and RIGHT click on protein",
                 "Rotate bar": "Click and drag on handles that appear at end of bar",
                 "Flip self-links": "RIGHT-click on self-link",
             }
@@ -256,7 +220,7 @@ CLMSUI.xiNetHelpViewBB = CLMSUI.utils.BaseFrameView.extend({
         var wrapperPanel = mainDivSel.append("div")
             .attr("class", "panelInner");
 
-     /*   var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
+        var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
 
 
         var sectionData = [this.options.expectedFormat];
@@ -277,8 +241,8 @@ CLMSUI.xiNetHelpViewBB = CLMSUI.utils.BaseFrameView.extend({
         };
 
         CLMSUI.utils.sectionTable.call(this, formatPanel, sectionData, mainDivSel.attr("id"), ["Action", "Control"], headerFunc, rowFilterFunc, cellFunc, []);
-	*/
-},
+    },
 
     identifier: "xiNET Help",
 });
+*/
