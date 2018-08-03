@@ -15,11 +15,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             groupColours: null, // will be d3.scale for colouring by search/group,
 			TTCrossLinkCount: 0
         });
-		
+
 		this.listenTo (this.get("clmsModel"), "change:matches", function () {
 			this.calcAndStoreTTCrossLinkCount();
 		});
-		
+
 		this.calcAndStoreTTCrossLinkCount();
     },
 
@@ -256,7 +256,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredCrossLinks: function (type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
     },
-	
+
 	calcAndStoreTTCrossLinkCount: function () {
 		var clmsModel = this.get("clmsModel");
 		if (clmsModel) {
@@ -512,10 +512,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         };
         if (options.calcDecoyProteinDistances) {
             if (xlink.fromProtein.is_decoy) {
-                options.realFromPid = xlink.fromProtein.realProteinID; //this.get("clmsModel").getRealProteinID(xlink.fromProtein.id);
+                options.realFromPid = xlink.fromProtein.targetProteinID;
             }
             if (xlink.toProtein.is_decoy) {
-                options.realToPid = xlink.toProtein.realProteinID; //this.get("clmsModel").getRealProteinID(xlink.toProtein.id);
+                options.realToPid = xlink.toProtein.targetProteinID;
             }
         }
 

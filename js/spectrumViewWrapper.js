@@ -155,8 +155,8 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
                 if (filteredSelectedMatches.length) {
                     var match = filteredSelectedMatches[0].match;
                     //console.log ("match", match, selectedMatches.get(match.id));
-                    if (match.score > highestScore || !highestScoringMatch) {
-						highestScore = match.score;
+                    if (match.score() > highestScore || !highestScoringMatch) {
+						highestScore = match.score();
                         highestScoringMatch = match;
                     }
                 }

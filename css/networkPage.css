@@ -6,7 +6,7 @@
 	float: right;
 }
 
-#xiNetControlsPanel {
+#xiNetButtonBar {
     /* right:0px; */
 	/* width: 710px;
 	text-transform: none; */
@@ -43,12 +43,21 @@
 */
 
 /* xinetcontrol panel */
-.xinetButtonBar {
+#xiNetButtonBar {
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	padding-left:15px;
 }
 
 .layoutLabel {
-	letter-spacing: 1px;
+	padding-left: 15px;
+}
+
+#xiNetButtonBar > .sectionDividerRight {
+	border-right: 1px solid rgba(255,255,255,255);
+	margin-right: 0.5em;
+}
+
+#xiNetButtonBar > .sectionDividerLeft {
+	border-left: 1px solid rgba(255,255,255,255);
 	margin-left: 0.5em;
 }
