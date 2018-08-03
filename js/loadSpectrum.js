@@ -30,7 +30,7 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
                 console.log ("error getting peak list", error);
             } else {
             	d3.select("#range-error").text ("");
-                formatted_data.peaklist = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
+                formatted_data.peakList = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
                 console.log(formatted_data);
                 xiSPEC.setData(formatted_data);
             }
