@@ -33,7 +33,7 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
                 for (var p =0; p < peakArray.length; p++) {
                     peakArray[p] = peakArray[p].split(/\s/);
                 }
-                formatted_data.peaklist = peakArray;//JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
+                formatted_data.peakList = peakArray;//JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
                 console.log(formatted_data);
                 xiSPEC.setData(formatted_data);
             }

@@ -42,7 +42,7 @@
 
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
-		<link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
 
         <!-- Spectrum Viewer styles  -->
         <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
@@ -151,7 +151,6 @@
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../spectrum/vendor/js.cookie.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/Wrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/model.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>

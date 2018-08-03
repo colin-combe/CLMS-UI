@@ -31,7 +31,7 @@ var allDataLoaded = _.after(3, function() {
     //init annotation types
     var annotationTypes = [];
 
-    // add option for showing digestible residues
+    //add option for showing digestible residues
     var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
         category: "AA",
         type: "Digestible",
@@ -538,13 +538,13 @@ CLMSUI.init.viewsEssential = function(options) {
             model: miniDistModelInst,
             myOptions: {
                 maxX: 0, // let data decide
-                seriesNames: ["Matches", "Decoys"],
+                seriesNames: ["Targets", "Decoys"],
                 //scaleOthersTo: "Matches",
                 xlabel: "Score",
                 ylabel: "Count",
                 height: 65,
                 colours: {
-                    "Matches": "blue",
+                    "Targets": "blue",
                     "Decoys": "red"
                 }
             }
@@ -631,14 +631,15 @@ CLMSUI.init.viewsEssential = function(options) {
 
     // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
 
-    var xiSPEC_model_vars = {
+    var xiSPEC_options = {
+        targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        showCustomConfig: false
     }
 
-    xiSPEC.init('modular_xispec', xiSPEC_model_vars, true);
-
+    xiSPEC.init(xiSPEC_options);
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
