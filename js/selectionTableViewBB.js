@@ -186,6 +186,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 			},
 		});
 
+		d3el.select(".rightSpan").classed ("selectionTableHideToggle", true);
 		new CLMSUI.utils.checkBoxView ({
 			el: d3el.select(".rightSpan").node(),
 			model: this.viewStateModel,
@@ -193,7 +194,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 				toggleAttribute: "hidden",
 				id: self.el.id +"HideToggle",
 				label: "Hide",
-			},
+			}
 		});
 
     },

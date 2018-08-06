@@ -61,9 +61,13 @@
 #alternatives {
     background: rgba(9, 29, 66, 0.9);
     margin: 0 10px;
-    height:150px;
+    /* height:150px; */ /* otherwise hide button doesn't work */
 }
 
 button {
     line-height: normal;
+}
+
+.xispec_subViewContent-plot {
+	min-height: 1px;	/* fix for firefox and ie11, otherwise quality plots bounds push over into alternatives table */
 }

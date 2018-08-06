@@ -62,6 +62,7 @@
     flex-shrink: 1;	/* otherwise it never shrinks and kicks alternative table out of view */
     height: calc(100% - 200px);
     position: relative;
+	min-height: 1px;	/* for firefox, ie11 - https://stackoverflow.com/questions/44948158/flexbox-overflow-issue-in-firefox */
 }
 
 #spectrumMainPlotDiv {
@@ -101,7 +102,7 @@
 #alternatives {
     /* height:200px; */
 	max-height: 200px;
-    flex-shrink: 0;
+    flex-shrink: 1;
 }
 
 .CLMSUIspectrumWrapper #alternatives {
