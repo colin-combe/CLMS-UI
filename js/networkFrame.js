@@ -642,7 +642,6 @@ CLMSUI.init.viewsEssential = function(options) {
 
     xiSPEC.init(xiSPEC_options);
 
-
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
         this.resize();

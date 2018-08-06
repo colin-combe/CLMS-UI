@@ -28,7 +28,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		chartTitle: this.identifier,
 		intraRandomOnly: false,
 		maxX: 90,
-		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		attributeOptions: null,
 		xStandardTickFormat: d3.format(","),
 	},
 
@@ -42,6 +42,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				showRandoms: true,
 			}
 		};
+
+        this.options.attributeOptions = CLMSUI.compositeModelInst.get("clmsModel").attributeOptions;
 
 		this.precalcedDistributions = {Random: {data: [], origSize: 0}};
 
