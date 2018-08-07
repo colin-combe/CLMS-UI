@@ -282,7 +282,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        //this.modeChanged();
+        this.modeChanged();
     },
 
     filter: function (evt) {
@@ -322,12 +322,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		}
     },
 
-    // modeChanged: function () {
-	// 	var fdrMode = d3.select("#fdrMode").node().checked;
-    //     d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
-    //     d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
-	// 	this.model.set ("fdrMode", fdrMode);
-    // },
+    modeChanged: function () {
+		var fdrMode = d3.select("#fdrMode").node().checked;
+        d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
+        d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
+        if (fdrMode == true) {
+            d3.select("#ambig").property("checked", false);
+            d3.select("#ambig").property("disabled", true);
+            this.model.set("ambig", false);
+        } else {
+            d3.select("#ambig").property("disabled", false);
+        }
+		this.model.set ("fdrMode", fdrMode);
+    },
 
     render: function () {
         return this;
