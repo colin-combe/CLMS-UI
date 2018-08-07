@@ -196,7 +196,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             // 1. New stage model made 2. Stage model change event fired here - xlRepr set to null
             // 3. New linklist data generated 4. linklist change event fired here (but no-op as xlRepr === null)
             // 5. New distanceObj generated (making new xlRepr) 6. distanceObj change event fired here making new xlRepr
-            this.xlRepr = null; 
+			if (this.xlRepr) {
+				this.xlRepr.dispose();	// remove old mouse handlers or they keep firing and cause errors
+				this.xlRepr = null; 
+			}
             this.listenTo (newStageModel, "change:linkList", function (stageModel, newLinkList) {
                 if (this.xlRepr) {
                     this.xlRepr._handleDataChange();
@@ -782,6 +785,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
                     var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
+					//console.log ("cp", cp, pdtrans, this, this.structureComp);
                     crosslinkData.getModel().get("tooltipModel")
                         .set("header", "Cross-Linked with "+CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex, {"Distance (Å)": distances}))
@@ -972,7 +976,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     dispose: function () {
         this.stage.signals.clicked.remove (this._selectionPicking, this);
         this.stage.signals.hovered.remove (this._highlightPicking, this);
-
+		// console.log ("dispose called");
         // this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
     },
     
