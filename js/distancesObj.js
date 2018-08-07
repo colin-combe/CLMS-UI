@@ -126,7 +126,7 @@ CLMSUI.DistancesObj.prototype = {
 	
 	
     
-    // options - intraOnly:true for no cross-protein sample links
+    // options - withinProtein:true for no cross-protein sample links
     getSampleDistances: function (sampleLinkQuantity, crosslinkerSpecificityList, options) {
         options = options || {};
         crosslinkerSpecificityList = crosslinkerSpecificityList || [{name: "all", searches: new Set(), linkables: new Set()}];
@@ -169,9 +169,9 @@ CLMSUI.DistancesObj.prototype = {
                 CLMSUI.utils.xilog ("rr", searchID, srmap);
 
                 // Now pick lots of pairings from the remaining residues, one for each end of the crosslinker, so one from each residue list
-				var searchMeta = {hetero: crosslinkerSpecificity.heterobi, perSearch: sampleLinksPerSearch};
-                if (options.intraOnly) {   // if intra links only allowed
-                	this.generateSampleIntraOnlyDistancesBySearch (srmap, sampleDists, searchMeta, false);	// set true for chain-specific self restriction
+				var searchMeta = {heterobi: crosslinkerSpecificity.heterobi, perSearch: sampleLinksPerSearch};
+                if (options.withinProtein) {   // if intra links only allowed
+                	this.generateSampleIntraOnlyDistancesBySearch (srmap, sampleDists, searchMeta, options.withinChain || false);	// set true for chain-specific self restriction
                 } else {    // inter and intra links allowed (simpler)
                     this.generateSampleDistancesBySearch (srmap[0], srmap[1], sampleDists, sampleLinksPerSearch);
                 }
