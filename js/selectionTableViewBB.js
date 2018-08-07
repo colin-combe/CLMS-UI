@@ -241,8 +241,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return b.matches[0].score() - a.matches[0].score();
             })
         ;
-            d3.select("#page").text(newpage);
-            this.setPage(newpage);
 
 		// filter to top match per link if requested
 		if (options.topMatchesOnly) {
