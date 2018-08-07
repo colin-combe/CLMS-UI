@@ -7,6 +7,7 @@
     /* height: calc(100% - 45px); */
     flex-grow: 1;
     overflow: auto;
+	min-height: 1px;
 }
 
 .selectView TABLE  {
@@ -127,5 +128,13 @@
 
 .dynDiv .rightSpan label:hover {
     background: inherit;
+}
+
+.selectionTableHideToggle {
+	display: none;
+}
+
+#alternatives .selectionTableHideToggle {
+	display: inline-block;
 }
 
