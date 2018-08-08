@@ -6,6 +6,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         "mouseleave table": "highlight",
 		"mouseenter table": "focusTable",
 		"keydown table": "selectByKey",
+		"click .pageUp": "pageUp",
+		"click .pageDown": "pageDown",
+
     },
 
     initialize: function (options) {
@@ -146,19 +149,22 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.pageSize = this.options.pageSize || 20;
         var pager = d3el.select(".pager");
         if (!self.options.mainModel) {
-            pager.append("span").text("Page:");
+            //pager.append("span").text("Page:");
 
-            pager.append("input")
-                .attr("type", "number")
-                .attr("min", "1")
-                .attr("max", "999")
-                .style("display", "inline-block")
-                .on("input", function () {
-                    // this check stops deleting final character resetting page to 1 all the time
-                    if (d3.event.inputType !== "deleteContentBackward" && this.value) { // "deleteContentBackward" is chrome specific
-                        self.setPage(this.value);
-                    }
-                });
+            // pager.append("input")
+            //     .attr("type", "number")
+            //     .attr("min", "1")
+            //     .attr("max", "999")
+            //     .style("display", "inline-block")
+            //     .on("input", function () {
+            //         // this check stops deleting final character resetting page to 1 all the time
+            //         if (d3.event.inputType !== "deleteContentBackward" && this.value) { // "deleteContentBackward" is chrome specific
+            //             self.setPage(this.value);
+            //         }
+            //     });
+
+            pager.append("span").html("Page:<span id='page'>1</span><button class='pageDown'>&lt;</button><button class='pageUp'>&gt;</button>")
+
         } else {
             pager.append("span").text("Alternative Explanations");
         }
@@ -278,6 +284,22 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         }
     },
 
+    pageUp: function () {
+        if (this.page < this.getPageCount()){
+            var newpage = this.page + 1;
+            d3.select("#page").text(newpage);
+            this.setPage(newpage);
+        }
+    },
+
+    pageDown: function () {
+        if (this.page > 1) {
+            var newpage = this.page - 1;
+            d3.select("#page").text(newpage);
+            this.setPage(newpage);
+        }
+    },
+
     setPage: function (pg) {
         // limit page number and set text elements
         var mci = this.matchCountIndices;
@@ -286,8 +308,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var pageCount = this.getPageCount();
         pg = Math.max (Math.min (pg, pageCount), 1);
         this.page = pg;
-        var input = d3.select(this.el).select(".pager>input");
-        input.property("value", pg);
+        // var input = d3.select(this.el).select(".pager>input");
+        // input.property("value", pg);
+        d3.select("#page").text(pg);
 
         var limit = totalSelectedFilteredMatches; // selectedXLinkCount;
         var lower = (limit === 0) ? 0 : ((pg - 1) * this.pageSize) + 1;

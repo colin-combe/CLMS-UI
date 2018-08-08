@@ -15,7 +15,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			parentEvents = parentEvents();
 		}
 		return _.extend({}, parentEvents, {
-			"click .intraRandomButton": "reRandom",
+			"click .randomScope": "reRandom",
 		});
 	},
 
@@ -26,10 +26,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		subSeriesNames: [],
 		scaleOthersTo: {"Random": "Cross-Links"},
 		chartTitle: this.identifier,
-		intraRandomOnly: false,
 		maxX: 90,
 		attributeOptions: null,
 		xStandardTickFormat: d3.format(","),
+		randomScope: "All",
 	},
 
 	initialize: function (viewOptions) {
@@ -62,11 +62,39 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 		var buttonData = [
 			{class: "downloadButton", label: CLMSUI.utils.commonLabels.downloadImg+"SVG", type: "button", id: "download"},
-			{class: "intraRandomButton", label: "Self Randoms Only", type: "checkbox", id: "intraRandom", initialState: this.options.intraRandomOnly, title: "Show only random links between same protein", noBreak: false},
 		];
-
 		var toolbar = mainDivSel.select("div.toolbar");
 		CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+		
+		// Various view options set up, then put in a dropdown menu
+        var toggleButtonData = [
+			{class: "randomScope", label: "All combinations (Between & Self)", id: "All", tooltip: "Calculate random links from within and between all proteins", group: "randomScope", type: "radio", value: "All"},
+			{class: "randomScope", label: "Within proteins only (Self)", id: "Intra", tooltip: "Only calculate random links from within the same proteins", group: "randomScope", type: "radio", value: "Intra"},
+			{class: "randomScope", label: "Within chains only (Self in same protein copy)", id: "Chain", tooltip: "Only calculate random links from within the same chain", group: "randomScope", type: "radio", value: "Chain"},
+        ];
+        toggleButtonData
+            .forEach (function (d) {
+				d.value = d.value || d.label;
+                d.inputFirst = true;
+				if (d.initialState === undefined && d.group && d.value) {	// set initial values for radio button groups
+					d.initialState = (d.value === this.options[d.group]);
+				}
+            }, this)
+        ;
+        CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
+		
+		var optid = this.el.id+"RandomOptions";
+        toolbar.append("p").attr("id", optid);
+        new CLMSUI.DropDownMenuViewBB ({
+            el: "#"+optid,
+            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            myOptions: {
+                title: "Random Scope ▼",
+                menu: toggleButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
+                closeOnClick: false,
+				tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+            }
+        });
 
 		// Add a select widget for picking axis data type
 		this.setMultipleSelectControls (toolbar, this.options.attributeOptions, false);
@@ -517,10 +545,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var crosslinkerSpecificityMap = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
 		//console.log ("ress", residueSets);
 		var distObj = this.model.get("clmsModel").get("distancesObj");
+		var rscope = this.options.randomScope;
 		var randArr = distObj ? distObj.getSampleDistances (
 			d3.median ([10000, linkCount * 100, 100000]),
 			d3.values (crosslinkerSpecificityMap),
-			{intraOnly: this.options.intraRandomOnly}
+			{withinProtein: rscope === "Intra" || rscope === "Chain", withinChain: rscope === "Chain"}
 		)
 		: [];
 		var thresholds = this.getBinThresholds ([[]]);
@@ -669,8 +698,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return countArrays;
 	},
 
-	reRandom: function () {
-		this.options.intraRandomOnly = !this.options.intraRandomOnly;
+	reRandom: function (evt) {
+		this.options.randomScope = evt.target.value;
 		this.options.reRandom = true;
 		this.render();
 	},
@@ -679,8 +708,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var self = this;
 		var funcMeta = this.getSelectedOption("X");
 		var extras = this.attrExtraOptions[funcMeta.id] || {};
-		d3.select(this.el).select("#distoPanelintraRandom")
-			.style ("display", self.model.get("clmsModel").targetProteinCount > 1 && extras.showRandoms ? null : "none")
+		d3.select(this.el).select("#distoPanelRandomOptions")
+			.style ("display", /*self.model.get("clmsModel").targetProteinCount > 1 && */extras.showRandoms ? null : "none")
 		;
 	},
 
