@@ -298,6 +298,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			keepOldOptions: keepOld || false,
             selectLabelFunc: function (d) { return "Plot This Data Along Axis ►"; },
             optionLabelFunc: function (d) { return d.label; },
+			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.render(); },
         });
 	},
