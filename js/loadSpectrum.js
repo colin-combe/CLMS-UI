@@ -24,15 +24,22 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
 
     console.log("loadSpectrum match:" + match.id);
 
-    //TODO: ignoreResultUnlessLastRequested reimplementation
     d3.text ('../CLMS-model/php/peakList.php?sid='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
             if (error) {
                 console.log ("error getting peak list", error);
             } else {
-            	d3.select("#range-error").text ("");
-                formatted_data.peakList = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
-                console.log(formatted_data);
-                xiSPEC.setData(formatted_data);
+                if (text == "false") {
+                    var xiVersion = CLMSUI.compositeModelInst.get("clmsModel").get("searches").get(match.searchId).version;
+                    var message = "Missing peak list for spectrum " + match.spectrumId + ". xiSearch v" + xiVersion;
+                    alert(message);
+                    //xiSPEC.Spectrum.model.clear();
+                    //xiSPEC.setData({});
+                } else {
+                	d3.select("#range-error").text ("");
+                    formatted_data.peakList = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
+                    console.log(formatted_data);
+                    xiSPEC.setData(formatted_data);
+                }
             }
     });
 
