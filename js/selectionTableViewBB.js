@@ -307,6 +307,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.page = pg;
         // var input = d3.select(this.el).select(".pager>input");
         // input.property("value", pg);
+        d3.select("#page").text(pg);
 
         var limit = totalSelectedFilteredMatches; // selectedXLinkCount;
         var lower = (limit === 0) ? 0 : ((pg - 1) * this.pageSize) + 1;
