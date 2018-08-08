@@ -432,6 +432,7 @@ CLMSUI.modelUtils = {
 
     // Nice web-servicey way of doing ngl chain to clms protein matching
     // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
+    //   - and it depends on search sequences being identical to uniprot cannonical seqs? - cc 
     // Therefore, current default is to use sequence matching to detect similarities
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
         $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
