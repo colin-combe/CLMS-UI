@@ -195,6 +195,11 @@
         },
         
         comparator: "displayLabel",
+		
+		possibleComparators: [
+			{label: "Name", compFunc: "displayLabel"},
+			{label: "No. of Aligned Sequences", compFunc: function (m) { return m.get("seqCollection").length; }}
+		],
         
         nonTrivialChange: undefined,
          

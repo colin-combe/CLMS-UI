@@ -19,13 +19,38 @@
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
+            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
             holdingDiv.html (template ({
                 headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
             }));  
+			
+			// Sort dropdown
+			var self = this;
+			CLMSUI.utils.addMultipleSelectControls ({
+				addToElem: topElem.select(".alignSortWidget"),
+				selectList: ["Sort Tabs By"], 
+				optionList: this.collection.possibleComparators, 
+				optionLabelFunc: function (d) { return d.label; },
+				optionValueFunc: function (d) { return d.compFunc; },
+				changeFunc: function () {
+					var compFunc;
+					// cant rely on event.target.value as it returns functions as a string
+					d3.select (d3.event.target)
+						.selectAll("option")
+						.filter(function() { return d3.select(this).property("selected"); })
+						.each (function (d) {
+							compFunc = d.compFunc;
+						})
+					;
+					self.collection.comparator = compFunc;
+					self.collection.sort();
+					self.render();
+				},
+				initialSelectionFunc: function(d) { return d.compFunc === self.collection.comparator; }
+			});
             
             holdingDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
             

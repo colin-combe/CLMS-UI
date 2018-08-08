@@ -82,12 +82,6 @@ P.seq, TD.seq {
     font-family: Consolas, Courier;
 }
 
-/*
-.alignView P.alignHeader {
-    text-decoration: underline;
-}
-*/
-
 DIV.checkHolder {
 	padding-top: 1px;
     padding-bottom: 1px;
