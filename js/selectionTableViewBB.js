@@ -11,8 +11,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
     },
 
-    page: 1,
-
     initialize: function (options) {
         this.options = options || {};
 
