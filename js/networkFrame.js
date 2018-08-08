@@ -663,7 +663,7 @@ CLMSUI.init.viewsEssential = function(options) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId(match);
             CLMSUI.loadSpectrum(match, randId, this.model);
         } else {
-            this.model.clear();
+            xiSPEC.clear();
         }
     });
 
