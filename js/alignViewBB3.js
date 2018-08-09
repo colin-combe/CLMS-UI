@@ -104,9 +104,11 @@
 		},
         
         render: function () {
+			var models = this.collection.models;
+			
             var topElem = d3.select(this.el);
             var list = topElem.select("DIV.checkHolder");
-            var proteins = list.selectAll("span.alignTab").data(this.collection.models, function(d) { return d.id; });
+            var proteins = list.selectAll("span.alignTab").data(models, function(d) { return d.id; });
             var self = this;
             
             proteins.exit().remove();
@@ -125,12 +127,14 @@
             pspans.append("label")
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
                 .on ("mouseenter", function(d) {
+				    var nformat = d3.format(",d");
                     self.tooltipModel
                         .set ("header", d.get("displayLabel"))
-                        .set("contents", [
-                            ["Aligned Sequences", d.get("seqCollection") ? d.get("seqCollection").length : 0],
-                            //[d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],
-                        ])
+                        .set ("contents", 
+							self.collection.possibleComparators.slice(1).map (function (comp) {
+								return [comp.label, d.get("seqCollection") ? nformat(comp.compFunc(d)) : 0]
+							})
+                        )
                         .set("location", d3.event)
                     ;
                     self.tooltipModel.trigger ("change:location");
@@ -143,6 +147,9 @@
             ;
             
             proteins.order();
+			
+			// Hide sort widget if only 1 protein
+			topElem.select(".alignSortWidget").style("display", models.length > 1 ? null : "none");
             
             return this;
         },
