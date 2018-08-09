@@ -26,7 +26,7 @@ _.extend(CLMSUI.vent, Backbone.Events);
 var allDataLoaded = _.after(3, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
-    CLMSUI.blosumCollInst.trigger("modelSelected", CLMSUI.blosumCollInst.models[3]);
+    CLMSUI.blosumCollInst.trigger("blosumModelSelected", CLMSUI.blosumCollInst.models[3]);
 
     //init annotation types
     var annotationTypes = [];
@@ -128,9 +128,9 @@ CLMSUI.init.models = function(options) {
         allDataLoaded();
     });
 
-    // and when the blosum Collection fires a modelSelected event (via bothSyncsDone) it is accompanied by the chosen blosum Model
+    // and when the blosum Collection fires a blosumModelSelected event (via bothSyncsDone) it is accompanied by the chosen blosum Model
     // and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value
-    alignmentCollectionInst.listenTo(CLMSUI.blosumCollInst, "modelSelected", function(blosumModel) {
+    alignmentCollectionInst.listenTo(CLMSUI.blosumCollInst, "blosumModelSelected", function(blosumModel) {
         // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
         // (done internally within alignmentModelInst)
         this.models.forEach(function(protAlignModel) {

@@ -123,7 +123,6 @@ DIV.checkHolder SPAN INPUT:checked + label {
 }
 
 DIV.alignSettings {
-    padding-bottom: 0.5em;
     font-size: 1em
 }
 
@@ -163,4 +162,12 @@ DIV.alignSettings {
 .alignSettings .alignChoiceGroup label:not(:last-of-type) {
 	border-right: 1px solid #aaa;
 	margin-right: 0.5em;
+}
+
+.alignView .topRule {
+	margin-top: 0.5em;
+	/*border-top: 1px solid #aaa;*/
+	font-size: 0.75em;
+	color: #668;
+	line-height: 1.4em;
 }
