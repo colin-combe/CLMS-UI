@@ -633,6 +633,7 @@ CLMSUI.utils = {
             optionList: [],
             selectLabelFunc: function (d) { return d; },
             optionLabelFunc: function (d) { return d; },
+			optionValueFunc: function (d) { return d; },
             initialSelectionFunc: function (d,i) { return i === 0; }
         };
         settings = _.extend (defaults, settings);
@@ -671,6 +672,7 @@ CLMSUI.utils = {
                 .enter()
                 .append ("option")
                 .text (settings.optionLabelFunc)
+				.property ("value", settings.optionValueFunc)
                 .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
         ;
 

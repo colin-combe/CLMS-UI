@@ -195,6 +195,14 @@
         },
         
         comparator: "displayLabel",
+		
+		possibleComparators: [
+			{label: "Name", compFunc: "displayLabel"},
+			{label: "No. of Aligned Sequences", compFunc: function (m) { return m.get("seqCollection").length; }},
+			{label: "Total Alignment Score", compFunc: function (m) { 
+				return d3.sum (m.get("seqCollection").pluck("compAlignment").map(function(ca) { return ca.score; }))
+			}}
+		],
         
         nonTrivialChange: undefined,
          
