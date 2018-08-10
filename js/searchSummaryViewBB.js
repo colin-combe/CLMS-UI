@@ -44,7 +44,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend ({
         return this;
     },
 
-	searchDescriptionTemplate: "The identification of cross-links was performed with <%= version %> using the following parameters: MS accuracy, <%= ms1Value %> <%= ms1Units %>; MS/MS accuracy, <%= ms2Value %> <%= ms2Units %>; enzyme, <%= enzymeNames %>; maximum missed cleavages, <%= missedCleavages %>; maximum number of modifications, <%= maxModifications %>; fixed modification, <%= fixedModList %>; variable modifications, <%= varModList %>; and modification by the [??? hydrolyzed or the ammonia reacted cross-linker on lysine, serine, threonine, tyrosine, and the protein N terminus]. Cross-linking was allowed to involve <%= crossLinkerDesc %>.",
+	searchDescriptionTemplate: "The identification of cross-links was performed with <%= version %> using the following parameters: MS accuracy, <%= ms1Value %> <%= ms1Units %>; MS/MS accuracy, <%= ms2Value %> <%= ms2Units %>; enzyme, <%= enzymeNames %>; maximum missed cleavages, <%= missedCleavages %>; maximum number of modifications, <%= maxModifications %>; fixed modification, <%= fixedModList %>; variable modifications, <%= varModList %>. Cross-linking was allowed to involve <%= crossLinkerDesc %>.",
 	
 	exportDescriptions: function () {
 		var template = _.template (this.searchDescriptionTemplate);
@@ -52,25 +52,43 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend ({
 		var linkerData = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searches);
 		//console.log ("LD", linkerData);
 		
+		var modRegex=/^.*;MODIFIED:([^;]*)/;
+		
 		var descriptions = searches.map (function (search) {
 			
+			// https://stackoverflow.com/questions/15069587/is-there-a-way-to-join-the-elements-in-an-js-array-but-let-the-last-separator-b
+			var niceJoin = function (arr) {
+				return arr.length < 2 ? arr.join("") : arr.slice(0, -1).join(', ')+' and '+arr.slice(-1);
+			}
+			
 			// crosslinker descriptions for each search
-			var crossLinkerDescs = search.crosslinkers.map (function (clink) {
+			var crossLinkerDescs = search.crosslinkers ? search.crosslinkers.map (function (clink) {
 				var linkerDatum = linkerData[clink.name];
 				var linkables = linkerDatum.linkables;
 				var obj = { 
 					name: linkerDatum.name, 
-					first: Array.from(linkables[0].values())
+					first: niceJoin (
+						Array.from(linkables[0].values())
 						.map(function(code) { return CLMSUI.modelUtils.amino1toNameMap[code].replace("_", "-"); })
-						.join(", ") 
+					)
 				};
 				if (linkerDatum.heterobi) {
-					obj.second = Array.from(linkables[1].values())
+					obj.second = niceJoin (
+						Array.from(linkables[1].values())
 						.map(function(code) { return CLMSUI.modelUtils.amino1toNameMap[code].replace("_", "-"); })
-						.join(", ") 
+					);
 				}
 				return obj;
-			});
+			}) : "";
+			
+			var modDesc = function (mod) {
+				var residueList = mod.description.match (modRegex);
+				if (residueList && residueList[1]) {
+					var residues = residueList[1].split(",").map (function (letterCode) { return CLMSUI.modelUtils.amino1toNameMap[letterCode].replace("_", "-"); });
+					return mod.name + " of " + niceJoin (residues);
+				}
+				return "";
+			};
 			
 			// other values for each search
 			var values = {
@@ -79,20 +97,20 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend ({
 				ms1Units: search.mstoleranceunits,
 				ms2Value: search.ms2tolerance,
 				ms2Units: search.ms2toleranceunits,
-				enzymeNames: search.enzymes.map (function (enz) { return enz.name; }).join (", "),
+				enzymeNames: search.enzymes ? search.enzymes.map (function (enz) { return enz.name; }).join (", ") : "",
 				missedCleavages: search.missedcleavages,
-				maxModifications: search.modifications.length,
-				fixedModList: search.modifications
+				maxModifications: search.modifications ? search.modifications.length : 0,
+				fixedModList: search.modifications ? search.modifications
 					.filter(function (mod) { return mod.fixed === "t"; })
-					.map (function (mod) { return mod.name; })
-					.join (", "),
-				varModList: search.modifications
+					.map (function (mod) { return modDesc (mod); })
+					.join (", ") : "",
+				varModList: search.modifications ? search.modifications
 					.filter(function (mod) { return mod.fixed === "f"; })
-					.map (function (mod) { return mod.name; })
-					.join (", "),
+					.map (function (mod) { return modDesc (mod); })
+					.join (", ") : "",
 				crossLinkerDesc: crossLinkerDescs
 					.map (function (clinkDesc) {
-						return clinkDesc.name+" on "+clinkDesc.first + (clinkDesc.second ? " -> "+clinkDesc.second : "")
+						return clinkDesc.name+" on "+clinkDesc.first + (clinkDesc.second ? " at one end of the cross-link to "+clinkDesc.second + " at the other": "")
 					})
 					.join(", ")
 			}
