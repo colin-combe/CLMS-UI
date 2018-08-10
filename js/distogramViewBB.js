@@ -27,7 +27,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		scaleOthersTo: {"Random": "Cross-Links"},
 		chartTitle: this.identifier,
 		maxX: 90,
-		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		attributeOptions: null,
 		xStandardTickFormat: d3.format(","),
 		randomScope: "All",
 	},
@@ -42,6 +42,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				showRandoms: true,
 			}
 		};
+
+        this.options.attributeOptions = CLMSUI.compositeModelInst.get("clmsModel").attributeOptions;
 
 		this.precalcedDistributions = {Random: {data: [], origSize: 0}};
 

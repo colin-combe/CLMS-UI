@@ -515,7 +515,7 @@ CLMSUI.init.viewsEssential = function(options) {
         model: CLMSUI.compositeModelInst,
     });
 
-    if (CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent") === false) {
+    if (CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent") !== true) {
         d3.select("#filterModeDiv").style("display", "none");
     }
 
@@ -642,7 +642,6 @@ CLMSUI.init.viewsEssential = function(options) {
 
     xiSPEC.init(xiSPEC_options);
 
-
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
         this.resize();
@@ -664,7 +663,7 @@ CLMSUI.init.viewsEssential = function(options) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId(match);
             CLMSUI.loadSpectrum(match, randId, this.model);
         } else {
-            this.model.clear();
+            xiSPEC.clear();
         }
     });
 

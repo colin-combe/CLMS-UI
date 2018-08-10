@@ -33,7 +33,7 @@
 		jitter: true,
 		chartMargin: 10,
 		pointSize: 4,
-		attributeOptions: CLMSUI.modelUtils.attributeOptions,
+		attributeOptions: null,
 		standardTickFormat: d3.format(",d"),
 		logX: false,
 		logY: false
@@ -42,6 +42,8 @@
     initialize: function (viewOptions) {
         CLMSUI.ScatterplotViewBB.__super__.initialize.apply (this, arguments);
         
+        this.options.attributeOptions = CLMSUI.compositeModelInst.get("clmsModel").attributeOptions;
+
         var self = this;
 
         this.margin = {

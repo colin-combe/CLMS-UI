@@ -15,7 +15,28 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
     formatted_data.modifications = xiSPEC.SpectrumModel.knownModifications;
     formatted_data.precursorCharge = match.precursorCharge;
     formatted_data.fragmentTolerance = match.fragmentTolerance();
-    formatted_data.customConfig = CLMSUI.compositeModelInst.get("clmsModel").get("searches").get(match.searchId).customsettings.split('\n');
+
+    var search = CLMSUI.compositeModelInst.get("clmsModel").get("searches").get(match.searchId);
+    formatted_data.customConfig = search.customsettings.split('\n');
+
+
+    formatted_data.losses = [];
+    search.losses.forEach(function(loss){
+        formatted_loss = {};
+        var match = /(?=.*NAME:([^;]+))(?=.*aminoacids:([^;]+))(?=.*MASS:([^;]+)).*/.exec(loss.description);
+        if (match){
+            formatted_loss.id = match[1];
+            formatted_loss.specificity = match[2].split(',');
+            formatted_loss.mass = match[3];
+            if (loss.description.indexOf(';nterm'))
+                formatted_loss.specificity.push('NTerm');
+            if (loss.description.indexOf(';cterm'))
+                formatted_loss.specificity.push('CTerm');
+        }
+        formatted_data.losses.push(formatted_loss);
+        // ToDo: remove tmp fix for losses to customConfig
+        formatted_data.customConfig.push(loss.description);
+    });
 
     var ions = match.ionTypes();
     formatted_data.ionTypes = ions.map(function(ion){ return ion.type.replace("Ion", "")}).join(';')
@@ -24,15 +45,21 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
 
     console.log("loadSpectrum match:" + match.id);
 
-    //TODO: ignoreResultUnlessLastRequested reimplementation
     d3.text ('../CLMS-model/php/peakList.php?sid='+match.searchId+'-'+randId+'&spid='+match.spectrumId, function(error, text) {
             if (error) {
                 console.log ("error getting peak list", error);
             } else {
-            	d3.select("#range-error").text ("");
-                formatted_data.peakList = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
-                console.log(formatted_data);
-                xiSPEC.setData(formatted_data);
+                if (text == "false") {
+                    var xiVersion = CLMSUI.compositeModelInst.get("clmsModel").get("searches").get(match.searchId).version;
+                    var message = "Missing peak list for spectrum " + match.spectrumId + ". xiSearch v" + xiVersion;
+                    alert(message);
+                    xiSPEC.clear();
+                } else {
+                	d3.select("#range-error").text ("");
+                    formatted_data.peakList = JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
+                    console.log(formatted_data);
+                    xiSPEC.setData(formatted_data);
+                }
             }
     });
 
