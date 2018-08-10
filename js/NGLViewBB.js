@@ -411,7 +411,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    identifier: "NGL3D",
+    identifier: "NGL Viewer - PDB Structure",
     
     optionsToString: function () {  
         var abbvMap = {

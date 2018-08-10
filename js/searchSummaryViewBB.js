@@ -20,17 +20,19 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend ({
 				.append("div").attr ("class", "verticalFlexContainer")
 		;
         
-		mainPanel.append("button")
+		var descriptionButton = mainPanel.append("button")
 			.classed ("btn btn-1 btn-1a flexStatic", true)
 			.text("Download Search Descriptions")
 			.on ("click", function () {
-				var searchString = Array.from(self.model.get("searches").values())
+				var searchString = Array.from (self.model.get("searches").values())
 					.map (function (search) { return search.id; })
 					.join("-")
 				;
 				download (self.exportDescriptions(), "plain/text", "search_description_"+searchString+".txt", true);
 			})
 		;
+		descriptionButton.style ("display", self.model.get("crosslinkerSpecificity") ? null : "none");
+		
         mainPanel.append("div").attr("class", "searchSummaryDiv");
         
         return this;

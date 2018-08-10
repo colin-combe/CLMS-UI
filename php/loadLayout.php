@@ -18,8 +18,7 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 include('../../connectionString.php');
-$dbconn = pg_connect($connectionString)
-        or die('Could not connect: ' . pg_last_error());
+$dbconn = pg_connect($connectionString) or die('Could not connect to database.');
 
     //Stored layouts
 	// $layoutQuery = "SELECT t1.layout AS l "

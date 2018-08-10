@@ -129,9 +129,8 @@ CLMSUI.DistancesObj.prototype = {
     // options - withinProtein:true for no cross-protein sample links
     getSampleDistances: function (sampleLinkQuantity, crosslinkerSpecificityList, options) {
         options = options || {};
-        crosslinkerSpecificityList = crosslinkerSpecificityList || [{name: "all", searches: new Set(), linkables: new Set()}];
         var specificitySearchTotal = d3.sum (crosslinkerSpecificityList, function (rdata) { return rdata.searches.size; });
-        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION CALCS ------");
+        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION CALCS ------", crosslinkerSpecificityList);
         CLMSUI.utils.xilog (crosslinkerSpecificityList, "STOTS", specificitySearchTotal, this, this.matrices);
         var sampleLinksPerSearch = Math.ceil (sampleLinkQuantity / specificitySearchTotal);
         
