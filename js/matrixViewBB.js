@@ -992,7 +992,7 @@
     
     canvasImageParent: "svg g.clipg",   // place image made from canvas into clipped element (so image doesn't exceed matrix size)
         
-    identifier: "Matrix",
+    identifier: "Matrix View",
         
     optionsToString: function () {
         var matrixObj = this.options.matrixObj;

@@ -19,7 +19,7 @@
 
 include('../../connectionString.php');
 $dbconn = pg_connect($connectionString)
-        or die('Could not connect: ' . pg_last_error());
+        or die('Could not connect to database.');
 // Prepare a query for execution
 pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_id, layout, description) VALUES ($1, -1, $2, $3)');
 // Execute the prepared query
