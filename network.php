@@ -153,6 +153,7 @@
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/Wrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/model.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumControlsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js<?php echo $cacheBuster ?>"></script>
