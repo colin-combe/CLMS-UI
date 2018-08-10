@@ -47,12 +47,11 @@
         },
         
         render: function () {
-            console.log ("control rerendering");
             var self = this;
-            var controls = d3.select(this.el).selectAll("div.controlBlock input");
-            console.log ("selfm", self.model, controls.datum());
-            controls.attr("value", function(d) { return self.model.get(d.prop); });
-            
+            d3.select(this.el)
+				.selectAll("div.controlBlock input")
+				.attr("value", function(d) { return self.model.get(d.prop); })
+			;
             return this;
         },
           
@@ -75,7 +74,9 @@
         selectChanged: function (evt) {
             var control = d3.select(evt.target);
             var controlDatum = control.datum();
-            var selectedOption = control.selectAll("option").filter(function(d,i) { return i == control.property("selectedIndex"); });
+            var selectedOption = control.selectAll("option")
+				.filter(function(d,i) { return i == control.property("selectedIndex"); })
+			;
             this.model.set (controlDatum.prop, selectedOption.datum().value);   // actual matrix dataset is stored in d3 data, not in html option attributes
             // previous set will cause all sequences in this model to recalc
             // this line inform views that wish to know of such events at a bulk level, rather than individually
@@ -141,6 +142,6 @@
         selectChanged: function (evt) {
             var control = d3.select(evt.target);
             var selectedOption = control.selectAll("option").filter(function() { return this.selected; });
-            this.collection.trigger ("modelSelected", selectedOption.datum());
+            this.collection.trigger ("blosumModelSelected", selectedOption.datum());
         }
     });

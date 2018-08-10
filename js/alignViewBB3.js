@@ -19,13 +19,38 @@
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
+            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV><P class='topRule'>Per Protein Settings</P><DIV id='<%= alignControlID %>'></DIV></DIV><DIV><P class='topRule'>Global Settings</P><DIV id='<%= alignControlID2 %>'></DIV></DIV>");
             holdingDiv.html (template ({
                 headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
-            }));  
+            }));
+			
+			// Sort dropdown
+			var self = this;
+			CLMSUI.utils.addMultipleSelectControls ({
+				addToElem: topElem.select(".alignSortWidget"),
+				selectList: ["Sort Tabs By"], 
+				optionList: this.collection.possibleComparators, 
+				optionLabelFunc: function (d) { return d.label; },
+				optionValueFunc: function (d) { return d.compFunc; },
+				changeFunc: function () {
+					var compFunc;
+					// cant rely on event.target.value as it returns functions as a string
+					d3.select (d3.event.target)
+						.selectAll("option")
+						.filter(function() { return d3.select(this).property("selected"); })
+						.each (function (d) {
+							compFunc = d.compFunc;
+						})
+					;
+					self.collection.comparator = compFunc;
+					self.collection.sort();
+					self.render();
+				},
+				initialSelectionFunc: function(d) { return d.compFunc === self.collection.comparator; }
+			});
             
             holdingDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
             
@@ -79,9 +104,11 @@
 		},
         
         render: function () {
+			var models = this.collection.models;
+			
             var topElem = d3.select(this.el);
             var list = topElem.select("DIV.checkHolder");
-            var proteins = list.selectAll("span.alignTab").data(this.collection.models, function(d) { return d.id; });
+            var proteins = list.selectAll("span.alignTab").data(models, function(d) { return d.id; });
             var self = this;
             
             proteins.exit().remove();
@@ -100,12 +127,14 @@
             pspans.append("label")
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
                 .on ("mouseenter", function(d) {
+				    var nformat = d3.format(",d");
                     self.tooltipModel
                         .set ("header", d.get("displayLabel"))
-                        .set("contents", [
-                            ["Aligned Sequences", d.get("seqCollection") ? d.get("seqCollection").length : 0],
-                            //[d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],
-                        ])
+                        .set ("contents", 
+							self.collection.possibleComparators.slice(1).map (function (comp) {
+								return [comp.label, d.get("seqCollection") ? nformat(comp.compFunc(d)) : 0]
+							})
+                        )
                         .set("location", d3.event)
                     ;
                     self.tooltipModel.trigger ("change:location");
@@ -118,6 +147,9 @@
             ;
             
             proteins.order();
+			
+			// Hide sort widget if only 1 protein
+			topElem.select(".alignSortWidget").style("display", models.length > 1 ? null : "none");
             
             return this;
         },
