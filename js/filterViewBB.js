@@ -282,7 +282,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        this.modeChanged();
+        //this.modeChanged();
     },
 
     filter: function (evt) {
