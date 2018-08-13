@@ -785,7 +785,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.chart = this.chart.destroy();
 	},
 
-	identifier: "Histogram",
+	identifier: "Histogram View",
 
 	optionsToString: function () {
 		var seriesIDs = _.pluck (this.chart.data.shown(), "id");

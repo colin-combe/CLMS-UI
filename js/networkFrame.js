@@ -329,7 +329,7 @@ CLMSUI.init.views = function() {
         },
         {
             id: "distoChkBxPlaceholder",
-            label: CLMSUI.DistogramBB.prototype.identifier,
+            label: "Histogram",
             eventName: "distoShow",
             tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"
         },

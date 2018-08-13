@@ -22,7 +22,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         this.controlDiv = topDiv.select(".toolbar");
         this.controlDiv.append("button")
             .attr ("class", "downloadButton3 btn btn-1 btn-1a")
-            .text ("Download Cross-Link Colour Scheme as SVG")
+            .text ("Download Current Cross-Link Colour Scheme as SVG")
         ;
         this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
         
@@ -39,7 +39,9 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             homom: "<path d='m 18,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer dynColour'/>",
             selflinkinter: "<path d='m 3,28 l 14,-20 l 14,20' class='defaultStroke selfLink dynColour'/>",
             linkmodpep: "<path d='m 12,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour filled'/><path d='m 30,2 v 25 l -8,-5 l 8,-5' class='defaultStroke ambiguous selfLink dynColour'/>",
-            highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>"
+            highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>",
+			scatterNormal: "<rect x='0' y='0' width='5' height='5' class='scatterNormal'></rect>",
+			scatterDecoy: "<rect x='0' y='0' width='5' height='5' class='scatterDecoy'></rect>"
         };
         
         var texts = {
@@ -54,29 +56,39 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             homom: "Self Cross-Link with Overlapping Peptides. Cannot be the same molecule, so it's either between two different molecules of the same protein (Homomultimeric) or a mis-identification.",
             selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide).",
             linkmodpep: "Linker modified peptide (unfilled = ambiguous).",
-            highlight: "Highlighted linked peptide.",
+            highlight: "Highlighted linked peptide (XiNet only).",
         };
         
         var sectionData = [
             {
                 id: "colourKey",
                 header: "Current Cross-Link Colour Scheme",
-                rows: []
+                rows: [],
+				columnHeaders: ["Colour", "Meaning"]
             },
             {
                 id: "proteinKey",
-                header: "Protein-Protein Level",
+                header: "Protein-Protein Level Legend",
                 rows: ["clinkp", "multip", "selflinkp", "selflinkpc", "ambigp"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
             {
                 id: "residueKey",
-                header: "Residue Level",
+                header: "Residue Level Legend",
                 rows: ["clinkr", "selflinkr", "homom", "ambigr", /*"selflinkinter", "linkmodpep",*/ "highlight"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
+			/*
+			{
+                id: "scatterplotKey",
+                header: "Scatterplot Legend",
+                rows: ["clinkr", "selflinkr", "homom", "ambigr", "highlight"].map (function(row) {
+                    return [row, texts[row]];
+                })
+            },
+			*/
         ];
         
         var headerFunc = function(d) { return d.header.replace("_", " "); };
