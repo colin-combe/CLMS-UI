@@ -344,7 +344,7 @@ CLMSUI.init.views = function() {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
             eventName: "alignShow",
-            tooltip: "Shows alignments between Canonical/PDB/Uniprot sequences per protein"
+            tooltip: "Shows alignments between Search/PDB/Uniprot sequences per protein"
         },
         {
             id: "searchSummaryChkBxPlaceholder",

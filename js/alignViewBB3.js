@@ -413,7 +413,7 @@
 			var rowBind = tbodybind.selectAll("tr")
 				.data(function(d) { return [
 					{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID"), segments: [{klass: undefined, segment: d.decoratedRStr}]}, 
-					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label, segments: d.segments}
+					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label === "Canonical" ? "Uniprot" : d.label, segments: d.segments}
 				]; 
 			});
 			
@@ -429,7 +429,7 @@
                     self.tooltipModel
                         .set ("header", self.model.get("displayLabel"))
                         .set("contents", [
-                            ["Align Sequence", seqInfo.label],
+                            ["Align Sequence", d.rowLabel],
                             ["Search Length", nformat(seqInfo.convertFromRef.length)], 
                             ["Align Sequence Length", nformat(seqInfo.convertToRef.length)], 
                             ["Align Score", scoreFormat(seqInfo.score)],
