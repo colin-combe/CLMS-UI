@@ -33,6 +33,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             multip : "<line x1='0' y1='15' x2='50' y2='15' class='multiLinkStroke'/><line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
             selflinkp: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink'/>",
             selflinkpc: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink homomultimer dynColour'/>",
+			annotp: "<circle cx='25' cy='15' r='10' class='defaultStroke' style='shape-rendering:auto'></circle><path d='M 25 5 a 10 10 0 0 1 8 8 L 25 15 Z' class='selfLink dynColour' style='fill: #88f'></path>",
             clinkr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke dynColour'/>",
             ambigr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous dynColour'/>",
             selflinkr: "<path d='m 3,28 v -10 a 15,10 0 0 1 44,0 v 10' class='defaultStroke selfLink dynColour'/>",
@@ -58,6 +59,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             multip: "Multiple Linkage Sites.",
             selflinkp: "Self Cross-Link(s); could include Cross-Links not between the same molecule of same protein.",
             selflinkpc: "Self Cross-Link(s); definitely includes Cross-Links not between the same molecule of same protein.",
+			annotp: "Annotation in contracted protein",
             clinkr: "Cross Link between different proteins.",
             ambigr: "Ambiguous Cross-Link.",
             selflinkr: "Self Cross-Link in same protein. Could link either the same or two different molecules of the same protein.",
@@ -87,7 +89,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             {
                 id: "proteinKey",
                 header: "XiNet Protein-Protein Level Legend",
-                rows: ["clinkp", "multip", "selflinkp", "selflinkpc", "ambigp"].map (function(row) {
+                rows: ["clinkp", "multip", "selflinkp", "selflinkpc", "ambigp", "annotp"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
