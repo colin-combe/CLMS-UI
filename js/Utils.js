@@ -986,13 +986,17 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 	newHeaders.append("span");
 	dataJoin.selectAll("h2 > span").text(headerFunc);	// name may have changed for existing tables too
 
-    newElems.append("table")
-        .html("<caption></caption><thead><tr><th>"+columnHeaders[0]+"</th><th>"+columnHeaders[1]+"</th></tr></thead><tbody></tbody>")
+    var newTables = newElems.append("table")
+        .html("<caption></caption><thead><tr><th></th><th></th></tr></thead><tbody></tbody>")
         .attr("id", function(d) { return idPrefix+d.id; })
 		.style("display", function (d,i) {
 			return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
 		})
     ;
+	newTables.selectAll("thead th").data (function(d) { return d.columnHeaders || columnHeaders})
+		.text (function (d) { return d; })
+	;
+	
 	var tables = dataJoin.selectAll("table");
 
     // yet another cobble a table together function, but as a string

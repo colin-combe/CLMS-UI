@@ -22,7 +22,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         this.controlDiv = topDiv.select(".toolbar");
         this.controlDiv.append("button")
             .attr ("class", "downloadButton3 btn btn-1 btn-1a")
-            .text ("Download Cross-Link Colour Scheme as SVG")
+            .text ("Download Current Cross-Link Colour Scheme as SVG")
         ;
         this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
         
@@ -35,11 +35,21 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             selflinkpc: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink homomultimer dynColour'/>",
             clinkr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke dynColour'/>",
             ambigr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous dynColour'/>",
-            selflinkr: "<path d='m 3,28 v -10 a 15,15 0 0 1 30,0 v 10' class='defaultStroke selfLink dynColour'/>",
-            homom: "<path d='m 18,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer dynColour'/>",
+            selflinkr: "<path d='m 3,28 v -10 a 15,10 0 0 1 44,0 v 10' class='defaultStroke selfLink dynColour'/>",
+            homom: "<path d='m 25,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer dynColour'/>",
             selflinkinter: "<path d='m 3,28 l 14,-20 l 14,20' class='defaultStroke selfLink dynColour'/>",
             linkmodpep: "<path d='m 12,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour filled'/><path d='m 30,2 v 25 l -8,-5 l 8,-5' class='defaultStroke ambiguous selfLink dynColour'/>",
-            highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>"
+            highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>",
+			circleCrossLink: "<path d='m 3 15 q 22 -10, 44 0' class='defaultStroke selfLink dynColour'></path>",
+			scatterNormal: "<rect x='10' y='14' width='5' height='5' class='scatterNormal'></rect>",
+			scatterDecoy: "<rect x='10' y='14' width='5' height='5' class='scatterDecoy'></rect>",
+			scatterAmbig: "<rect x='10' y='14' width='5' height='5' class='scatterAmbig'></rect>",
+			scatterHighlighted: "<rect x='10' y='14' width='5' height='5' class='scatterNormal highlighted'></rect>",
+			scatterSelected: "<rect x='10' y='14' width='5' height='5' class='scatterNormal selected'></rect>",
+			alignMatch: "<text x='24' y='18' class='peptideAAText'>LIEKFLR<text>",
+			alignMissing: "<rect x='0' y='8' width='50' height ='15' class='seqDelete'/><text x='24' y='18' class='peptideAAText'>-------<text>",
+			alignExtra: "<rect x='0' y='8' width='50' height ='15' class='seqInsert'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>",
+			alignVariation: "<rect x='0' y='8' width='50' height ='15' class='seqVar'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>",
         };
         
         var texts = {
@@ -54,26 +64,65 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             homom: "Self Cross-Link with Overlapping Peptides. Cannot be the same molecule, so it's either between two different molecules of the same protein (Homomultimeric) or a mis-identification.",
             selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide).",
             linkmodpep: "Linker modified peptide (unfilled = ambiguous).",
-            highlight: "Highlighted linked peptide.",
+            highlight: "Highlighted linked peptide (XiNet only).",
+			circleCrossLink: "Cross-Link",
+			scatterNormal: "Cross-Link or Match.",
+			scatterDecoy: "Decoy Cross-Link or Match.",
+			scatterAmbig: "Ambiguous Cross-Link or Match.",
+			scatterHighlighted: "Highlighted Cross-Link or Match.",
+			scatterSelected: "Selected Cross-Link or Match.",
+			alignMatch: "Matching residues between sequences.",
+			alignMissing: "Deleted/missing residues when compared to search sequence.",
+			alignExtra: "Inserted/extra residues when compared to search sequence.",
+			alignVariation: "Residue variations when compared to search sequence.",
         };
         
         var sectionData = [
             {
                 id: "colourKey",
                 header: "Current Cross-Link Colour Scheme",
-                rows: []
+                rows: [],
+				columnHeaders: ["Colour", "Meaning"]
             },
             {
                 id: "proteinKey",
-                header: "Protein-Protein Level",
+                header: "XiNet Protein-Protein Level Legend",
                 rows: ["clinkp", "multip", "selflinkp", "selflinkpc", "ambigp"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
             {
                 id: "residueKey",
-                header: "Residue Level",
-                rows: ["clinkr", "selflinkr", "homom", "ambigr", /*"selflinkinter", "linkmodpep",*/ "highlight"].map (function(row) {
+                header: "XiNet Residue Level Legend",
+                rows: ["clinkr", "selflinkr", "homom", "ambigr", "highlight"].map (function(row) {
+                    return [row, texts[row]];
+                })
+            },
+			{
+                id: "circularKey",
+                header: "Circular View Legend",
+                rows: ["circleCrossLink", "homom", "ambigr"].map (function(row) {
+                    return [row, texts[row]];
+                })
+            },
+			{
+                id: "matrixKey",
+                header: "Matrix View Legend",
+                rows: ["scatterNormal", "scatterAmbig", "scatterHighlighted", "scatterSelected"].map (function(row) {
+                    return [row, texts[row]];
+                })
+            },
+			{
+                id: "scatterplotKey",
+                header: "Scatterplot Legend",
+                rows: ["scatterNormal", "scatterDecoy", "scatterAmbig", "scatterHighlighted", "scatterSelected"].map (function(row) {
+                    return [row, texts[row]];
+                })
+            },
+			{
+                id: "alignmentKey",
+                header: "Alignment Legend",
+                rows: ["alignMatch", "alignMissing", "alignExtra", "alignVariation"].map (function(row) {
                     return [row, texts[row]];
                 })
             },

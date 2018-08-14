@@ -784,9 +784,12 @@
                     .each (function (d) {
                         var high = highlightedCrossLinkIDs.has (d.id);
                         var selected = selectedCrossLinkIDs.has (d.id);
+						var ambig = d.ambiguous;
                         d3.select(this)
-                            .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
-                            .style ("stroke", high || selected ? "black" : null)
+							.style ("fill-opacity", ambig ? 0.6 : null)
+                            .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour(d)))
+							.style ("stroke-dasharray", ambig ? 3 : null)
+                            .style ("stroke", high || selected ? "black" : (ambig ? colourScheme.getColour(d) : null))
                             //.style ("stroke-opacity", high || selected ? 0.4 : null)
                         ;
                     })

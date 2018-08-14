@@ -19,7 +19,7 @@
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV><P class='topRule'>Per Protein Settings</P><DIV id='<%= alignControlID %>'></DIV></DIV><DIV><P class='topRule'>Global Settings</P><DIV id='<%= alignControlID2 %>'></DIV></DIV>");
+            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV><P class='topRule'>Per Protein Settings</P><DIV id='<%= alignControlID %>'></DIV></DIV><DIV><P class='topRule'></P><DIV id='<%= alignControlID2 %>'></DIV></DIV>");
             holdingDiv.html (template ({
                 headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,
@@ -59,7 +59,7 @@
             this.alignViewBlosumSelector = new CLMSUI.CollectionAsSelectViewBB ({
                 el:"#"+modelViewID+"Controls2",
                 collection: CLMSUI.blosumCollInst,
-                label: "Set Score Matrix",
+                label: "Set <a href='https://en.wikipedia.org/wiki/BLOSUM' target='_blank'>BLOSUM</a> Matrix",
                 name: "BlosumSelector",
             });
             
@@ -154,8 +154,6 @@
             return this;
         },
 		
-		
-        
         radioClicked: function (evt) {
             var model = this.collection.get (evt.target.value);
             this.setFocusModel (model);
@@ -188,7 +186,7 @@
                 });
 
                 this.alignViewSettings = new CLMSUI.AlignSettingsViewBB ({
-                    el:"#"+modelViewID+"Controls",
+                    el: "#"+modelViewID+"Controls",
                     model: model,
                 });
                 
@@ -246,11 +244,18 @@
 					.attr("value", function(d) { return d.value; })
 			;
             
-            //this.listenTo (this.model, "change:compAlignment", this.render);
 			d3.select(this.el).select(".alignChoiceGroup input[type=radio][value='"+this.defaults.defaultSeqShowSetting+"']").property("checked", true);
             this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
                 this.render ({affectedModel: affectedModel});
             });
+			
+			// Listen for change in blosum selection and pass it to model
+			this.listenTo (CLMSUI.blosumCollInst, "blosumModelSelected", function (blosumMatrix) {
+				console.log ("BLOSUM", this, arguments);
+				this.model.set ("scoreMatrix", blosumMatrix);
+				this.model.collection.bulkAlignChangeFinished();
+			})
+			
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");
             
@@ -408,7 +413,7 @@
 			var rowBind = tbodybind.selectAll("tr")
 				.data(function(d) { return [
 					{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID"), segments: [{klass: undefined, segment: d.decoratedRStr}]}, 
-					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label, segments: d.segments}
+					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label === "Canonical" ? "Uniprot" : d.label, segments: d.segments}
 				]; 
 			});
 			
@@ -424,7 +429,7 @@
                     self.tooltipModel
                         .set ("header", self.model.get("displayLabel"))
                         .set("contents", [
-                            ["Align Sequence", seqInfo.label],
+                            ["Align Sequence", d.rowLabel],
                             ["Search Length", nformat(seqInfo.convertFromRef.length)], 
                             ["Align Sequence Length", nformat(seqInfo.convertToRef.length)], 
                             ["Align Score", scoreFormat(seqInfo.score)],

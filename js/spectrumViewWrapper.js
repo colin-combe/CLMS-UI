@@ -248,7 +248,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    identifier: "Spectrum",
+    identifier: "Spectrum View",
 
     optionsToString: function () {
         //console.log ("this", this);

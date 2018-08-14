@@ -81,11 +81,13 @@
 				}
             });
             
+			// if the alignStr between a refAlignment and compAlignment has changed then declare a non-trivial change
             this.listenTo (this.get("seqCollection"), "change:alignStr", function (seqModel) {
                 //console.log ("collection catching one of its model's alignStr changing", arguments);
                 this.trigger ("nonTrivialAlignmentChange", seqModel); 
             });
 			
+			// redo sequence name labels if protein metadata updates names
 			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (metaMetaData) {
 				var columns = metaMetaData.columns;
 				var interactors = metaMetaData.items;

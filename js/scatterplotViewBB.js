@@ -223,6 +223,7 @@
                 self.scatg.select(".brush").selectAll("text").transition().duration(500).style("opacity", 0);
             })
         ;
+		
         
         // Listen to these events (and generally re-render in some fashion)
 		// if highlighted/selection matches change, or colour model change, then recolour cross links
@@ -642,7 +643,7 @@
             var sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (4, filteredCrossLinks, function (link) {
                 return highlightedCrossLinkIDs.has (link.id) ? 3 : (selectedCrossLinkIDs.has (link.id) ? 2 : (link.isDecoyLink() ? 0 : 1));
             });
-            
+		          
             var makeCoords = function (datax, datay) {
                 return datax.data.map (function (xd, i) {
                     var yd = datay.data[i];
@@ -729,6 +730,7 @@
             //ctx.fillStyle = this.options.background;
             ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
             ctx.imageSmoothingEnabled = false;
+		
             
             var datax = this.getAxisData ("X", true, sortedFilteredCrossLinks);
             var datay = this.getAxisData ("Y", true, sortedFilteredCrossLinks);
@@ -752,12 +754,13 @@
                 var linkDomainInd = colourScheme.getDomainIndex (link);
                 var colour = colourScheme.getColourByValue (linkValue);
 
-                var high, selected;
+                var high, selected, ambig;
                 if (!matchLevel) {
                     high = highlightedCrossLinkIDs.has (link.id);
                     selected = selectedCrossLinkIDs.has (link.id);
+					ambig = link.ambiguous;
                     ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
-                    ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                    ctx.strokeStyle = high || selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
                 }
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
@@ -771,8 +774,9 @@
                         var match = link.filteredMatches_pp[ii].match;
                         high = highlightedMatchMap.has (match.id);
                         selected = selectedMatchMap.has (match.id);
+						ambig = match.isAmbig();
                         ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
-                        ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                        ctx.strokeStyle = high || selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
                     }
                     var x = this.x (coord[0]) + xjr - halfPointSize;
                     var y = this.y (coord[1]) + yjr - halfPointSize;
@@ -785,8 +789,17 @@
 							//ctx.fillRect (x, y + offset, pointSize + 1, 1);
 							//ctx.fillRect (x + offset, y, 1, pointSize + 1);
 						} else {
+							if (ambig) {
+								ctx.globalAlpha = 0.7;
+							}
 							ctx.fillRect (x, y, pointSize, pointSize);
-							if (high || selected) {
+							if (ambig) {
+								ctx.globalAlpha = 1;
+								ctx.setLineDash([3]);
+								ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+								ctx.setLineDash([]);
+							}
+							else if (high || selected) {
 								ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
 							}
 
