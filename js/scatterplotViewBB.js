@@ -760,7 +760,7 @@
                     selected = selectedCrossLinkIDs.has (link.id);
 					ambig = link.ambiguous;
                     ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
-                    ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                    ctx.strokeStyle = high || selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
                 }
                 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
@@ -776,7 +776,7 @@
                         selected = selectedMatchMap.has (match.id);
 						ambig = match.isAmbig();
                         ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
-                        ctx.strokeStyle = high || selected ? "black" : (decoy ? ctx.fillStyle : null);
+                        ctx.strokeStyle = high || selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
                     }
                     var x = this.x (coord[0]) + xjr - halfPointSize;
                     var y = this.y (coord[1]) + yjr - halfPointSize;
@@ -790,20 +790,17 @@
 							//ctx.fillRect (x + offset, y, 1, pointSize + 1);
 						} else {
 							if (ambig) {
-								//ctx.rotate(45);
+								ctx.globalAlpha = 0.7;
 							}
 							ctx.fillRect (x, y, pointSize, pointSize);
 							if (ambig) {
-								//ctx.setLineDash([2, 3]);
-								//ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);	
-							}
-							if (high || selected) {
-								ctx.setLineDash 
+								ctx.globalAlpha = 1;
+								ctx.setLineDash([3]);
 								ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
+								ctx.setLineDash([]);
 							}
-							if (ambig) {
-								//ctx.rotate(-45);
-								//ctx.setLineDash([]);
+							else if (high || selected) {
+								ctx.strokeRect (x - 0.5, y - 0.5, pointSize, pointSize);
 							}
 
 							if (countable) {

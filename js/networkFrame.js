@@ -26,7 +26,7 @@ _.extend(CLMSUI.vent, Backbone.Events);
 var allDataLoaded = _.after(3, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
-    CLMSUI.blosumCollInst.trigger("blosumModelSelected", CLMSUI.blosumCollInst.models[3]);
+    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.models[3]);
 
     //init annotation types
     var annotationTypes = [];
@@ -112,7 +112,7 @@ CLMSUI.init.models = function(options) {
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
-    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
+    alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
         CLMSUI.modelUtils.addNewSequencesToAlignment.call(this, clmsModel);
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
@@ -123,18 +123,18 @@ CLMSUI.init.models = function(options) {
     CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection(); // options if we want to override defaults
 
     // when the blosum Collection is fetched (an async process), we select one of its models as being selected
-    CLMSUI.blosumCollInst.listenToOnce(CLMSUI.blosumCollInst, "sync", function() {
+    CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
         console.log("ASYNC. blosum models loaded");
         allDataLoaded();
     });
 
-    // and when the blosum Collection fires a blosumModelSelected event (via bothSyncsDone) it is accompanied by the chosen blosum Model
+    // and when the blosum Collection fires a blosumModelGlobalSetevent (via bothSyncsDone) it is accompanied by the chosen blosum Model
     // and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value
-    alignmentCollectionInst.listenTo(CLMSUI.blosumCollInst, "blosumModelSelected", function(blosumModel) {
+    alignmentCollectionInst.listenToOnce (CLMSUI.blosumCollInst, "blosumModelGlobalSet", function (blosumModel) {
         // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
         // (done internally within alignmentModelInst)
-        this.models.forEach(function(protAlignModel) {
-            protAlignModel.set("scoreMatrix", blosumModel);
+        this.models.forEach (function (protAlignModel) {
+            protAlignModel.set ("scoreMatrix", blosumModel);
         });
     });
 
@@ -144,7 +144,7 @@ CLMSUI.init.models = function(options) {
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences) {
+    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function(sequences) {
         if (sequences && sequences.length) { // if sequences passed and it has a non-zero length...
             sequences.forEach(function(entry) {
                 this.addSeq(entry.id, entry.name, entry.data, entry.otherAlignSettings);
@@ -160,7 +160,7 @@ CLMSUI.init.models = function(options) {
 
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
+    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
         CLMSUI.modelUtils.addNewSequencesToAlignment.call(this, CLMSUI.compositeModelInst.get("clmsModel"));
         // this triggers an event to say loads has changed in the alignment collection
         // more efficient to listen to that then redraw/recalc for every seq addition

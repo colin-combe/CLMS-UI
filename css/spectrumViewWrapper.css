@@ -102,7 +102,14 @@
 #alternatives {
     /* height:200px; */
 	max-height: 200px;
+	/*
     flex-shrink: 1;
+	flex-grow: 1;
+	*/
+}
+
+#alternatives .selectView {
+	max-height: 200px;
 }
 
 .CLMSUIspectrumWrapper #alternatives {

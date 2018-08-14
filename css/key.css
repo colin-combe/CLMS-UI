@@ -53,6 +53,44 @@ changes there are automatically reflected in the legend
     padding-left: 1px;
 }
 
+.scatterNormal {
+	stroke: none;
+	fill: #f8f;
+}
+
+.scatterDecoy {
+	stroke: #f8f;
+	fill: none;
+}
+
+.scatterAmbig {
+	stroke: #f8f;
+	stroke-dasharray: 3;
+	fill: #fbf;
+}
+
+.highlighted.scatterNormal {
+	stroke: black;
+	fill: #f80;
+}
+
+.selected.scatterNormal {
+	stroke: black;
+	fill: yellow;
+}
+
+.seqDelete {
+	fill: #88f;
+}
+
+.seqInsert {
+	fill: #8f8;
+}
+
+.seqVar {
+	fill: #fc6;
+}
+
 /* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */
 .keyPanel.verticalFlexContainer .panelInner {
     overflow-y: auto;

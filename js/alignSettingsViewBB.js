@@ -5,13 +5,14 @@
             "change input": "inputChanged",
             "keyup input": "inputKeyed",
             "change select": "selectChanged",
+			"input input": "inputChanged",
         },
 
         initialize: function (viewOptions) {         
             var controls = d3.select(this.el);
             var inputArray = [
-                {label: "Set Gap Open Penalty", prop:"gapOpenScore", type:"number", min: 0, max: 99},
-                {label: "Set Gap Extend Penalty", prop:"gapExtendScore", type:"number", min: 0, max: 99},
+                {label: "Set Gap Open Penalty", prop: "gapOpenScore", type: "number", min: 0, max: 99},
+                {label: "Set Gap Extend Penalty", prop: "gapExtendScore", type: "number", min: 0, max: 99},
                 //{label: "Score Matrix", prop:"scoreMatrix", type:"select", options: this.model.scoreMatrices },
             ];
             var inputSel = controls.selectAll("div.controlBlock")
