@@ -28,20 +28,22 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         
         var chartDiv = topDiv.select(".panelInner");
         var svgs = {
-            clinkp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
-            ambigp : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous'/>",
-            multip : "<line x1='0' y1='15' x2='50' y2='15' class='multiLinkStroke'/><line x1='0' y1='15' x2='50' y2='15' class='defaultStroke'/>",
-            selflinkp: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink'/>",
-            selflinkpc: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='defaultStroke selfLink homomultimer dynColour'/>",
-			annotp: "<circle cx='25' cy='15' r='10' class='defaultStroke' style='shape-rendering:auto'></circle><path d='M 25 5 a 10 10 0 0 1 8 8 L 25 15 Z' class='selfLink dynColour' style='fill: #88f'></path>",
-            clinkr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke dynColour'/>",
-            ambigr : "<line x1='0' y1='15' x2='50' y2='15' class='defaultStroke ambiguous dynColour'/>",
-            selflinkr: "<path d='m 3,28 v -10 a 15,10 0 0 1 44,0 v 10' class='defaultStroke selfLink dynColour'/>",
-            homom: "<path d='m 25,2 q -9,25, 0,27 q 9,-2 0,-27' class='defaultStroke selfLink homomultimer dynColour'/>",
-            selflinkinter: "<path d='m 3,28 l 14,-20 l 14,20' class='defaultStroke selfLink dynColour'/>",
-            linkmodpep: "<path d='m 12,2 v 25 l -8,-5 l 8,-5' class='defaultStroke selfLink dynColour filled'/><path d='m 30,2 v 25 l -8,-5 l 8,-5' class='defaultStroke ambiguous selfLink dynColour'/>",
+            clinkp : "<line x1='0' y1='15' x2='50' y2='15' class='monochrome'/>",
+            ambigp : "<line x1='0' y1='15' x2='50' y2='15' class='monochrome ambiguous'/>",
+            multip : "<line x1='0' y1='15' x2='50' y2='15' class='multiLinkStroke'/><line x1='0' y1='15' x2='50' y2='15' class='monochrome'/>",
+            selflinkp: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='monochrome antialias'/>",
+            selflinkpc: "<path d='m 3,15 q 1.5,-10 9,-10 a 15,15 0 0 1 10,10 q 0,6 -10,9' class='monochrome selfLink antialias homomultimer dynColour'/>",
+			annotp: "<g class='antialias'><circle cx='25' cy='15' r='10' class='monochrome'></circle><path d='M 25 5 a 9 9 0 0 1 9 7 L 25 15 Z' class='annotationLegend'></path></g>",
+            clinkr : "<line x1='0' y1='15' x2='50' y2='15' class='monochrome'/>",
+            ambigr : "<line x1='0' y1='15' x2='50' y2='15' class='monochrome ambiguous'/>",
+            selflinkr: "<path d='m 3,28 v -10 a 15,10 0 0 1 44,0 v 10' class='monochrome antialias'/>",
+            homom: "<path d='m 25,2 q -9,25, 0,27 q 9,-2 0,-27' class='monochrome antialias'/>",
+            selflinkinter: "<path d='m 3,28 l 14,-20 l 14,20' class='monochrome selfLink dynColour'/>",
+            linkmodpep: "<path d='m 12,2 v 25 l -8,-5 l 8,-5' class='monochrome selfLink dynColour filled'/><path d='m 30,2 v 25 l -8,-5 l 8,-5' class='monochrome ambiguous selfLink dynColour'/>",
             highlight: "<rect x='0' y='8' width='50' height ='15' class='highlighted'/><text x='24' y='18' class='peptideAAText'>LIEKFLR<text>",
-			circleCrossLink: "<path d='m 3 15 q 22 -10, 44 0' class='defaultStroke selfLink dynColour'></path>",
+			annotr: "<rect x='3' y='10' width='44' height='10' class='monochrome'></rect><rect x='5' y='10' width='12' height='10' class='annotationLegend'></rect>",
+			circleCrossLink: "<path d='m 3 15 q 22 -10, 44 0' class='monochrome antialias'></path>",
+			circleAnnot:"<g class='antialias'><path d='m 3 10 a 50 50 0 0 0 44 0 l 3 10 a 50 50 0 0 1 -50 0 Z' class='circleNode'></path><path d='m 3 10 a 50 50 0 0 0 15 5 l -1 10 a 50 50 0 0 1 -17 -5 Z' class='annotationLegend' style='stroke:none;'></path></g>",
 			scatterNormal: "<rect x='10' y='14' width='5' height='5' class='scatterNormal'></rect>",
 			scatterDecoy: "<rect x='10' y='14' width='5' height='5' class='scatterDecoy'></rect>",
 			scatterAmbig: "<rect x='10' y='14' width='5' height='5' class='scatterAmbig'></rect>",
@@ -59,7 +61,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             multip: "Multiple Linkage Sites.",
             selflinkp: "Self Cross-Link(s); could include Cross-Links not between the same molecule of same protein.",
             selflinkpc: "Self Cross-Link(s); definitely includes Cross-Links not between the same molecule of same protein.",
-			annotp: "Annotation in contracted protein",
+			annotp: "Annotation range in contracted protein",
             clinkr: "Cross Link between different proteins.",
             ambigr: "Ambiguous Cross-Link.",
             selflinkr: "Self Cross-Link in same protein. Could link either the same or two different molecules of the same protein.",
@@ -67,7 +69,9 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             selflinkinter: "Intra-molecular Self Link (definitely links same molecule e.g. from internally linked peptide).",
             linkmodpep: "Linker modified peptide (unfilled = ambiguous).",
             highlight: "Highlighted linked peptide (XiNet only).",
+			annotr: "Annotation range in expanded protein",
 			circleCrossLink: "Cross-Link",
+			circleAnnot: "Annotation region in protein",
 			scatterNormal: "Cross-Link or Match.",
 			scatterDecoy: "Decoy Cross-Link or Match.",
 			scatterAmbig: "Ambiguous Cross-Link or Match.",
@@ -96,14 +100,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             {
                 id: "residueKey",
                 header: "XiNet Residue Level Legend",
-                rows: ["clinkr", "selflinkr", "homom", "ambigr", "highlight"].map (function(row) {
+                rows: ["clinkr", "selflinkr", "homom", "ambigr", "highlight", "annotr"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
 			{
                 id: "circularKey",
                 header: "Circular View Legend",
-                rows: ["circleCrossLink", "homom", "ambigr"].map (function(row) {
+                rows: ["circleCrossLink", "homom", "ambigr", "circleAnnot"].map (function(row) {
                     return [row, texts[row]];
                 })
             },
