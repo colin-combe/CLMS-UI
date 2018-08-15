@@ -16,20 +16,17 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
+function downloadFilename (type) {
+	return CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--"+type+"--" + CLMSUI.utils.filterStateToString()) + ".csv";
+}
 function downloadMatches(){
-    var csv = getMatchesCSV();
-    var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--matches--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);
+    download (getMatchesCSV(), 'text/csv', downloadFilename ("matches"));
 }
 function downloadLinks(){
-    var csv = getLinksCSV();
-    var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--links--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);
+    download (getLinksCSV(), 'text/csv', downloadFilename ("links"));
 }
 function downloadResidueCount(){
-    var csv = getResidueCount();
-    var filename = CLMSUI.utils.makeLegalFileName (CLMSUI.utils.searchesToString() + "--residueCount--" + CLMSUI.utils.filterStateToString()) + ".csv";
-    download(csv, 'text/csv', filename);
+    download (getResidueCount(), 'text/csv', downloadFilename ("residueCount"));
 }
 
 function download (content, contentType, fileName, modernWeb) {
@@ -104,13 +101,31 @@ function download (content, contentType, fileName, modernWeb) {
 	//CLMSUI.utils.displayError (function() { return true; }, "Downloaded "+fileType.toUpperCase()+" File:<br>"+fileName, "#091d42", 0.6);
 }
 
+
+function mostReadableId (protein) {
+    if (protein.accession && protein.name) {
+        return "sp|" + protein.accession + "|" + protein.name;
+    }
+    else if (protein.name) {
+        return protein.name;
+    }
+    else if (protein.accession) {
+        return protein.accession;
+    }
+    else {
+        return protein.id;
+    }
+}
+
+
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes"\r\n';
+    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var matches = clmsModel.get("matches");
     var matchCount = matches.length;
     var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
+	var distance2dp = d3.format(".2f");
 
     for (var m = 0; m < matchCount; ++m){
 		var match = matches[m];
@@ -124,21 +139,33 @@ function getMatchesCSV () {
 						&& filterModel.navigationFilter(match);
 		}
         if (result === true){
+			var peptides2 = match.matchedPeptides[1];
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
+			var lp1 = match.matchedPeptides[0].pos.map (function (v) { return v + match.linkPos1 - 1; }).join(", ");
+			var lp2 = peptides2 ? peptides2.pos.map (function (v) { return v + match.linkPos2 - 1; }).join(", ") : "";
+			
+			// Work out distances for this match - ambiguous matches will have >1 crosslink
+			var crossLinks = match.crossLinks;
+			var distances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true, calcDecoyProteinDistances: true});
+			var distances2DArr = distances.map (function (dist) {
+				return dist && dist.distance ? [distance2dp(dist.distance), dist.chainInfo.from, dist.chainInfo.to, dist.chainInfo.fromRes, dist.chainInfo.toRes] : ["", "", "", "", ""];
+			});
+			var distancesTransposed = d3.transpose (distances2DArr); // transpose so distance data now grouped in array by field (distance, tores, etc)
+			var distancesJoined = distancesTransposed.map (function (arr) { return arr.join(", "); });
+			
             csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
-                + '","' + (+pp1 + match.linkPos1 - 1)
-                + '","' + pp1 + '","'
+                + '","' + lp1 + '","' + pp1 + '","'
                 + match.matchedPeptides[0].seq_mods + '","' + match.linkPos1 + '","'
-                + (match.matchedPeptides[1]? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : "")
-                + '","' + (+pp2 + match.linkPos2 - 1)
-                + '","' + pp2 + '","'
-                + (match.matchedPeptides[1]? match.matchedPeptides[1].seq_mods : "") + '","' + match.linkPos2 + '","'
+                + (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : "")
+                + '","' + lp2 + '","' + pp2 + '","'
+                + (peptides2 ? peptides2.seq_mods : "") + '","' + match.linkPos2 + '","'
                 + match.score() + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","'
                 + match.calcMZ() + '","' + match.calcMass() + '","' + match.massError() + '","'
                 + match.autovalidated + '","' + match.validated + '","'
                 + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '","' + match.scanIndex + '","'
-                + match.crossLinkerModMass() + '","' + match.fragmentToleranceString() + '","' + match.ionTypesString() + '"\r\n';
+                + match.crossLinkerModMass() + '","' + match.fragmentToleranceString() + '","' + match.ionTypesString() +'","'
+				+ distancesJoined.join('","') + '"\r\n';
         }
     }
     return csv;
@@ -161,59 +188,6 @@ function getLinksCSV(){
     var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true, calcDecoyProteinDistances: true});
     //console.log ("pd", physicalDistances);
     var distance2dp = d3.format(".2f");
-
-    /*
-    crossLinks.forEach (function (crossLink, i) {
-        var linear = crossLink.isLinearLink();
-        var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
-        csv += '"' + mostReadableId(crossLink.fromProtein) + '","'
-            + crossLink.fromResidue + '","' + crossLink.fromProtein.sequence[crossLink.fromResidue - 1] + '","'
-            + (linear ? "" : mostReadableId(crossLink.toProtein)) + '","'
-            + crossLink.toResidue + '","';
-        if (!linear && crossLink.toResidue) {
-            csv += crossLink.toProtein.sequence[crossLink.toResidue - 1];
-        }
-
-        var highestScore = null;
-        var searchesFound = new Set();
-        var filteredMatchCount = filteredMatchesAndPepPos.length;    // me n lutz fix
-        var linkAutovalidated = false;
-        var validationStats = [];
-        for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
-            var match = filteredMatchesAndPepPos[fm_pp].match;
-            if (highestScore == null || match.score() > highestScore) {
-                highestScore = match.score().toFixed(4);
-            }
-            if (match.autovalidated === true) {linkAutovalidated = true;}
-            validationStats.push(match.validated);
-            searchesFound.add(match.searchId);
-        }
-        //console.log ("sf", searchesFound);
-        csv += '","' + highestScore;
-        csv += '","' + filteredMatchCount;
-        csv += '","' + linkAutovalidated;
-        csv +=  '","' + validationStats.toString();
-        csv += '","' + (crossLink.meta ? crossLink.meta.fdr : undefined);
-		var distExists; // = physicalDistances[i].distance;
-        if (physicalDistances[i]) {
-			distExists = physicalDistances[i].distance;
-		} else {
-			distExists = false;
-		}
-        csv += '","' + (distExists ? distance2dp (distExists) : undefined);
-        csv += '","' + (distExists ? physicalDistances[i].chainInfo.from : undefined);
-        csv += '","' + (distExists ? physicalDistances[i].chainInfo.to : undefined);
-
-        for (var s = 0; s < searchIds.length; s++){
-            csv +=  '","';
-            if (searchesFound.has(searchIds[s])){
-				csv += "X";
-			}
-        }
-
-        csv += '"\r\n';
-    }, this);
-    */
 
      var rows = crossLinks.map (function (crossLink, i) {
         var row = [];
@@ -316,19 +290,4 @@ function getResidueCount() {
         }
     }
     return csv;
-}
-
-mostReadableId = function (protein) {
-    if (protein.accession && protein.name) {
-        return "sp|" + protein.accession + "|" + protein.name;
-    }
-    else if (protein.name) {
-        return protein.name;
-    }
-    else if (protein.accession) {
-        return protein.accession;
-    }
-    else {
-        return protein.id;
-    }
 }
