@@ -13,9 +13,9 @@
           parentEvents = parentEvents();
       }
       return _.extend({},parentEvents,{
-        "mousemove canvas": "brushNeighbourhood",
-        "mousedown canvas": "setStartPoint",
-        "click canvas": "selectNeighbourhood",
+        "mousemove .mouseMat": "brushNeighbourhood",
+        "mousedown .mouseMat": "setStartPoint",
+        "click .mouseMat": "selectNeighbourhood",
       });
     },
 		
@@ -161,6 +161,10 @@
 			.attr("class", "backdrop")
 			.style ("background", this.options.background)	// override standard background colour with option
 			.style("display", "none")
+		;
+		
+		canvasViewport.append("div")
+			.attr ("class", "mouseMat")
 		;
 
         
@@ -458,6 +462,7 @@
     convertEvtToXY: function (evt) {
 		//console.log ("evt", evt, evt.offsetX);
         var sd = this.getSizeData();
+		console.log ("XXXY", evt.offsetX, evt.offsetY, this.zoomStatus, this.zoomStatus.scale(), this.zoomStatus.translate());
         var x = evt.offsetX + 1;
         var y = (sd.lengthB - 1) - evt.offsetY;
 		
@@ -500,6 +505,8 @@
         var xy = this.convertEvtToXY (evt);
         var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
         var crossLinks = _.pluck (linkWrappers, "crossLink");
+		
+		console.log ("cl", crossLinks);
         
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
@@ -575,13 +582,6 @@
         if (this.options.matrixObj && this.isVisible()) {
             console.log ("MATRIX RENDER");
 
-            // make underlying canvas big enough to hold 1 pixel per possible residue pair
-            // it gets rescaled in the resize function to fit a particular size on the screen
-            var seqLengths = this.getSeqLengthData();
-            this.canvas
-                .attr("width",  seqLengths.lengthA)
-                .attr("height", seqLengths.lengthB)
-            ;
             this
                 .resize()
                 .renderBackgroundMap ()
@@ -653,13 +653,18 @@
         
     renderBackgroundMap: function () {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
-        var canvasNode = this.canvas.node();
-        var ctx = canvasNode.getContext("2d");       
-        //ctx.fillStyle = this.options.background;
-        ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
         
         // only render background if distances available
         if (distancesObj) {
+			var seqLengths = this.getSeqLengthData();
+			this.canvas
+                .attr("width",  seqLengths.lengthA)
+                .attr("height", seqLengths.lengthB)
+            ;
+			var canvasNode = this.canvas.node();
+        	var ctx = canvasNode.getContext("2d");       
+        	ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
+			
             var rangeDomain = this.colourScaleModel.get("colScale").domain();
             var min = rangeDomain[0];
             var max = rangeDomain[1];
@@ -673,7 +678,6 @@
                 return col.rgb();
             });
 
-            var seqLengths = this.getSeqLengthData();
             var seqLengthB = seqLengths.lengthB - 1;    
         
             // Get alignment info for chains in the two proteins, filtering to chains that are marked as showable
@@ -977,7 +981,7 @@
         
 		// for some reason using a css transform style on an svg group doesn't play nice in firefox (i.e. wrong positions reported, offsetx/y mangled etc)
 		// , so use attr transform instead
-        [{elem: this.canvas, type: "style"}, {elem: this.zoomGroup, type: "attr"}].forEach (function (d3sel) {
+        [/*{elem: d3.select(this.el).select(".viewport .mouseMat"), type: "style"}*/, {elem: this.zoomGroup, type: "attr"}].forEach (function (d3sel) {
 			if (d3sel.type === "attr") {
 				d3sel.elem.attr ("transform", transformStrings[d3sel.type])
 			}
@@ -1029,8 +1033,6 @@
         
         return this;
     },
-    
-    canvasImageParent: "svg g.clipg",   // place image made from canvas into clipped element (so image doesn't exceed matrix size)
         
     identifier: "Matrix View",
         

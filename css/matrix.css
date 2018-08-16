@@ -49,3 +49,8 @@
 .matrixView .chainArea {
 	
 }
+
+.matrixView .mouseMat {
+	width: 100%;
+	height: 100%;
+}
