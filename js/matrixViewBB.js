@@ -57,7 +57,7 @@
         this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
         
         this.controlDiv.append("button")
-            .attr ("class", "downloadButton2 btn btn-1 btn-1a")
+            .attr ("class", "downloadButton btn btn-1 btn-1a")
             .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
         ;
         
@@ -160,6 +160,7 @@
 			.append("canvas")
 			.attr("class", "backdrop")
 			.style ("background", this.options.background)	// override standard background colour with option
+			.style("display", "none")
 		;
 
         
@@ -188,7 +189,9 @@
             .attr("clip-path", "url(#matrixClip)")
         ;
         this.zoomGroup = this.clipGroup.append("g");
-        
+		this.zoomGroup.append("g").attr("class", "blockAreas");
+		this.zoomGroup.append("g").attr("class", "backgroundImage").append("image");
+		this.zoomGroup.append("g").attr("class", "crossLinkPlot");
         
         // Axes setup
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
@@ -587,6 +590,66 @@
         }
         return this;
     },
+		
+	// draw white blocks in background to demarcate areas covered by active pdb chains
+	renderChainBlocks: function (alignInfo, ctx) {
+		
+		// Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
+		var splitChain = function (alignInfo) {
+			var seq = this.model.get("alignColl").get(alignInfo.proteinID).getCompSequence(alignInfo.alignID);
+			var index = seq.convertToRef;
+			var blocks = [];
+			var start = index[0];
+			for (var n = 0; n < index.length - 1; n++) {
+				if ((index[n+1] - index[n]) > 1) {  // if non-contiguous numbers
+					blocks.push ({first: start + 1, last: index[n] + 1});
+					start = index[n + 1];
+				}
+			}
+			blocks.push ({first: start + 1, last: index [index.length - 1] + 1});
+			return blocks;
+		};
+		
+		var seqLengths = this.getSeqLengthData();
+        var seqLengthB = seqLengths.lengthB - 1;   
+
+		// Work out blocks for each chain, using routine above
+		var blockMap = {};
+		d3.merge(alignInfo).forEach (function (alignDatum) {
+			blockMap[alignDatum.alignID] = splitChain.call (this, alignDatum);    
+		}, this);
+		//console.log ("blockMap", blockMap);
+
+		// Draw backgrounds for each pairing of chains
+		ctx.fillStyle = this.options.chainBackground;
+		
+		var blockAreas = this.zoomGroup.select(".blockAreas");
+		var blockSel = blockAreas.selectAll(".chainArea");
+		blockSel.remove();
+		
+		alignInfo[0].forEach (function (alignInfo1) {
+			var blocks1 = blockMap[alignInfo1.alignID];
+
+			alignInfo[1].forEach (function (alignInfo2) {
+				var blocks2 = blockMap[alignInfo2.alignID];
+
+				blocks1.forEach (function (brange1) {
+					blocks2.forEach (function (brange2) {
+						blockAreas.append ("rect")
+							.attr ("x", brange1.first - 1)
+							.attr ("y", seqLengthB - (brange2.last - 1))
+							.attr ("width", brange1.last - brange1.first + 1)
+							.attr ("height", brange2.last - brange2.first + 1)
+							.attr ("class", "chainArea")
+							.style ("fill", this.options.chainBackground)
+						;
+						//ctx.fillRect (brange1.first - 1, seqLengthB - (brange2.last - 1), brange1.last - brange1.first + 1, brange2.last - brange2.first + 1);
+					}, this);
+				}, this);
+
+			}, this);
+		}, this);					  
+	},
         
     renderBackgroundMap: function () {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
@@ -597,7 +660,6 @@
         
         // only render background if distances available
         if (distancesObj) {
-            
             var rangeDomain = this.colourScaleModel.get("colScale").domain();
             var min = rangeDomain[0];
             var max = rangeDomain[1];
@@ -611,7 +673,6 @@
                 return col.rgb();
             });
 
-            //var distanceMatrix = this.options.matrixObj.distanceMatrix;
             var seqLengths = this.getSeqLengthData();
             var seqLengthB = seqLengths.lengthB - 1;    
         
@@ -636,7 +697,7 @@
 
             
             // function to draw one matrix according to a pairing of two chains (called in loop later)
-            var drawDistanceMatrix = function (matrixValue, alignInfo1, alignInfo2) {
+            var drawDistanceMatrix = function (imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
                 var alignColl = this.model.get("alignColl");
                 var distanceMatrix = matrixValue.distanceMatrix;
                 var pw = this.canvas.attr("width");
@@ -657,9 +718,16 @@
                             if (distance < max) {
                                 var searchIndex2 = preCalcSearchIndices[j];
                                 if (searchIndex2 > 0) {
-                                    var col = colourArray [distance > min ? 1 : 0];
-                                    this.drawPixel (cd, searchIndex1 + ((seqLengthB - searchIndex2) * pw), col.r, col.g, col.b, 255);
-                                    //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+									var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
+									var val = minArray ? minArray[index] : 0;
+									if (val === 0 || val > distance) {
+										var col = colourArray [distance > min ? 1 : 0];
+										this.drawPixel (imgDataArr, index, col.r, col.g, col.b, 255);
+										//drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+										if (minArray) {
+											minArray[index] = val;
+										}
+									}
                                 }
                             }
                         }
@@ -667,51 +735,14 @@
                 }
             };
 
-            // Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
-            var splitChain = function (alignInfo) {
-                var seq = this.model.get("alignColl").get(alignInfo.proteinID).getCompSequence(alignInfo.alignID);
-                var index = seq.convertToRef;
-                var blocks = [];
-                var start = index[0];
-                for (var n = 0; n < index.length - 1; n++) {
-                    if ((index[n+1] - index[n]) > 1) {  // if non-contiguous numbers
-                        blocks.push ({first: start + 1, last: index[n] + 1});
-                        start = index[n + 1];
-                    }
-                }
-                blocks.push ({first: start + 1, last: index [index.length - 1] + 1});
-                return blocks;
-            };
+			this.renderChainBlocks (alignInfo, ctx);
 
-
-            // Work out blocks for each chain, using routine above
-            var blockMap = {};
-            d3.merge(alignInfo).forEach (function (alignDatum) {
-                blockMap[alignDatum.alignID] = splitChain.call (this, alignDatum);    
-            }, this);
-            //console.log ("blockMap", blockMap);
-
-            // Draw backgrounds for each pairing of chains
-            ctx.fillStyle = this.options.chainBackground;
-            alignInfo[0].forEach (function (alignInfo1) {
-                var blocks1 = blockMap[alignInfo1.alignID];
-
-                alignInfo[1].forEach (function (alignInfo2) {
-                    var blocks2 = blockMap[alignInfo2.alignID];
-
-                    blocks1.forEach (function (brange1) {
-                        blocks2.forEach (function (brange2) {
-                            ctx.fillRect (brange1.first - 1, (seqLengthB - (brange2.last - 1)), brange1.last - brange1.first + 1, brange2.last - brange2.first + 1);
-                        }, this);
-                    }, this);
-
-                }, this);
-            }, this);
             
             var mid = performance.now();
 
             var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
             var cd = canvasData.data;
+			var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Float32Array (this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
 
             // draw actual content of chain pairings
             alignInfo[0].forEach (function (alignInfo1) {
@@ -719,7 +750,7 @@
                 alignInfo[1].forEach (function (alignInfo2) {
                     var chainIndex2 = alignInfo2.chainID;
                     var distanceMatrixValue = distancesObj.matrices[chainIndex1+"-"+chainIndex2];
-                    drawDistanceMatrix.call (this, distanceMatrixValue, alignInfo1, alignInfo2);
+                    drawDistanceMatrix.call (this, cd, minArray, distanceMatrixValue, alignInfo1, alignInfo2);
                 }, this);
             }, this);
 
@@ -728,6 +759,12 @@
             var end = performance.now();
             CLMSUI.times.push (Math.round (end - mid));
             //console.log ("CLMSUI.times", CLMSUI.times);
+			
+			this.zoomGroup.select(".backgroundImage").select("image")
+				.attr ("width", this.canvas.attr("width"))
+				.attr ("height", this.canvas.attr("height"))
+				.attr ("href", canvasNode.toDataURL("image/png"))
+			;
         }
         return this;
     },
@@ -768,7 +805,7 @@
                     return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
                 });
 
-                var linkSel = this.zoomGroup.selectAll("rect.crossLink")
+                var linkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.crossLink")
                     .data(sortedFinalCrossLinks, function(d) { return d.id; })
                     .order()
                 ;
