@@ -300,6 +300,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			keepOldOptions: keepOld || false,
             selectLabelFunc: function (d) { return "Plot This Data Along Axis ►"; },
             optionLabelFunc: function (d) { return d.label; },
+			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.render(); },
         });
 	},
@@ -543,7 +544,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	recalcRandomBinning: function (linkCount) {
 		var searchArray = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("searches"));
 		var crosslinkerSpecificityMap = CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray);
-		//console.log ("ress", residueSets);
 		var distObj = this.model.get("clmsModel").get("distancesObj");
 		var rscope = this.options.randomScope;
 		var randArr = distObj ? distObj.getSampleDistances (
@@ -785,7 +785,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.chart = this.chart.destroy();
 	},
 
-	identifier: "Histogram",
+	identifier: "Histogram View",
 
 	optionsToString: function () {
 		var seriesIDs = _.pluck (this.chart.data.shown(), "id");

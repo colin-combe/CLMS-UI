@@ -250,7 +250,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    identifier: "Spectrum",
+    identifier: "Spectrum View",
 
     optionsToString: function () {
         //console.log ("this", this);
@@ -295,6 +295,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     },
 
     clearSpectrumHighlights: function() {
-        CLMSUI.vent.trigger('clearSpectrumHighlights');
+        xiSPEC.vent.trigger('clearSpectrumHighlights');
     }
 });

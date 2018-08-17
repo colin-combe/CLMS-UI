@@ -5,23 +5,19 @@ changes there are automatically reflected in the legend
 
 /* crosslink styles */
 
-.ambiguous {
-    stroke-dasharray: 5 5;
+.monochrome {
+    stroke: #222;
+    fill: none;
 }
 
-.defaultStroke {
-    stroke: black;
-    fill: none;
+.ambiguous {
+    stroke-dasharray: 5;
 }
 
 .multiLinkStroke {
     stroke: #bbb;
     stroke-width: 11px;
     fill: none;
-}
-
-.selfLink {
-    shape-rendering: initial;
 }
 
 .homomultimer {
@@ -51,6 +47,53 @@ changes there are automatically reflected in the legend
     shape-rendering: crispEdges;
     background: white;
     padding-left: 1px;
+}
+
+.scatterNormal {
+	stroke: none;
+	fill: #f8f;
+}
+
+.scatterDecoy {
+	stroke: #f8f;
+	fill: none;
+}
+
+.scatterAmbig {
+	stroke: #f8f;
+	stroke-dasharray: 3;
+	fill: #fbf;
+}
+
+.highlighted.scatterNormal {
+	stroke: black;
+	fill: #f80;
+}
+
+.selected.scatterNormal {
+	stroke: black;
+	fill: yellow;
+}
+
+.seqDelete {
+	fill: #88f;
+}
+
+.seqInsert {
+	fill: #8f8;
+}
+
+.seqVar {
+	fill: #fc6;
+}
+
+.antialias {
+	shape-rendering: geometricprecision;
+}
+
+.annotationLegend {
+	fill: #8ff;
+	stroke: #4bb;
 }
 
 /* For the panels used to render legend, should be separate (and merged with those in ProteinViewInfo) */

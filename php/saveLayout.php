@@ -16,7 +16,9 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
-if (!isset($_SESSION['session_name'])) {
+
+session_start();
+if (isset($_SESSION['session_name'])) {
     include('../../connectionString.php');
 
     $dbconn = pg_connect($connectionString)

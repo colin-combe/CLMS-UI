@@ -19,13 +19,38 @@
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<P class='alignHeader'><%= headerText %></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV id='<%= alignControlID %>'></DIV><DIV id='<%= alignControlID2 %>'></DIV>");
+            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV><P class='topRule'>Per Protein Settings</P><DIV id='<%= alignControlID %>'></DIV></DIV><DIV><P class='topRule'></P><DIV id='<%= alignControlID2 %>'></DIV></DIV>");
             holdingDiv.html (template ({
                 headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,
                 alignControlID: modelViewID+"Controls",
                 alignControlID2: modelViewID+"Controls2",
-            }));  
+            }));
+			
+			// Sort dropdown
+			var self = this;
+			CLMSUI.utils.addMultipleSelectControls ({
+				addToElem: topElem.select(".alignSortWidget"),
+				selectList: ["Sort Tabs By"], 
+				optionList: this.collection.possibleComparators, 
+				optionLabelFunc: function (d) { return d.label; },
+				optionValueFunc: function (d) { return d.compFunc; },
+				changeFunc: function () {
+					var compFunc;
+					// cant rely on event.target.value as it returns functions as a string
+					d3.select (d3.event.target)
+						.selectAll("option")
+						.filter(function() { return d3.select(this).property("selected"); })
+						.each (function (d) {
+							compFunc = d.compFunc;
+						})
+					;
+					self.collection.comparator = compFunc;
+					self.collection.sort();
+					self.render();
+				},
+				initialSelectionFunc: function(d) { return d.compFunc === self.collection.comparator; }
+			});
             
             holdingDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
             
@@ -34,7 +59,7 @@
             this.alignViewBlosumSelector = new CLMSUI.CollectionAsSelectViewBB ({
                 el:"#"+modelViewID+"Controls2",
                 collection: CLMSUI.blosumCollInst,
-                label: "Set Score Matrix",
+                label: "Set <a href='https://en.wikipedia.org/wiki/BLOSUM' target='_blank'>BLOSUM</a> Matrix",
                 name: "BlosumSelector",
             });
             
@@ -79,9 +104,11 @@
 		},
         
         render: function () {
+			var models = this.collection.models;
+			
             var topElem = d3.select(this.el);
             var list = topElem.select("DIV.checkHolder");
-            var proteins = list.selectAll("span.alignTab").data(this.collection.models, function(d) { return d.id; });
+            var proteins = list.selectAll("span.alignTab").data(models, function(d) { return d.id; });
             var self = this;
             
             proteins.exit().remove();
@@ -100,12 +127,14 @@
             pspans.append("label")
                 .attr ("for", function(d,i) { return topElem.attr("id")+"pgroup"+i; })
                 .on ("mouseenter", function(d) {
+				    var nformat = d3.format(",d");
                     self.tooltipModel
                         .set ("header", d.get("displayLabel"))
-                        .set("contents", [
-                            ["Aligned Sequences", d.get("seqCollection") ? d.get("seqCollection").length : 0],
-                            //[d.label+" Length", nformat(d.convertToRef.length)], ["Align Score", scoreFormat(d.score)],
-                        ])
+                        .set ("contents", 
+							self.collection.possibleComparators.slice(1).map (function (comp) {
+								return [comp.label, d.get("seqCollection") ? nformat(comp.compFunc(d)) : 0]
+							})
+                        )
                         .set("location", d3.event)
                     ;
                     self.tooltipModel.trigger ("change:location");
@@ -118,12 +147,13 @@
             ;
             
             proteins.order();
+			
+			// Hide sort widget if only 1 protein
+			topElem.select(".alignSortWidget").style("display", models.length > 1 ? null : "none");
             
             return this;
         },
 		
-		
-        
         radioClicked: function (evt) {
             var model = this.collection.get (evt.target.value);
             this.setFocusModel (model);
@@ -156,7 +186,7 @@
                 });
 
                 this.alignViewSettings = new CLMSUI.AlignSettingsViewBB ({
-                    el:"#"+modelViewID+"Controls",
+                    el: "#"+modelViewID+"Controls",
                     model: model,
                 });
                 
@@ -214,11 +244,18 @@
 					.attr("value", function(d) { return d.value; })
 			;
             
-            //this.listenTo (this.model, "change:compAlignment", this.render);
 			d3.select(this.el).select(".alignChoiceGroup input[type=radio][value='"+this.defaults.defaultSeqShowSetting+"']").property("checked", true);
             this.listenTo (this.model.get("seqCollection"), "change:compAlignment", function (affectedModel) {
                 this.render ({affectedModel: affectedModel});
             });
+			
+			// Listen for change in blosum selection and pass it to model
+			this.listenTo (CLMSUI.blosumCollInst, "blosumModelSelected", function (blosumMatrix) {
+				console.log ("BLOSUM", this, arguments);
+				this.model.set ("scoreMatrix", blosumMatrix);
+				this.model.collection.bulkAlignChangeFinished();
+			})
+			
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");
             
@@ -376,7 +413,7 @@
 			var rowBind = tbodybind.selectAll("tr")
 				.data(function(d) { return [
 					{seqInfo: d, str: d.decoratedRStr, rowLabel: self.model.get("refID"), segments: [{klass: undefined, segment: d.decoratedRStr}]}, 
-					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label, segments: d.segments}
+					{seqInfo: d, str: d.decoratedStr, rowLabel: d.label === "Canonical" ? "Uniprot" : d.label, segments: d.segments}
 				]; 
 			});
 			
@@ -392,7 +429,7 @@
                     self.tooltipModel
                         .set ("header", self.model.get("displayLabel"))
                         .set("contents", [
-                            ["Align Sequence", seqInfo.label],
+                            ["Align Sequence", d.rowLabel],
                             ["Search Length", nformat(seqInfo.convertFromRef.length)], 
                             ["Align Sequence Length", nformat(seqInfo.convertToRef.length)], 
                             ["Align Score", scoreFormat(seqInfo.score)],

@@ -116,14 +116,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Residue colour scheme dropdown
         var allColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
         var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "densityfit", "chainid"];
-        var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
-        var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
+        var aliases = {"bfactor": "B Factor", uniform: "No Colouring", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure", entityindex: "Entity Index", entitytype: "Entity Type", partialcharge: "Partial Charge"};
+        var labellabel = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference (allColourSchemes, ignoreColourSchemes);
-        
+		       
         var colourChangeFunc = function () {
             if (self.xlRepr) {
-                var index = d3.event.target.selectedIndex;
-                var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: undefined, colorValue: 0x808080};
+				var value = d3.event.target.value;
+                var schemeObj = {colorScheme: value || "uniform", colorScale: undefined, colorValue: 0x808080};
                 // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
 
                 if (schemeObj.colorScheme !== "uniform") {
@@ -154,15 +154,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                 self.xlRepr.resRepr.setParameters (schemeObj);
                 self.xlRepr.sstrucRepr.setParameters (schemeObj);
-                self.xlRepr.labelRepr.setParameters (labellable.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
+                self.xlRepr.labelRepr.setParameters (labellabel.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
             }
         };
         
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: toolbar,
-            selectList: ["Colour By"], 
+            selectList: ["Colour Proteins By"], 
             optionList: mainColourSchemes, 
-            selectLabelFunc: function (d) { return aliases[d] || d; },
+            optionLabelFunc: function (d) { return aliases[d] || d; },
             changeFunc: colourChangeFunc,
             initialSelectionFunc: function(d) { return d === self.options.colourScheme; }
         });
@@ -411,7 +411,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    identifier: "NGL3D",
+    identifier: "NGL Viewer - PDB Structure",
     
     optionsToString: function () {  
         var abbvMap = {

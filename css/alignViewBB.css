@@ -82,12 +82,6 @@ P.seq, TD.seq {
     font-family: Consolas, Courier;
 }
 
-/*
-.alignView P.alignHeader {
-    text-decoration: underline;
-}
-*/
-
 DIV.checkHolder {
 	padding-top: 1px;
     padding-bottom: 1px;
@@ -110,9 +104,8 @@ DIV.checkHolder SPAN.alignTab:after {
 DIV.checkHolder SPAN LABEL {
     padding: 0em 0.4em;
     margin: 0;
-    border-right: 1px solid rgba(255,255,255,0.5);
-    border-left: 1px solid rgba(255,255,255,0.5);
-    border-top: 1px solid rgba(255,255,255,0.5);
+    border: 1px solid #bbb;
+    border-bottom: none;
     border-top-left-radius: 5px;
     white-space: nowrap;
 }
@@ -123,13 +116,13 @@ DIV.checkHolder SPAN INPUT {
 
 DIV.checkHolder SPAN INPUT:checked + label {
     background: white;
-    border: 1px solid #888;
+    border: 1px solid #444;
 	border-bottom: none;
-    color: #002;
+	font-weight: bold;
+    color: black;
 }
 
 DIV.alignSettings {
-    padding-bottom: 0.5em;
     font-size: 1em
 }
 
@@ -150,7 +143,7 @@ DIV.alignSettings {
 }
 
 .alignSeqCount {
-    color: #99b;
+    color: #668;
     font-size: 0.75em;
 }
 
@@ -169,4 +162,12 @@ DIV.alignSettings {
 .alignSettings .alignChoiceGroup label:not(:last-of-type) {
 	border-right: 1px solid #aaa;
 	margin-right: 0.5em;
+}
+
+.alignView .topRule {
+	margin-top: 0.5em;
+	/*border-top: 1px solid #aaa;*/
+	font-size: 0.75em;
+	color: #668;
+	line-height: 1.4em;
 }

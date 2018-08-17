@@ -626,7 +626,11 @@ CLMSUI.modelUtils = {
     },
 
     crosslinkerSpecificityPerLinker: function (searchArray) {
-        return CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
+        var crossSpec = CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
+		if (!crossSpec) {
+			crossSpec = {"default": {name: "all", searches: new Set (searchArray.map(function(s) { return s.id; })), linkables: [new Set(["*"])]}};
+		}
+		return crossSpec;
         /*var linkableResSets = {};
         searchArray.forEach (function (search) {
             var crosslinkers = search.crosslinkers || [];

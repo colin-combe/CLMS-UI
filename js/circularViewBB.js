@@ -1023,7 +1023,7 @@
             return this;
         },
 
-        identifier: "Circular",
+        identifier: "Circular View",
 
         optionsToString: function () {
             var abbvMap = {

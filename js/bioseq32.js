@@ -507,18 +507,30 @@
         return s.join("");
     }
 
+	function arrayMax (arr) {
+		var max = arr.reduce (function(a, b) {
+			return Math.max(a, b);
+		});
+		return max;
+	}
+
     function align (query, target, scores, isLocal, isSemiLocal, windowSize) {
         var target = target || 'ATAGCTAGCTAGCATAAGC';
         var query  = query || 'AGCTAcCGCAT';
         var isLocal = isLocal || false;
         var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
         var matrix = scores.matrix || Blosum80Map;
-        //console.log ("scores", scores);
+
         var rst;
+		var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
         if (target === query) {
-            rst = [Number.MAX_VALUE, 0, [target.length << 4]];  // completely equal
+			var maxValues = matrix.scoreMatrix.map (function (row) { return arrayMax (row); });
+			var score = 0;
+			for (var n = 0; n < target.length; n++) {
+				score += maxValues[table[target.charCodeAt(n)]];
+			}
+            rst = [score, 0, [target.length << 4]];  // completely equal
         } else {
-            var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
             rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
         }
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
