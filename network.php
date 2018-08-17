@@ -153,6 +153,7 @@
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/Wrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/model.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumControlsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/FragmentationKeyView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js<?php echo $cacheBuster ?>"></script>
@@ -243,7 +244,7 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
-				CLMSUI.utils.displayError (function() { return true; }, "Error when attempting to load search<br>"+text.substring (0, 150));
+				CLMSUI.utils.displayError (function() { return true; }, "Error when attempting to load search.<br>"+text.substring (0, 150));
 				console.error ("Error", err, text.substring (0, 1000));
 			}
 		};

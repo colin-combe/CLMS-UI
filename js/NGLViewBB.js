@@ -116,14 +116,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Residue colour scheme dropdown
         var allColourSchemes = d3.values (NGL.ColormakerRegistry.getSchemes());
         var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "densityfit", "chainid"];
-        var aliases = {"bfactor": "B Factor", uniform: "None", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure"};
-        var labellable = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
+        var aliases = {"bfactor": "B Factor", uniform: "No Colouring", atomindex: "Atom Index", residueindex: "Residue Index", chainindex: "Chain Index", modelindex: "Model Index", resname: "Residue Name", chainname: "Chain Name", sstruc: "Sub Structure", entityindex: "Entity Index", entitytype: "Entity Type", partialcharge: "Partial Charge"};
+        var labellabel = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference (allColourSchemes, ignoreColourSchemes);
-        
+		       
         var colourChangeFunc = function () {
             if (self.xlRepr) {
-                var index = d3.event.target.selectedIndex;
-                var schemeObj = {colorScheme: mainColourSchemes[index] || "uniform", colorScale: undefined, colorValue: 0x808080};
+				var value = d3.event.target.value;
+                var schemeObj = {colorScheme: value || "uniform", colorScale: undefined, colorValue: 0x808080};
                 // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
 
                 if (schemeObj.colorScheme !== "uniform") {
@@ -154,15 +154,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                 self.xlRepr.resRepr.setParameters (schemeObj);
                 self.xlRepr.sstrucRepr.setParameters (schemeObj);
-                self.xlRepr.labelRepr.setParameters (labellable.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
+                self.xlRepr.labelRepr.setParameters (labellabel.has(self.options.colourScheme) ? schemeObj : {colorScheme: "uniform"});
             }
         };
         
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: toolbar,
-            selectList: ["Colour By"], 
+            selectList: ["Colour Proteins By"], 
             optionList: mainColourSchemes, 
-            selectLabelFunc: function (d) { return aliases[d] || d; },
+            optionLabelFunc: function (d) { return aliases[d] || d; },
             changeFunc: colourChangeFunc,
             initialSelectionFunc: function(d) { return d === self.options.colourScheme; }
         });
@@ -196,7 +196,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             // 1. New stage model made 2. Stage model change event fired here - xlRepr set to null
             // 3. New linklist data generated 4. linklist change event fired here (but no-op as xlRepr === null)
             // 5. New distanceObj generated (making new xlRepr) 6. distanceObj change event fired here making new xlRepr
-            this.xlRepr = null; 
+			if (this.xlRepr) {
+				this.xlRepr.dispose();	// remove old mouse handlers or they keep firing and cause errors
+				this.xlRepr = null; 
+			}
             this.listenTo (newStageModel, "change:linkList", function (stageModel, newLinkList) {
                 if (this.xlRepr) {
                     this.xlRepr._handleDataChange();
@@ -408,7 +411,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    identifier: "NGL3D",
+    identifier: "NGL Viewer - PDB Structure",
     
     optionsToString: function () {  
         var abbvMap = {
@@ -782,6 +785,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
                     var cp = this.structureComp.structure.getChainProxy (pdtrans.residue.chainIndex);
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
+					//console.log ("cp", cp, pdtrans, this, this.structureComp);
                     crosslinkData.getModel().get("tooltipModel")
                         .set("header", "Cross-Linked with "+CLMSUI.modelUtils.makeTooltipTitle.residue (protein, srindex, ":"+cp.chainname))
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks (pdtrans.xlinks, protein.id, srindex, {"Distance (Å)": distances}))
@@ -972,7 +976,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     dispose: function () {
         this.stage.signals.clicked.remove (this._selectionPicking, this);
         this.stage.signals.hovered.remove (this._highlightPicking, this);
-
+		// console.log ("dispose called");
         // this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
     },
     

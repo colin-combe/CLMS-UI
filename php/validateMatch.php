@@ -19,7 +19,7 @@
 
 include('../../connectionString.php');
 $dbconn = pg_connect($connectionString)
-        or die('Could not connect: ' . pg_last_error());
+        or die('Could not connect to database.');
 // Prepare a query for execution
 pg_prepare($dbconn, "my_query",
 	'UPDATE spectrum_match SET validated = $1 WHERE id = $2 AND search_id IN (SELECT id FROM search WHERE random_id = $3);');

@@ -372,6 +372,13 @@ span, label {
 	left: 60px;
 }
 
+#matrixPanel {
+	left: 40px;
+	width: 40em;
+	height: 50em;
+	min-width: 15em;
+	min-height: 30em;
+}
 
 .verticalFlexContainer {
     height: 100%;
@@ -398,6 +405,7 @@ span, label {
 #alignPanel{
     left: 40px;
     width: 70em;
+	min-width: 30em;
     /*height:80px;*/
 }
 

@@ -511,12 +511,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             average: false
         };
         if (options.calcDecoyProteinDistances) {
-            if (xlink.fromProtein.is_decoy) {
-                options.realFromPid = xlink.fromProtein.targetProteinID;
-            }
-            if (xlink.toProtein.is_decoy) {
-                options.realToPid = xlink.toProtein.targetProteinID;
-            }
+            options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
+            options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
         }
 
         return distancesObj ? distancesObj.getXLinkDistance (xlink, protAlignCollection, options) : undefined;
@@ -532,11 +528,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var protAlignCollection = this.get("alignColl");
         var clCount = crossLinks.length;
         for (var cl = 0; cl < clCount; cl++) {
-            var dist = this.getSingleCrosslinkDistance(crossLinks[cl], distModel, protAlignCollection, options);
+            var dist = this.getSingleCrosslinkDistance (crossLinks[cl], distModel, protAlignCollection, options);
             if (dist != null) {
-                distArr.push(options.returnChainInfo ? dist : +dist); // + is to stop it being a string
+                distArr.push (options.returnChainInfo ? dist : +dist); // + is to stop it being a string
             } else if (includeUndefineds) {
-                distArr.push(undefined);
+                distArr.push (undefined);
             }
         }
         //console.log ("distArr", distArr);

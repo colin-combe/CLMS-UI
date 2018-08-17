@@ -126,12 +126,11 @@ CLMSUI.DistancesObj.prototype = {
 	
 	
     
-    // options - intraOnly:true for no cross-protein sample links
+    // options - withinProtein:true for no cross-protein sample links
     getSampleDistances: function (sampleLinkQuantity, crosslinkerSpecificityList, options) {
         options = options || {};
-        crosslinkerSpecificityList = crosslinkerSpecificityList || [{name: "all", searches: new Set(), linkables: new Set()}];
         var specificitySearchTotal = d3.sum (crosslinkerSpecificityList, function (rdata) { return rdata.searches.size; });
-        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION CALCS ------");
+        CLMSUI.utils.xilog ("------ RANDOM DISTRIBUTION CALCS ------", crosslinkerSpecificityList);
         CLMSUI.utils.xilog (crosslinkerSpecificityList, "STOTS", specificitySearchTotal, this, this.matrices);
         var sampleLinksPerSearch = Math.ceil (sampleLinkQuantity / specificitySearchTotal);
         
@@ -169,9 +168,9 @@ CLMSUI.DistancesObj.prototype = {
                 CLMSUI.utils.xilog ("rr", searchID, srmap);
 
                 // Now pick lots of pairings from the remaining residues, one for each end of the crosslinker, so one from each residue list
-				var searchMeta = {hetero: crosslinkerSpecificity.heterobi, perSearch: sampleLinksPerSearch};
-                if (options.intraOnly) {   // if intra links only allowed
-                	this.generateSampleIntraOnlyDistancesBySearch (srmap, sampleDists, searchMeta);
+				var searchMeta = {heterobi: crosslinkerSpecificity.heterobi, perSearch: sampleLinksPerSearch};
+                if (options.withinProtein) {   // if intra links only allowed
+                	this.generateSampleIntraOnlyDistancesBySearch (srmap, sampleDists, searchMeta, options.withinChain || false);	// set true for chain-specific self restriction
                 } else {    // inter and intra links allowed (simpler)
                     this.generateSampleDistancesBySearch (srmap[0], srmap[1], sampleDists, sampleLinksPerSearch);
                 }
@@ -282,106 +281,59 @@ CLMSUI.DistancesObj.prototype = {
 		return rmap;
 	},
 	
-	generateSampleIntraOnlyDistancesBySearch: function (srmap, randDists, metaData) {
+	// sameChainOnly == true for sample distances internal to same chains only, == false for sample distances internal to same protein (could be multiple chains)
+	generateSampleIntraOnlyDistancesBySearch: function (srmap, randDists, metaData, sameChainOnly) {
 		 // Convenience: Divide into list per protein for selecting intra-protein samples only
-		var srmapPerProt = [{},{}];
-		var protSet = d3.set();
+		var srmapPerProtChain = [{},{}];
+		var protChainSet = d3.set();
 		srmap.forEach (function (dirMap, i) {
-			var perProtMap = srmapPerProt[i];
+			var perProtChainMap = srmapPerProtChain[i];
 
 			dirMap.forEach (function (res) {
 				var protID = res.protID;
-				var perProtList = perProtMap[protID];
-				if (!perProtList) {
-					perProtMap[protID] = [res];
-					protSet.add (protID);
+				var chainID = res.chainIndex;
+				var protChainID = sameChainOnly ? protID+"|"+chainID : protID;
+				var perProtChainList = perProtChainMap[protChainID];
+				if (!perProtChainList) {
+					perProtChainMap[protChainID] = [res];
+					protChainSet.add (protChainID);
 				} else {
-					perProtList.push (res);
+					perProtChainList.push (res);
 				}
 			});
 			//console.log ("dirMap", dirMap, perProtMap, d3.nest().key(function(d) { return d.protID; }).entries(dirMap));
 		});
 		if (!metaData.heterobi) {
-			srmapPerProt[1] = srmapPerProt[0];
+			srmapPerProtChain[1] = srmapPerProtChain[0];
 		}
+		CLMSUI.utils.xilog ("intra spp", srmapPerProtChain);
 		
-		CLMSUI.utils.xilog ("intra spp", srmapPerProt);
-
-		/*
-		// make a list of counts of possible intra-protein residue links
-		var total = 0;
-		var counts = d3.entries(srmapPerProt[0])
-			// Filter out proteins with no suitable residues at the other end
-			.filter (function (protEntry) {
-				return srmapPerProt[1][protEntry.key];
-			})
-			// make the counts of lower and upper bounds
-			.map (function (protEntry) {
-				var key = protEntry.key;
-				var resCount1 = protEntry.value.length;
-				var resCount2 = srmapPerProt[1][key].length;
-				var combos = resCount1 * resCount2;
-				var val = {protID: key, lowerBound: total};
-				total += combos;
-				val.upperBound = total - 1;
-				return val;
-			})
-		;
-	
-		var possibleLinks = total;
-		CLMSUI.utils.xilog ("counts", counts, total);
-		*/
+		// Assign randoms to inter-protein links based on number of possible pairings
+		// e.g. if proteinA-A is 100->100 residues and proteinB-B is 20->20 residues
+		// then the possible pairings are 10,000 (100x100) and 400 (20x20) and the randoms are allocated in that proportion
+		var proportions = d3.entries(srmapPerProtChain[0]).map (function (entry) {
+			var key = entry.key;
+			var quant1 = entry.value.length;
+			var opp = srmapPerProtChain[1][key];
+			return {protChainID: entry.key, possiblePairings: opp ? quant1 * opp.length: 0};
+		});
+		var total = d3.sum (proportions, function (d) { return d.possiblePairings; });
+		var propMap = d3.map (proportions, function(d) { return d.protChainID; })
 		
-		
-		var samplesPerProtein = metaData.perSearch / protSet.size();
-		protSet.values().forEach (function (protID) {
-			this.generateSampleDistancesBySearch (srmapPerProt[0][protID], srmapPerProt[1][protID], randDists, samplesPerProtein);
+		//var samplesPerProtein = metaData.perSearch / protSet.size();
+		protChainSet.values().forEach (function (protChainID) {
+			var samplesPerProtein = metaData.perSearch / total * propMap.get(protChainID).possiblePairings;
+			this.generateSampleDistancesBySearch (srmapPerProtChain[0][protChainID], srmapPerProtChain[1][protChainID], randDists, Math.floor(samplesPerProtein));
 		}, this);
 		
-		//generateSampleDistancesBySearch (rowMap, columnMap, randDists, metaData) {
-		/*
-		if (possibleLinks) {  // can't do this if no actual residues pairings left
-			var hop = Math.max (1, possibleLinks / metaData.perSearch);
-			var maxRuns = Math.min (possibleLinks, metaData.perSearch);
-			var bisectCount = d3.bisector(function(d) { return d.upperBound; }).left;
-			CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
-
-			for (var n = 0; n < maxRuns; n++) {
-				// This is Uniform
-				var ni = Math.floor (n * hop);
-
-				// Find the protein that corresponds to this index 'ni'
-				var proteinIndex = bisectCount (counts, ni);
-				// Then turn it into a residue pairing internal to that protein
-				var count = counts[proteinIndex];
-				var withinIndex = ni - count.lowerBound;
-				var resList1 = srmapPerProt[0][count.protID];
-				var resList2 = srmapPerProt[1][count.protID];
-				var resIndex1 = Math.floor (withinIndex / resList2.length);
-				var resIndex2 = withinIndex % resList2.length;
-				var res1 = resList1[resIndex1];
-				var res2 = resList2[resIndex2];
-				if (!res1 || !res2) {
-					CLMSUI.utils.xilog ("intra", ni, proteinIndex, withinIndex, resIndex1, resIndex2);
-				}
-
-				//CLMSUI.utils.xilog ("rr", n, ni, resFlatIndex1, resFlatIndex2, res1, res2);
-				// -1's 'cos these indexes are 1-based and the get3DDistance expects 0-indexed residues
-				var dist = this.getXLinkDistanceFromChainCoords (this.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
-				// dist is zero if same residues getting linked, which isn't really a plausible scenario, or is it?
-				if (!isNaN(dist) && dist > 0) {
-					randDists.push (dist);
-				}
-			}
-		}
-		*/
+		//console.log ("ppp", srmapPerProtChain, proportions, total, propMap);
 	},
 	
 	generateSampleDistancesBySearch: function (rowMap, columnMap, randDists, count) {
 		var rowCount = rowMap.length;
 		var columnCount = columnMap.length;
 		var possibleLinks = rowCount * columnCount;
-		if (possibleLinks) {  // can't do this if no actual residues pairings left
+		if (possibleLinks && count) {  // can't do this if no actual residues pairings left, or no sample links requested (count == 0)
 			var hop = Math.max (1, possibleLinks / count);
 			var maxRuns = Math.min (possibleLinks, count);
 			CLMSUI.utils.xilog ("hop", hop, "possible link count", possibleLinks, maxRuns);
@@ -390,7 +342,7 @@ CLMSUI.DistancesObj.prototype = {
     		var residueRowIndices = d3.range(0, Math.min (rowCount, residuesPerSide)).map (function (r) { return Math.floor (rowCount / residuesPerSide * r); });
 			var residueColumnIndices = d3.range(0, Math.min (columnCount, residuesPerSide)).map (function (c) { return Math.floor (columnCount / residuesPerSide * c); });
 			
-			//console.log ("rro", residueRowIndices, residueColumnIndices, metaData.perSearch)
+			//console.log ("rro", residueRowIndices, residueColumnIndices, count)
 			
 			var self = this;
 			residueRowIndices.forEach (function (rri) {
