@@ -15,7 +15,8 @@
       return _.extend({},parentEvents,{
         "mousemove .mouseMat": "brushNeighbourhood",
         "mousedown .mouseMat": "setStartPoint",
-        "click .mouseMat": "selectNeighbourhood",
+        //"click .mouseMat": "selectNeighbourhood",
+		  "input .dragPanRB": "setMatrixDragMode",
       });
     },
 		
@@ -29,6 +30,7 @@
 		highlightedColour: "#f80",
 		linkWidth: 5,
 		tooltipRange: 3,
+		matrixDragMode: "Pan",
 	},
 
     initialize: function (viewOptions) {
@@ -60,6 +62,25 @@
             .attr ("class", "downloadButton btn btn-1 btn-1a")
             .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
         ;
+		
+		var buttonHolder = this.controlDiv.append("span").attr("class", "noBreak reducePadding");
+		// Radio Button group to decide pan or select
+        var toggleButtonData = [
+			{class: "dragPanRB", label: "Drag to Pan", id: "dragPan", tooltip: "Left-click and drag pans the matrix", group: "matrixDragMode", value: "Pan"},
+			{class: "dragPanRB", label: "Or Select", id: "dragSelect", tooltip: "Left-click and drag selects an area in the matrix", group: "matrixDragMode", value: "Select"},
+        ];
+        toggleButtonData
+            .forEach (function (d) {
+                d.type = "radio";
+				d.value = d.value || d.label;
+                d.inputFirst = false;
+				if (d.initialState === undefined && d.group && d.value) {	// set initial values for radio button groups
+					d.initialState = (d.value === this.options[d.group]);
+				}
+            }, this)
+        ;
+        CLMSUI.utils.makeBackboneButtons (buttonHolder, self.el.id, toggleButtonData);
+		
         
         var setSelectTitleString = function () {
             var selElem = d3.select (d3.event.target);
@@ -117,6 +138,8 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Chain "+prot+" ▼",
+					tooltipModel: this.model.get("tooltipModel"),
+					tooltip: {header: "PDB Chains", contents: "Turn on/off plotting of individual PDB chains along this axis."},
                     menu: [],
                     closeOnClick: false,
                     classed: "chainDropdown",
@@ -185,7 +208,15 @@
         this.vis = this.svg.append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         ;
-        
+		
+		this.brush = d3.svg.brush()
+            .x(self.x)
+            .y(self.y)
+            //.clamp ([false, false])
+            .on("brush", function() {} )
+            .on("brushend", function (val) { console.log ("yo", self.brush.extent()); self.selectNeighbourhood2 (self.brush.extent()); })
+        ;
+		
         
         // Add clippable and pan/zoomable viewport made of two group elements
         this.clipGroup = this.vis.append("g")
@@ -196,6 +227,10 @@
 		this.zoomGroup.append("g").attr("class", "blockAreas");
 		this.zoomGroup.append("g").attr("class", "backgroundImage").append("image");
 		this.zoomGroup.append("g").attr("class", "crossLinkPlot");
+		this.zoomGroup.append("g")
+            .attr("class", "brush")
+            .call(self.brush)
+        ;
         
         // Axes setup
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
@@ -245,6 +280,8 @@
         var entries = this.makeProteinPairingOptions();
         var startPairing = entries && entries.length ? entries[0].value : undefined;
         this.setAndShowPairing (startPairing);
+		
+		this.setMatrixDragMode ({target: {value: this.options.matrixDragMode}});
     },
         
     relayout: function () {
@@ -460,13 +497,30 @@
     },
         
     convertEvtToXY: function (evt) {
-		//console.log ("evt", evt, evt.offsetX);
         var sd = this.getSizeData();
-		console.log ("XXXY", evt.offsetX, evt.offsetY, this.zoomStatus, this.zoomStatus.scale(), this.zoomStatus.translate());
-        var x = evt.offsetX + 1;
-        var y = (sd.lengthB - 1) - evt.offsetY;
 		
-        return [x,y];
+		var px = evt.offsetX;
+		var py = evt.offsetY;
+		//console.log ("p", px, py);
+		
+		var t = this.zoomStatus.translate();
+		var baseScale = Math.min (sd.width / sd.lengthA, sd.height / sd.lengthB);
+        var scale = baseScale * this.zoomStatus.scale();
+		//console.log ("XXXY", this.zoomStatus.scale(), baseScale, scale, t);
+		
+		px -= t[0];	// translate
+		py -= t[1];
+		//console.log ("p2", px, py);
+		
+		px /= scale;	// scale
+		py /= scale;
+		//console.log ("p3", px, py);
+		
+		px++;	// +1 cos crosslinks are 1-indexed
+		py = (sd.lengthB - 1) - py;	// flip because y is bigger at top
+		//console.log ("p4", px, py);
+		
+        return [Math.round(px), Math.round(py)];
     },
         
     grabNeighbourhoodLinks: function (x, y) {
@@ -499,19 +553,56 @@
             this.model.setMarkedCrossLinks ("selection", crossLinks, false, add);
         }
     },
+		
+	grabNeighbourhoodLinks2: function (extent) {
+        //var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
+        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
+        var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
+        var proteinIDs = this.getCurrentProteinIDs();
+        var convFunc = function (x, y) {    // x and y are 0-indexed
+            return {
+                convX: x, 
+                convY: y, 
+                proteinX: proteinIDs[0] ? proteinIDs[0].proteinID : undefined, 
+                proteinY: proteinIDs[1] ? proteinIDs[1].proteinID : undefined,
+            };
+        };
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare2 (convFunc, filteredCrossLinkMap, extent[0][0], extent[0][1], extent[1][0], extent[1][1], this.options.tooltipRange, true);
+        return neighbourhoodLinks.filter (function (nlink) { return this.esterFilter (nlink.crossLink); }, this);
+    },
+		
+		
+	selectNeighbourhood2: function (extent) {
+        var add = d3.event.ctrlKey || d3.event.shiftKey;  // should this be added to current selection?
+        var linkWrappers = this.grabNeighbourhoodLinks2 (extent);
+        var crossLinks = _.pluck (linkWrappers, "crossLink");   
+        this.model.setMarkedCrossLinks ("selection", crossLinks, false, add);
+    },
+		
+		
         
     // Brush neighbourhood and invoke tooltip
     brushNeighbourhood: function (evt) {
         var xy = this.convertEvtToXY (evt);
         var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
         var crossLinks = _.pluck (linkWrappers, "crossLink");
-		
-		console.log ("cl", crossLinks);
         
         // invoke tooltip before setting highlights model change for quicker tooltip response
         this.invokeTooltip (evt, linkWrappers);
         this.model.setMarkedCrossLinks ("highlights", crossLinks, true, false);
     },
+		
+	setMatrixDragMode: function (evt) {
+		this.options.matrixDragMode = evt.target.value;
+		if (this.options.matrixDragMode === "Pan") {
+			d3.select(this.el).select(".viewport").call (this.zoomStatus);
+			d3.select(this.el).select(".clipg .brush rect.background").style ("pointer-events", "none");
+		} else {
+			d3.select(this.el).select(".viewport").on (".zoom", null);
+			d3.select(this.el).select(".clipg .brush rect.background").style ("pointer-events", null);
+		}
+		return this;
+	},
         
     getSingleLinkDistances: function (crossLink) {
 		return this.model.getSingleCrosslinkDistance (crossLink);
@@ -592,7 +683,7 @@
     },
 		
 	// draw white blocks in background to demarcate areas covered by active pdb chains
-	renderChainBlocks: function (alignInfo, ctx) {
+	renderChainBlocks: function (alignInfo) {
 		
 		// Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
 		var splitChain = function (alignInfo) {
@@ -621,8 +712,6 @@
 		//console.log ("blockMap", blockMap);
 
 		// Draw backgrounds for each pairing of chains
-		ctx.fillStyle = this.options.chainBackground;
-		
 		var blockAreas = this.zoomGroup.select(".blockAreas");
 		var blockSel = blockAreas.selectAll(".chainArea");
 		blockSel.remove();
@@ -643,7 +732,6 @@
 							.attr ("class", "chainArea")
 							.style ("fill", this.options.chainBackground)
 						;
-						//ctx.fillRect (brange1.first - 1, seqLengthB - (brange2.last - 1), brange1.last - brange1.first + 1, brange2.last - brange2.first + 1);
 					}, this);
 				}, this);
 
@@ -656,31 +744,8 @@
         
         // only render background if distances available
         if (distancesObj) {
-			var seqLengths = this.getSeqLengthData();
-			this.canvas
-                .attr("width",  seqLengths.lengthA)
-                .attr("height", seqLengths.lengthB)
-            ;
-			var canvasNode = this.canvas.node();
-        	var ctx = canvasNode.getContext("2d");       
-        	ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
 			
-            var rangeDomain = this.colourScaleModel.get("colScale").domain();
-            var min = rangeDomain[0];
-            var max = rangeDomain[1];
-            var rangeColours = this.colourScaleModel.get("colScale").range();
-            var cols = rangeColours;//.slice (1,3);
-            // have slightly different saturation/luminance for each colour so shows up in black & white
-            var colourArray = cols.map (function(col, i) {
-                col = d3.hsl(col);
-                col.s = 0.4;// - (0.1 * i);
-                col.l = 0.85;// - (0.1 * i);
-                return col.rgb();
-            });
-
-            var seqLengthB = seqLengths.lengthB - 1;    
-        
-            // Get alignment info for chains in the two proteins, filtering to chains that are marked as showable
+			// Get alignment info for chains in the two proteins, filtering to chains that are marked as showable
             var proteinIDs = this.getCurrentProteinIDs();
             var alignInfo = proteinIDs.map (function (proteinID, i) {
                 var pid = proteinID.proteinID;
@@ -695,80 +760,125 @@
                 return [];
             }, this);
             //console.log ("ALLL", alignInfo);
-
-            CLMSUI.times = CLMSUI.times || [];
-            var start = performance.now();
-
-            
-            // function to draw one matrix according to a pairing of two chains (called in loop later)
-            var drawDistanceMatrix = function (imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
-                var alignColl = this.model.get("alignColl");
-                var distanceMatrix = matrixValue.distanceMatrix;
-                var pw = this.canvas.attr("width");
-
-                // precalc some stuff that would get recalculatd a lot in the inner loop
-                var preCalcSearchIndices = d3.keys(distanceMatrix[0]).map (function (dIndex) {
-                    return alignColl.getAlignedIndex (+dIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
-                });
-                //console.log ("pcsi", preCalcSearchIndices, this);
-
-                // draw chain values, aligned to search sequence
-                for (var i = 0; i < distanceMatrix.length; i++){
-                    var row = distanceMatrix[i];
-                    var searchIndex1 = alignColl.getAlignedIndex (i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
-                    if (row && searchIndex1 >= 0) {
-                        for (var j = 0, len = row.length; j < len; j++) {   // was seqLength     
-                            var distance = row[j];
-                            if (distance < max) {
-                                var searchIndex2 = preCalcSearchIndices[j];
-                                if (searchIndex2 > 0) {
-									var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
-									var val = minArray ? minArray[index] : 0;
-									if (val === 0 || val > distance) {
-										var col = colourArray [distance > min ? 1 : 0];
-										this.drawPixel (imgDataArr, index, col.r, col.g, col.b, 255);
-										//drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
-										if (minArray) {
-											minArray[index] = val;
-										}
-									}
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-
-			this.renderChainBlocks (alignInfo, ctx);
-
-            
-            var mid = performance.now();
-
-            var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
-            var cd = canvasData.data;
-			var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Float32Array (this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
-
-            // draw actual content of chain pairings
-            alignInfo[0].forEach (function (alignInfo1) {
+			
+			// draw the areas covered by pdb chain data
+			this.renderChainBlocks (alignInfo);
+			
+			// Work out if at least one of the matrices has distances beyond just the crosslinks
+			var linksOnly = true;
+			alignInfo[0].forEach (function (alignInfo1) {
                 var chainIndex1 = alignInfo1.chainID;
                 alignInfo[1].forEach (function (alignInfo2) {
                     var chainIndex2 = alignInfo2.chainID;
                     var distanceMatrixValue = distancesObj.matrices[chainIndex1+"-"+chainIndex2];
-                    drawDistanceMatrix.call (this, cd, minArray, distanceMatrixValue, alignInfo1, alignInfo2);
+                    linksOnly &= distanceMatrixValue.linksOnly;
                 }, this);
             }, this);
-
-            ctx.putImageData (canvasData, 0, 0);
-
-            var end = performance.now();
-            CLMSUI.times.push (Math.round (end - mid));
-            //console.log ("CLMSUI.times", CLMSUI.times);
 			
-			this.zoomGroup.select(".backgroundImage").select("image")
-				.attr ("width", this.canvas.attr("width"))
-				.attr ("height", this.canvas.attr("height"))
-				.attr ("href", canvasNode.toDataURL("image/png"))
-			;
+			// If so, it's worth drawing the background, setting up the canvas etc
+			if (linksOnly) {
+				// shrink canvas / hide image if not showing it
+				this.canvas
+					.attr("width", 1)
+					.attr("height", 1)
+				;
+				this.zoomGroup.select(".backgroundImage").select("image").style("display", "none");
+			} else {
+				var seqLengths = this.getSeqLengthData();
+				this.canvas
+					.attr("width",  seqLengths.lengthA)
+					.attr("height", seqLengths.lengthB)
+				;
+				var canvasNode = this.canvas.node();
+				var ctx = canvasNode.getContext("2d");       
+				ctx.clearRect (0, 0, canvasNode.width, canvasNode.height);
+
+				var rangeDomain = this.colourScaleModel.get("colScale").domain();
+				var min = rangeDomain[0];
+				var max = rangeDomain[1];
+				var rangeColours = this.colourScaleModel.get("colScale").range();
+				var cols = rangeColours;//.slice (1,3);
+				// have slightly different saturation/luminance for each colour so shows up in black & white
+				var colourArray = cols.map (function(col, i) {
+					col = d3.hsl(col);
+					col.s = 0.4;// - (0.1 * i);
+					col.l = 0.85;// - (0.1 * i);
+					return col.rgb();
+				});
+
+				var seqLengthB = seqLengths.lengthB - 1;    
+
+				CLMSUI.times = CLMSUI.times || [];
+				var start = performance.now();
+
+				// function to draw one matrix according to a pairing of two chains (called in loop later)
+				var drawDistanceMatrix = function (imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
+					var alignColl = this.model.get("alignColl");
+					var distanceMatrix = matrixValue.distanceMatrix;
+					var pw = this.canvas.attr("width");
+
+					// precalc some stuff that would get recalculatd a lot in the inner loop
+					var preCalcSearchIndices = d3.keys(distanceMatrix[0]).map (function (dIndex) {
+						return alignColl.getAlignedIndex (+dIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
+					});
+					//console.log ("pcsi", preCalcSearchIndices, this);
+
+					// draw chain values, aligned to search sequence
+					for (var i = 0; i < distanceMatrix.length; i++){
+						var row = distanceMatrix[i];
+						var searchIndex1 = alignColl.getAlignedIndex (i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
+						if (row && searchIndex1 >= 0) {
+							for (var j = 0, len = row.length; j < len; j++) {   // was seqLength     
+								var distance = row[j];
+								if (distance < max) {
+									var searchIndex2 = preCalcSearchIndices[j];
+									if (searchIndex2 > 0) {
+										var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
+										var val = minArray ? minArray[index] : 0;
+										if (val === 0 || val > distance) {
+											var col = colourArray [distance > min ? 1 : 0];
+											this.drawPixel (imgDataArr, index, col.r, col.g, col.b, 255);
+											//drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+											if (minArray) {
+												minArray[index] = val;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				};
+
+				var middle = performance.now();
+
+				var canvasData = ctx.getImageData (0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
+				var cd = canvasData.data;
+				var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Float32Array (this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
+
+				// draw actual content of chain pairings
+				alignInfo[0].forEach (function (alignInfo1) {
+					var chainIndex1 = alignInfo1.chainID;
+					alignInfo[1].forEach (function (alignInfo2) {
+						var chainIndex2 = alignInfo2.chainID;
+						var distanceMatrixValue = distancesObj.matrices[chainIndex1+"-"+chainIndex2];
+						drawDistanceMatrix.call (this, cd, minArray, distanceMatrixValue, alignInfo1, alignInfo2);
+					}, this);
+				}, this);
+
+				ctx.putImageData (canvasData, 0, 0);
+
+				var end = performance.now();
+				CLMSUI.times.push (Math.round (end - middle));
+				//console.log ("CLMSUI.times", CLMSUI.times);
+
+				this.zoomGroup.select(".backgroundImage").select("image")
+					.style ("display", null)	// default value
+					.attr ("width", this.canvas.attr("width"))
+					.attr ("height", this.canvas.attr("height"))
+					.attr ("href", canvasNode.toDataURL("image/png"))
+				;
+			}
         }
         return this;
     },
@@ -882,7 +992,7 @@
         var fx = sizeData.lengthA * minRatio;
         var fy = sizeData.lengthB * minRatio;
         
-        //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, diffRatio, "FXY", fx, fy);
+        console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, diffRatio, "FXY", fx, fy);
         
         viewPort
             //.style("width",  minDim+"px")
@@ -892,8 +1002,6 @@
         ;
         
         d3.select(this.el).select("#matrixClip > rect")
-            //.attr ("width", minDim)
-            //.attr ("height", minDim)
             .attr ("width", fx)
             .attr ("height", fy)
         ;
@@ -912,11 +1020,23 @@
 			 //.range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
             .range([0, fy])
         ;
-        
-        //console.log ("XAX", this.x, this.xAxis, this.vis.select(".x"));
+		
+		// update brush
+		this.brush
+			.x(this.x.copy().range(this.x.domain().slice()))
+			.y(this.y.copy().range(this.y.domain().slice().reverse()))
+		;
+		this.zoomGroup.select(".brush").call(this.brush);
+		console.log ("BRUSH", this.brush);
+		
+		// make sure brush rectangle is big enough to cover viewport (accommodate for scaling)
+		this.zoomGroup.select(".brush rect.background")
+		    .attr ("width", sizeData.lengthA)
+            .attr ("height", sizeData.lengthB)
+        ;
         
         //var approxTicks = Math.round (minDim / 50); // 50px minimum spacing between ticks
-        this.xAxis.ticks(Math.round (fx / 50)).outerTickSize(0);
+        this.xAxis.ticks (Math.round (fx / 50)).outerTickSize(0);
         this.yAxis.ticks (Math.round (fy / 50)).outerTickSize(0);     
         
         // then store the current pan/zoom values
@@ -971,7 +1091,6 @@
         var sizeData = this.getSizeData();
         
         // rescale and position canvas according to pan/zoom settings and available space
-        //var baseScale = Math.min (sizeData.minDim / sizeData.lengthA, sizeData.minDim / sizeData.lengthB);
         var baseScale = Math.min (sizeData.width / sizeData.lengthA, sizeData.height / sizeData.lengthB);
         var scale = baseScale * this.zoomStatus.scale();
         var scaleString = "scale("+scale+")";
@@ -981,7 +1100,7 @@
         
 		// for some reason using a css transform style on an svg group doesn't play nice in firefox (i.e. wrong positions reported, offsetx/y mangled etc)
 		// , so use attr transform instead
-        [/*{elem: d3.select(this.el).select(".viewport .mouseMat"), type: "style"}*/, {elem: this.zoomGroup, type: "attr"}].forEach (function (d3sel) {
+        [/*{elem: d3.select(this.el).select(".mouseMat"), type: "style"},*/ {elem: this.zoomGroup, type: "attr"}].forEach (function (d3sel) {
 			if (d3sel.type === "attr") {
 				d3sel.elem.attr ("transform", transformStrings[d3sel.type])
 			}
@@ -1002,23 +1121,22 @@
         var viewport = cvs.parent();
         sizeData.viewHeight = $.zepto ? viewport.height() : viewport.outerHeight(true);
         sizeData.viewWidth = $.zepto ? viewport.width() : viewport.outerWidth(true);
-        var bottom = Math.min (
+
+        var bottom = sizeData.viewHeight; /*Math.min (
             cvs.position().top + (($.zepto ? cvs.height() : cvs.outerHeight(true)) * scale), 
             sizeData.viewHeight
-        );
-        var right = Math.min (
+        ); */
+        var right = sizeData.viewWidth; /*Math.min (
             cvs.position().left + (($.zepto ? cvs.width() : cvs.outerWidth(true)) * scale), 
             sizeData.viewWidth
-        );
+        );*/
         
         // redraw axes
         this.vis.select(".y")
             .call(self.yAxis)
-            .selectAll("g.tick")
         ;
         
         this.vis.select(".x")
-            //.attr("transform", "translate(0," + sizeData.viewHeight + ")")
             .attr("transform", "translate(0," + bottom + ")")
             .call(self.xAxis)
         ;

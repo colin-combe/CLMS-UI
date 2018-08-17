@@ -57,7 +57,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
 
-        // Various view options set up, then put in a dropdown menu
+        // Various view options set up...
         var toggleButtonData = [
             {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Cross-Links Only", id: "selectedOnly", tooltip: "Only show selected cross-links"},
             {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Possible Cross-Links Only", id: "shortestOnly", tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"},
@@ -80,6 +80,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         ;
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, toggleButtonData);
 
+		// ...then moved to a dropdown menu
         var optid = this.el.id+"Options";
         toolbar.append("p").attr("id", optid);
         new CLMSUI.DropDownMenuViewBB ({
