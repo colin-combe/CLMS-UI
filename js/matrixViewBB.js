@@ -13,9 +13,11 @@
           parentEvents = parentEvents();
       }
       return _.extend({},parentEvents,{
-        "mousemove .mouseMat": "brushNeighbourhood",
-        "mousedown .mouseMat": "setStartPoint",
-        //"click .mouseMat": "selectNeighbourhood",
+      		"mousemove .mouseMat": "brushNeighbourhood",
+		  "mousemove rect.background": "brushNeighbourhood",
+		  "mousemove rect.extent": "brushNeighbourhood",
+		  "mouseleave .viewport": "cancelHighlights",
+		  "mouseleave .clipg": "cancelHighlights",
 		  "input .dragPanRB": "setMatrixDragMode",
       });
     },
@@ -29,7 +31,7 @@
 		selectedColour: "#ff0",
 		highlightedColour: "#f80",
 		linkWidth: 5,
-		tooltipRange: 3,
+		tooltipRange: 7,
 		matrixDragMode: "Pan",
 	},
 
@@ -214,7 +216,7 @@
             .y(self.y)
             //.clamp ([false, false])
             .on("brush", function() {} )
-            .on("brushend", function (val) { console.log ("yo", self.brush.extent()); self.selectNeighbourhood2 (self.brush.extent()); })
+            .on("brushend", function (val) { self.selectNeighbourhood (self.brush.extent()); })
         ;
 		
         
@@ -287,10 +289,6 @@
     relayout: function () {
         this.resize();
         return this;
-    },
-        
-    esterFilter: function (crossLink) {
-        return (this.filterVal === undefined || CLMSUI.modelUtils.getEsterLinkType (crossLink) >= this.filterVal);
     },
         
     setAndShowPairing: function (pairing) {
@@ -490,18 +488,18 @@
     },
         
         
-    // Tooltip functions
-        
-    setStartPoint: function (evt) {
-        this.startPoint = {x: evt.clientX, y: evt.clientY};
-    },
-        
+    // Tooltip functions     
     convertEvtToXY: function (evt) {
         var sd = this.getSizeData();
 		
 		var px = evt.offsetX;
 		var py = evt.offsetY;
-		//console.log ("p", px, py);
+		
+		if (evt.target instanceof SVGElement) {	// if an svg element, coords needs shifted relative to svg
+			px -= this.margin.left;
+			py -= this.margin.top;
+		}
+		//console.log ("p", evt, px, py, evt.target);
 		
 		var t = this.zoomStatus.translate();
 		var baseScale = Math.min (sd.width / sd.lengthA, sd.height / sd.lengthB);
@@ -522,8 +520,8 @@
 		
         return [Math.round(px), Math.round(py)];
     },
-        
-    grabNeighbourhoodLinks: function (x, y) {
+		
+	grabNeighbourhoodLinks: function (extent) {
         //var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
         var filteredCrossLinks = this.model.getFilteredCrossLinks ();
         var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
@@ -536,55 +534,24 @@
                 proteinY: proteinIDs[1] ? proteinIDs[1].proteinID : undefined,
             };
         };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, x, y, this.options.tooltipRange, true);
-        return neighbourhoodLinks.filter (function (nlink) { return this.esterFilter (nlink.crossLink); }, this);
-    },
-        
-    selectNeighbourhood: function (evt) {
-        // To stop this being run after a drag, make sure click co-ords are with sqrt(X) pixels of original mousedown co-ords
-        this.startPoint = this.startPoint || {x: -10, y: -10};
-        var mouseMovement = Math.pow ((evt.clientX - this.startPoint.x), 2) + Math.pow ((evt.clientY - this.startPoint.y), 2);
-        this.startPoint = {x: -10, y: -10};
-        if (mouseMovement <= 0) {   // Zero tolerance
-            var xy = this.convertEvtToXY (evt);
-            var add = evt.ctrlKey || evt.shiftKey;  // should this be added to current selection?
-            var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
-            var crossLinks = _.pluck (linkWrappers, "crossLink");   
-            this.model.setMarkedCrossLinks ("selection", crossLinks, false, add);
-        }
+        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare (convFunc, filteredCrossLinkMap, extent[0][0], extent[0][1], extent[1][0], extent[1][1], true);
+        return neighbourhoodLinks;
     },
 		
-	grabNeighbourhoodLinks2: function (extent) {
-        //var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
-        var filteredCrossLinks = this.model.getFilteredCrossLinks ();
-        var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
-        var proteinIDs = this.getCurrentProteinIDs();
-        var convFunc = function (x, y) {    // x and y are 0-indexed
-            return {
-                convX: x, 
-                convY: y, 
-                proteinX: proteinIDs[0] ? proteinIDs[0].proteinID : undefined, 
-                proteinY: proteinIDs[1] ? proteinIDs[1].proteinID : undefined,
-            };
-        };
-        var neighbourhoodLinks = CLMSUI.modelUtils.findResiduesInSquare2 (convFunc, filteredCrossLinkMap, extent[0][0], extent[0][1], extent[1][0], extent[1][1], this.options.tooltipRange, true);
-        return neighbourhoodLinks.filter (function (nlink) { return this.esterFilter (nlink.crossLink); }, this);
-    },
-		
-		
-	selectNeighbourhood2: function (extent) {
+	selectNeighbourhood: function (extent) {
         var add = d3.event.ctrlKey || d3.event.shiftKey;  // should this be added to current selection?
-        var linkWrappers = this.grabNeighbourhoodLinks2 (extent);
+        var linkWrappers = this.grabNeighbourhoodLinks (extent);
         var crossLinks = _.pluck (linkWrappers, "crossLink");   
         this.model.setMarkedCrossLinks ("selection", crossLinks, false, add);
     },
-		
 		
         
     // Brush neighbourhood and invoke tooltip
     brushNeighbourhood: function (evt) {
         var xy = this.convertEvtToXY (evt);
-        var linkWrappers = this.grabNeighbourhoodLinks (xy[0], xy[1]);
+		var halfRange = this.options.tooltipRange / 2;
+		var highlightExtent = d3.transpose (xy.map (function (xory) { return [xory - halfRange, xory + halfRange]; }));	// turn xy into extent equivalent
+        var linkWrappers = this.grabNeighbourhoodLinks (highlightExtent);
         var crossLinks = _.pluck (linkWrappers, "crossLink");
         
         // invoke tooltip before setting highlights model change for quicker tooltip response
@@ -592,14 +559,18 @@
         this.model.setMarkedCrossLinks ("highlights", crossLinks, true, false);
     },
 		
+	cancelHighlights: function () {
+		this.model.setMarkedCrossLinks ("highlights", [], true, false);
+	},
+		
 	setMatrixDragMode: function (evt) {
 		this.options.matrixDragMode = evt.target.value;
 		if (this.options.matrixDragMode === "Pan") {
 			d3.select(this.el).select(".viewport").call (this.zoomStatus);
-			d3.select(this.el).select(".clipg .brush rect.background").style ("pointer-events", "none");
+			d3.select(this.el).selectAll(".clipg .brush rect").style ("pointer-events", "none");
 		} else {
 			d3.select(this.el).select(".viewport").on (".zoom", null);
-			d3.select(this.el).select(".clipg .brush rect.background").style ("pointer-events", null);
+			d3.select(this.el).selectAll(".clipg .brush rect").style ("pointer-events", null);
 		}
 		return this;
 	},
@@ -907,8 +878,7 @@
                 var highlightedCrossLinkIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("highlights"), "id"));
 
                 var finalCrossLinks = Array.from(filteredCrossLinks).filter (function (crossLink) {
-                    var protOK = (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
-                    return protOK && this.esterFilter (crossLink);
+                    return (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
                 }, this);
 
                 var sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort (3, finalCrossLinks, function (link) {
@@ -992,7 +962,7 @@
         var fx = sizeData.lengthA * minRatio;
         var fy = sizeData.lengthB * minRatio;
         
-        console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, diffRatio, "FXY", fx, fy);
+        //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, diffRatio, "FXY", fx, fy);
         
         viewPort
             //.style("width",  minDim+"px")
@@ -1027,7 +997,7 @@
 			.y(this.y.copy().range(this.y.domain().slice().reverse()))
 		;
 		this.zoomGroup.select(".brush").call(this.brush);
-		console.log ("BRUSH", this.brush);
+		//console.log ("BRUSH", this.brush);
 		
 		// make sure brush rectangle is big enough to cover viewport (accommodate for scaling)
 		this.zoomGroup.select(".brush rect.background")
