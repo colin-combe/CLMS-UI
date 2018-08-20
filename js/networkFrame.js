@@ -637,7 +637,8 @@ CLMSUI.init.viewsEssential = function(options) {
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
-        showCustomConfig: true
+        showCustomConfig: true,
+        showQualityControl: "min",
     }
 
     xiSPEC.init(xiSPEC_options);
