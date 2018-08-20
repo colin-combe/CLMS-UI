@@ -14,6 +14,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "click input.filterTypeToggle": "filter",
         "input input.filterTypeText": "textFilter",
         "click input.subsetToggleFilterToggle": "subsetToggleFilter",
+        "click input.thresholdToggle": "thresholdToggleFilter",
         "keyup input.subsetNumberFilter": "subsetNumberFilter",
         "mouseup input.subsetNumberFilter": "subsetNumberFilter",
     },
@@ -37,12 +38,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Pep. length", "id":"pepLength", min: 1, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
             ],
             validationStatusToggles: [
-                {"label":"A", "id":"A"},
-                {"label":"B", "id":"B"},
-                {"label":"C", "id":"C"},
-                {"label":"?", "id":"Q"},
-                {"label":"Auto", "id":"AUTO", tooltip: "Show autovalidated cross-links"},
-                {"label":"Unval.", "id":"unval", tooltip: "Show unvalidated cross-links"},
+                {"label":"All", "id":"thresholdAll"},
+                {"label":"Pass", "id":"thresholdPass"},
+                {"label":"Fail", "id":"thresholdFail"},
+            ],
+            decoysToggle: [
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},
             ],
             navigationFilters: [
@@ -66,6 +66,17 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup")
 									.attr ("id", "filterModeDiv");
         //~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
+
+		var cutoffDivSel = mainDivSel.append ("div")
+								.attr("class", "filterControlGroup")
+								.attr("id", "matchScore");
+		      //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+
+        var validationDivSel = mainDivSel.append("div")
+								.attr ("class", "filterControlGroup")
+								.attr ("id", "validationStatus");
+        //validationDivSel.append("span").attr("class", "sideOn").text("THRESHOLD");
+
         var modeElems = modeDivSel.selectAll("div.modeToggles")
             .data(this.options.modes, function(d) { return d.id; })
             .enter()
@@ -130,9 +141,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
 
 
-		var validationDivSel = mainDivSel.append("div")
-								.attr ("class", "filterControlGroup")
-								.attr ("id", "validationStatus");
         var validationElems = validationDivSel.selectAll("div.validationToggles")
             .data(this.options.validationStatusToggles, function(d) { return d.id; })
             .enter()
@@ -149,15 +157,38 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         validationElems.append ("input")
             .attr ("id", function(d) { return d.id; })
-            .attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
-            .attr ("type", "checkbox")
+            .attr ("class", "thresholdToggle")
+            .attr ("type", "radio")
+            .attr ("name", "thresholdRadio")
             .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
         ;
 
-		var cutoffDivSel = mainDivSel.append ("div")
-								.attr("class", "filterControlGroup")
-								.attr("id", "matchScore");
-		      //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+
+		// var decoysDivSel = mainDivSel.append("div")
+		// 						.attr ("class", "filterControlGroup")
+		// 						.attr ("id", "decoyStatus");
+        // var decoyElems = validationDivSel.selectAll("div.decoyToggles")
+        //     .data(this.options.validationStatusToggles, function(d) { return d.id; })
+        //     .enter()
+        //     .append ("div")
+        //     .attr ("class", "toggles decoyToggles")
+        //     .attr("id", function(d) { return "toggles_" + d.id; })
+        //     .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+        //     .append ("label")
+        // ;
+        //
+        // decoyElems.append ("span")
+        //     .text (function(d) { return d.label; })
+        // ;
+        //
+        // decoyElems.append ("input")
+        //     .attr ("id", function(d) { return d.id; })
+        //     .attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
+        //     .attr ("type", "input")
+        //     .property ("checked", function(d) {  console.log("D:", d.id, self.model.get(d.id)); return Boolean (self.model.get(d.id)); })
+        // ;
+
+
 
         var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
         // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
@@ -282,7 +313,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        //this.modeChanged();
+        this.modeChanged();
     },
 
     filter: function (evt) {
@@ -308,6 +339,28 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			d3.select("#aaApart").attr("disabled", target.checked ? null : "disabled");
 		}
         this.model.set (id, target.checked);
+    },
+
+    thresholdToggleFilter: function (evt) {
+        console.log ("thresholdToggleFilter", evt);
+        var target = evt.target;
+        var id = target.id;
+        // if you can see a nicer way...
+        switch (id) {
+            case "thresholdAll":
+                this.model.set ("thresholdPass", false,  {silent:true});
+                this.model.set ("thresholdFail", false,  {silent:true});
+                break;
+            case "thresholdPass":
+                this.model.set ("thresholdAll", false,  {silent:true});
+                this.model.set ("thresholdFail", false,  {silent:true});
+                break;
+            case "thresholdFail":
+                this.model.set ("thresholdAll", false,  {silent:true});
+                this.model.set ("thresholdPass", false,  {silent:true});
+                break;
+        }
+        this.model.set (id, true);
     },
 
     sliderDecimalPlaces: 2,
@@ -460,7 +513,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
                 } else {
                     if (i === 0 && decoysPresent) {
                         var roughFDR = (self.model.getFilteredCrossLinks("decoysTD").length - self.model.getFilteredCrossLinks("decoysDD").length) / (self.model.getFilteredCrossLinks().length || 1);
-                        return "• Rough FDR Equivalent = "+self.pctFormat(roughFDR);
+                        return "• Apparent link-level FDR: "+self.pctFormat(roughFDR);
                     }
                     return "";
                 }

@@ -17,12 +17,10 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 aaApart: 0,
                 pepLength: 1,
                 //validation status
-                A: true,
-                B: true,
-                C: true,
-                Q: true,
-                unval: true,
-                AUTO: false,
+                thresholdAll: false,
+                thresholdPass: true,
+                thresholdFail: false,
+
                 decoys: true,
                 //fdr
                 fdrThreshold: 0.05,
@@ -131,14 +129,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
             validationStatusFilter: function (match) {
-                // var vChar = match.validated;
-                // if (vChar != 'R') {
-                //     if (this.get(vChar) || this.get(this.valMap.get(vChar))) return true;
-                //     if (match.autovalidated && this.get("AUTO")) return true;
-                //     if (!match.autovalidated && !vChar && this.get("unval")) return true;
-                // }
-
-                return true;
+                if (this.get("thresholdAll")) {
+                     return true;
+                }
+                if (this.get("thresholdPass") && match.passThreshold == true) {
+                    return true;
+                }
+                if (this.get("thresholdFail") && match.passThreshold == false) {
+                    return true;
+                }
+                return false;
             },
 
             proteinNameCheck: function (match, searchString) {
@@ -379,7 +379,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
 				// return parts of current url query string that aren't filter flags or values
 				var search = window.location.search.slice(1);
-				var nonFilterKeys = d3.set (["sid", "decoys", "unval", "lowestScore", "anon"]);
+				var nonFilterKeys = d3.set (["upload", "decoys", "unval", "lowestScore", "anon"]);
 				var nonFilterParts = search.split("&").filter (function (nfpart) {
 					return nonFilterKeys.has (nfpart.split("=")[0]);
 				});
