@@ -645,17 +645,24 @@ CLMSUI.init.viewsEssential = function(options) {
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.resize();
+        xiSPEC.vent.trigger('resize:spectrum');
     });
-    xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.resize();
-    });
-    xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.render();
-    });
-    xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.render();
-    });
+
+    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.resize();
+    // });
+    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.resize();
+    // });
+    // xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.resize();
+    // });
+    // xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.render();
+    // });
+    // xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.render();
+    // });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
