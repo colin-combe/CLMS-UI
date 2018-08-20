@@ -14,8 +14,9 @@
       }
       return _.extend({},parentEvents,{
       		"mousemove .mouseMat": "brushNeighbourhood",
-		  "mousemove rect.background": "brushNeighbourhood",
-		  "mousemove rect.extent": "brushNeighbourhood",
+		  "mousemove .clipg": "brushNeighbourhood",
+		  //"mousemove rect.background": "brushNeighbourhood",
+		  //"mousemove rect.extent": "brushNeighbourhood",
 		  "mouseleave .viewport": "cancelHighlights",
 		  "mouseleave .clipg": "cancelHighlights",
 		  "input .dragPanRB": "setMatrixDragMode",
@@ -492,24 +493,31 @@
     convertEvtToXY: function (evt) {
         var sd = this.getSizeData();
 		
-		var px = evt.offsetX;
-		var py = evt.offsetY;
+		//var px = evt.offsetX;
+		//var py = evt.offsetY;
+		
+		// *****!$$$ finally, cross-browser
+		var elem = d3.select(this.el).select(".viewport");
+		var px = evt.pageX - $(elem.node()).offset().left;
+		var py = evt.pageY - $(elem.node()).offset().top;
+			
+		//console.log ("p", evt, px, py, evt.target, evt.originalEvent.offsetX);
 		
 		if (evt.target instanceof SVGElement) {	// if an svg element, coords needs shifted relative to svg
-			px -= this.margin.left;
-			py -= this.margin.top;
+			//px -= this.margin.left;
+			//py -= this.margin.top;
 		}
-		//console.log ("p", evt, px, py, evt.target);
-		
+		//console.log ("p1a", px, py);
+
 		var t = this.zoomStatus.translate();
 		var baseScale = Math.min (sd.width / sd.lengthA, sd.height / sd.lengthB);
-        var scale = baseScale * this.zoomStatus.scale();
+		var scale = baseScale * this.zoomStatus.scale();
 		//console.log ("XXXY", this.zoomStatus.scale(), baseScale, scale, t);
-		
+
 		px -= t[0];	// translate
 		py -= t[1];
 		//console.log ("p2", px, py);
-		
+
 		px /= scale;	// scale
 		py /= scale;
 		//console.log ("p3", px, py);
