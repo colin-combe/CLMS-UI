@@ -306,6 +306,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                     chain1: chain1,
                     chain2: chain2,
                     isSymmetric: chain1 === chain2,
+					linksOnly: linksOnly,
                     size: [cindices1.length, cindices2.length],
                     distanceMatrix: linksOnly
                         ? this.getLinkDistancesBetween2Chains (cindices1, cindices2, +chain1, +chain2, links)
