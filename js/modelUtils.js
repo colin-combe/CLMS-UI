@@ -205,13 +205,19 @@ CLMSUI.modelUtils = {
         feature: function () { return "Feature"; },
         linkList: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },
     },
-
-    findResiduesInSquare : function (convFunc, crossLinkMap, cx, cy, side, asymmetric) {
+	
+	findResiduesInSquare: function (convFunc, crossLinkMap, x1, y1, x2, y2, asymmetric) {
         var a = [];
-        for (var n = cx - side; n <= cx + side; n++) {
+		var xmin = Math.max (0, Math.round (Math.min (x1, x2)));
+		var xmax = Math.round (Math.max (x1, x2));
+		var ymin = Math.max (0, Math.round (Math.min (y1, y2)));
+		var ymax = Math.round (Math.max (y1, y2));
+		//console.log ("x", xmin, xmax, "y", ymin, ymax);
+		
+        for (var n = xmin; n <= xmax; n++) {
             var convn = convFunc (n, 0).convX;
             if (!isNaN(convn) && convn > 0) {
-                for (var m = cy - side; m <= cy + side; m++) {
+                for (var m = ymin; m <= ymax; m++) {
                     var conv = convFunc (n, m);
                     var convm = conv.convY;
                     var excludeasym = asymmetric && (conv.proteinX === conv.proteinY) && (convn > convm);
