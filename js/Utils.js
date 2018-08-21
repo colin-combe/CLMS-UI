@@ -398,7 +398,7 @@ CLMSUI.utils = {
     // targetDiv is a d3 select element
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button",
-    // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
+    // initialState: true|false, group: "sort", tooltip: "tooltipText", noBreak: true|false},
     makeBackboneButtons: function (targetDiv, baseID, buttonData) {
         var makeID = function (d) { return baseID + d.id; };
 
@@ -422,7 +422,7 @@ CLMSUI.utils = {
             .enter()
             .append ("label")
                 .attr ("class", "btn noBreak")
-                .attr ("title", function(d) { return d.title; })
+                .attr ("title", function(d) { return d.tooltip; })
                 .attr ("id", makeID)
         ;
 		

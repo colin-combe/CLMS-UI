@@ -59,11 +59,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // Various view options set up...
         var toggleButtonData = [
-            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Cross-Links Only", id: "selectedOnly", tooltip: "Only show selected cross-links"},
-            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Possible Cross-Links Only", id: "shortestOnly", tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"},
-			{initialState: this.options.showResidues, class: "showResiduesCB", label: "Cross-Linked Residues", id: "showResidues", tooltip: "Show cross-linked residues on protein representations"},
-            {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins", tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"},
-			{initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel", tooltip: "Show distance labels on displayed cross-links"},
+            {initialState: this.options.selectedOnly, class: "selectedOnlyCB", label: "Selected Cross-Links Only", id: "selectedOnly", d3tooltip: "Only show selected cross-links"},
+            {initialState: this.options.shortestLinksOnly, class: "shortestLinkCB", label: "Shortest Possible Cross-Links Only", id: "shortestOnly", d3tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"},
+			{initialState: this.options.showResidues, class: "showResiduesCB", label: "Cross-Linked Residues", id: "showResidues", d3tooltip: "Show cross-linked residues on protein representations"},
+            {initialState: this.options.showAllProteins, class: "showAllProteinsCB", label: "All Proteins", id: "showAllProteins", d3tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"},
+			{initialState: this.options.labelVisible, class: "distanceLabelCB", label: "Distance Labels", id: "visLabel", d3tooltip: "Show distance labels on displayed cross-links"},
 			{class: "chainLabelLengthRB", label: "Long", id: "showLongChainLabels", tooltip: "Show protein chain labels with more verbose content if available", group: "chainLabelSetting", type: "radio", value: "Verbose", header: "Protein Chain Label Style"},
 			{class: "chainLabelLengthRB", label: "Short", id: "showShortChainLabels", tooltip: "Show protein chain labels with shorter content", group: "chainLabelSetting", type: "radio", value: "Short"},
 			{class: "chainLabelLengthRB", label: "None", id: "showNoChainLabels", tooltip: "Show no protein chain labels", group: "chainLabelSetting", type: "radio", value: "None"},
@@ -88,7 +88,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
                 title: "Show ▼",
-                menu: toggleButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
+                menu: toggleButtonData.map (function(d) { 
+					d.id = self.el.id + d.id; 
+					d.tooltip = d.d3tooltip;
+					return d; 
+				}),
                 closeOnClick: false,
 				tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
             }

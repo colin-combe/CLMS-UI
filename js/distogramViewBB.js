@@ -68,9 +68,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		
 		// Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
-			{class: "randomScope", label: "All combinations (Between & Self)", id: "All", tooltip: "Calculate random links from within and between all proteins", group: "randomScope", type: "radio", value: "All"},
-			{class: "randomScope", label: "Within proteins only (Self)", id: "Intra", tooltip: "Only calculate random links from within the same proteins", group: "randomScope", type: "radio", value: "Intra"},
-			{class: "randomScope", label: "Within chains only (Self in same protein copy)", id: "Chain", tooltip: "Only calculate random links from within the same chain", group: "randomScope", type: "radio", value: "Chain"},
+			{class: "randomScope", label: "All combinations (Between & Self)", id: "All", d3tooltip: "Calculate random links from within and between all proteins", group: "randomScope", type: "radio", value: "All"},
+			{class: "randomScope", label: "Within proteins only (Self)", id: "Intra", d3tooltip: "Only calculate random links from within the same proteins", group: "randomScope", type: "radio", value: "Intra"},
+			{class: "randomScope", label: "Within chains only (Self in same protein copy)", id: "Chain", d3tooltip: "Only calculate random links from within the same chain", group: "randomScope", type: "radio", value: "Chain"},
         ];
         toggleButtonData
             .forEach (function (d) {
@@ -90,7 +90,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
                 title: "Random Scope ▼",
-                menu: toggleButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
+                menu: toggleButtonData.map (function(d) {
+					d.id = self.el.id + d.id; 
+					d.tooltip = d.d3tooltip;
+					return d; 
+				}),
                 closeOnClick: false,
 				tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
             }

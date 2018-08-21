@@ -15,8 +15,6 @@
       return _.extend({},parentEvents,{
       		"mousemove .mouseMat": "brushNeighbourhood",
 		  "mousemove .clipg": "brushNeighbourhood",
-		  //"mousemove rect.background": "brushNeighbourhood",
-		  //"mousemove rect.extent": "brushNeighbourhood",
 		  "mouseleave .viewport": "cancelHighlights",
 		  "mouseleave .clipg": "cancelHighlights",
 		  "input .dragPanRB": "setMatrixDragMode",
@@ -34,6 +32,7 @@
 		linkWidth: 5,
 		tooltipRange: 7,
 		matrixDragMode: "Pan",
+		margin: {top: 30, right: 20, bottom: 40, left: 60},
 	},
 
     initialize: function (viewOptions) {
@@ -41,12 +40,12 @@
         
         var self = this;
         
-        this.margin = {
-            top:    this.options.chartTitle  ? 30 : 0,
-            right:  20,
-            bottom: this.options.xlabel ? 40 : 25,
-            left:   this.options.ylabel ? 60 : 40
-        };
+		var marginLimits = {
+			top:    this.options.chartTitle  ? 30 : undefined,
+            bottom: this.options.xlabel ? 40 : undefined,
+            left:   this.options.ylabel ? 60 : undefined
+		};
+        $.extend (this.options.margin, marginLimits);
         
         this.colourScaleModel = viewOptions.colourScaleModel;
         
@@ -69,14 +68,12 @@
 		var buttonHolder = this.controlDiv.append("span").attr("class", "noBreak reducePadding");
 		// Radio Button group to decide pan or select
         var toggleButtonData = [
-			{class: "dragPanRB", label: "Drag to Pan", id: "dragPan", tooltip: "Left-click and drag pans the matrix", group: "matrixDragMode", value: "Pan"},
+			{class: "dragPanRB", label: "Drag to Pan", id: "dragPan", tooltip: "Left-click and drag pans the matrix. Mouse-wheel zooms.", group: "matrixDragMode", value: "Pan"},
 			{class: "dragPanRB", label: "Or Select", id: "dragSelect", tooltip: "Left-click and drag selects an area in the matrix", group: "matrixDragMode", value: "Select"},
         ];
         toggleButtonData
             .forEach (function (d) {
-                d.type = "radio";
-				d.value = d.value || d.label;
-                d.inputFirst = false;
+				$.extend (d, {type: "radio", inputFirst: false, value: d.value || d.label});
 				if (d.initialState === undefined && d.group && d.value) {	// set initial values for radio button groups
 					d.initialState = (d.value === this.options[d.group]);
 				}
@@ -111,26 +108,6 @@
                         setSelectTitleString (selElem);
                     })
         ;
-		
-		/*
-		CLMSUI.utils.addMultipleSelectControls ({
-            addToElem: this.controlDiv, 
-            selectList: ["Show Protein Pairing"], 
-            optionList: [], 
-            selectLabelFunc: function (d) { return "Show Protein Pairing"; }, 
-            optionLabelFunc: function (d) { return d.label; }, 
-            changeFunc: function (d) {
-				var value = this.value;
-				var selectedDatum = d3.select(this).selectAll("option")
-					.filter(function(d) { return d3.select(this).property("selected"); })
-					.datum()
-				;
-				self.setAndShowPairing (selectedDatum.value);
-				var selElem = d3.select(d3.event.target);
-				setSelectTitleString (selElem);
-			},
-        });
-		*/
         
         // Various view options set up, then put in a dropdown menu
         this.chainDropdowns = ["prot1", "prot2"].map (function (prot) {
@@ -177,16 +154,15 @@
         // Canvas viewport and element
         var canvasViewport = viewDiv.append("div")
             .attr ("class", "viewport")
-            .style("top", this.margin.top + "px")
-            .style("left", this.margin.left + "px")
-            .call(self.zoomStatus)
+            .style ("top", this.options.margin.top + "px")
+            .style ("left", this.options.margin.left + "px")
+            .call (self.zoomStatus)
         ;
         
         this.canvas = canvasViewport
 			.append("canvas")
-			.attr("class", "backdrop")
 			.style ("background", this.options.background)	// override standard background colour with option
-			.style("display", "none")
+			.style ("display", "none")
 		;
 		
 		canvasViewport.append("div")
@@ -209,7 +185,7 @@
         ;
 
         this.vis = this.svg.append("g")
-            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
+            .attr("transform", "translate(" + this.options.margin.left + "," + this.options.margin.top + ")")
         ;
 		
 		this.brush = d3.svg.brush()
@@ -239,15 +215,8 @@
         this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
         this.yAxis = d3.svg.axis().scale(this.y).orient("left");
         
-        this.vis.append("g")
-			 .attr("class", "y axis")
-			 //.call(self.yAxis)
-        ;
-        
-        this.vis.append("g")
-			 .attr("class", "x axis")
-			 //.call(self.xAxis)
-        ;
+        this.vis.append("g").attr("class", "y axis");
+        this.vis.append("g").attr("class", "x axis");
         
         
         // Add labels
@@ -363,8 +332,7 @@
 		var protIDs = this.getCurrentProteinIDs(); 
         this.vis.selectAll("g.label text").data(protIDs)
         	.text (function(d) { return d.labelText; })
-        ;
-            
+        ; 
     	this.makeChainOptions (protIDs);
 	},
         
@@ -493,21 +461,11 @@
     convertEvtToXY: function (evt) {
         var sd = this.getSizeData();
 		
-		//var px = evt.offsetX;
-		//var py = evt.offsetY;
-		
 		// *****!$$$ finally, cross-browser
 		var elem = d3.select(this.el).select(".viewport");
 		var px = evt.pageX - $(elem.node()).offset().left;
-		var py = evt.pageY - $(elem.node()).offset().top;
-			
+		var py = evt.pageY - $(elem.node()).offset().top;		
 		//console.log ("p", evt, px, py, evt.target, evt.originalEvent.offsetX);
-		
-		if (evt.target instanceof SVGElement) {	// if an svg element, coords needs shifted relative to svg
-			//px -= this.margin.left;
-			//py -= this.margin.top;
-		}
-		//console.log ("p1a", px, py);
 
 		var t = this.zoomStatus.translate();
 		var baseScale = Math.min (sd.width / sd.lengthA, sd.height / sd.lengthB);
@@ -530,7 +488,6 @@
     },
 		
 	grabNeighbourhoodLinks: function (extent) {
-        //var crossLinkMap = this.model.get("clmsModel").get("crossLinks");
         var filteredCrossLinks = this.model.getFilteredCrossLinks ();
         var filteredCrossLinkMap = d3.map (filteredCrossLinks, function(d) { return d.id; });
         var proteinIDs = this.getCurrentProteinIDs();
@@ -573,12 +530,13 @@
 		
 	setMatrixDragMode: function (evt) {
 		this.options.matrixDragMode = evt.target.value;
+		var top = d3.select(this.el);
 		if (this.options.matrixDragMode === "Pan") {
-			d3.select(this.el).select(".viewport").call (this.zoomStatus);
-			d3.select(this.el).selectAll(".clipg .brush rect").style ("pointer-events", "none");
+			top.select(".viewport").call (this.zoomStatus);
+			top.selectAll(".clipg .brush rect").style ("pointer-events", "none");
 		} else {
-			d3.select(this.el).select(".viewport").on (".zoom", null);
-			d3.select(this.el).selectAll(".clipg .brush rect").style ("pointer-events", null);
+			top.select(".viewport").on (".zoom", null);
+			top.selectAll(".clipg .brush rect").style ("pointer-events", null);
 		}
 		return this;
 	},
@@ -934,8 +892,8 @@
         var jqElem = $(this.svg.node());
         var cx = jqElem.width(); //this.svg.node().clientWidth;
         var cy = jqElem.height(); //this.svg.node().clientHeight;
-        var width = Math.max (0, cx - this.margin.left - this.margin.right);
-        var height = Math.max (0, cy - this.margin.top  - this.margin.bottom);
+        var width = Math.max (0, cx - this.options.margin.left - this.options.margin.right);
+        var height = Math.max (0, cy - this.options.margin.top  - this.options.margin.bottom);
         //its going to be square and fit in containing div
         var minDim = Math.min (width, height);
         
@@ -951,8 +909,7 @@
     },
     
     // called when things need repositioned, but not re-rendered from data
-    resize: function () {
-        
+    resize: function () {     
         console.log ("matrix resize");
         var sizeData = this.getSizeData(); 
         var minDim = sizeData.minDim;
@@ -973,8 +930,6 @@
         //console.log (sizeData, "rr", widthRatio, heightRatio, minRatio, diffRatio, "FXY", fx, fy);
         
         viewPort
-            //.style("width",  minDim+"px")
-            //.style("height", minDim+"px")
             .style("width",  fx+"px")
             .style("height", fy+"px")
         ;
@@ -988,14 +943,12 @@
         // set x/y scales to full domains and current size (range)
         this.x
             .domain([1, sizeData.lengthA + 1])
-            //.range([0, diffRatio > 1 ? minDim / diffRatio : minDim])
             .range([0, fx])
         ;
 
         // y-scale (inverted domain)
         this.y
-			 .domain([sizeData.lengthB + 1, 1])
-			 //.range([0, diffRatio < 1 ? minDim * diffRatio : minDim])
+			.domain([sizeData.lengthB + 1, 1])
             .range([0, fy])
         ;
 		
@@ -1047,10 +1000,10 @@
     // Used to do this just on resize, but rectangular areas mean labels often need re-centred on panning
     repositionLabels: function (sizeData) {
         // reposition labels
-        //console.log ("SD", sizeData, this.margin);
+        //console.log ("SD", sizeData, this.options.margin);
         var labelCoords = [
-            {x: sizeData.right / 2, y: sizeData.bottom + this.margin.bottom - 5, rot: 0}, 
-            {x: -this.margin.left, y: sizeData.bottom / 2, rot: -90},
+            {x: sizeData.right / 2, y: sizeData.bottom + this.options.margin.bottom - 5, rot: 0}, 
+            {x: -this.options.margin.left, y: sizeData.bottom / 2, rot: -90},
             {x: sizeData.right / 2, y: 0, rot: 0}
         ];
         this.vis.selectAll("g.label text")
@@ -1084,13 +1037,9 @@
 			}
             else { 
 				var tString = transformStrings[d3sel.type];
-				d3sel.elem
-					.style("-ms-transform", tString)
-					.style("-moz-transform", tString)
-					.style("-o-transform", tString)
-					.style("-webkit-transform", tString)
-					.style("transform", tString)
-				;
+				["-ms-transform", "-moz-transform", "-o-transform", "-webkit-transform", "transform"].forEach (function (styleName) {
+					d3sel.elem.style (styleName, tString);
+				})
 			}
         });
         
