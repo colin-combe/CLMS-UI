@@ -161,7 +161,7 @@ CLMSUI.utils = {
 			}
 		},
 
-		showState : function (args) {
+		showState: function (args) {
 			var boolVal = arguments.length > 1 ? arguments[1] : arguments[0];
 			d3.select(this.el).select("input").property("checked", boolVal);
 		},
@@ -398,7 +398,7 @@ CLMSUI.utils = {
     // targetDiv is a d3 select element
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button",
-    // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
+    // initialState: true|false, group: "sort", tooltip: "tooltipText", noBreak: true|false},
     makeBackboneButtons: function (targetDiv, baseID, buttonData) {
         var makeID = function (d) { return baseID + d.id; };
 
@@ -422,7 +422,7 @@ CLMSUI.utils = {
             .enter()
             .append ("label")
                 .attr ("class", "btn noBreak")
-                .attr ("title", function(d) { return d.title; })
+                .attr ("title", function(d) { return d.tooltip; })
                 .attr ("id", makeID)
         ;
 		
@@ -898,7 +898,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         d3.select(this.el).attr ("class", "btn selectHolder")
 			.append ("span")
 			.attr ("class", "noBreak")
-			.text("Change Cross-Link Colour Scheme ►")
+			.text("Choose Cross-Link Colour Scheme ►")
         ;
 
         var addOptions = function (selectSel) {

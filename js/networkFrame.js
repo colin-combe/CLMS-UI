@@ -299,7 +299,7 @@ CLMSUI.init.views = function() {
             id: "circularChkBxPlaceholder",
             label: "Circular",
             eventName: "circularShow",
-            tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between"
+            tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between",
         },
         {
             id: "nglChkBxPlaceholder",
@@ -361,12 +361,8 @@ CLMSUI.init.views = function() {
         },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend({
-            labelFirst: false
-        }, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView({
-            myOptions: options
-        });
+        var options = $.extend({labelFirst: false}, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView({myOptions: options});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
@@ -637,24 +633,32 @@ CLMSUI.init.viewsEssential = function(options) {
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
-        showCustomConfig: true
+        showCustomConfig: true,
+        showQualityControl: "min",
     }
 
     xiSPEC.init(xiSPEC_options);
 
     // Update spectrum view when external resize event called
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.resize();
+        xiSPEC.vent.trigger('resize:spectrum');
     });
-    xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.resize();
-    });
-    xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.render();
-    });
-    xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-        this.render();
-    });
+
+    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.resize();
+    // });
+    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.resize();
+    // });
+    // xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.resize();
+    // });
+    // xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.render();
+    // });
+    // xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
+    //     this.render();
+    // });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
@@ -708,20 +712,24 @@ CLMSUI.init.viewsEssential = function(options) {
         myOptions: {
             title: "Help",
             menu: [{
+                    name: "Xi Docs",
+                    func: function() {
+                        window.open("../xidocs/html/xiview.html", "_blank");
+                    },
+                    tooltip: "Documentation for Xi View"
+                },{
                     name: "Online Videos",
                     func: function() {
                         window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank");
                     },
                     tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
-                },
-                {
+                },{
                     name: "Report Issue on Github",
                     func: function() {
                         window.open("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank");
                     },
                     tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
-                },
-                {
+                },{
                     name: "About Xi View",
                     func: function() {
                         window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
