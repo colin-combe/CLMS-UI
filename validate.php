@@ -92,6 +92,7 @@ header('Content-type: text/html; charset=utf-8');
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/filterModels.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/models.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
