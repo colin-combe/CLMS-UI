@@ -22,7 +22,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	defaultOptions: {
 		xlabel: "X Value",
 		ylabel: "Count",
-		seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
+		seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random", "Selected"],
 		subSeriesNames: [],
 		scaleOthersTo: {"Random": "Cross-Links"},
 		chartTitle: this.identifier,
@@ -30,6 +30,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		attributeOptions: null,
 		xStandardTickFormat: d3.format(","),
 		randomScope: "All",
+		unknownID: "Unknown",
 	},
 
 	initialize: function (viewOptions) {
@@ -125,6 +126,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				colors: {
 					"Cross-Links": "#44d",
 					Random: "#444",
+					Selected: "yellow",
 					"Decoys (TD-DD)": "#d44",
 				},
 				empty: {
@@ -137,9 +139,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					grouped: true,
 					multiple: true,
 					draggable: true,
-				},
-				ondragend: function (extent) {
-					console.log ("extent", extent);
 				},
 				onclick: function (d) {
 					self.highlightOrSelect ("selection", this.data(), d);
@@ -173,11 +172,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 							var formattedVal = self.options.xCurrentTickFormat (val);
 							return returnUnformattedToo ? {val: val, formattedVal: formattedVal} : formattedVal;
 						},
-						/*
-						culling: {
-							max: Math.floor (this.options.maxX / 10)
-						}
-						*/
 					}
 				},
 				y: {
@@ -271,6 +265,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.listenTo (this.model, "filteringDone", this.render);   // listen for custom filteringDone event from model
 		this.listenTo (this.model, "currentColourModelChanged", function() { this.render ({noAxesRescale: true, recolourOnly: true}); }); // have details (range, domain, colour) of current colour model changed?
 		this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
+		this.listenTo (this.model, "selectionMatchesLinksChanged", function () {this.render ({noAxesRescale: true}); });	// update selection series
 		this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
 		this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
@@ -338,7 +333,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				colModel = CLMSUI.linkColour.defaultColoursBB;  // make default colour choice for histogram if current colour model is continuous
 			}
 			this.colourScaleModel = colModel;
-			this.options.subSeriesNames = colModel.get("labels").range().concat(["Unknown"]);
+			this.options.subSeriesNames = colModel.get("labels").range().concat([this.options.unknownID]);
 			//console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
 
 			// Add sub-series data
@@ -392,15 +387,25 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			if (this.isEmpty(series)) {
 				countArrays = [[]];
 			}
+			
+			function removeSeriesIfEmpty (seriesID) {
+				var seriesIndex = _.indexOf (this.options.subSeriesNames, seriesID);
+				if (seriesIndex >= 0) {
+					var hide = splitSeries[seriesIndex].length === 0;
+					if (hide) {
+						splitSeries.splice (seriesIndex, 1);
+						var self = this;
+						var seriesIndex2 = _.findIndex (countArrays, function (ca) { return ca[0] === seriesID; });
+						countArrays.splice (seriesIndex2, 1);
+					}
+				}
+			}
 
 			var redoChart = function () {
 
 				// Remove 'Unknown' category if empty
-				var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
-				if (hideUnknowns) {
-					splitSeries.pop();
-					countArrays.pop();
-				}
+				removeSeriesIfEmpty.call (this, this.options.unknownID);
+				
 				var currentlyLoaded = _.pluck (this.chart.data(), "id");
 				var toBeLoaded = countArrays.map (function (arr) { return arr[0]; });
 				var unload = _.difference (currentlyLoaded, toBeLoaded);
@@ -422,7 +427,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				/*
 				// hiding/showing/toggling series when it is loading/unloading causes all kinds of issues due to transitions getting overwritten in c3
 				this.hideShowSeries ([
-					//{name:"Unknown", active: !hideUnknowns},
+					//{name: this.options.unknownID, active: !hideUnknowns},
 					//{name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
 				]);
 				*/
@@ -500,7 +505,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 		if (toggleList.length) {
 			this.chart.toggle (toggleList, {withLegend: true});
-			if (toggleList.indexOf("Unknown") >= 0) {
+			if (toggleList.indexOf (this.options.unknownID) >= 0) {
 				this.chart.flush();
 			}
 		}
@@ -539,9 +544,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			links: [
 				this.model.getFilteredCrossLinks (),
 				this.model.getFilteredCrossLinks ("decoysTD"),
-				this.model.getFilteredCrossLinks ("decoysDD")
+				this.model.getFilteredCrossLinks ("decoysDD"),
+				this.model.getMarkedCrossLinks ("selection"),
 			],
-			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"]
+			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Selected"]
 		};
 	},
 
@@ -571,6 +577,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var linkData = this.getFilteredLinksByDecoyStatus();
 		var seriesNames = linkData.seriesNames;
 		var links = linkData.links;
+		//console.log ("links", links);
 
 		var extras = this.attrExtraOptions[attrMetaData.id] || {conditions:[]};
 		var conditions = extras.conditions;
@@ -746,7 +753,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.options.subSeriesNames.forEach (function (subSeries, i) {
 			colMap[subSeries] = colRange[i];
 		});
-		colMap["Unknown"] = colModel.undefinedColour;
+		colMap[this.options.unknownID] = colModel.undefinedColour;
 		return colMap;
 	},
 
