@@ -161,7 +161,7 @@ CLMSUI.utils = {
 			}
 		},
 
-		showState : function (args) {
+		showState: function (args) {
 			var boolVal = arguments.length > 1 ? arguments[1] : arguments[0];
 			d3.select(this.el).select("input").property("checked", boolVal);
 		},
@@ -898,7 +898,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         d3.select(this.el).attr ("class", "btn selectHolder")
 			.append ("span")
 			.attr ("class", "noBreak")
-			.text("Change Cross-Link Colour Scheme ►")
+			.text("Choose Cross-Link Colour Scheme ►")
         ;
 
         var addOptions = function (selectSel) {
