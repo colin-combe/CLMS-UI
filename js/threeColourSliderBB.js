@@ -203,7 +203,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend ({
 		;
         this.brushg.select(".extent").style ("fill", colRange[1]);
         this.lowerRange
-			.attr(orientDim1, Math.max (0, majorDimRange[majorDimRange.length - 1] - this.majorDim(s[0])))
+			.attr(orientDim1, Math.max (0, _.last(majorDimRange) - this.majorDim(s[0])))
 			.attr(orientDim2, this.majorDim(s[0]))
 			.style("fill", colRange[isVert ? 0 : 2])
 		;

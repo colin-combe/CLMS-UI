@@ -53,12 +53,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		// this.el is the dom element this should be getting added to, replaces targetDiv
 		var mainDivSel = d3.select(this.el);
 
-		var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
 		mainDivSel.append("div")
 			.attr ("class", "verticalFlexContainer")
-			.html(
-				template ({})
-			)
+			.html ("<DIV class='toolbar'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>")
 		;
 
 		var buttonData = [
@@ -69,14 +66,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		
 		// Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
-			{class: "randomScope", label: "All combinations (Between & Self)", id: "All", d3tooltip: "Calculate random links from within and between all proteins", group: "randomScope", type: "radio", value: "All"},
-			{class: "randomScope", label: "Within proteins only (Self)", id: "Intra", d3tooltip: "Only calculate random links from within the same proteins", group: "randomScope", type: "radio", value: "Intra"},
-			{class: "randomScope", label: "Within chains only (Self in same protein copy)", id: "Chain", d3tooltip: "Only calculate random links from within the same chain", group: "randomScope", type: "radio", value: "Chain"},
+			{label: "All combinations (Between & Self)", id: "All", d3tooltip: "Calculate random links from within and between all proteins", value: "All"},
+			{label: "Within proteins only (Self)", id: "Intra", d3tooltip: "Only calculate random links from within the same proteins", value: "Intra"},
+			{label: "Within chains only (Self in same protein copy)", id: "Chain", d3tooltip: "Only calculate random links from within the same chain", value: "Chain"},
         ];
         toggleButtonData
             .forEach (function (d) {
-				d.value = d.value || d.label;
-                d.inputFirst = true;
+				$.extend (d, {inputFirst: true, class: "randomScope", group: "randomScope", type: "radio"});
 				if (d.initialState === undefined && d.group && d.value) {	// set initial values for radio button groups
 					d.initialState = (d.value === this.options[d.group]);
 				}
@@ -122,11 +118,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			data: {
 				columns: columnsAsNamesOnly,
 				type: 'bar',
-				//groups: [this.options.subSeriesNames] || this.options.seriesNames,
 				colors: {
 					"Cross-Links": "#44d",
 					Random: "#444",
-					Selected: "yellow",
+					Selected: "url(#selectedStripe)", //"yellow",
 					"Decoys (TD-DD)": "#d44",
 				},
 				empty: {
@@ -252,6 +247,24 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				self.model.setMarkedCrossLinks ("highlights", [], false, false);
 			},
 		});
+		
+		// make pattern fill for selected bars
+		d3.select(chartID).select("defs")
+			.append("pattern")
+			.attr ("id", "selectedStripe")
+			.attr ("patternUnits", "userSpaceOnUse")
+			.attr ("width", "10")
+			.attr ("height", "10")
+			.append ("image")
+				.attr("xlink:href", 
+				 //"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMjHxIGmVAAAAIElEQVQoU2MAgv8gAg1gE8MARGkcjIqwAeqZTg1FDAwA2JUT7SbPGRMAAAAASUVORK5CYII="
+					  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMjHxIGmVAAAANklEQVQoU33JUQoAIAgEUe9/aSuQsUlI9mPfGvsyOy+FQYEOBQKFmi7+fofCoECHAoFCTTBjAdWmn2HxrX04AAAAAElFTkSuQmCC"
+					 )
+				.attr ("x", "0")
+				.attr ("y", "0")
+				.attr ("width", "10")
+				.attr ("height", "10")
+		;
 
 
 		function distancesAvailable () {
@@ -278,7 +291,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
 				};
 			});
-			//console.log ("NEW OPTIONS", newOptions);
 
 			self.setMultipleSelectControls (mainDivSel.select("div.toolbar"), newOptions, true);
 		});
@@ -319,12 +331,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 			this.showRandomButton();
 
-			console.log ("re rendering distogram");
-
 			var TT = 0, TD = 1, DD = 2;
-			var measurements = this.getDataCount();
-			var series = measurements.linksWithValues;
-			console.log ("s", series);
+			var seriesData = this.getDataCount();	// get series data, split into colour scheme sub-categories later
 
 			// Get colour model. If chosen colour model is non-categorical, default to distance colours.
 			var colModel = this.model.get("linkColourAssignment");
@@ -332,42 +340,47 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				colModel = CLMSUI.linkColour.defaultColoursBB;  // make default colour choice for histogram if current colour model is continuous
 			}
 			this.colourScaleModel = colModel;
-			this.options.subSeriesNames = colModel.get("labels").range().concat([this.options.unknownID]);
-			//console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
 
 			// Add sub-series data
 			// split TT list into sublists for length
-			var splitSeries = d3.range(0, colModel.getDomainCount() + 1).map (function () { return []; });
+			var splitSeries = colModel.get("labels").range().concat([this.options.unknownID]).map (function (name) { 
+				return {name: name, linkValues: []}; 
+			});
 
 			//console.log ("measurements", measurements);
-			measurements.linksWithValues[TT].forEach (function (linkDatum) {
+			seriesData[TT].linkValues.forEach (function (linkDatum) {
 				var cat = colModel.getDomainIndex (linkDatum[0]);
 				if (cat === undefined) { cat = splitSeries.length - 1; }
-				splitSeries[cat].push (linkDatum);
+				splitSeries[cat].linkValues.push (linkDatum);
 			});
 
+			// add sub-series data to main series array
 			splitSeries.forEach (function (subSeries) {
-				series.push (subSeries);
+				subSeries.isSubSeries = true;
+				seriesData.push (subSeries);
 			});
-			var seriesLengths = _.pluck (series, "length");
-			//console.log ("series", series, this.colourScaleModel);
-
-			// Add DD Decoys as temporary series for aggregation
-			var seriesNames = d3.merge ([measurements.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
-			//seriesNames.splice (DD, 0, "Decoys (DD)");
-
+			
 			//console.log ("seriesLengths", seriesLengths);
 			var removeCatchAllCategory = (this.options.maxX !== undefined);
-			var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
+			var countArrays = this.aggregate (seriesData, this.precalcedDistributions, removeCatchAllCategory);
 
+			
+			function removeSeries (seriesID, onlyIfEmpty) {
+				var seriesIndex =  _.findIndex (seriesData, function (series) { return series.name === seriesID; });
+				if (seriesIndex >= 0) {
+					var hide = !onlyIfEmpty || seriesData[seriesIndex].linkValues.length === 0;
+					if (hide) {
+						seriesData.splice (seriesIndex, 1);
+						countArrays.splice (seriesIndex, 1);
+					}
+				}
+			}
+			
 			// Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
 			countArrays[TD].forEach (function (v, i) {
 				countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts
 			});
-			countArrays.splice (DD,1);   // remove DD, its purpose is done
-			seriesNames.splice (DD,1);
-
-			//console.log ("ca2", countArrays);
+			removeSeries ("Decoys (DD)", false);	// remove DD, its purpose is done
 
 			//var maxY = d3.max(countArrays[0]);  // max calced on real data only
 			// if max y needs to be calculated across all series
@@ -377,43 +390,36 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			maxY = Math.max (maxY, 1);
 			//console.log ("maxY", maxY);
 
-
 			// add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
-			countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
+			countArrays.forEach (function (countArray,i) { countArray.unshift (seriesData[i].name); }, this);
 			//console.log ("thresholds", thresholds);
 			//console.log ("countArrays", countArrays);
 
-			if (this.isEmpty(series)) {
+			if (this.isEmpty(seriesData)) {
 				countArrays = [[]];
-			}
-			
-			function removeSeriesIfEmpty (seriesID) {
-				var seriesIndex = _.indexOf (this.options.seriesNames, seriesID);
-				if (seriesIndex >= 0) {
-					var hide = series[seriesIndex].length === 0;
-					if (hide) {
-						splitSeries.splice (seriesIndex, 1);
-						
-						var seriesIndex2 = _.findIndex (countArrays, function (ca) { return ca[0] === seriesID; });
-						countArrays.splice (seriesIndex2, 1);
-						
-						var seriesIndex3 = _.indexOf (this.options.subSeriesNames, seriesID);
-						if (seriesIndex >= 0) {
-							splitSeries.splice (seriesIndex3, 1);
-						}
-					}
-				}
 			}
 
 			var redoChart = function () {
 				// Remove 'Unknown' category if empty
-				removeSeriesIfEmpty.call (this, this.options.unknownID);
+				removeSeries.call (this, this.options.unknownID, true);
+				removeSeries.call (this, "Selected", true);
 				
 				var currentlyLoaded = _.pluck (this.chart.data(), "id");
 				var toBeLoaded = countArrays.map (function (arr) { return arr[0]; });
 				var unload = _.difference (currentlyLoaded, toBeLoaded);
-				console.log ("series", currentlyLoaded, toBeLoaded, unload);
+				var newloads =  _.difference (toBeLoaded, currentlyLoaded);
+				console.log ("series", currentlyLoaded, toBeLoaded, unload, newloads);
 
+				this.options.subSeriesNames = seriesData
+					.filter(function(d) { return d.isSubSeries; })
+					.map (function (d) { return d.name; })
+				;
+				
+				var subSeriesLengths = seriesData
+					.filter(function(d) { return d.isSubSeries; })
+					.map (function (d) { return d.linkValues.length; })
+				;
+				
 				var chartOptions = {
 					columns: countArrays,
 					colors: this.getSeriesColours (this.options.subSeriesNames),
@@ -428,8 +434,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				}
 
 				this
-					.makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel)
+					.makeChartTitle (subSeriesLengths, colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel)
 				;
+				
+				return {unload: unload, newloads: newloads};
 			};
 
 			 // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
@@ -442,12 +450,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			//console.log ("SHORTCUT", shortcut, this.chart);
 
 			if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
-				countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
-					return arr[0] !== "Random";
-				});
-				redoChart.call (this);
+				var seriesChanges = redoChart.call (this);
 				c3.chart.internal.fn.redraw = tempHandle;
-				tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: []});
+				tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: [], withLegend: seriesChanges.newloads.length ? true : false});
 				// Quicker way to just update c3 chart legend colours
 				chartInternal.svg.selectAll("."+chartInternal.CLASS.legendItemTile).style("stroke", chartInternal.color);
 				c3.chart.internal.fn.redrawTitle = tempTitleHandle;
@@ -583,16 +588,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			seriesNames.push ("Random");
 		}
 		
-		/*
 		return d3.zip(joinedCounts, seriesNames).map (function (pair) {
-			return {count: pair[0], name: pair[1]}
+			return {linkValues: pair[0], name: pair[1]}
 		});
-		*/
-
-		return {
-			linksWithValues: joinedCounts,
-			seriesNames: seriesNames,
-		};
 	},
 
 	getSelectedOption: function (axisLetter) {
@@ -618,13 +616,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	},
 
 	isEmpty: function (series) {
-		return series.every (function (aSeries) { return !aSeries.length; });
+		return series.every (function (aSeries) { return !aSeries.linkValues.length; });
 	},
 
-	getBinThresholds: function (series, accessor) {
+	getBinThresholds: function (seriesData, accessor) {
 		accessor = accessor || function (d) { return d; };	// return object/variable/number as is as standard accessor
 		// get extents of all arrays, concatenate them, then get extent of that array
-		var extent = d3.extent ([].concat.apply([], series.map (function(singleSeries) { return singleSeries ? d3.extent (singleSeries, accessor) : [0,1]; })));
+		var extent = d3.extent ([].concat.apply([], seriesData.map (function(singleSeries) { return singleSeries.linkValues ? d3.extent (singleSeries.linkValues, accessor) : [0,1]; })));
 		var min = d3.min ([0, Math.floor(extent[0])]);
 		var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
 		var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
@@ -641,31 +639,32 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return this.precalcedDistributions[seriesName];
 	},
 
-	aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
+	aggregate: function (seriesData, precalcedDistributions, removeLastEntry) {
 
-		var thresholds = this.getBinThresholds (series, function (d) { return d[1]; });
+		var thresholds = this.getBinThresholds (seriesData, function (d) { return d[1]; });
 		//console.log ("precalcs", precalcedDistributions, seriesNames);
 		this.currentBins = [];
 
-		var countArrays = series.map (function (aseries, i) {
-			var aseriesName = seriesNames[i];
-			var rescaleToSeries = this.options.scaleOthersTo[aseriesName];
+		var countArrays = seriesData.map (function (series, i) {
+			var aseries = series.linkValues;
+			var seriesName = series.name;
+			var rescaleToSeries = this.options.scaleOthersTo[seriesName];
 			var rescaleLength = 1;
 			if (rescaleToSeries) {
-				var rsIndex = seriesNames.indexOf (rescaleToSeries);
-				rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1;
+				var rsIndex = _.findIndex (seriesData, function (s) { return s.name === rescaleToSeries; });
+				rescaleLength = rsIndex >= 0 ? seriesData[rsIndex].linkValues.length : 1;
 				//console.log ("rescale", aseriesName, rescaleToSeries, seriesNames, rsIndex, seriesLengths);
 			}
 
-			var pcd = this.getPrecalcedDistribution (aseriesName);
+			var pcd = this.getPrecalcedDistribution (seriesName);
 			var binnedData = pcd ? pcd.data :
 				d3.layout
 					.histogram()
 					.value (function (d) { return d[1]; })  // [1] is the actual value, [0] is the crosslink
 					.bins(thresholds)(aseries || [])
 			;
-			var dataLength = pcd ? pcd.origSize : seriesLengths[i];
-			this.currentBins[i] = {bin: binnedData, id: aseriesName};  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
+			var dataLength = pcd ? pcd.origSize : aseries.length;
+			this.currentBins[i] = {bin: binnedData, id: seriesName};  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
 			//console.log ("CURRENT BINS", this.currentBins, i, aseries);
 			//console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 

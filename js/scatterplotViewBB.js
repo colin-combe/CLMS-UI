@@ -822,7 +822,7 @@
             
             // Remove unknown from appearing in title if no data falls into this category
             //console.log ("COUNTS", this.counts);
-            if (counts[counts.length - 1] === 0) {
+            if (_.last(counts) === 0) {
                 counts.pop();
             }
             this.makeChartTitle (counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
