@@ -117,7 +117,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.chart = c3.generate({
 			bindto: chartID,
 			transition: {
-				duration: 0,
+				duration: 0,	// no animations, causes bugs in c3 when actions performed rapidly
 			},
 			data: {
 				columns: columnsAsNamesOnly,
@@ -323,9 +323,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 			var TT = 0, TD = 1, DD = 2;
 			var measurements = this.getDataCount();
-			//var series = measurements.values;
 			var series = measurements.linksWithValues;
-			var seriesLengths = _.pluck (series, "length");
+			console.log ("s", series);
 
 			// Get colour model. If chosen colour model is non-categorical, default to distance colours.
 			var colModel = this.model.get("linkColourAssignment");
@@ -349,8 +348,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 			splitSeries.forEach (function (subSeries) {
 				series.push (subSeries);
-				seriesLengths.push (subSeries.length);
 			});
+			var seriesLengths = _.pluck (series, "length");
 			//console.log ("series", series, this.colourScaleModel);
 
 			// Add DD Decoys as temporary series for aggregation
@@ -389,31 +388,35 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 			
 			function removeSeriesIfEmpty (seriesID) {
-				var seriesIndex = _.indexOf (this.options.subSeriesNames, seriesID);
+				var seriesIndex = _.indexOf (this.options.seriesNames, seriesID);
 				if (seriesIndex >= 0) {
-					var hide = splitSeries[seriesIndex].length === 0;
+					var hide = series[seriesIndex].length === 0;
 					if (hide) {
 						splitSeries.splice (seriesIndex, 1);
-						var self = this;
+						
 						var seriesIndex2 = _.findIndex (countArrays, function (ca) { return ca[0] === seriesID; });
 						countArrays.splice (seriesIndex2, 1);
+						
+						var seriesIndex3 = _.indexOf (this.options.subSeriesNames, seriesID);
+						if (seriesIndex >= 0) {
+							splitSeries.splice (seriesIndex3, 1);
+						}
 					}
 				}
 			}
 
 			var redoChart = function () {
-
 				// Remove 'Unknown' category if empty
 				removeSeriesIfEmpty.call (this, this.options.unknownID);
 				
 				var currentlyLoaded = _.pluck (this.chart.data(), "id");
 				var toBeLoaded = countArrays.map (function (arr) { return arr[0]; });
 				var unload = _.difference (currentlyLoaded, toBeLoaded);
-				//console.log ("this.chart", this.chart, currentlyLoaded, toBeLoaded, unload);
+				console.log ("series", currentlyLoaded, toBeLoaded, unload);
 
 				var chartOptions = {
 					columns: countArrays,
-					colors: this.getSeriesColours(),
+					colors: this.getSeriesColours (this.options.subSeriesNames),
 				};
 				if (unload.length) {
 					chartOptions.unload = unload;
@@ -424,16 +427,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					 this.chart.groups ([this.options.subSeriesNames]);
 				}
 
-				/*
-				// hiding/showing/toggling series when it is loading/unloading causes all kinds of issues due to transitions getting overwritten in c3
-				this.hideShowSeries ([
-					//{name: this.options.unknownID, active: !hideUnknowns},
-					//{name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
-				]);
-				*/
-
 				this
-					//.makeBarsSitBetweenTicks()
 					.makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel)
 				;
 			};
@@ -489,28 +483,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			this.chart.axis.max({y: maxY});
 		}
 		return this;
-	},
-
-	// Show hide series depending on whether data is present for it (active) and whether it's currently shown or not
-	hideShowSeries: function (seriesInfo) {
-		var hidden = this.chart.internal.hiddenTargetIds;
-		var toggleList = seriesInfo.filter (function (sseriesInfo) {
-			var curHidden = hidden.indexOf(sseriesInfo.name) >= 0;
-			var active = sseriesInfo.active;
-			return (curHidden === active);
-		})
-		.map (function (fsseriesInfo) {
-			return fsseriesInfo.name;
-		});
-
-		if (toggleList.length) {
-			this.chart.toggle (toggleList, {withLegend: true});
-			if (toggleList.indexOf (this.options.unknownID) >= 0) {
-				this.chart.flush();
-			}
-		}
-
-		//console.log ("togglelist", toggleList);
 	},
 
 	// Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
@@ -610,6 +582,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			joinedCounts.push (this.getPrecalcedDistribution("Random"));
 			seriesNames.push ("Random");
 		}
+		
+		/*
+		return d3.zip(joinedCounts, seriesNames).map (function (pair) {
+			return {count: pair[0], name: pair[1]}
+		});
+		*/
 
 		return {
 			linksWithValues: joinedCounts,
@@ -738,7 +716,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return this;
 	},
 
-	getSeriesColours: function () {
+	getSeriesColours: function (seriesNames) {
 		var colModel = this.colourScaleModel;
 		var colScale = colModel.get("colScale");
 
@@ -750,8 +728,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 		var colRange = colScale.range();
 		var colMap = {};
-		this.options.subSeriesNames.forEach (function (subSeries, i) {
-			colMap[subSeries] = colRange[i];
+		seriesNames.forEach (function (seriesName, i) {
+			colMap[seriesName] = colRange[i];
 		});
 		colMap[this.options.unknownID] = colModel.undefinedColour;
 		return colMap;
