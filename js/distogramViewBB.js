@@ -31,6 +31,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		xStandardTickFormat: d3.format(","),
 		randomScope: "All",
 		unknownID: "Unknown",
+		selectedColour: "#ff0",
 	},
 
 	initialize: function (viewOptions) {
@@ -121,7 +122,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				colors: {
 					"Cross-Links": "#44d",
 					Random: "#444",
-					Selected: "url(#selectedStripe)", //"yellow",
+					Selected: "url(#selectedStripe)",
 					"Decoys (TD-DD)": "#d44",
 				},
 				empty: {
@@ -249,23 +250,17 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		});
 		
 		// make pattern fill for selected bars
-		d3.select(chartID).select("defs")
+		var pattern = d3.select(chartID).select("defs")
 			.append("pattern")
 			.attr ("id", "selectedStripe")
 			.attr ("patternUnits", "userSpaceOnUse")
 			.attr ("width", "10")
 			.attr ("height", "10")
-			.append ("image")
-				.attr("xlink:href", 
-				 //"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMjHxIGmVAAAAIElEQVQoU2MAgv8gAg1gE8MARGkcjIqwAeqZTg1FDAwA2JUT7SbPGRMAAAAASUVORK5CYII="
-					  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMjHxIGmVAAAANklEQVQoU33JUQoAIAgEUe9/aSuQsUlI9mPfGvsyOy+FQYEOBQKFmi7+fofCoECHAoFCTTBjAdWmn2HxrX04AAAAAElFTkSuQmCC"
-					 )
-				.attr ("x", "0")
-				.attr ("y", "0")
-				.attr ("width", "10")
-				.attr ("height", "10")
+			.attr ("patternTransform", "rotate(45)")
 		;
-
+		pattern.append("rect").attr("x", "0").attr("y", "0").attr("width", "10").attr("height", "10").style("fill", this.options.selectedColour)
+		pattern.append ("line").attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "10");
+		pattern.append ("line").attr("x1", "5").attr("y1", "0").attr("x2", "5").attr("y2", "10");
 
 		function distancesAvailable () {
 			console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
