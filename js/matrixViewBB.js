@@ -634,7 +634,7 @@
 					start = index[n + 1];
 				}
 			}
-			blocks.push ({first: start + 1, last: index [index.length - 1] + 1});
+			blocks.push ({first: start + 1, last: _.last(index) + 1});
 			return blocks;
 		};
 		

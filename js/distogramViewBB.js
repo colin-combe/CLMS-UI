@@ -22,7 +22,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	defaultOptions: {
 		xlabel: "X Value",
 		ylabel: "Count",
-		seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random"],
+		seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random", "Selected"],
 		subSeriesNames: [],
 		scaleOthersTo: {"Random": "Cross-Links"},
 		chartTitle: this.identifier,
@@ -30,6 +30,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		attributeOptions: null,
 		xStandardTickFormat: d3.format(","),
 		randomScope: "All",
+		unknownID: "Unknown",
+		selectedColour: "#ff0",
 	},
 
 	initialize: function (viewOptions) {
@@ -52,12 +54,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		// this.el is the dom element this should be getting added to, replaces targetDiv
 		var mainDivSel = d3.select(this.el);
 
-		var template = _.template ("<DIV class='toolbar'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
 		mainDivSel.append("div")
 			.attr ("class", "verticalFlexContainer")
-			.html(
-				template ({})
-			)
+			.html ("<DIV class='toolbar'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>")
 		;
 
 		var buttonData = [
@@ -68,14 +67,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		
 		// Various view options set up, then put in a dropdown menu
         var toggleButtonData = [
-			{class: "randomScope", label: "All combinations (Between & Self)", id: "All", d3tooltip: "Calculate random links from within and between all proteins", group: "randomScope", type: "radio", value: "All"},
-			{class: "randomScope", label: "Within proteins only (Self)", id: "Intra", d3tooltip: "Only calculate random links from within the same proteins", group: "randomScope", type: "radio", value: "Intra"},
-			{class: "randomScope", label: "Within chains only (Self in same protein copy)", id: "Chain", d3tooltip: "Only calculate random links from within the same chain", group: "randomScope", type: "radio", value: "Chain"},
+			{label: "All combinations (Between & Self)", id: "All", d3tooltip: "Calculate random links from within and between all proteins", value: "All"},
+			{label: "Within proteins only (Self)", id: "Intra", d3tooltip: "Only calculate random links from within the same proteins", value: "Intra"},
+			{label: "Within chains only (Self in same protein copy)", id: "Chain", d3tooltip: "Only calculate random links from within the same chain", value: "Chain"},
         ];
         toggleButtonData
             .forEach (function (d) {
-				d.value = d.value || d.label;
-                d.inputFirst = true;
+				$.extend (d, {inputFirst: true, class: "randomScope", group: "randomScope", type: "radio"});
 				if (d.initialState === undefined && d.group && d.value) {	// set initial values for radio button groups
 					d.initialState = (d.value === this.options[d.group]);
 				}
@@ -116,15 +114,15 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.chart = c3.generate({
 			bindto: chartID,
 			transition: {
-				duration: 0,
+				duration: 0,	// no animations, causes bugs in c3 when actions performed rapidly
 			},
 			data: {
 				columns: columnsAsNamesOnly,
 				type: 'bar',
-				//groups: [this.options.subSeriesNames] || this.options.seriesNames,
 				colors: {
 					"Cross-Links": "#44d",
 					Random: "#444",
+					Selected: "url(#selectedStripe)",
 					"Decoys (TD-DD)": "#d44",
 				},
 				empty: {
@@ -137,9 +135,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					grouped: true,
 					multiple: true,
 					draggable: true,
-				},
-				ondragend: function (extent) {
-					console.log ("extent", extent);
 				},
 				onclick: function (d) {
 					self.highlightOrSelect ("selection", this.data(), d);
@@ -173,11 +168,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 							var formattedVal = self.options.xCurrentTickFormat (val);
 							return returnUnformattedToo ? {val: val, formattedVal: formattedVal} : formattedVal;
 						},
-						/*
-						culling: {
-							max: Math.floor (this.options.maxX / 10)
-						}
-						*/
 					}
 				},
 				y: {
@@ -258,7 +248,19 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				self.model.setMarkedCrossLinks ("highlights", [], false, false);
 			},
 		});
-
+		
+		// make pattern fill for selected bars
+		var pattern = d3.select(chartID).select("defs")
+			.append("pattern")
+			.attr ("id", "selectedStripe")
+			.attr ("patternUnits", "userSpaceOnUse")
+			.attr ("width", "10")
+			.attr ("height", "10")
+			.attr ("patternTransform", "rotate(45)")
+		;
+		pattern.append("rect").attr("x", "0").attr("y", "0").attr("width", "10").attr("height", "10").style("fill", this.options.selectedColour)
+		pattern.append ("line").attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "10");
+		pattern.append ("line").attr("x1", "5").attr("y1", "0").attr("x2", "5").attr("y2", "10");
 
 		function distancesAvailable () {
 			console.log ("DISTOGRAM RAND DISTANCES CALCULATED");
@@ -271,6 +273,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.listenTo (this.model, "filteringDone", this.render);   // listen for custom filteringDone event from model
 		this.listenTo (this.model, "currentColourModelChanged", function() { this.render ({noAxesRescale: true, recolourOnly: true}); }); // have details (range, domain, colour) of current colour model changed?
 		this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
+		this.listenTo (this.model, "selectionMatchesLinksChanged", function () {this.render ({noAxesRescale: true}); });	// update selection series
 		this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
 		this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
@@ -283,7 +286,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
 				};
 			});
-			//console.log ("NEW OPTIONS", newOptions);
 
 			self.setMultipleSelectControls (mainDivSel.select("div.toolbar"), newOptions, true);
 		});
@@ -324,13 +326,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 			this.showRandomButton();
 
-			console.log ("re rendering distogram");
-
 			var TT = 0, TD = 1, DD = 2;
-			var measurements = this.getDataCount();
-			//var series = measurements.values;
-			var series = measurements.linksWithValues;
-			var seriesLengths = _.pluck (series, "length");
+			var seriesData = this.getDataCount();	// get series data, split into colour scheme sub-categories later
 
 			// Get colour model. If chosen colour model is non-categorical, default to distance colours.
 			var colModel = this.model.get("linkColourAssignment");
@@ -338,42 +335,47 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				colModel = CLMSUI.linkColour.defaultColoursBB;  // make default colour choice for histogram if current colour model is continuous
 			}
 			this.colourScaleModel = colModel;
-			this.options.subSeriesNames = colModel.get("labels").range().concat(["Unknown"]);
-			//console.log ("SUBSERIES", colModel, this.options.subSeriesNames);
 
 			// Add sub-series data
 			// split TT list into sublists for length
-			var splitSeries = d3.range(0, colModel.getDomainCount() + 1).map (function () { return []; });
+			var splitSeries = colModel.get("labels").range().concat([this.options.unknownID]).map (function (name) { 
+				return {name: name, linkValues: []}; 
+			});
 
 			//console.log ("measurements", measurements);
-			measurements.linksWithValues[TT].forEach (function (linkDatum) {
+			seriesData[TT].linkValues.forEach (function (linkDatum) {
 				var cat = colModel.getDomainIndex (linkDatum[0]);
 				if (cat === undefined) { cat = splitSeries.length - 1; }
-				splitSeries[cat].push (linkDatum);
+				splitSeries[cat].linkValues.push (linkDatum);
 			});
 
+			// add sub-series data to main series array
 			splitSeries.forEach (function (subSeries) {
-				series.push (subSeries);
-				seriesLengths.push (subSeries.length);
+				subSeries.isSubSeries = true;
+				seriesData.push (subSeries);
 			});
-			//console.log ("series", series, this.colourScaleModel);
-
-			// Add DD Decoys as temporary series for aggregation
-			var seriesNames = d3.merge ([measurements.seriesNames, this.options.subSeriesNames]);  // copy and merge series and subseries names
-			//seriesNames.splice (DD, 0, "Decoys (DD)");
-
+			
 			//console.log ("seriesLengths", seriesLengths);
 			var removeCatchAllCategory = (this.options.maxX !== undefined);
-			var countArrays = this.aggregate (series, seriesLengths, this.precalcedDistributions, removeCatchAllCategory, seriesNames);
+			var countArrays = this.aggregate (seriesData, this.precalcedDistributions, removeCatchAllCategory);
 
+			
+			function removeSeries (seriesID, onlyIfEmpty) {
+				var seriesIndex =  _.findIndex (seriesData, function (series) { return series.name === seriesID; });
+				if (seriesIndex >= 0) {
+					var hide = !onlyIfEmpty || seriesData[seriesIndex].linkValues.length === 0;
+					if (hide) {
+						seriesData.splice (seriesIndex, 1);
+						countArrays.splice (seriesIndex, 1);
+					}
+				}
+			}
+			
 			// Adjust the TD count by subtracting the matching DD count, to get TD-DD, then discard the DD series
 			countArrays[TD].forEach (function (v, i) {
 				countArrays[TD][i] = Math.max (v - countArrays[DD][i], 0);  // subtract DD from TD counts
 			});
-			countArrays.splice (DD,1);   // remove DD, its purpose is done
-			seriesNames.splice (DD,1);
-
-			//console.log ("ca2", countArrays);
+			removeSeries ("Decoys (DD)", false);	// remove DD, its purpose is done
 
 			//var maxY = d3.max(countArrays[0]);  // max calced on real data only
 			// if max y needs to be calculated across all series
@@ -383,32 +385,39 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			maxY = Math.max (maxY, 1);
 			//console.log ("maxY", maxY);
 
-
 			// add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
-			countArrays.forEach (function (countArray,i) { countArray.unshift (seriesNames[i]); }, this);
+			countArrays.forEach (function (countArray,i) { countArray.unshift (seriesData[i].name); }, this);
 			//console.log ("thresholds", thresholds);
 			//console.log ("countArrays", countArrays);
 
-			if (this.isEmpty(series)) {
+			if (this.isEmpty(seriesData)) {
 				countArrays = [[]];
 			}
 
 			var redoChart = function () {
-
 				// Remove 'Unknown' category if empty
-				var hideUnknowns = splitSeries[splitSeries.length - 1].length === 0;
-				if (hideUnknowns) {
-					splitSeries.pop();
-					countArrays.pop();
-				}
+				removeSeries.call (this, this.options.unknownID, true);
+				removeSeries.call (this, "Selected", true);
+				
 				var currentlyLoaded = _.pluck (this.chart.data(), "id");
 				var toBeLoaded = countArrays.map (function (arr) { return arr[0]; });
 				var unload = _.difference (currentlyLoaded, toBeLoaded);
-				//console.log ("this.chart", this.chart, currentlyLoaded, toBeLoaded, unload);
+				var newloads =  _.difference (toBeLoaded, currentlyLoaded);
+				console.log ("series", currentlyLoaded, toBeLoaded, unload, newloads);
 
+				this.options.subSeriesNames = seriesData
+					.filter(function(d) { return d.isSubSeries; })
+					.map (function (d) { return d.name; })
+				;
+				
+				var subSeriesLengths = seriesData
+					.filter(function(d) { return d.isSubSeries; })
+					.map (function (d) { return d.linkValues.length; })
+				;
+				
 				var chartOptions = {
 					columns: countArrays,
-					colors: this.getSeriesColours(),
+					colors: this.getSeriesColours (this.options.subSeriesNames),
 				};
 				if (unload.length) {
 					chartOptions.unload = unload;
@@ -419,18 +428,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					 this.chart.groups ([this.options.subSeriesNames]);
 				}
 
-				/*
-				// hiding/showing/toggling series when it is loading/unloading causes all kinds of issues due to transitions getting overwritten in c3
-				this.hideShowSeries ([
-					//{name:"Unknown", active: !hideUnknowns},
-					//{name:"Random", active: measurements.seriesNames.indexOf ("Random") >= 0}
-				]);
-				*/
-
 				this
-					//.makeBarsSitBetweenTicks()
-					.makeChartTitle (_.pluck (splitSeries, "length"), colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel)
+					.makeChartTitle (subSeriesLengths, colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption ("X").matchLevel)
 				;
+				
+				return {unload: unload, newloads: newloads};
 			};
 
 			 // Jiggery-pokery to stop c3 doing total redraws on every single command (near enough)
@@ -443,12 +445,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			//console.log ("SHORTCUT", shortcut, this.chart);
 
 			if (options.noAxesRescale) {    // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
-				countArrays = countArrays.filter (function (arr) {  // don't need to reload randoms either
-					return arr[0] !== "Random";
-				});
-				redoChart.call (this);
+				var seriesChanges = redoChart.call (this);
 				c3.chart.internal.fn.redraw = tempHandle;
-				tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: []});
+				tempHandle.call (chartInternal, {withTrimXDomain: false, withDimension: false, withEventRect: false, withTheseAxes: [], withLegend: seriesChanges.newloads.length ? true : false});
 				// Quicker way to just update c3 chart legend colours
 				chartInternal.svg.selectAll("."+chartInternal.CLASS.legendItemTile).style("stroke", chartInternal.color);
 				c3.chart.internal.fn.redrawTitle = tempTitleHandle;
@@ -486,28 +485,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return this;
 	},
 
-	// Show hide series depending on whether data is present for it (active) and whether it's currently shown or not
-	hideShowSeries: function (seriesInfo) {
-		var hidden = this.chart.internal.hiddenTargetIds;
-		var toggleList = seriesInfo.filter (function (sseriesInfo) {
-			var curHidden = hidden.indexOf(sseriesInfo.name) >= 0;
-			var active = sseriesInfo.active;
-			return (curHidden === active);
-		})
-		.map (function (fsseriesInfo) {
-			return fsseriesInfo.name;
-		});
-
-		if (toggleList.length) {
-			this.chart.toggle (toggleList, {withLegend: true});
-			if (toggleList.indexOf("Unknown") >= 0) {
-				this.chart.flush();
-			}
-		}
-
-		//console.log ("togglelist", toggleList);
-	},
-
 	// Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
 	makeBarsSitBetweenTicks: function (chartObj) {
 		var internal = chartObj || this.chart.internal;
@@ -539,9 +516,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			links: [
 				this.model.getFilteredCrossLinks (),
 				this.model.getFilteredCrossLinks ("decoysTD"),
-				this.model.getFilteredCrossLinks ("decoysDD")
+				this.model.getFilteredCrossLinks ("decoysDD"),
+				this.model.getMarkedCrossLinks ("selection"),
 			],
-			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)"]
+			seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Selected"]
 		};
 	},
 
@@ -571,6 +549,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		var linkData = this.getFilteredLinksByDecoyStatus();
 		var seriesNames = linkData.seriesNames;
 		var links = linkData.links;
+		//console.log ("links", links);
 
 		var extras = this.attrExtraOptions[attrMetaData.id] || {conditions:[]};
 		var conditions = extras.conditions;
@@ -603,11 +582,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			joinedCounts.push (this.getPrecalcedDistribution("Random"));
 			seriesNames.push ("Random");
 		}
-
-		return {
-			linksWithValues: joinedCounts,
-			seriesNames: seriesNames,
-		};
+		
+		return d3.zip(joinedCounts, seriesNames).map (function (pair) {
+			return {linkValues: pair[0], name: pair[1]}
+		});
 	},
 
 	getSelectedOption: function (axisLetter) {
@@ -633,13 +611,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 	},
 
 	isEmpty: function (series) {
-		return series.every (function (aSeries) { return !aSeries.length; });
+		return series.every (function (aSeries) { return !aSeries.linkValues.length; });
 	},
 
-	getBinThresholds: function (series, accessor) {
+	getBinThresholds: function (seriesData, accessor) {
 		accessor = accessor || function (d) { return d; };	// return object/variable/number as is as standard accessor
 		// get extents of all arrays, concatenate them, then get extent of that array
-		var extent = d3.extent ([].concat.apply([], series.map (function(singleSeries) { return singleSeries ? d3.extent (singleSeries, accessor) : [0,1]; })));
+		var extent = d3.extent ([].concat.apply([], seriesData.map (function(singleSeries) { return singleSeries.linkValues ? d3.extent (singleSeries.linkValues, accessor) : [0,1]; })));
 		var min = d3.min ([0, Math.floor(extent[0])]);
 		var max = d3.max ([1, this.options.maxX || Math.ceil (extent[1]) ]);
 		var step = Math.max (1, CLMSUI.utils.niceRound ((max - min) / 100));
@@ -656,31 +634,32 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return this.precalcedDistributions[seriesName];
 	},
 
-	aggregate: function (series, seriesLengths, precalcedDistributions, removeLastEntry, seriesNames) {
+	aggregate: function (seriesData, precalcedDistributions, removeLastEntry) {
 
-		var thresholds = this.getBinThresholds (series, function (d) { return d[1]; });
+		var thresholds = this.getBinThresholds (seriesData, function (d) { return d[1]; });
 		//console.log ("precalcs", precalcedDistributions, seriesNames);
 		this.currentBins = [];
 
-		var countArrays = series.map (function (aseries, i) {
-			var aseriesName = seriesNames[i];
-			var rescaleToSeries = this.options.scaleOthersTo[aseriesName];
+		var countArrays = seriesData.map (function (series, i) {
+			var aseries = series.linkValues;
+			var seriesName = series.name;
+			var rescaleToSeries = this.options.scaleOthersTo[seriesName];
 			var rescaleLength = 1;
 			if (rescaleToSeries) {
-				var rsIndex = seriesNames.indexOf (rescaleToSeries);
-				rescaleLength = rsIndex >= 0 ? seriesLengths[rsIndex] : 1;
+				var rsIndex = _.findIndex (seriesData, function (s) { return s.name === rescaleToSeries; });
+				rescaleLength = rsIndex >= 0 ? seriesData[rsIndex].linkValues.length : 1;
 				//console.log ("rescale", aseriesName, rescaleToSeries, seriesNames, rsIndex, seriesLengths);
 			}
 
-			var pcd = this.getPrecalcedDistribution (aseriesName);
+			var pcd = this.getPrecalcedDistribution (seriesName);
 			var binnedData = pcd ? pcd.data :
 				d3.layout
 					.histogram()
 					.value (function (d) { return d[1]; })  // [1] is the actual value, [0] is the crosslink
 					.bins(thresholds)(aseries || [])
 			;
-			var dataLength = pcd ? pcd.origSize : seriesLengths[i];
-			this.currentBins[i] = {bin: binnedData, id: aseriesName};  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
+			var dataLength = pcd ? pcd.origSize : aseries.length;
+			this.currentBins[i] = {bin: binnedData, id: seriesName};  // Keep a list of the bins for crosslinks for easy reference when highlighting / selecting
 			//console.log ("CURRENT BINS", this.currentBins, i, aseries);
 			//console.log (aseriesName, "binnedData", aseries, binnedData, rescaleToSeries, rescaleLength, dataLength);
 
@@ -731,7 +710,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		return this;
 	},
 
-	getSeriesColours: function () {
+	getSeriesColours: function (seriesNames) {
 		var colModel = this.colourScaleModel;
 		var colScale = colModel.get("colScale");
 
@@ -743,10 +722,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
 		var colRange = colScale.range();
 		var colMap = {};
-		this.options.subSeriesNames.forEach (function (subSeries, i) {
-			colMap[subSeries] = colRange[i];
+		seriesNames.forEach (function (seriesName, i) {
+			colMap[seriesName] = colRange[i];
 		});
-		colMap["Unknown"] = colModel.undefinedColour;
+		colMap[this.options.unknownID] = colModel.undefinedColour;
 		return colMap;
 	},
 

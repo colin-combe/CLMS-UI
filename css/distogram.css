@@ -30,3 +30,9 @@
     */
     fill-opacity: 0.1;
 }
+
+.distoDiv #selectedStripe line {
+	stroke: black;
+	stroke-width: 1;
+	shape-rendering: crispEdges;
+}
