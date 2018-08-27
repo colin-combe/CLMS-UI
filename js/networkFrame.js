@@ -476,7 +476,7 @@ CLMSUI.init.views = function() {
     // Set up a one-time event listener that is then called from allDataLoaded
     // Once this is done, the views depending on async loading data (blosum, uniprot) can be set up
     // Doing it here also means that we don't have to set up these views at all if these views aren't needed (e.g. for some testing or validation pages)
-    CLMSUI.compositeModelInst.listenToOnce(CLMSUI.vent, "buildAsyncViews", function() {
+    CLMSUI.compositeModelInst.listenToOnce (CLMSUI.vent, "buildAsyncViews", function() {
         CLMSUI.init.viewsThatNeedAsyncData();
     })
 };
