@@ -678,7 +678,7 @@ CLMSUI.init.viewsEssential = function(options) {
         myOptions: {
             title: "Export",
             menu: [{
-                    name: "Filtered Links as CSV",
+                    name: "Filtered Cross-Links as CSV",
                     func: downloadLinks,
                     tooltip: "Produces a CSV File of Filtered Cross-Link data"
                 },

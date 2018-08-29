@@ -634,6 +634,7 @@ CLMSUI.utils = {
             selectLabelFunc: function (d) { return d; },
             optionLabelFunc: function (d) { return d; },
 			optionValueFunc: function (d) { return d; },
+			selectLabelTooltip: function (d) { return undefined; },
             initialSelectionFunc: function (d,i) { return i === 0; }
         };
         settings = _.extend (defaults, settings);
@@ -650,6 +651,12 @@ CLMSUI.utils = {
             .attr ("class", "btn selectHolder")
                 .append ("span")
                 .attr ("class", "noBreak")
+				.each (function (d) {
+					var tip = settings.selectLabelTooltip (d);
+					if (tip) {
+						d3.select(this).attr ("title", tip);
+					}
+				})
                 .text (settings.selectLabelFunc)
                 .append("select")
                     .on ("change", settings.changeFunc)

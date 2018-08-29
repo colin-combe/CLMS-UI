@@ -41,7 +41,7 @@
             
             this
                 .updateTitle (this.options.title)
-				.updateTooltip (this.options.tooltip)
+				.updateTooltip (this.options.titleTooltip)
                 .update()
                 .render()
             ;

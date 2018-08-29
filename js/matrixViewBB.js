@@ -119,7 +119,7 @@
                 myOptions: {
                     title: "Chain "+prot+" ▼",
 					tooltipModel: this.model.get("tooltipModel"),
-					tooltip: {header: "PDB Chains", contents: "Turn on/off plotting of individual PDB chains along this axis."},
+					titleTooltip: {header: "PDB Chains", contents: "Turn on/off plotting of individual PDB chains along this axis."},
                     menu: [],
                     closeOnClick: false,
                     classed: "chainDropdown",
