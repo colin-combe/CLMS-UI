@@ -94,6 +94,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 					return d; 
 				}),
                 closeOnClick: false,
+				titleTooltip: {header: "Random Scope", contents: "Decide scope of random distances."},
 				tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
             }
         });
@@ -304,7 +305,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             selectList: ["X"],
             optionList: options,
 			keepOldOptions: keepOld || false,
-            selectLabelFunc: function (d) { return "Plot This Data Along Axis ►"; },
+            selectLabelFunc: function () { return "Plot This Data Along Axis ►"; },
             optionLabelFunc: function (d) { return d.label; },
 			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.render(); },

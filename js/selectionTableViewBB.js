@@ -300,7 +300,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     setPage: function (pg) {
         // limit page number and set text elements
         var mci = this.matchCountIndices;
-        var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
+        var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
 
         var pageCount = this.getPageCount();
         pg = Math.max (Math.min (pg, pageCount), 1);
@@ -373,7 +373,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 	getPageCount: function () {
 		var mci = this.matchCountIndices;
-        var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
+        var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
         return Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;
 	},
 

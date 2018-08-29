@@ -41,7 +41,7 @@
             
             this
                 .updateTitle (this.options.title)
-				.updateTooltip (this.options.tooltip)
+				.updateTooltip (this.options.titleTooltip)
                 .update()
                 .render()
             ;
@@ -88,7 +88,7 @@
 					var cat = model.get (self.options.groupByAttribute);
                     if (lastCat !== cat) {  // have to access last datum to say it's the last in its category
 						if (adata.length) {	// ignore sectionEnd for first item
-                        	adata[adata.length - 1].sectionEnd = true;
+                        	_.last(adata).sectionEnd = true;
 						}
 						cbdata.sectionBegin = true; 
                     }
