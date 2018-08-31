@@ -446,6 +446,20 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 	padding: 0 0.5em;
 }
 
+#pdbPanel .toolbar {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#pdbPanel .toolbar .verticalFlexContainer {
+	display: flex;
+}
+
+#pdbPanel button i.fa {
+	padding-left: 0.4em;
+	vertical-align: sub;
+}
+
 A.btn {
     text-decoration: none;
 }

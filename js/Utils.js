@@ -673,15 +673,19 @@ CLMSUI.utils = {
 
         // add options to new and existing select elements
         var selects = selectHolders.selectAll("select");
-        selects
+        var options = selects
             .selectAll("option")
             .data (optionData)
-                .enter()
-                .append ("option")
-                .text (settings.optionLabelFunc)
-				.property ("value", settings.optionValueFunc)
-                .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
+		;
+		options
+            .enter()
+            .append ("option")
+            .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
         ;
+		options
+			.text (settings.optionLabelFunc)
+			.property ("value", settings.optionValueFunc)
+		;
 
         return selects;
     },
