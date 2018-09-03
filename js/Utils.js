@@ -635,7 +635,8 @@ CLMSUI.utils = {
             optionLabelFunc: function (d) { return d; },
 			optionValueFunc: function (d) { return d; },
 			selectLabelTooltip: function (d) { return undefined; },
-            initialSelectionFunc: function (d,i) { return i === 0; }
+            initialSelectionFunc: function (d,i) { return i === 0; },
+			idFunc: function (d,i) { return i; },
         };
         settings = _.extend (defaults, settings);
 
@@ -675,8 +676,9 @@ CLMSUI.utils = {
         var selects = selectHolders.selectAll("select");
         var options = selects
             .selectAll("option")
-            .data (optionData)
+            .data (optionData, settings.idFunc)
 		;
+		options.exit().remove();
 		options
             .enter()
             .append ("option")

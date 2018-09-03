@@ -309,6 +309,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             optionLabelFunc: function (d) { return d.label; },
 			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.render(); },
+			idFunc: function (d) { return d.id; },
         });
 	},
 

@@ -260,6 +260,7 @@
             optionLabelFunc: function (d) { return d.label; }, 
 			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.axisChosen().render(); },
+			idFunc: function (d) { return d.id; },
         });
 	},
         

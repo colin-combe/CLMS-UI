@@ -126,7 +126,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			keepOldOptions: false,
             selectLabelFunc: function () { return "Select Protein for EBI Sequence Search ►"; }, 
             optionLabelFunc: function (d) { return d.name; }, 
-			optionValueFunc: function (d) { return d.name; },
+			optionValueFunc: function (d) { return d.id; },
+			idFunc: function (d) { return d.id; },
             //changeFunc: function () { self.axisChosen().render(); },
         });
 
