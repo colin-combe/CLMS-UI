@@ -25,6 +25,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             this.render();
             //~ }
         });
+		
+		// redraw datable on protein metadata change (possible protein name change)
+		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
 
         // emphasise selected match table row (or not if nothing selected)
         this.listenTo (this.model, "change:lastSelectedMatch", function (model) {

@@ -15,6 +15,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		}
 		return _.extend ({}, parentEvents, {
 			"click .pdbWindowButton": "launchExternalPDBWindow",
+			"click .ebiPdbWindowButton": "launchExternalEBIPDBWindow",
 			"change .selectPdbButton": "selectPDBFile",
 			"keyup .inputPDBCode": "enteringPDBCode",
 			"click button.PDBSubmit": "loadPDBCode",
@@ -67,11 +68,28 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			.text ("Enter")
 			.property ("disabled", true)
 		;
-
-		toolbar.append("button")
-			.attr ("class", "pdbWindowButton btn btn-1 btn-1a")
-			.text ("Show Possible PDBs @ RCSB.Org")
+		
+		var queryBox = toolbar.append("div")
+			.attr ("class", "verticalFlexContainer queryBox")
 		;
+
+		queryBox.append("button")
+			.attr ("class", "pdbWindowButton btn btn-1 btn-1a")
+			.text ("Show PDBs Matching UniProt Accessions @ RCSB.Org")
+			.attr ("title", "Queries via uniprot accession numbers (can be multiple)")
+		;
+		
+		queryBox.append("button")
+			.attr ("class", "ebiPdbWindowButton btn btn-1 btn-1a")
+			.text ("Show PDBs Matching Protein Sequence @ EBI")
+			.attr ("title", "Queries via individual protein sequence")
+		;
+		
+		queryBox.selectAll("button")
+			.append ("i").attr("class", "fa fa-xi fa-external-link")
+		;
+		
+		this.updateProteinDropdown (queryBox);
 
 
 		wrapperPanel.append("div").attr("class", "messagebar").html("&nbsp;");//.style("display", "none");
@@ -84,6 +102,9 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 			return str.replace(/[^a-z0-9 ,.?!]/ig, '');
 		}
 		
+		this.listenTo (this.model.get("clmsModel"), "change:matches", function () { this.updateProteinDropdown (d3.select(this.el).select(".queryBox")); });  
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function () { this.updateProteinDropdown (d3.select(this.el).select(".queryBox")); });
+		
 		this.listenTo (this.model, "3dsync", function (sequences) {
 			var count = sequences && sequences.length ? sequences.length : 0;
 			var success = count > 0;
@@ -95,6 +116,21 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 							". Please check the PDB file or code is correct.");
 			this.setStatusText (msg, success);    
 		});
+	},
+	
+	updateProteinDropdown : function (parentElem) {
+		CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: parentElem, 
+            selectList: ["Proteins"], 
+            optionList: CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")).filter (function (prot) { return !prot.is_decoy; }),
+			keepOldOptions: false,
+            selectLabelFunc: function () { return "Select Protein for EBI Sequence Search ►"; }, 
+            optionLabelFunc: function (d) { return d.name; }, 
+			optionValueFunc: function (d) { return d.id; },
+			idFunc: function (d) { return d.id; },
+            //changeFunc: function () { self.axisChosen().render(); },
+        });
+
 	},
 
 
@@ -118,6 +154,29 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		} else {
 			newtab.document.body.innerHTML = "No legal Accession IDs are in the current dataset. These are required to query the PDB service.";
 		}
+	},
+	
+	
+	getSelectedOption: function (higherElem, selectName) {
+        var funcMeta;
+        
+        //this.controlDiv
+		higherElem
+            .selectAll("select")
+                .filter(function(d) { return d === selectName; })
+                .selectAll("option")
+                .filter(function() { return d3.select(this).property("selected"); })
+                .each (function (d) {
+                    funcMeta = d;
+                })
+        ;
+        
+        return funcMeta;
+    },
+	
+	launchExternalEBIPDBWindow : function () {
+		var chosenSeq = (this.getSelectedOption (d3.select(this.el).select(".toolbar"), "Proteins") || {sequence: ""}).sequence;
+		window.open ("http://www.ebi.ac.uk/pdbe-srv/PDBeXplore/sequence/?seq="+chosenSeq+"&tab=PDB%20entries", "_blank");
 	},
 	
 	setWaitingEffect: function () {

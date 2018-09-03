@@ -33,7 +33,7 @@
 				addToElem: topElem.select(".alignSortWidget"),
 				selectList: ["Sort Tabs By"], 
 				optionList: this.collection.possibleComparators, 
-				optionLabelFunc: function (d) { return d.label; },
+				optionLabelFunc: function (d) { console.log (d); return d.label; },
 				optionValueFunc: function (d) { return d.compFunc; },
 				changeFunc: function () {
 					var compFunc;
@@ -49,7 +49,7 @@
 					self.collection.sort();
 					self.render();
 				},
-				initialSelectionFunc: function(d) { return d.compFunc === self.collection.comparator; }
+				initialSelectionFunc: function(d) { return d.compFunc === self.collection.comparator; },
 			});
             
             holdingDiv.selectAll("DIV:not(.checkHolder)").attr("class", "alignSettings");
