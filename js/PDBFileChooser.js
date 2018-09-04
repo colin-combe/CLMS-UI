@@ -72,6 +72,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 		var queryBox = toolbar.append("div")
 			.attr ("class", "verticalFlexContainer queryBox")
 		;
+		
+		queryBox.append("p").attr("class", "smallHeading").text("PDB Query Services");
 
 		queryBox.append("button")
 			.attr ("class", "pdbWindowButton btn btn-1 btn-1a")

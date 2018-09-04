@@ -163,11 +163,3 @@ DIV.alignSettings {
 	border-right: 1px solid #aaa;
 	margin-right: 0.5em;
 }
-
-.alignView .topRule {
-	margin-top: 0.5em;
-	/*border-top: 1px solid #aaa;*/
-	font-size: 0.75em;
-	color: #668;
-	line-height: 1.4em;
-}

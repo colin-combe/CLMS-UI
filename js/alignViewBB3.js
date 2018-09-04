@@ -19,7 +19,7 @@
             var topElem = d3.select(this.el);
             var modelViewID = topElem.attr("id") + "IndView";
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV><P class='topRule'>Per Protein Settings</P><DIV id='<%= alignControlID %>'></DIV></DIV><DIV><P class='topRule'></P><DIV id='<%= alignControlID2 %>'></DIV></DIV>");
+            var template = _.template ("<P><span><%= headerText %></span><span class='alignSortWidget'></span></P><DIV class='checkHolder'></DIV><DIV id='<%= alignModelViewID %>'></DIV><DIV><P class='smallHeading'>Per Protein Settings</P><DIV id='<%= alignControlID %>'></DIV></DIV><DIV><DIV id='<%= alignControlID2 %>'></DIV></DIV>");
             holdingDiv.html (template ({
                 headerText: "Select Protein Name in Tab for Details",
                 alignModelViewID: modelViewID,

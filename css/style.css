@@ -753,3 +753,10 @@ input {
 }
 
 sup {font-size:xx-small; vertical-align:super;}
+
+.smallHeading {
+	margin-top: 0.5em;
+	font-size: 0.75em;
+	color: #668;
+	line-height: 1.4em;
+}
