@@ -21,7 +21,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 B: true,
                 C: true,
                 Q: true,
-                unval: true,
+                unval: false,
                 AUTO: false,
                 decoys: true,
                 //fdr
@@ -38,9 +38,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
             initialize: function (options, secondarySettings) {
-                // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 if (!this.get("matchScoreCutoff")) {
                     this.set("matchScoreCutoff", [0, 100]);
+					// ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 }
                 // scoreExtent used to restrain text input values
                 this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
@@ -48,7 +48,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 this.valMap = d3.map();
                 this.valMap.set("?", "Q");
                 this.textSet = d3.map();
+				
+				this.resetValues = this.toJSON();	// Store copy of original values if needed to restore later
             },
+			
+			resetFilter: function () {
+				this
+					.clear ({silent:true})
+					.set (this.resetValues)
+				;
+			},
 
             processTextFilters: function () {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas

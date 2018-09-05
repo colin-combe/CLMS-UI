@@ -760,3 +760,9 @@ sup {font-size:xx-small; vertical-align:super;}
 	color: #668;
 	line-height: 1.4em;
 }
+
+.btn-tight {
+	margin: 0;
+	padding: 2px 2px;
+	border: 1px solid grey;
+}
