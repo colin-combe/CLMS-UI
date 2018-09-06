@@ -97,7 +97,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 				.attr ("class", "modeToggle")
 				.attr ("name", "modeSelect")
 				.attr ("type", "radio")
-				.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
+				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 		}
 
@@ -120,7 +120,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 				.attr ("id", function(d) { return d.id; })
 				.attr ("class", "subsetToggleFilterToggle")
 				.attr ("type", "checkbox")
-				.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
+				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 
 			var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
@@ -141,7 +141,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			subsetNumberFilters.append ("input")
 				.attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 							min: function(d) { return d.min; }, max: function(d) { return d.max; }})
-				.property ("value", function(d) { return self.model.get(d.id); })
+				//.property ("value", function(d) { return self.model.get(d.id); })
 			;
 		}
 
@@ -168,7 +168,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 				.attr ("id", function(d) { return d.id; })
 				.attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
 				.attr ("type", "checkbox")
-				.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
+				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 		}
 
@@ -255,7 +255,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 				.attr ("class", "filterTypeText")
 				.attr ("type", "textbox")
 				.attr ("size", function(d) { return d.chars; })
-				.property ("value", function(d) { return self.model.get(d.id); })
+				//.property ("value", function(d) { return self.model.get(d.id); })
 			;
 		}
 		
@@ -281,7 +281,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			navigationNumberFilters.append ("input")
 				.attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
 							min: function(d) { return d.min; }, max: function(d) { return d.max; }})
-				.property ("value", function(d) { return self.model.get(d.id); })
+				//.property ("value", function(d) { return self.model.get(d.id); })
 			;
 		}
 
@@ -293,9 +293,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		initFDRPlaceholder.call (this);
 		initNavigationGroup.call (this);
 		initNavigationGroup2.call (this);
-		
-		this.setInputValuesFromModel (this.model);
-
 
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
@@ -315,13 +312,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
 
-		this.listenTo (this.model, "change", function (model) {
-			this.setInputValuesFromModel (model);
-		})
+		this.listenTo (this.model, "change", this.setInputValuesFromModel);
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        this.modeChanged();
+		this.model.trigger ("change", this.model, {showHide: true});	// Forces first call of setInputValuesFromModel
+		this.modeChanged();
     },
 
     filter: function (evt) {
@@ -360,11 +356,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     modeChanged: function () {
 		var fdrMode = d3.select("#fdrMode").node().checked;
-		this.model.set ("fdrMode", fdrMode);
+		this.model.set ({fdrMode: fdrMode, manualMode: !fdrMode});
     },
 	
-	setInputValuesFromModel: function () {
-		var model = this.model;
+	setInputValuesFromModel: function (model, options) {
 		var mainDiv = d3.select(this.el);
 		
 		mainDiv.selectAll("input.filterTypeText, input.subsetNumberFilter")
@@ -375,8 +370,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			.property ("checked", function (d) { return Boolean (model.get(d.id)); })
 		;
 		
-		// hide parts of the filter panel if mode (manual/fdr) setting has changed
-		if (model.changed.manualMode !== undefined || model.changed.fdrMode !== undefined) {
+		// hide parts of the filter panel if mode (manual/fdr) setting has changed, or if setInputValuesFromModelcalled directly (change is empty)
+		if (options.showHide || model.changed.manualMode !== undefined || model.changed.fdrMode !== undefined) {
 			var fdrMode = model.get("fdrMode");
 			d3.selectAll("#validationStatus, #matchScore").style("display", fdrMode ? "none" : null);
 			d3.selectAll("#fdrPanel").style("display", fdrMode ? null : "none");
@@ -435,8 +430,8 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     })
         ;
 		
-		this.setInputValuesFromModel (this.model);
 		this.listenTo (this.model, "change:fdrThreshold", this.setInputValuesFromModel);
+		this.model.trigger ("change:fdrThreshold", this.model);
 
         return this;
     },
@@ -444,6 +439,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
 	setInputValuesFromModel: function (model) {
 		var fdrThreshold = model.get("fdrThreshold");
 		var d3el = d3.select(this.el);
+		d3el.style ("display", model.get("fdrMode") ? null : "none");
 		d3el.selectAll("input[name='fdrPercent']").property("checked", function(d) { return d === fdrThreshold; });
 		d3el.selectAll(".fdrValue").property("value", function() { return fdrThreshold * 100; });
 	}
