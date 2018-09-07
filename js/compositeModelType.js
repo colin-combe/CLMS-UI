@@ -23,7 +23,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 		// Clear fdr information from crosslinks when switching out of fdr mode
 		this.listenTo (this.get("filterModel"), "change:fdrMode", function (filterModel) {
 			if (!filterModel.get("fdrMode")) {
-				CLMSUI.clearFdr (this.getFilteredCrossLinks ("all"));	
+				// Need to clear all crosslinks as they all get valued
+				CLMSUI.clearFdr (CLMS.arrayFromMapValues (this.get("clmsModel").get("crossLinks")));	
 			}
 		});
 
