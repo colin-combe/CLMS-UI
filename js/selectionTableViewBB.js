@@ -76,8 +76,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "calcMass": "Calc Mass",
             "massError": "Mass Error (ppm)",
             "precursorIntensity": "Intensity",
-            "elutionStart": "Elut.Start",
-            "elutionEnd": "Elut.End",
+            "elutionStart": "Elut. Start",
+            "elutionEnd": "Elut. End",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
