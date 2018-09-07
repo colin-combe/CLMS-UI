@@ -83,7 +83,7 @@ CLMSUI.modelUtils = {
 			});
 
             d3.entries(xlink.meta).forEach (function (entry) {
-                if (! _.isObject (entry.value)) {
+                if (entry.value !== undefined && ! _.isObject (entry.value)) {
                     info.push ([entry.key, entry.value]);
                 }
             });
