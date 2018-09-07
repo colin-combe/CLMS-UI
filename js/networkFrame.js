@@ -242,9 +242,9 @@ CLMSUI.init.modelsEssential = function(options) {
         matchScoreCutoff: scoreExtentInstance.slice()
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
-    filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
-    console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
+    filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
+    console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {
         scoreExtent: scoreExtentInstance
     });
 
@@ -278,7 +278,7 @@ CLMSUI.init.views = function() {
     console.log("MODEL", compModel);
 
     //todo: only if there is validated {
-    compModel.get("filterModel").set("unval", false);
+    // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
     var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead

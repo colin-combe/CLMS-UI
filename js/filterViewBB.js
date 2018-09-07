@@ -16,6 +16,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "click input.subsetToggleFilterToggle": "subsetToggleFilter",
         "keyup input.subsetNumberFilter": "subsetNumberFilter",
         "mouseup input.subsetNumberFilter": "subsetNumberFilter",
+		"dblclick button.filterReset": function() { this.model.resetFilter(); },
     },
 
     initialize: function (viewOptions) {
@@ -62,200 +63,236 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
+		
+		
+		function initResetGroup () {
+			var resetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup verticalFlexContainer");
+			resetDivSel.append("p").attr("class", "smallHeading").text("Filter Bar");
+			resetDivSel.append("button")
+				.attr("class", "filterReset btn btn-1a btn-tight")
+				.attr("title", "Double-click to reset filter to originally set values")
+				.text("Reset")
+			;
+		}
 
-        var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup")
-									.attr ("id", "filterModeDiv");
-        //~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
-        var modeElems = modeDivSel.selectAll("div.modeToggles")
-            .data(this.options.modes, function(d) { return d.id; })
-            .enter()
-            .append ("div")
-            .attr ("class", "toggles")
-            .attr("id", function(d) { return "toggles_" + d.id; })
-            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label")
-        ;
-        modeElems.append ("span")
-            .text (function(d) { return d.label; })
-        ;
-        modeElems.append ("input")
-            .attr ("id", function(d) { return d.id; })
-            .attr ("class", "modeToggle")
-            .attr ("name", "modeSelect")
-            .attr ("type", "radio")
-            .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
-        ;
-
-
-		var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
-        var subsetToggles = dataSubsetDivSel.selectAll("div.subsetToggles")
-            .data(this.options.subsetToggles, function(d) { return d.id; })
-            .enter()
-            .append ("div")
-            .attr ("class", "toggles subsetToggles")
-            .attr("id", function(d) { return "toggles_" + d.id; })
-            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label")
-        ;
-        subsetToggles.append ("span")
-            .text (function(d) { return d.label; })
-        ;
-        subsetToggles.append ("input")
-            .attr ("id", function(d) { return d.id; })
-            .attr ("class", "subsetToggleFilterToggle")
-            .attr ("type", "checkbox")
-            .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
-        ;
+		
+		function initFilterModeGroup() {
+			var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup")
+										.attr ("id", "filterModeDiv");
+			//~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
+			var modeElems = modeDivSel.selectAll("div.modeToggles")
+				.data(this.options.modes, function(d) { return d.id; })
+				.enter()
+				.append ("div")
+				.attr ("class", "toggles")
+				.attr("id", function(d) { return "toggles_" + d.id; })
+				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+				.append ("label")
+			;
+			modeElems.append ("span")
+				.text (function(d) { return d.label; })
+			;
+			modeElems.append ("input")
+				.attr ("id", function(d) { return d.id; })
+				.attr ("class", "modeToggle")
+				.attr ("name", "modeSelect")
+				.attr ("type", "radio")
+				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
+			;
+		}
 
 
-        var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
-            .data(this.options.subsetNumberFilters, function(d) { return d.id; })
-            .enter()
-            .append ("div")
-            .attr ("class", "toggles subsetNumberFilterDiv")
-            //.attr("id", function(d) { return "toggles_" + d.id; }) // not a toggle, change id?
-            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label")
-        ;
-        subsetNumberFilters.append ("span")
-            .text (function(d) { return d.label; })
-        ;
+		function initLinkPropertyGroup () {
+			var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+			var subsetToggles = dataSubsetDivSel.selectAll("div.subsetToggles")
+				.data(this.options.subsetToggles, function(d) { return d.id; })
+				.enter()
+				.append ("div")
+				.attr ("class", "toggles subsetToggles")
+				.attr("id", function(d) { return "toggles_" + d.id; })
+				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+				.append ("label")
+			;
+			subsetToggles.append ("span")
+				.text (function(d) { return d.label; })
+			;
+			subsetToggles.append ("input")
+				.attr ("id", function(d) { return d.id; })
+				.attr ("class", "subsetToggleFilterToggle")
+				.attr ("type", "checkbox")
+				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
+			;
 
-        subsetNumberFilters.append("p").classed("cutoffLabel",true).append("span").html("&ge;");
+			var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
+				.data(this.options.subsetNumberFilters, function(d) { return d.id; })
+				.enter()
+				.append ("div")
+				.attr ("class", "toggles subsetNumberFilterDiv")
+				//.attr("id", function(d) { return "toggles_" + d.id; }) // not a toggle, change id?
+				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+				.append ("label")
+			;
+			subsetNumberFilters.append ("span")
+				.text (function(d) { return d.label; })
+			;
 
-        subsetNumberFilters.append ("input")
-            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
-						min: function(d) { return d.min; }, max: function(d) { return d.max; }})
-            .property ("value", function(d) { return self.model.get(d.id); })
-        ;
+			subsetNumberFilters.append("p").classed("cutoffLabel",true).append("span").html("&ge;");
 
-
-		var validationDivSel = mainDivSel.append("div")
-								.attr ("class", "filterControlGroup")
-								.attr ("id", "validationStatus");
-        var validationElems = validationDivSel.selectAll("div.validationToggles")
-            .data(this.options.validationStatusToggles, function(d) { return d.id; })
-            .enter()
-            .append ("div")
-            .attr ("class", "toggles validationToggles")
-            .attr("id", function(d) { return "toggles_" + d.id; })
-            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label")
-        ;
-
-        validationElems.append ("span")
-            .text (function(d) { return d.label; })
-        ;
-
-        validationElems.append ("input")
-            .attr ("id", function(d) { return d.id; })
-            .attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
-            .attr ("type", "checkbox")
-            .property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
-        ;
-
-		var cutoffDivSel = mainDivSel.append ("div")
-								.attr("class", "filterControlGroup")
-								.attr("id", "matchScore");
-		      //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
-
-        var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
-        // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-        var tpl = _.template ("<div><p>Match score</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>Match score</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div>");
-        sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
-		// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
-        sliderSection.selectAll("p.cutoffLabel")
-            .attr ("title", function () {
-                var isMinInput = d3.select(this).classed("vmin");
-                return "Filter out matches with scores "+(isMinInput ? "less than": "greater than")+" X e.g. "+(isMinInput ? "8.0": "20.0");
-            })
-            .append("input")
-            .attr({
-                type: "number",
-                step: 0.1,
-                //min: 0,
-            })
-			.property ("value", function () {
-				var isMinInput = d3.select(this.parentNode).classed("vmin");
-				var cutoff = self.model.get("matchScoreCutoff");
-				var val = cutoff [isMinInput ? 0 : 1];
-				return val !== undefined ? val : "";
-			})
-            .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
-                //console.log ("model", self.model);
-                var val = +this.value;
-                var isMinInput = d3.select(this.parentNode).classed("vmin");
-                var cutoff = self.model.get("matchScoreCutoff");
-                var scoreExtent = self.model.scoreExtent;
-                // take new values, along with score extents, sort them and discard extremes for new cutoff settings
-                var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]),
-							   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val,
-							   scoreExtent[0], scoreExtent[1]]
-					.filter (function (v) { return v !== undefined; })
-                    .sort(function(a,b) { return a - b;})
-				;
-				//console.log ("newVals", newVals);
-				newVals = newVals.slice ((newVals.length / 2) - 1, (newVals.length / 2) + 1);
-
-                self.model.set("matchScoreCutoff", newVals);
-            })
-        ;
-
-		//following may not be best practice, its here to get the placeholder divs in the right place in the filter div (the grey bar at bottom)
-        mainDivSel.append ("div")
-            .attr("class", "filterControlGroup")
-            .attr("id", "fdrPanel")
-        ;
-
-        var navDivSel = mainDivSel.append ("div")
-            .attr("class", "filterControlGroup")
-            .attr("id", "navFilters")
-		;
-		//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
-
-		var textFilters = navDivSel.selectAll("div.textFilters")
-            .data(this.options.navigationFilters, function(d) { return d.id; })
-            .enter()
-            .append("div")
-            .attr("class", "textFilters")
-            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label")
-        ;
-        textFilters.append("span")
-            .text (function(d) { return d.label; })
-        ;
-        textFilters.append ("input")
-            .attr ("id", function(d) { return d.id; })
-            .attr ("class", "filterTypeText")
-            .attr ("type", "textbox")
-            .attr ("size", function(d) { return d.chars; })
-			.property ("value", function(d) { return self.model.get(d.id); })
-        ;
-
-        var navNumberDivSel = mainDivSel.append ("div")
-            .attr("class", "filterControlGroup")
-            .attr("id", "navNumberFilters")
-		;
-        var navigationNumberFilters = navNumberDivSel.selectAll("div.navNumberFilterDiv")
-            .data(this.options.navigationNumberFilters, function(d) { return d.id; })
-            .enter()
-            .append ("div")
-            .attr ("class", "navNumberFilterDiv")
-            .attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-            .append ("label")
-        ;
-        navigationNumberFilters.append ("span")
-            .style("display", "block")
-            .text (function(d) { return d.label; })
-        ;
-        navigationNumberFilters.append("p").classed("cutoffLabel",true).append("span").html ("&ge;");
-        navigationNumberFilters.append ("input")
-            .attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
-                        min: function(d) { return d.min; }, max: function(d) { return d.max; }})
-            .property ("value", function(d) { return self.model.get(d.id); })
-        ;
+			subsetNumberFilters.append ("input")
+				.attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
+							min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+				//.property ("value", function(d) { return self.model.get(d.id); })
+			;
+		}
 
 
+		function initValidationGroup () {
+			var validationDivSel = mainDivSel.append("div")
+									.attr ("class", "filterControlGroup")
+									.attr ("id", "validationStatus");
+			var validationElems = validationDivSel.selectAll("div.validationToggles")
+				.data(this.options.validationStatusToggles, function(d) { return d.id; })
+				.enter()
+				.append ("div")
+				.attr ("class", "toggles validationToggles")
+				.attr("id", function(d) { return "toggles_" + d.id; })
+				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+				.append ("label")
+			;
+
+			validationElems.append ("span")
+				.text (function(d) { return d.label; })
+			;
+
+			validationElems.append ("input")
+				.attr ("id", function(d) { return d.id; })
+				.attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
+				.attr ("type", "checkbox")
+				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
+			;
+		}
+
+		
+		function initScoreFilterGroup () {
+			var cutoffDivSel = mainDivSel.append ("div")
+									.attr("class", "filterControlGroup")
+									.attr("id", "matchScore");
+				  //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+
+			var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
+			// Can validate template output at http://validator.w3.org/#validate_by_input+with_options
+			var tpl = _.template ("<div><p>Match score</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>Match score</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div>");
+			sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
+			// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
+			sliderSection.selectAll("p.cutoffLabel")
+				.attr ("title", function () {
+					var isMinInput = d3.select(this).classed("vmin");
+					return "Filter out matches with scores "+(isMinInput ? "less than": "greater than")+" X e.g. "+(isMinInput ? "8.0": "20.0");
+				})
+				.append("input")
+				.attr({
+					type: "number",
+					step: 0.1,
+					//min: 0,
+				})
+				.property ("value", function () {
+					var isMinInput = d3.select(this.parentNode).classed("vmin");
+					var cutoff = self.model.get("matchScoreCutoff");
+					var val = cutoff [isMinInput ? 0 : 1];
+					return val !== undefined ? val : "";
+				})
+				.on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+					//console.log ("model", self.model);
+					var val = +this.value;
+					var isMinInput = d3.select(this.parentNode).classed("vmin");
+					var cutoff = self.model.get("matchScoreCutoff");
+					var scoreExtent = self.model.scoreExtent;
+					// take new values, along with score extents, sort them and discard extremes for new cutoff settings
+					var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]),
+								   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val,
+								   scoreExtent[0], scoreExtent[1]]
+						.filter (function (v) { return v !== undefined; })
+						.sort(function(a,b) { return a - b;})
+					;
+					//console.log ("newVals", newVals);
+					newVals = newVals.slice ((newVals.length / 2) - 1, (newVals.length / 2) + 1);
+
+					self.model.set("matchScoreCutoff", newVals);
+				})
+			;
+		}
+
+		
+		function initFDRPlaceholder() {
+			//following may not be best practice, its here to get the placeholder divs in the right place in the filter div (the grey bar at bottom)
+			mainDivSel.append ("div")
+				.attr("class", "filterControlGroup")
+				.attr("id", "fdrPanel")
+			;
+		}
+		
+
+		function initNavigationGroup () {
+			var navDivSel = mainDivSel.append ("div")
+				.attr("class", "filterControlGroup")
+				.attr("id", "navFilters")
+			;
+			//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
+
+			var textFilters = navDivSel.selectAll("div.textFilters")
+				.data(this.options.navigationFilters, function(d) { return d.id; })
+				.enter()
+				.append("div")
+				.attr("class", "textFilters")
+				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+				.append ("label")
+			;
+			textFilters.append("span")
+				.text (function(d) { return d.label; })
+			;
+			textFilters.append ("input")
+				.attr ("id", function(d) { return d.id; })
+				.attr ("class", "filterTypeText")
+				.attr ("type", "textbox")
+				.attr ("size", function(d) { return d.chars; })
+				//.property ("value", function(d) { return self.model.get(d.id); })
+			;
+		}
+		
+		
+		function initNavigationGroup2 () {
+			var navNumberDivSel = mainDivSel.append ("div")
+				.attr("class", "filterControlGroup")
+				.attr("id", "navNumberFilters")
+			;
+			var navigationNumberFilters = navNumberDivSel.selectAll("div.navNumberFilterDiv")
+				.data(this.options.navigationNumberFilters, function(d) { return d.id; })
+				.enter()
+				.append ("div")
+				.attr ("class", "navNumberFilterDiv")
+				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
+				.append ("label")
+			;
+			navigationNumberFilters.append ("span")
+				.style("display", "block")
+				.text (function(d) { return d.label; })
+			;
+			navigationNumberFilters.append("p").classed("cutoffLabel",true).append("span").html ("&ge;");
+			navigationNumberFilters.append ("input")
+				.attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
+							min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+				//.property ("value", function(d) { return self.model.get(d.id); })
+			;
+		}
+
+		initResetGroup.call (this);
+		initFilterModeGroup.call (this);
+		initLinkPropertyGroup.call (this);
+		initValidationGroup.call (this);
+		initScoreFilterGroup.call (this);
+		initFDRPlaceholder.call (this);
+		initNavigationGroup.call (this);
+		initNavigationGroup2.call (this);
 
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
@@ -270,34 +307,29 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         this.displayEventName = viewOptions.displayEventName;
 
-        this.listenTo (this.model, "change:matchScoreCutoff", function(model, val) {
-            //console.log ("cutoff", val);
+        this.listenTo (this.model, "change:matchScoreCutoff", function (model, val) {
             mainDivSel.select(".vmin input").property("value", val[0]); // min label
             mainDivSel.select(".vmax input").property("value", val[1]); // max label
         });
-        //todo: extend to update all attributes
-        this.listenTo (this.model, "change:unval", function  (model, val) {
-			mainDivSel.select("#unval").property("checked", Boolean (val));
-		});
+
+		this.listenTo (this.model, "change", this.setInputValuesFromModel);
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-        this.modeChanged();
+		this.model.trigger ("change", this.model, {showHide: true});	// Forces first call of setInputValuesFromModel
+		this.modeChanged();
     },
 
     filter: function (evt) {
-        //console.log ("this filterBB filter", evt);
         var target = evt.target;
-        var id = target.id;
-        console.log ("filter set", id, target.checked);
-        this.model.set (id, target.checked);
+        console.log ("filter set", target.id, target.checked);
+        this.model.set (target.id, target.checked);
     },
 
     textFilter: function (evt) {
         var target = evt.target;
-        var id = target.id;
-        console.log ("filter set", id, target.value);
-        this.model.set (id, target.value);
+        console.log ("filter set", target.id, target.value);
+        this.model.set (target.id, target.value);
     },
 
     subsetToggleFilter: function (evt) {
@@ -324,17 +356,31 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     modeChanged: function () {
 		var fdrMode = d3.select("#fdrMode").node().checked;
-        d3.selectAll("#validationStatus,#matchScore").style("display", fdrMode ? "none" : "inline-block");
-        d3.selectAll("#fdrPanel").style("display", fdrMode ? "inline-block" : "none");
-        if (fdrMode == true) {
-            d3.select("#ambig").property("checked", false);
-            d3.select("#ambig").property("disabled", true);
-            this.model.set("ambig", false);
-        } else {
-            d3.select("#ambig").property("disabled", false);
-        }
-		this.model.set ("fdrMode", fdrMode);
+		this.model.set ({fdrMode: fdrMode, manualMode: !fdrMode});
     },
+	
+	setInputValuesFromModel: function (model, options) {
+		var mainDiv = d3.select(this.el);
+		
+		mainDiv.selectAll("input.filterTypeText, input.subsetNumberFilter")
+			.property ("value", function(d) { return model.get(d.id); })
+		;
+		
+		mainDiv.selectAll("input.subsetToggleFilterToggle, input.modeToggle, input.filterTypeToggle")
+			.property ("checked", function (d) { return Boolean (model.get(d.id)); })
+		;
+		
+		// hide parts of the filter panel if mode (manual/fdr) setting has changed, or if setInputValuesFromModelcalled directly (change is empty)
+		if (options.showHide || model.changed.manualMode !== undefined || model.changed.fdrMode !== undefined) {
+			var fdrMode = model.get("fdrMode");
+			d3.selectAll("#validationStatus, #matchScore").style("display", fdrMode ? "none" : null);
+			d3.selectAll("#fdrPanel").style("display", fdrMode ? null : "none");
+			if (fdrMode == true) {
+				this.model.set("ambig", false);
+			}
+			d3.select("#ambig").property("disabled", fdrMode == true);
+		}
+	},
 
     render: function () {
         return this;
@@ -346,8 +392,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
     initialize: function () {
 
         var chartDiv = d3.select(this.el);
-        //var tpl = _.template (("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
-        chartDiv.html ("<div class=\"fdrCalculation\"><p>Basic link-level FDR calculation</p><span></span></div>");
+        chartDiv.html ("<div class='fdrCalculation'><p>Basic link-level FDR calculation</p><span></span></div>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
         var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
@@ -363,9 +408,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     .attr("type", "radio")
                     .attr("value", function(d) { return d; })
                     .attr("name", "fdrPercent")
-                    .property("checked", function(d) { return d === self.model.get("fdrThreshold"); })
                     .on ("click", function(d) {
-                        d3.select(self.el).select("input[type='number']").property("value", d * 100 /*""*/);
                         self.model.set("fdrThreshold", d);
                     })
         ;
@@ -381,15 +424,25 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                     .attr("min", 0)
                     .attr("max", 100)
                     .attr("step", 1)
-					.property ("value", self.model.get("fdrThreshold") * 100)
+					.attr ("class", "fdrValue")
                     .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
-                        d3.select(self.el).selectAll("input[name='fdrPercent']").property("checked", false);
                         self.model.set("fdrThreshold", (+this.value) / 100);
                     })
         ;
+		
+		this.listenTo (this.model, "change:fdrThreshold", this.setInputValuesFromModel);
+		this.model.trigger ("change:fdrThreshold", this.model);
 
         return this;
-    }
+    },
+	
+	setInputValuesFromModel: function (model) {
+		var fdrThreshold = model.get("fdrThreshold");
+		var d3el = d3.select(this.el);
+		d3el.style ("display", model.get("fdrMode") ? null : "none");
+		d3el.selectAll("input[name='fdrPercent']").property("checked", function(d) { return d === fdrThreshold; });
+		d3el.selectAll(".fdrValue").property("value", function() { return fdrThreshold * 100; });
+	}
 });
 
 CLMSUI.FilterSummaryViewBB = Backbone.View.extend({

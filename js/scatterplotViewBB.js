@@ -256,7 +256,7 @@
             selectList: ["X", "Y"], 
             optionList: options, 
 			keepOldOptions: keepOld || false,
-            selectLabelFunc: function (d) { return "Plot This Data Along ("+d+") Axis ►"; }, 
+            selectLabelFunc: function (d) { return "Plot This Data On The "+d+" Axis ►"; }, 
             optionLabelFunc: function (d) { return d.label; }, 
 			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.axisChosen().render(); },
