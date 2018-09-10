@@ -35,7 +35,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             ],
             subsetNumberFilters: [
                 {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"},
-                {"label":"Pep. length", "id":"pepLength", min: 1, max: 99, tooltip: "Only show cross-links connecting peptides of at least N amino acids e.g. 4"},
+                {"label":"Pep. length", "id":"pepLength", min: 1, max: 99, tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4"},
             ],
             validationStatusToggles: [
                 {"label":"A", "id":"A"},
@@ -47,9 +47,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},
             ],
             navigationFilters: [
-                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links involving a peptide including this AA sequence e.g. FAKR"},
-                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein including this text. Separate with commas, specify both proteins with hyphens e.g. RAT3, RAT1-RAT2"},
-                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with this charge state e.g. 3"},
+                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links with matches involving a peptide including this AA sequence e.g. FAKR"},
+                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"},
+                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with matches with this charge state e.g. 3"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
                 {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"},
             ],

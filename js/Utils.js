@@ -17,15 +17,21 @@ CLMSUI.utils = {
     },
 
     // return comma-separated list of protein names from array of protein ids
-    proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
-        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+    proteinConcat: function (match, matchedPeptideIndex, clmsModel) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         var pnames = mpeptides ? mpeptides.prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;}) : [];
         return pnames.join(",");
     },
 
-    pepPosConcat: function (d, matchedPeptideIndex) {
-        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+    pepPosConcat: function (match, matchedPeptideIndex) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         return mpeptides ? mpeptides.pos.join(", ") : "";
+    },
+	
+	fullPosConcat: function (match, matchedPeptideIndex) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
+		var linkPos = matchedPeptideIndex === 0 ? match.linkPos1 : match.linkPos2;
+        return mpeptides ? mpeptides.pos.map (function (v) { return v + linkPos - 1; }).join(", ") : "";
     },
 
     commonLabels: {

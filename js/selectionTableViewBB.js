@@ -45,59 +45,62 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 
         var tableDataPropOrder = [
-                "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
-                "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score",
+                "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
+                "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
                 "autovalidated", "validated", "group", "runName", "scanNumber",
                 "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
                 "precursorIntensity", "elutionStart", "elutionEnd",
             ];
 
         this.headerLabels = {
-            "id": "PSM ID",
-            "ambiguity": "Ambiguity",
-            "protein1": "Protein 1",
-            "pepPos1": "Pep Pos",
-            "pepSeq1raw": "Pep 1 Sequence",
-            "linkPos1": "Link Pos",
-            "protein2": "Protein 2",
-            "pepPos2": "Pep Pos",
-            "pepSeq2raw": "Pep 2 Sequence",
-            "linkPos2": "Link Pos",
-            "score": "Score",
-            "autovalidated": "Auto",
-            "validated": "Manual",
-            "group": "Group",
-            "runName": "Run Name",
-            "scanNumber": "Scan Number",
-            "precursorCharge": "Charge (Z)",
-            "expMZ": "Exp M/Z",
-            "expMass": "Exp Mass",
-            "calcMZ": "Calc M/Z",
-            "calcMass": "Calc Mass",
-            "massError": "Mass Error (ppm)",
-            "precursorIntensity": "Intensity",
-            "elutionStart": "Elut. Start",
-            "elutionEnd": "Elut. End",
+            id: "PSM ID",
+            ambiguity: "Ambiguity",
+            protein1: "Protein 1",
+			pos1: "Pos",
+            pepPos1: "Pep Pos",
+            pepSeq1raw: "Pep 1 Sequence",
+            linkPos1: "Link Pos",
+            protein2: "Protein 2",
+			pos2: "Pos",
+            pepPos2: "Pep Pos",
+            pepSeq2raw: "Pep 2 Sequence",
+            linkPos2: "Link Pos",
+            score: "Score",
+            autovalidated: "Auto",
+            validated: "Manual",
+            group: "Group",
+            runName: "Run Name",
+            scanNumber: "Scan Number",
+            precursorCharge: "Charge (Z)",
+            expMZ: "Exp M/Z",
+            expMass: "Exp Mass",
+            calcMZ: "Calc M/Z",
+            calcMass: "Calc Mass",
+            massError: "Mass Error (ppm)",
+            precursorIntensity: "Intensity",
+            elutionStart: "Elut. Start",
+            elutionEnd: "Elut. End",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
+		this.emphasiseColumns = d3.set(["pos1", "pos2"]);
 
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
-            "ambiguity": function () {
+            ambiguity: function () {
                 return false;
             },
             //~ "protein1": function () { return false; },
             //~ "protein2": function () { return false; },
             //~ "pepPos1": function () { return false; },
             //~ "pepPos2": function () { return false; },
-            "autovalidated": function () {
+            autovalidated: function () {
                 return CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
             },
-            "validated": function () {
+            validated: function () {
                 return true;
             } //CLMS.model.manualValidatedFound; },
         };
@@ -125,6 +128,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "protein2": function (d) { return CLMSUI.utils.proteinConcat (d, 1, self.model.get("clmsModel")); },
             "runName": function (d) { return d.runName(); },
             "group": function (d) { return d.group(); },
+			"pos1": function (d) { return CLMSUI.utils.fullPosConcat (d, 0); },
+			"pos2": function (d) { return CLMSUI.utils.fullPosConcat (d, 1); },
             "pepPos1": function (d) { return CLMSUI.utils.pepPosConcat (d, 0); },
             "pepPos2": function (d) { return CLMSUI.utils.pepPosConcat (d, 1); },
             "pepSeq1raw": function (d) { return d.matchedPeptides[0].seq_mods; },
@@ -452,7 +457,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 
         // Within each row, match cells up to individual pieces of match information
-        var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth"];
+        var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth", "emphasise"];
         var cellJoin = tjoin.selectAll("TD").data(filteredProps /*, function(d) { return d; }*/ );
         cellJoin.exit().remove();
         cellJoin.enter()
@@ -466,6 +471,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                         self.colSectionStarts.has(d),
                         self.monospacedColumns.has(d),
                         self.maxWidthColumns.has(d),
+						self.emphasiseColumns.has(d),
                     ];
                 var classes = possClasses.filter(function (cd, ci) {
                     return states[ci];
