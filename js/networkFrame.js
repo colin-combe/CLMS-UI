@@ -313,7 +313,12 @@ CLMSUI.init.views = function() {
             eventName: "matrixShow",
             tooltip: "AKA Contact Map. Relevant PDB File required for distance background"
         },
-        //{id: "listChkBxPlaceholder", label: "List", eventName: "listShow", tooltip: "Sortable list of cross-links"},
+        {
+			id: "listChkBxPlaceholder", 
+			label: "List", 
+			eventName: "listShow", 
+			tooltip: "Sortable list of cross-links"
+		},
         {
             id: "proteinInfoChkBxPlaceholder",
             label: "Protein Info",
@@ -887,14 +892,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // This makes a list viewer
-    /*
     new CLMSUI.ListViewBB ({
         el: "#listPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "listShow",
     });
-	*/
 
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync

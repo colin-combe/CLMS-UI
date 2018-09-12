@@ -5,7 +5,7 @@
     
   var CLMSUI = CLMSUI || {};
 
-  CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend ({   
+  CLMSUI.HeatMapViewBB = CLMSUI.utils.BaseFrameView.extend ({   
         
     events: function() {
       var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
@@ -29,7 +29,7 @@
 	},
 
     initialize: function (viewOptions) {
-        CLMSUI.ListViewBB.__super__.initialize.apply (this, arguments);
+        CLMSUI.HeatMapViewBB.__super__.initialize.apply (this, arguments);
         
         var self = this;
         
@@ -87,19 +87,18 @@
         ;
 		*/
 		
-		// first column is hidden column which has fixed filter later on to only show filtered cross-links
-		var columnMetaData = [			
-			{columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, id: "filtered", accessor: function (d) { return d.filteredMatches_pp.length; }},
-            {columnName: "ID", type: "alpha", tooltip: "", visible: true, id: "id"},
-			{columnName: "Ambiguous", type: "boolean", tooltip: "", visible: true, id: "ambiguous"},
-			{columnName: "Match Count", type: "numeric", tooltip: "", visible: true, id: "matchCount", accessor: function (d) { return d.filteredMatches_pp.length; }},
+		var columnMetaData = [
+            {name: "ID", type: "alpha", tooltip: "", visible: true, id: "id"},
+			{name: "Ambiguous", type: "boolean", tooltip: "", visible: true, id: "ambiguous"},
+			{name: "Match Count", type: "numeric", tooltip: "", visible: true, id: "matchCount"},
         ];
 		
 		var initialValues = {
-			filters: {ambiguous: false, filtered: 0},	
+			filters: {id: false, ambiguous: false},	
 		};
 		var cellStyles = {
 			name: "varWidthCell", 
+			file_name: "varWidthCell2",
 		};
 		var tooltipHelper = function (d, field) {
 			return d.value.id + ": " + d.value[field];
@@ -136,54 +135,36 @@
 			addRowListeners (rowSelection);
 		};
 		var modifiers = {
-			filtered: function (d) { return d.filteredMatches_pp.length; },
 			id: function(d) { return d.id; },
 			ambiguous: function(d) { return d.ambiguous; },
-			matchCount: function (d) { return d.filteredMatches_pp.length; },
+			matchCount: function (d) { return d.matches_pp.length; }
 		};
         
-		var columnSettings = columnMetaData.map (function (cmd) { return {key: cmd.id, value: cmd}; });
-		var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer")
+		var headerEntries = columnMetaData.map (function (cmd) { return {key: cmd.id, value: cmd}; });
+		var d3tab = flexWrapperPanel.append("div").attr("class", "d3tableContainer")
 			.datum({
 				data: Array.from (self.model.get("clmsModel").get("crossLinks").values()), 
-				columnSettings: columnSettings, 
+				headerEntries: headerEntries, 
 				cellStyles: cellStyles,
 				tooltips: tooltips,
-				columnOrder: columnSettings.map (function (hentry) { return hentry.key; }),
+				columnOrder: headerEntries.map (function (hentry) { return hentry.key; }),
 			})
 		;
-		var d3table = CLMSUI.d3Table ();
-		d3table (d3tableElem);
+		var table = CLMSUI.d3Table ();
+		table (d3tab);
 		//applyHeaderStyling (d3tab.selectAll("thead tr:first-child").selectAll("th"));
-		console.log ("table", d3table);
-
-		// Bespoke filter type to hide rows not in current filtered crosslinks
-		/*
-		table.typeSettings ("passCrossLinkFilter", {
-			preprocessFunc: function (links) { return d3.set (links ? links.map (function(d) { return d.id; }) : []); },
-			filterFunc: function (datum, set) { return set.has (datum); },
-			comparator: table.typeSettings("alpha").comparator,		
-		});
-		*/
-		
-		d3table.typeSettings ("numericGt", {
-			preprocessFunc: function (d) { return d; },
-			filterFunc: function (datum, d) { console.log ("datum", datum, d); return datum > d; },
-			comparator: d3table.typeSettings("numeric").comparator,		
-		});
-		
-		//table.getFilterCells().style("display", "none");
+		console.log ("table", table);
 
 		// set initial filters
 		var keyedFilters = {};
-		columnSettings.forEach (function (hentry) {
-			var findex = d3table.getColumnIndex (hentry.key);
+		headerEntries.forEach (function (hentry) {
+			var findex = table.getColumnIndex (hentry.key);
 			//console.log (hentry, "ind", findex, initialValues.filters);
-			keyedFilters[hentry.key] = initialValues.filters[findex];	
+			keyedFilters[hentry.key] = {value: initialValues.filters[findex], type: hentry.value.type}	
 		});
 		//console.log ("keyedFilters", keyedFilters);
 
-		d3table
+		table
 			.filter (keyedFilters)
 			.dataToHTML (modifiers)
 			.postUpdate (empowerRows)
@@ -191,8 +172,8 @@
 
 		// set initial sort
 		if (initialValues.sort && initialValues.sort.column) {
-			d3table
-				.orderKey (columnSettings[initialValues.sort.column].key)
+			table
+				.orderKey (headerEntries[initialValues.sort.column].key)
 				.orderDir (initialValues.sort.sortDesc ? "desc" : "asc")
 				.sort()
 			;
@@ -207,14 +188,14 @@
 		// rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
         this.listenTo (this.model, "filteringDone", this.render);
 		this.listenTo (this.model, "change:selection change:highlights change:linkColourAssignment currentColourModelChanged", function() {
-			colourRows (d3table.getAllRowsSelection());
+			colourRows (table.getAllRowsSelection());
 		});
         this.listenTo (this.colourScaleModel, "colourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged);  // Entire new set of distances
         this.listenTo (this.model.get("clmsModel"), "change:matches", this.matchesChanged);  // New matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
 		
-		this.d3table = d3table;
+		this.table = table;
 		
         this.render();
     },
@@ -243,16 +224,14 @@
     },
 
     render: function () {
-		var self = this;
         if (this.isVisible()) {
-			var filter = this.d3table.filter ();
-			filter.filtered = 0;
-			this.d3table.filter(filter).update();
+            console.log ("LIST RENDER");
+			this.table.update();
         }
         return this;
     },
         
-    identifier: "List View",
+    identifier: "List",
         
     optionsToString: function () {
         var matrixObj = this.options.matrixObj;
