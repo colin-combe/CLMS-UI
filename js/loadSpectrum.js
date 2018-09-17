@@ -2,7 +2,7 @@ var CLMSUI = CLMSUI || {};
 var xiSPEC = xiSPEC || {};
 
 CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
-    if (match.spectrum.pks) {
+    if (match.spectrum && match.spectrum.pks) {
         var formatted_data = {};
 
         formatted_data.sequence1 = match.matchedPeptides[0].seq_mods;
