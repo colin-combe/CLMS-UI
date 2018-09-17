@@ -41,8 +41,6 @@
             left:   this.options.ylabel ? 60 : 40
         };
         
-        this.colourScaleModel = viewOptions.colourScaleModel;
-        
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
         //avoids prob with 'save - web page complete'
@@ -58,13 +56,13 @@
 		var distanceFunc = function (d) {
 			return selfModel.getSingleCrosslinkDistance (d);
 		}
-		
+
 		// first column is hidden column which has fixed filter later on to only show filtered cross-links
 		var columnSettings = {	
 			filtered: {columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, accessor: function (d) { return d.filteredMatches_pp.length; }},
 			protein: {columnName: "Protein", type: "alpha", tooltip: "", visible: true, accessor: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); }},
 			matchCount: {columnName: "Match Count", type: "numeric", tooltip: "", visible: true, accessor: function (d) { return d.filteredMatches_pp.length; }},
-			distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: distanceFunc, cellStyle: "number"},
+			distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: distanceFunc, cellStyle: "number", cellD3EventHook: this.makeColourSchemeBackgroundHook ("Distance")},
 		};
 		
 		var initialValues = {
@@ -126,7 +124,7 @@
 		var d3table = CLMSUI.d3Table ();
 		d3table (d3tableElem);
 		
-		console.log ("table", d3table);
+		//console.log ("table", d3table);
 
 		// Bespoke filter type to hide rows not in current filtered crosslinks
 		d3table.typeSettings ("numericGt", {
@@ -148,19 +146,16 @@
 			.postUpdate (empowerRows)
 		;
 
-		// rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
+		// rerender crosslinks if selection/highlight changed or filteringDone
         this.listenTo (this.model, "filteringDone", this.render);
-		this.listenTo (this.model, "change:selection change:highlights change:linkColourAssignment currentColourModelChanged", function() {
+		this.listenTo (this.model, "change:selection change:highlights", function() {
 			colourRows (d3table.getAllRowsSelection());
 		});
-        this.listenTo (this.colourScaleModel, "colourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
-        this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.render);  // Entire new set of distances
-        this.listenTo (this.model.get("clmsModel"), "change:matches", this.render);  // New matches added (via csv generally)
+        this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances  or ew matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
-			this.updateTableData (metaData)
-			console.log ("arguments", arguments);
-			this.render();
+			this.updateTableData(metaData).render();
 		}); // New/Changed metadata attributes present
 		this.d3table = d3table;
 		
@@ -176,16 +171,38 @@
         return this;
 	},
 	  
+	makeColourSchemeBackgroundHook: function (columnKey) {
+		return function (cellSel) {
+			cellSel.style("background", function(d) { 
+				var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
+				var dValue = colScheme.getValue (d.value);
+				return dValue !== undefined ? colScheme.getColour(d.value) : "none";
+			});
+		};
+	},
+	  
 	updateTableData: function (metaData) {
 		var columnSettings = this.d3table.columnSettings();
-		console.log ("metaData", metaData);
+
 		metaData.columns.map (function (mcol) {
-			var accFunc = function (d) { return d.meta ? d.meta[mcol] : ""; }
 			var columnType = metaData.columnTypes[mcol];
+			
+			var accFunc = function (d) { return d.meta ? d.meta[mcol] : ""; };
+			var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ? 
+				this.makeColourSchemeBackgroundHook (mcol) : undefined
+			;
+
 			columnSettings[mcol] = {
-				columnName: mcol, type: columnType || "alpha", tooltip: "", visible: true, accessor: accFunc, dataToHTMLModifier: accFunc, cellStyle: columnType === "numeric" ? "number" : undefined
+				columnName: mcol, 
+				type: columnType || "alpha", 
+				tooltip: "", 
+				visible: true, 
+				accessor: accFunc, 
+				dataToHTMLModifier: accFunc, 
+				cellStyle: columnType === "numeric" ? "number" : undefined,
+				cellD3EventHook: cellD3Hook,
 			};
-		});
+		}, this);
 		
 		this.d3table
 			.columnSettings (columnSettings)

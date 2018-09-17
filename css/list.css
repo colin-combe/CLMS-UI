@@ -17,6 +17,11 @@
 .listView table.d3table tbody tr td {
 	color: #091d42;
 	font-size: 1.2em;
+	border: 3px solid transparent;
+}
+
+.listView table.d3table tbody tr:nth-child(2n) {
+	background: #eee;
 }
 
 .listView table.d3table thead th {
