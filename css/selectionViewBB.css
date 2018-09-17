@@ -76,6 +76,11 @@
     text-overflow: ellipsis;
 }
 
+.selectView TD.emphasise {
+	font-weight: bold;
+	transform: scaleX(1.1);
+}
+
 .selectView tbody TR.spectrumShown2 {
     color: black;
     background: #afa;

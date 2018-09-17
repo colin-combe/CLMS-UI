@@ -162,8 +162,8 @@ function getMatchesCSV () {
 			var peptides2 = match.matchedPeptides[1];
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
-			var lp1 = peptides1.pos.map (function (v) { return v + match.linkPos1 - 1; }).join(", ");
-			var lp2 = peptides2 ? peptides2.pos.map (function (v) { return v + match.linkPos2 - 1; }).join(", ") : "";
+			var lp1 = CLMSUI.utils.fullPosConcat (match, 0);
+			var lp2 = CLMSUI.utils.fullPosConcat (match, 1);
 			
 			var decoy1 = clmsModel.get("participants").get(peptides1.prt[0]).is_decoy;
 			var decoy2 = peptides2 ? clmsModel.get("participants").get(peptides2.prt[0]).is_decoy : "";

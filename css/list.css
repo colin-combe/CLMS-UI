@@ -1,0 +1,30 @@
+.listView table.d3table tbody tr:hover td {
+	color: #222;
+    background: inherit;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    transition: none;
+    /*border-top-color: #444;
+    border-bottom-color: #444;*/
+}
+
+.listView table.d3table {
+	table-layout: auto;
+}
+
+.listView table.d3table tbody tr td {
+	color: #091d42;
+	font-size: 1.2em;
+}
+
+.listView table.d3table thead th {
+	padding: 0 2px;
+}
+
+.listView TD.number {
+	text-align: right;
+	font-family: "Courier", monospace;
+	font-weight: bold;
+}
