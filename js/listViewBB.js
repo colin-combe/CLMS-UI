@@ -53,62 +53,22 @@
         ;
         
         this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
-        
-		/*
-        this.controlDiv.append("button")
-            .attr ("class", "downloadButton2 btn btn-1 btn-1a")
-            .text (CLMSUI.utils.commonLabels.downloadImg+"SVG")
-        ;
-        
-        var setSelectTitleString = function () {
-            var selElem = d3.select (d3.event.target);
-            selElem.attr("title", selElem.selectAll("option")
-                .filter(function() { return d3.select(this).property("selected"); })
-                .text()
-            );
-        };
-    
-        this.controlDiv.append("label")
-            .attr("class", "btn")
-            .append ("span")
-                .attr("class", "noBreak")
-                .text("Show Protein Pairing")
-                .append("select")
-                    .attr("id", mainDivSel.attr("id")+"chainSelect")
-                    .on ("change", function (d) {
-                        var value = this.value;
-                        var selectedDatum = d3.select(this).selectAll("option")
-                            .filter(function(d) { return d3.select(this).property("selected"); })
-                            .datum()
-                        ;
-                        self.setAndShowPairing (selectedDatum.value);
-                        var selElem = d3.select(d3.event.target);
-                        setSelectTitleString (selElem);
-                    })
-        ;
-		*/
 		
 		var selfModel = this.model;
 		var distanceFunc = function (d) {
-			var distancesObj = selfModel.get("clmsModel").get("distancesObj");
-        	var protAlignCollection = selfModel.get("alignColl");
-			return selfModel.getSingleCrosslinkDistance (d, distancesObj, protAlignCollection, {});
+			return selfModel.getSingleCrosslinkDistance (d);
 		}
 		
 		// first column is hidden column which has fixed filter later on to only show filtered cross-links
-		var columnMetaData = [			
-			{columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, id: "filtered", accessor: function (d) { return d.filteredMatches_pp.length; }},
-			{columnName: "Protein", type: "alpha", tooltip: "", visible: true, id: "protein", accessor: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); }},
-			{columnName: "Match Count", type: "numeric", tooltip: "", visible: true, id: "matchCount", accessor: function (d) { return d.filteredMatches_pp.length; }},
-			{columnName: "Distance", type: "numeric", tooltip: "", visible: true, id: "distance", accessor: distanceFunc},
-        ];
+		var columnSettings = {	
+			filtered: {columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, accessor: function (d) { return d.filteredMatches_pp.length; }},
+			protein: {columnName: "Protein", type: "alpha", tooltip: "", visible: true, accessor: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); }},
+			matchCount: {columnName: "Match Count", type: "numeric", tooltip: "", visible: true, accessor: function (d) { return d.filteredMatches_pp.length; }},
+			distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: distanceFunc, cellStyle: "number"},
+		};
 		
 		var initialValues = {
 			filters: {filtered: 0},	
-		};
-		var cellStyles = {
-			name: "varWidthCell", 
-			distance: "number",
 		};
 		var tooltipHelper = function (d, field) {
 			return d.value.id + ": " + d.value[field];
@@ -146,30 +106,26 @@
 			addRowListeners (rowSelection);
 		};
 		var distance2dp = d3.format(".2f");
-		var modifiers = {
+		var dataToHTMLModifiers = {
 			filtered: function (d) { return d.filteredMatches_pp.length; },
 			protein: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); },
 			matchCount: function (d) { return d.filteredMatches_pp.length; },
 			distance: function(d) { var dist = distanceFunc(d); return dist != undefined ? distance2dp(dist) : ""; },
 		};
+		d3.entries(dataToHTMLModifiers).forEach (function (entry) {
+			columnSettings[entry.key].dataToHTMLModifier = dataToHTMLModifiers[entry.key];	
+		});
         
-		var columnSettings = columnMetaData.map (function (cmd) { return {key: cmd.id, value: cmd}; });
 		var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
 			.datum({
 				data: Array.from (self.model.get("clmsModel").get("crossLinks").values()), 
-				columnSettings: columnSettings, 
-				cellStyles: cellStyles,
-				tooltips: tooltips,
-				columnOrder: columnSettings.map (function (hentry) { return hentry.key; }),
+				columnSettings: columnSettings,
+				columnOrder: d3.keys(columnSettings),
 			})
 		;
 		var d3table = CLMSUI.d3Table ();
 		d3table (d3tableElem);
-		//applyHeaderStyling (d3tab.selectAll("thead tr:first-child").selectAll("th"));
 		
-		// pull table into it's own div so we can do overflow and scrolling
-		var flexNestDiv = d3tableElem.append("div").attr("class", "extraContainerDiv");
-		$(flexNestDiv[0]).append($(d3tableElem.select("table")[0]));
 		console.log ("table", d3table);
 
 		// Bespoke filter type to hide rows not in current filtered crosslinks
@@ -183,32 +139,15 @@
 
 		// set initial filters
 		var keyedFilters = {};
-		columnSettings.forEach (function (hentry) {
-			var findex = d3table.getColumnIndex (hentry.key);
-			keyedFilters[hentry.key] = initialValues.filters[findex];	
+		d3.keys(columnSettings).forEach (function (columnKey) {
+			keyedFilters[columnKey] = initialValues.filters[columnKey];	
 		});
 
 		d3table
 			.filter (keyedFilters)
-			.dataToHTML (modifiers)
 			.postUpdate (empowerRows)
 		;
 
-		// set initial sort
-		if (initialValues.sort && initialValues.sort.column) {
-			d3table
-				.orderKey (columnSettings[initialValues.sort.column].key)
-				.orderDir (initialValues.sort.sortDesc ? "desc" : "asc")
-				.sort()
-			;
-		}
-
-		/*
-		var dispatch = table.dispatch();
-		dispatch.on ("columnHiding", storeColumnHiding);
-		dispatch.on ("filtering", storeFiltering);
-		dispatch.on ("ordering", storeOrdering);
-         */
 		// rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
         this.listenTo (this.model, "filteringDone", this.render);
 		this.listenTo (this.model, "change:selection change:highlights change:linkColourAssignment currentColourModelChanged", function() {
@@ -218,7 +157,11 @@
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.render);  // Entire new set of distances
         this.listenTo (this.model.get("clmsModel"), "change:matches", this.render);  // New matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
-		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", this.render); // New/Changed metadata attributes present
+		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
+			this.updateTableData (metaData)
+			console.log ("arguments", arguments);
+			this.render();
+		}); // New/Changed metadata attributes present
 		this.d3table = d3table;
 		
         this.render();
@@ -232,9 +175,28 @@
 		this.model.setMarkedCrossLinks ("highlights", [], false, false);
         return this;
 	},
+	  
+	updateTableData: function (metaData) {
+		var columnSettings = this.d3table.columnSettings();
+		console.log ("metaData", metaData);
+		metaData.columns.map (function (mcol) {
+			var accFunc = function (d) { return d.meta ? d.meta[mcol] : ""; }
+			var columnType = metaData.columnTypes[mcol];
+			columnSettings[mcol] = {
+				columnName: mcol, type: columnType || "alpha", tooltip: "", visible: true, accessor: accFunc, dataToHTMLModifier: accFunc, cellStyle: columnType === "numeric" ? "number" : undefined
+			};
+		});
+		
+		this.d3table
+			.columnSettings (columnSettings)
+			.columnOrder (d3.keys(columnSettings))
+		;
+		
+		this.d3table (this.d3table.getSelection());
+		return this;
+	},
 
     render: function () {
-		var self = this;
         if (this.isVisible()) {
 			var filter = this.d3table.filter ();
 			filter.filtered = 0;

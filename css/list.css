@@ -10,10 +10,8 @@
     border-bottom-color: #444;*/
 }
 
-.listView .d3tableContainer .extraContainerDiv {
-	overflow: auto;
-	flex-grow: 1;
-	flex-shrink: 1;
+.listView table.d3table {
+	table-layout: auto;
 }
 
 .listView table.d3table tbody tr td {
