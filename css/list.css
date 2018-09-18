@@ -33,3 +33,34 @@
 	font-family: "Courier", monospace;
 	font-weight: bold;
 }
+
+.listView table.heatmap.d3table tbody td {
+	line-height: 0.5em;
+	height: 0.5em;
+} 
+
+.listView table.heatmap.d3table tbody tr {
+	line-height: 5px;
+	height: 5px;
+	border: none;
+} 
+
+.listView table.heatmap.d3table tbody tr td {
+	border: none;
+	width: 10px;
+	max-width: 10px;
+	font-size: 0.5em;
+} 
+
+.listView table.heatmap.d3table thead th {
+	min-width: 1em;
+	height: inherit;
+} 
+
+.listView table.heatmap.d3table thead th .d3table-filterInput {
+	display: none;
+} 
+
+.listView table.heatmap.d3table thead th .d3table-arrow {
+	display: none;
+} 

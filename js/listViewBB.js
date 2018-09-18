@@ -151,8 +151,8 @@
 		this.listenTo (this.model, "change:selection change:highlights", function() {
 			colourRows (d3table.getAllRowsSelection());
 		});
-        this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
-        this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances  or ew matches added (via csv generally)
+        this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // redraw if any colour model chanegs
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances or new matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
 			this.updateTableData(metaData).render();
