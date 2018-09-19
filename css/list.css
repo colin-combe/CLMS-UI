@@ -34,15 +34,22 @@
 	font-weight: bold;
 }
 
-.listView table.heatmap.d3table tbody td {
-	line-height: 0.5em;
-	height: 0.5em;
-} 
+.listView label.btn.staticLabel {
+	color: mediumpurple;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.listView label.btn.staticLabel:hover {
+	background: inherit;
+}
+
 
 .listView table.heatmap.d3table tbody tr {
 	line-height: 5px;
 	height: 5px;
 	border: none;
+	background: inherit;
 } 
 
 .listView table.heatmap.d3table tbody tr td {
@@ -50,17 +57,28 @@
 	width: 10px;
 	max-width: 10px;
 	font-size: 0.5em;
+	line-height: 0.5em;
+	height: 0.5em;
 } 
+
+.listView table.heatmap.d3table tbody tr td:not(:first-child) {
+	font-size: 0;
+}
 
 .listView table.heatmap.d3table thead th {
+	max-width: 1em;
 	min-width: 1em;
 	height: inherit;
+	text-overflow: clip;
 } 
 
-.listView table.heatmap.d3table thead th .d3table-filterInput {
+.listView table.heatmap.d3table thead th .d3table-filterInput/*, .listView table.heatmap.d3table thead th .d3table-arrow*/ {
 	display: none;
-} 
+}
 
-.listView table.heatmap.d3table thead th .d3table-arrow {
-	display: none;
+.listView table.heatmap.d3table thead th span.d3table-headerSpan {
+	transform: rotate(90deg) translate(-4em, 3.5em);
+    display: inline-block;
+	width: 1em;
+    height: 10em;
 } 

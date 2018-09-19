@@ -860,8 +860,25 @@ CLMSUI.modelUtils = {
 		});
 	},
 	
-	metaClustering: function (crossLinks) {
-		var metaDims = ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 9 1", "pH 9 2", "pH 9 3"];
+	flattenBinaryTree: function (tree, arr) {
+		arr = arr || [];
+		if (tree.value) {
+			arr.push (tree.value);
+		} else {
+			this.flattenBinaryTree (tree.left, arr);
+			this.flattenBinaryTree (tree.right, arr);
+		}
+		return arr;
+	},
+	
+	metaClustering: function (crossLinks, myOptions) {
+		var defaults = {
+			distance: "euclidean",
+			linkage: "average",
+		};
+		var options = $.extend ({}, defaults, myOptions);
+		
+		var metaDims = ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"];
 		
 		function metaPluck (crossLinks, dim) {
 			return crossLinks.map (function (crossLink) {
@@ -888,11 +905,12 @@ CLMSUI.modelUtils = {
 			return !_.every (arr, function (val) { return val === undefined; });
 		});
 		
-		console.log ("zs", zscoresByLink);
-		
-		var kmeans = clusterfck.kmeans (zscoresByLink);
-		console.log ("kmeans", kmeans);
-		console.log ("distance", clusterfck.hcluster (zscoresByLink));
+		var kmeans = clusterfck.kmeans (zscoresByLink, undefined, options.distance);
+		var zdistances = clusterfck.hcluster (zscoresByLink, options.distance, options.linkage);
+		var treeOrder = this.flattenBinaryTree (zdistances.tree);
+		//console.log ("zs", zscoresByLink);
+		//console.log ("kmeans", kmeans);
+		console.log ("distance", zdistances, treeOrder);
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {
@@ -900,7 +918,16 @@ CLMSUI.modelUtils = {
 			});
 		});
 		
-		CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: ["kmcluster"], columnTypes: {kmcluster: "numeric"}, items: crossLinks, matchedItemCount: zscoresByLink.length});	
+		treeOrder.forEach (function (value, i) {
+			value.clink.meta.treeOrder = i+1;
+		});
+		
+		CLMSUI.vent.trigger ("linkMetadataUpdated", {
+			columns: ["kmcluster", "treeOrder"], 
+			columnTypes: {kmcluster: "numeric", treeOrder: "numeric"}, 
+			items: crossLinks, 
+			matchedItemCount: zscoresByLink.length
+		});	
 	},
 
 	// test to ignore short chains and those that are just water molecules
