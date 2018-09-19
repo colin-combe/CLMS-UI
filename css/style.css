@@ -290,9 +290,9 @@ span, label {
 #keyPanel{
     left: 10px;
     height: 35em;
-    width: 40em;
+    width: 45em;
 	min-height: 25em;
-	min-width: 40em;
+	min-width: 45em;
 }
 
 #listPanel {
@@ -444,6 +444,20 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 	font-size: 1.4em;
 	vertical-align: middle;
 	padding: 0 0.5em;
+}
+
+#pdbPanel .toolbar {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#pdbPanel .toolbar .verticalFlexContainer {
+	display: flex;
+}
+
+#pdbPanel button i.fa {
+	padding-left: 0.4em;
+	vertical-align: sub;
 }
 
 A.btn {
@@ -739,3 +753,29 @@ input {
 }
 
 sup {font-size:xx-small; vertical-align:super;}
+
+.smallHeading {
+	margin-top: 0.5em;
+	font-size: 0.75em;
+	color: #668;
+	line-height: 1.4em;
+}
+
+.btn-tight {
+	margin: 0;
+	padding: 2px 2px;
+	border: 1px solid grey;
+}
+
+.rainbow {
+    width: 4em;
+    height: 1em;
+    display: inline-block;
+    margin-right: 0.5em;
+    vertical-align: middle;
+    margin-left: -1.5em;
+	/* generated at http://www.colorzilla.com/gradient-editor/ */
+	background: -moz-linear-gradient(left, #fc3932 0%, #e4e82c 25%, #20cc3d 50%, #0436ea 75%, #f986bc 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}

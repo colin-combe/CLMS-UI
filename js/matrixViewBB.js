@@ -119,7 +119,7 @@
                 myOptions: {
                     title: "Chain "+prot+" ▼",
 					tooltipModel: this.model.get("tooltipModel"),
-					tooltip: {header: "PDB Chains", contents: "Turn on/off plotting of individual PDB chains along this axis."},
+					titleTooltip: {header: "PDB Chains", contents: "Turn on/off plotting of individual PDB chains along this axis."},
                     menu: [],
                     closeOnClick: false,
                     classed: "chainDropdown",
@@ -634,7 +634,7 @@
 					start = index[n + 1];
 				}
 			}
-			blocks.push ({first: start + 1, last: index [index.length - 1] + 1});
+			blocks.push ({first: start + 1, last: _.last(index) + 1});
 			return blocks;
 		};
 		

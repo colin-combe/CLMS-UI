@@ -119,14 +119,29 @@ function mostReadableId (protein) {
 
 
 function getMatchesCSV () {
-    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2"\r\n';
+    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
-    var matches = clmsModel.get("matches");
-    var matchCount = matches.length;
-    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
-    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
 	var distance2dp = d3.format(".2f");
+	
+	var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");
+	var matchMap = d3.map();
+	
+	// do it like this so ambiguous matches (belonging to >1 crosslink) aren't repeated
+	crossLinks.forEach (function (crossLink) {
+		crossLink.filteredMatches_pp.forEach (function (match) {
+			matchMap.set (match.match.id, match.match);
+		})
+	});
+	//console.log ("CL", crossLinks, matchMap);
 
+	/*
+	var count = 0;
+	var matchCount = matches.length;
+	var matches = clmsModel.get("matches");
+
+    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
+    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
+	
     for (var m = 0; m < matchCount; ++m){
 		var match = matches[m];
         var result;
@@ -139,11 +154,19 @@ function getMatchesCSV () {
 						&& filterModel.navigationFilter(match);
 		}
         if (result === true){
+			count++;
+		*/
+			
+	matchMap.values().forEach (function (match) {
+			var peptides1 = match.matchedPeptides[0];
 			var peptides2 = match.matchedPeptides[1];
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
-			var lp1 = match.matchedPeptides[0].pos.map (function (v) { return v + match.linkPos1 - 1; }).join(", ");
-			var lp2 = peptides2 ? peptides2.pos.map (function (v) { return v + match.linkPos2 - 1; }).join(", ") : "";
+			var lp1 = CLMSUI.utils.fullPosConcat (match, 0);
+			var lp2 = CLMSUI.utils.fullPosConcat (match, 1);
+			
+			var decoy1 = clmsModel.get("participants").get(peptides1.prt[0]).is_decoy;
+			var decoy2 = peptides2 ? clmsModel.get("participants").get(peptides2.prt[0]).is_decoy : "";
 			
 			// Work out distances for this match - ambiguous matches will have >1 crosslink
 			var crossLinks = match.crossLinks;
@@ -154,20 +177,17 @@ function getMatchesCSV () {
 			var distancesTransposed = d3.transpose (distances2DArr); // transpose so distance data now grouped in array by field (distance, tores, etc)
 			var distancesJoined = distancesTransposed.map (function (arr) { return arr.join(", "); });
 			
-            csv += '"' + match.id + '","' + CLMSUI.utils.proteinConcat(match, 0, CLMSUI.compositeModelInst.get("clmsModel"))
-                + '","' + lp1 + '","' + pp1 + '","'
-                + match.matchedPeptides[0].seq_mods + '","' + match.linkPos1 + '","'
-                + (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, CLMSUI.compositeModelInst.get("clmsModel")) : "")
-                + '","' + lp2 + '","' + pp2 + '","'
-                + (peptides2 ? peptides2.seq_mods : "") + '","' + match.linkPos2 + '","'
-                + match.score() + '","' + match.precursorCharge + '","'  + match.expMZ() + '","' + match.expMass() + '","'
-                + match.calcMZ() + '","' + match.calcMass() + '","' + match.massError() + '","'
-                + match.autovalidated + '","' + match.validated + '","'
-                + match.searchId + '","' + match.runName() + '","' + match.scanNumber + '","' + match.scanIndex + '","'
-                + match.crossLinkerModMass() + '","' + match.fragmentToleranceString() + '","' + match.ionTypesString() +'","'
-				+ distancesJoined.join('","') + '"\r\n';
+			var data = [
+				match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","')
+			];
+            csv += '"' + data.join('","') + '"\r\n';
+		/*
         }
     }
+	*/
+	});
+	
+	//console.log ("MCSV", count, matchMap.values().length);
     return csv;
 }
 
@@ -183,8 +203,14 @@ function getLinksCSV(){
     console.log ("searchIds", searchIds);
     var headerRow = '"' + headerArray.join('","') + '"';
 
+	/*
+	// filtered crosslinks already cached and obtainable via CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");
     var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
     crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
+	*/
+	var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");
+	//console.log ("XLINK COMP", crossLinks.length, crossLinks2.length);
+	
     var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true, calcDecoyProteinDistances: true});
     //console.log ("pd", physicalDistances);
     var distance2dp = d3.format(".2f");
@@ -242,34 +268,30 @@ function getResidueCount() {
     var residueCounts = d3.map();
     var residuePairCounts = d3.map();
 
-    var crossLinksArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
-    var crossLinkCount = crossLinksArray.length;
-    for (var cl = 0; cl < crossLinkCount; cl++){
-		var residueLink = crossLinksArray[cl];
-        if (residueLink.filteredMatches_pp.length > 0){
+    //var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks")); 
+	var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");	// already pre-filtered
+    crossLinks.forEach (function (residueLink) {
+		var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
+		if (!linkedRes1) { linkedRes1 = ""}
+		var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
+		incrementCount(linkedRes1);
+		incrementCount(linkedRes2);
 
-            var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
-            if (!linkedRes1) { linkedRes1 = ""}
-            var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
-            incrementCount(linkedRes1);
-            incrementCount(linkedRes2);
+		var pairId;
+		if (linkedRes1 > linkedRes2) {
+			pairId = linkedRes2 + "-" + linkedRes1;
+		} else {
+			pairId = linkedRes1 + "-" + linkedRes2;
+		}
 
-            var pairId;
-            if (linkedRes1 > linkedRes2) {
-                pairId = linkedRes2 + "-" + linkedRes1;
-            } else {
-                pairId = linkedRes1 + "-" + linkedRes2;
-            }
-
-            var c = parseInt(residuePairCounts.get(pairId));
-            if (isNaN(c)){
-                residuePairCounts.set(pairId, 1);
-            }else {
-                c++;
-                residuePairCounts.set(pairId, c);
-            }
-        }
-    }
+		var c = parseInt(residuePairCounts.get(pairId));
+		if (isNaN(c)){
+			residuePairCounts.set(pairId, 1);
+		}else {
+			c++;
+			residuePairCounts.set(pairId, c);
+		}
+    });
 
     residuePairCounts.forEach(function (k,v){
         csv += '"' + k + '","'

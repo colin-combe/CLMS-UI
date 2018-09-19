@@ -17,15 +17,21 @@ CLMSUI.utils = {
     },
 
     // return comma-separated list of protein names from array of protein ids
-    proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
-        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+    proteinConcat: function (match, matchedPeptideIndex, clmsModel) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         var pnames = mpeptides ? mpeptides.prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;}) : [];
         return pnames.join(",");
     },
 
-    pepPosConcat: function (d, matchedPeptideIndex) {
-        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+    pepPosConcat: function (match, matchedPeptideIndex) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         return mpeptides ? mpeptides.pos.join(", ") : "";
+    },
+	
+	fullPosConcat: function (match, matchedPeptideIndex) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
+		var linkPos = matchedPeptideIndex === 0 ? match.linkPos1 : match.linkPos2;
+        return mpeptides ? mpeptides.pos.map (function (v) { return v + linkPos - 1; }).join(", ") : "";
     },
 
     commonLabels: {
@@ -634,7 +640,9 @@ CLMSUI.utils = {
             selectLabelFunc: function (d) { return d; },
             optionLabelFunc: function (d) { return d; },
 			optionValueFunc: function (d) { return d; },
-            initialSelectionFunc: function (d,i) { return i === 0; }
+			selectLabelTooltip: function (d) { return undefined; },
+            initialSelectionFunc: function (d,i) { return i === 0; },
+			idFunc: function (d,i) { return i; },
         };
         settings = _.extend (defaults, settings);
 
@@ -650,6 +658,12 @@ CLMSUI.utils = {
             .attr ("class", "btn selectHolder")
                 .append ("span")
                 .attr ("class", "noBreak")
+				.each (function (d) {
+					var tip = settings.selectLabelTooltip (d);
+					if (tip) {
+						d3.select(this).attr ("title", tip);
+					}
+				})
                 .text (settings.selectLabelFunc)
                 .append("select")
                     .on ("change", settings.changeFunc)
@@ -666,15 +680,20 @@ CLMSUI.utils = {
 
         // add options to new and existing select elements
         var selects = selectHolders.selectAll("select");
-        selects
+        var options = selects
             .selectAll("option")
-            .data (optionData)
-                .enter()
-                .append ("option")
-                .text (settings.optionLabelFunc)
-				.property ("value", settings.optionValueFunc)
-                .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
+            .data (optionData, settings.idFunc)
+		;
+		options.exit().remove();
+		options
+            .enter()
+            .append ("option")
+            .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
         ;
+		options
+			.text (settings.optionLabelFunc)
+			.property ("value", settings.optionValueFunc)
+		;
 
         return selects;
     },
@@ -898,7 +917,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         d3.select(this.el).attr ("class", "btn selectHolder")
 			.append ("span")
 			.attr ("class", "noBreak")
-			.text("Choose Cross-Link Colour Scheme ►")
+			.html("<span class='rainbow'></span>Choose Cross-Link Colour Scheme ►")
         ;
 
         var addOptions = function (selectSel) {

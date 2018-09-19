@@ -227,7 +227,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
         if (colourAssign) {
             var newValue = evt.target.value;
             var rowData = d3.select(evt.target.parentNode.parentNode).datum();
-            var i = rowData[rowData.length - 1];
+            var i = _.last(rowData);
             var colScale = colourAssign.get("colScale");
             colScale.range()[i] = newValue;
             // this will fire a change event for this colour model
