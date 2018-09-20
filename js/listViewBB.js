@@ -14,19 +14,17 @@
       }
       return _.extend({},parentEvents,{
 		  "mouseleave .d3table tbody": "clearHighlight",
+		  "click button.toggleHeatMapMode": "toggleHeatMapMode",
+		  "click button.generateStats": "generateStats",
       });
     },
 		
 	defaultOptions: {
-		xlabel: "Residue Index 1",
-		ylabel: "Residue Index 2",
-		chartTitle: "Cross-Link Matrix",
-		chainBackground: "white",
-		matrixObj: null,
 		selectedColour: "#ff0",
 		highlightedColour: "#f80",
-		linkWidth: 5,
-		tooltipRange: 3,
+		heatMap: false,
+		statDistance: "euclidean",
+		statLinkage: "average",
 	},
 
     initialize: function (viewOptions) {
@@ -52,8 +50,55 @@
         
         this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
 		
+		this.viewStateModel = new (Backbone.Model.extend ({
+			initialize: function () {
+                this.listenTo (this, "change:statDistance change:statLinkage", function () { 
+					self.indicateNewFiltering (true); 
+				});
+            },
+		}))(this.options);
+		
+		// Add download button
+        var buttonData = [
+            {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap"},
+        ];
+        CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
+        
+		
+		this.controlDiv2 = flexWrapperPanel.append("div").attr("class", "toolbar");
+
+		this.controlDiv2.append("label")
+			.text ("Clusters")
+			.attr ("class", "btn staticLabel")
+		;
+		
+		CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: this.controlDiv2, 
+            selectList: ["Distance"], 
+            optionList: ["euclidean", "manhattan", "max"], 
+			keepOldOptions: false,
+            selectLabelFunc: function () { return "Distance ►"; }, 
+			initialSelectionFunc: function (d) { return d === self.viewStateModel.get("statDistance"); },
+            changeFunc: function () { self.viewStateModel.set ("statDistance", d3.event.target.value); },
+        });
+		
+		CLMSUI.utils.addMultipleSelectControls ({
+			addToElem: this.controlDiv2, 
+            selectList: ["Linkage"], 
+            optionList: ["average", "single", "complete"], 
+			keepOldOptions: false,
+            selectLabelFunc: function () { return "Linkage ►"; }, 
+			initialSelectionFunc: function (d) { return d === self.viewStateModel.get("statLinkage"); },
+            changeFunc: function () { self.viewStateModel.set ("statLinkage", d3.event.target.value); },
+        });
+		
+		var buttonData2 = [
+			{class: "generateStats", label: "Calculate", type: "button", id: "generateStats", tooltip: "Adds 2 columns to the table, Kmcluster and TreeOrder"},
+        ];
+        CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonData2);
+		
 		var selfModel = this.model;
-		var distanceFunc = function (d) {
+		var physDistanceFunc = function (d) {
 			return selfModel.getSingleCrosslinkDistance (d);
 		}
 
@@ -62,23 +107,11 @@
 			filtered: {columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, accessor: function (d) { return d.filteredMatches_pp.length; }},
 			protein: {columnName: "Protein", type: "alpha", tooltip: "", visible: true, accessor: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); }},
 			matchCount: {columnName: "Match Count", type: "numeric", tooltip: "", visible: true, accessor: function (d) { return d.filteredMatches_pp.length; }},
-			distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: distanceFunc, cellStyle: "number", cellD3EventHook: this.makeColourSchemeBackgroundHook ("Distance")},
+			distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: physDistanceFunc, cellStyle: "number", cellD3EventHook: this.makeColourSchemeBackgroundHook ("Distance")},
 		};
 		
 		var initialValues = {
 			filters: {filtered: 0},	
-		};
-		var tooltipHelper = function (d, field) {
-			return d.value.id + ": " + d.value[field];
-		}
-		var tooltips = {
-			/*
-			notes: function(d) { return tooltipHelper (d, "notes"); },
-			name: function(d) { return tooltipHelper (d, "status"); },
-			file_name: function(d) { return tooltipHelper (d, "file_name"); },
-			enzyme: function(d) { return tooltipHelper (d, "enzyme"); },
-			crosslinkers: function(d) { return tooltipHelper (d, "crosslinkers"); },
-			*/
 		};
 		var colourRows = function (rowSelection) {
 			var selectedCrossLinks = self.model.getMarkedCrossLinks("selection");
@@ -96,7 +129,14 @@
 				self.model.setMarkedCrossLinks ("selection", [d], false, d3.event.ctrlKey);	
 			});
 			rowSelection.on ("mouseover", function (d) {
-				self.model.setMarkedCrossLinks ("highlights", [d], false, d3.event.ctrlKey);	
+				self.model.setMarkedCrossLinks ("highlights", [d], false, d3.event.ctrlKey);
+				var ttm = self.model.get("tooltipModel");
+				ttm
+					.set ("header", CLMSUI.modelUtils.makeTooltipTitle.link (d))
+					.set ("contents", CLMSUI.modelUtils.makeTooltipContents.link (d))
+					.set ("location", d3.event)
+				;
+				ttm.trigger ("change:location");
 			});
 		};
 		var empowerRows = function (rowSelection) {
@@ -108,7 +148,7 @@
 			filtered: function (d) { return d.filteredMatches_pp.length; },
 			protein: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); },
 			matchCount: function (d) { return d.filteredMatches_pp.length; },
-			distance: function(d) { var dist = distanceFunc(d); return dist != undefined ? distance2dp(dist) : ""; },
+			distance: function(d) { var dist = physDistanceFunc(d); return dist != undefined ? distance2dp(dist) : ""; },
 		};
 		d3.entries(dataToHTMLModifiers).forEach (function (entry) {
 			columnSettings[entry.key].dataToHTMLModifier = dataToHTMLModifiers[entry.key];	
@@ -147,12 +187,14 @@
 		;
 
 		// rerender crosslinks if selection/highlight changed or filteringDone
-        this.listenTo (this.model, "filteringDone", this.render);
+        this.listenTo (this.model, "filteringDone", function() {
+			this.indicateNewFiltering(true).render({refilter: true});
+		});
 		this.listenTo (this.model, "change:selection change:highlights", function() {
 			colourRows (d3table.getAllRowsSelection());
 		});
-        this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
-        this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances  or ew matches added (via csv generally)
+        this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // redraw if any colour model chanegs
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances or new matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
 			this.updateTableData(metaData).render();
@@ -161,13 +203,10 @@
 		
         this.render();
     },
-        
-    getSingleLinkDistance: function (crossLink) {
-		return this.model.getSingleCrosslinkDistance (crossLink);
-    },
 	  
 	clearHighlight: function () {
 		this.model.setMarkedCrossLinks ("highlights", [], false, false);
+		this.model.get("tooltipModel").set("contents", null);
         return this;
 	},
 	  
@@ -213,14 +252,39 @@
 		return this;
 	},
 
-    render: function () {
+    render: function (options) {
+		options = options || {};
         if (this.isVisible()) {
-			var filter = this.d3table.filter ();
-			filter.filtered = 0;
-			this.d3table.filter(filter).update();
+			if (options.refilter) {
+				var filter = this.d3table.filter ();
+				filter.filtered = 0;
+				this.d3table.filter(filter);
+			}
+			this.d3table.update();
         }
         return this;
     },
+	  
+	toggleHeatMapMode: function () {
+		this.options.heatMap = !this.options.heatMap;
+		 d3.select(this.el).select(".d3table").classed ("heatmap", this.options.heatMap);
+		var ps = this.d3table.pageSize();
+		this.d3table.pageSize(120 - ps).update();
+		return this;
+	},
+	  
+	generateStats: function () {
+		var crossLinks = this.model.getFilteredCrossLinks();
+		var options = {distance: this.viewStateModel.get("statDistance"), linkage: this.viewStateModel.get("statLinkage")}
+		CLMSUI.modelUtils.metaClustering (crossLinks, options);
+		this.indicateNewFiltering (false);
+		return this;
+	},
+	  
+	indicateNewFiltering: function (truthy) {
+		d3.select(this.el).select("button.generateStats").property ("disabled", !truthy);
+		return this;
+	},
         
     identifier: "List View",
         

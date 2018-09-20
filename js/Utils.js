@@ -420,6 +420,7 @@ CLMSUI.utils = {
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
                 .classed ("btn btn-1 btn-1a", true) // and we don't class .temp so these can't be picked up by a subsequent call to make backbonebuttons
+				.attr ("title", function(d) { return d.tooltip; })
                 .attr("id", makeID)
         ;
 
