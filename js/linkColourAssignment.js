@@ -327,9 +327,9 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
 	var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     
 	// if it isn't a list of colours and only a few uinique values, make it categorical
-    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).values();
+    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).size();
     // if the values in this metadata form 6 or less distinct values count it as categorical
-    var isCategorical = uniq.length < 7;
+    var isCategorical = uniq < 7;
     if (isCategorical && !dataIsColours) {
         extents.push (undefined);
         range = colorbrewer.Dark2[8];

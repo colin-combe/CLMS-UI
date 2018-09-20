@@ -875,20 +875,18 @@ CLMSUI.modelUtils = {
 		var defaults = {
 			distance: "euclidean",
 			linkage: "average",
+			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
+			accessor: function (crossLinks, dim) {
+				return crossLinks.map (function (crossLink) {
+					return crossLink[dim] || (crossLink.meta ? crossLink.meta[dim] : undefined);
+				});
+			}
 		};
 		var options = $.extend ({}, defaults, myOptions);
 		
-		var metaDims = ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"];
-		
-		function metaPluck (crossLinks, dim) {
-			return crossLinks.map (function (crossLink) {
-				return crossLink.meta ? crossLink.meta[dim] : undefined;
-			});
-		}
-		
 		// calc zscores for each data column
-		var zscores = metaDims.map (function (dim) {
-			var vals = metaPluck (crossLinks, dim);
+		var zscores = options.columns.map (function (dim) {
+			var vals = options.accessor (crossLinks, dim);
 			return CLMSUI.modelUtils.zscore (vals);
 		}, this);
 		
@@ -910,7 +908,7 @@ CLMSUI.modelUtils = {
 		var treeOrder = this.flattenBinaryTree (zdistances.tree);
 		//console.log ("zs", zscoresByLink);
 		//console.log ("kmeans", kmeans);
-		console.log ("distance", zdistances, treeOrder);
+		//console.log ("distance", zdistances, treeOrder);
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {

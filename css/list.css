@@ -44,6 +44,15 @@
 	background: inherit;
 }
 
+.listView .ms-parent, .listView .ms-parent span {
+	font-family: "Lato-Bold", Helvetica, Arial, sans-serif;
+	color: #091d42;
+}
+
+.listView .ms-parent button {
+	border-color: #091d42;
+}
+
 
 .listView table.heatmap.d3table tbody tr {
 	line-height: 5px;
