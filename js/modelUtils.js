@@ -83,7 +83,7 @@ CLMSUI.modelUtils = {
 			});
 
             d3.entries(xlink.meta).forEach (function (entry) {
-                if (! _.isObject (entry.value)) {
+                if (entry.value !== undefined && ! _.isObject (entry.value)) {
                     info.push ([entry.key, entry.value]);
                 }
             });
@@ -205,13 +205,19 @@ CLMSUI.modelUtils = {
         feature: function () { return "Feature"; },
         linkList: function (linkCount) { return "Linked Residue Pair" + (linkCount > 1 ? "s" : ""); },
     },
-
-    findResiduesInSquare : function (convFunc, crossLinkMap, cx, cy, side, asymmetric) {
+	
+	findResiduesInSquare: function (convFunc, crossLinkMap, x1, y1, x2, y2, asymmetric) {
         var a = [];
-        for (var n = cx - side; n <= cx + side; n++) {
+		var xmin = Math.max (0, Math.round (Math.min (x1, x2)));
+		var xmax = Math.round (Math.max (x1, x2));
+		var ymin = Math.max (0, Math.round (Math.min (y1, y2)));
+		var ymax = Math.round (Math.max (y1, y2));
+		//console.log ("x", xmin, xmax, "y", ymin, ymax);
+		
+        for (var n = xmin; n <= xmax; n++) {
             var convn = convFunc (n, 0).convX;
             if (!isNaN(convn) && convn > 0) {
-                for (var m = cy - side; m <= cy + side; m++) {
+                for (var m = ymin; m <= ymax; m++) {
                     var conv = convFunc (n, m);
                     var convm = conv.convY;
                     var excludeasym = asymmetric && (conv.proteinX === conv.proteinY) && (convn > convm);
@@ -714,19 +720,20 @@ CLMSUI.modelUtils = {
         });
         var first = true;
         var columns = [];
+		var columnTypes = {};
         var dontStoreArray = ["linkID", "LinkID", "Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2", "Protein1", "Protein2", "SeqPos1", "SeqPos2"];
         var dontStoreSet = d3.set (dontStoreArray);
-		var matchedCrossLinkCount = 0;
 		function getValueN (ref, n, d) {
 			return d[ref+" "+n] || d[ref+n];
 		}
 
+		var matchedCrossLinks = [];
         d3.csv.parse (metaDataFileContents, function (d) {
             var linkID = d.linkID || d.LinkID;
-            var crossLinkEntry = crossLinks.get(linkID);
+            var crossLink = crossLinks.get(linkID);
 
             // Maybe need to generate key from several columns
-            if (!crossLinkEntry) {
+            if (!crossLink) {
 				var p1 = getValueN ("Protein", 1, d);
 				var p2 = getValueN ("Protein", 2, d);
                 var parts1 = p1 ? p1.split("|") : [];
@@ -739,31 +746,53 @@ CLMSUI.modelUtils = {
                     pkey2 = pkey2 || protMap.get(part);
                 });
                 linkID = pkey1+"_"+getValueN("SeqPos", 1, d)+"-"+pkey2+"_"+getValueN("SeqPos", 2, d);
-                crossLinkEntry = crossLinks.get(linkID);
+                crossLink = crossLinks.get(linkID);
             }
 
-            if (crossLinkEntry) {
-				matchedCrossLinkCount++;
-                crossLinkEntry.meta = crossLinkEntry.meta || {};
-                var meta = crossLinkEntry.meta;
+            if (crossLink) {
+				matchedCrossLinks.push (crossLink);
+                crossLink.meta = crossLink.meta || {};
+                var meta = crossLink.meta;
                 var keys = d3.keys(d);
+				
+				if (first) {
+					columns = _.difference (keys, dontStoreArray);
+					columns.forEach (function (column) { columnTypes[column] = "numeric"; });
+                    first = false;
+                }
+				
                 keys.forEach (function (key) {
                     var val = d[key];
                     if (val && !dontStoreSet.has(key)) {
                         if (!isNaN(val)) {
                             val = +val;
-                        }
+                        } else {
+							columnTypes[key] = "alpha";	// at least one entry in the column is non-numeric
+						}
                         meta[key] = val;
                     }
                 });
-                if (first) {
-					columns = _.difference (keys, dontStoreArray);
-                    first = false;
-                }
             }
         });
+		
+		var matchedCrossLinkCount = matchedCrossLinks.length;
+		
+		// If any data types have been detected as non-numeric, go through the links and maked sure they're all non-numeric
+		// or sorting etc will throw errors
+		d3.entries(columnTypes)
+			.filter (function (entry) { return entry.value === "alpha"; })
+			.forEach (function (entry) {
+				matchedCrossLinks.forEach (function (matchedCrossLink) {
+					var val = matchedCrossLink.meta[entry.key];
+					if (val !== undefined) {
+						matchedCrossLink.meta[entry.key] = val.toString();
+					}
+				})
+		    })
+		;
+		
         if (columns) {
-            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, items: crossLinks, matchedItemCount: matchedCrossLinkCount});
+            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, columnTypes: columnTypes, items: crossLinks, matchedItemCount: matchedCrossLinkCount});
         }
     },
 

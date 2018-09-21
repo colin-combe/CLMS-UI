@@ -26,6 +26,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             //~ }
         });
 
+		// redraw datable on protein metadata change (possible protein name change)
+		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
+
         // emphasise selected match table row (or not if nothing selected)
         this.listenTo (this.model, "change:lastSelectedMatch", function (model) {
 			var selMatch = model.get("lastSelectedMatch");
@@ -42,49 +45,52 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 
         var tableDataPropOrder = [
-                "id", "ambiguity", "protein1", "pepPos1", "pepSeq1raw", "linkPos1",
-                "protein2", "pepPos2", "pepSeq2raw", "linkPos2", "score",
+                "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
+                "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
                 "autovalidated", "validated", "group", "runName", "scanNumber",
                 "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
                 "precursorIntensity", "elutionStart", "elutionEnd",
             ];
 
         this.headerLabels = {
-            "id": "PSM ID",
-            "ambiguity": "Ambiguity",
-            "protein1": "Protein 1",
-            "pepPos1": "Pep Pos",
-            "pepSeq1raw": "Pep 1 Sequence",
-            "linkPos1": "Link Pos",
-            "protein2": "Protein 2",
-            "pepPos2": "Pep Pos",
-            "pepSeq2raw": "Pep 2 Sequence",
-            "linkPos2": "Link Pos",
-            "score": "Score",
-            "autovalidated": "Auto",
-            "validated": "Manual",
-            "group": "Group",
-            "runName": "Run Name",
-            "scanNumber": "Scan Number",
-            "precursorCharge": "Charge (Z)",
-            "expMZ": "Exp M/Z",
-            "expMass": "Exp Mass",
-            "calcMZ": "Calc M/Z",
-            "calcMass": "Calc Mass",
-            "massError": "Mass Error (ppm)",
-            "precursorIntensity": "Intensity",
-            "elutionStart": "Elut.Start",
-            "elutionEnd": "Elut.End",
+            id: "PSM ID",
+            ambiguity: "Ambiguity",
+            protein1: "Protein 1",
+			pos1: "Pos",
+            pepPos1: "Pep Pos",
+            pepSeq1raw: "Pep 1 Sequence",
+            linkPos1: "Link Pos",
+            protein2: "Protein 2",
+			pos2: "Pos",
+            pepPos2: "Pep Pos",
+            pepSeq2raw: "Pep 2 Sequence",
+            linkPos2: "Link Pos",
+            score: "Score",
+            autovalidated: "Auto",
+            validated: "Manual",
+            group: "Group",
+            runName: "Run Name",
+            scanNumber: "Scan Number",
+            precursorCharge: "Charge (Z)",
+            expMZ: "Exp M/Z",
+            expMass: "Exp Mass",
+            calcMZ: "Calc M/Z",
+            calcMass: "Calc Mass",
+            massError: "Mass Error (ppm)",
+            precursorIntensity: "Intensity",
+            elutionStart: "Elut. Start",
+            elutionEnd: "Elut. End",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
+		this.emphasiseColumns = d3.set(["pos1", "pos2"]);
 
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
-            "ambiguity": function () {
+            ambiguity: function () {
                 return false;
             },
             //~ "protein1": function () { return false; },
@@ -125,6 +131,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "protein2": function (d) { return CLMSUI.utils.proteinConcat (d, 1, self.model.get("clmsModel")); },
             "runName": function (d) { return d.runName(); },
             "group": function (d) { return d.group(); },
+			"pos1": function (d) { return CLMSUI.utils.fullPosConcat (d, 0); },
+			"pos2": function (d) { return CLMSUI.utils.fullPosConcat (d, 1); },
             "pepPos1": function (d) { return CLMSUI.utils.pepPosConcat (d, 0); },
             "pepPos2": function (d) { return CLMSUI.utils.pepPosConcat (d, 1); },
             "pepSeq1raw": function (d) { return d.matchedPeptides[0].seq_mods; },
@@ -303,7 +311,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     setPage: function (pg) {
         // limit page number and set text elements
         var mci = this.matchCountIndices;
-        var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
+        var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
 
         var pageCount = this.getPageCount();
         pg = Math.max (Math.min (pg, pageCount), 1);
@@ -376,7 +384,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 	getPageCount: function () {
 		var mci = this.matchCountIndices;
-        var totalSelectedFilteredMatches = mci.length ? mci[mci.length - 1].runningTotalEnd : 0;
+        var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
         return Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;
 	},
 
@@ -452,7 +460,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 
         // Within each row, match cells up to individual pieces of match information
-        var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth"];
+        var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth", "emphasise"];
         var cellJoin = tjoin.selectAll("TD").data(filteredProps /*, function(d) { return d; }*/ );
         cellJoin.exit().remove();
         cellJoin.enter()
@@ -466,6 +474,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                         self.colSectionStarts.has(d),
                         self.monospacedColumns.has(d),
                         self.maxWidthColumns.has(d),
+						self.emphasiseColumns.has(d),
                     ];
                 var classes = possClasses.filter(function (cd, ci) {
                     return states[ci];

@@ -20,14 +20,61 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div>")
         ;         
         this.controlDiv = topDiv.select(".toolbar");
-        this.controlDiv.append("button")
-            .attr ("class", "downloadButton3 btn btn-1 btn-1a")
-            .text ("Download Current Cross-Link Colour Scheme as SVG")
-        ;
         this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
         
         var chartDiv = topDiv.select(".panelInner");
-        var svgs = {
+		
+		this.setupColourSection (chartDiv);
+		this.setupLegendSection (chartDiv);
+           
+        this.listenTo (this.model, "change:linkColourAssignment", this.render);
+        // update is only triggered once when adding/removing multiple models to/from a collection
+        this.listenTo (CLMSUI.linkColour.Collection, "update", this.render);
+        
+        return this;
+    },
+	
+	setupColourSection: function (chartDiv) {
+		var sectionDiv = chartDiv.append("div");
+		//sectionDiv.append("h3").text("Chosen Colour Scheme Legend").attr("class", "groupHeader");
+		
+		var sectionData = [
+            {
+                id: "colourKey",
+                header: "Current Cross-Link Colour Scheme",
+                rows: [],
+            },
+		];
+		
+		var headerFunc = function(d) { return d.header.replace("_", " "); };
+        var rowFilterFunc = function(d) { 
+            return d.rows.map (function(row) {
+                return {key: row[0], value: row[1]};
+            });
+        };
+        var cellFunc = function (d) {
+            d3.select(this).text(d.value);
+        };
+		var self = this;
+		var clickFunc = function (showSection, d) {
+			if (showSection && d.id === "colourKey" && self.sliderSubView) {
+				self.sliderSubView.show (true);
+			}
+		}
+		
+		CLMSUI.utils.sectionTable.call (this, sectionDiv, sectionData, "colourInfo", ["Colour (Editable)", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], clickFunc);
+		
+		sectionDiv.append("button")
+            .attr ("class", "downloadButton3 btn btn-1 btn-1a")
+            .text ("Download This Colour Scheme as SVG")
+        ;
+	},
+	
+	setupLegendSection: function (chartDiv) {
+		var sectionDiv = chartDiv.append("div");
+		sectionDiv.append("h3").text("View Legends").attr("class", "groupHeader");
+		
+		var svgs = {
             clinkp : "<line x1='0' y1='15' x2='50' y2='15' class='monochrome'/>",
             ambigp : "<line x1='0' y1='15' x2='50' y2='15' class='monochrome ambiguous'/>",
             multip : "<line x1='0' y1='15' x2='50' y2='15' class='multiLinkStroke'/><line x1='0' y1='15' x2='50' y2='15' class='monochrome'/>",
@@ -83,13 +130,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
 			alignVariation: "Residue variations when compared to search sequence.",
         };
         
-        var sectionData = [
-            {
-                id: "colourKey",
-                header: "Current Cross-Link Colour Scheme",
-                rows: [],
-				columnHeaders: ["Colour", "Meaning"]
-            },
+
+		var viewLegendSectionData = [
             {
                 id: "proteinKey",
                 header: "XiNet Protein-Protein Level Legend",
@@ -152,14 +194,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             }
         };
 		
-		var self = this;
-		var clickFunc = function (showSection, d) {
-			if (showSection && d.id === "colourKey" && self.sliderSubView) {
-				self.sliderSubView.show (true);
-			}
-		}
         
-        CLMSUI.utils.sectionTable.call (this, chartDiv, sectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], clickFunc);
+        CLMSUI.utils.sectionTable.call (this, sectionDiv, viewLegendSectionData, "keyInfo", ["Mark", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], null);
         
         var colScheme = CLMSUI.linkColour.defaultColoursBB;
         var notLinear = function () { return false; };
@@ -173,7 +209,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             //console.log ("key", key, cols[key]);
         }/*, colScheme*/);
         
-        chartDiv.selectAll("table").selectAll("path.dynColour,line.dynColour")
+        sectionDiv.selectAll("table").selectAll("path.dynColour,line.dynColour")
             .each (function() {
                 var d3Sel = d3.select(this);
                 var colType = d3Sel.classed("selfLink") ? (d3Sel.classed("homomultimer") ? "homom" : "intra") : "inter";
@@ -184,20 +220,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
                 }
             })
         ;
-            
-        this.listenTo (this.model, "change:linkColourAssignment", this.render);
-        // update is only triggered once when adding/removing multiple models to/from a collection
-        this.listenTo (CLMSUI.linkColour.Collection, "update", this.render);
-        
-        return this;
-    },
+	},
     
     changeColour: function (evt) {
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
             var newValue = evt.target.value;
             var rowData = d3.select(evt.target.parentNode.parentNode).datum();
-            var i = rowData[rowData.length - 1];
+            var i = _.last(rowData);
             var colScale = colourAssign.get("colScale");
             colScale.range()[i] = newValue;
             // this will fire a change event for this colour model
@@ -221,8 +251,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend ({
             rows: []
         }];
         
-        //console.log ("RERENDER COLOUR KEYS", arguments);
-        
+		// Update colour key section
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
 			var colScale = colourAssign.get("colScale");

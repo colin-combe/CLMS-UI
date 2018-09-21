@@ -193,7 +193,7 @@
             var orderOptionsButtonData = [
                 {class: "circRadio", label: "Alphabetically", id: "alpha", raw_id: "alpha", type: "radio", group: "sort"},
                 {class: "circRadio", label: "By Length", id: "size", raw_id: "size", type: "radio", group: "sort"},
-                {class: "circRadio", label: "To Reduce Crossings", id: "best", raw_id: "best", type: "radio", group: "sort", sectionEnd: true, tooltip: "Order proteins to reduce visual cross-link intersections in the circle - making it easier to comprehend"},
+                {class: "circRadio", label: "To Reduce Crossings", id: "best", raw_id: "best", type: "radio", group: "sort", sectionEnd: true, d3tooltip: "Order proteins to reduce visual cross-link intersections in the circle - making it easier to comprehend"},
                 {class: "niceButton", label: "Redo Current Ordering", id: "nice", raw_id: "nice", type: "button"},
 			];
             orderOptionsButtonData
@@ -216,7 +216,11 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Order Proteins ▼",
-                    menu: orderOptionsButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
+                    menu: orderOptionsButtonData.map (function(d) { 
+						d.id = self.el.id + d.id;
+						d.tooltip = d.d3tooltip;
+						return d; 
+					}),
                     closeOnClick: false,
 					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
                 }
@@ -224,10 +228,10 @@
 
 
 			var showOptionsButtonData = [
-                {class: "showLinkless", label: "All Proteins", id: "showLinkless", initialState: this.options.showLinkless, tooltip: "Keep showing proteins with no current cross-links for a steadier layout"},
-                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
-				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside, tooltip: "Flips the display of Self cross-links between inside and outside"},
-				{class: "toggleHomomOpposition", label: "Links with Overlapping Peptides Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite, tooltip: "Show cross-links with overlapping peptides on the opposite side (in/out) to Self cross-links. Often these may be homomultimeric - links between different copies of the same protein."},
+                {class: "showLinkless", label: "All Proteins", id: "showLinkless", initialState: this.options.showLinkless, d3tooltip: "Keep showing proteins with no current cross-links for a steadier layout"},
+                {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, d3tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
+				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside, d3tooltip: "Flips the display of Self cross-links between inside and outside"},
+				{class: "toggleHomomOpposition", label: "Links with Overlapping Peptides Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite, d3tooltip: "Show cross-links with overlapping peptides on the opposite side (in/out) to Self cross-links. Often these may be homomultimeric - links between different copies of the same protein."},
 			];
 			showOptionsButtonData
                 .forEach (function (d) {
@@ -244,7 +248,11 @@
                 model: CLMSUI.compositeModelInst.get("clmsModel"),
                 myOptions: {
                     title: "Show ▼",
-                    menu: showOptionsButtonData.map (function(d) { d.id = self.el.id + d.id; return d; }),
+                    menu: showOptionsButtonData.map (function(d) { 
+						d.id = self.el.id + d.id; 
+						d.tooltip = d.d3tooltip;
+						return d; 
+					}),
                     closeOnClick: false,
 					tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
                 }
@@ -983,7 +991,7 @@
             links.forEach (function (link) {
                 var xlink = crossLinks.get (link.id);
                 resMap.set (xlink.fromProtein.id+"-"+xlink.fromResidue, {polar: link.coords[0], res: CLMSUI.modelUtils.getResidueType (xlink.fromProtein, xlink.fromResidue)});
-                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: link.coords[link.coords.length - 1], res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
+                resMap.set (xlink.toProtein.id+"-"+xlink.toResidue, {polar: _.last(link.coords), res: CLMSUI.modelUtils.getResidueType (xlink.toProtein, xlink.toResidue)});
             });
             var degToRad = Math.PI / 180;
 

@@ -3,13 +3,26 @@
 }
 
 .filterControlGroup {
-	vertical-align:top;
+	position: relative;
+	vertical-align: top;
     display: inline-block;
     padding: 0 0.35em 0 0;
 	border-right: 1px solid #bbb;
 	margin: auto 0.35em auto 0;
     height: 65px;
 }
+
+/*
+.filterControlGroup:after {
+	position: absolute;
+	top: 0.25em;
+	right: -0.25em;
+	font-size: 3em;
+	color: #bbb;
+	content: '>';
+	transform: scale(0.7, 3);
+}
+*/
 
 /*
 .filterControlGroup > div {
@@ -40,13 +53,13 @@ div.filterControlGroup label:hover {
 }
 
 
-div.textFilters, div.toggles, div.scoreSlider > div {
+div.textFilters, div.toggles, div.scoreSlider > div, div.navNumberFilterDiv {
     display: inline-block;
     vertical-align: top;
 }
 
 
-.textFilters span:after, .toggles span:after, .scoreSlider span:after {
+.textFilters span:after, .toggles span:after, .scoreSlider span:after, .navNumberFilterDiv span:after {
     content: ' ';
     display: block;
 }

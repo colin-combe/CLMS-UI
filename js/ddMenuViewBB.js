@@ -41,6 +41,7 @@
             
             this
                 .updateTitle (this.options.title)
+				.updateTooltip (this.options.titleTooltip)
                 .update()
                 .render()
             ;
@@ -52,6 +53,25 @@
             d3.select(this.el).select("span.menuTitle").text (this.options.title);
             return this;
         },
+		
+		updateTooltip: function (tooltipObj) {
+			if (tooltipObj && this.options.tooltipModel) {
+				var self = this;
+				d3.select(this.el).select("span.menuTitle")
+					.on ("mouseenter", function () {
+						self.options.tooltipModel
+					    	.set("header", tooltipObj.header)
+            				.set("contents", tooltipObj.contents)
+            				.set("location", d3.event)
+						;
+					})
+					.on ("mouseleave", function () {
+						self.options.tooltipModel.set ("contents", null);
+					})
+				;
+			}
+			return this;
+		},
         
         update: function () {
             var self = this;
@@ -68,7 +88,7 @@
 					var cat = model.get (self.options.groupByAttribute);
                     if (lastCat !== cat) {  // have to access last datum to say it's the last in its category
 						if (adata.length) {	// ignore sectionEnd for first item
-                        	adata[adata.length - 1].sectionEnd = true;
+                        	_.last(adata).sectionEnd = true;
 						}
 						cbdata.sectionBegin = true; 
                     }
