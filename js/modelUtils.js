@@ -725,6 +725,16 @@ CLMSUI.modelUtils = {
 		function getValueN (ref, n, d) {
 			return d[ref+" "+n] || d[ref+n];
 		}
+		
+		function parseProteinID (i, d) {
+			var p = getValueN ("Protein", i, d);
+			var parts = p ? p.split("|") : [];
+			var pkey;
+			parts.forEach (function (part) {
+				pkey = pkey || protMap.get(part);
+			});
+			return pkey;
+		}
 
 		var matchedCrossLinks = [];
         d3.csv.parse (metaDataFileContents, function (d) {
@@ -733,17 +743,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLink) {
-				var p1 = getValueN ("Protein", 1, d);
-				var p2 = getValueN ("Protein", 2, d);
-                var parts1 = p1 ? p1.split("|") : [];
-                var parts2 = p2 ? p2.split("|") : [];
-                var pkey1, pkey2;
-                parts1.forEach (function (part) {
-                    pkey1 = pkey1 || protMap.get(part);
-                });
-                parts2.forEach (function (part) {
-                    pkey2 = pkey2 || protMap.get(part);
-                });
+				var pkey1 = parseProteinID (1, d);
+				var pkey2 = parseProteinID (2, d);
                 linkID = pkey1+"_"+getValueN("SeqPos", 1, d)+"-"+pkey2+"_"+getValueN("SeqPos", 2, d);
                 crossLink = crossLinks.get(linkID);
             }
@@ -789,6 +790,10 @@ CLMSUI.modelUtils = {
 				})
 		    })
 		;
+		
+		var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
+		columns.forEach (function (column) { registry.add (column); });
+		clmsModel.set("crossLinkMetaRegistry", registry);
 		
         if (columns) {
             CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, columnTypes: columnTypes, items: crossLinks, matchedItemCount: matchedCrossLinkCount});

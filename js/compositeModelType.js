@@ -451,7 +451,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             participant.manuallyHidden = true;
         }
         this.setSelectedProteins([]);
-        this.get("filterModel").trigger("change");
+        this.get("filterModel").trigger("change", this.get("filterModel"));
 
     },
 
