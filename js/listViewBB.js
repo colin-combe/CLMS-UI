@@ -326,6 +326,8 @@
 
 		$(selects.node()).multipleSelect ("setSelects", this.viewStateModel.get("statColumns").values());
 		
+		console.log ("listview", this);
+		
 		return this;
 	},
 
