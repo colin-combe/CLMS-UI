@@ -16,6 +16,7 @@
 		  "mouseleave .d3table tbody": "clearHighlight",
 		  "click button.toggleHeatMapMode": "toggleHeatMapMode",
 		  "click button.generateStats": "generateStats",
+		  "click .downloadButton3": "downloadImage",
       });
     },
 		
@@ -62,6 +63,7 @@
 		// Add download button
         var buttonData = [
             {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap"},
+			{class: "downloadButton3", label: "Download Image", type: "button", id: "download3"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
@@ -155,6 +157,15 @@
 			filterFunc: function (datum, d) { return datum > d; },
 			comparator: d3table.typeSettings("numeric").comparator,		
 		});
+			
+		this.dendrosvg = d3.select(this.el).select(".d3table-wrapper")
+			.style ("display", "flex")
+			.style ("flex-direction", "row")
+			.append ("svg")
+			.style ("min-width", "100px")
+		;
+		
+		d3table.dispatch().on ("ordering2", this.columnOrdering.bind(this));
 		
 		//table.getFilterCells().style("display", "none");
 
@@ -221,9 +232,10 @@
 				.render({refilter: true})
 			;
 		}); // New/Changed metadata attributes present
+		
 		this.d3table = d3table;
 		
-        this.render();
+        this.render({refilter: true});
     },
 	  
 	clearHighlight: function () {
@@ -271,6 +283,9 @@
 		;
 		
 		this.d3table (this.d3table.getSelection());
+		
+		this.d3table.dispatch().on ("ordering2.dendro", this.columnOrdering.bind(this));	// needs to be fixed in d3table rather than here
+		
 		return this;
 	},
 	  
@@ -333,8 +348,13 @@
 
     render: function (options) {
 		options = options || {};
+		if (options.refilter) {
+			this.needsRefilter = true;
+		}
+		
         if (this.isVisible()) {
-			if (options.refilter) {
+			if (options.refilter || this.needsRefilter) {
+				this.needsRefilter = false;
 				var filter = this.d3table.filter ();
 				filter.filtered = 0;
 				this.d3table.filter(filter);
@@ -349,12 +369,13 @@
 		 d3.select(this.el).select(".d3table").classed ("heatmap", this.options.heatMap);
 		var ps = this.d3table.pageSize();
 		this.d3table.pageSize(120 - ps).update();
+		
+		this.showDendrogram();
 		return this;
 	},
 	  
 	generateStats: function () {
 		var crossLinks = this.model.getFilteredCrossLinks();
-		var columns = this.viewStateModel.get("statColumns");
 		var columnSettings = this.d3table.columnSettings();
 		var accessor = function (crossLinks, dim) {
 			var accessFunc = columnSettings[dim].accessor;
@@ -369,14 +390,48 @@
 			columns: this.viewStateModel.get("statColumns").values(),	// values 'cos d3.set not array
 			accessor: accessor,
 		}
-		CLMSUI.modelUtils.metaClustering (crossLinks, options);
+		
+		var stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
+		console.log ("stat", stats);
+		CLMSUI.utils.drawDendrogram (this.dendrosvg, stats.cfk_distances.tree);
+		
 		this.indicateRecalcNeeded (false);
 		return this;
+	},
+	  
+	columnOrdering: function (sortColumn, sortDesc) {
+		console.log ("col", sortColumn);
+		this.viewStateModel.set("sortColumn", sortColumn);
+		this.showDendrogram();
+	},
+	  
+	showDendrogram: function () {
+		var shiftY = $(d3.select(this.el).select(".d3table tbody").node()).position().top;
+		console.log ("yo");
+		this.dendrosvg
+			.style ("display", this.viewStateModel.get("sortColumn") === "treeOrder" && this.options.heatMap ? null : "none")
+			.style ("transform", "translateY("+shiftY+"px) scale(-1)")
+		;
 	},
 	  
 	indicateRecalcNeeded: function (truthy) {
 		d3.select(this.el).select("button.generateStats").property ("disabled", !truthy);
 		return this;
+	},
+	  
+	downloadImage: function () {
+		var self = this;
+		this.downloadHTMLAsImg (d3.select(this.el).select(".d3table"), function (dataURL, img) {
+			var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			var d3svg = d3.select(svg);
+			
+			d3svg.append("image").attr("xlink:href", dataURL);
+			var clone = self.dendrosvg.select("g.dendro").node().cloneNode(true);
+			console.log ("clone", clone);
+			d3svg.append (clone);
+			
+			console.log ("svg", d3svg);
+		});	
 	},
         
     identifier: "List View",

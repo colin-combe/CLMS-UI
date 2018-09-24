@@ -913,7 +913,7 @@ CLMSUI.modelUtils = {
 		var treeOrder = this.flattenBinaryTree (zdistances.tree);
 		//console.log ("zs", zscoresByLink);
 		//console.log ("kmeans", kmeans);
-		//console.log ("distance", zdistances, treeOrder);
+		console.log ("distance", zdistances, treeOrder);
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {
@@ -931,6 +931,8 @@ CLMSUI.modelUtils = {
 			items: crossLinks, 
 			matchedItemCount: zscoresByLink.length
 		});	
+		
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances};
 	},
 
 	// test to ignore short chains and those that are just water molecules

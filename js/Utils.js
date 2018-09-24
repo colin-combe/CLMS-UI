@@ -698,6 +698,67 @@ CLMSUI.utils = {
 
         return selects;
     },
+	
+	drawDendrogram: function (svgd3, cfckDistances) {
+		
+		function recurse (tree, parent) {
+			tree.parent = parent;
+			if (!tree.value) {
+				recurse (tree.left, tree);
+				recurse (tree.right, tree);
+			} else {
+				tree.origValue = tree.value;
+			}
+		}
+		
+		var height = cfckDistances.size * 5;
+		var width = 100;
+
+		svgd3.attr("width", width).attr("height", height);
+		var g = svgd3.select("g.dendro");
+		if (g.empty()) {
+			g = svgd3.append("g").attr("class", "dendro");
+		}
+		
+		recurse (cfckDistances, null);
+		
+		var cluster = d3.layout.cluster ();
+		cluster
+			.children (function(d) { return d.left && d.right ? [d.left, d.right] : undefined; })
+			.size ([height, width])
+			.separation (function (a, b) { return 1; })
+		;
+		
+		var nodes = cluster.nodes(cfckDistances);
+		var links = cluster.links(nodes);
+		
+		var crange = d3.extent (nodes, function(d) { return d.dist || 0; });
+		var scale = d3.scale.linear().domain(crange).range([width - 5, 5]);
+	
+		//console.log ("nodes", nodes, links, crange);
+		
+		nodes.forEach (function(d) { d.y = scale (d.children && d.children.length ? d.dist || 0 : 0); });
+		
+		var link = g.selectAll(".dlink").data(links);
+		
+		link.exit().remove();
+		link.enter().append("g")
+			.attr("class", "dlink")
+			.append("path");
+		;
+		link.select("path").attr ("d", function (d) {
+			return "M"+d.source.y+" "+d.source.x+" V "+d.target.x+" H "+d.target.y;
+		});
+
+		var node = g.selectAll(".dnode").data(nodes);
+		node.exit().remove();
+		node.enter().append("g")
+			.attr("class", "dnode")
+			.append("circle")
+			.attr("r", 2.5)
+		;
+		node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+	},
 
 
     BaseFrameView: Backbone.View.extend ({
@@ -800,11 +861,15 @@ CLMSUI.utils = {
             });
         },
 		
-		downloadHTMLAsImg: function (d3Elem) {
+		downloadHTMLAsImg: function (d3Elem, callbackFunc) {
+			callbackFunc = callbackFunc || function () { console.warn ("Missing a callback func for downloadHTMLAsImg!"); };
 			var elemArr = [d3Elem.node()];
 			var elemStrings = CLMSUI.svgUtils.capture (elemArr);
 			var detachedSVG = elemStrings[0];
             var detachedSVGD3 = d3.select (detachedSVG);
+			
+			var table = detachedSVGD3.select("table");
+			table.style ("font-size", "1em");
 			
 			var fo = detachedSVGD3.append(function() {
 					//aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
@@ -812,22 +877,26 @@ CLMSUI.utils = {
 				})
 				.attr("width", "100%").attr("height", "100%")
 				.append ("div")
-				.attr("xmlns", "http://www.w3.org/1999/xhtml")
-				.html (detachedSVGD3.select("table").node().outerHTML);
+					.attr("xmlns", "http://www.w3.org/1999/xhtml")
+					.html (table.node().outerHTML);
 			;
-			var table = detachedSVGD3.select("table");
 			table.remove();
 			//$(fo.node()).append($(table.node()));
 			
-			var canvas = d3.select("body").append("canvas").style("position", "absolute").style("top",0).style("z-index", 5000)
+			var canvas = d3.select("body").append("canvas")
+				.style("position", "absolute")
+				.style("top",0)
+				.style("z-index", 5000)
+				.style("display", "none")
 				.attr ("width", $(detachedSVGD3.node()).width())
 				.attr ("height", $(detachedSVGD3.node()).height())
+				.node()
 			;
-    		var ctx = canvas.node().getContext("2d");
+    		var ctx = canvas.getContext("2d");
 
 			var DOMURL = URL || webkitURL || this;
 			
-			detachedSVGD3.selectAll("svg.d3table-arrow,tfoot,input").remove();
+			detachedSVGD3.selectAll("svg.d3table-arrow,tfoot,input").remove();	// don't need inputs or footer
 			
 			var ohtml = detachedSVGD3.node().outerHTML;
 					
@@ -835,31 +904,42 @@ CLMSUI.utils = {
 			newsvg.html (ohtml);
 			//$(newsvg.node()).append($(detachedSVGD3.node()));
 			
-			ohtml = ohtml.replace(/"/g, "'");
-			
 			var str = "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><foreignObject width='100%' height='100%'><div xmlns='http://www.w3.org/1999/xhtml'><h3>test</h3></div></foreignObject></svg>";
 			
 			console.log ("fff", ohtml, str);
 			console.log ("table xhtml", detachedSVGD3.selectAll("foreignObject > div").node().outerHTML);
 			
-			var svg = new Blob([ohtml.slice()], {
-			//var svg = new Blob([str], {
+			var data = ohtml;
+			var svg = new Blob([data], {
 				type: "image/svg+xml;charset=utf-8"
 			});
-			var url = DOMURL.createObjectURL(svg);
+			var url = DOMURL.createObjectURL(svg);	// causes tainted canvas error due to https://bugs.chromium.org/p/chromium/issues/detail?id=294129
 			console.log ("sv", svg, url);
 			
 			var img = new Image();
+			img.setAttribute("crossOrigin", "anonymous");
 			img.onerror = function () {
-				console.log ("error", arguments);
+				callbackFunc (undefined, arguments);
 			}
 			img.onload = function() {
-				console.log ("hello", arguments);
 				ctx.drawImage (img, 0, 0);
-				DOMURL.revokeObjectURL(url);
 				console.log ("img", img, url);
-			};
-    		img.src = url;  
+				
+				var dataURL = canvas.toDataURL();
+				console.log ("dd", dataURL);
+				
+				var newImg = document.createElement('img');
+				newImg.onload = function() {
+					// no longer need to read the blob so it's revoked
+					DOMURL.revokeObjectURL(url);
+					callbackFunc (dataURL, newImg);
+				};
+
+				newImg.src = dataURL;
+			}
+		
+			// Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129
+    		img.src = "data:image/svg+xml;charset=utf-8," + data;  
 		},
 
 

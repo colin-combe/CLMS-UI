@@ -61,6 +61,13 @@
 	background: inherit;
 } 
 
+.listView table.heatmap.d3table tbody tr:nth-child(2n) {
+	line-height: 5px;
+	height: 5px;
+	border: none;
+	background: inherit;
+} 
+
 .listView table.heatmap.d3table tbody tr td {
 	border: none;
 	width: 10px;
@@ -91,3 +98,19 @@
 	width: 1em;
     height: 10em;
 } 
+
+.dlink {
+	stroke: #222; 
+	fill: none;
+}
+
+.dnode {
+	fill: black;
+	stroke: none;
+	display: none;
+}
+
+.dnone node--internal {
+	fill: cyan;
+	stroke: none;
+}
