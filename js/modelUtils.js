@@ -894,6 +894,7 @@ CLMSUI.modelUtils = {
 			var vals = options.accessor (crossLinks, dim);
 			return CLMSUI.modelUtils.zscore (vals);
 		}, this);
+		var zrange = d3.extent (d3.merge (zscores.map (function (zs) { return d3.extent (zs); })));
 		
 		// transpose to get scores per link not per column
 		var zscoresByLink = d3.transpose (zscores);
@@ -917,11 +918,15 @@ CLMSUI.modelUtils = {
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {
-				arr.clink.meta.kmcluster = i+1;
+				var clink = arr.clink;
+				if (!clink.meta) { clink.meta = {}; }
+				clink.meta.kmcluster = i+1;
 			});
 		});
 		
 		treeOrder.forEach (function (value, i) {
+			var clink = value.clink;
+			if (!clink.meta) { clink.meta = {}; }
 			value.clink.meta.treeOrder = i+1;
 		});
 		
@@ -932,7 +937,12 @@ CLMSUI.modelUtils = {
 			matchedItemCount: zscoresByLink.length
 		});	
 		
-		return {cfk_kmeans: kmeans, cfk_distances: zdistances};
+		var zscoresByLinkMap = {};
+		treeOrder.forEach (function (linkZScores) {
+			zscoresByLinkMap[linkZScores.clink.id] = linkZScores;
+		});
+		
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zrange: zrange, zscores: zscoresByLinkMap};
 	},
 
 	// test to ignore short chains and those that are just water molecules

@@ -57,6 +57,9 @@
 					var colCount = vsmodel.get("statColumns").size();
 					self.indicateRecalcNeeded (colCount ? true : false); 
 				});
+				this.listenTo (this, "change:heatMap change:sortColumn", function () {
+					self.showDendrogram();
+				});
             },
 		}))(this.options);
 		
@@ -158,14 +161,11 @@
 			comparator: d3table.typeSettings("numeric").comparator,		
 		});
 			
-		this.dendrosvg = d3.select(this.el).select(".d3table-wrapper")
-			.style ("display", "flex")
-			.style ("flex-direction", "row")
-			.append ("svg")
-			.style ("min-width", "100px")
-		;
+		var d3tableWrapper = d3.select(this.el).select(".d3table-wrapper");
+		d3tableWrapper.style("display", "flex").style("flex-direction", "row");
+		this.dendrosvg = d3tableWrapper.append("svg").style("min-width", "170px");
 		
-		d3table.dispatch().on ("ordering2", this.columnOrdering.bind(this));
+		d3table.dispatch().on ("ordering2.colord", this.columnOrdering.bind(this));
 		
 		//table.getFilterCells().style("display", "none");
 
@@ -235,6 +235,7 @@
 		
 		this.d3table = d3table;
 		
+		this.showDendrogram();
         this.render({refilter: true});
     },
 	  
@@ -242,6 +243,11 @@
 		this.model.setMarkedCrossLinks ("highlights", [], false, false);
 		this.model.get("tooltipModel").set("contents", null);
         return this;
+	},
+	  
+	getColour: function (columnKey, value) {
+		var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
+		return colScheme.getValue (value);
 	},
 	  
 	makeColourSchemeBackgroundHook: function (columnKey) {
@@ -284,8 +290,6 @@
 		
 		this.d3table (this.d3table.getSelection());
 		
-		this.d3table.dispatch().on ("ordering2.dendro", this.columnOrdering.bind(this));	// needs to be fixed in d3table rather than here
-		
 		return this;
 	},
 	  
@@ -312,7 +316,7 @@
 			keepOldOptions: true,
 			optionLabelFunc: function (d) { return d.value.columnName; },
 			optionValueFunc: function (d) { return d.key; },
-            initialSelectionFunc: function (d,i) { return true; },
+            initialSelectionFunc: function () { return true; },
             selectLabelFunc: function () { return "Use Columns ►"; }, 
 			idFunc: function (d) { return d.key; },
         });
@@ -365,12 +369,11 @@
     },
 	  
 	toggleHeatMapMode: function () {
-		this.options.heatMap = !this.options.heatMap;
-		 d3.select(this.el).select(".d3table").classed ("heatmap", this.options.heatMap);
+		var heatMap = this.viewStateModel.get("heatMap");
+		d3.select(this.el).select(".d3table").classed ("heatmap", !heatMap);
+		this.viewStateModel.set("heatMap", !heatMap);
 		var ps = this.d3table.pageSize();
 		this.d3table.pageSize(120 - ps).update();
-		
-		this.showDendrogram();
 		return this;
 	},
 	  
@@ -393,7 +396,28 @@
 		
 		var stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
 		console.log ("stat", stats);
-		CLMSUI.utils.drawDendrogram (this.dendrosvg, stats.cfk_distances.tree);
+		CLMSUI.utils.drawDendrogram (this.dendrosvg, stats.cfk_distances.tree, {
+			ltor: false,
+			labelFunc: function (d) { return d.origValue.clink.id; }
+		});
+		var title = this.dendrosvg.style("overflow", "visible").select("text.title");
+		if (title.empty()) { title = this.dendrosvg.append("text").attr("class", "title"); }
+		title
+			.text ("Distance "+this.viewStateModel.get("statDistance")+", Linkage "+this.viewStateModel.get("statLinkage"))
+			.attr ("y", -20)
+		;
+		
+		this.zcolourModel = d3.scale.linear().domain(stats.zrange).range(stats.zrange.length === 3 ? ["green", "white", "red"] : ["green", "red"]);
+		var self = this;
+		
+		var columnIndexMap = {};
+		this.viewStateModel.get("statColumns").values().forEach (function (columnKey, i) {
+			columnIndexMap[columnKey] = i;
+		});
+		this.zcolourer = function (crosslink, columnKey) {
+			var val = stats.zscores[crosslink.id][columnIndexMap[columnKey]];
+			return self.zcolourModel (val);
+		};
 		
 		this.indicateRecalcNeeded (false);
 		return this;
@@ -402,16 +426,16 @@
 	columnOrdering: function (sortColumn, sortDesc) {
 		console.log ("col", sortColumn);
 		this.viewStateModel.set("sortColumn", sortColumn);
-		this.showDendrogram();
 	},
 	  
 	showDendrogram: function () {
 		var shiftY = $(d3.select(this.el).select(".d3table tbody").node()).position().top;
-		console.log ("yo");
 		this.dendrosvg
-			.style ("display", this.viewStateModel.get("sortColumn") === "treeOrder" && this.options.heatMap ? null : "none")
-			.style ("transform", "translateY("+shiftY+"px) scale(-1)")
+			.style ("display", this.viewStateModel.get("sortColumn") === "treeOrder" && this.viewStateModel.get("heatMap") ? null : "none")
+			.select ("g.dendro")
+			.style ("transform", "translate(70px, "+shiftY+"px)")
 		;
+		return this;
 	},
 	  
 	indicateRecalcNeeded: function (truthy) {
@@ -419,29 +443,34 @@
 		return this;
 	},
 	  
+	getTableBackgroundColourArray: function (d3table) {
+		d3table = d3table || this.d3table;
+		
+		var fdata = d3table.getFilteredData();
+		
+	},
+	  
 	downloadImage: function () {
 		var self = this;
-		this.downloadHTMLAsImg (d3.select(this.el).select(".d3table"), function (dataURL, img) {
+		this.getHTMLAsDataURL (d3.select(this.el).select(".d3table"), function (dataURL, size) {
 			var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 			var d3svg = d3.select(svg);
 			
-			d3svg.append("image").attr("xlink:href", dataURL);
-			var clone = self.dendrosvg.select("g.dendro").node().cloneNode(true);
-			console.log ("clone", clone);
-			d3svg.append (clone);
+			var img = d3svg.append("image").attr("xlink:href", dataURL);
+			var nestedSvg = self.dendrosvg;
+			//console.log ("g", nestedSvg, img);
+			var clone = nestedSvg.node().cloneNode(true);
+			d3.select(clone).attr("x", size.width);
+			d3svg.node().appendChild (clone);
 			
-			console.log ("svg", d3svg);
+			self.downloadSVG (undefined, d3svg);	
 		});	
 	},
         
     identifier: "List View",
         
     optionsToString: function () {
-        var matrixObj = this.options.matrixObj;
-        return [matrixObj.fromProtein, matrixObj.toProtein]
-            .map (function (protein) { return protein.name.replace("_", " "); })
-            .join("-")
-        ;
+        return "Sorted_by_"+this.d3table.orderKey()+"-"+this.d3table.orderDir();
     },
 });
     

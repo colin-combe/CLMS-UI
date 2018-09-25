@@ -72,13 +72,13 @@
 	border: none;
 	width: 10px;
 	max-width: 10px;
-	font-size: 0.5em;
+	font-size: 0;
 	line-height: 0.5em;
 	height: 0.5em;
 } 
 
-.listView table.heatmap.d3table tbody tr td:not(:first-child) {
-	font-size: 0;
+.listView table.heatmap.d3table tbody tr td.showText {
+	font-size: 0.5em;
 }
 
 .listView table.heatmap.d3table thead th {
@@ -113,4 +113,10 @@
 .dnone node--internal {
 	fill: cyan;
 	stroke: none;
+}
+
+g.dendro {
+	shape-rendering: crispEdges;
+	font-size: 5px;
+	font-family: Arial, sans-serif;
 }
