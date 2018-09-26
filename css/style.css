@@ -781,3 +781,11 @@ sup {font-size:xx-small; vertical-align:super;}
 	background: -webkit-linear-gradient(left, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* Chrome10-25,Safari5.1-6 */
 	background: linear-gradient(to right, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 }
+
+.testTopLeft {
+	position: absolute;
+	z-index: 5000;
+	top: 0;
+	left: 0;
+	background: white;
+}

@@ -526,14 +526,13 @@ CLMSUI.utils = {
 
     // Function for making a cross-link colour key as an svg group element
     updateColourKey: function (model, svgElem) {
-        var keyGroup = svgElem.select("g.key");
-        if (keyGroup.empty()) {
-            svgElem
-                .append("g").attr("class", "key")
-                    .append("text").attr("class", "keyTitle")
-            ;
-        }
-        keyGroup = svgElem.select("g.key");
+		svgElem.attr("height", "200");
+		
+        var keyGroup = svgElem.selectAll("g.key").data([0]);
+		keyGroup.enter()
+			.append("g").attr("class", "key")
+            .append("text").attr("class", "keyTitle")
+        ;
 
         var colourAssign = model.get("linkColourAssignment");
         if (colourAssign) {
@@ -546,6 +545,10 @@ CLMSUI.utils = {
             var labels = colourAssign.get("labels");
 			var domain = colScale.domain(); 
             var pairUp = d3.zip (colScale.range(), labels.range());
+			var isLinear = colourAssign.get("type") === "linear";
+			var linearHeight = 150;
+			var normalScale = d3.scale.linear().domain(d3.extent(domain)).range([0,100]);
+			var heightScale = d3.scale.linear().domain(d3.extent(domain)).range([18,linearHeight+18]);
 			
 			if (colourAssign.get("type") === "threshold") {
 				pairUp.forEach (function (pair, i) {
@@ -555,12 +558,16 @@ CLMSUI.utils = {
 					pair[1] += " (" + dp.join(" & ") + ")";
 				});
 			}
+			
+			pairUp.forEach (function (pair, i) {
+				pair[2] = isLinear ? heightScale (domain[i]) : 3+((i+1)*15);	// y-position of colour swatches and labels
+			});
 
             var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
             colourElems.exit().remove();
             var newElems = colourElems.enter().append("g")
                 .attr("class", "keyPoint")
-                .attr("transform", function(d,i) { return "translate(0,"+(3+((i+1)*15))+")"; })
+                .attr("transform", function(d) { return "translate(0,"+d[2]+")"; })
             ;
             newElems.append("rect")
                 .attr("height", 4)
@@ -573,10 +580,52 @@ CLMSUI.utils = {
                 .attr("x", 19)
                 .attr("y", 12)
             ;
-            colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
+            colourElems.select("rect")
+				.style("fill", function (d, i) { return d[0]; })
+				.style("display", isLinear ? "none" : null)	// hide if showing linear scale
+			;
             colourElems.select("text").text(function (d, i) { return d[1]; });
+			
+			
+			if (isLinear) {
+				// Make gradient and fill a rect with it
+				var gradID = "grad"+Math.ceil(Math.random() * 100000);
+				
+				var defs = svgElem.selectAll("defs").data([0]);
+				defs.enter().append("defs");
+				var grad = defs.selectAll("#"+gradID).data([0]);
+				var newGrad = grad.enter().append("linearGradient")
+					.attr("id", gradID)
+					.attr("x1", "0%")
+					.attr("x2", "0%")
+					.attr("y1", "0%")
+					.attr("y2", "100%")
+				;
+				newGrad.selectAll("stop").data(domain)
+					.enter()
+					.append("stop")
+					.attr("offset", function(d) { return Math.round(normalScale(d))+"%"; })
+					.attr("stop-color", function (d,i) { return colScale.range()[i]; })
+				;
+				
+				svgElem.selectAll("rect.gradientScale").remove();
+				
+				svgElem.append("rect")
+					.attr("class", "gradientScale")
+					.attr("x", 1)
+					.attr("y", heightScale.range()[0] + 5)
+					.attr("width", "1em")
+					.attr("height", heightScale.range()[1] - heightScale.range()[0])
+					.attr("fill", "url(#"+gradID+")")
+				;
+			}
         }
     },
+	
+	testColourKey: function () {
+		var svg = d3.select("body").append("svg").attr("class", "testTopLeft").style("width", "300px").style("height", "200px");
+		CLMSUI.utils.updateColourKey (CLMSUI.compositeModelInst, svg);
+	},
 	
 	updateAnnotationColourKey: function (bbModelArray, svgElem, myOptions) {
 		var defaults = {
