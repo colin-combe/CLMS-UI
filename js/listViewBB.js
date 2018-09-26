@@ -39,6 +39,7 @@
             bottom: this.options.xlabel ? 40 : 25,
             left:   this.options.ylabel ? 60 : 40
         };
+		this.zCellColourer = function() { return undefined; };
         
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
@@ -251,10 +252,13 @@
 	},
 	  
 	makeColourSchemeBackgroundHook: function (columnKey) {
+		var self = this;
 		return function (cellSel) {
 			cellSel.style("background", function(d) { 
+				var colour = self.zCellColourer (d);
+				if (colour) { return colour; }
 				var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
-				var dValue = colScheme.getValue (d.value);
+				var dValue = colScheme.getValue (d.value);	// d.value is crosslink
 				return dValue !== undefined ? colScheme.getColour(d.value) : "none";
 			});
 		};
@@ -294,7 +298,7 @@
 	},
 	  
 	  // Add a multiple select widget for column visibility
-	updateColumnSelector: function (containerSelector, d3table, dispatch) {
+	updateColumnSelector: function (containerSelector, d3table) {
 
 		var self = this;
 		
@@ -407,16 +411,25 @@
 			.attr ("y", -20)
 		;
 		
-		this.zcolourModel = d3.scale.linear().domain(stats.zrange).range(stats.zrange.length === 3 ? ["green", "white", "red"] : ["green", "red"]);
-		var self = this;
+		CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: stats.zrange});	// make colour model based on z value extents
 		
 		var columnIndexMap = {};
 		this.viewStateModel.get("statColumns").values().forEach (function (columnKey, i) {
 			columnIndexMap[columnKey] = i;
 		});
-		this.zcolourer = function (crosslink, columnKey) {
-			var val = stats.zscores[crosslink.id][columnIndexMap[columnKey]];
-			return self.zcolourModel (val);
+		
+		this.zCellColourer = function (d) {
+			var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
+			var columnIndex = columnIndexMap[d.key];
+			var colValue;
+			if (colourScheme && columnIndex !== undefined) {
+				var linkZScores = stats.zscores[d.value.id];
+				if (linkZScores) {
+					var val = linkZScores[columnIndex];	// d.value is crosslink
+					colValue = val !== undefined ? colourScheme.getColourByValue (val) : undefined;
+				}
+			}
+			return colValue;
 		};
 		
 		this.indicateRecalcNeeded (false);
@@ -424,7 +437,7 @@
 	},
 	  
 	columnOrdering: function (sortColumn, sortDesc) {
-		console.log ("col", sortColumn);
+		//console.log ("col", sortColumn);
 		this.viewStateModel.set("sortColumn", sortColumn);
 	},
 	  
