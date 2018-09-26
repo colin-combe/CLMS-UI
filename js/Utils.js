@@ -420,6 +420,7 @@ CLMSUI.utils = {
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
                 .classed ("btn btn-1 btn-1a", true) // and we don't class .temp so these can't be picked up by a subsequent call to make backbonebuttons
+				.attr ("title", function(d) { return d.tooltip; })
                 .attr("id", makeID)
         ;
 
@@ -697,6 +698,97 @@ CLMSUI.utils = {
 
         return selects;
     },
+	
+	drawDendrogram: function (svgd3, cfckDistances, options) {
+		
+		var defaultOptions = {
+			ltor: true,
+			ttob: true,
+			leafLabels: true,
+			labelFunc: function (d) { return d ? d.value : ""; }
+		}
+		options = $.extend ({}, defaultOptions, options);
+		
+		function recurse (tree, parent) {
+			tree.parent = parent;
+			if (!tree.value) {
+				recurse (tree.left, tree);
+				recurse (tree.right, tree);
+			} else {
+				tree.origValue = tree.value;
+			}
+		}
+		
+		var height = cfckDistances.size * 5;
+		var width = 100;
+
+		svgd3.attr("width", width).attr("height", height);
+		var g = svgd3.select("g.dendro");
+		if (g.empty()) {
+			g = svgd3.append("g").attr("class", "dendro");
+		}
+		
+		recurse (cfckDistances, null);
+		
+		var cluster = d3.layout.cluster ();
+		cluster
+			.children (function(d) { return d.left && d.right ? [d.left, d.right] : undefined; })
+			.size ([height, width])
+			.separation (function (a, b) { return 1; })
+		;
+		
+		var nodes = cluster.nodes(cfckDistances);
+		var links = cluster.links(nodes);
+		
+		var crange = d3.extent (nodes, function(d) { return d.dist || 0; });
+		var scaleDown = d3.scale.linear().domain(crange).range(options.ltor ? [width - 5, 5] : [5, width - 5]);
+		var scaleAlong = d3.scale.linear().domain([0, height]).range(options.ttob ? [height, 0] : [0, height]);
+	
+		//console.log ("nodes", nodes, links, crange);
+		
+		nodes.forEach (function(d) { 
+			d.y = scaleDown (d.children && d.children.length ? d.dist || 0 : 0); 
+			d.x = scaleAlong (d.x);
+		});
+		
+		var link = g.selectAll(".dlink").data(links);
+		
+		link.exit().remove();
+		link.enter().append("g")
+			.attr("class", "dlink")
+			.append("path");
+		;
+		link.select("path").attr ("d", function (d) {
+			return "M"+d.source.y+" "+d.source.x+" V "+d.target.x+" H "+d.target.y;
+		});
+		
+		if (options.leafLabels) {
+			var labels = g.selectAll("text.dlabel")
+				.data(nodes.filter (function (d) { return !d.children; }))
+			;
+			labels.exit().remove();
+			labels.enter().append ("text").attr("class", "dlabel");
+			labels.text (options.labelFunc)
+				.style ("text-anchor", options.ltor ? "start" : "end")
+				.attr ("x", options.ltor ? width : 0)
+				.attr ("y", function (d) { return d.x; })
+				.attr ("dy", "0.35em")
+			;
+		} else {
+			g.selectAll(".dlabel").remove();
+		}
+
+		/*
+		var node = g.selectAll(".dnode").data(nodes);
+		node.exit().remove();
+		node.enter().append("g")
+			.attr("class", "dnode")
+			.append("circle")
+			.attr("r", 2.5)
+		;
+		node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+		*/
+	},
 
 
     BaseFrameView: Backbone.View.extend ({
@@ -798,6 +890,81 @@ CLMSUI.utils = {
                 download (svgXML, "application/svg", fileName);
             });
         },
+		
+		getHTMLAsDataURL: function (d3Elem, callbackFunc) {
+			callbackFunc = callbackFunc || function () { console.warn ("Missing a callback func for downloadHTMLAsImg!"); };
+			var elemArr = [d3Elem.node()];
+			var elemStrings = CLMSUI.svgUtils.capture (elemArr);
+			var detachedSVG = elemStrings[0];
+            var detachedSVGD3 = d3.select (detachedSVG);
+			
+			var table = detachedSVGD3.select("table");
+			table.style ("font-size", "1em");
+			
+			var fo = detachedSVGD3.append(function() {
+					//aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
+					return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")	
+				})
+				.attr("width", "100%").attr("height", "100%")
+				.append ("div")
+					.attr("xmlns", "http://www.w3.org/1999/xhtml")
+					.html (table.node().outerHTML);
+			;
+			table.remove();
+			//$(fo.node()).append($(table.node()));
+			detachedSVGD3.selectAll("svg.d3table-arrow,tfoot,input").remove();	// don't need inputs or footer
+			var data = detachedSVGD3.node().outerHTML;
+			
+			var canvas = document.createElement ("canvas");
+			d3.select(canvas)
+				.attr ("id", "tempCanvas")
+				.style("display", "none")
+				.attr ("width", $(detachedSVGD3.node()).width())
+				.attr ("height", $(detachedSVGD3.node()).height())
+			;
+    		var ctx = canvas.getContext("2d");
+				
+			/*
+			var newsvg = d3.select("body").append("div").style("position", "absolute").style("top",0).style("right", 0).style("z-index", 4999).style("width", "500px");
+			newsvg.html (data);
+			//$(newsvg.node()).append($(detachedSVGD3.node()));
+			
+			var str = "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><foreignObject width='100%' height='100%'><div xmlns='http://www.w3.org/1999/xhtml'><h3>test</h3></div></foreignObject></svg>";
+			
+			console.log ("fff", data, str);
+			console.log ("table xhtml", detachedSVGD3.selectAll("foreignObject > div").node().outerHTML);
+			*/
+			
+			var svg = new Blob([data], {
+				type: "image/svg+xml;charset=utf-8"
+			});
+			//var DOMURL = URL || webkitURL || this;
+			//var url = DOMURL.createObjectURL(svg);	// causes tainted canvas error due to https://bugs.chromium.org/p/chromium/issues/detail?id=294129
+			// console.log ("sv", svg, url);
+			
+			var img = new Image();
+			img.setAttribute ("crossOrigin", "anonymous");
+			img.onerror = function () {
+				callbackFunc (undefined);
+			}
+			img.onload = function() {
+				ctx.drawImage (img, 0, 0);
+				//console.log ("img", img, url);
+				
+				img = null;
+				//DOMURL.revokeObjectURL (url);
+				
+				var dataURL = canvas.toDataURL();
+				var size = {width: canvas.width, height: canvas.height};
+				canvas = null;
+				
+				callbackFunc (dataURL, size);
+				//console.log ("dd", dataURL);
+			}
+		
+			// Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129
+    		img.src = "data:image/svg+xml;charset=utf-8," + data;  
+		},
 
 
         hideView: function () {

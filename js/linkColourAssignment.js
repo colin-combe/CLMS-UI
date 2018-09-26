@@ -232,6 +232,29 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
     },
 });
 
+/* Colour model that doesn't use crosslink properties, if querying by crosslink will just return undefined colour */
+/* Q: What's the point then? A: it can be used to return colours to values, and also as it extends ColourModel we */
+/* can change the colours in the legend panel. */
+CLMSUI.BackboneModelTypes.NonCrossLinkColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
+    initialize: function () {
+		var domain = this.get("colScale").domain();
+		var labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
+		domain.map (function (domVal, i) {
+			labels[i] += " (" + domVal + ")";
+		});
+		
+		this
+			.set ("labels", this.get("colScale").copy().range(labels))
+			.set ("title", this.get("id"))
+			.set ("longDescription", this.get("id"))
+		;
+    },
+    getValue: function () {
+        return undefined;
+    },
+});
+
+
 
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
@@ -281,7 +304,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     ]);
     
     // If necessary, swap in newly added colour scale with same id as removed (but current) scale pointed to by linkColourAssignment
-    var replaceCurrentLinkColourAssignment  = function (collection) {
+    var replaceCurrentLinkColourAssignment = function (collection) {
         var currentColourModel = CLMSUI.compositeModelInst.get("linkColourAssignment");
         if (!currentColourModel.collection) {
             CLMSUI.compositeModelInst.set ("linkColourAssignment", collection.get(currentColourModel.get("id")));
@@ -310,6 +333,13 @@ CLMSUI.linkColour.setupColourModels = function () {
         
         replaceCurrentLinkColourAssignment (this);
     });
+	
+	CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "addNonCrossLinkColourModel", function (data) {
+		this.remove (data.id);
+		var newModel = CLMSUI.linkColour.makeNonCrossLinkColourModel (data.id, data.domain);
+        this.add (newModel);
+        replaceCurrentLinkColourAssignment (this);
+    });
 };
 
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
@@ -327,9 +357,9 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
 	var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     
 	// if it isn't a list of colours and only a few uinique values, make it categorical
-    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).values();
+    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).size();
     // if the values in this metadata form 6 or less distinct values count it as categorical
-    var isCategorical = uniq.length < 7;
+    var isCategorical = uniq < 7;
     if (isCategorical && !dataIsColours) {
         extents.push (undefined);
         range = colorbrewer.Dark2[8];
@@ -358,6 +388,22 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     }
     
     return newColourModel;
+};
+
+CLMSUI.linkColour.makeNonCrossLinkColourModel = function (id, domain) {
+	var extents = d3.extent (domain);
+	var range = ["red", "blue"];
+    if (extents[0] < 0 && extents[1] > 0) {
+        extents.splice (1, 0, 0);
+        range.splice (1, 0, "#aaa");
+    }
+	
+	var newColourModel = new CLMSUI.BackboneModelTypes.NonCrossLinkColourModel ({
+        colScale: d3.scale.linear().domain(extents).range(range),
+        id: id,
+    });
+	
+	return newColourModel;
 };
 
 

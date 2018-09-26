@@ -297,8 +297,10 @@ span, label {
 
 #listPanel {
 	left: 2em;
-	height: 25em;
-	width: 50em;
+	height: 40em;
+	min-height: 20em;
+	width: 60em;
+	min-width: 20em;
 }
 
 #searchSummaryPanel{

@@ -78,6 +78,7 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
+		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
 		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
 
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
@@ -96,6 +97,7 @@
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
 		<script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
+		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
 		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="../vendor/js/crossfilter.js"></script> -->
