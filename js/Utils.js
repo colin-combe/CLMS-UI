@@ -744,7 +744,7 @@ CLMSUI.utils = {
 		var scaleDown = d3.scale.linear().domain(crange).range(options.ltor ? [width - 5, 5] : [5, width - 5]);
 		var scaleAlong = d3.scale.linear().domain([0, height]).range(options.ttob ? [height, 0] : [0, height]);
 	
-		console.log ("nodes", nodes, links, crange);
+		//console.log ("nodes", nodes, links, crange);
 		
 		nodes.forEach (function(d) { 
 			d.y = scaleDown (d.children && d.children.length ? d.dist || 0 : 0); 
@@ -763,9 +763,10 @@ CLMSUI.utils = {
 		});
 		
 		if (options.leafLabels) {
-			var labels = g.selectAll("g.dlabel")
+			var labels = g.selectAll("text.dlabel")
 				.data(nodes.filter (function (d) { return !d.children; }))
 			;
+			labels.exit().remove();
 			labels.enter().append ("text").attr("class", "dlabel");
 			labels.text (options.labelFunc)
 				.style ("text-anchor", options.ltor ? "start" : "end")
@@ -939,7 +940,7 @@ CLMSUI.utils = {
 			});
 			//var DOMURL = URL || webkitURL || this;
 			//var url = DOMURL.createObjectURL(svg);	// causes tainted canvas error due to https://bugs.chromium.org/p/chromium/issues/detail?id=294129
-			console.log ("sv", svg, url);
+			// console.log ("sv", svg, url);
 			
 			var img = new Image();
 			img.setAttribute ("crossOrigin", "anonymous");
@@ -958,7 +959,7 @@ CLMSUI.utils = {
 				canvas = null;
 				
 				callbackFunc (dataURL, size);
-				console.log ("dd", dataURL);
+				//console.log ("dd", dataURL);
 			}
 		
 			// Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129

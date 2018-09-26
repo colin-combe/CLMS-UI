@@ -399,7 +399,7 @@
 		}
 		
 		var stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
-		console.log ("stat", stats);
+		//console.log ("stat", stats);
 		CLMSUI.utils.drawDendrogram (this.dendrosvg, stats.cfk_distances.tree, {
 			ltor: false,
 			labelFunc: function (d) { return d.origValue.clink.id; }
@@ -433,6 +433,8 @@
 		};
 		
 		this.indicateRecalcNeeded (false);
+		
+		this.render();
 		return this;
 	},
 	  
