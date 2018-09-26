@@ -360,6 +360,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 	
 	setInputValuesFromModel: function (model, options) {
+		options = options || {};
+		model = model || this.model;
+		
 		var mainDiv = d3.select(this.el);
 		
 		mainDiv.selectAll("input.filterTypeText, input.subsetNumberFilter")
@@ -437,6 +440,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
     },
 	
 	setInputValuesFromModel: function (model) {
+		model = model || this.model;
 		var fdrThreshold = model.get("fdrThreshold");
 		var d3el = d3.select(this.el);
 		d3el.style ("display", model.get("fdrMode") ? null : "none");

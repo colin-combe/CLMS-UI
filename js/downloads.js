@@ -194,22 +194,21 @@ function getMatchesCSV () {
 
 function getLinksCSV(){
     var validatedTypes = ["A", "B", "C", "?", "R"];
+	var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
     var headerArray = ["Protein1","SeqPos1","LinkedRes1","Protein2","SeqPos2","LinkedRes2","Highest Score","Match Count","AutoValidated","Validated","Link FDR","3D Distance","From Chain","To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
-    var searchIds = Array.from (CLMSUI.compositeModelInst.get("clmsModel").get("searches").keys());
-    for (var i = 0; i < searchIds.length; i++ ) {
-        headerArray.push ("Search_"+searchIds[i]);
+    var searchIDs = Array.from(clmsModel.get("searches").keys());
+    for (var i = 0; i < searchIDs.length; i++ ) {
+        headerArray.push ("Search_"+searchIDs[i]);
     }
-    console.log ("searchIds", searchIds);
+	console.log ("searchIds", searchIDs);
+	
+	var metaColumns = (clmsModel.get("crossLinkMetaRegistry") || d3.set()).values();
+	headerArray = headerArray.concat (metaColumns);
+	
     var headerRow = '"' + headerArray.join('","') + '"';
 
-	/*
-	// filtered crosslinks already cached and obtainable via CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");
-    var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks"));
-    crossLinks = crossLinks.filter (function (crossLink) { return crossLink.filteredMatches_pp.length > 0; });
-	*/
 	var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");
-	//console.log ("XLINK COMP", crossLinks.length, crossLinks2.length);
 	
     var physicalDistances = CLMSUI.compositeModelInst.getCrossLinkDistances (crossLinks, {includeUndefineds: true, returnChainInfo: true, calcDecoyProteinDistances: true});
     //console.log ("pd", physicalDistances);
@@ -224,6 +223,8 @@ function getLinksCSV(){
             (linear ? "" : mostReadableId(crossLink.toProtein)), crossLink.toResidue,
             !linear && crossLink.toResidue ? crossLink.toProtein.sequence[crossLink.toResidue - 1] : ""
         );
+		 
+		var meta = crossLink.meta || {};
 
         var highestScore = null;
         var searchesFound = new Set();
@@ -239,8 +240,9 @@ function getLinksCSV(){
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
-        //console.log ("sf", searchesFound);
-        row.push (highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), (crossLink.meta ? crossLink.meta.fdr : undefined));
+        row.push (highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), meta.fdr);
+		 
+		// Distance info
         var pDist = physicalDistances[i];
         if (pDist && pDist.distance) {
             var chain = pDist.chainInfo;
@@ -249,9 +251,15 @@ function getLinksCSV(){
             row.push ("", "", "", "", "");
 		}
 
-        for (var s = 0; s < searchIds.length; s++){
-            row.push (searchesFound.has(searchIds[s]) ? "X" : "");
+		 // Add presence in searches
+        for (var s = 0; s < searchIDs.length; s++){
+            row.push (searchesFound.has(searchIDs[s]) ? "X" : "");
         }
+		 
+		// Add metadata information
+		for (var m = 0; m < metaColumns.length; m++) {
+			row.push (meta[metaColumns[m]] || "");
+		}
 
         return '"' + row.join('","') + '"';
     }, this);
@@ -268,7 +276,6 @@ function getResidueCount() {
     var residueCounts = d3.map();
     var residuePairCounts = d3.map();
 
-    //var crossLinks = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks")); 
 	var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks ("all");	// already pre-filtered
     crossLinks.forEach (function (residueLink) {
 		var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
