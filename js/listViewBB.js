@@ -374,10 +374,30 @@
 	  
 	toggleHeatMapMode: function () {
 		var heatMap = this.viewStateModel.get("heatMap");
-		d3.select(this.el).select(".d3table").classed ("heatmap", !heatMap);
-		this.viewStateModel.set("heatMap", !heatMap);
+		heatMap = !heatMap;
+		d3.select(this.el).select(".d3table").classed ("heatmap", heatMap);
+		this.viewStateModel.set("heatMap", heatMap);
+		
+		var csettings = d3.entries(this.d3table.columnSettings());
+		
 		var ps = this.d3table.pageSize();
 		this.d3table.pageSize(120 - ps).update();
+		
+		if (!heatMap) {
+			csettings.forEach (function (cEntry) {
+				var cindex = this.d3table.getColumnIndex(cEntry.key);
+				this.d3table.showColumn (cindex + 1, cEntry.value.visible);
+			}, this);
+		} else {
+			var showSet = d3.set(this.viewStateModel.get("statColumns").values());
+			showSet.add ("treeOrder");
+			showSet.add ("kmcluster");
+			csettings.forEach (function (cEntry) {
+				var cindex = this.d3table.getColumnIndex(cEntry.key);
+				this.d3table.showColumn (cindex + 1, showSet.has (cEntry.key));
+			}, this);
+		}
+		
 		return this;
 	},
 	  
@@ -402,14 +422,9 @@
 		//console.log ("stat", stats);
 		CLMSUI.utils.drawDendrogram (this.dendrosvg, stats.cfk_distances.tree, {
 			ltor: false,
-			labelFunc: function (d) { return d.origValue.clink.id; }
+			labelFunc: function (d) { return d.origValue.clink.id; },
+			title: "Distance "+this.viewStateModel.get("statDistance")+", Linkage "+this.viewStateModel.get("statLinkage"),
 		});
-		var title = this.dendrosvg.style("overflow", "visible").select("text.title");
-		if (title.empty()) { title = this.dendrosvg.append("text").attr("class", "title"); }
-		title
-			.text ("Distance "+this.viewStateModel.get("statDistance")+", Linkage "+this.viewStateModel.get("statLinkage"))
-			.attr ("y", -20)
-		;
 		
 		CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: stats.zrange});	// make colour model based on z value extents
 		
@@ -467,25 +482,30 @@
 	  
 	downloadImage: function () {
 		var self = this;
-		this.getHTMLAsDataURL (d3.select(this.el).select(".d3table"), function (dataURL, size) {
-			var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-			var d3svg = d3.select(svg);
-			
-			var img = d3svg.append("image").attr("xlink:href", dataURL);
-			var nestedSvg = self.dendrosvg;
-			//console.log ("g", nestedSvg, img);
-			var clone = nestedSvg.node().cloneNode(true);
-			d3.select(clone).attr("x", size.width);
-			d3svg.node().appendChild (clone);
-			
-			self.downloadSVG (undefined, d3svg);	
-		});	
+		this.getHTMLAsDataURL (d3.select(this.el).select(".d3table"), 
+			{
+				removeChildren: "svg.d3table-arrow,tfoot,input",
+			},
+			function (dataURL, size) {
+				var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+				var d3svg = d3.select(svg);
+
+				var img = d3svg.append("image").attr("xlink:href", dataURL);
+				var nestedSvg = self.dendrosvg;
+				//console.log ("g", nestedSvg, img);
+				var clone = nestedSvg.node().cloneNode(true);
+				d3.select(clone).attr("x", size.width);
+				d3svg.node().appendChild (clone);
+
+				self.downloadSVG (undefined, d3svg);	
+			}, 
+		);	
 	},
         
     identifier: "List View",
         
     optionsToString: function () {
-        return "Sorted_by_"+this.d3table.orderKey()+"-"+this.d3table.orderDir();
+        return (this.viewStateModel.get("heatMap") ? "Heatmap_" : "") + "Sorted_by_"+this.d3table.orderKey()+"-"+this.d3table.orderDir();
     },
 });
     

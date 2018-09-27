@@ -120,3 +120,9 @@ g.dendro {
 	font-size: 5px;
 	font-family: Arial, sans-serif;
 }
+
+.dendrogramTitle {
+	font-size: 0.5rem;
+	font-family: Arial, sans-serif;
+	text-anchor: middle;
+}
