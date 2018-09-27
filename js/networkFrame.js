@@ -314,12 +314,6 @@ CLMSUI.init.views = function() {
             tooltip: "AKA Contact Map. Relevant PDB File required for distance background"
         },
         {
-			id: "listChkBxPlaceholder", 
-			label: "List", 
-			eventName: "listShow", 
-			tooltip: "Sortable list of cross-links"
-		},
-        {
             id: "proteinInfoChkBxPlaceholder",
             label: "Protein Info",
             eventName: "proteinInfoShow",
@@ -343,8 +337,14 @@ CLMSUI.init.views = function() {
             label: "Scatterplot",
             eventName: "scatterplotShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
-            sectionEnd: true
         },
+		{
+			id: "listChkBxPlaceholder", 
+			label: "List / HeatMap", 
+			eventName: "listShow", 
+			tooltip: "Sortable list of cross-links, can convert to heatmap",
+			sectionEnd: true
+		},
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",

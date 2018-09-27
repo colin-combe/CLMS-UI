@@ -754,7 +754,8 @@ CLMSUI.utils = {
 			ltor: true,
 			ttob: true,
 			leafLabels: true,
-			labelFunc: function (d) { return d ? d.value : ""; }
+			labelFunc: function (d) { return d ? d.value : ""; },
+			title: "A Dendrogram",
 		}
 		options = $.extend ({}, defaultOptions, options);
 		
@@ -772,10 +773,12 @@ CLMSUI.utils = {
 		var width = 100;
 
 		svgd3.attr("width", width).attr("height", height);
-		var g = svgd3.select("g.dendro");
-		if (g.empty()) {
-			g = svgd3.append("g").attr("class", "dendro");
-		}
+		var g = svgd3.selectAll("g.dendro").data([0]);
+		g.enter().append("g").attr("class", "dendro");
+		
+		var title = g.selectAll("text.dendrogramTitle").data([0]);
+		title.enter().append("text").attr("class", "dendrogramTitle").attr("y", -20);
+		title.text (options.title);
 		
 		recurse (cfckDistances, null);
 		
@@ -940,15 +943,20 @@ CLMSUI.utils = {
             });
         },
 		
-		getHTMLAsDataURL: function (d3Elem, callbackFunc) {
+		getHTMLAsDataURL: function (d3Elem, options, callbackFunc) {
+			var defaults = {
+				removeChildren: undefined,
+			};
+			options = $.extend ({}, defaults, options);
+			
 			callbackFunc = callbackFunc || function () { console.warn ("Missing a callback func for downloadHTMLAsImg!"); };
 			var elemArr = [d3Elem.node()];
 			var elemStrings = CLMSUI.svgUtils.capture (elemArr);
 			var detachedSVG = elemStrings[0];
             var detachedSVGD3 = d3.select (detachedSVG);
 			
-			var table = detachedSVGD3.select("table");
-			table.style ("font-size", "1em");
+			var origElem = detachedSVGD3.select(":not(style)");
+			origElem.style ("font-size", "1em");
 			
 			var fo = detachedSVGD3.append(function() {
 					//aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
@@ -957,11 +965,13 @@ CLMSUI.utils = {
 				.attr("width", "100%").attr("height", "100%")
 				.append ("div")
 					.attr("xmlns", "http://www.w3.org/1999/xhtml")
-					.html (table.node().outerHTML);
+					.html (origElem.node().outerHTML);
 			;
-			table.remove();
+			origElem.remove();
 			//$(fo.node()).append($(table.node()));
-			detachedSVGD3.selectAll("svg.d3table-arrow,tfoot,input").remove();	// don't need inputs or footer
+			if (options.removeChildren) {
+				detachedSVGD3.selectAll(options.removeChildren).remove();
+			}
 			var data = detachedSVGD3.node().outerHTML;
 			
 			var canvas = document.createElement ("canvas");
@@ -972,17 +982,6 @@ CLMSUI.utils = {
 				.attr ("height", $(detachedSVGD3.node()).height())
 			;
     		var ctx = canvas.getContext("2d");
-				
-			/*
-			var newsvg = d3.select("body").append("div").style("position", "absolute").style("top",0).style("right", 0).style("z-index", 4999).style("width", "500px");
-			newsvg.html (data);
-			//$(newsvg.node()).append($(detachedSVGD3.node()));
-			
-			var str = "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><foreignObject width='100%' height='100%'><div xmlns='http://www.w3.org/1999/xhtml'><h3>test</h3></div></foreignObject></svg>";
-			
-			console.log ("fff", data, str);
-			console.log ("table xhtml", detachedSVGD3.selectAll("foreignObject > div").node().outerHTML);
-			*/
 			
 			var svg = new Blob([data], {
 				type: "image/svg+xml;charset=utf-8"
