@@ -27,7 +27,7 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
         if (match){
             formatted_loss.id = match[1];
             formatted_loss.specificity = match[2].split(',');
-            formatted_loss.mass = match[3];
+            formatted_loss.mass = parseFloat(match[3]);
             if (loss.description.indexOf(';nterm') !== -1)
                 formatted_loss.specificity.push('NTerm');
             if (loss.description.indexOf(';cterm') !== -1)
