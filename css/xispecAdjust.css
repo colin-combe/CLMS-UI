@@ -2,6 +2,11 @@
 	background-color: #091d42;
 	color: #000;
 }
+
+.xispec_dynDiv_moveParentDiv {
+	font-size: 15px;
+}
+
 #xispec_dl_spectrum_SVG{
     display: none;
 }
