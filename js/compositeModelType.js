@@ -19,6 +19,14 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 		this.listenTo (this.get("clmsModel"), "change:matches", function () {
 			this.calcAndStoreTTCrossLinkCount();
 		});
+		
+		// Clear fdr information from crosslinks when switching out of fdr mode
+		this.listenTo (this.get("filterModel"), "change:fdrMode", function (filterModel) {
+			if (!filterModel.get("fdrMode")) {
+				// Need to clear all crosslinks as they all get valued
+				CLMSUI.clearFdr (CLMS.arrayFromMapValues (this.get("clmsModel").get("crossLinks")));	
+			}
+		});
 
 		this.calcAndStoreTTCrossLinkCount();
     },
@@ -443,7 +451,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             participant.manuallyHidden = true;
         }
         this.setSelectedProteins([]);
-        this.get("filterModel").trigger("change");
+        this.get("filterModel").trigger("change", this.get("filterModel"));
 
     },
 

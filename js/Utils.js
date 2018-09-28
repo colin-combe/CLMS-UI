@@ -17,15 +17,21 @@ CLMSUI.utils = {
     },
 
     // return comma-separated list of protein names from array of protein ids
-    proteinConcat: function (d, matchedPeptideIndex, clmsModel) {
-        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+    proteinConcat: function (match, matchedPeptideIndex, clmsModel) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         var pnames = mpeptides ? mpeptides.prt.map (function(pid) {return clmsModel.get("participants").get(pid).name;}) : [];
         return pnames.join(",");
     },
 
-    pepPosConcat: function (d, matchedPeptideIndex) {
-        var mpeptides = d.matchedPeptides[matchedPeptideIndex];
+    pepPosConcat: function (match, matchedPeptideIndex) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         return mpeptides ? mpeptides.pos.join(", ") : "";
+    },
+	
+	fullPosConcat: function (match, matchedPeptideIndex) {
+        var mpeptides = match.matchedPeptides[matchedPeptideIndex];
+		var linkPos = matchedPeptideIndex === 0 ? match.linkPos1 : match.linkPos2;
+        return mpeptides ? mpeptides.pos.map (function (v) { return v + linkPos - 1; }).join(", ") : "";
     },
 
     commonLabels: {
@@ -161,7 +167,7 @@ CLMSUI.utils = {
 			}
 		},
 
-		showState : function (args) {
+		showState: function (args) {
 			var boolVal = arguments.length > 1 ? arguments[1] : arguments[0];
 			d3.select(this.el).select("input").property("checked", boolVal);
 		},
@@ -398,7 +404,7 @@ CLMSUI.utils = {
     // targetDiv is a d3 select element
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button",
-    // initialState: true|false, group: "sort", title: "tooltipText", noBreak: true|false},
+    // initialState: true|false, group: "sort", tooltip: "tooltipText", noBreak: true|false},
     makeBackboneButtons: function (targetDiv, baseID, buttonData) {
         var makeID = function (d) { return baseID + d.id; };
 
@@ -414,6 +420,7 @@ CLMSUI.utils = {
                 .text (function(d) { return d.label; })
                 .attr ("class", function(d) { return d.class; })
                 .classed ("btn btn-1 btn-1a", true) // and we don't class .temp so these can't be picked up by a subsequent call to make backbonebuttons
+				.attr ("title", function(d) { return d.tooltip; })
                 .attr("id", makeID)
         ;
 
@@ -422,7 +429,7 @@ CLMSUI.utils = {
             .enter()
             .append ("label")
                 .attr ("class", "btn noBreak")
-                .attr ("title", function(d) { return d.title; })
+                .attr ("title", function(d) { return d.tooltip; })
                 .attr ("id", makeID)
         ;
 		
@@ -519,14 +526,13 @@ CLMSUI.utils = {
 
     // Function for making a cross-link colour key as an svg group element
     updateColourKey: function (model, svgElem) {
-        var keyGroup = svgElem.select("g.key");
-        if (keyGroup.empty()) {
-            svgElem
-                .append("g").attr("class", "key")
-                    .append("text").attr("class", "keyTitle")
-            ;
-        }
-        keyGroup = svgElem.select("g.key");
+		svgElem.attr("height", "200");
+		
+        var keyGroup = svgElem.selectAll("g.key").data([0]);
+		keyGroup.enter()
+			.append("g").attr("class", "key")
+            .append("text").attr("class", "keyTitle")
+        ;
 
         var colourAssign = model.get("linkColourAssignment");
         if (colourAssign) {
@@ -539,6 +545,10 @@ CLMSUI.utils = {
             var labels = colourAssign.get("labels");
 			var domain = colScale.domain(); 
             var pairUp = d3.zip (colScale.range(), labels.range());
+			var isLinear = colourAssign.get("type") === "linear";
+			var linearHeight = 150;
+			var normalScale = d3.scale.linear().domain(d3.extent(domain)).range([0,100]);
+			var heightScale = d3.scale.linear().domain(d3.extent(domain)).range([18,linearHeight+18]);
 			
 			if (colourAssign.get("type") === "threshold") {
 				pairUp.forEach (function (pair, i) {
@@ -548,12 +558,16 @@ CLMSUI.utils = {
 					pair[1] += " (" + dp.join(" & ") + ")";
 				});
 			}
+			
+			pairUp.forEach (function (pair, i) {
+				pair[2] = isLinear ? heightScale (domain[i]) : 3+((i+1)*15);	// y-position of colour swatches and labels
+			});
 
             var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
             colourElems.exit().remove();
             var newElems = colourElems.enter().append("g")
                 .attr("class", "keyPoint")
-                .attr("transform", function(d,i) { return "translate(0,"+(3+((i+1)*15))+")"; })
+                .attr("transform", function(d) { return "translate(0,"+d[2]+")"; })
             ;
             newElems.append("rect")
                 .attr("height", 4)
@@ -566,10 +580,52 @@ CLMSUI.utils = {
                 .attr("x", 19)
                 .attr("y", 12)
             ;
-            colourElems.select("rect").style("fill", function (d, i) { return d[0]; });
+            colourElems.select("rect")
+				.style("fill", function (d, i) { return d[0]; })
+				.style("display", isLinear ? "none" : null)	// hide if showing linear scale
+			;
             colourElems.select("text").text(function (d, i) { return d[1]; });
+			
+			
+			if (isLinear) {
+				// Make gradient and fill a rect with it
+				var gradID = "grad"+Math.ceil(Math.random() * 100000);
+				
+				var defs = svgElem.selectAll("defs").data([0]);
+				defs.enter().append("defs");
+				var grad = defs.selectAll("#"+gradID).data([0]);
+				var newGrad = grad.enter().append("linearGradient")
+					.attr("id", gradID)
+					.attr("x1", "0%")
+					.attr("x2", "0%")
+					.attr("y1", "0%")
+					.attr("y2", "100%")
+				;
+				newGrad.selectAll("stop").data(domain)
+					.enter()
+					.append("stop")
+					.attr("offset", function(d) { return Math.round(normalScale(d))+"%"; })
+					.attr("stop-color", function (d,i) { return colScale.range()[i]; })
+				;
+				
+				svgElem.selectAll("rect.gradientScale").remove();
+				
+				svgElem.append("rect")
+					.attr("class", "gradientScale")
+					.attr("x", 1)
+					.attr("y", heightScale.range()[0] + 5)
+					.attr("width", "1em")
+					.attr("height", heightScale.range()[1] - heightScale.range()[0])
+					.attr("fill", "url(#"+gradID+")")
+				;
+			}
         }
     },
+	
+	testColourKey: function () {
+		var svg = d3.select("body").append("svg").attr("class", "testTopLeft").style("width", "300px").style("height", "200px");
+		CLMSUI.utils.updateColourKey (CLMSUI.compositeModelInst, svg);
+	},
 	
 	updateAnnotationColourKey: function (bbModelArray, svgElem, myOptions) {
 		var defaults = {
@@ -634,7 +690,9 @@ CLMSUI.utils = {
             selectLabelFunc: function (d) { return d; },
             optionLabelFunc: function (d) { return d; },
 			optionValueFunc: function (d) { return d; },
-            initialSelectionFunc: function (d,i) { return i === 0; }
+			selectLabelTooltip: function (d) { return undefined; },
+            initialSelectionFunc: function (d,i) { return i === 0; },
+			idFunc: function (d,i) { return i; },
         };
         settings = _.extend (defaults, settings);
 
@@ -650,6 +708,12 @@ CLMSUI.utils = {
             .attr ("class", "btn selectHolder")
                 .append ("span")
                 .attr ("class", "noBreak")
+				.each (function (d) {
+					var tip = settings.selectLabelTooltip (d);
+					if (tip) {
+						d3.select(this).attr ("title", tip);
+					}
+				})
                 .text (settings.selectLabelFunc)
                 .append("select")
                     .on ("change", settings.changeFunc)
@@ -666,18 +730,117 @@ CLMSUI.utils = {
 
         // add options to new and existing select elements
         var selects = selectHolders.selectAll("select");
-        selects
+        var options = selects
             .selectAll("option")
-            .data (optionData)
-                .enter()
-                .append ("option")
-                .text (settings.optionLabelFunc)
-				.property ("value", settings.optionValueFunc)
-                .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
+            .data (optionData, settings.idFunc)
+		;
+		options.exit().remove();
+		options
+            .enter()
+            .append ("option")
+            .property ("selected", settings.initialSelectionFunc)  // necessary for IE not to fall over later (it detects nothing is selected otherwise)
         ;
+		options
+			.text (settings.optionLabelFunc)
+			.property ("value", settings.optionValueFunc)
+		;
 
         return selects;
     },
+	
+	drawDendrogram: function (svgd3, cfckDistances, options) {
+		
+		var defaultOptions = {
+			ltor: true,
+			ttob: true,
+			leafLabels: true,
+			labelFunc: function (d) { return d ? d.value : ""; },
+			title: "A Dendrogram",
+		}
+		options = $.extend ({}, defaultOptions, options);
+		
+		function recurse (tree, parent) {
+			tree.parent = parent;
+			if (!tree.value) {
+				recurse (tree.left, tree);
+				recurse (tree.right, tree);
+			} else {
+				tree.origValue = tree.value;
+			}
+		}
+		
+		var height = cfckDistances.size * 5;
+		var width = 100;
+
+		svgd3.attr("width", width).attr("height", height);
+		var g = svgd3.selectAll("g.dendro").data([0]);
+		g.enter().append("g").attr("class", "dendro");
+		
+		var title = g.selectAll("text.dendrogramTitle").data([0]);
+		title.enter().append("text").attr("class", "dendrogramTitle").attr("y", -20);
+		title.text (options.title);
+		
+		recurse (cfckDistances, null);
+		
+		var cluster = d3.layout.cluster ();
+		cluster
+			.children (function(d) { return d.left && d.right ? [d.left, d.right] : undefined; })
+			.size ([height, width])
+			.separation (function (a, b) { return 1; })
+		;
+		
+		var nodes = cluster.nodes(cfckDistances);
+		var links = cluster.links(nodes);
+		
+		var crange = d3.extent (nodes, function(d) { return d.dist || 0; });
+		var scaleDown = d3.scale.linear().domain(crange).range(options.ltor ? [width - 5, 5] : [5, width - 5]);
+		var scaleAlong = d3.scale.linear().domain([0, height]).range(options.ttob ? [height, 0] : [0, height]);
+	
+		//console.log ("nodes", nodes, links, crange);
+		
+		nodes.forEach (function(d) { 
+			d.y = scaleDown (d.children && d.children.length ? d.dist || 0 : 0); 
+			d.x = scaleAlong (d.x);
+		});
+		
+		var link = g.selectAll(".dlink").data(links);
+		
+		link.exit().remove();
+		link.enter().append("g")
+			.attr("class", "dlink")
+			.append("path");
+		;
+		link.select("path").attr ("d", function (d) {
+			return "M"+d.source.y+" "+d.source.x+" V "+d.target.x+" H "+d.target.y;
+		});
+		
+		if (options.leafLabels) {
+			var labels = g.selectAll("text.dlabel")
+				.data(nodes.filter (function (d) { return !d.children; }))
+			;
+			labels.exit().remove();
+			labels.enter().append ("text").attr("class", "dlabel");
+			labels.text (options.labelFunc)
+				.style ("text-anchor", options.ltor ? "start" : "end")
+				.attr ("x", options.ltor ? width : 0)
+				.attr ("y", function (d) { return d.x; })
+				.attr ("dy", "0.35em")
+			;
+		} else {
+			g.selectAll(".dlabel").remove();
+		}
+
+		/*
+		var node = g.selectAll(".dnode").data(nodes);
+		node.exit().remove();
+		node.enter().append("g")
+			.attr("class", "dnode")
+			.append("circle")
+			.attr("r", 2.5)
+		;
+		node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+		*/
+	},
 
 
     BaseFrameView: Backbone.View.extend ({
@@ -779,6 +942,77 @@ CLMSUI.utils = {
                 download (svgXML, "application/svg", fileName);
             });
         },
+		
+		getHTMLAsDataURL: function (d3Elem, options, callbackFunc) {
+			var defaults = {
+				removeChildren: undefined,
+			};
+			options = $.extend ({}, defaults, options);
+			
+			callbackFunc = callbackFunc || function () { console.warn ("Missing a callback func for downloadHTMLAsImg!"); };
+			var elemArr = [d3Elem.node()];
+			var elemStrings = CLMSUI.svgUtils.capture (elemArr);
+			var detachedSVG = elemStrings[0];
+            var detachedSVGD3 = d3.select (detachedSVG);
+			
+			var origElem = detachedSVGD3.select(":not(style)");
+			origElem.style ("font-size", "1em");
+			
+			var fo = detachedSVGD3.append(function() {
+					//aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
+					return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")	
+				})
+				.attr("width", "100%").attr("height", "100%")
+				.append ("div")
+					.attr("xmlns", "http://www.w3.org/1999/xhtml")
+					.html (origElem.node().outerHTML);
+			;
+			origElem.remove();
+			//$(fo.node()).append($(table.node()));
+			if (options.removeChildren) {
+				detachedSVGD3.selectAll(options.removeChildren).remove();
+			}
+			var data = detachedSVGD3.node().outerHTML;
+			
+			var canvas = document.createElement ("canvas");
+			d3.select(canvas)
+				.attr ("id", "tempCanvas")
+				.style("display", "none")
+				.attr ("width", $(detachedSVGD3.node()).width())
+				.attr ("height", $(detachedSVGD3.node()).height())
+			;
+    		var ctx = canvas.getContext("2d");
+			
+			var svg = new Blob([data], {
+				type: "image/svg+xml;charset=utf-8"
+			});
+			//var DOMURL = URL || webkitURL || this;
+			//var url = DOMURL.createObjectURL(svg);	// causes tainted canvas error due to https://bugs.chromium.org/p/chromium/issues/detail?id=294129
+			// console.log ("sv", svg, url);
+			
+			var img = new Image();
+			img.setAttribute ("crossOrigin", "anonymous");
+			img.onerror = function () {
+				callbackFunc (undefined);
+			}
+			img.onload = function() {
+				ctx.drawImage (img, 0, 0);
+				//console.log ("img", img, url);
+				
+				img = null;
+				//DOMURL.revokeObjectURL (url);
+				
+				var dataURL = canvas.toDataURL();
+				var size = {width: canvas.width, height: canvas.height};
+				canvas = null;
+				
+				callbackFunc (dataURL, size);
+				//console.log ("dd", dataURL);
+			}
+		
+			// Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129
+    		img.src = "data:image/svg+xml;charset=utf-8," + data;  
+		},
 
 
         hideView: function () {
@@ -898,7 +1132,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend ({
         d3.select(this.el).attr ("class", "btn selectHolder")
 			.append ("span")
 			.attr ("class", "noBreak")
-			.text("Change Cross-Link Colour Scheme ►")
+			.html("<span class='rainbow'></span>Choose Cross-Link Colour Scheme ►")
         ;
 
         var addOptions = function (selectSel) {

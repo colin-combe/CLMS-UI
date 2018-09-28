@@ -131,9 +131,24 @@ changes there are automatically reflected in the legend
 }
 
 .keyPanel .toolbar {
-	margin-bottom: 1em;
+	margin-bottom: 0.5em;
 }
 
-#linkColourDropdownPlaceholder {
-    margin-bottom: 0.4em;
+.groupHeader {
+	padding-top: 0.25em;
+	border-top: 2px solid #aaa;
+	margin-top: 0.75em;
+	margin-bottom: 0.5em;
+	font-size: 1.2em;
+	color: #668;
+}
+
+.keyPanel .panelInner div:first-of-type .groupHeader {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: none;
+}
+
+.keyPanel .downloadButton3 {
+	margin-top: 0.5em;
 }

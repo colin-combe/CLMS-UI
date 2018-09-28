@@ -242,9 +242,9 @@ CLMSUI.init.modelsEssential = function(options) {
         matchScoreCutoff: scoreExtentInstance.slice()
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
-    filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
-    console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
+    filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
+    console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {
         scoreExtent: scoreExtentInstance
     });
 
@@ -278,7 +278,7 @@ CLMSUI.init.views = function() {
     console.log("MODEL", compModel);
 
     //todo: only if there is validated {
-    compModel.get("filterModel").set("unval", false);
+    // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
     var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
@@ -299,7 +299,7 @@ CLMSUI.init.views = function() {
             id: "circularChkBxPlaceholder",
             label: "Circular",
             eventName: "circularShow",
-            tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between"
+            tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between",
         },
         {
             id: "nglChkBxPlaceholder",
@@ -313,7 +313,6 @@ CLMSUI.init.views = function() {
             eventName: "matrixShow",
             tooltip: "AKA Contact Map. Relevant PDB File required for distance background"
         },
-        //{id: "listChkBxPlaceholder", label: "List", eventName: "listShow", tooltip: "Sortable list of cross-links"},
         {
             id: "proteinInfoChkBxPlaceholder",
             label: "Protein Info",
@@ -338,8 +337,14 @@ CLMSUI.init.views = function() {
             label: "Scatterplot",
             eventName: "scatterplotShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
-            sectionEnd: true
         },
+		{
+			id: "listChkBxPlaceholder", 
+			label: "List / HeatMap", 
+			eventName: "listShow", 
+			tooltip: "Sortable list of cross-links, can convert to heatmap",
+			sectionEnd: true
+		},
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
@@ -361,12 +366,8 @@ CLMSUI.init.views = function() {
         },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend({
-            labelFirst: false
-        }, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView({
-            myOptions: options
-        });
+        var options = $.extend({labelFirst: false}, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView({myOptions: options});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
@@ -480,7 +481,7 @@ CLMSUI.init.views = function() {
     // Set up a one-time event listener that is then called from allDataLoaded
     // Once this is done, the views depending on async loading data (blosum, uniprot) can be set up
     // Doing it here also means that we don't have to set up these views at all if these views aren't needed (e.g. for some testing or validation pages)
-    CLMSUI.compositeModelInst.listenToOnce(CLMSUI.vent, "buildAsyncViews", function() {
+    CLMSUI.compositeModelInst.listenToOnce (CLMSUI.vent, "buildAsyncViews", function() {
         CLMSUI.init.viewsThatNeedAsyncData();
     })
 };
@@ -682,7 +683,7 @@ CLMSUI.init.viewsEssential = function(options) {
         myOptions: {
             title: "Export",
             menu: [{
-                    name: "Filtered Links as CSV",
+                    name: "Filtered Cross-Links as CSV",
                     func: downloadLinks,
                     tooltip: "Produces a CSV File of Filtered Cross-Link data"
                 },
@@ -716,20 +717,24 @@ CLMSUI.init.viewsEssential = function(options) {
         myOptions: {
             title: "Help",
             menu: [{
+                    name: "Xi Docs",
+                    func: function() {
+                        window.open("../xidocs/html/xiview.html", "_blank");
+                    },
+                    tooltip: "Documentation for Xi View"
+                },{
                     name: "Online Videos",
                     func: function() {
                         window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank");
                     },
                     tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
-                },
-                {
+                },{
                     name: "Report Issue on Github",
                     func: function() {
                         window.open("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank");
                     },
                     tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
-                },
-                {
+                },{
                     name: "About Xi View",
                     func: function() {
                         window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
@@ -887,14 +892,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // This makes a list viewer
-    /*
     new CLMSUI.ListViewBB ({
         el: "#listPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "listShow",
     });
-	*/
 
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync

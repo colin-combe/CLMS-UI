@@ -1,5 +1,16 @@
 var CLMSUI = CLMSUI || {};
 
+CLMSUI.clearFdr = function (crossLinksArr) {
+	// clear fdr information from crosslinks (usually because we've gone into none-fdr mode and don't want it showing in tooltips)
+	crossLinksArr.forEach (function (crossLink) {
+		var meta = crossLink.meta;
+		if (meta) {
+			if (meta.fdr !== undefined) { meta.fdr = undefined; }
+			if (meta.meanMatchScore !== undefined) { meta.meanMatchScore = undefined; }
+		}	
+	});
+};
+
 CLMSUI.fdr = function (crossLinksArr, options) {
 
     var defaultScoreCalcFunc = function (crossLink) {      // default function is based on quadratic mean (rms)

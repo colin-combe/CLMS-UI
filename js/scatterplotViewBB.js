@@ -256,10 +256,11 @@
             selectList: ["X", "Y"], 
             optionList: options, 
 			keepOldOptions: keepOld || false,
-            selectLabelFunc: function (d) { return "Plot This Data Along ("+d+") Axis ►"; }, 
+            selectLabelFunc: function (d) { return "Plot This Data On The "+d+" Axis ►"; }, 
             optionLabelFunc: function (d) { return d.label; }, 
 			optionValueFunc: function (d) { return d.id; },
             changeFunc: function () { self.axisChosen().render(); },
+			idFunc: function (d) { return d.id; },
         });
 	},
         
@@ -822,7 +823,7 @@
             
             // Remove unknown from appearing in title if no data falls into this category
             //console.log ("COUNTS", this.counts);
-            if (counts[counts.length - 1] === 0) {
+            if (_.last(counts) === 0) {
                 counts.pop();
             }
             this.makeChartTitle (counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
