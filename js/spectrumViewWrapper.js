@@ -253,28 +253,29 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     optionsToString: function () {
         //console.log ("this", this);
         var match = this.primaryMatch;
+		console.log ("MATCH", match);
         var description = [
             {field: "id"},
             {label: "prot1", value: CLMSUI.utils.proteinConcat (match, 0, this.model.get("clmsModel"))},
             {label: "pep1", value: match.matchedPeptides[0].sequence},
             {label: "pos1", value: match.matchedPeptides[0].pos[0]},
-            {field: "lp1"},
+            {label: "lp1", value: match.linkPos1},
         ];
         if (match.matchedPeptides[1]) {
             description.push (
                 {label: "prot2", value: CLMSUI.utils.proteinConcat (match, 1, this.model.get("clmsModel"))},
                 {label: "pep2", value: match.matchedPeptides[1].sequence},
                 {label: "pos2", value: match.matchedPeptides[1].pos[0]},
-                {field: "lp2"}
+                {label: "lp2", value: match.linkPos2}
             );
         }
         description.push (
-            {field: "score"},
+            {field: "score", value: match.score()},
             {field: "autovalidated", label: "Auto"},
             {field: "validated", label: "Val"},
             //["precursorCharge"],
             {field: "searchId"},
-            {label:"run", value: match.runName()},
+            {label: "run", value: match.runName()},
             {field: "scanNumber"},
             {field: "is_decoy", label:"Decoy"}
         );
