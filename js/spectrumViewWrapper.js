@@ -200,9 +200,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
             var visible = !!match;
             if (this.isVisible() !== visible) {
                 //console.log ("CHANGE VISIBILITY");
-                if (match.spectrum.pks) {
-                    CLMSUI.vent.trigger ("spectrumShow", visible);
-                }
+                CLMSUI.vent.trigger ("spectrumShow", visible);
             }
             CLMSUI.vent.trigger ("individualMatchSelected", match);
             this.enableControls (match);
