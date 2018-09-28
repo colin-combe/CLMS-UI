@@ -35,7 +35,7 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
         }
         formatted_data.losses.push(formatted_loss);
         // ToDo: remove tmp fix for losses to customConfig
-        formatted_data.customConfig.push(loss.description);
+        // formatted_data.customConfig.push(loss.description);
     });
 
     var ions = match.ionTypes();
