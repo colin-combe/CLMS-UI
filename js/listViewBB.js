@@ -381,22 +381,28 @@
 		var csettings = d3.entries(this.d3table.columnSettings());
 		
 		var ps = this.d3table.pageSize();
-		this.d3table.pageSize(120 - ps).update();
+		this.d3table.pageSize(120 - ps);
 		
 		if (!heatMap) {
 			csettings.forEach (function (cEntry) {
-				var cindex = this.d3table.getColumnIndex(cEntry.key);
-				this.d3table.showColumn (cindex + 1, cEntry.value.visible);
+				this.d3table.showColumnByKey (cEntry.key, this.visColDefaults[cEntry.key]);
 			}, this);
 		} else {
+			// store default visibilities for restoration later
+			this.visColDefaults = {};
+			csettings.forEach (function (csetting) {
+				this.visColDefaults[csetting.key] = csetting.value.visible;
+			}, this);
+			
 			var showSet = d3.set(this.viewStateModel.get("statColumns").values());
 			showSet.add ("treeOrder");
 			showSet.add ("kmcluster");
 			csettings.forEach (function (cEntry) {
-				var cindex = this.d3table.getColumnIndex(cEntry.key);
-				this.d3table.showColumn (cindex + 1, showSet.has (cEntry.key));
+				this.d3table.showColumnByKey (cEntry.key, showSet.has (cEntry.key));
 			}, this);
 		}
+		
+		this.d3table.update();
 		
 		return this;
 	},
