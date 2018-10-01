@@ -53,6 +53,14 @@
 	border-color: #091d42;
 }
 
+table.heatmap.d3table {
+	margin-left: 0;
+	margin-right: 0;
+	min-width: 1em;
+	table-layout: fixed;
+	overflow: hidden;
+}
+
 
 .listView table.heatmap.d3table tbody tr {
 	line-height: 5px;
@@ -82,8 +90,6 @@
 }
 
 .listView table.heatmap.d3table thead th {
-	max-width: 1em;
-	min-width: 1em;
 	height: inherit;
 	text-overflow: clip;
 } 
