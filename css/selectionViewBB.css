@@ -15,7 +15,7 @@
 }
 
 .selectView TABLE TH  {
-    vertical-align: top;
+    vertical-align: bottom;
 }
 
 .selectView THEAD {
@@ -74,6 +74,10 @@
     max-width: 12em;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.selectView TD.minWidth {
+    min-width: 6em;
 }
 
 .selectView TD.emphasise {
@@ -141,5 +145,9 @@
 
 #alternatives .selectionTableHideToggle {
 	display: inline-block;
+}
+
+.selectView .smallText {
+	font-size: 0.8em;
 }
 
