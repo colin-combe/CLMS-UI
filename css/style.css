@@ -262,7 +262,8 @@ span, label {
 }
 
 #main .controls{
-    overflow: hidden;
+    overflow-y: hidden;
+	overflow-x: visible;
     /*display: table-row;*/
 
     position: fixed;
