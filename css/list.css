@@ -132,3 +132,13 @@ g.dendro {
 	font-family: Arial, sans-serif;
 	text-anchor: middle;
 }
+
+input.group {
+	width: 2.2em;
+	line-height: 1rem;
+	float: right;
+}
+
+.listView .ms-drop li label {
+	display: inline-block;
+}
