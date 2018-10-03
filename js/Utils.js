@@ -756,6 +756,8 @@ CLMSUI.utils = {
 			leafLabels: true,
 			labelFunc: function (d) { return d ? d.value : ""; },
 			title: "A Dendrogram",
+			height: cfckDistances.size * 5,
+			width: 100,
 		}
 		options = $.extend ({}, defaultOptions, options);
 		
@@ -768,11 +770,8 @@ CLMSUI.utils = {
 				tree.origValue = tree.value;
 			}
 		}
-		
-		var height = cfckDistances.size * 5;
-		var width = 100;
 
-		svgd3.attr("width", width).attr("height", height);
+		svgd3.attr("width", options.width).attr("height", options.height);
 		var g = svgd3.selectAll("g.dendro").data([0]);
 		g.enter().append("g").attr("class", "dendro");
 		
@@ -785,7 +784,7 @@ CLMSUI.utils = {
 		var cluster = d3.layout.cluster ();
 		cluster
 			.children (function(d) { return d.left && d.right ? [d.left, d.right] : undefined; })
-			.size ([height, width])
+			.size ([options.height, options.width])
 			.separation (function (a, b) { return 1; })
 		;
 		
@@ -793,8 +792,8 @@ CLMSUI.utils = {
 		var links = cluster.links(nodes);
 		
 		var crange = d3.extent (nodes, function(d) { return d.dist || 0; });
-		var scaleDown = d3.scale.linear().domain(crange).range(options.ltor ? [width - 5, 5] : [5, width - 5]);
-		var scaleAlong = d3.scale.linear().domain([0, height]).range(options.ttob ? [height, 0] : [0, height]);
+		var scaleDown = d3.scale.linear().domain(crange).range(options.ltor ? [options.width - 5, 5] : [5, options.width - 5]);
+		var scaleAlong = d3.scale.linear().domain([0, options.height]).range(options.ttob ? [options.height, 0] : [0, options.height]);
 	
 		//console.log ("nodes", nodes, links, crange);
 		
@@ -822,7 +821,7 @@ CLMSUI.utils = {
 			labels.enter().append ("text").attr("class", "dlabel");
 			labels.text (options.labelFunc)
 				.style ("text-anchor", options.ltor ? "start" : "end")
-				.attr ("x", options.ltor ? width : 0)
+				.attr ("x", options.ltor ? options.width : 0)
 				.attr ("y", function (d) { return d.x; })
 				.attr ("dy", "0.35em")
 			;
