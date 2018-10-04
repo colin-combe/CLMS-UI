@@ -181,7 +181,6 @@
 			.postUpdate (empowerRows)
 		;
 		
-		
 		// Second row of controls
 		
 		this.updateColumnSelector (this.controlDiv2, d3table, undefined);
@@ -327,7 +326,7 @@
 		selects.property("multiple", "true");	// important, set select to allow multiple choices
 		this.columnChoices = selects;
 		
-		$(selects.node()).multipleSelect ({  
+		var ms = $(selects.node()).multipleSelect ({  
 			width: 200,
 			onClick: function (view) {
 				var key = view.value;
@@ -349,7 +348,18 @@
 
 		$(selects.node()).multipleSelect ("setSelects", this.viewStateModel.get("statColumns").values());
 		
-		console.log ("listview", this);
+		var mslist = d3.select(this.el).select(".ms-drop ul");
+		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
+		items.selectAll("input.group").data(function(d) { return d.key; }, function(d) { return d.key; })
+			.enter()
+			.append("input")
+			.attr("class", "group")
+			.attr("type", "number")
+			.attr("title", "Set group number (to do)")
+		;
+		
+		
+		console.log ("listview", this, ms);
 		
 		return this;
 	},
@@ -444,9 +454,9 @@
 			var columnIndex = columnIndexMap[d.key];
 			var colValue;
 			if (colourScheme && columnIndex !== undefined) {
-				var linkZScores = stats.zscores[d.value.id];
+				var linkZScores = stats.zscores[d.value.id];	// d.value is crosslink
 				if (linkZScores) {
-					var val = linkZScores[columnIndex];	// d.value is crosslink
+					var val = linkZScores[columnIndex];
 					colValue = val !== undefined ? colourScheme.getColourByValue (val) : undefined;
 				}
 			}
