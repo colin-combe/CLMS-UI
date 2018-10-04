@@ -3,7 +3,7 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
     {
-        FilterModel: Backbone.Model.extend({
+    /*    FilterModel: Backbone.Model.extend({
             defaults: {
                 manualMode: true,
                 fdrMode: false,
@@ -95,7 +95,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var aaApart = +this.get("aaApart");
                 if (!isNaN(aaApart)) {
                     // if not homomultimer and not ambig and is a selfLink
-                    if (/*!match.confirmedHomomultimer &&*/ !ambig && match.crossLinks[0].isSelfLink()) {
+                    if (/*!match.confirmedHomomultimer &&*/ /*!ambig && match.crossLinks[0].isSelfLink()) {
                         // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
                         var unambigCrossLink = match.crossLinks[0];
                         var calc = Math.abs (unambigCrossLink.toResidue - unambigCrossLink.fromResidue);
@@ -240,7 +240,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         }
                     }
                 }
-                */
+                *//*
             },
 
             navigationFilter: function (match) {
@@ -405,7 +405,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 				return filterChunkMap;
 			},
 
-        }),
+        }),*/
 
         // I want MinigramBB to be model agnostic so I can re-use it in other places
         MinigramModel: Backbone.Model.extend({
