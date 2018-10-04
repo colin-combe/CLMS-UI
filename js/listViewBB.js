@@ -26,6 +26,7 @@
 		heatMap: false,
 		statDistance: "euclidean",
 		statLinkage: "average",
+		groups: {},
 	},
 
     initialize: function (viewOptions) {
@@ -326,40 +327,47 @@
 		selects.property("multiple", "true");	// important, set select to allow multiple choices
 		this.columnChoices = selects;
 		
-		var ms = $(selects.node()).multipleSelect ({  
-			width: 200,
-			onClick: function (view) {
-				var key = view.value;
-				var statColumns = self.viewStateModel.get("statColumns");
-				statColumns[view.checked ? "add" : "remove"](key);
-				self.viewStateModel
-					.set ("statColumns", statColumns)
-					.trigger ("change:statColumns", self.viewStateModel)
-				;
-			},
-			onCheckAll: function () {
-				var keys = getPickableColumns().map (function (pcolumn) { return pcolumn.key; });
-				self.viewStateModel.set("statColumns", d3.set(keys));
-			},
-			onUncheckAll: function () {
-				self.viewStateModel.set("statColumns", d3.set([]));
-			}
-		});
+		//if (!this.ms) {
+			this.ms = $(selects.node()).multipleSelect ({  
+				width: 200,
+				onClick: function (view) {
+					var key = view.value;
+					var statColumns = self.viewStateModel.get("statColumns");
+					statColumns[view.checked ? "add" : "remove"](key);
+					self.viewStateModel
+						.set ("statColumns", statColumns)
+						.trigger ("change:statColumns", self.viewStateModel)
+					;
+				},
+				onCheckAll: function () {
+					var keys = getPickableColumns().map (function (pcolumn) { return pcolumn.key; });
+					self.viewStateModel.set("statColumns", d3.set(keys));
+				},
+				onUncheckAll: function () {
+					self.viewStateModel.set("statColumns", d3.set([]));
+				}
+			});
 
-		$(selects.node()).multipleSelect ("setSelects", this.viewStateModel.get("statColumns").values());
+			$(selects.node()).multipleSelect ("setSelects", this.viewStateModel.get("statColumns").values());
+		//} else {
+		//	$(selects.node()).multipleSelect ("refresh");
+		//}
 		
 		var mslist = d3.select(this.el).select(".ms-drop ul");
 		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
-		items.selectAll("input.group").data(function(d) { return d.key; }, function(d) { return d.key; })
+		items.selectAll("input.group").data(function(d) { return [d]; }, function(d) { return d.key; })
 			.enter()
-			.append("input")
-			.attr("class", "group")
-			.attr("type", "number")
-			.attr("title", "Set group number (to do)")
+			.insert("input", ":first-child")
+				.attr("class", "group")
+				.attr("type", "number")
+				.attr("title", "Set group number (to do)")
+				.on ("input", function (d) {
+					console.log ("d", d, d3.select(this).property("value"));
+					self.options.groups[d] = d3.select(this).property("value");
+				})
 		;
 		
-		
-		console.log ("listview", this, ms);
+		console.log ("listview", this);
 		
 		return this;
 	},
@@ -445,19 +453,19 @@
 		CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: stats.zrange});	// make colour model based on z value extents
 		
 		var columnIndexMap = {};
-		this.viewStateModel.get("statColumns").values().forEach (function (columnKey, i) {
+		stats.zColumnNames.forEach (function (columnKey, i) {
 			columnIndexMap[columnKey] = i;
 		});
 		
 		this.zCellColourer = function (d) {
 			var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
-			var columnIndex = columnIndexMap[d.key];
+			var zcolumnIndex = columnIndexMap[d.key];
 			var colValue;
-			if (colourScheme && columnIndex !== undefined) {
+			if (colourScheme && zcolumnIndex !== undefined) {
 				var linkZScores = stats.zscores[d.value.id];	// d.value is crosslink
 				if (linkZScores) {
-					var val = linkZScores[columnIndex];
-					colValue = val !== undefined ? colourScheme.getColourByValue (val) : undefined;
+					var val = linkZScores[zcolumnIndex];
+					colValue = val !== undefined ? colourScheme.getColourByValue (val) : colourScheme.undefinedColour;
 				}
 			}
 			return colValue;

@@ -857,6 +857,8 @@ CLMSUI.modelUtils = {
 	
 	// normalise an array of values
 	zscore: function (vals) {
+		if (vals.length === 0) { return [undefined]; }
+		if (vals.length === 1) { return [0]; }
 		//console.log ("vals", vals);
 		var avg = d3.mean (vals);
 		var sd = d3.deviation (vals);
@@ -889,12 +891,86 @@ CLMSUI.modelUtils = {
 		};
 		var options = $.extend ({}, defaults, myOptions);
 		
+		console.log ("cl", crossLinks, options);
+		
 		// calc zscores for each data column
 		var zscores = options.columns.map (function (dim) {
 			var vals = options.accessor (crossLinks, dim);
-			return CLMSUI.modelUtils.zscore (vals);
+			var zscore = CLMSUI.modelUtils.zscore (vals);
+			zscore.colName = dim;
+			return zscore;
 		}, this);
-		var zrange = d3.extent (d3.merge (zscores.map (function (zs) { return d3.extent (zs); })));
+		
+		function makeGroups (zscores, groupFunction) {
+			var gset = d3.map();
+			var index = 0;
+			var colNameGroups = [];
+			
+			zscores.forEach (function (zscore) {
+				var val;
+				var colName = zscore.colName;
+				if (groupFunction) {
+					val = groupFunction (zscore);
+				} else {
+					var match = colName.match(/\d+/g);
+					val = match && match.length ? match[0] : undefined;
+				}
+				
+				if (val !== undefined) {
+					var groupIndex = gset.get (val);
+					if (groupIndex === undefined) {
+						gset.set (val, index);
+						groupIndex = index;
+						colNameGroups[groupIndex] = [];
+						index++;
+					}
+					colNameGroups[groupIndex].push (colName)
+					zscore.groupIndex = groupIndex;
+				}
+			});
+			
+			return colNameGroups;
+		}
+		
+		var colNameGroups = makeGroups (zscores);
+		console.log ("zscores", zscores, colNameGroups);
+		
+		function averageGroups (zscores, colNameGroups, averageFunc) {
+			averageFunc = averageFunc || d3.mean;
+			
+			var groupIndices = zscores.map (function (zscore) { return zscore.groupIndex; });
+			var colRange = _.range(colNameGroups.length);
+			var avgColumns = colRange.map(function() { return []; });
+			
+			for (var n = 0; n < zscores[0].length; n++) {
+				var groups = colRange.map(function() { return []; });
+				
+				for (var c = 0; c < zscores.length; c++) {
+					if (groupIndices[c] !== undefined) {
+						var val = zscores[c][n];
+						if (val) {
+							groups[groupIndices[c]].push (val);
+						}
+					}
+				}
+				
+				var avgs = groups.map (function (group, i) {
+					var avg = group.length ? averageFunc(group) : undefined;
+					avgColumns[i].push (avg);
+				});
+			}
+			
+			avgColumns.forEach (function (avgColumn, i) {
+				avgColumn.colName = colNameGroups[i].join(";");
+			});
+			
+			return avgColumns;
+		}
+		
+		var zGroupAvgScores = averageGroups (zscores, colNameGroups);
+		zscores = zscores.concat (zGroupAvgScores);
+		console.log ("zlinkGroupAvgScores", zGroupAvgScores, zscores);
+		
 		
 		// transpose to get scores per link not per column
 		var zscoresByLink = d3.transpose (zscores);
@@ -904,76 +980,27 @@ CLMSUI.modelUtils = {
 			zslink.clink = crossLinks[i];
 		});
 		
-		zscores.forEach (function (zs, i) {
-			zs.colName = options.columns[i];
-		});
-		
-		
 		// get rid of arrays with no defined values
 		zscoresByLink = zscoresByLink.filter (function (arr) {
 			return !_.every (arr, function (val) { return val === undefined; });
 		});
 		
-		function setGroups (zscores, groupFunction) {
-			var gset = d3.map();
-			var index = 0;
-			zscores.forEach (function (zscore) {
-				var val = groupFunction ? groupFunction (zscore) : zscore.colName.match(/\d+/g)[0]; 
-				var groupIndex = gset.get (val);
-				if (groupIndex === undefined) {
-					gset.set (val, index);
-					groupIndex = index;
-					index++;
-				}
-				zscore.groupIndex = groupIndex;
-			});
-		}
+		var colNames = zscores.map (function (col) { return col.colName; });
 		
-		setGroups (zscores);
-		console.log ("zscores", zscores);
-		
-		function averageGroups (zlinkScores, averageFunc) {
-			averageFunc = averageFunc || d3.mean;
-			var zlinkGroupAvgScores = zlinkScores.map (function (zlinkSingle) {
-				var groups = [];
-				zlinkSingle.forEach (function (score, i) {
-					var groupIndex = zscores[i].groupIndex;
-					if (!groups[groupIndex]) {
-						groups[groupIndex] = [];
+		function normalizeToColumn (zlinkScores, columnName) {
+			var columnIndex = colNames.indexOf (columnName);
+			if (columnIndex >= 0) {
+				zlinkScores.forEach (function (row) {
+					var base = row[columnIndex];
+					for (var n = 0; n < row.length; n++) {
+						row[n] = base !== undefined && row[n] !== undefined ? row[n] - base : undefined;
 					}
-					groups[groupIndex].push (score);
 				});
-				
-				var avgs = groups.map (function (group) {
-					return group ? averageFunc(group) : undefined;
-				});
-				avgs.clink = zlinkSingle.clink;
-				
-				return avgs;
-			});
-			
-			return zlinkGroupAvgScores;
+			}
 		}
 		
-		var zlinkGroupAvgScores = averageGroups (zscoresByLink);
-		console.log ("zlinkGroupAvgScores", zlinkGroupAvgScores);
-	
-		function normalizeToGroup (zlinkGroupAvgScores, groupIndex) {
-			zlinkGroupAvgScores.forEach (function (row) {
-				var base = row[groupIndex];
-				for (var n = 0; n < row.length; n++) {
-					row[n] = base !== undefined && row[n] !== undefined ? row[n] - base : undefined;
-				}
-			});
-		}
-		
-		var zlinkGroupAvgScoresNormed = zlinkGroupAvgScores.map (function (row) { 
-			var a = row.slice();
-			a.clink = row.clink;
-			return a; 
-		});
-		normalizeToGroup (zlinkGroupAvgScoresNormed, 2);
-		console.log ("zlinkGroupAvgScoresNormed", zlinkGroupAvgScoresNormed);
+		normalizeToColumn (zscoresByLink, zGroupAvgScores ? zGroupAvgScores[0].colName : "unknown");
+		console.log ("zscoresByLink", zscoresByLink);
 		
 		//var kkmeans = clusterfck.kmeans (zscores, undefined, options.distance);
 		//console.log ("kkmeans", kkmeans);
@@ -982,6 +1009,7 @@ CLMSUI.modelUtils = {
 		var kmeans = clusterfck.kmeans (inputScores, undefined, options.distance);
 		var zdistances = clusterfck.hcluster (inputScores, options.distance, options.linkage);
 		var treeOrder = this.flattenBinaryTree (zdistances.tree);
+		var zrange = d3.extent (d3.merge (inputScores.map (function (zs) { return d3.extent (zs); })));
 		//console.log ("zs", zscoresByLink);
 		//console.log ("kmeans", kmeans);
 		//console.log ("distance", zdistances, treeOrder);
@@ -1000,9 +1028,27 @@ CLMSUI.modelUtils = {
 			value.clink.meta.treeOrder = i+1;
 		});
 		
+		var groupColumns = zGroupAvgScores.map (function (avgColumn) {
+			return {name: avgColumn.colName, index: colNames.indexOf (avgColumn.colName)};
+		});
+		console.log ("groupColumns", groupColumns);
+		
+		zscoresByLink.forEach (function (zlinkScore) {
+			var clink = zlinkScore.clink;
+			if (!clink.meta) { clink.meta = {}; }
+			groupColumns.forEach (function (groupColumn) {
+				clink.meta[groupColumn.name] = zlinkScore[groupColumn.index];
+			})
+		});
+		
+		var newAndUpdatedColumns = zGroupAvgScores
+			.map (function (col) { return col.colName; })
+			.concat (["kmcluster", "treeOrder"])
+		;
+		
 		CLMSUI.vent.trigger ("linkMetadataUpdated", {
-			columns: ["kmcluster", "treeOrder"], 
-			columnTypes: {kmcluster: "numeric", treeOrder: "numeric"}, 
+			columns: newAndUpdatedColumns, 
+			columnTypes: _.object (newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() { return "numeric"; })), 
 			items: crossLinks, 
 			matchedItemCount: zscoresByLink.length
 		});	
@@ -1012,7 +1058,7 @@ CLMSUI.modelUtils = {
 			zscoresByLinkMap[linkZScores.clink.id] = linkZScores;
 		});
 		
-		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zrange: zrange, zscores: zscoresByLinkMap};
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zrange: zrange, zColumnNames: colNames, zscores: zscoresByLinkMap};
 	},
 
 	// test to ignore short chains and those that are just water molecules
