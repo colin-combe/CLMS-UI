@@ -725,6 +725,16 @@ CLMSUI.modelUtils = {
 		function getValueN (ref, n, d) {
 			return d[ref+" "+n] || d[ref+n];
 		}
+		
+		function parseProteinID (i, d) {
+			var p = getValueN ("Protein", i, d);
+			var parts = p ? p.split("|") : [];
+			var pkey;
+			parts.forEach (function (part) {
+				pkey = pkey || protMap.get(part);
+			});
+			return pkey;
+		}
 
 		var matchedCrossLinks = [];
         d3.csv.parse (metaDataFileContents, function (d) {
@@ -733,17 +743,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLink) {
-				var p1 = getValueN ("Protein", 1, d);
-				var p2 = getValueN ("Protein", 2, d);
-                var parts1 = p1 ? p1.split("|") : [];
-                var parts2 = p2 ? p2.split("|") : [];
-                var pkey1, pkey2;
-                parts1.forEach (function (part) {
-                    pkey1 = pkey1 || protMap.get(part);
-                });
-                parts2.forEach (function (part) {
-                    pkey2 = pkey2 || protMap.get(part);
-                });
+				var pkey1 = parseProteinID (1, d);
+				var pkey2 = parseProteinID (2, d);
                 linkID = pkey1+"_"+getValueN("SeqPos", 1, d)+"-"+pkey2+"_"+getValueN("SeqPos", 2, d);
                 crossLink = crossLinks.get(linkID);
             }
@@ -790,8 +791,12 @@ CLMSUI.modelUtils = {
 		    })
 		;
 		
+		var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
+		columns.forEach (function (column) { registry.add (column); });
+		clmsModel.set("crossLinkMetaRegistry", registry);
+		
         if (columns) {
-            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, columnTypes: columnTypes, items: crossLinks, matchedItemCount: matchedCrossLinkCount});
+            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, columnTypes: columnTypes, items: crossLinks, matchedItemCount: matchedCrossLinkCount}, {source: "file"});
         }
     },
 
@@ -875,22 +880,21 @@ CLMSUI.modelUtils = {
 		var defaults = {
 			distance: "euclidean",
 			linkage: "average",
+			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
+			accessor: function (crossLinks, dim) {
+				return crossLinks.map (function (crossLink) {
+					return crossLink[dim] || (crossLink.meta ? crossLink.meta[dim] : undefined);
+				});
+			}
 		};
 		var options = $.extend ({}, defaults, myOptions);
 		
-		var metaDims = ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"];
-		
-		function metaPluck (crossLinks, dim) {
-			return crossLinks.map (function (crossLink) {
-				return crossLink.meta ? crossLink.meta[dim] : undefined;
-			});
-		}
-		
 		// calc zscores for each data column
-		var zscores = metaDims.map (function (dim) {
-			var vals = metaPluck (crossLinks, dim);
+		var zscores = options.columns.map (function (dim) {
+			var vals = options.accessor (crossLinks, dim);
 			return CLMSUI.modelUtils.zscore (vals);
 		}, this);
+		var zrange = d3.extent (d3.merge (zscores.map (function (zs) { return d3.extent (zs); })));
 		
 		// transpose to get scores per link not per column
 		var zscoresByLink = d3.transpose (zscores);
@@ -910,15 +914,19 @@ CLMSUI.modelUtils = {
 		var treeOrder = this.flattenBinaryTree (zdistances.tree);
 		//console.log ("zs", zscoresByLink);
 		//console.log ("kmeans", kmeans);
-		console.log ("distance", zdistances, treeOrder);
+		//console.log ("distance", zdistances, treeOrder);
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {
-				arr.clink.meta.kmcluster = i+1;
+				var clink = arr.clink;
+				if (!clink.meta) { clink.meta = {}; }
+				clink.meta.kmcluster = i+1;
 			});
 		});
 		
 		treeOrder.forEach (function (value, i) {
+			var clink = value.clink;
+			if (!clink.meta) { clink.meta = {}; }
 			value.clink.meta.treeOrder = i+1;
 		});
 		
@@ -928,6 +936,13 @@ CLMSUI.modelUtils = {
 			items: crossLinks, 
 			matchedItemCount: zscoresByLink.length
 		});	
+		
+		var zscoresByLinkMap = {};
+		treeOrder.forEach (function (linkZScores) {
+			zscoresByLinkMap[linkZScores.clink.id] = linkZScores;
+		});
+		
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zrange: zrange, zscores: zscoresByLinkMap};
 	},
 
 	// test to ignore short chains and those that are just water molecules

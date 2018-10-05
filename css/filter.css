@@ -1,11 +1,13 @@
 #filterPlaceholder {
     display: inline-flex;
+	position: fixed;
 }
 
 .filterControlGroup {
 	position: relative;
 	vertical-align: top;
-    display: inline-block;
+    /*display: inline-block;*/
+	display: inline-flex;
     padding: 0 0.35em 0 0;
 	border-right: 1px solid #bbb;
 	margin: auto 0.35em auto 0;
@@ -136,4 +138,20 @@ div.textFilters, div.toggles, div.scoreSlider > div, div.navNumberFilterDiv {
 
 div.filterControlGroup label.noBreak2 {
 	display: inline-block;
+}
+
+.tallButton {
+	height: 100%;
+	width: 1em;
+	margin: 0 0.5em 0 0;
+}
+
+.fixedBottomRight {
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	height: 65px;
+	width: 20px;
+	background: #eee;
+	padding: 0.2em;
 }

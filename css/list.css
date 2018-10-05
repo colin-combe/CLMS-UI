@@ -44,8 +44,32 @@
 	background: inherit;
 }
 
+.listView .ms-parent, .listView .ms-parent span {
+	font-family: "Lato-Bold", Helvetica, Arial, sans-serif;
+	color: #091d42;
+}
+
+.listView .ms-parent button {
+	border-color: #091d42;
+}
+
+table.heatmap.d3table {
+	margin-left: 0;
+	margin-right: 0;
+	min-width: 1em;
+	table-layout: fixed;
+	overflow: hidden;
+}
+
 
 .listView table.heatmap.d3table tbody tr {
+	line-height: 5px;
+	height: 5px;
+	border: none;
+	background: inherit;
+} 
+
+.listView table.heatmap.d3table tbody tr:nth-child(2n) {
 	line-height: 5px;
 	height: 5px;
 	border: none;
@@ -56,18 +80,16 @@
 	border: none;
 	width: 10px;
 	max-width: 10px;
-	font-size: 0.5em;
+	font-size: 0;
 	line-height: 0.5em;
 	height: 0.5em;
 } 
 
-.listView table.heatmap.d3table tbody tr td:not(:first-child) {
-	font-size: 0;
+.listView table.heatmap.d3table tbody tr td.showText {
+	font-size: 0.5em;
 }
 
 .listView table.heatmap.d3table thead th {
-	max-width: 1em;
-	min-width: 1em;
 	height: inherit;
 	text-overflow: clip;
 } 
@@ -82,3 +104,31 @@
 	width: 1em;
     height: 10em;
 } 
+
+.dlink {
+	stroke: #222; 
+	fill: none;
+}
+
+.dnode {
+	fill: black;
+	stroke: none;
+	display: none;
+}
+
+.dnone node--internal {
+	fill: cyan;
+	stroke: none;
+}
+
+g.dendro {
+	shape-rendering: crispEdges;
+	font-size: 5px;
+	font-family: Arial, sans-serif;
+}
+
+.dendrogramTitle {
+	font-size: 0.5rem;
+	font-family: Arial, sans-serif;
+	text-anchor: middle;
+}

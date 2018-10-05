@@ -65,12 +65,14 @@
 
 			CLMSUI.utils.sectionTable.call (this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc, []);
 			
-            this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (metaMetaData) {
-				var columns = metaMetaData.columns;
-				var matchedItemCount = metaMetaData.matchedItemCount;
-				var success = columns && columns.length && matchedItemCount ? true : false;
-				var msg1 = _.template(this.options.parseMsgTemplate)({attrCount: columns ? columns.length : 0, itemCount: matchedItemCount});
-                self.setStatusText ("File "+this.lastFileName+":<br>"+(success ? "" : "Error! ") + msg1, success); 
+            this.listenTo (CLMSUI.vent, self.options.loadedEventName, function (metaMetaData, sourceData) {
+				if (sourceData && sourceData.source === "file") {
+					var columns = metaMetaData.columns;
+					var matchedItemCount = metaMetaData.matchedItemCount;
+					var success = columns && columns.length && matchedItemCount ? true : false;
+					var msg1 = _.template(this.options.parseMsgTemplate)({attrCount: columns ? columns.length : 0, itemCount: matchedItemCount});
+					self.setStatusText ("File "+this.lastFileName+":<br>"+(success ? "" : "Error! ") + msg1, success);
+				}
             });
         },
         
