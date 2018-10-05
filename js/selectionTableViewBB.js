@@ -86,6 +86,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
+		this.minWidthColumns = d3.set(["massError"]);
 		this.emphasiseColumns = d3.set(["pos1", "pos2"]);
 
         // entries commented out until a replacement is found for xlv
@@ -460,7 +461,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 
         // Within each row, match cells up to individual pieces of match information
-        var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth", "emphasise"];
+        var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth", "minWidth", "emphasise"];
         var cellJoin = tjoin.selectAll("TD").data(filteredProps /*, function(d) { return d; }*/ );
         cellJoin.exit().remove();
         cellJoin.enter()
@@ -474,6 +475,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                         self.colSectionStarts.has(d),
                         self.monospacedColumns.has(d),
                         self.maxWidthColumns.has(d),
+						self.minWidthColumns.has(d),
 						self.emphasiseColumns.has(d),
                     ];
                 var classes = possClasses.filter(function (cd, ci) {
@@ -489,6 +491,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             var cellFunc = self.cellFuncs[d];
             return cellFunc ? cellFunc(link) : (link[d] || "");
         };
+		
+		var deemphasiseFraction = function (text) {
+			var z = text ? text.toString().indexOf(".") : -1;
+			if (z < 0 ) return text;
+			return text.slice(0, z+1)+"<span class='smallText'>"+text.slice(z+1)+"</span>";
+		};
 
         cellJoin
             /*
@@ -506,7 +514,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return self.maxWidthColumns.has (d);
             })
             */
-            .text(getText)
+            //.text(getText)
             .each(function (d) {
                 /*
                 d3.select(this).classed ({
@@ -516,9 +524,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                     maxWidth: self.maxWidthColumns.has (d),
                 });
                 */
+				var d3this = d3.select(this);
+				if (self.numberColumns.has(d)) {
+					d3this.html (deemphasiseFraction (getText.call(this, d)))
+				} else {
+					d3this.text (getText);
+				}
 
                 if (self.maxWidthColumns.has(d)) {
-                    d3.select(this).attr("title", getText.call(this, d));
+                    d3this.attr("title", getText.call(this, d));
                 }
             });
     },

@@ -797,7 +797,7 @@ CLMSUI.modelUtils = {
 		clmsModel.set("crossLinkMetaRegistry", registry);
 		
         if (columns) {
-            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, columnTypes: columnTypes, items: crossLinks, matchedItemCount: matchedCrossLinkCount});
+            CLMSUI.vent.trigger ("linkMetadataUpdated", {columns: columns, columnTypes: columnTypes, items: crossLinks, matchedItemCount: matchedCrossLinkCount}, {source: "file"});
         }
     },
 

@@ -75,11 +75,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			;
 		}
 
-		
+
 		function initFilterModeGroup() {
 			var modeDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup")
 										.attr ("id", "filterModeDiv");
 			//~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
+
 			var modeElems = modeDivSel.selectAll("div.modeToggles")
 				.data(this.options.modes, function(d) { return d.id; })
 				.enter()
@@ -104,6 +105,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
 		function initLinkPropertyGroup () {
 			var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
+
 			var subsetToggles = dataSubsetDivSel.selectAll("div.subsetToggles")
 				.data(this.options.subsetToggles, function(d) { return d.id; })
 				.enter()
@@ -167,7 +169,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			validationElems.append ("input")
 				.attr ("id", function(d) { return d.id; })
 				.attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
-				.attr ("type", "checkbox")
+				.attr ("type", "radio")
+				.attr ("name", "valStatus")
 				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 		}
@@ -285,6 +288,30 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			;
 		}
 
+		function addScrollRightButton () {
+			var fixedBox = mainDivSel
+				.append ("div")
+				.attr ("class", "fixedBottomRight")
+			;
+
+			var button = fixedBox
+				.append("button")
+				.attr("class", "tallButton btn btn-1a btn-tight")
+				.attr ("title", "Press to show currently off-screen filter controls")
+				.on ("click", function () {
+					var right = mainDivSel.style("right");
+					var rightSet = right === "20px";
+					mainDivSel.style("right", rightSet ? "auto" : "20px");
+
+					d3.select(this).select("i").attr("class", rightSet ? "fa fa-angle-double-right" : "fa fa-angle-double-left");
+				})
+			;
+
+			button.append("i")
+				.attr("class", "fa fa-angle-double-right")
+			;
+		}
+
 		initResetGroup.call (this);
 		initFilterModeGroup.call (this);
 		initLinkPropertyGroup.call (this);
@@ -293,6 +320,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		initFDRPlaceholder.call (this);
 		initNavigationGroup.call (this);
 		initNavigationGroup2.call (this);
+		addScrollRightButton.call (this);
 
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
@@ -384,7 +412,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 	setInputValuesFromModel: function (model, options) {
 		options = options || {};
 		model = model || this.model;
-		
+
 		var mainDiv = d3.select(this.el);
 
 		mainDiv.selectAll("input.filterTypeText, input.subsetNumberFilter")
