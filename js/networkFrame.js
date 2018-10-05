@@ -313,12 +313,6 @@ CLMSUI.init.views = function() {
             tooltip: "AKA Contact Map. Relevant PDB File required for distance background"
         },
         {
-			id: "listChkBxPlaceholder",
-			label: "List",
-			eventName: "listShow",
-			tooltip: "Sortable list of cross-links"
-		},
-        {
             id: "proteinInfoChkBxPlaceholder",
             label: "Protein Info",
             eventName: "proteinInfoShow",
