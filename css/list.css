@@ -146,3 +146,7 @@ input.group {
 .listView .ms-drop li label {
 	display: inline-block;
 }
+
+.listView select.selectMinWidth {
+	width: 12em;
+}

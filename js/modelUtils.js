@@ -883,6 +883,7 @@ CLMSUI.modelUtils = {
 			distance: "euclidean",
 			linkage: "average",
 			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
+			groups: {"pH4 1": undefined},
 			accessor: function (crossLinks, dim) {
 				return crossLinks.map (function (crossLink) {
 					return crossLink[dim] || (crossLink.meta ? crossLink.meta[dim] : undefined);
@@ -901,20 +902,14 @@ CLMSUI.modelUtils = {
 			return zscore;
 		}, this);
 		
-		function makeGroups (zscores, groupFunction) {
+		function makeGroups (zscores) {
 			var gset = d3.map();
 			var index = 0;
 			var colNameGroups = [];
 			
 			zscores.forEach (function (zscore) {
-				var val;
 				var colName = zscore.colName;
-				if (groupFunction) {
-					val = groupFunction (zscore);
-				} else {
-					var match = colName.match(/\d+/g);
-					val = match && match.length ? match[0] : undefined;
-				}
+				var val = options.groups[colName];
 				
 				if (val !== undefined) {
 					var groupIndex = gset.get (val);
@@ -975,31 +970,21 @@ CLMSUI.modelUtils = {
 		// transpose to get scores per link not per column
 		var zscoresByLink = d3.transpose (zscores);
 		
-		// add crosslink id to each array, need to do this before next step
-		zscoresByLink.forEach (function (zslink, i) {
-			zslink.clink = crossLinks[i];
-		});
-		
-		// get rid of arrays with no defined values
+		// add crosslink id to each array, need to do this before next step, and then get rid of rows with no defined values
+		zscoresByLink.forEach (function (zslink, i) { zslink.clink = crossLinks[i]; });
 		zscoresByLink = zscoresByLink.filter (function (arr) {
 			return !_.every (arr, function (val) { return val === undefined; });
 		});
 		
 		var colNames = zscores.map (function (col) { return col.colName; });
 		
+		/*
 		function normalizeToColumn (zlinkScores, columnName) {
 			var columnIndex = colNames.indexOf (columnName);
-			if (columnIndex >= 0) {
-				zlinkScores.forEach (function (row) {
-					var base = row[columnIndex];
-					for (var n = 0; n < row.length; n++) {
-						row[n] = base !== undefined && row[n] !== undefined ? row[n] - base : undefined;
-					}
-				});
-			}
+			return CLMSUI.modelUtils.normalize2DArrayToColumn (zlinkScores, columnIndex)
 		}
-		
-		normalizeToColumn (zscoresByLink, zGroupAvgScores ? zGroupAvgScores[0].colName : "unknown");
+		zscoresByLink = normalizeToColumn (zscoresByLink, zGroupAvgScores && zGroupAvgScores[0] ? zGroupAvgScores[0].colName : "unknown");
+		*/
 		console.log ("zscoresByLink", zscoresByLink);
 		
 		//var kkmeans = clusterfck.kmeans (zscores, undefined, options.distance);
@@ -1009,7 +994,6 @@ CLMSUI.modelUtils = {
 		var kmeans = clusterfck.kmeans (inputScores, undefined, options.distance);
 		var zdistances = clusterfck.hcluster (inputScores, options.distance, options.linkage);
 		var treeOrder = this.flattenBinaryTree (zdistances.tree);
-		var zrange = d3.extent (d3.merge (inputScores.map (function (zs) { return d3.extent (zs); })));
 		//console.log ("zs", zscoresByLink);
 		//console.log ("kmeans", kmeans);
 		//console.log ("distance", zdistances, treeOrder);
@@ -1053,12 +1037,24 @@ CLMSUI.modelUtils = {
 			matchedItemCount: zscoresByLink.length
 		});	
 		
-		var zscoresByLinkMap = {};
-		zscoresByLink.forEach (function (linkZScores) {
-			zscoresByLinkMap[linkZScores.clink.id] = linkZScores;
-		});
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zColumnNames: colNames, zscores: zscoresByLink};
+	},
+	
+	normalize2DArrayToColumn: function (orig2DArr, normalColIndex) {
+		var arr;
 		
-		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zrange: zrange, zColumnNames: colNames, zscores: zscoresByLinkMap};
+		if (normalColIndex >= 0) {
+			arr = orig2DArr.map (function (row) { return row.slice(); });
+			
+			arr.forEach (function (row) {
+				var base = row[normalColIndex];
+				for (var n = 0; n < row.length; n++) {
+					row[n] = base !== undefined && row[n] !== undefined ? row[n] - base : undefined;
+				}
+			});
+		}
+		
+		return arr || orig2DArr;
 	},
 
 	// test to ignore short chains and those that are just water molecules
