@@ -68,7 +68,7 @@
 				this.listenTo (this, "change:outputStatColumns", function () {
 					self.updateColumnSelectors2 (self.controlDiv2);
 				});
-				this.listenTo (this, "change:normalColumn", function () { self.normalise(); });
+				this.listenTo (this, "change:normalColumn", function () { self.normalise().updateSingleColumnZColourScheme(); });
 				this.listenTo (this, "change:colourByColumn", function () { self.updateSingleColumnZColourScheme(); })
             },
 		}))(this.options);
@@ -291,7 +291,7 @@
 		metaData.columns.map (function (mcol) {
 			var columnType = metaData.columnTypes[mcol];
 			
-			var accFunc = function (d) { return d.meta ? d.meta[mcol] : ""; };
+			var accFunc = function (d) { return d.meta ? d.meta[mcol] : undefined; };
 			var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ? 
 				this.makeColourSchemeBackgroundHook (mcol) : undefined
 			;
@@ -379,6 +379,7 @@
 				.attr("title", "Set group number (to do)")
 				.on ("input", function (d) {
 					self.options.groups[d.key] = d3.select(this).property("value");
+					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
 				})
 		;
 		
@@ -395,6 +396,7 @@
 					var match = d.key.match(/\d+/g);
 					var val = match && match.length ? match[0] : undefined;
 					self.options.groups[d.key] = val;
+					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
 				});
 				restoreGroupsToInputs ();
 			})
@@ -428,13 +430,17 @@
 	  
 	updateSingleColumnZColourScheme: function () {
 		var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
-		var column = this.viewStateModel.get("colourByColumn");
-		CLMSUI.vent.trigger ("addZMetaLinkColourModel", {
-			id: "ZMetaColumn", 
-			field: column,
-			label: "Z-"+column, 
-			links: this.model.getFilteredCrossLinks()
-		});	// make colour model based on z value extents
+		var columnName = this.viewStateModel.get("colourByColumn");
+		var columnIndex = this.stats.zColumnNames.indexOf (columnName);
+		if (columnIndex >= 0) {
+			var self = this;
+			CLMSUI.vent.trigger ("addMapBasedLinkColourModel", {
+				id: "ZMetaColumn", 
+				columnIndex: columnIndex,
+				label: "Z-"+columnName, 
+				linkMap: self.stats.zscoresByLinkMap
+			});	// make colour model based on z value extents
+		}
 	},
 
     render: function (options) {

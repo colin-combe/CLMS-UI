@@ -42,7 +42,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
         }
     },
     isCategorical: function () { return this.get("type") !== "linear"; },
-    undefinedColour: "#888",
+    undefinedColour: "#ddd",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
@@ -255,6 +255,26 @@ CLMSUI.BackboneModelTypes.NonCrossLinkColourModel = CLMSUI.BackboneModelTypes.Co
 });
 
 
+/* Colour model based on map of crosslinks to values rather than properties of crosslinks themselves */
+/* Good for making models based on calculated / derived values */
+CLMSUI.BackboneModelTypes.MapBasedLinkColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
+    initialize: function () {
+		var domain = this.get("colScale").domain();
+		var labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
+		domain.map (function (domVal, i) {
+			labels[i] += " (" + domVal + ")";
+		});
+		
+		this
+			.set ("labels", this.get("colScale").copy().range(labels))
+		;
+    },
+    getValue: function (crossLink) {
+        return this.get("valueMap")[crossLink.id];
+    },
+});
+
+
 
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
@@ -341,9 +361,10 @@ CLMSUI.linkColour.setupColourModels = function () {
         replaceCurrentLinkColourAssignment (this);
     });
 	
-	CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "addZMetaLinkColourModel", function (data) {
+	CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "addMapBasedLinkColourModel", function (data) {
+		console.log ("AMB", data);
 		this.remove (data.id);
-		var newModel = CLMSUI.linkColour.makeColourModel (data.field, data.label, data.links);
+		var newModel = CLMSUI.linkColour.makeMapBasedLinkColourModel (data.columnIndex, data.label, data.linkMap);
 		newModel.set ("id", data.id);
         this.add (newModel);
         replaceCurrentLinkColourAssignment (this);
@@ -357,7 +378,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
-        range.splice (1, 0, "#aaa");
+        range.splice (1, 0, "#888");
     }
 	
 	// see if it is a list of colours
@@ -403,12 +424,41 @@ CLMSUI.linkColour.makeNonCrossLinkColourModel = function (id, domain) {
 	var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
-        range.splice (1, 0, "#aaa");
+        range.splice (1, 0, "#888");
     }
 	
 	var newColourModel = new CLMSUI.BackboneModelTypes.NonCrossLinkColourModel ({
         colScale: d3.scale.linear().domain(extents).range(range),
         id: id,
+    });
+	
+	return newColourModel;
+};
+
+CLMSUI.linkColour.makeMapBasedLinkColourModel = function (columnIndex, label, linkMap) {
+	var entries = d3.entries (linkMap);
+	var domain = entries.map (function (entry) {
+		return entry.value[columnIndex];
+	});
+	var fieldValueMap = {};
+	entries.forEach (function (entry, i) {
+		fieldValueMap[entry.key] = domain[i];
+	});
+	
+	console.log ("dfv", domain, fieldValueMap);
+	
+	var extents = d3.extent (domain);
+	var range = ["red", "blue"];
+    if (extents[0] < 0 && extents[1] > 0) {
+        extents.splice (1, 0, 0);
+        range.splice (1, 0, "#888");
+    }
+	
+	var newColourModel = new CLMSUI.BackboneModelTypes.MapBasedLinkColourModel ({
+        colScale: d3.scale.linear().domain(extents).range(range),
+		title: label,
+		longDescription: label + " Z-values.", 
+		valueMap: fieldValueMap
     });
 	
 	return newColourModel;
