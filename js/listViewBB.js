@@ -30,6 +30,7 @@
 		groups: {},
 		outputStatColumns: d3.set(),
 		showClusterControls: true,
+		groupRegex: "\\d+",
 	},
 
     initialize: function (viewOptions) {
@@ -76,7 +77,6 @@
 		// Add download button
         var buttonData = [
 			{class: "downloadButton3", label: "Download Image", type: "button", id: "download3"},
-            {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap"},
 			{class: "toggleClusterControls", label: "Toggle Cluster Controls", type: "button", id: "clusterToggle"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
@@ -219,6 +219,7 @@
 		
 		var buttonData2 = [
 			{class: "generateStats", label: "Calculate", type: "button", id: "generateStats", tooltip: "Adds 2 columns to the table, Kmcluster and TreeOrder"},
+			{class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap", tooltip: "Shows table as heatmap"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonData2);
 		
@@ -388,17 +389,31 @@
 		}
 		restoreGroupsToInputs();
 		
-		mslist.append("li").append("button")
+		var groupWidget = mslist.insert("li", ":first-child").append("div")
+		
+		groupWidget.append("button")
 			.attr ("class", "btn btn-1 btn-1a")
-			.text ("Guess Groups")
+			.text ("Auto Group")
 			.on ("click", function() {
+				var regex = new RegExp (self.viewStateModel.get("groupRegex"));
 				items.data().forEach (function (d) {
-					var match = d.key.match(/\d+/g);
+					var match = regex.exec (d.key);
 					var val = match && match.length ? match[0] : undefined;
 					self.options.groups[d.key] = val;
 					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
 				});
 				restoreGroupsToInputs ();
+			})
+		;
+		
+		groupWidget.append("input")
+			.attr("type", "text")
+			.attr ("class", "regexInput")
+			.attr("placeholder", "A Regex String")
+			.attr("value", self.viewStateModel.get("groupRegex"))
+			.attr("title", "A regular expression on column names to assign group numbers.")
+			.on ("input", function () {
+				self.viewStateModel.set("groupRegex", d3.select(this).property("value"));
 			})
 		;
 		
@@ -437,7 +452,7 @@
 			CLMSUI.vent.trigger ("addMapBasedLinkColourModel", {
 				id: "ZMetaColumn", 
 				columnIndex: columnIndex,
-				label: "Z-"+columnName, 
+				label: "Norm. "+columnName, 
 				linkMap: self.stats.zscoresByLinkMap
 			});	// make colour model based on z value extents
 		}
@@ -561,7 +576,20 @@
 			this.stats.normZScores = normScores;
 			this.stats.zscoresByLinkMap = zmap;
 			
-			console.log ("stats", this.stats);
+			
+			// Update group meta data with normalised values
+			/*
+			var gcolumns = this.stats.groupColumns.map (function (col) { return col.name; });
+			CLMSUI.modelUtils.updateMetaDataWithTheseColumns (normScores, gcolumns);
+			CLMSUI.vent.trigger ("linkMetadataUpdated", {
+				columns: gcolumns, 
+				columnTypes: _.object (gcolumns, _.range(gcolumns.length).map(function() { return "numeric"; })), 
+				items: self.model.getFilteredCrossLinks(), 
+				matchedItemCount: normScores.length
+			});
+			*/
+			
+			//console.log ("stats", this.stats);
 
 			this.zCellColourer = function (d) {
 				var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
@@ -577,7 +605,7 @@
 				return colValue;
 			};
 
-			CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: zrange});	// make colour model based on z value extents
+			CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: zrange});	// make colour model based on normalised z value extents
 			
 			this.render();
 		}

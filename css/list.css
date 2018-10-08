@@ -134,7 +134,7 @@ g.dendro {
 }
 
 input.group {
-	width: 2.2em;
+	width: 2.6em;
 	line-height: 1rem;
 }
 
@@ -149,4 +149,8 @@ input.group {
 
 .listView select.selectMinWidth {
 	width: 12em;
+}
+
+.listView .regexInput {
+	width: 6em;
 }
