@@ -27,7 +27,7 @@ CLMSUI.utils = {
         var mpeptides = match.matchedPeptides[matchedPeptideIndex];
         return mpeptides ? mpeptides.pos.join(", ") : "";
     },
-	
+
 	fullPosConcat: function (match, matchedPeptideIndex) {
         var mpeptides = match.matchedPeptides[matchedPeptideIndex];
 		var linkPos = matchedPeptideIndex === 0 ? match.linkPos1 : match.linkPos2;
@@ -38,7 +38,7 @@ CLMSUI.utils = {
         downloadImg: "Download Image As ",  // http://ux.stackexchange.com/a/61757/76906
 		shareLink: "Share Search Link with Current Filter State",
     },
-	
+
 	commonTemplates: {
 		downloadImg: _.template("Download Image As <%=fileType%>"),
 		downloadCSV: _.template("Download Filtered <%=items> as CSV"),
@@ -317,7 +317,7 @@ CLMSUI.utils = {
 
 				//draw the original canvas onto the destination canvas
 				destCtx.drawImage (d3canvas.node(), 0, 0);
-			
+
                 var url = destinationCanvas.toDataURL ("image/png");
 				//var url = d3canvas.node().toDataURL ("image/png");
 				//destinationCanvas.dispose();
@@ -406,7 +406,7 @@ CLMSUI.utils = {
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button",
     // initialState: true|false, group: "sort", tooltip: "tooltipText", noBreak: true|false},
     makeBackboneButtons: function (targetDiv, baseID, buttonData) {
-        var makeID = function (d) { return baseID + d.id; };
+        var makeID = function (d) { return baseID + d.id.replace(/(\|)/g, '_'); };
 
         // Don't make buttons whose id already exists
         buttonData = buttonData.filter (function (d) {
@@ -432,7 +432,7 @@ CLMSUI.utils = {
                 .attr ("title", function(d) { return d.tooltip; })
                 .attr ("id", makeID)
         ;
-		
+
 		// add header if asked for
 		cboxes
             .filter (function(d) { return d.header; })
@@ -527,7 +527,7 @@ CLMSUI.utils = {
     // Function for making a cross-link colour key as an svg group element
     updateColourKey: function (model, svgElem) {
 		svgElem.attr("height", "200");
-		
+
         var keyGroup = svgElem.selectAll("g.key").data([0]);
 		keyGroup.enter()
 			.append("g").attr("class", "key")
@@ -543,13 +543,13 @@ CLMSUI.utils = {
 
             var colScale = colourAssign.get("colScale");
             var labels = colourAssign.get("labels");
-			var domain = colScale.domain(); 
+			var domain = colScale.domain();
             var pairUp = d3.zip (colScale.range(), labels.range());
 			var isLinear = colourAssign.get("type") === "linear";
 			var linearHeight = 150;
 			var normalScale = d3.scale.linear().domain(d3.extent(domain)).range([0,100]);
 			var heightScale = d3.scale.linear().domain(d3.extent(domain)).range([18,linearHeight+18]);
-			
+
 			if (colourAssign.get("type") === "threshold") {
 				pairUp.forEach (function (pair, i) {
 					var d1 = i > 0 ? ">"+domain[i-1] : undefined;
@@ -558,7 +558,7 @@ CLMSUI.utils = {
 					pair[1] += " (" + dp.join(" & ") + ")";
 				});
 			}
-			
+
 			pairUp.forEach (function (pair, i) {
 				pair[2] = isLinear ? heightScale (domain[i]) : 3+((i+1)*15);	// y-position of colour swatches and labels
 			});
@@ -585,12 +585,12 @@ CLMSUI.utils = {
 				.style("display", isLinear ? "none" : null)	// hide if showing linear scale
 			;
             colourElems.select("text").text(function (d, i) { return d[1]; });
-			
-			
+
+
 			if (isLinear) {
 				// Make gradient and fill a rect with it
 				var gradID = "grad"+Math.ceil(Math.random() * 100000);
-				
+
 				var defs = svgElem.selectAll("defs").data([0]);
 				defs.enter().append("defs");
 				var grad = defs.selectAll("#"+gradID).data([0]);
@@ -607,9 +607,9 @@ CLMSUI.utils = {
 					.attr("offset", function(d) { return Math.round(normalScale(d))+"%"; })
 					.attr("stop-color", function (d,i) { return colScale.range()[i]; })
 				;
-				
+
 				svgElem.selectAll("rect.gradientScale").remove();
-				
+
 				svgElem.append("rect")
 					.attr("class", "gradientScale")
 					.attr("x", 1)
@@ -621,12 +621,12 @@ CLMSUI.utils = {
 			}
         }
     },
-	
+
 	testColourKey: function () {
 		var svg = d3.select("body").append("svg").attr("class", "testTopLeft").style("width", "300px").style("height", "200px");
 		CLMSUI.utils.updateColourKey (CLMSUI.compositeModelInst, svg);
 	},
-	
+
 	updateAnnotationColourKey: function (bbModelArray, svgElem, myOptions) {
 		var defaults = {
 			colour: function (d) { return d.colour; },
@@ -634,7 +634,7 @@ CLMSUI.utils = {
 			title: "Key",
 		};
 		var options = $.extend ({}, defaults, myOptions);
-		
+
         var keyGroup = svgElem.select("g.key");
         if (keyGroup.empty()) {
             svgElem
@@ -747,9 +747,9 @@ CLMSUI.utils = {
 
         return selects;
     },
-	
+
 	drawDendrogram: function (svgd3, cfckDistances, options) {
-		
+
 		var defaultOptions = {
 			ltor: true,
 			ttob: true,
@@ -760,7 +760,7 @@ CLMSUI.utils = {
 			width: 100,
 		}
 		options = $.extend ({}, defaultOptions, options);
-		
+
 		function recurse (tree, parent) {
 			tree.parent = parent;
 			if (!tree.value) {
@@ -774,36 +774,36 @@ CLMSUI.utils = {
 		svgd3.attr("width", options.width).attr("height", options.height);
 		var g = svgd3.selectAll("g.dendro").data([0]);
 		g.enter().append("g").attr("class", "dendro");
-		
+
 		var title = g.selectAll("text.dendrogramTitle").data([0]);
 		title.enter().append("text").attr("class", "dendrogramTitle").attr("y", -20);
 		title.text (options.title);
-		
+
 		recurse (cfckDistances, null);
-		
+
 		var cluster = d3.layout.cluster ();
 		cluster
 			.children (function(d) { return d.left && d.right ? [d.left, d.right] : undefined; })
 			.size ([options.height, options.width])
 			.separation (function (a, b) { return 1; })
 		;
-		
+
 		var nodes = cluster.nodes(cfckDistances);
 		var links = cluster.links(nodes);
-		
+
 		var crange = d3.extent (nodes, function(d) { return d.dist || 0; });
 		var scaleDown = d3.scale.linear().domain(crange).range(options.ltor ? [options.width - 5, 5] : [5, options.width - 5]);
 		var scaleAlong = d3.scale.linear().domain([0, options.height]).range(options.ttob ? [options.height, 0] : [0, options.height]);
-	
+
 		//console.log ("nodes", nodes, links, crange);
-		
-		nodes.forEach (function(d) { 
-			d.y = scaleDown (d.children && d.children.length ? d.dist || 0 : 0); 
+
+		nodes.forEach (function(d) {
+			d.y = scaleDown (d.children && d.children.length ? d.dist || 0 : 0);
 			d.x = scaleAlong (d.x);
 		});
-		
+
 		var link = g.selectAll(".dlink").data(links);
-		
+
 		link.exit().remove();
 		link.enter().append("g")
 			.attr("class", "dlink")
@@ -812,7 +812,7 @@ CLMSUI.utils = {
 		link.select("path").attr ("d", function (d) {
 			return "M"+d.source.y+" "+d.source.x+" V "+d.target.x+" H "+d.target.y;
 		});
-		
+
 		if (options.leafLabels) {
 			var labels = g.selectAll("text.dlabel")
 				.data(nodes.filter (function (d) { return !d.children; }))
@@ -941,25 +941,25 @@ CLMSUI.utils = {
                 download (svgXML, "application/svg", fileName);
             });
         },
-		
+
 		getHTMLAsDataURL: function (d3Elem, options, callbackFunc) {
 			var defaults = {
 				removeChildren: undefined,
 			};
 			options = $.extend ({}, defaults, options);
-			
+
 			callbackFunc = callbackFunc || function () { console.warn ("Missing a callback func for downloadHTMLAsImg!"); };
 			var elemArr = [d3Elem.node()];
 			var elemStrings = CLMSUI.svgUtils.capture (elemArr);
 			var detachedSVG = elemStrings[0];
             var detachedSVGD3 = d3.select (detachedSVG);
-			
+
 			var origElem = detachedSVGD3.select(":not(style)");
 			origElem.style ("font-size", "1em");
-			
+
 			var fo = detachedSVGD3.append(function() {
 					//aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
-					return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")	
+					return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")
 				})
 				.attr("width", "100%").attr("height", "100%")
 				.append ("div")
@@ -972,7 +972,7 @@ CLMSUI.utils = {
 				detachedSVGD3.selectAll(options.removeChildren).remove();
 			}
 			var data = detachedSVGD3.node().outerHTML;
-			
+
 			var canvas = document.createElement ("canvas");
 			d3.select(canvas)
 				.attr ("id", "tempCanvas")
@@ -981,14 +981,14 @@ CLMSUI.utils = {
 				.attr ("height", $(detachedSVGD3.node()).height())
 			;
     		var ctx = canvas.getContext("2d");
-			
+
 			var svg = new Blob([data], {
 				type: "image/svg+xml;charset=utf-8"
 			});
 			//var DOMURL = URL || webkitURL || this;
 			//var url = DOMURL.createObjectURL(svg);	// causes tainted canvas error due to https://bugs.chromium.org/p/chromium/issues/detail?id=294129
 			// console.log ("sv", svg, url);
-			
+
 			var img = new Image();
 			img.setAttribute ("crossOrigin", "anonymous");
 			img.onerror = function () {
@@ -997,20 +997,20 @@ CLMSUI.utils = {
 			img.onload = function() {
 				ctx.drawImage (img, 0, 0);
 				//console.log ("img", img, url);
-				
+
 				img = null;
 				//DOMURL.revokeObjectURL (url);
-				
+
 				var dataURL = canvas.toDataURL();
 				var size = {width: canvas.width, height: canvas.height};
 				canvas = null;
-				
+
 				callbackFunc (dataURL, size);
 				//console.log ("dd", dataURL);
 			}
-		
+
 			// Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129
-    		img.src = "data:image/svg+xml;charset=utf-8," + data;  
+    		img.src = "data:image/svg+xml;charset=utf-8," + data;
 		},
 
 
@@ -1229,7 +1229,7 @@ CLMSUI.utils.sectionTable = function (domid, data, idPrefix, columnHeaders, head
 	newTables.selectAll("thead th").data (function(d) { return d.columnHeaders || columnHeaders})
 		.text (function (d) { return d; })
 	;
-	
+
 	var tables = dataJoin.selectAll("table");
 
     // yet another cobble a table together function, but as a string
