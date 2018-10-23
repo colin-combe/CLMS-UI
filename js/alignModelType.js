@@ -119,8 +119,8 @@
 
             var fullResults = compSeqArray.map (function (cSeq) {
                 var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                var localAlign = (tempSemiLocal && tempSemiLocal.local);// || this.get("local")[i];
-                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);// || this.get("semiLocal")[i];
+                var localAlign = (tempSemiLocal && tempSemiLocal.local);
+                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
                 return aligner.align (cSeq, refSeq, scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
             }, this);
             
