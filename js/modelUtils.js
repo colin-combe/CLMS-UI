@@ -19,35 +19,6 @@ CLMSUI.modelUtils = {
 		return extent;
 	},
 
-    // letters from http://www.hgmd.cf.ac.uk/docs/cd_amino.html
-    // the four 'nh ester' amino acids
-    // lys = k, ser = s, thr = t, tyr = y
-    esterMap: {"K": true, "S": true, "T": true, "Y": true},
-    esterBool: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map (function(n) { return {"K": true, "S": true, "T": true, "Y": true}[n]; }),
-
-    getEsterLinkType: function (crossLink) {
-        var toResIndex = crossLink.toResidue;
-        var fromResIndex = crossLink.fromResidue;
-        //console.log ("res", crossLink);
-        //~ var pLink = crossLink.proteinLink;
-        //var pLinkId = pLink.id;
-
-        // might need to query protein model at this point if from and to prot data stops getting attached to residues
-
-        var fromProt = crossLink.fromProtein;
-        var toProt = crossLink.toProtein;
-
-        var fromResType = this.getResidueType (fromProt, fromResIndex);
-        var toResType = this.getResidueType (toProt, toResIndex);
-
-        // http://jsperf.com/letter-match says using a boolean array for the letter values is generally quickest, have a poke if you disagree
-        var fromEster = this.esterBool[fromResType.charCodeAt(0) - 65]; //this.esterMap[fromResType];
-        var toEster = this.esterBool[toResType.charCodeAt(0) - 65]; //this.esterMap[toResType];
-
-        return (fromEster ? 1 : 0) + (toEster ? 1 : 0);
-
-    },
-
     getResidueType: function (protein, resIndex, seqAlignFunc) {
         var seq = protein.sequence;
         // Some sequence alignment stuff can be done if you pass in a func
@@ -188,11 +159,7 @@ CLMSUI.modelUtils = {
     },
 
     highestScore: function (crosslink) {
-		var scores = crosslink.filteredMatches_pp.map(function (m) {return +m.match.score();});
-		//~ console.log(scores);
-		var result = Math.max.apply(Math,scores);
-		//~ console.log(result);
-		return result;
+		return d3.max (crosslink.filteredMatches_pp.map (function (m) {return +m.match.score();}));
 	},
 
     makeTooltipTitle: {
@@ -358,12 +325,13 @@ CLMSUI.modelUtils = {
 					var interactorMap = bbmodel.get("clmsModel").get("participants");
 					var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
-					// If have a pdb code AND legal accession IDs use a web service to glean matches between ngl protein chains and clms proteins
-					// This is asynchronous so we use a callback
-					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length > 0) {
+					// If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
+					// between ngl protein chains and clms proteins. This is asynchronous so we use a callback
+					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
 						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
-							if (pdbUniProtMap.fail) {
-								returnFailure ("No valid data returned");
+							if (pdbUniProtMap.fail) {	// No data returned for this pdb codem fall back to aligning
+								matchByAlignment();
+								//returnFailure ("No valid uniprot data returned");
 							} else if (!pdbUniProtMap.length) {    // no matches, fall back to aligning
 								matchByAlignment();
 							} else {
@@ -378,7 +346,7 @@ CLMSUI.modelUtils = {
 					// bit to continue onto after ngl protein chain to clms protein matching has been done
 					function sequenceMapsAvailable (sequenceMap) {
 
-						//console.log ("seqmpa", sequenceMap);
+						console.log ("seqmpa", sequenceMap);
 						//if (sequenceMap && sequenceMap.length) {
 							sequenceMap.pdbid = pdbInfo.baseSeqId;
 							var chainMap = {};
@@ -481,6 +449,7 @@ CLMSUI.modelUtils = {
                         callback (mapArr);
                     }
                 } else {	// usually some kind of error if reached here as we didn't detect xml
+					//console.log ("error", data, status)
 					var emptySequenceMap = [];
 					emptySequenceMap.fail = true;
 					callback (emptySequenceMap);
@@ -489,27 +458,55 @@ CLMSUI.modelUtils = {
         );
     },
 
-    /* Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query
-    the pdb web services or it's offline.
-    */
+    // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline.
     matchSequencesToProteins: function (protAlignCollection, sequenceObjs, proteins, extractFunc) {
         proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
         var matchMatrix = {};
+		var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
+		
+		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
+		var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence (seqs);
+		var uniqSeqs = seqs.filter (function (seq, i) { return sameSeqIndices[i] === undefined; });	// unique sequences
+		var uniqSeqIndices = d3.range(0, seqs.length).filter (function (i) { return sameSeqIndices[i] === undefined; });	// and their indices in 'seqs'
+		var uniqSeqReverseIndex = _.invert (uniqSeqIndices);	// and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
+		//console.log ("sss", sameSeqIndices, uniqSeqs, uniqSeqIndices, uniqSeqReverseIndex);
+		
         proteins.forEach (function (prot) {
             //console.log ("prot", prot);
-            var protAlignModel = protAlignCollection.get(prot.id);
+            var protAlignModel = protAlignCollection.get (prot.id);
             if (protAlignModel) {
-                var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
-                //protAlignModel.set("semiLocal", true);  // needs to be done as initialisation not called on model (figure out why later)
-                var alignResults = protAlignModel.alignWithoutStoring (seqs, {semiLocal: true});
-                console.log ("alignResults", alignResults);
-                var scores = alignResults.map (function (indRes) { return indRes.res[0]; });
+				// Only calc alignments for unique sequences, we can copy values for repeated sequences
+                var alignResults = protAlignModel.alignWithoutStoring (uniqSeqs, {semiLocal: true});
+                console.log ("alignResults", /*alignResults*/ prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
+                var uniqScores = alignResults.map (function (indRes) { return indRes.res[0]; });
+				
+				// reinflate scores to accommodate repeated sequences that were found and filtered out above
+				var scores = d3.range(0, seqs.length).map (function (i) {
+					var sameSeqIndex = sameSeqIndices[i];
+					var seqIndex = sameSeqIndex === undefined ? i : sameSeqIndex;
+					var uniqSeqIndex = +uniqSeqReverseIndex[seqIndex];
+					return uniqScores[uniqSeqIndex]; 	
+				});
                 matchMatrix[prot.id] = scores;
             }
         });
         //console.log ("matchMatrix", matchMatrix, sequenceObjs);
         return CLMSUI.modelUtils.matrixPairings (matchMatrix, sequenceObjs);
     },
+	
+	indexSameSequencesToFirstOccurrence: function (sequences) {
+		var firstIndex = [];
+		sequences.forEach (function (seq, i) {
+			firstIndex[i] = undefined;
+			for (var j = 0; j < i; j++) {
+				if (seq === sequences[j]) {
+					firstIndex[i] = j;
+					break;
+				}
+			}
+		});
+		return firstIndex;
+	},
 
     // call with alignmentCollection as this context through .call
     addNewSequencesToAlignment : function (clmsModel) {

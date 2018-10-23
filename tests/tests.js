@@ -521,7 +521,7 @@ function callback (model) {
 		var expectedValue = [28, 44, 13, 43, 51, 60, 28, 44, 24, 44, 29, 35, 44, 44, 37, 49, 51, 55, 13, 24, 37, 30, 41, 51, 43, 44, 49, 30, 38, 48, 51, 29, 51, 41, 38, 11, 60, 35, 55, 51, 48, 11, 29, 45, 13, 43, 51, 60, 29, 44, 25, 44, 29, 35, 45, 44, 38, 49, 51, 55, 13, 25, 38, 30, 41, 50, 43, 44, 49, 30, 38, 48, 51, 29, 51, 41, 38, 11, 60, 35, 55, 50, 48, 11];
 		
 		var crossSpec = clmsModel.get("crosslinkerSpecificity");
-		clmsModel.set ("crosslinkerSpecificity", null);	// null crosslink specs for this test
+		clmsModel.set ("crosslinkerSpecificity", null);	// null crosslink specificity for this test
 		var searchArray = CLMS.arrayFromMapValues (clmsModel.get("searches"));
 		var crosslinkerSpecificityList = d3.values (CLMSUI.modelUtils.crosslinkerSpecificityPerLinker (searchArray));
 		var distObj = clmsModel.get("distancesObj");
@@ -532,6 +532,43 @@ function callback (model) {
 		clmsModel.set ("crosslinkerSpecificity", crossSpec);	// restore crosslink specs
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
+	});
+	
+	QUnit.module ("Model Utils Functions");
+	
+	QUnit.test ("Get max score of crosslink matches", function (assert) {
+		var testCrossLink = {
+			filteredMatches_pp: [
+				{match: { score: function () { return "cat"; }}},
+				{match: { score: function () { return 12.04; }}},
+				{match: { score: function () { return 11.34; }}},
+				{match: { score: function () { return null; }}},
+			]	
+		};
+		
+		var expectedValue = 12.04;
+		var actualValue = CLMSUI.modelUtils.highestScore (testCrossLink);
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as highest score, Passed!");
+	});
+	
+	
+	QUnit.test ("Index same sequences to first occurence", function (assert) {
+		var testSeqs = [
+			"ABCDEFGHIJKLM",
+			"BABARACUS",
+			"ABCDEFGHIJKLM",
+			"HANNIBALSMITH",
+			"BABARACUS",
+			"FACE",
+			"FACE"
+		];
+		
+		var expectedValue = [undefined, undefined, 0, undefined, 1, undefined, 5];
+		var actualValue = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence (testSeqs);
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as index array, Passed!");
 	});
 }
 
