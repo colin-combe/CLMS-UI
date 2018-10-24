@@ -188,6 +188,20 @@ function callback (model) {
 	});
 	
 	
+	QUnit.module ("Alignment Tests");
+	
+	QUnit.test ("Sequence generation from PDB chains", function (assert) {
+		var expected = [
+			{chainName: "A", chainIndex: 0, residueOffset: 0, data: dseq1AO6},
+			{chainName: "B", chainIndex: 1, residueOffset: 578, data: dseq1AO6},
+		];
+		
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		var actual = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
+		assert.deepEqual (actual, expected, "Expected "+expected+" when generating sequences from `1AO6`");
+	});
+	
+	
 	QUnit.module ("NGL Selection Language");
 	
 	QUnit.test ("Generate Selection with range", function (assert) {
@@ -569,6 +583,108 @@ function callback (model) {
 		
 		// stringify turns undefined to null for printout, but it's a match
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as index array, Passed!");
+	});
+	
+	
+	QUnit.test ("Normalise 2D array to column", function (assert) {
+		var testArr = [
+			[2, 3, 4],
+			[1, 2, 3],
+			[4, 5, 6],
+			[7, undefined, 9],	// column 1 value is undefined, this is the column we try to normalise against
+			[undefined, 11, 12],	// column 0 value is undefined, just one of the other columns
+		];
+		
+		var expectedValue = [
+			[-1, 0, 1],
+			[-1, 0, 1],
+			[-1, 0, 1],
+			[undefined, undefined, undefined],	// normalise row to an undefined value = all row undefined
+			[undefined, 0, 1]	// normalise undefined value to known value = that value stays undefined
+		];
+		
+		var actualValue = CLMSUI.modelUtils.normalize2DArrayToColumn (testArr, 1);	// normalise to column 1
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as normalised array, Passed!");
+	});
+	
+	QUnit.test ("Merge contiguous features", function (assert) {
+		var testArrs = [
+			[
+				{begin: 1, end: 1},
+				{begin: 2, end: 2},
+				{begin: 4, end: 4},
+				{begin: 5, end: 10},
+				{begin: 6, end: 8},
+				{begin: 7, end: 12},
+				{begin: 20, end: 30},
+			],
+			[
+				{begin: -15, end: 6}
+			],
+			[
+				{begin: -12, end: 8},
+				{begin: -15, end: 6}
+			]
+		];
+		
+		var expectedValue = [
+			[
+				{begin: 1, end: 2},
+				{begin: 4, end: 12},
+				{begin: 20, end: 30}
+			],
+			[
+				{begin: -15, end: 6}
+			],
+			[
+				{begin: -15, end: 8}
+			]
+		];
+		
+		var actualValue = testArrs.map (function (testArr, i) {
+			return CLMSUI.modelUtils.mergeContiguousFeatures (testArr);
+		});
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as contiguous feature ranges, Passed!");
+	});
+	
+	
+	QUnit.test ("Radix sort", function (assert) {
+		var testArr = [2, 4, 6, 6, 3, 2, 1, 4, 2, 4, 6, 8, 1, 2, 4, 6, 9, 0];
+		
+		var expectedValue = [0, 1, 1, 2, 2, 2, 2, 3, 4, 4, 4, 4, 6, 6, 6, 6, 8, 9];
+		
+		var actualValue = CLMSUI.modelUtils.radixSort (10, testArr, function(d) { return d; });
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sorted by radix, Passed!");
+	});
+	
+	
+	QUnit.test ("Parse URL Query String", function (assert) {
+		var testString = "sid=10003-secret&decoys=1&unval=1&linear=1&cats=true&anon=";
+		
+		var expectedValue = {sid: "10003-secret", decoys: 1, unval: 1, linear: 1, cats: true, anon: ""};
+		
+		var actualValue = CLMSUI.modelUtils.parseURLQueryString (testString);
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as parsed URL query string, Passed!");
+	});
+	
+	
+	QUnit.test ("Make URL Query String", function (assert) {
+		var testObj = {sid: "10003-secret", decoys: 1, unval: 1, linear: 1, cats: true, anon: ""};
+		
+		var expectedValue = ["sid=10003-secret", "decoys=1", "unval=1", "linear=1", "cats=1", "anon="];	// true gets turned to 1, false to 0
+		
+		var actualValue = CLMSUI.modelUtils.makeURLQueryString(testObj, "");
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as constructed URL query string, Passed!");
 	});
 }
 

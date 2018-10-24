@@ -249,7 +249,7 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
-				CLMSUI.utils.displayError (function() { return true; }, "Error when attempting to load search.<br>"+text.substring (0, 150));
+				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+text.substring (0, 150)+"</p>");
 				console.error ("Error", err, text.substring (0, 1000));
 			}
 		};
