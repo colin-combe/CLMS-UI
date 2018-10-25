@@ -477,7 +477,7 @@ CLMSUI.modelUtils = {
             if (protAlignModel) {
 				// Only calc alignments for unique sequences, we can copy values for repeated sequences in the next bit
                 var alignResults = protAlignModel.alignWithoutStoring (uniqSeqs, {semiLocal: true});
-                console.log ("alignResults", alignResults,  prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
+                console.log ("alignResults", /*alignResults,*/  prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
                 var uniqScores = alignResults.map (function (indRes) { return indRes.res[0]; });
 				
 				// reinflate scores to accommodate repeated sequences that were found and filtered out above
