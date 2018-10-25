@@ -326,7 +326,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     // If necessary, swap in newly added colour scale with same id as removed (but current) scale pointed to by linkColourAssignment
     var replaceCurrentLinkColourAssignment = function (collection) {
         var currentColourModel = CLMSUI.compositeModelInst.get("linkColourAssignment");
-        if (!currentColourModel.collection) {
+        if (currentColourModel && !currentColourModel.collection) {
             CLMSUI.compositeModelInst.set ("linkColourAssignment", collection.get(currentColourModel.get("id")));
         }
     };
