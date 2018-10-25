@@ -23,7 +23,7 @@ CLMSUI.modelUtils = {
         var seq = protein.sequence;
         // Some sequence alignment stuff can be done if you pass in a func
         resIndex = seqAlignFunc ? seqAlignFunc (resIndex) : resIndex;
-        // Is the sequence starting at 1, do the resIndex's start at 1?
+        // seq is 0-indexed, but resIndex is 1-indexed so -1
         return seq[resIndex - 1];
     },
 
@@ -315,20 +315,20 @@ CLMSUI.modelUtils = {
 					// match by alignment for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
 					function matchByAlignment () {
 						var protAlignCollection = bbmodel.get("alignColl");
-						var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToProteins (protAlignCollection, nglSequences2, interactorArr,
+						var pdbUniProtMap = CLMSUI.modelUtils.matchSequencesToExistingProteins (protAlignCollection, nglSequences, interactorArr,
 							function(sObj) { return sObj.data; }
 						);
 						sequenceMapsAvailable (pdbUniProtMap);
 					}
 
-					var nglSequences2 = CLMSUI.modelUtils.getSequencesFromNGLModelNew (stage);
+					var nglSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stage);
 					var interactorMap = bbmodel.get("clmsModel").get("participants");
 					var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
 					// If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
 					// between ngl protein chains and clms proteins. This is asynchronous so we use a callback
 					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
-						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences2, interactorArr, function (pdbUniProtMap) {
+						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences, interactorArr, function (pdbUniProtMap) {
 							if (pdbUniProtMap.fail) {	// No data returned for this pdb codem fall back to aligning
 								matchByAlignment();
 								//returnFailure ("No valid uniprot data returned");
@@ -385,18 +385,18 @@ CLMSUI.modelUtils = {
     },
 
 
-    getSequencesFromNGLModelNew: function (stage) {
+    getChainSequencesFromNGLModel: function (stage) {
         var sequences = [];
 
         stage.eachComponent (function (comp) {
             comp.structure.eachChain (function (c) {
                 if (CLMSUI.modelUtils.isViableChain (c)) {    // short chains are ions/water molecules, ignore
-                    console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname);
                     var resList = [];
                     c.eachResidue (function (r) {
                         resList.push (CLMSUI.modelUtils.amino3to1Map[r.resname] || "X");
                     });
                     sequences.push ({chainName: c.chainname, chainIndex: c.index, residueOffset: c.residueOffset, data: resList.join("")});
+					//console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName(), resList.join(""));
                 }
             });
         });
@@ -459,32 +459,32 @@ CLMSUI.modelUtils = {
     },
 
     // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline.
-    matchSequencesToProteins: function (protAlignCollection, sequenceObjs, proteins, extractFunc) {
+    matchSequencesToExistingProteins: function (protAlignCollection, sequenceObjs, proteins, extractFunc) {
         proteins = proteins.filter (function (protein) { return !protein.is_decoy; });
         var matchMatrix = {};
 		var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
 		
 		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
 		var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence (seqs);
-		var uniqSeqs = seqs.filter (function (seq, i) { return sameSeqIndices[i] === undefined; });	// unique sequences
-		var uniqSeqIndices = d3.range(0, seqs.length).filter (function (i) { return sameSeqIndices[i] === undefined; });	// and their indices in 'seqs'
-		var uniqSeqReverseIndex = _.invert (uniqSeqIndices);	// and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
+		var uniqSeqs = seqs.filter (function (seq, i) { return sameSeqIndices[i] === undefined; });	// unique sequences...
+		var uniqSeqIndices = d3.range(0, seqs.length).filter (function (i) { return sameSeqIndices[i] === undefined; });	// ...and their indices in 'seqs'...
+		var uniqSeqReverseIndex = _.invert (uniqSeqIndices);	// ...and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
 		//console.log ("sss", sameSeqIndices, uniqSeqs, uniqSeqIndices, uniqSeqReverseIndex);
 		
         proteins.forEach (function (prot) {
             //console.log ("prot", prot);
             var protAlignModel = protAlignCollection.get (prot.id);
             if (protAlignModel) {
-				// Only calc alignments for unique sequences, we can copy values for repeated sequences
+				// Only calc alignments for unique sequences, we can copy values for repeated sequences in the next bit
                 var alignResults = protAlignModel.alignWithoutStoring (uniqSeqs, {semiLocal: true});
-                console.log ("alignResults", /*alignResults*/ prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
+                console.log ("alignResults", alignResults,  prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
                 var uniqScores = alignResults.map (function (indRes) { return indRes.res[0]; });
 				
 				// reinflate scores to accommodate repeated sequences that were found and filtered out above
 				var scores = d3.range(0, seqs.length).map (function (i) {
 					var sameSeqIndex = sameSeqIndices[i];
 					var seqIndex = sameSeqIndex === undefined ? i : sameSeqIndex;
-					var uniqSeqIndex = +uniqSeqReverseIndex[seqIndex];
+					var uniqSeqIndex = +uniqSeqReverseIndex[seqIndex];	// + 'cos invert above turns numbers into strings
 					return uniqScores[uniqSeqIndex]; 	
 				});
                 matchMatrix[prot.id] = scores;
@@ -514,10 +514,10 @@ CLMSUI.modelUtils = {
             //console.log ("entry", entry);
             if (!entry.is_decoy) {
                 this.add ([{
-                    "id": entry.id,
-                    "displayLabel": entry.name.replace("_", " "),
-                    "refID": "Search",
-                    "refSeq": entry.sequence,
+                    id: entry.id,
+                    displayLabel: entry.name.replace("_", " "),
+                    refID: "Search",
+                    refSeq: entry.sequence,
                 }]);
                 if (entry.uniprot){
 					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence);
@@ -528,17 +528,17 @@ CLMSUI.modelUtils = {
     },
 
     matrixPairings: function (matrix, sequenceObjs) {
-        var keys = d3.keys(matrix);
+        var entries = d3.entries(matrix);
         var pairings = [];
         for (var n = 0; n < sequenceObjs.length; n++) {
             var max = {key: undefined, seqObj: undefined, score: 40};
             var seqObj = sequenceObjs[n];
-            keys.forEach (function (key) {
-                var score = matrix[key][n];
+            entries.forEach (function (entry) {
+                var score = entry.value[n];
                 //console.log ("s", n, score, score / sequenceObjs[n].data.length);
                 if (score > max.score && (score / seqObj.data.length) > 1) {
                     max.score = score;
-                    max.key = key;
+                    max.key = entry.key;
                     max.seqObj = seqObj;
                 }
             });
@@ -633,57 +633,18 @@ CLMSUI.modelUtils = {
 			crossSpec = {"default": {name: "all", searches: new Set (searchArray.map(function(s) { return s.id; })), linkables: [new Set(["*"])]}};
 		}
 		return crossSpec;
-        /*var linkableResSets = {};
-        searchArray.forEach (function (search) {
-            var crosslinkers = search.crosslinkers || [];
-
-            crosslinkers.forEach (function (crosslinker) {
-                var crosslinkerDescription = crosslinker.description;
-                var crosslinkerName = crosslinker.name;
-                var linkedAARegex = /LINKEDAMINOACIDS:(.*?)(?:;|$)/g;   // capture both sets if > 1 set
-                //console.log ("cld", crosslinkerDescription);
-                var resSet = linkableResSets[crosslinkerName];
-
-                if (!resSet) {
-                    resSet = {searches: new Set(), linkables: [], name: crosslinkerName};
-                    linkableResSets[crosslinkerName] = resSet;
-                }
-                resSet.searches.add (search.id);
-
-                var result = null;
-                var i = 0;
-                while ((result = linkedAARegex.exec(crosslinkerDescription)) !== null) {
-                    if (!resSet.linkables[i]) {
-                        resSet.linkables[i] = new Set();
-                    }
-
-                    var resArray = result[1].split(',');
-                    resArray.forEach (function (res) {
-                        var resRegex = /(cterm|nterm|[A-Z])(.*)?/i;
-                        var resMatch = resRegex.exec(res);
-                        if (resMatch) {
-                            resSet.linkables[i].add(resMatch[1].toUpperCase());
-                        }
-                    });
-                    i++;
-                }
-
-                resSet.heterobi = resSet.heterobi || (i > 1);
-            });
-        });
-
-        console.log ("CROSS", linkableResSets);
-        return linkableResSets;*/
     },
 
     // return indices of sequence whose letters match one in the residue set. Index is to the array, not to any external factor
     filterSequenceByResidueSet: function (seq, residueSet, all) {
-        var rmap = [];
-        for (var m = 0; m < seq.length; m++) {
-            if (all || residueSet.has(seq[m])) {
-                rmap.push (m);
-            }
-        }
+        var rmap = all ? d3.range (0, seq.length) : [];
+		if (!all) {
+			for (var m = 0; m < seq.length; m++) {
+				if (residueSet.has(seq[m])) {
+					rmap.push (m);
+				}
+			}
+		}
         return rmap;
     },
 
@@ -875,6 +836,39 @@ CLMSUI.modelUtils = {
 		return arr;
 	},
 	
+	// Calculate averages of grouped columns
+	averageGroups: function (zscores, colNameGroups, averageFunc) {
+		averageFunc = averageFunc || d3.mean;
+
+		var groupIndices = zscores.map (function (zscore) { return zscore.groupIndex; });
+		var colRange = _.range(colNameGroups.length);
+		var avgColumns = colRange.map(function() { return []; });
+
+		for (var n = 0; n < zscores[0].length; n++) {
+			var groups = colRange.map(function() { return []; });
+
+			for (var c = 0; c < zscores.length; c++) {
+				if (groupIndices[c] !== undefined) {
+					var val = zscores[c][n];
+					if (val) {
+						groups[groupIndices[c]].push (val);
+					}
+				}
+			}
+
+			var avgs = groups.map (function (group, i) {
+				var avg = group.length ? averageFunc(group) : undefined;
+				avgColumns[i].push (avg);
+			});
+		}
+
+		avgColumns.forEach (function (avgColumn, i) {
+			avgColumn.colName = "Avg Z ["+colNameGroups[i].join(";")+"]";
+		});
+
+		return avgColumns;
+	},
+	
 	metaClustering: function (crossLinks, myOptions) {
 		var defaults = {
 			distance: "euclidean",
@@ -965,44 +959,9 @@ CLMSUI.modelUtils = {
 			value.clink.meta.treeOrder = i+1;
 		});
 		
-		
-		// Calculate averages of grouped columns
-		function averageGroups (zscores, colNameGroups, averageFunc) {
-			averageFunc = averageFunc || d3.mean;
-			
-			var groupIndices = zscores.map (function (zscore) { return zscore.groupIndex; });
-			var colRange = _.range(colNameGroups.length);
-			var avgColumns = colRange.map(function() { return []; });
-			
-			for (var n = 0; n < zscores[0].length; n++) {
-				var groups = colRange.map(function() { return []; });
-				
-				for (var c = 0; c < zscores.length; c++) {
-					if (groupIndices[c] !== undefined) {
-						var val = zscores[c][n];
-						if (val) {
-							groups[groupIndices[c]].push (val);
-						}
-					}
-				}
-				
-				var avgs = groups.map (function (group, i) {
-					var avg = group.length ? averageFunc(group) : undefined;
-					avgColumns[i].push (avg);
-				});
-			}
-			
-			avgColumns.forEach (function (avgColumn, i) {
-				avgColumn.colName = "Avg Z ["+colNameGroups[i].join(";")+"]";
-			});
-			
-			return avgColumns;
-		}
-		
-		var zGroupAvgScores = averageGroups (zscores, colNameGroups);
+		var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zscores, colNameGroups);
 		var concatZScores = zscores.concat (zGroupAvgScores);
 		//console.log ("zlinkGroupAvgScores", zGroupAvgScores, zscores);
-		
 		
 		// transpose to get scores per link not per column
 		var concatZScoresByLink = reduceLinks (d3.transpose (concatZScores), crossLinks);
@@ -1065,9 +1024,9 @@ CLMSUI.modelUtils = {
 		return arr || orig2DArr;
 	},
 
-	// test to ignore short chains and those that are just water molecules
+	// test to ignore short chains and those that aren't polymer chains (such as water molecules)
     isViableChain: function (chainProxy) {
-        return chainProxy.residueCount > 10 && (!chainProxy.entity || chainProxy.entity.description !== "water");
+        return chainProxy.residueCount > 10 && (!chainProxy.entity || chainProxy.entity.isPolymer());
     },
 
     crosslinkCountPerProteinPairing: function (crossLinkArr) {
@@ -1081,14 +1040,13 @@ CLMSUI.modelUtils = {
                 var key = fromProtein.id + "-" + toProtein.id;
                 if (!obj[key]) {
                     obj[key] = {
-                        crossLinks:[],
+                        crossLinks: [],
                         fromProtein: fromProtein,
                         toProtein: toProtein,
                         label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
                     };
                 }
-                var slot = obj[key].crossLinks;
-                slot.push (crossLink);
+                obj[key].crossLinks.push (crossLink);
             }
         });
         return obj;
@@ -1099,19 +1057,23 @@ CLMSUI.modelUtils = {
         features.sort (function (f1, f2) {
             return +f1.begin - +f2.begin;
         });
-        var mergedRanges = [], furthestEnd = -10, mergeBegin = -10;
-        features.forEach (function (f, i) {
+        var mergedRanges = [], furthestEnd, mergeBegin;
+        features.forEach (function (f) {
             var b = +f.begin;
             var e = +f.end;
-            if (b > furthestEnd + 1) { // if a gap between beginning of this range and the maximum end value found so far
-                if (i) {    // if not the first feature (for which previous values are meaningless)
-                    mergedRanges.push ({begin: mergeBegin, end: furthestEnd});  // then add the merged range
-                }
-                mergeBegin = b; // and then set the beginning of a new merged range
-            }
-            furthestEnd = Math.max (furthestEnd, e);
+			
+			if (furthestEnd === undefined) {	// first feature, initialise mergeBegin and furthestEnd
+				mergeBegin = b;
+				furthestEnd = e;
+			} else {							// otherwise look for overlap with previous
+				if (b > furthestEnd + 1) {	// if a gap between beginning of this range and the maximum end value found so far
+					mergedRanges.push ({begin: mergeBegin, end: furthestEnd});  // then add the now finished old merged range
+					mergeBegin = b; // and then set the beginning of a new merged range
+				}
+				furthestEnd = Math.max (furthestEnd, e);
+			}
         });
-        if (furthestEnd >= 0) {
+        if (furthestEnd) {
             mergedRanges.push ({begin: mergeBegin, end: furthestEnd});  // add hanging range
         }
 
@@ -1119,9 +1081,8 @@ CLMSUI.modelUtils = {
             mergedRanges.map (function (coords) { // make new features based on the new merged ranges
                 return $.extend ({}, features[0], coords); // features[0] is used to get other fields
             })
-            : features  // otherwise just use origina;s
+            : features  // otherwise just use originals
         ;
-        //window.mergerxi = merged;
         //console.log ("mergedFeatures", features, merged);
         return merged;
     },
