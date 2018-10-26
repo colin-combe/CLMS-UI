@@ -188,7 +188,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				},
 			},
 			padding: {
-				left: 45, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
+				left: 56, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
 				right: 20,
 				top: 6
 			},

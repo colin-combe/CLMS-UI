@@ -42,7 +42,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend ({
         }
     },
     isCategorical: function () { return this.get("type") !== "linear"; },
-    undefinedColour: "#888",
+    undefinedColour: "#ddd",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend ({
@@ -255,6 +255,26 @@ CLMSUI.BackboneModelTypes.NonCrossLinkColourModel = CLMSUI.BackboneModelTypes.Co
 });
 
 
+/* Colour model based on map of crosslinks to values rather than properties of crosslinks themselves */
+/* Good for making models based on calculated / derived values */
+CLMSUI.BackboneModelTypes.MapBasedLinkColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend ({
+    initialize: function () {
+		var domain = this.get("colScale").domain();
+		var labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
+		domain.map (function (domVal, i) {
+			labels[i] += " (" + domVal + ")";
+		});
+		
+		this
+			.set ("labels", this.get("colScale").copy().range(labels))
+		;
+    },
+    getValue: function (crossLink) {
+        return this.get("valueMap")[crossLink.id];
+    },
+});
+
+
 
 CLMSUI.linkColour.setupColourModels = function () {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel ({
@@ -306,7 +326,7 @@ CLMSUI.linkColour.setupColourModels = function () {
     // If necessary, swap in newly added colour scale with same id as removed (but current) scale pointed to by linkColourAssignment
     var replaceCurrentLinkColourAssignment = function (collection) {
         var currentColourModel = CLMSUI.compositeModelInst.get("linkColourAssignment");
-        if (!currentColourModel.collection) {
+        if (currentColourModel && !currentColourModel.collection) {
             CLMSUI.compositeModelInst.set ("linkColourAssignment", collection.get(currentColourModel.get("id")));
         }
     };
@@ -340,16 +360,25 @@ CLMSUI.linkColour.setupColourModels = function () {
         this.add (newModel);
         replaceCurrentLinkColourAssignment (this);
     });
+	
+	CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "addMapBasedLinkColourModel", function (data) {
+		console.log ("AMB", data);
+		this.remove (data.id);
+		var newModel = CLMSUI.linkColour.makeMapBasedLinkColourModel (data.columnIndex, data.label, data.linkMap);
+		newModel.set ("id", data.id);
+        this.add (newModel);
+        replaceCurrentLinkColourAssignment (this);
+    });
 };
 
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
-    var linkArr = CLMS.arrayFromMapValues (links);
+    var linkArr = links.length ? links : CLMS.arrayFromMapValues (links);
 	// first attempt to treat as if numbers
-    var extents = d3.extent (linkArr, function(link) { return link.meta ? link.meta[field] : undefined; });
+    var extents = d3.extent (linkArr, function (link) { return link.meta ? link.meta[field] : undefined; });
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
-        range.splice (1, 0, "#aaa");
+        range.splice (1, 0, "#888");
     }
 	
 	// see if it is a list of colours
@@ -357,7 +386,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
 	var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     
 	// if it isn't a list of colours and only a few uinique values, make it categorical
-    var uniq = d3.set (linkArr.map (function(link) { return link.meta ? link.meta[field] : undefined; })).size();
+    var uniq = d3.set (linkArr.map (function (link) { return link.meta ? link.meta[field] : undefined; })).size();
     // if the values in this metadata form 6 or less distinct values count it as categorical
     var isCategorical = uniq < 7;
     if (isCategorical && !dataIsColours) {
@@ -395,12 +424,41 @@ CLMSUI.linkColour.makeNonCrossLinkColourModel = function (id, domain) {
 	var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
-        range.splice (1, 0, "#aaa");
+        range.splice (1, 0, "#888");
     }
 	
 	var newColourModel = new CLMSUI.BackboneModelTypes.NonCrossLinkColourModel ({
         colScale: d3.scale.linear().domain(extents).range(range),
         id: id,
+    });
+	
+	return newColourModel;
+};
+
+CLMSUI.linkColour.makeMapBasedLinkColourModel = function (columnIndex, label, linkMap) {
+	var entries = d3.entries (linkMap);
+	var domain = entries.map (function (entry) {
+		return entry.value[columnIndex];
+	});
+	var fieldValueMap = {};
+	entries.forEach (function (entry, i) {
+		fieldValueMap[entry.key] = domain[i];
+	});
+	
+	console.log ("dfv", domain, fieldValueMap);
+	
+	var extents = d3.extent (domain);
+	var range = ["red", "blue"];
+    if (extents[0] < 0 && extents[1] > 0) {
+        extents.splice (1, 0, 0);
+        range.splice (1, 0, "#888");
+    }
+	
+	var newColourModel = new CLMSUI.BackboneModelTypes.MapBasedLinkColourModel ({
+        colScale: d3.scale.linear().domain(extents).range(range),
+		title: label,
+		longDescription: label + " Z-values.", 
+		valueMap: fieldValueMap
     });
 	
 	return newColourModel;
