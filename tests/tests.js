@@ -633,6 +633,21 @@ function callback (model) {
 	});
 	
 	
+	QUnit.test ("Crosslink count per protein pairing", function (assert) {
+		var crossLinks = CLMS.arrayFromMapValues (clmsModel.get("crossLinks"));
+		var expectedCrossLinkIDs = crossLinks.map (function (crossLink) { return crossLink.id; });
+		var expectedValue = {"2000171-2000171" : {crossLinks: expectedCrossLinkIDs, fromProtein: "2000171", toProtein: "2000171", label: "ALBU HUMAN - ALBU HUMAN"}};
+		var actualValue = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinks);	
+		d3.values(actualValue).forEach (function (pairing) {	// do this as otherwise stringify will kick off about circular structures, so just match ids
+			pairing.fromProtein = pairing.fromProtein.id;
+			pairing.toProtein = pairing.toProtein.id;
+			pairing.crossLinks = pairing.crossLinks.map (function (crossLink) { return crossLink.id; });
+		});
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as crosslink protein pairing value, Passed!");
+	});
+	
+	
 	QUnit.test ("Merge contiguous features", function (assert) {
 		var testArrs = [
 			[
@@ -750,13 +765,29 @@ function callback (model) {
 	});
 	
 	
+	QUnit.test ("addGroupsToScoreColumns", function (assert) {
+		var expectedValue = [["a", "b"],["c"]];
+		var options = {groups: {a: "cat", b: "cat", c: "dog"}};
+		var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5]];
+		["a", "b", "c"].forEach (function (val, i) { testNumbers[i].colName = val; });
+		var actualValue = CLMSUI.modelUtils.addGroupsToScoreColumns(testNumbers, options);
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as groups, Passed!");
+		
+		expectedValue = [0, 0, 1];
+		actualValue = testNumbers.map (function (arr) { return arr.groupIndex; });
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as attached score group indices, Passed!");
+	});
+	
+	
 	QUnit.test ("Average columns by group", function (assert) {
 		var expectedValue = [[2, 2, 2, 2, 2], [5, 5, 5, 5, 5]];
 		["Avg Z[a;b]", "Avg Z[c]"].forEach (function (val, i) { expectedValue[i].colName = val; });
 		
 		var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5],[7, 7, 7, 7, 7]];
+		var columnGroupNames = [["a", "b"], ["c"]];
 		[0,0,1].forEach (function (val, i) { testNumbers[i].groupIndex = val; });	// 7's not given groupIndex
-		var actualValue = CLMSUI.modelUtils.averageGroups(testNumbers, [["a", "b"], ["c"]]);
+		var actualValue = CLMSUI.modelUtils.averageGroups(testNumbers, columnGroupNames);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as z-value output, Passed!");
 	});
