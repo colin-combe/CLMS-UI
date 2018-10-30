@@ -103,10 +103,25 @@
         },
         
         alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
-            var matrix = this.get("scoreMatrix");
-            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+            var settings = this.getSettings();
+
+            var fullResults = compSeqArray.map (function (cSeq) {
+                var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
+                var localAlign = (tempSemiLocal && tempSemiLocal.local);
+                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
+                return settings.aligner.align (cSeq, settings.refSeq, settings.scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
+            }, this);
             
-            var scores = {
+            //console.log ("fr", fullResults);
+            
+            return fullResults;
+        },
+		
+		getSettings: function () {
+			var matrix = this.get("scoreMatrix");
+            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+			
+			var scores = {
                 matrix: matrix,
                 match: this.get("matchScore"), 
                 mis: this.get("misScore"), 
@@ -114,20 +129,12 @@
                 gapExt: this.get("gapExtendScore"),
                 gapAtStart: this.get("gapAtStartScore")
             };
-            var refSeq = this.get("refSeq");
+			
+			var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
-
-            var fullResults = compSeqArray.map (function (cSeq) {
-                var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                var localAlign = (tempSemiLocal && tempSemiLocal.local);
-                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
-                return aligner.align (cSeq, refSeq, scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
-            }, this);
-            
-            //console.log ("fr", fullResults);
-            
-            return fullResults;
-        },
+			
+			return {scores: scores, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow")};
+		},
         
         getCompSequence: function (seqName) {
             var seqModel = this.get("seqCollection").get(seqName);

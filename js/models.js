@@ -109,6 +109,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
         url: "R/blosums.json",
         parse: function (response) {
             // turn json object into array, add keys to value parts, then export just the values
+			console.log ("rep", response);
             var entries = d3.entries(response);
             var values = entries.map(function (entry) {
                 entry.value.key = entry.key;
@@ -120,3 +121,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
         }
     }),
 });
+
+
+CLMS.model.CrossLink.prototype.getMeta = function (metaField) {
+	if (arguments.length === 0) { return this.meta; }
+	return this.meta ? this.meta[metaField] : undefined;
+};
+
+CLMS.model.CrossLink.prototype.setMeta = function (metaField, value) {
+	if (arguments.length === 2) {
+		this.meta = this.meta || {};
+		this.meta[metaField] = value;
+	}
+};

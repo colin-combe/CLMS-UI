@@ -518,11 +518,17 @@
 		return max;
 	}
 
-    function align (query, target, scores, isLocal, isSemiLocal, windowSize) {
+    function align (query, target, myScores, isLocal, isSemiLocal, windowSize) {
         var target = target || 'ATAGCTAGCTAGCATAAGC';
         var query  = query || 'AGCTAcCGCAT';
         var isLocal = isLocal || false;
-        var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
+		var defaults = {match: 1, mis: -1, gapOpen: -1, gapExt: -1};
+		var scores = myScores || {};
+		Object.keys(scores).forEach (function (key) {
+			defaults[key] = scores[key];
+		});
+		scores = defaults;
+        //var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
         var matrix = scores.matrix || Blosum80Map;
 
         var rst;
@@ -546,8 +552,8 @@
     if (typeof module == 'object') {
         module.exports = combine;
     } else {
-        CLMSUI = CLMSUI || {};
-        CLMSUI.GotohAligner = {align: align};
+        this.CLMSUI = this.CLMSUI || {};
+        this.CLMSUI.GotohAligner = {align: align};
     }
     
     function combine () {

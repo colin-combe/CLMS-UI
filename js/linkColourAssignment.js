@@ -228,7 +228,7 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
         this.set ("labels", this.get("colScale").copy().range(labels));
     },
     getValue: function (crossLink) {
-        return crossLink.meta ? crossLink.meta[this.get("field")] : undefined;
+        return crossLink.getMeta (this.get("field"));
     },
 });
 
@@ -374,7 +374,7 @@ CLMSUI.linkColour.setupColourModels = function () {
 CLMSUI.linkColour.makeColourModel = function (field, label, links) {
     var linkArr = links.length ? links : CLMS.arrayFromMapValues (links);
 	// first attempt to treat as if numbers
-    var extents = d3.extent (linkArr, function (link) { return link.meta ? link.meta[field] : undefined; });
+    var extents = d3.extent (linkArr, function (link) { return link.getMeta(field); });
     var range = ["red", "blue"];
     if (extents[0] < 0 && extents[1] > 0) {
         extents.splice (1, 0, 0);
@@ -386,7 +386,7 @@ CLMSUI.linkColour.makeColourModel = function (field, label, links) {
 	var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
     
 	// if it isn't a list of colours and only a few uinique values, make it categorical
-    var uniq = d3.set (linkArr.map (function (link) { return link.meta ? link.meta[field] : undefined; })).size();
+    var uniq = d3.set (linkArr.map (function (link) { return link.getMeta(field); })).size();
     // if the values in this metadata form 6 or less distinct values count it as categorical
     var isCategorical = uniq < 7;
     if (isCategorical && !dataIsColours) {

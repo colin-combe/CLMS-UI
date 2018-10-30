@@ -632,6 +632,54 @@ function callback (model) {
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as index array, Passed!");
 	});
 	
+	QUnit.test ("Filter repeated Sequences", function (assert) {
+		var testSeqs = [
+			"ABCDEFGHIJKLM",
+			"BABARACUS",
+			"ABCDEFGHIJKLM",
+			"HANNIBALSMITH",
+			"BABARACUS",
+			"FACE",
+			"FACE"
+		];
+		var expectedValue = {
+			sameSeqIndices: [undefined, undefined, 0, undefined, 1, undefined, 5],
+			uniqSeqs: ["ABCDEFGHIJKLM", "BABARACUS", "HANNIBALSMITH", "FACE"],
+			uniqSeqIndices: [0, 1, 3, 5],
+			uniqSeqReverseIndex: {"0": "0", "1": "1", "3": "2", "5": "3"}
+		};
+		var actualValue = CLMSUI.modelUtils.filterRepeatedSequences (testSeqs);
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as repeated sequence result, Passed!");
+	});
+	
+	
+	QUnit.test ("Reinflate sequence map", function (assert) {
+		var testSeqs = [
+			"ABCDEFGHIJKLM",
+			"BABARACUS",
+			"ABCDEFGHIJKLM",
+			"HANNIBALSMITH",
+			"BABARACUS",
+			"FACE",
+			"FACE"
+		];
+		var matchMatrix = {Prot1: [1, 2, 3, 4], Prot2: [2, 4, 6, 8]};
+		var filteredSeqInfo = {
+			sameSeqIndices: [undefined, undefined, 0, undefined, 1, undefined, 5],
+			uniqSeqs: ["ABCDEFGHIJKLM", "BABARACUS", "HANNIBALSMITH", "FACE"],
+			uniqSeqIndices: [0, 1, 3, 5],
+			uniqSeqReverseIndex: {"0": "0", "1": "1", "3": "2", "5": "3"}
+		};
+		
+		var expectedValue = {Prot1: [1, 2, 1, 3, 2, 4, 4], Prot2: [2, 4, 2, 6, 4, 8, 8]};
+		var actualValue = CLMSUI.modelUtils.reinflateSequenceMap (matchMatrix, testSeqs, filteredSeqInfo);
+		
+		// stringify turns undefined to null for printout, but it's a match
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as reinflated sequence result, Passed!");
+	});
+	
 	
 	QUnit.test ("Crosslink count per protein pairing", function (assert) {
 		var crossLinks = CLMS.arrayFromMapValues (clmsModel.get("crossLinks"));
@@ -741,7 +789,7 @@ function callback (model) {
 		CLMSUI.vent.listenToOnce (CLMSUI.vent, "linkMetadataUpdated", function (actualValue) {
 			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as linkmetadata event data, Passed!");
 			
-			var actualValue2 = clmsModel.get("crossLinks").get("2000171_415-2000171_497").meta;
+			var actualValue2 = clmsModel.get("crossLinks").get("2000171_415-2000171_497").getMeta();
 			var expectedValue2 = {cat: 2, dog: 4};
 			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as link meta value, Passed!");
 		});
@@ -762,6 +810,15 @@ function callback (model) {
 		});
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as z-value output, Passed!");
+	});
+	
+	
+	QUnit.test ("Compact 2D array", function (assert) {
+		var expectedValue = [[1, 2, undefined, 3], [4, 5, 6, 7]];
+		var testNumbers = [[1, 2, undefined, 3], [undefined, undefined, undefined, undefined], [4, 5, 6, 7]];
+		var actualValue = CLMSUI.modelUtils.compact2DArray (testNumbers);
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as compacted 2D array, Passed!");
 	});
 	
 	
@@ -814,6 +871,21 @@ function callback (model) {
 		
 		// stringify turns undefined to null for printout, but it's a match
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as normalised array, Passed!");
+	});
+	
+	
+	QUnit.test ("Update crosslink metadata with column data", function (assert) {
+		var expectedValue = [{cat: 1, dog: 2}, {cat: 3, dog: 4}];
+		
+		var testLinks = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks")).slice(0,2);
+		var testZScores = [[1, 2],[3, 4]];
+		testLinks.forEach (function (crossLink, i) { testZScores[i].clink = crossLink; });
+		var testColumnNameIndexPair = [{name: "cat", index: 0}, {name: "dog", index: 1}];
+		CLMSUI.modelUtils.updateMetaDataWithTheseColumns (testZScores, testColumnNameIndexPair);
+		
+		var actualValue = testLinks.map (function (testLink) { return testLink.getMeta(); });
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as updated metadata values, Passed!");
 	});
 	
 }
