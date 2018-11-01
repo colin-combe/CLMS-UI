@@ -109,7 +109,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
         url: "R/blosums.json",
         parse: function (response) {
             // turn json object into array, add keys to value parts, then export just the values
-			console.log ("rep", response);
             var entries = d3.entries(response);
             var values = entries.map(function (entry) {
                 entry.value.key = entry.key;

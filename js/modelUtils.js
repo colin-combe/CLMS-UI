@@ -316,7 +316,7 @@ CLMSUI.modelUtils = {
 					function matchByAlignment () {
 						var protAlignCollection = bbmodel.get("alignColl");
 						CLMSUI.vent.listenToOnce (CLMSUI.vent, "sequenceMatchingDone", function (matchMatrix) {
-							var pdbUniProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, nglSequences);
+							var pdbUniProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, nglSequences, protAlignCollection);
 							sequenceMapsAvailable (pdbUniProtMap);
 						});
 						// sequenceMatchingDone event triggered in matchSequencesToExistingProteins when alignments done, sync or async
@@ -592,29 +592,44 @@ CLMSUI.modelUtils = {
         }, this);
     },
 
-    matrixPairings: function (matrix, sequenceObjs) {
+    matrixPairings: function (matrix, sequenceObjs, protAlignCollection) {
         var entries = d3.entries(matrix);
         var pairings = [];
         for (var n = 0; n < sequenceObjs.length; n++) {
-            var max = {key: undefined, seqObj: undefined, score: 40};
+            var max = {key: undefined, seqObj: undefined, score: 40, bitScore: 50};
             var seqObj = sequenceObjs[n];
             entries.forEach (function (entry) {
-                var score = entry.value[n];
-				var bitScore = ((0.358511 * score) - Math.log(0.225042)) / Math.LN2;
-                if (score > max.score && /*(score / seqObj.data.length) > 5 && */ bitScore > 100) {
+				var protAlignModel = protAlignCollection ? protAlignCollection.get (entry.key) : undefined;
+				var blosum = protAlignModel ? protAlignModel.get("scoreMatrix") : undefined;
+				var score = entry.value[n];
+				var sigs = CLMSUI.modelUtils.alignmentSignificancies (score, protAlignModel ? protAlignModel.get("refSeq").length : 1000, seqObj.data.length, blosum);
+
+                if (sigs.bitScore > max.bitScore) {
                     max.score = score;
                     max.key = entry.key;
                     max.seqObj = seqObj;
-					max.bitScore = bitScore;
+					max.bitScore = sigs.bitScore;
                 }
             });
             if (max.key) {
                 pairings.push ({id: max.key, seqObj: max.seqObj});
-				console.log ("MAX SCORE", max.score / max.seqObj.data.length, max.bitScore);
+				//console.log ("MAX SCORE", max.score / max.seqObj.data.length, max.bitScore);
             }
         }
         return pairings;
     },
+	
+	alignmentSignificancies: function (rawScore, proteinLength, seqLength, blosumData) {
+		var lambda = (blosumData ? blosumData.get("lambda") : 0.254) || 0.254;
+		var K = (blosumData ? blosumData.get("K") : 0.225042) || 0.225042;
+		var bitScore = ((lambda * rawScore) - Math.log(K)) / Math.LN2;
+		var pScore = Math.pow (2, -bitScore);
+		return {
+			bitScore: bitScore,
+			pScore: pScore,
+			eScore: proteinLength * seqLength * pScore
+		}
+	},
 
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
         return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
