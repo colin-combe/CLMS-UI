@@ -790,3 +790,7 @@ sup {font-size:xx-small; vertical-align:super;}
 	left: 0;
 	background: white;
 }
+
+input:invalid {
+	background: pink;
+}
