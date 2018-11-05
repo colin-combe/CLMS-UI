@@ -14,14 +14,15 @@
             )[0];
             
             var refResult = {str: fullResult.fmt[1], label: this.get("holderModel").get("refID")}; 
-            
+			
             var compResult = {
                str: fullResult.fmt[0], 
                refStr: fullResult.fmt[1], 
                convertToRef: fullResult.indx.qToTarget, 
                convertFromRef: fullResult.indx.tToQuery, 
                cigar: fullResult.res[2], 
-               score: fullResult.res[0], 
+               score: fullResult.res[0],
+				bitScore: fullResult.bitScore,
                label: this.get("compID"),
             }; 
             
@@ -109,7 +110,9 @@
                 var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
                 var localAlign = (tempSemiLocal && tempSemiLocal.local);
                 var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
-                return settings.aligner.align (cSeq, settings.refSeq, settings.scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
+                var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
+				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
+				return bioseqResults;
             }, this);
             
             //console.log ("fr", fullResults);
@@ -117,11 +120,18 @@
             return fullResults;
         },
 		
+		getBitScore: function (rawScore, blosumData) {
+			var lambda = (blosumData ? blosumData.lambda : 0.254) || 0.254;
+			var K = (blosumData ? blosumData.K : 0.225042) || 0.225042;
+			var bitScore = ((lambda * rawScore) - Math.log(K)) / Math.LN2;
+			return bitScore;
+		},
+
 		getSettings: function () {
 			var matrix = this.get("scoreMatrix");
             if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
 			
-			var scores = {
+			var scoringSystem = {
                 matrix: matrix,
                 match: this.get("matchScore"), 
                 mis: this.get("misScore"), 
@@ -133,7 +143,7 @@
 			var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
 			
-			return {scores: scores, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow")};
+			return {scoringSystem: scoringSystem, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow")};
 		},
         
         getCompSequence: function (seqName) {

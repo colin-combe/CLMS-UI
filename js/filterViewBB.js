@@ -49,7 +49,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             navigationFilters: [
                 {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE", pattern: "[A-Za-z]+-?[A-Za-z]*"},
                 {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"},
-                {"label":"Charge", "id":"charge", "chars":3, tooltip: "Filter to cross-links with matches with this charge state e.g. 3", pattern:"\\d+-?\\d*"},
+                {"label":"Charge", "id":"charge", "chars":3, tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6", pattern:"\\d+-?\\d*"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
                 {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565", pattern: "\\d*"},
             ],

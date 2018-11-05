@@ -414,6 +414,14 @@ CLMSUI.modelUtils = {
     // Except it depends on having a pdb code, not a standalone file, and all the uniprot ids present too
     // Therefore, current default is to use sequence matching to detect similarities
     matchPDBChainsToUniprot: function (pdbCode, nglSequences, interactorArr, callback) {
+		
+		function handleError (data, status) {
+			console.log ("error", data, status)
+			var emptySequenceMap = [];
+			emptySequenceMap.fail = true;
+			callback (emptySequenceMap);
+		}
+		
         $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query="+pdbCode,
             function (data, status, xhr) {
 
@@ -455,13 +463,13 @@ CLMSUI.modelUtils = {
                         callback (mapArr);
                     }
                 } else {	// usually some kind of error if reached here as we didn't detect xml
-					console.log ("error", data, status)
-					var emptySequenceMap = [];
-					emptySequenceMap.fail = true;
-					callback (emptySequenceMap);
+					handleError (data, status);
 				}
             }
-        );
+        ).fail (function (jqxhr, status, error) {
+			handleError (null, status);
+		})
+		;
     },
 
     // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline.
@@ -494,11 +502,18 @@ CLMSUI.modelUtils = {
             	var protAlignModel = protAlignCollection.get (prot.id);
 				var settings = protAlignModel.getSettings();
 				settings.aligner = undefined;
-				pool.exec ('protAlignPar', [settings, filteredSeqInfo.uniqSeqs, {semiLocal: true}])
-					.then(function (alignResults) {
+				pool.exec ('protAlignPar', [prot.id, settings, filteredSeqInfo.uniqSeqs, {semiLocal: true}])
+					.then(function (alignResultsObj) {
+						// be careful this is async, protID might not be right unless you get it from returned object
+						var alignResults = alignResultsObj.fullResults;
+						var protID = alignResultsObj.protID;
 					 	//console.log('result', /*alignResults,*/ prot.id);
-						var uniqScores = alignResults.map (function (indRes) { return indRes.res[0]; });
-						matchMatrix[prot.id] = uniqScores;
+						var protAlignModel2 = protAlignCollection.get (prot.id);
+						var uniqScores = alignResults.map (function (indRes) {
+							return protAlignModel2.getBitScore (indRes.res[0], protAlignModel2.get("scoreMatrix").attributes);
+						});
+							
+						matchMatrix[protID] = uniqScores;
 					})
 					.catch(function (err) { console.log(err); })
 					.then(function () {
@@ -525,7 +540,9 @@ CLMSUI.modelUtils = {
 				// Only calc alignments for unique sequences, we can copy values for repeated sequences in the next bit
 				var alignResults = protAlignModel.alignWithoutStoring (filteredSeqInfo.uniqSeqs, {semiLocal: true});
 				console.log ("alignResults", /*alignResults,*/  prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
-				var uniqScores = alignResults.map (function (indRes) { return indRes.res[0]; });
+				var uniqScores = alignResults.map (function (indRes) {
+					return indRes.bitScore;
+				});
 				matchMatrix[prot.id] = uniqScores;
 			});
 
@@ -595,40 +612,37 @@ CLMSUI.modelUtils = {
     matrixPairings: function (matrix, sequenceObjs, protAlignCollection) {
         var entries = d3.entries(matrix);
         var pairings = [];
+		var proteinSeqs = protAlignCollection.pluck("refSeq").map (function(seq) { return {size: seq.length};});
+		var totalProteinLength = CLMSUI.modelUtils.totalProteinLength (proteinSeqs);
+
         for (var n = 0; n < sequenceObjs.length; n++) {
-            var max = {key: undefined, seqObj: undefined, score: 40, bitScore: 50};
+            var max = {key: undefined, seqObj: undefined, bitScore: 50, eScore: 0.00000001};
             var seqObj = sequenceObjs[n];
             entries.forEach (function (entry) {
 				var protAlignModel = protAlignCollection ? protAlignCollection.get (entry.key) : undefined;
-				var blosum = protAlignModel ? protAlignModel.get("scoreMatrix") : undefined;
-				var score = entry.value[n];
-				var sigs = CLMSUI.modelUtils.alignmentSignificancies (score, protAlignModel ? protAlignModel.get("refSeq").length : 1000, seqObj.data.length, blosum);
+				var bitScore = entry.value[n];
+				var eScore = CLMSUI.modelUtils.alignmentSignificancy (bitScore, totalProteinLength, seqObj.data.length);
 
-                if (sigs.bitScore > max.bitScore) {
-                    max.score = score;
+                if (eScore < max.eScore) {	// lower eScore is better
                     max.key = entry.key;
                     max.seqObj = seqObj;
-					max.bitScore = sigs.bitScore;
+					max.bitScore = bitScore;
+					max.eScore = eScore;
                 }
             });
             if (max.key) {
                 pairings.push ({id: max.key, seqObj: max.seqObj});
-				//console.log ("MAX SCORE", max.score / max.seqObj.data.length, max.bitScore);
+				console.log ("MAX SCORE", max);
             }
         }
+		
         return pairings;
     },
 	
-	alignmentSignificancies: function (rawScore, proteinLength, seqLength, blosumData) {
-		var lambda = (blosumData ? blosumData.get("lambda") : 0.254) || 0.254;
-		var K = (blosumData ? blosumData.get("K") : 0.225042) || 0.225042;
-		var bitScore = ((lambda * rawScore) - Math.log(K)) / Math.LN2;
-		var pScore = Math.pow (2, -bitScore);
-		return {
-			bitScore: bitScore,
-			pScore: pScore,
-			eScore: proteinLength * seqLength * pScore
-		}
+	
+	alignmentSignificancy: function (bitScore, dbLength, seqLength) {
+		var exp = Math.pow (2, -bitScore);
+		return dbLength * seqLength * exp;	// escore
 	},
 
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
