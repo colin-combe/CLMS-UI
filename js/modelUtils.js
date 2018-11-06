@@ -489,6 +489,11 @@ CLMSUI.modelUtils = {
 			CLMSUI.vent.trigger ("sequenceMatchingDone", CLMSUI.modelUtils.reinflateSequenceMap (matchMatrix, seqs, filteredSeqInfo));
 		}
 		
+		function updateMatchMatrix (protID, alignResults) {
+			var uniqScores = alignResults.map (function (indRes) { return indRes.bitScore; });
+			matchMatrix[protID] = uniqScores;
+		}
+		
 		var totalAlignments = filteredSeqInfo.uniqSeqs.length * proteins.length;
 		CLMSUI.vent.trigger ("alignmentProgress", "Attempting to match "+proteins.length+" proteins to "+seqs.length+" additional sequences.");
 	
@@ -504,29 +509,19 @@ CLMSUI.modelUtils = {
 				settings.aligner = undefined;
 				pool.exec ('protAlignPar', [prot.id, settings, filteredSeqInfo.uniqSeqs, {semiLocal: true}])
 					.then(function (alignResultsObj) {
-						// be careful this is async, protID might not be right unless you get it from returned object
-						var alignResults = alignResultsObj.fullResults;
-						var protID = alignResultsObj.protID;
-					 	//console.log('result', /*alignResults,*/ prot.id);
-						var protAlignModel2 = protAlignCollection.get (prot.id);
-						var uniqScores = alignResults.map (function (indRes) {
-							return protAlignModel2.getBitScore (indRes.res[0], protAlignModel2.get("scoreMatrix").attributes);
-						});
-							
-						matchMatrix[protID] = uniqScores;
+						// be careful this is async, so protID better obtained from returned object - might not be prot.id
+						updateMatchMatrix (alignResultsObj.protID, alignResultsObj.fullResults)
 					})
-					.catch(function (err) { console.log(err); })
+					.catch(function (err) { console.log (err); })
 					.then(function () {
 						count--;
 						if (count % 10 === 0) {
-							//console.log ("done task,",count,"to go");
 							CLMSUI.vent.trigger ("alignmentProgress", count+" proteins remaining to align.");
-						}
-						if (count === 0) {
-							pool.terminate(); // terminate all workers when done
-							console.log ("tidy pool. TIME PAR", performance.now() - start);
-							
-							finished (matchMatrix);
+							if (count === 0) {
+								pool.terminate(); // terminate all workers when done
+								console.log ("tidy pool. TIME PAR", performance.now() - start);
+								finished (matchMatrix);
+							}
 						}
 					})
 				;
@@ -539,11 +534,8 @@ CLMSUI.modelUtils = {
 				var protAlignModel = protAlignCollection.get (prot.id);
 				// Only calc alignments for unique sequences, we can copy values for repeated sequences in the next bit
 				var alignResults = protAlignModel.alignWithoutStoring (filteredSeqInfo.uniqSeqs, {semiLocal: true});
-				console.log ("alignResults", /*alignResults,*/  prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
-				var uniqScores = alignResults.map (function (indRes) {
-					return indRes.bitScore;
-				});
-				matchMatrix[prot.id] = uniqScores;
+				console.log ("alignResults", /*alignResults,*/ prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
+				updateMatchMatrix (prot.id, alignResults)
 			});
 
 			finished (matchMatrix);
@@ -632,7 +624,7 @@ CLMSUI.modelUtils = {
             });
             if (max.key) {
                 pairings.push ({id: max.key, seqObj: max.seqObj});
-				console.log ("MAX SCORE", max);
+				//console.log ("MAX SCORE", max);
             }
         }
 		

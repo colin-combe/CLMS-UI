@@ -104,12 +104,15 @@
         },
         
         alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
-            var settings = this.getSettings();
+			return this.alignWithoutStoringWithSettings (compSeqArray, tempSemiLocal, this.getSettings());
+        },
+		
+		alignWithoutStoringWithSettings: function (compSeqArray, tempSemiLocal, settings) {
+			var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
+            var localAlign = (tempSemiLocal && tempSemiLocal.local);
+            var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
 
             var fullResults = compSeqArray.map (function (cSeq) {
-                var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
-                var localAlign = (tempSemiLocal && tempSemiLocal.local);
-                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
                 var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
 				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
 				return bioseqResults;
