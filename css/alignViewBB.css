@@ -163,3 +163,9 @@ DIV.alignSettings {
 	border-right: 1px solid #aaa;
 	margin-right: 0.5em;
 }
+
+.alignSettings span.subduedText {
+	margin-left: 2em;
+	color: #668;
+	font-size: 0.8em;
+}

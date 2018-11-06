@@ -155,3 +155,7 @@ div.filterControlGroup label.noBreak2 {
 	background: #eee;
 	padding: 0.2em;
 }
+
+.filterControlGroup input:invalid {
+	background: pink;
+}

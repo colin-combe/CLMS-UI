@@ -283,8 +283,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			var newOptions = columns.map (function (column) {
 				return {
 					id: column, label: column, decimalPlaces: 2, matchLevel: false,
-					linkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
-					unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+					linkFunc: function (c) {return c.getMeta() ? [c.getMeta(column)] : []; },
+					unfilteredLinkFunc: function (c) {return c.getMeta() ? [c.getMeta(column)] : []; },
 				};
 			});
 

@@ -292,7 +292,7 @@
 		metaData.columns.map (function (mcol) {
 			var columnType = metaData.columnTypes[mcol];
 			
-			var accFunc = function (d) { return d.meta ? d.meta[mcol] : undefined; };
+			var accFunc = function (d) { return d.getMeta (mcol); };
 			var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ? 
 				this.makeColourSchemeBackgroundHook (mcol) : undefined
 			;

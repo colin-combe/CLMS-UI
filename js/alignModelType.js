@@ -14,14 +14,15 @@
             )[0];
             
             var refResult = {str: fullResult.fmt[1], label: this.get("holderModel").get("refID")}; 
-            
+			
             var compResult = {
                str: fullResult.fmt[0], 
                refStr: fullResult.fmt[1], 
                convertToRef: fullResult.indx.qToTarget, 
                convertFromRef: fullResult.indx.tToQuery, 
                cigar: fullResult.res[2], 
-               score: fullResult.res[0], 
+               score: fullResult.res[0],
+				bitScore: fullResult.bitScore,
                label: this.get("compID"),
             }; 
             
@@ -103,10 +104,34 @@
         },
         
         alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
-            var matrix = this.get("scoreMatrix");
-            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+            var settings = this.getSettings();
+
+            var fullResults = compSeqArray.map (function (cSeq) {
+                var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
+                var localAlign = (tempSemiLocal && tempSemiLocal.local);
+                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
+                var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
+				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
+				return bioseqResults;
+            }, this);
             
-            var scores = {
+            //console.log ("fr", fullResults);
+            
+            return fullResults;
+        },
+		
+		getBitScore: function (rawScore, blosumData) {
+			var lambda = (blosumData ? blosumData.lambda : 0.254) || 0.254;
+			var K = (blosumData ? blosumData.K : 0.225042) || 0.225042;
+			var bitScore = ((lambda * rawScore) - Math.log(K)) / Math.LN2;
+			return bitScore;
+		},
+
+		getSettings: function () {
+			var matrix = this.get("scoreMatrix");
+            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+			
+			var scoringSystem = {
                 matrix: matrix,
                 match: this.get("matchScore"), 
                 mis: this.get("misScore"), 
@@ -114,20 +139,12 @@
                 gapExt: this.get("gapExtendScore"),
                 gapAtStart: this.get("gapAtStartScore")
             };
-            var refSeq = this.get("refSeq");
+			
+			var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
-
-            var fullResults = compSeqArray.map (function (cSeq) {
-                var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                var localAlign = (tempSemiLocal && tempSemiLocal.local);
-                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
-                return aligner.align (cSeq, refSeq, scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
-            }, this);
-            
-            //console.log ("fr", fullResults);
-            
-            return fullResults;
-        },
+			
+			return {scoringSystem: scoringSystem, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow")};
+		},
         
         getCompSequence: function (seqName) {
             var seqModel = this.get("seqCollection").get(seqName);
