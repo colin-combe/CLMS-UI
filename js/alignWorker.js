@@ -1,16 +1,11 @@
 if (importScripts) {
-	importScripts ("bioseq32.js", "../../vendor/js/workerpool.js");
+	importScripts ("bioseq32.js", "../../vendor/js/workerpool.js", "../../vendor/js/underscore.js", "../../vendor/js/backbone.js", "alignModelType.js");
 }
 
 function protAlignPar (protID, settings, compSeqArray, tempSemiLocal) {
-	
-	var fullResults = compSeqArray.map (function (cSeq) {
-		var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
-		var localAlign = (tempSemiLocal && tempSemiLocal.local);
-		var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
-		return CLMSUI.GotohAligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
-	});
-
+	settings.aligner = CLMSUI.GotohAligner;
+	var protAlignModel = CLMSUI.BackboneModelTypes.ProtAlignModel.prototype;
+	var fullResults = protAlignModel.alignWithoutStoringWithSettings (compSeqArray, tempSemiLocal, settings);
 	return {fullResults: fullResults, protID: protID};
 }
 

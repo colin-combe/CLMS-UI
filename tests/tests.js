@@ -222,20 +222,6 @@ function callback (model) {
 	});
 	
 	
-	QUnit.test ("Sequence significancies", function (assert) {
-		var expectedValue = {
-			bitScore: 45.60277932155626,
-			pScore: 1.8715245937680376e-14,
-			eScore: 1.1229147562608226e-9,
-		};
-		var testBlosum = new CLMSUI.BackboneModelTypes.BlosumModel ({lambda: 0.3, K: 0.2});
-		var actualValue = CLMSUI.modelUtils.alignmentSignificancies (100, 200, 300, testBlosum);
-		
-		// stringify turns undefined to null for printout, but it's a match
-		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as alignment significancies, Passed!");
-	});
-	
-	
 	QUnit.test ("Align test", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var chainSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
