@@ -3,11 +3,8 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.clearFdr = function (crossLinksArr) {
 	// clear fdr information from crosslinks (usually because we've gone into none-fdr mode and don't want it showing in tooltips)
 	crossLinksArr.forEach (function (crossLink) {
-		var meta = crossLink.meta;
-		if (meta) {
-			if (meta.fdr !== undefined) { meta.fdr = undefined; }
-			if (meta.meanMatchScore !== undefined) { meta.meanMatchScore = undefined; }
-		}	
+		if (crossLink.getMeta ("fdr") !== undefined) { crossLink.setMeta ("fdr", undefined); }
+		if (crossLink.getMeta ("meanMatchScore") !== undefined) { crossLink.setMeta ("meanMatchScore", undefined); }	
 	});
 };
 
@@ -38,8 +35,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     var clCount = crossLinksArr.length;
     for (var i = 0; i < clCount; ++i) {
 		var crossLink = crossLinksArr[i];
-        crossLink.meta = crossLink.meta || {};
-        crossLink.meta.meanMatchScore = options.scoreCalcFunc (crossLink);
+        crossLink.setMeta ("meanMatchScore", options.scoreCalcFunc (crossLink));
     }
 
     // filter out linears
@@ -51,7 +47,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
     var arrLabels = ["Inter", "Intra"];
     var linkArrs = _.partition (crossLinksArr, function (xLink) { return !xLink.isSelfLink (); });
     linkArrs.forEach (function (linkArr) {
-        linkArr.sort (function(a,b) { return a.meta.meanMatchScore - b.meta.meanMatchScore; });
+        linkArr.sort (function(a,b) { return a.getMeta("meanMatchScore") - b.getMeta("meanMatchScore"); });
     });  // in ascending order (lowest first)
     //console.log ("linkArrs", linkArrs);
 
@@ -67,7 +63,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
         if (linkArr.length && options.threshold !== undefined) {
             // first run, count tt, td, and dd
             linkArr.forEach (function (link) {
-                if (link.meta.meanMatchScore > 0) {
+                if (link.getMeta("meanMatchScore") > 0) {
                     t[decoyClass(link)]++;
                 } else {
 					t[3]++;
@@ -85,11 +81,11 @@ CLMSUI.fdr = function (crossLinksArr, options) {
                 runningMin = Math.min (fdr, runningMin);
                 fdr = runningMin;
                 runningFdr.push (fdr);
-                link.meta.fdr = fdr;
-                //console.log ("fdr", arrLabels[index], fdr, t, link.meta.meanMatchScore);
+                link.setMeta ("fdr", fdr);
+                //console.log ("fdr", arrLabels[index], fdr, t, link.getMeta("meanMatchScore"));
 
                 // B. then change running totals
-                if (link.meta.meanMatchScore > 0) {
+                if (link.getMeta("meanMatchScore") > 0) {
                     t[decoyClass(link)]--;
                 }
                 i++;
@@ -105,7 +101,7 @@ CLMSUI.fdr = function (crossLinksArr, options) {
 
             cutoffIndex = Math.max (cutoffIndex - 1, 0);
             var lastLink = linkArr[cutoffIndex];
-            fdrScoreCutoff = nonzero ? lastLink.meta.meanMatchScore : 0.001;
+            fdrScoreCutoff = nonzero ? lastLink.getMeta("meanMatchScore") : 0.001;
 
             if (false) {
                 console.log (arrLabels[index]+" post totals tt td dd (should be zero)", t);

@@ -400,6 +400,7 @@
 			
 
             var nformat = d3.format(",d");
+			var rformat = d3.format(",.2f");
             var scoreFormat = function (val) {
                 return val === Number.MAX_VALUE ? "Exact" : nformat (val);
             };
@@ -432,7 +433,8 @@
                             ["Align Sequence", d.rowLabel],
                             ["Search Length", nformat(seqInfo.convertFromRef.length)], 
                             ["Align Sequence Length", nformat(seqInfo.convertToRef.length)], 
-                            ["Align Score", scoreFormat(seqInfo.score)],
+                            ["Align Raw Score", scoreFormat(seqInfo.score)],
+							["Align Bit Score", rformat(seqInfo.bitScore)],
                         ])
                         .set("location", d3.event)
                     ;

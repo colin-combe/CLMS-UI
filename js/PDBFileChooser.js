@@ -118,6 +118,10 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 							". Please check the PDB file or code is correct.");
 			this.setStatusText (msg, success);    
 		});
+		
+		this.listenTo (CLMSUI.vent, "alignmentProgress", function (msg) {
+			this.setStatusText (msg);    
+		})
 	},
 	
 	updateProteinDropdown : function (parentElem) {
@@ -194,9 +198,12 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend ({
 
   	setStatusText : function (msg, success) {
 		var mbar = d3.select(this.el).select(".messagebar");//.style("display", null);
-		var t = mbar.html(msg).transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
+		var t = mbar.html(msg);
 		if (success !== undefined) {
+			t = t.transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
 			t.transition().duration(5000).style("color", "#091d42");
+		} else {
+			t.style("color", "#091d42");
 		}
 	},
 

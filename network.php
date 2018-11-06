@@ -97,6 +97,7 @@
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
 		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
 		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="../vendor/js/crossfilter.js"></script> -->
 
