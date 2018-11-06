@@ -745,10 +745,12 @@ select {
 	font-family: Lato-Bold;
 }
 
+/*
 label.selectHolder select {
 	margin-top: 0.8em;
 	margin-bottom: 0.8em;
 }
+*/
 
 input {
 	color: #091d42;

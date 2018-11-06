@@ -288,11 +288,33 @@
 	  
 	updateTableData: function (metaData) {
 		var columnSettings = this.d3table.columnSettings();
+		var self = this;
 
 		metaData.columns.map (function (mcol) {
 			var columnType = metaData.columnTypes[mcol];
 			
-			var accFunc = function (d) { return d.getMeta (mcol); };
+			// Use Z-Score if calculated, otherwise use cross-link raw values in link meta object
+			var accFunc = function (d) { 
+				var linkZScores = self.stats && self.stats.zscoresByLinkMap ? self.stats.zscoresByLinkMap[d.id] : undefined;
+				if (linkZScores) {
+					var columnIndex = self.stats.zColumnNames.indexOf (mcol);
+					if (columnIndex >= 0) {
+						return linkZScores [columnIndex];
+					}
+				}
+				return d.getMeta (mcol);
+			};
+			
+			var zscoreRoundFormat = d3.format(",.5f");
+			var zscoreRounder = function (d) {
+				var val = accFunc (d);
+				var columnIndex = self.stats && self.stats.zColumnNames ? self.stats.zColumnNames.indexOf (mcol) : undefined;
+				if (columnIndex >= 0 && val !== undefined && !Number.isInteger(val)) {
+					return zscoreRoundFormat (val);
+				}
+				return val;
+			}
+			
 			var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ? 
 				this.makeColourSchemeBackgroundHook (mcol) : undefined
 			;
@@ -303,7 +325,7 @@
 				tooltip: "", 
 				visible: true, 
 				accessor: accFunc, 
-				dataToHTMLModifier: accFunc, 
+				dataToHTMLModifier: zscoreRounder, 
 				cellStyle: columnType === "numeric" ? "number" : undefined,
 				cellD3EventHook: cellD3Hook,
 			};
@@ -367,7 +389,10 @@
 			}
 		});
 
-		$(selects.node()).multipleSelect ("setSelects", this.viewStateModel.get("statColumns").values());
+		function restoreSelectionToInputs () {
+			$(selects.node()).multipleSelect ("setSelects", self.viewStateModel.get("statColumns").values());
+		}
+		restoreSelectionToInputs();
 		
 		var mslist = d3.select(this.el).select(".ms-drop ul");
 		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
@@ -377,7 +402,7 @@
 				.attr("class", "group")
 				.attr("type", "number")
 				.attr("min", 0)
-				.attr("title", "Set group number (to do)")
+				.attr("title", "Set group number")
 				.on ("input", function (d) {
 					self.options.groups[d.key] = d3.select(this).property("value");
 					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
@@ -396,12 +421,21 @@
 			.text ("Auto Group")
 			.on ("click", function() {
 				var regex = new RegExp (self.viewStateModel.get("groupRegex"));
+				var keys = [];
 				items.data().forEach (function (d) {
 					var match = regex.exec (d.key);
 					var val = match && match.length ? match[0] : undefined;
 					self.options.groups[d.key] = val;
-					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
+					if (val !== undefined) {
+						keys.push (d.key);
+					}
 				});
+			
+				self.viewStateModel
+					.set("statColumns", d3.set(keys), {silent: true})
+					.trigger ("change:statColumns", self.viewStateModel)
+				;
+				restoreSelectionToInputs();
 				restoreGroupsToInputs ();
 			})
 		;
@@ -411,7 +445,7 @@
 			.attr ("class", "regexInput")
 			.attr("placeholder", "A Regex String")
 			.attr("value", self.viewStateModel.get("groupRegex"))
-			.attr("title", "A regular expression on column names to assign group numbers.")
+			.attr("title", "A regular expression acting on column names to produce group numbers.")
 			.on ("input", function () {
 				self.viewStateModel.set("groupRegex", d3.select(this).property("value"));
 			})
@@ -425,11 +459,11 @@
 	 updateColumnSelectors2: function (containerSelector) {
 		 var self = this;
 		 var columnNames = this.viewStateModel.get("outputStatColumns").values();
-		 columnNames.unshift (undefined);
+		 columnNames.unshift ("None");
 		 
 		 var selects2 = CLMSUI.utils.addMultipleSelectControls ({
 			addToElem: containerSelector, 
-            selectList: ["Normalise To", "Colour Links By"], 
+            selectList: ["Normalise Other Columns To", "Build Colour Scheme On"], 
             optionList: columnNames, 
 			keepOldOptions: true,
             selectLabelFunc: function (d) { return d + " ►"; }, 
@@ -614,7 +648,6 @@
 	},
 	  
 	columnOrdering: function (sortColumn, sortDesc) {
-		//console.log ("col", sortColumn);
 		this.viewStateModel.set("sortColumn", sortColumn);
 	},
 	  
