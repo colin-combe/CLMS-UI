@@ -97,6 +97,7 @@
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
 		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
 		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
         <!-- <script type="text/javascript" src="../vendor/js/crossfilter.js"></script> -->
 
@@ -249,7 +250,7 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
-				CLMSUI.utils.displayError (function() { return true; }, "Error when attempting to load search.<br>"+text.substring (0, 150));
+				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+text.substring (0, 150)+"</p>");
 				console.error ("Error", err, text.substring (0, 1000));
 			}
 		};
