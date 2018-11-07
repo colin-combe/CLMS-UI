@@ -11,8 +11,8 @@
         initialize: function (viewOptions) {         
             var controls = d3.select(this.el);
             var inputArray = [
-                {label: "Set Gap Open Penalty", prop: "gapOpenScore", type: "number", min: 0, max: 99},
-                {label: "Set Gap Extend Penalty", prop: "gapExtendScore", type: "number", min: 0, max: 99},
+                {label: "Set Gap Open Penalty", prop: "gapOpenScore", type: "number", min: 0, max: 20},
+                {label: "Set Gap Extend Penalty", prop: "gapExtendScore", type: "number", min: 0, max: 10},
                 //{label: "Score Matrix", prop:"scoreMatrix", type:"select", options: this.model.scoreMatrices },
             ];
             var inputSel = controls.selectAll("div.controlBlock")
@@ -27,7 +27,12 @@
             
             inputElems.each (function(datum) {
                 if (datum.type !== "select") {
-                    d3.select(this).append("input").attr("type", datum.type).attr("min", datum.min).attr("max", datum.max);
+                    d3.select(this).append("input")
+						.attr("type", datum.type)
+						.attr("min", datum.min)
+						.attr("max", datum.max)
+						.attr("title", "Permitted values: "+datum.min+" to "+datum.max);
+					;
                 } else {
                     var seli = d3.select(this).append("select").attr("name", datum.prop);
                     seli.selectAll("option").data(datum.options)
@@ -57,12 +62,14 @@
         },
           
         inputChanged: function (evt) {
-            var control = d3.select(evt.target);
-            var controlDatum = control.datum();
-            this.model.set (controlDatum.prop, controlDatum.type === "number" ? +control.property("value") : control.property("value"));
-            // previous set will cause all sequences in this model to recalc
-            // this line inform views that wish to know of such events at a bulk level, rather than individually
-            this.model.collection.bulkAlignChangeFinished();
+			if (evt.target.checkValidity()) {
+				var control = d3.select(evt.target);
+				var controlDatum = control.datum();
+				this.model.set (controlDatum.prop, controlDatum.type === "number" ? +control.property("value") : control.property("value"));
+				// previous set will cause all sequences in this model to recalc
+				// this line inform views that wish to know of such events at a bulk level, rather than individually
+				this.model.collection.bulkAlignChangeFinished();
+			}
         },
         
         inputKeyed: function (evt) {
