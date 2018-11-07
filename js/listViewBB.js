@@ -18,6 +18,7 @@
 		  "click button.generateStats": "generateStats",
 		  "click .downloadButton3": "downloadImage",
 		  "click .toggleClusterControls": "toggleClusterControls",
+          "click .showZValues": "toggleShowZValues",
       });
     },
 		
@@ -30,6 +31,7 @@
 		groups: {},
 		outputStatColumns: d3.set(),
 		showClusterControls: true,
+        showZValues: true,
 		groupRegex: "\\d+",
 	},
 
@@ -63,14 +65,12 @@
 					var colCount = vsmodel.get("statColumns").size();
 					self.indicateRecalcNeeded (colCount ? true : false); 
 				});
-				this.listenTo (this, "change:heatMap change:sortColumn", function () {
-					self.showDendrogram();
-				});
-				this.listenTo (this, "change:outputStatColumns", function () {
-					self.updateColumnSelectors2 (self.controlDiv2);
-				});
+				this.listenTo (this, "change:heatMap change:sortColumn", function () { self.showDendrogram(); });
+				this.listenTo (this, "change:outputStatColumns", function () { self.updateColumnSelectors2 (self.controlDiv2); });
 				this.listenTo (this, "change:normalColumn", function () { self.normalise().updateSingleColumnZColourScheme(); });
-				this.listenTo (this, "change:colourByColumn", function () { self.updateSingleColumnZColourScheme(); })
+				this.listenTo (this, "change:colourByColumn", function () { self.updateSingleColumnZColourScheme(); });
+                this.listenTo (this, "change:showZValues", function () { self.render(); });
+                this.listenTo (this, "change:showClusterControls", function (model, val) { self.controlDiv2.style ("display", val ? null : "none"); });
             },
 		}))(this.options);
 		
@@ -81,116 +81,126 @@
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
+		// Set up d3table
+		var selfModel = this.model;
+        
+        function setupD3Table () {
+            var physDistanceFunc = function (d) {
+                return selfModel.getSingleCrosslinkDistance (d);
+            };
+
+            // first column is hidden column which has fixed filter later on to only show filtered cross-links
+            var columnSettings = {	
+                filtered: {columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, accessor: function (d) { return d.filteredMatches_pp.length; }},
+                protein: {columnName: "Protein", type: "alpha", tooltip: "", visible: true, accessor: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); }},
+                matchCount: {columnName: "Match Count", type: "numeric", tooltip: "", visible: true, accessor: function (d) { return d.filteredMatches_pp.length; }},
+                distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: physDistanceFunc, cellStyle: "number", cellD3EventHook: self.makeColourSchemeBackgroundHook ("Distance")},
+            };
+            var initialStatColumns = d3.entries(columnSettings)
+                .filter (function (colEntry) {return colEntry.value.visible && colEntry.value.type === "numeric"; })
+                .map (function (colEntry) { return colEntry.key; })
+            ;
+            self.viewStateModel.set ("statColumns", d3.set(initialStatColumns));
+
+            var initialValues = {
+                filters: {filtered: 0},	
+            };
+            var colourRows = function (rowSelection) {
+                var selectedCrossLinks = self.model.getMarkedCrossLinks("selection");
+                var selectedSet = d3.set (_.pluck (selectedCrossLinks, "id"));
+
+                var highlightedCrossLinks = self.model.getMarkedCrossLinks("highlights");
+                var highlightedSet = d3.set (_.pluck (highlightedCrossLinks, "id"));
+
+                rowSelection.each (function (d) {
+                    d3.select(this).style ("background", highlightedSet.has(d.id) ? self.options.highlightedColour : (selectedSet.has(d.id) ? self.options.selectedColour : null));	
+                });
+            };
+            var addRowListeners = function (rowSelection) {
+                rowSelection.on ("click", function (d) {
+                    self.model.setMarkedCrossLinks ("selection", [d], false, d3.event.ctrlKey);	
+                });
+                rowSelection.on ("mouseover", function (d) {
+                    self.model.setMarkedCrossLinks ("highlights", [d], false, d3.event.ctrlKey);
+                    var ttm = self.model.get("tooltipModel");
+                    ttm
+                        .set ("header", CLMSUI.modelUtils.makeTooltipTitle.link (d))
+                        .set ("contents", CLMSUI.modelUtils.makeTooltipContents.link (d))
+                        .set ("location", d3.event)
+                    ;
+                    ttm.trigger ("change:location");
+                });
+            };
+            var empowerRows = function (rowSelection) {
+                colourRows (rowSelection);
+                addRowListeners (rowSelection);
+            };
+            var distance2dp = d3.format(".2f");
+            var dataToHTMLModifiers = {
+                filtered: function (d) { return d.filteredMatches_pp.length; },
+                protein: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); },
+                matchCount: function (d) { return d.filteredMatches_pp.length; },
+                distance: function(d) { var dist = physDistanceFunc(d); return dist != undefined ? distance2dp(dist) : ""; },
+            };
+            d3.entries(dataToHTMLModifiers).forEach (function (entry) {
+                columnSettings[entry.key].dataToHTMLModifier = dataToHTMLModifiers[entry.key];	
+            });
+
+            var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
+                .datum({
+                    data: Array.from (self.model.get("clmsModel").get("crossLinks").values()), 
+                    columnSettings: columnSettings,
+                    columnOrder: d3.keys(columnSettings),
+                })
+            ;
+            var d3table = CLMSUI.d3Table ();
+            d3table (d3tableElem);
+
+            //console.log ("table", d3table);
+
+            // Bespoke filter type to hide rows not in current filtered crosslinks
+            d3table.typeSettings ("numericGt", {
+                preprocessFunc: function (d) { return d; },
+                filterFunc: function (datum, d) { return datum > d; },
+                comparator: d3table.typeSettings("numeric").comparator,		
+            });
+
+            var d3tableWrapper = d3.select(self.el).select(".d3table-wrapper");
+            d3tableWrapper.style("display", "flex").style("flex-direction", "row");
+            self.dendrosvg = d3tableWrapper.append("svg").style("min-width", "170px").style("overflow", "visible");
+            d3table.dispatch().on ("ordering2.colord", self.columnOrdering.bind(self));
+
+            //table.getFilterCells().style("display", "none");
+
+            // set initial filters
+            var keyedFilters = {};
+            d3.keys(columnSettings).forEach (function (columnKey) {
+                keyedFilters[columnKey] = initialValues.filters[columnKey];	
+            });
+
+            d3table
+                .filter (keyedFilters)
+                .postUpdate (empowerRows)
+            ;
+            return {table: d3table, colourRows: colourRows};
+        }
+        var d3tableInfo = setupD3Table();
+        var d3table = d3tableInfo.table;
+        var colourRows = d3tableInfo.colourRows;
 		
+        		
 		this.controlDiv2 = flexWrapperPanel.append("div").attr("class", "toolbar");
 
+        this.controlDiv2.append("label")
+			.text ("Group Columns")
+			.attr ("class", "btn staticLabel")
+		;
+        
 		this.controlDiv2.append("label")
 			.text ("Clusters")
 			.attr ("class", "btn staticLabel")
 		;
-		
-		// Set up d3table
-		
-		var selfModel = this.model;
-		var physDistanceFunc = function (d) {
-			return selfModel.getSingleCrosslinkDistance (d);
-		}
-
-		// first column is hidden column which has fixed filter later on to only show filtered cross-links
-		var columnSettings = {	
-			filtered: {columnName: "Filtered", type: "numericGt", tooltip: "", visible: false, accessor: function (d) { return d.filteredMatches_pp.length; }},
-			protein: {columnName: "Protein", type: "alpha", tooltip: "", visible: true, accessor: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); }},
-			matchCount: {columnName: "Match Count", type: "numeric", tooltip: "", visible: true, accessor: function (d) { return d.filteredMatches_pp.length; }},
-			distance: {columnName: "Distance", type: "numeric", tooltip: "", visible: true, accessor: physDistanceFunc, cellStyle: "number", cellD3EventHook: this.makeColourSchemeBackgroundHook ("Distance")},
-		};
-		var initialStatColumns = d3.entries(columnSettings)
-			.filter (function (colEntry) {return colEntry.value.visible && colEntry.value.type === "numeric"; })
-			.map (function (colEntry) { return colEntry.key; })
-		;
-		this.viewStateModel.set ("statColumns", d3.set(initialStatColumns));
-		
-		var initialValues = {
-			filters: {filtered: 0},	
-		};
-		var colourRows = function (rowSelection) {
-			var selectedCrossLinks = self.model.getMarkedCrossLinks("selection");
-			var selectedSet = d3.set (_.pluck (selectedCrossLinks, "id"));
-			
-			var highlightedCrossLinks = self.model.getMarkedCrossLinks("highlights");
-			var highlightedSet = d3.set (_.pluck (highlightedCrossLinks, "id"));
-			
-			rowSelection.each (function (d) {
-				d3.select(this).style ("background", highlightedSet.has(d.id) ? self.options.highlightedColour : (selectedSet.has(d.id) ? self.options.selectedColour : null));	
-			});
-		}
-		var addRowListeners = function (rowSelection) {
-			rowSelection.on ("click", function (d) {
-				self.model.setMarkedCrossLinks ("selection", [d], false, d3.event.ctrlKey);	
-			});
-			rowSelection.on ("mouseover", function (d) {
-				self.model.setMarkedCrossLinks ("highlights", [d], false, d3.event.ctrlKey);
-				var ttm = self.model.get("tooltipModel");
-				ttm
-					.set ("header", CLMSUI.modelUtils.makeTooltipTitle.link (d))
-					.set ("contents", CLMSUI.modelUtils.makeTooltipContents.link (d))
-					.set ("location", d3.event)
-				;
-				ttm.trigger ("change:location");
-			});
-		};
-		var empowerRows = function (rowSelection) {
-			colourRows (rowSelection);
-			addRowListeners (rowSelection);
-		};
-		var distance2dp = d3.format(".2f");
-		var dataToHTMLModifiers = {
-			filtered: function (d) { return d.filteredMatches_pp.length; },
-			protein: function (d) { return d.fromProtein.name + (d.toProtein ? " " + d.toProtein.name : ""); },
-			matchCount: function (d) { return d.filteredMatches_pp.length; },
-			distance: function(d) { var dist = physDistanceFunc(d); return dist != undefined ? distance2dp(dist) : ""; },
-		};
-		d3.entries(dataToHTMLModifiers).forEach (function (entry) {
-			columnSettings[entry.key].dataToHTMLModifier = dataToHTMLModifiers[entry.key];	
-		});
         
-		var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
-			.datum({
-				data: Array.from (self.model.get("clmsModel").get("crossLinks").values()), 
-				columnSettings: columnSettings,
-				columnOrder: d3.keys(columnSettings),
-			})
-		;
-		var d3table = CLMSUI.d3Table ();
-		d3table (d3tableElem);
-		
-		//console.log ("table", d3table);
-
-		// Bespoke filter type to hide rows not in current filtered crosslinks
-		d3table.typeSettings ("numericGt", {
-			preprocessFunc: function (d) { return d; },
-			filterFunc: function (datum, d) { return datum > d; },
-			comparator: d3table.typeSettings("numeric").comparator,		
-		});
-			
-		var d3tableWrapper = d3.select(this.el).select(".d3table-wrapper");
-		d3tableWrapper.style("display", "flex").style("flex-direction", "row");
-		this.dendrosvg = d3tableWrapper.append("svg").style("min-width", "170px").style("overflow", "visible");
-		
-		d3table.dispatch().on ("ordering2.colord", this.columnOrdering.bind(this));
-		
-		//table.getFilterCells().style("display", "none");
-
-		// set initial filters
-		var keyedFilters = {};
-		d3.keys(columnSettings).forEach (function (columnKey) {
-			keyedFilters[columnKey] = initialValues.filters[columnKey];	
-		});
-
-		d3table
-			.filter (keyedFilters)
-			.postUpdate (empowerRows)
-		;
-		
 		// Second row of controls
 		
 		this.updateColumnSelectors (this.controlDiv2, d3table);
@@ -230,7 +240,11 @@
 			.attr ("class", "btn staticLabel")
 		;
 		
-		this.updateColumnSelectors2 (this.controlDiv2);
+        var buttonData3 = [
+			{class: "showZValues", label: "Show", type: "checkbox", id: "showZValues", tooltip: "Show Z-Scores for columns if calculated", initialState: this.options.showZValues},
+        ];
+        CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonData3);
+        this.updateColumnSelectors2 (this.controlDiv2);
 		
 
 		// Backbone event listeners
@@ -295,7 +309,7 @@
 			
 			// Use Z-Score if calculated, otherwise use cross-link raw values in link meta object
 			var accFunc = function (d) { 
-				var linkZScores = self.stats && self.stats.zscoresByLinkMap ? self.stats.zscoresByLinkMap[d.id] : undefined;
+				var linkZScores = self.viewStateModel.get("showZValues") && self.stats && self.stats.zscoresByLinkMap ? self.stats.zscoresByLinkMap[d.id] : undefined;
 				if (linkZScores) {
 					var columnIndex = self.stats.zColumnNames.indexOf (mcol);
 					if (columnIndex >= 0) {
@@ -400,9 +414,8 @@
 			.enter()
 			.insert("input", ":first-child")
 				.attr("class", "group")
-				.attr("type", "number")
-				.attr("min", 0)
-				.attr("title", "Set group number")
+				.attr("type", "text")
+				.attr("title", "Set group identifier")
 				.on ("input", function (d) {
 					self.options.groups[d.key] = d3.select(this).property("value");
 					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
@@ -410,7 +423,10 @@
 		;
 		
 		function restoreGroupsToInputs () {
-			items.selectAll("input.group").property ("value", function(d) { return self.options.groups[d.key]; });
+			items.selectAll("input.group").property ("value", function(d) { 
+                var value = self.options.groups[d.key];
+                return value !== undefined ? value : "";
+            });
 		}
 		restoreGroupsToInputs();
 		
@@ -512,9 +528,13 @@
 	  
 	 toggleClusterControls: function () {
 		 var showClusterControls = this.viewStateModel.get("showClusterControls");
-		 showClusterControls = !showClusterControls;
-		 this.controlDiv2.style ("display", showClusterControls ? null : "none");
-		 this.viewStateModel.set ("showClusterControls", showClusterControls);
+		 this.viewStateModel.set ("showClusterControls", !showClusterControls);
+		 return this;
+	 },
+      
+    toggleShowZValues: function () {
+		 var showZValues = this.viewStateModel.get("showZValues");
+		 this.viewStateModel.set ("showZValues", !showZValues);
 		 return this;
 	 },
 	  
@@ -690,7 +710,7 @@
 				d3svg.node().appendChild (clone);
 
 				self.downloadSVG (undefined, d3svg);	
-			}, 
+			}
 		);	
 	},
         

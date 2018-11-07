@@ -924,25 +924,27 @@ CLMSUI.modelUtils = {
 	},
 	
 	// Calculate averages of grouped column values
-	averageGroups: function (zscores, colNameGroups, averageFunc) {
+	averageGroups: function (valuesByColumn, colNameGroups, averageFunc) {
 		averageFunc = averageFunc || d3.mean;
 
-		var groupIndices = zscores.map (function (zscore) { return zscore.groupIndex; });
-		var colRange = _.range(colNameGroups.length);
+		var groupIndices = valuesByColumn.map (function (zscore) { return zscore.groupIndex; });
+		var colRange = _.range (d3.max (groupIndices) + 1);
 		var avgColumns = colRange.map(function() { return []; });
 
-		for (var n = 0; n < zscores[0].length; n++) {
+		for (var n = 0; n < valuesByColumn[0].length; n++) {  // go from top to bottom of columns
 			var groups = colRange.map(function() { return []; });
 
-			for (var c = 0; c < zscores.length; c++) {
-				if (groupIndices[c] !== undefined) {
-					var val = zscores[c][n];
-					if (val) {
+            // so this is now going through a row (same index in each column)
+			for (var c = 0; c < valuesByColumn.length; c++) {    
+				if (groupIndices[c] !== undefined) {    // if column in group...
+					var val = valuesByColumn[c][n];
+					if (val) { // ...push val into correct group bucket
 						groups[groupIndices[c]].push (val);
 					}
 				}
 			}
 
+            // Now average the group buckets into new column value datasets
 			var avgs = groups.map (function (group, i) {
 				var avg = group.length ? averageFunc(group) : undefined;
 				avgColumns[i].push (avg);
@@ -950,15 +952,17 @@ CLMSUI.modelUtils = {
 		}
 
 		avgColumns.forEach (function (avgColumn, i) {
-			avgColumn.colName = "Avg Z ["+colNameGroups[i].join(";")+"]";
+			avgColumn.colName = "Avg ["+colNameGroups[i].join(";")+"]";
 		});
 
 		return avgColumns;
 	},
 	
-	// add group indices to columns
-	addGroupsToScoreColumns: function (zscores, options) {
-		var columnNames = zscores.map (function (zs) { return zs.colName; });
+	// add group indices to columns, and return columnNames grouped in an array under the appropriate index
+    // e.g. options.groups = {a: "cat", b: "cat", c: "dog"};
+    // then a.groupIndex = 0, b.groupIndex = 0, c.groupIndex = 1, colNameGroups = [0: [a,b], 1: [c]]
+	makeColumnGroupIndices: function (valuesByColumn, options) {
+		var columnNames = valuesByColumn.map (function (columnValues) { return columnValues.colName; });
 		var columnNameGroups = _.pick (options.groups, columnNames);
 		var uniqGroupValues = _.uniq (d3.values (columnNameGroups));
 		var groupIndices = {};
@@ -968,11 +972,11 @@ CLMSUI.modelUtils = {
 			colNameGroups.push ([]);
 		});
 		
-		zscores.forEach (function (zscore) {
-			var colName = zscore.colName;
+		valuesByColumn.forEach (function (columnValues) {
+			var colName = columnValues.colName;
 			var groupName = columnNameGroups [colName];
 			var groupIndex = groupIndices[groupName];
-			zscore.groupIndex = groupIndex;
+			columnValues.groupIndex = groupIndex;
 			colNameGroups[groupIndex].push (colName);
 		});
 
@@ -985,6 +989,24 @@ CLMSUI.modelUtils = {
 			return !_.every (arr, function (val) { return val === undefined; });
 		});
 	},
+    
+    makeZScores: function (crossLinks, options) {
+        // get values per column
+        var valuesByColumn = options.columns.map (function (dim) {
+			var vals = options.accessor (crossLinks, dim);
+			vals.colName = dim;
+			return vals;
+		}, this);
+        
+		// calc zscores for each data column
+		var zscores = valuesByColumn.map (function (columnValues) {
+			var zscore = CLMSUI.modelUtils.zscore (columnValues);
+			zscore.colName = columnValues.colName;
+			return zscore;
+		}, this);
+        
+        return zscores;
+    },
 	
 	metaClustering: function (crossLinks, myOptions) {
 		var defaults = {
@@ -1000,15 +1022,10 @@ CLMSUI.modelUtils = {
 		};
 		var options = $.extend ({}, defaults, myOptions);
 		
-		// calc zscores for each data column
-		var zscores = options.columns.map (function (dim) {
-			var vals = options.accessor (crossLinks, dim);
-			var zscore = CLMSUI.modelUtils.zscore (vals);
-			zscore.colName = dim;
-			return zscore;
-		}, this);
+        // get zscores per column
+        var zscores = CLMSUI.modelUtils.makeZScores (crossLinks, options);
 		
-		var colNameGroups = CLMSUI.modelUtils.addGroupsToScoreColumns (zscores, options);
+		var colNameGroups = CLMSUI.modelUtils.makeColumnGroupIndices (zscores, options);
 		//console.log ("zscores", zscores, colNameGroups);
 		
 		
@@ -1017,7 +1034,6 @@ CLMSUI.modelUtils = {
 			linkArr.forEach (function (zslink, i) { zslink.clink = crossLinks[i]; });
 			return CLMSUI.modelUtils.compact2DArray (linkArr);
 		}
-		
 		
 		// Calculate K-means and dimension tree on non-grouped dimensions
 		var zScoresByLink = reduceLinks (d3.transpose (zscores), crossLinks);
@@ -1064,7 +1080,6 @@ CLMSUI.modelUtils = {
 			.map (function (groupCol) { return groupCol.name; })
 			.concat (["kmcluster", "treeOrder"])
 		;
-		
 		CLMSUI.vent.trigger ("linkMetadataUpdated", {
 			columns: newAndUpdatedColumns, 
 			columnTypes: _.object (newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() { return "numeric"; })), 

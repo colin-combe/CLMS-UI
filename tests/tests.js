@@ -823,12 +823,12 @@ function callback (model) {
 	});
 	
 	
-	QUnit.test ("addGroupsToScoreColumns", function (assert) {
+	QUnit.test ("makeColumnGroupIndices", function (assert) {
 		var expectedValue = [["a", "b"],["c"]];
 		var options = {groups: {a: "cat", b: "cat", c: "dog"}};
 		var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5]];
 		["a", "b", "c"].forEach (function (val, i) { testNumbers[i].colName = val; });
-		var actualValue = CLMSUI.modelUtils.addGroupsToScoreColumns(testNumbers, options);
+		var actualValue = CLMSUI.modelUtils.makeColumnGroupIndices(testNumbers, options);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as groups, Passed!");
 		
