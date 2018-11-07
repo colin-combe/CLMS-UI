@@ -188,7 +188,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				},
 			},
 			padding: {
-				left: 45, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
+				left: 56, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
 				right: 20,
 				top: 6
 			},
@@ -283,8 +283,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 			var newOptions = columns.map (function (column) {
 				return {
 					id: column, label: column, decimalPlaces: 2, matchLevel: false,
-					linkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
-					unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+					linkFunc: function (c) {return c.getMeta() ? [c.getMeta(column)] : []; },
+					unfilteredLinkFunc: function (c) {return c.getMeta() ? [c.getMeta(column)] : []; },
 				};
 			});
 

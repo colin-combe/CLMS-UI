@@ -223,8 +223,6 @@ function getLinksCSV(){
             (linear ? "" : mostReadableId(crossLink.toProtein)), crossLink.toResidue,
             !linear && crossLink.toResidue ? crossLink.toProtein.sequence[crossLink.toResidue - 1] : ""
         );
-		 
-		var meta = crossLink.meta || {};
 
         var highestScore = null;
         var searchesFound = new Set();
@@ -240,7 +238,7 @@ function getLinksCSV(){
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
-        row.push (highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), meta.fdr);
+        row.push (highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
 		 
 		// Distance info
         var pDist = physicalDistances[i];
@@ -258,7 +256,9 @@ function getLinksCSV(){
 		 
 		// Add metadata information
 		for (var m = 0; m < metaColumns.length; m++) {
-			row.push (meta[metaColumns[m]] || "");
+			var mval = crossLink.getMeta(metaColumns[m]);
+			if (mval === undefined) { mval = ""; }
+			row.push (mval);
 		}
 
         return '"' + row.join('","') + '"';

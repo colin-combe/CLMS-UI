@@ -323,7 +323,6 @@ CLMSUI.utils = {
 				//destinationCanvas.dispose();
 				return url;
             })
-            //.attr ("xlink:href", "http://www.spayaware.ie/images/cat.png")
         ;
         callback (image);
     },

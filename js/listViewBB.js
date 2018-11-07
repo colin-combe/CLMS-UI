@@ -17,6 +17,7 @@
 		  "click button.toggleHeatMapMode": "toggleHeatMapMode",
 		  "click button.generateStats": "generateStats",
 		  "click .downloadButton3": "downloadImage",
+		  "click .toggleClusterControls": "toggleClusterControls",
       });
     },
 		
@@ -26,6 +27,10 @@
 		heatMap: false,
 		statDistance: "euclidean",
 		statLinkage: "average",
+		groups: {},
+		outputStatColumns: d3.set(),
+		showClusterControls: true,
+		groupRegex: "\\d+",
 	},
 
     initialize: function (viewOptions) {
@@ -61,13 +66,18 @@
 				this.listenTo (this, "change:heatMap change:sortColumn", function () {
 					self.showDendrogram();
 				});
+				this.listenTo (this, "change:outputStatColumns", function () {
+					self.updateColumnSelectors2 (self.controlDiv2);
+				});
+				this.listenTo (this, "change:normalColumn", function () { self.normalise().updateSingleColumnZColourScheme(); });
+				this.listenTo (this, "change:colourByColumn", function () { self.updateSingleColumnZColourScheme(); })
             },
 		}))(this.options);
 		
 		// Add download button
         var buttonData = [
-            {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap"},
 			{class: "downloadButton3", label: "Download Image", type: "button", id: "download3"},
+			{class: "toggleClusterControls", label: "Toggle Cluster Controls", type: "button", id: "clusterToggle"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
@@ -181,10 +191,9 @@
 			.postUpdate (empowerRows)
 		;
 		
-		
 		// Second row of controls
 		
-		this.updateColumnSelector (this.controlDiv2, d3table, undefined);
+		this.updateColumnSelectors (this.controlDiv2, d3table);
 		
 		CLMSUI.utils.addMultipleSelectControls ({
             addToElem: this.controlDiv2, 
@@ -210,8 +219,18 @@
 		
 		var buttonData2 = [
 			{class: "generateStats", label: "Calculate", type: "button", id: "generateStats", tooltip: "Adds 2 columns to the table, Kmcluster and TreeOrder"},
+			{class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap", tooltip: "Shows table as heatmap"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonData2);
+		
+		this.controlDiv2.append("hr").style("display", "block");
+		
+		this.controlDiv2.append("label")
+			.text ("Z Scores")
+			.attr ("class", "btn staticLabel")
+		;
+		
+		this.updateColumnSelectors2 (this.controlDiv2);
 		
 
 		// Backbone event listeners
@@ -229,15 +248,18 @@
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
 			this
 				.updateTableData (metaData)
-				.updateColumnSelector (this.controlDiv2, this.d3table, undefined)
+				.updateColumnSelectors (this.controlDiv2, this.d3table, undefined)
 				.render({refilter: true})
 			;
 		}); // New/Changed metadata attributes present
 		
 		this.d3table = d3table;
 		
-		this.showDendrogram();
-        this.render({refilter: true});
+		this
+			.toggleClusterControls()
+			.showDendrogram()
+			.render({refilter: true})
+		;
     },
 	  
 	clearHighlight: function () {
@@ -270,7 +292,7 @@
 		metaData.columns.map (function (mcol) {
 			var columnType = metaData.columnTypes[mcol];
 			
-			var accFunc = function (d) { return d.meta ? d.meta[mcol] : ""; };
+			var accFunc = function (d) { return d.getMeta (mcol); };
 			var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ? 
 				this.makeColourSchemeBackgroundHook (mcol) : undefined
 			;
@@ -298,7 +320,7 @@
 	},
 	  
 	  // Add a multiple select widget for column visibility
-	updateColumnSelector: function (containerSelector, d3table) {
+	updateColumnSelectors: function (containerSelector, d3table) {
 
 		var self = this;
 		
@@ -314,18 +336,16 @@
 		var pickableColumns = getPickableColumns();
 		
 		var selects = CLMSUI.utils.addMultipleSelectControls ({
-			addToElem: this.controlDiv2, 
-            selectList: ["Show Columns"], 
+			addToElem: containerSelector, 
+            selectList: ["Use Columns"], 
             optionList: pickableColumns, 
 			keepOldOptions: true,
 			optionLabelFunc: function (d) { return d.value.columnName; },
 			optionValueFunc: function (d) { return d.key; },
-            initialSelectionFunc: function () { return true; },
-            selectLabelFunc: function () { return "Use Columns ►"; }, 
+            selectLabelFunc: function (d) { return d+" ►"; }, 
 			idFunc: function (d) { return d.key; },
         });
-		selects.property("multiple", "true");	// important, set select to allow multiple choices
-		this.columnChoices = selects;
+		selects.property ("multiple", "true");	// important, set first select element to allow multiple choices
 		
 		$(selects.node()).multipleSelect ({  
 			width: 200,
@@ -349,9 +369,93 @@
 
 		$(selects.node()).multipleSelect ("setSelects", this.viewStateModel.get("statColumns").values());
 		
+		var mslist = d3.select(this.el).select(".ms-drop ul");
+		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
+		items.selectAll("input.group").data(function(d) { return [d]; }, function(d) { return d.key; })
+			.enter()
+			.insert("input", ":first-child")
+				.attr("class", "group")
+				.attr("type", "number")
+				.attr("min", 0)
+				.attr("title", "Set group number (to do)")
+				.on ("input", function (d) {
+					self.options.groups[d.key] = d3.select(this).property("value");
+					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
+				})
+		;
+		
+		function restoreGroupsToInputs () {
+			items.selectAll("input.group").property ("value", function(d) { return self.options.groups[d.key]; });
+		}
+		restoreGroupsToInputs();
+		
+		var groupWidget = mslist.insert("li", ":first-child").append("div")
+		
+		groupWidget.append("button")
+			.attr ("class", "btn btn-1 btn-1a")
+			.text ("Auto Group")
+			.on ("click", function() {
+				var regex = new RegExp (self.viewStateModel.get("groupRegex"));
+				items.data().forEach (function (d) {
+					var match = regex.exec (d.key);
+					var val = match && match.length ? match[0] : undefined;
+					self.options.groups[d.key] = val;
+					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
+				});
+				restoreGroupsToInputs ();
+			})
+		;
+		
+		groupWidget.append("input")
+			.attr("type", "text")
+			.attr ("class", "regexInput")
+			.attr("placeholder", "A Regex String")
+			.attr("value", self.viewStateModel.get("groupRegex"))
+			.attr("title", "A regular expression on column names to assign group numbers.")
+			.on ("input", function () {
+				self.viewStateModel.set("groupRegex", d3.select(this).property("value"));
+			})
+		;
+		
 		console.log ("listview", this);
 		
 		return this;
+	},
+	  
+	 updateColumnSelectors2: function (containerSelector) {
+		 var self = this;
+		 var columnNames = this.viewStateModel.get("outputStatColumns").values();
+		 columnNames.unshift (undefined);
+		 
+		 var selects2 = CLMSUI.utils.addMultipleSelectControls ({
+			addToElem: containerSelector, 
+            selectList: ["Normalise To", "Colour Links By"], 
+            optionList: columnNames, 
+			keepOldOptions: true,
+            selectLabelFunc: function (d) { return d + " ►"; }, 
+			idFunc: function (d) { return d; },
+        });
+		
+		selects2.classed ("selectMinWidth", true)
+			.on ("change", function (d, i, ii) { 
+				self.viewStateModel.set (ii === 0 ? "normalColumn": "colourByColumn", this.value); 
+			})
+		 ;
+	 },
+	  
+	updateSingleColumnZColourScheme: function () {
+		var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
+		var columnName = this.viewStateModel.get("colourByColumn");
+		var columnIndex = this.stats.zColumnNames.indexOf (columnName);
+		if (columnIndex >= 0) {
+			var self = this;
+			CLMSUI.vent.trigger ("addMapBasedLinkColourModel", {
+				id: "ZMetaColumn", 
+				columnIndex: columnIndex,
+				label: "Norm. "+columnName, 
+				linkMap: self.stats.zscoresByLinkMap
+			});	// make colour model based on z value extents
+		}
 	},
 
     render: function (options) {
@@ -371,6 +475,14 @@
         }
         return this;
     },
+	  
+	 toggleClusterControls: function () {
+		 var showClusterControls = this.viewStateModel.get("showClusterControls");
+		 showClusterControls = !showClusterControls;
+		 this.controlDiv2.style ("display", showClusterControls ? null : "none");
+		 this.viewStateModel.set ("showClusterControls", showClusterControls);
+		 return this;
+	 },
 	  
 	toggleHeatMapMode: function () {
 		var heatMap = this.viewStateModel.get("heatMap");
@@ -394,7 +506,7 @@
 				this.visColDefaults[csetting.key] = csetting.value.visible;
 			}, this);
 			
-			var showSet = d3.set(this.viewStateModel.get("statColumns").values());
+			var showSet = d3.set(this.viewStateModel.get("outputStatColumns").values());
 			showSet.add ("treeOrder");
 			showSet.add ("kmcluster");
 			csettings.forEach (function (cEntry) {
@@ -421,41 +533,83 @@
 			distance: this.viewStateModel.get("statDistance"), 
 			linkage: this.viewStateModel.get("statLinkage"),
 			columns: this.viewStateModel.get("statColumns").values(),	// values 'cos d3.set not array
+			groups: this.options.groups,
 			accessor: accessor,
 		}
 		
-		var stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
+		this.stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
+		
+		this.viewStateModel.set ("outputStatColumns", d3.set (this.stats.zColumnNames));
+		
 		//console.log ("stat", stats);
-		CLMSUI.utils.drawDendrogram (this.dendrosvg, stats.cfk_distances.tree, {
+		CLMSUI.utils.drawDendrogram (this.dendrosvg, this.stats.cfk_distances.tree, {
 			ltor: false,
 			labelFunc: function (d) { return d.origValue.clink.id; },
 			title: "Distance "+this.viewStateModel.get("statDistance")+", Linkage "+this.viewStateModel.get("statLinkage"),
 		});
 		
-		CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: stats.zrange});	// make colour model based on z value extents
+		this
+			.indicateRecalcNeeded (false)
+			.normalise()
+		;
+		return this;
+	},
+	  
+	normalise: function () {
 		
-		var columnIndexMap = {};
-		this.viewStateModel.get("statColumns").values().forEach (function (columnKey, i) {
-			columnIndexMap[columnKey] = i;
-		});
-		
-		this.zCellColourer = function (d) {
-			var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
-			var columnIndex = columnIndexMap[d.key];
-			var colValue;
-			if (colourScheme && columnIndex !== undefined) {
-				var linkZScores = stats.zscores[d.value.id];
-				if (linkZScores) {
-					var val = linkZScores[columnIndex];	// d.value is crosslink
-					colValue = val !== undefined ? colourScheme.getColourByValue (val) : undefined;
+		if (this.stats) {
+			var columnIndexMap = {};
+			this.stats.zColumnNames.forEach (function (columnKey, i) {
+				columnIndexMap[columnKey] = i;
+			});
+			
+			var self = this;
+			var normScores = CLMSUI.modelUtils.normalize2DArrayToColumn (this.stats.zscores, columnIndexMap[this.viewStateModel.get("normalColumn")]);
+			var zrange = d3.extent (d3.merge (normScores.map (function (zs) { return d3.extent (zs); })));
+			
+			var zmap = {};
+			normScores.forEach (function (row, i) { 
+				row.clink = this.stats.zscores[i].clink;
+				zmap[row.clink.id] = row;
+			}, this);
+			
+			this.stats.normZScores = normScores;
+			this.stats.zscoresByLinkMap = zmap;
+			
+			
+			// Update group meta data with normalised values
+			/*
+			var gcolumns = this.stats.groupColumns.map (function (col) { return col.name; });
+			CLMSUI.modelUtils.updateMetaDataWithTheseColumns (normScores, gcolumns);
+			CLMSUI.vent.trigger ("linkMetadataUpdated", {
+				columns: gcolumns, 
+				columnTypes: _.object (gcolumns, _.range(gcolumns.length).map(function() { return "numeric"; })), 
+				items: self.model.getFilteredCrossLinks(), 
+				matchedItemCount: normScores.length
+			});
+			*/
+			
+			//console.log ("stats", this.stats);
+
+			this.zCellColourer = function (d) {
+				var colourScheme = CLMSUI.linkColour.Collection.get("zrange");
+				var zcolumnIndex = columnIndexMap[d.key];
+				var colValue;
+				if (colourScheme && zcolumnIndex !== undefined) {
+					var linkZScores = self.stats.zscoresByLinkMap[d.value.id];	// d.value is crosslink
+					if (linkZScores) {
+						var val = linkZScores[zcolumnIndex];
+						colValue = val !== undefined ? colourScheme.getColourByValue (val) : "transparent"; //colourScheme.undefinedColour;
+					}
 				}
-			}
-			return colValue;
-		};
+				return colValue;
+			};
+
+			CLMSUI.vent.trigger ("addNonCrossLinkColourModel", {id: "zrange", domain: zrange});	// make colour model based on normalised z value extents
+			
+			this.render();
+		}
 		
-		this.indicateRecalcNeeded (false);
-		
-		this.render();
 		return this;
 	},
 	  
@@ -483,7 +637,6 @@
 		d3table = d3table || this.d3table;
 		
 		var fdata = d3table.getFilteredData();
-		
 	},
 	  
 	downloadImage: function () {

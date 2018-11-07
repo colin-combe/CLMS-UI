@@ -71,11 +71,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             if (filterModel.get("fdrMode")) {
                 // FDR mode
                 var pass;
-                if (crossLink.meta && crossLink.meta.meanMatchScore !== undefined) {
-                    var fdr = crossLink.meta.meanMatchScore;
+				var mms = crossLink.getMeta ("meanMatchScore");
+                if (mms !== undefined) {
                     var self = crossLink.isSelfLink();
                     var cut = self ? result[1].fdr : result[0].fdr;
-                    pass = fdr >= cut;
+                    pass = mms >= cut;
                 }
 
                 if (pass) {

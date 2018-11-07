@@ -12,24 +12,26 @@
     for (var n = 9; n <=16; n++) { intBitMap[n] = Int16Array; }
     for (var n = 17; n <=32; n++) { intBitMap[n] = Int32Array; }
 
-    function makeIntArray (length, bitSize, fill) {
+    function makeIntArray (length, bitSize, fillValue) {
         //bitSize = Math.max (bitSize || 32, 32);
         //var arr = (cani8 ? new intBitMap[bitSize](length) : []);
         
         var arr = (cani8 ? 
-                   (bitSize <= 8 ? new Int8Array (length)
-                       : (bitSize <= 16 ? new Int16Array (length)
-                          : new Int32Array (length)
-                          )
-                    )
+				   ((bitSize > 16) ? new Int32Array (length) : 
+                   (bitSize <= 8 ? new Int8Array (length) : new Int16Array (length)))
                 : [])
         ;
         
-        if (!cani8 || (fill !== 0 && fill !== undefined)) {
-            for (var n = 0; n < length; n++) {
-                arr[n] = fill;
-            }
-        }
+		if (!cani8 || (fillValue !== 0 && fillValue !== undefined)) {
+			if (arr.fill) {
+				arr.fill (fillValue);
+			} else {
+				for (var n = 0; n < length; n++) {
+					arr[n] = fillValue;
+				}
+			}
+		}
+		
         return arr;
     }
     
@@ -322,6 +324,7 @@
                 H[j] = h1;           // set H(i,j-1) for the next row
                 h += qpi[j];         // h = H(i-1,j-1) + S(i,j) // match or not score
                 //  http://jsperf.com/two-ternary-versus-one-if
+			
                 if (h <= e) {
                     d = 1;
                     h = e;
@@ -330,8 +333,9 @@
                     d = 2;
                     h = f;  
                 }
+
                 // now h = H(i,j) = max{H(i-1,j-1)+S(i,j), E(i,j), F(i,j)}
-                d = !is_local || h > 0? d : 64;
+                d = !is_local || h > 0 ? d : 64;
                 h1 = h;              // save H(i,j) to h1 for the next column
                 if (h >= m) {
                     mj = j;
@@ -339,12 +343,12 @@
                 }
                 
                 h -= gapoe;
-                h = !is_local || h > 0? h : 0;
+                h = !is_local || h > 0 ? h : 0;
                 
                 // E(i+1,j) = max{H(i,j)-q, E(i,j)} - r
                 e -= gape;
                 if (e > h) {    // e = E(i+1,j)
-                    d |= 4;
+                    d |= 4;	// can replace |= with += since only powers of two are ever previously set
                 } else {
                     e = h;
                 }   
@@ -514,11 +518,17 @@
 		return max;
 	}
 
-    function align (query, target, scores, isLocal, isSemiLocal, windowSize) {
+    function align (query, target, myScores, isLocal, isSemiLocal, windowSize) {
         var target = target || 'ATAGCTAGCTAGCATAAGC';
         var query  = query || 'AGCTAcCGCAT';
         var isLocal = isLocal || false;
-        var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
+		var defaults = {match: 1, mis: -1, gapOpen: -1, gapExt: -1};
+		var scores = myScores || {};
+		Object.keys(scores).forEach (function (key) {
+			defaults[key] = scores[key];
+		});
+		scores = defaults;
+        //var scores = _.extend ({match: 1, mis: -1, gapOpen: -1, gapExt: -1}, scores || {});
         var matrix = scores.matrix || Blosum80Map;
 
         var rst;
@@ -534,16 +544,16 @@
             rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
         }
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
-        var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
-        var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);
+        var fmt = bsa_cigar2gaps (target, query, rst[1], rst[2]);
+        var indx = bsa_cigar2indexArrays (target, query, rst[1], rst[2]);
         return {res: rst, fmt: fmt, str: str, indx: indx};
     }
     
     if (typeof module == 'object') {
         module.exports = combine;
     } else {
-        CLMSUI = CLMSUI || {};
-        CLMSUI.GotohAligner = {align: align};
+        this.CLMSUI = this.CLMSUI || {};
+        this.CLMSUI.GotohAligner = {align: align};
     }
     
     function combine () {
