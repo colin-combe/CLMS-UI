@@ -34,7 +34,7 @@
 		showClusterControls: true,
         showZValues: true,
 		groupRegex: "\\d+",
-        groupAverageFunc: d3.mean
+        groupAverageFunc: {key: "mean", value: d3.mean}
 	},
 
     initialize: function (viewOptions) {
@@ -209,14 +209,14 @@
 			optionValueFunc: function (d) { return d.value; },
 			keepOldOptions: false,
             selectLabelFunc: function () { return "Average By ►"; }, 
-			initialSelectionFunc: function (d) { return d.value === self.viewStateModel.get("groupAverageFunc"); },
+			initialSelectionFunc: function (d) { return d.key === self.viewStateModel.get("groupAverageFunc").key; },
 			changeFunc: function () {
                 // cant rely on event.target.value as it returns functions as a string
                 d3.select (d3.event.target)
                     .selectAll("option")
                     .filter(function() { return d3.select(this).property("selected"); })
                     .each (function (d) {
-                        self.viewStateModel.get("groupAverageFunc", d.value);
+                        self.viewStateModel.set("groupAverageFunc", d);
                     })
                 ;
             },
@@ -416,14 +416,16 @@
         });
 		selects.property ("multiple", "true");	// important, set first select element to allow multiple choices
 		
-		$(selects.node()).multipleSelect ({  
-            selectAll: false,
-			width: 200,
-			onClick: function (view) {
-			},
-		});
+        var jqSelectNode = $(selects.node());
+		jqSelectNode.multipleSelect ({
+            selectAll: false, 
+            width: 200,
+            placeholder: "Use same value to group columns"
+        });
+        console.log ("JQQX", jqSelectNode.multipleSelect ("getSelects"));
+        jqSelectNode.multipleSelect ("uncheckAll");
 		
-		var mslist = d3.select($(selects.node()).next()[0]).select(".ms-drop ul");
+		var mslist = d3.select(jqSelectNode.next()[0]).select(".ms-drop ul");
 		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
 		items.selectAll("input.group").data(function(d) { return [d]; }, function(d) { return d.key; })
 			.enter()
@@ -439,11 +441,14 @@
         items.selectAll("input[type='checkbox']").remove();
 		
 		function restoreGroupsToInputs () {
+            var keys = [];
 			items.selectAll("input.group").property ("value", function(d) { 
-                console.log ("woooh", d, self.options.groups);
                 var value = self.options.groups[d.key];
+                if (value !== undefined) { keys.push (d.key); }
                 return value !== undefined ? value : "";
             });
+            jqSelectNode.multipleSelect ("setSelects", keys);
+            console.log ("JQQQ", jqSelectNode, keys);
 		}
 		restoreGroupsToInputs();
 		
@@ -463,7 +468,7 @@
 						keys.push (d.key);
 					}
 				});
-			
+                
 				self.viewStateModel
 					.set("groupColumns", d3.set(keys), {silent: true})
 					.trigger ("change:groupColumns", self.viewStateModel)
@@ -482,8 +487,6 @@
 				self.viewStateModel.set("groupRegex", d3.select(this).property("value"));
 			})
 		;
-		
-		console.log ("listview", this);
 		
 		return this;
 	},
@@ -650,9 +653,9 @@
 			});
 		};
         var options = {
-			columns: this.viewStateModel.get("statColumns").values(),	// values 'cos d3.set not array
 			groups: this.options.groups,
 			accessor: accessor,
+            averageFuncEntry: this.viewStateModel.get("groupAverageFunc")
 		};
         
         CLMSUI.modelUtils.averageGroupsMaster (crossLinks, options);
@@ -716,19 +719,6 @@
 			
 			this.stats.normZScores = normScores;
 			this.stats.zscoresByLinkMap = zmap;
-			
-			
-			// Update group meta data with normalised values
-			/*
-			var gcolumns = this.stats.groupColumns.map (function (col) { return col.name; });
-			CLMSUI.modelUtils.updateMetaDataWithTheseColumns (normScores, gcolumns);
-			CLMSUI.vent.trigger ("linkMetadataUpdated", {
-				columns: gcolumns, 
-				columnTypes: _.object (gcolumns, _.range(gcolumns.length).map(function() { return "numeric"; })), 
-				items: self.model.getFilteredCrossLinks(), 
-				matchedItemCount: normScores.length
-			});
-			*/
 			
 			//console.log ("stats", this.stats);
 

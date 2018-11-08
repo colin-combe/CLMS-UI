@@ -924,8 +924,8 @@ CLMSUI.modelUtils = {
 	},
 	
 	// Calculate averages of grouped column values
-	averageGroups: function (valuesByColumn, colNameGroups, averageFunc) {
-		averageFunc = averageFunc || d3.mean;
+	averageGroups: function (valuesByColumn, colNameGroups, averageFuncEntry) {
+		averageFuncEntry = averageFuncEntry || {key: "mean", value: d3.mean};
 
 		var groupIndices = valuesByColumn.map (function (zscore) { return zscore.groupIndex; });
 		var colRange = _.range (d3.max (groupIndices) + 1);
@@ -946,13 +946,13 @@ CLMSUI.modelUtils = {
 
             // Now average the group buckets into new column value datasets
 			var avgs = groups.map (function (group, i) {
-				var avg = group.length ? averageFunc(group) : undefined;
+				var avg = group.length ? averageFuncEntry.value(group) : undefined;
 				avgColumns[i].push (avg);
 			});
 		}
 
 		avgColumns.forEach (function (avgColumn, i) {
-			avgColumn.colName = "Avg ["+colNameGroups[i].join(";")+"]";
+			avgColumn.colName = averageFuncEntry.key+" ["+colNameGroups[i].join(";")+"]";
 		});
 
 		return avgColumns;
@@ -1010,7 +1010,6 @@ CLMSUI.modelUtils = {
     
     averageGroupsMaster: function (crossLinks, myOptions) {
         var defaults = {
-			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
 			groups: {"pH4 1": undefined},
 			accessor: function (crossLinks, dim) {
 				return crossLinks.map (function (crossLink) {
@@ -1019,6 +1018,10 @@ CLMSUI.modelUtils = {
 			}
 		};
         var options = $.extend ({}, defaults, myOptions);
+        options.columns = d3.entries(options.groups)
+            .filter (function (entry) { return entry.value !== undefined; })
+            .map (function (entry) { return entry.key; })
+        ;
         
         // add crosslink id to a row-based array, need to do this before next step, and then get rid of rows with no defined values
 		function reduceLinks (linkArr, crossLinks) {
@@ -1029,7 +1032,7 @@ CLMSUI.modelUtils = {
         // get zscores per column
         var zscores = CLMSUI.modelUtils.makeZScores (crossLinks, options);
 		var colNameGroups = CLMSUI.modelUtils.makeColumnGroupIndices (zscores, options);
-        var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zscores, colNameGroups);
+        var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zscores, colNameGroups, options.averageFuncEntry);
 		var allZScores = zscores.concat (zGroupAvgScores);
         var allZScoresByLink = reduceLinks (d3.transpose (allZScores), crossLinks);
         var colNames = allZScores.map (function (col) { return col.colName; });
@@ -1052,7 +1055,7 @@ CLMSUI.modelUtils = {
 			matchedItemCount: allZScoresByLink.length
 		});	
         
-        return {zColumnNames: colNames, zscores: allZScoresByLink};
+        return {zscores: allZScoresByLink};
     },
 	
 	metaClustering: function (crossLinks, myOptions) {
@@ -1089,14 +1092,12 @@ CLMSUI.modelUtils = {
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {
-				var clink = arr.clink;
-				clink.setMeta ("kmcluster", i+1);
+				arr.clink.setMeta ("kmcluster", i+1);
 			});
 		});
 		
 		treeOrder.forEach (function (value, i) {
-			var clink = value.clink;
-			clink.setMeta ("treeOrder", i+1);
+			value.clink.setMeta ("treeOrder", i+1);
 		});
 		
 		// transpose to get scores per link not per column
