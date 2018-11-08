@@ -1007,13 +1007,59 @@ CLMSUI.modelUtils = {
         
         return zscores;
     },
+    
+    averageGroupsMaster: function (crossLinks, myOptions) {
+        var defaults = {
+			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
+			groups: {"pH4 1": undefined},
+			accessor: function (crossLinks, dim) {
+				return crossLinks.map (function (crossLink) {
+					return crossLink[dim] || crossLink.getMeta(dim);
+				});
+			}
+		};
+        var options = $.extend ({}, defaults, myOptions);
+        
+        // add crosslink id to a row-based array, need to do this before next step, and then get rid of rows with no defined values
+		function reduceLinks (linkArr, crossLinks) {
+			linkArr.forEach (function (zslink, i) { zslink.clink = crossLinks[i]; });
+			return CLMSUI.modelUtils.compact2DArray (linkArr);
+		}
+        
+        // get zscores per column
+        var zscores = CLMSUI.modelUtils.makeZScores (crossLinks, options);
+		var colNameGroups = CLMSUI.modelUtils.makeColumnGroupIndices (zscores, options);
+        var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zscores, colNameGroups);
+		var allZScores = zscores.concat (zGroupAvgScores);
+        var allZScoresByLink = reduceLinks (d3.transpose (allZScores), crossLinks);
+        var colNames = allZScores.map (function (col) { return col.colName; });
+		var groupColumns = zGroupAvgScores.map (function (avgColumn) {
+			return {name: avgColumn.colName, index: colNames.indexOf (avgColumn.colName)};
+		});
+		//console.log ("groupColumns", groupColumns);
+		
+		// Copy group scores to link meta attributes
+		CLMSUI.modelUtils.updateMetaDataWithTheseColumns (allZScoresByLink, groupColumns);
+		
+		// Then tell the world these meta attributes have changed
+		var newAndUpdatedColumns = groupColumns
+			.map (function (groupCol) { return groupCol.name; })
+		;
+		CLMSUI.vent.trigger ("linkMetadataUpdated", {
+			columns: newAndUpdatedColumns, 
+			columnTypes: _.object (newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() { return "numeric"; })), 
+			items: crossLinks, 
+			matchedItemCount: allZScoresByLink.length
+		});	
+        
+        return {zColumnNames: colNames, zscores: allZScoresByLink};
+    },
 	
 	metaClustering: function (crossLinks, myOptions) {
 		var defaults = {
 			distance: "euclidean",
 			linkage: "average",
 			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
-			groups: {"pH4 1": undefined},
 			accessor: function (crossLinks, dim) {
 				return crossLinks.map (function (crossLink) {
 					return crossLink[dim] || crossLink.getMeta(dim);
@@ -1024,10 +1070,6 @@ CLMSUI.modelUtils = {
 		
         // get zscores per column
         var zscores = CLMSUI.modelUtils.makeZScores (crossLinks, options);
-		
-		var colNameGroups = CLMSUI.modelUtils.makeColumnGroupIndices (zscores, options);
-		//console.log ("zscores", zscores, colNameGroups);
-		
 		
 		// add crosslink id to a row-based array, need to do this before next step, and then get rid of rows with no defined values
 		function reduceLinks (linkArr, crossLinks) {
@@ -1057,29 +1099,12 @@ CLMSUI.modelUtils = {
 			clink.setMeta ("treeOrder", i+1);
 		});
 		
-		var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zscores, colNameGroups);
-		var allZScores = zscores.concat (zGroupAvgScores);
-		//console.log ("zlinkGroupAvgScores", zGroupAvgScores, zscores);
-		
 		// transpose to get scores per link not per column
-		var allZScoresByLink = reduceLinks (d3.transpose (allZScores), crossLinks);
+		var allZScoresByLink = reduceLinks (d3.transpose (zscores), crossLinks);
 		//console.log ("concatZScoresByLink", concatZScoresByLink);
-		
-		var colNames = allZScores.map (function (col) { return col.colName; });
-		var groupColumns = zGroupAvgScores.map (function (avgColumn) {
-			return {name: avgColumn.colName, index: colNames.indexOf (avgColumn.colName)};
-		});
-		//console.log ("groupColumns", groupColumns);
-		
-		
-		// Copy group scores to link meta attributes
-		CLMSUI.modelUtils.updateMetaDataWithTheseColumns (allZScoresByLink, groupColumns);
-		
+
 		// Then tell the world these meta attributes have changed
-		var newAndUpdatedColumns = groupColumns
-			.map (function (groupCol) { return groupCol.name; })
-			.concat (["kmcluster", "treeOrder"])
-		;
+		var newAndUpdatedColumns = ["kmcluster", "treeOrder"];
 		CLMSUI.vent.trigger ("linkMetadataUpdated", {
 			columns: newAndUpdatedColumns, 
 			columnTypes: _.object (newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() { return "numeric"; })), 
@@ -1087,7 +1112,7 @@ CLMSUI.modelUtils = {
 			matchedItemCount: allZScoresByLink.length
 		});	
 		
-		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zColumnNames: colNames, zscores: allZScoresByLink, groupColumns: groupColumns};
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zColumnNames: [], zscores: allZScoresByLink};
 	},
 	
 	

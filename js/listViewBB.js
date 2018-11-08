@@ -655,7 +655,7 @@
 			accessor: accessor,
 		};
         
-        //this.stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
+        CLMSUI.modelUtils.averageGroupsMaster (crossLinks, options);
         
         return this;
     },
