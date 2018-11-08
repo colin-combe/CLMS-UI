@@ -15,6 +15,7 @@
       return _.extend({},parentEvents,{
 		  "mouseleave .d3table tbody": "clearHighlight",
 		  "click button.toggleHeatMapMode": "toggleHeatMapMode",
+          "click button.generateGroups": "generateGroups",
 		  "click button.generateStats": "generateStats",
 		  "click .downloadButton3": "downloadImage",
 		  "click .toggleClusterControls": "toggleClusterControls",
@@ -33,6 +34,7 @@
 		showClusterControls: true,
         showZValues: true,
 		groupRegex: "\\d+",
+        groupAverageFunc: d3.mean
 	},
 
     initialize: function (viewOptions) {
@@ -80,6 +82,9 @@
 			{class: "toggleClusterControls", label: "Toggle Cluster Controls", type: "button", id: "clusterToggle"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
+        
+        
+        this.controlDiv2 = flexWrapperPanel.append("div").attr("class", "toolbar");
         
 		// Set up d3table
 		var selfModel = this.model;
@@ -185,26 +190,54 @@
             return {table: d3table, colourRows: colourRows};
         }
         var d3tableInfo = setupD3Table();
-        var d3table = d3tableInfo.table;
+        this.d3table = d3tableInfo.table;
         var colourRows = d3tableInfo.colourRows;
 		
-        		
-		this.controlDiv2 = flexWrapperPanel.append("div").attr("class", "toolbar");
 
         this.controlDiv2.append("label")
 			.text ("Group Columns")
 			.attr ("class", "btn staticLabel")
 		;
         
+        this.updateGroupColumnSelectors (this.controlDiv2, this.d3table);
+        
+        CLMSUI.utils.addMultipleSelectControls ({
+            addToElem: this.controlDiv2, 
+            selectList: ["Average By"], 
+			optionList: d3.entries ({mean: d3.mean, median: d3.median, max: d3.max, min: d3.min}),
+			optionLabelFunc: function (d) { return d.key; },
+			optionValueFunc: function (d) { return d.value; },
+			keepOldOptions: false,
+            selectLabelFunc: function () { return "Average By ►"; }, 
+			initialSelectionFunc: function (d) { return d.value === self.viewStateModel.get("groupAverageFunc"); },
+			changeFunc: function () {
+                // cant rely on event.target.value as it returns functions as a string
+                d3.select (d3.event.target)
+                    .selectAll("option")
+                    .filter(function() { return d3.select(this).property("selected"); })
+                    .each (function (d) {
+                        self.viewStateModel.get("groupAverageFunc", d.value);
+                    })
+                ;
+            },
+			idFunc: function (d) { return d.key; },
+        });
+        
+        var buttonDataGroups = [
+			{class: "generateGroups", label: "Calculate", type: "button", id: "generateGroups", tooltip: "Adds Group columns to the table"},
+        ];
+        CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonDataGroups);
+		
+		// Column grouping controls
+		this.controlDiv2.append("hr").style("display", "block");
 		this.controlDiv2.append("label")
-			.text ("Clusters")
+			.text ("Cluster Rows")
 			.attr ("class", "btn staticLabel")
 		;
         
-		// Second row of controls
+		this.updateClusterColumnSelectors (this.controlDiv2, this.d3table);
 		
-		this.updateColumnSelectors (this.controlDiv2, d3table);
-		
+		// Row Clustering controls
 		CLMSUI.utils.addMultipleSelectControls ({
             addToElem: this.controlDiv2, 
             selectList: ["Distance"], 
@@ -233,8 +266,9 @@
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonData2);
 		
-		this.controlDiv2.append("hr").style("display", "block");
 		
+		// Z Score colour scheme controls
+		this.controlDiv2.append("hr").style("display", "block");
 		this.controlDiv2.append("label")
 			.text ("Z Scores")
 			.attr ("class", "btn staticLabel")
@@ -254,7 +288,7 @@
 			this.indicateRecalcNeeded(true).render({refilter: true});
 		});
 		this.listenTo (this.model, "change:selection change:highlights", function() {
-			colourRows (d3table.getAllRowsSelection());
+			colourRows (this.d3table.getAllRowsSelection());
 		});
         this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // redraw if any colour model chanegs
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances or new matches added (via csv generally)
@@ -262,12 +296,11 @@
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
 			this
 				.updateTableData (metaData)
-				.updateColumnSelectors (this.controlDiv2, this.d3table, undefined)
+				.updateClusterColumnSelectors (this.controlDiv2, this.d3table, undefined)
+                .updateGroupColumnSelectors (this.controlDiv2, this.d3table, undefined)
 				.render({refilter: true})
 			;
 		}); // New/Changed metadata attributes present
-		
-		this.d3table = d3table;
 		
 		this
 			.toggleClusterControls()
@@ -354,22 +387,113 @@
 		
 		return this;
 	},
+      
+    getPickableColumns: function (d3table) {
+        var removeThese = d3.set(["kmcluster", "treeOrder"]);
+        return d3.entries (d3table.columnSettings())
+            .filter (function (columnSettingEntry) {
+                return columnSettingEntry.value.visible && columnSettingEntry.value.type === "numeric" && !removeThese.has(columnSettingEntry.key);
+            })
+        ;
+    },
 	  
 	  // Add a multiple select widget for column visibility
-	updateColumnSelectors: function (containerSelector, d3table) {
+	updateGroupColumnSelectors: function (containerSelector, d3table) {
 
 		var self = this;
+		var pickableColumns = this.getPickableColumns (d3table);
 		
-		function getPickableColumns() {
-			var removeThese = d3.set(["kmcluster", "treeOrder"]);
-			
-			return d3.entries (d3table.columnSettings())
-				.filter (function (columnSettingEntry) {
-					return columnSettingEntry.value.visible && columnSettingEntry.value.type === "numeric" && !removeThese.has(columnSettingEntry.key);
+		var selects = CLMSUI.utils.addMultipleSelectControls ({
+			addToElem: containerSelector, 
+            selectList: ["Set Groups"], 
+            optionList: pickableColumns, 
+			keepOldOptions: true,
+			optionLabelFunc: function (d) { return d.value.columnName; },
+			optionValueFunc: function (d) { return d.key; },
+            selectLabelFunc: function (d) { return d+" ►"; }, 
+            initialSelectionFunc: function () { return false; },
+			idFunc: function (d) { return d.key; },
+        });
+		selects.property ("multiple", "true");	// important, set first select element to allow multiple choices
+		
+		$(selects.node()).multipleSelect ({  
+            selectAll: false,
+			width: 200,
+			onClick: function (view) {
+			},
+		});
+		
+		var mslist = d3.select($(selects.node()).next()[0]).select(".ms-drop ul");
+		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
+		items.selectAll("input.group").data(function(d) { return [d]; }, function(d) { return d.key; })
+			.enter()
+			.insert("input", ":first-child")
+				.attr("class", "group")
+				.attr("type", "text")
+				.attr("title", "Set group identifier")
+				.on ("input", function (d) {
+					self.options.groups[d.key] = d3.select(this).property("value");
+					self.viewStateModel.trigger ("change:groupColumns", self.viewStateModel)
 				})
-			;
-		};
-		var pickableColumns = getPickableColumns();
+		;
+        items.selectAll("input[type='checkbox']").remove();
+		
+		function restoreGroupsToInputs () {
+			items.selectAll("input.group").property ("value", function(d) { 
+                console.log ("woooh", d, self.options.groups);
+                var value = self.options.groups[d.key];
+                return value !== undefined ? value : "";
+            });
+		}
+		restoreGroupsToInputs();
+		
+		var groupWidget = mslist.insert("li", ":first-child").append("div")
+		
+		groupWidget.append("button")
+			.attr ("class", "btn btn-1 btn-1a")
+			.text ("Auto Group")
+			.on ("click", function() {
+				var regex = new RegExp (self.viewStateModel.get("groupRegex"));
+				var keys = [];
+				items.data().forEach (function (d) {
+					var match = regex.exec (d.key);
+					var val = match && match.length ? match[0] : undefined;
+					self.options.groups[d.key] = val;
+					if (val !== undefined) {
+						keys.push (d.key);
+					}
+				});
+			
+				self.viewStateModel
+					.set("groupColumns", d3.set(keys), {silent: true})
+					.trigger ("change:groupColumns", self.viewStateModel)
+				;
+				restoreGroupsToInputs ();
+			})
+		;
+		
+		groupWidget.append("input")
+			.attr("type", "text")
+			.attr ("class", "regexInput")
+			.attr("placeholder", "A Regex String")
+			.attr("value", self.viewStateModel.get("groupRegex"))
+			.attr("title", "A regular expression acting on column names to produce group numbers.")
+			.on ("input", function () {
+				self.viewStateModel.set("groupRegex", d3.select(this).property("value"));
+			})
+		;
+		
+		console.log ("listview", this);
+		
+		return this;
+	},
+      
+      
+      // Add a multiple select widget for column visibility
+	updateClusterColumnSelectors: function (containerSelector, d3table) {
+
+		var self = this;
+		var pickableColumns = this.getPickableColumns (d3table);
 		
 		var selects = CLMSUI.utils.addMultipleSelectControls ({
 			addToElem: containerSelector, 
@@ -395,7 +519,7 @@
 				;
 			},
 			onCheckAll: function () {
-				var keys = getPickableColumns().map (function (pcolumn) { return pcolumn.key; });
+				var keys = self.getPickableColumns(self.d3table).map (function (pcolumn) { return pcolumn.key; });
 				self.viewStateModel.set("statColumns", d3.set(keys));
 			},
 			onUncheckAll: function () {
@@ -407,65 +531,6 @@
 			$(selects.node()).multipleSelect ("setSelects", self.viewStateModel.get("statColumns").values());
 		}
 		restoreSelectionToInputs();
-		
-		var mslist = d3.select(this.el).select(".ms-drop ul");
-		var items = mslist.selectAll("li:not(.ms-select-all)").data(pickableColumns);
-		items.selectAll("input.group").data(function(d) { return [d]; }, function(d) { return d.key; })
-			.enter()
-			.insert("input", ":first-child")
-				.attr("class", "group")
-				.attr("type", "text")
-				.attr("title", "Set group identifier")
-				.on ("input", function (d) {
-					self.options.groups[d.key] = d3.select(this).property("value");
-					self.viewStateModel.trigger ("change:statColumns", self.viewStateModel)
-				})
-		;
-		
-		function restoreGroupsToInputs () {
-			items.selectAll("input.group").property ("value", function(d) { 
-                var value = self.options.groups[d.key];
-                return value !== undefined ? value : "";
-            });
-		}
-		restoreGroupsToInputs();
-		
-		var groupWidget = mslist.insert("li", ":first-child").append("div")
-		
-		groupWidget.append("button")
-			.attr ("class", "btn btn-1 btn-1a")
-			.text ("Auto Group")
-			.on ("click", function() {
-				var regex = new RegExp (self.viewStateModel.get("groupRegex"));
-				var keys = [];
-				items.data().forEach (function (d) {
-					var match = regex.exec (d.key);
-					var val = match && match.length ? match[0] : undefined;
-					self.options.groups[d.key] = val;
-					if (val !== undefined) {
-						keys.push (d.key);
-					}
-				});
-			
-				self.viewStateModel
-					.set("statColumns", d3.set(keys), {silent: true})
-					.trigger ("change:statColumns", self.viewStateModel)
-				;
-				restoreSelectionToInputs();
-				restoreGroupsToInputs ();
-			})
-		;
-		
-		groupWidget.append("input")
-			.attr("type", "text")
-			.attr ("class", "regexInput")
-			.attr("placeholder", "A Regex String")
-			.attr("value", self.viewStateModel.get("groupRegex"))
-			.attr("title", "A regular expression acting on column names to produce group numbers.")
-			.on ("input", function () {
-				self.viewStateModel.set("groupRegex", d3.select(this).property("value"));
-			})
-		;
 		
 		console.log ("listview", this);
 		
@@ -573,6 +638,28 @@
 		return this;
 	},
 	  
+    generateGroups: function () {
+        var crossLinks = this.model.getFilteredCrossLinks();
+        var columnSettings = this.d3table.columnSettings();
+        // might have to be careful here, accessFunc could be zvalues or raw values...
+        var accessor = function (crossLinks, dim) {
+			var accessFunc = columnSettings[dim].accessor;
+			return crossLinks.map (function (crossLink) {
+				var val = accessFunc ? accessFunc(crossLink) : crossLink[dim];
+				return val ? val : ((val === 0) ? val : undefined);
+			});
+		};
+        var options = {
+			columns: this.viewStateModel.get("statColumns").values(),	// values 'cos d3.set not array
+			groups: this.options.groups,
+			accessor: accessor,
+		};
+        
+        //this.stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
+        
+        return this;
+    },
+      
 	generateStats: function () {
 		var crossLinks = this.model.getFilteredCrossLinks();
 		var columnSettings = this.d3table.columnSettings();
