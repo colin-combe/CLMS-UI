@@ -422,7 +422,6 @@
             width: 200,
             placeholder: "Use same value to group columns"
         });
-        console.log ("JQQX", jqSelectNode.multipleSelect ("getSelects"));
         jqSelectNode.multipleSelect ("uncheckAll");
 		
 		var mslist = d3.select(jqSelectNode.next()[0]).select(".ms-drop ul");
@@ -438,7 +437,7 @@
 					self.viewStateModel.trigger ("change:groupColumns", self.viewStateModel)
 				})
 		;
-        items.selectAll("input[type='checkbox']").remove();
+        items.selectAll("input[type='checkbox']").style("display", "none");
 		
 		function restoreGroupsToInputs () {
             var keys = [];
@@ -448,7 +447,6 @@
                 return value !== undefined ? value : "";
             });
             jqSelectNode.multipleSelect ("setSelects", keys);
-            console.log ("JQQQ", jqSelectNode, keys);
 		}
 		restoreGroupsToInputs();
 		
