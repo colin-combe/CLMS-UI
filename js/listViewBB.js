@@ -16,7 +16,7 @@
 		  "mouseleave .d3table tbody": "clearHighlight",
 		  "click button.toggleHeatMapMode": "toggleHeatMapMode",
           "click button.generateGroups": "generateGroups",
-		  "click button.generateStats": "generateStats",
+		  "click button.generateClusters": "generateClusters",
 		  "click .downloadButton3": "downloadImage",
 		  "click .toggleClusterControls": "toggleClusterControls",
           "click .showZValues": "toggleShowZValues",
@@ -49,6 +49,7 @@
             left:   this.options.ylabel ? 60 : 40
         };
 		this.zCellColourer = function() { return undefined; };
+        this.stats = {};
         
         // targetDiv could be div itself or id of div - lets deal with that
         // Backbone handles the above problem now - element is now found in this.el
@@ -80,6 +81,7 @@
         var buttonData = [
 			{class: "downloadButton3", label: "Download Image", type: "button", id: "download3"},
 			{class: "toggleClusterControls", label: "Toggle Cluster Controls", type: "button", id: "clusterToggle"},
+            {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap", tooltip: "Shows table as heatmap"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
@@ -195,7 +197,7 @@
 		
 
         this.controlDiv2.append("label")
-			.text ("Group Columns")
+			.text ("Group & Average Columns")
 			.attr ("class", "btn staticLabel")
 		;
         
@@ -203,12 +205,12 @@
         
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: this.controlDiv2, 
-            selectList: ["Average By"], 
+            selectList: ["Average Groups By"], 
 			optionList: d3.entries ({mean: d3.mean, median: d3.median, max: d3.max, min: d3.min}),
 			optionLabelFunc: function (d) { return d.key; },
 			optionValueFunc: function (d) { return d.value; },
 			keepOldOptions: false,
-            selectLabelFunc: function () { return "Average By ►"; }, 
+            selectLabelFunc: function (d) { return d+" ►"; }, 
 			initialSelectionFunc: function (d) { return d.key === self.viewStateModel.get("groupAverageFunc").key; },
 			changeFunc: function () {
                 // cant rely on event.target.value as it returns functions as a string
@@ -261,8 +263,7 @@
         });
 		
 		var buttonData2 = [
-			{class: "generateStats", label: "Calculate", type: "button", id: "generateStats", tooltip: "Adds 2 columns to the table, Kmcluster and TreeOrder"},
-			{class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap", tooltip: "Shows table as heatmap"},
+			{class: "generateClusters", label: "Calculate", type: "button", id: "generateClusters", tooltip: "Adds 2 columns to the table, Kmcluster and TreeOrder"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonData2);
 		
@@ -342,7 +343,7 @@
 			
 			// Use Z-Score if calculated, otherwise use cross-link raw values in link meta object
 			var accFunc = function (d) { 
-				var linkZScores = self.viewStateModel.get("showZValues") && self.stats && self.stats.zscoresByLinkMap ? self.stats.zscoresByLinkMap[d.id] : undefined;
+				var linkZScores = self.viewStateModel.get("showZValues") && self.stats.normZScoresLinkMap ? self.stats.normZScoresLinkMap[d.id] : undefined;
 				if (linkZScores) {
 					var columnIndex = self.stats.zColumnNames.indexOf (mcol);
 					if (columnIndex >= 0) {
@@ -355,7 +356,7 @@
 			var zscoreRoundFormat = d3.format(",.5f");
 			var zscoreRounder = function (d) {
 				var val = accFunc (d);
-				var columnIndex = self.stats && self.stats.zColumnNames ? self.stats.zColumnNames.indexOf (mcol) : undefined;
+				var columnIndex = self.stats.zColumnNames ? self.stats.zColumnNames.indexOf (mcol) : undefined;
 				if (columnIndex >= 0 && val !== undefined && !Number.isInteger(val)) {
 					return zscoreRoundFormat (val);
 				}
@@ -405,7 +406,7 @@
 		
 		var selects = CLMSUI.utils.addMultipleSelectControls ({
 			addToElem: containerSelector, 
-            selectList: ["Set Groups"], 
+            selectList: ["Set Column Groups"], 
             optionList: pickableColumns, 
 			keepOldOptions: true,
 			optionLabelFunc: function (d) { return d.value.columnName; },
@@ -569,7 +570,7 @@
 				id: "ZMetaColumn", 
 				columnIndex: columnIndex,
 				label: "Norm. "+columnName, 
-				linkMap: self.stats.zscoresByLinkMap
+				linkMap: self.stats.normZScoresLinkMap
 			});	// make colour model based on z value extents
 		}
 	},
@@ -611,6 +612,7 @@
 		this.viewStateModel.set("heatMap", heatMap);
 		
 		var csettings = d3.entries(this.d3table.columnSettings());
+        console.log ("cs", csettings);
 		
 		var ps = this.d3table.pageSize();
 		this.d3table.pageSize(120 - ps);
@@ -626,7 +628,11 @@
 				this.visColDefaults[csetting.key] = csetting.value.visible;
 			}, this);
 			
-			var showSet = d3.set(this.viewStateModel.get("outputStatColumns").values());
+			//var showSet = d3.set(this.viewStateModel.get("outputStatColumns").values());
+            var showSet = d3.set (csettings
+                .filter(function(cs) { return cs.value.type === "numeric"; })
+                .map(function(cs) {return cs.value.columnName; })
+            );
 			showSet.add ("treeOrder");
 			showSet.add ("kmcluster");
 			csettings.forEach (function (cEntry) {
@@ -656,12 +662,17 @@
             averageFuncEntry: this.viewStateModel.get("groupAverageFunc")
 		};
         
-        CLMSUI.modelUtils.averageGroupsMaster (crossLinks, options);
+        var groupResults = CLMSUI.modelUtils.averageGroupsMaster (crossLinks, options);
+        this.stats.zscores = groupResults.zscores;
+        this.stats.zColumnNames = groupResults.zColumnNames;
+		this.viewStateModel.set ("outputStatColumns", d3.set (this.stats.zColumnNames));
+        
+        this.normalise();
         
         return this;
     },
       
-	generateStats: function () {
+	generateClusters: function () {
 		var crossLinks = this.model.getFilteredCrossLinks();
 		var columnSettings = this.d3table.columnSettings();
 		var accessor = function (crossLinks, dim) {
@@ -679,27 +690,24 @@
 			accessor: accessor,
 		}
 		
-		this.stats = CLMSUI.modelUtils.metaClustering (crossLinks, options);
-		
-		this.viewStateModel.set ("outputStatColumns", d3.set (this.stats.zColumnNames));
+		var clusterResults = CLMSUI.modelUtils.metaClustering (crossLinks, options);
+        this.stats.clusterDistances = clusterResults.cfk_distances;
 		
 		//console.log ("stat", stats);
-		CLMSUI.utils.drawDendrogram (this.dendrosvg, this.stats.cfk_distances.tree, {
+		CLMSUI.utils.drawDendrogram (this.dendrosvg, this.stats.clusterDistances.tree, {
 			ltor: false,
 			labelFunc: function (d) { return d.origValue.clink.id; },
 			title: "Distance "+this.viewStateModel.get("statDistance")+", Linkage "+this.viewStateModel.get("statLinkage"),
 		});
 		
-		this
-			.indicateRecalcNeeded (false)
-			.normalise()
-		;
+		this.indicateRecalcNeeded (false);
+        
 		return this;
 	},
 	  
 	normalise: function () {
 		
-		if (this.stats) {
+		if (this.stats.zColumnNames) {
 			var columnIndexMap = {};
 			this.stats.zColumnNames.forEach (function (columnKey, i) {
 				columnIndexMap[columnKey] = i;
@@ -716,7 +724,7 @@
 			}, this);
 			
 			this.stats.normZScores = normScores;
-			this.stats.zscoresByLinkMap = zmap;
+			this.stats.normZScoresLinkMap = zmap;
 			
 			//console.log ("stats", this.stats);
 
@@ -725,7 +733,7 @@
 				var zcolumnIndex = columnIndexMap[d.key];
 				var colValue;
 				if (colourScheme && zcolumnIndex !== undefined) {
-					var linkZScores = self.stats.zscoresByLinkMap[d.value.id];	// d.value is crosslink
+					var linkZScores = self.stats.normZScoresLinkMap[d.value.id];	// d.value is crosslink
 					if (linkZScores) {
 						var val = linkZScores[zcolumnIndex];
 						colValue = val !== undefined ? colourScheme.getColourByValue (val) : "transparent"; //colourScheme.undefinedColour;
@@ -757,7 +765,7 @@
 	},
 	  
 	indicateRecalcNeeded: function (truthy) {
-		d3.select(this.el).select("button.generateStats").property ("disabled", !truthy);
+		d3.select(this.el).select("button.generateClusters").property ("disabled", !truthy);
 		return this;
 	},
 	  

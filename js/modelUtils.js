@@ -990,6 +990,12 @@ CLMSUI.modelUtils = {
 		});
 	},
     
+    // add crosslink id to a row-based array, need to do this before next step, and then get rid of rows with no defined values
+    reduceLinks: function (linkArr, crossLinks) {
+        linkArr.forEach (function (link, i) { link.clink = crossLinks[i]; });
+        return CLMSUI.modelUtils.compact2DArray (linkArr);
+    },
+    
     makeZScores: function (crossLinks, options) {
         // get values per column
         var valuesByColumn = options.columns.map (function (dim) {
@@ -999,13 +1005,15 @@ CLMSUI.modelUtils = {
 		}, this);
         
 		// calc zscores for each data column
-		var zscores = valuesByColumn.map (function (columnValues) {
+		var zscoresByColumn = valuesByColumn.map (function (columnValues) {
 			var zscore = CLMSUI.modelUtils.zscore (columnValues);
 			zscore.colName = columnValues.colName;
 			return zscore;
 		}, this);
         
-        return zscores;
+        var zScoresByLink = options.calcLinkZScores === true ? CLMSUI.modelUtils.reduceLinks (d3.transpose (zscoresByColumn), crossLinks) : [];
+        
+        return {zScoresByColumn: zscoresByColumn, zScoresByLink: zScoresByLink, zColumnNames: options.columns};
     },
     
     averageGroupsMaster: function (crossLinks, myOptions) {
@@ -1023,18 +1031,13 @@ CLMSUI.modelUtils = {
             .map (function (entry) { return entry.key; })
         ;
         
-        // add crosslink id to a row-based array, need to do this before next step, and then get rid of rows with no defined values
-		function reduceLinks (linkArr, crossLinks) {
-			linkArr.forEach (function (zslink, i) { zslink.clink = crossLinks[i]; });
-			return CLMSUI.modelUtils.compact2DArray (linkArr);
-		}
-        
         // get zscores per column
-        var zscores = CLMSUI.modelUtils.makeZScores (crossLinks, options);
-		var colNameGroups = CLMSUI.modelUtils.makeColumnGroupIndices (zscores, options);
-        var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zscores, colNameGroups, options.averageFuncEntry);
-		var allZScores = zscores.concat (zGroupAvgScores);
-        var allZScoresByLink = reduceLinks (d3.transpose (allZScores), crossLinks);
+        var zResults = CLMSUI.modelUtils.makeZScores (crossLinks, options);
+        var zScoresByColumn = zResults.zScoresByColumn;
+		var colNameGroups = CLMSUI.modelUtils.makeColumnGroupIndices (zScoresByColumn, options);
+        var zGroupAvgScores = CLMSUI.modelUtils.averageGroups (zScoresByColumn, colNameGroups, options.averageFuncEntry);
+		var allZScores = zScoresByColumn.concat (zGroupAvgScores);
+        var allZScoresByLink = CLMSUI.modelUtils.reduceLinks (d3.transpose (allZScores), crossLinks);
         var colNames = allZScores.map (function (col) { return col.colName; });
 		var groupColumns = zGroupAvgScores.map (function (avgColumn) {
 			return {name: avgColumn.colName, index: colNames.indexOf (avgColumn.colName)};
@@ -1055,40 +1058,30 @@ CLMSUI.modelUtils = {
 			matchedItemCount: allZScoresByLink.length
 		});	
         
-        return {zscores: allZScoresByLink};
+        return {zscores: allZScoresByLink, zColumnNames: colNames};
     },
 	
 	metaClustering: function (crossLinks, myOptions) {
 		var defaults = {
 			distance: "euclidean",
 			linkage: "average",
-			columns: ["pH4 1", "pH4 2", "pH4 3", "pH 5 1", "pH 5 2", "pH 5 3", "pH 6 1", "pH 6 2", "pH6 3", "pH 7 1", "pH 7 2", "pH 7 3", "pH 8 1", "pH 8 2", "pH 8 3", "pH 9 1", "pH 9 2", "pH 9 3", "pH 10 1", "pH 10 2", "pH10 3"],
+			columns: ["pH4 1", "pH4 2", "pH4 3"],
 			accessor: function (crossLinks, dim) {
 				return crossLinks.map (function (crossLink) {
 					return crossLink[dim] || crossLink.getMeta(dim);
 				});
-			}
+			},
+            calcLinkZScores: true
 		};
 		var options = $.extend ({}, defaults, myOptions);
 		
-        // get zscores per column
-        var zscores = CLMSUI.modelUtils.makeZScores (crossLinks, options);
-		
-		// add crosslink id to a row-based array, need to do this before next step, and then get rid of rows with no defined values
-		function reduceLinks (linkArr, crossLinks) {
-			linkArr.forEach (function (zslink, i) { zslink.clink = crossLinks[i]; });
-			return CLMSUI.modelUtils.compact2DArray (linkArr);
-		}
-		
+        // Get Z-Scores - Zscoring existing ZScores won't chnage anything, bit inefficient but ok
+        var zResults = CLMSUI.modelUtils.makeZScores (crossLinks, options);
+        var zScoresByLink = zResults.zScoresByLink;
 		// Calculate K-means and dimension tree on non-grouped dimensions
-		var zScoresByLink = reduceLinks (d3.transpose (zscores), crossLinks);
-		var ungroupedLinkScores = zScoresByLink; // zlinkGroupAvgScoresNormed; // zscoresByLink;
-		var kmeans = clusterfck.kmeans (ungroupedLinkScores, undefined, options.distance);
-		var zdistances = clusterfck.hcluster (ungroupedLinkScores, options.distance, options.linkage);
+		var kmeans = clusterfck.kmeans (zScoresByLink, undefined, options.distance);
+		var zdistances = clusterfck.hcluster (zScoresByLink, options.distance, options.linkage);
 		var treeOrder = this.flattenBinaryTree (zdistances.tree);
-		//console.log ("zs", zscoresByLink);
-		//console.log ("kmeans", kmeans);
-		//console.log ("distance", zdistances, treeOrder);
 		
 		kmeans.forEach (function (cluster, i) {
 			cluster.forEach (function (arr) {
@@ -1099,10 +1092,6 @@ CLMSUI.modelUtils = {
 		treeOrder.forEach (function (value, i) {
 			value.clink.setMeta ("treeOrder", i+1);
 		});
-		
-		// transpose to get scores per link not per column
-		var allZScoresByLink = reduceLinks (d3.transpose (zscores), crossLinks);
-		//console.log ("concatZScoresByLink", concatZScoresByLink);
 
 		// Then tell the world these meta attributes have changed
 		var newAndUpdatedColumns = ["kmcluster", "treeOrder"];
@@ -1110,10 +1099,10 @@ CLMSUI.modelUtils = {
 			columns: newAndUpdatedColumns, 
 			columnTypes: _.object (newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() { return "numeric"; })), 
 			items: crossLinks, 
-			matchedItemCount: allZScoresByLink.length
+			matchedItemCount: zScoresByLink.length
 		});	
 		
-		return {cfk_kmeans: kmeans, cfk_distances: zdistances, zColumnNames: [], zscores: allZScoresByLink};
+		return {cfk_kmeans: kmeans, cfk_distances: zdistances};
 	},
 	
 	
