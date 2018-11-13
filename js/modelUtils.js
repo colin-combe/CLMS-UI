@@ -287,7 +287,7 @@ CLMSUI.modelUtils = {
 
     repopulateNGL: function (pdbInfo) {
         pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
-        var params = {};    // {sele: ":A"};    // example: show just 'A' chain
+        var params = {assembly: "BU1", defaultAssembly: "BU1" /* "BU1" */};    // {sele: ":A"};    // example: show just 'A' chain
         if (pdbInfo.ext) {
             params.ext = pdbInfo.ext;
         }
@@ -358,7 +358,7 @@ CLMSUI.modelUtils = {
 								pMatch.data = pMatch.seqObj.data;
 								pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
 								chainMap[pMatch.id] = chainMap[pMatch.id] || [];
-								chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName});
+								chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName, modelIndex: pMatch.seqObj.modelIndex});
 								pMatch.otherAlignSettings = {semiLocal: true};
 							});
 							console.log ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
@@ -400,7 +400,7 @@ CLMSUI.modelUtils = {
                     c.eachResidue (function (r) {
                         resList.push (CLMSUI.modelUtils.amino3to1Map[r.resname] || "X");
                     });
-                    sequences.push ({chainName: c.chainname, chainIndex: c.index, residueOffset: c.residueOffset, data: resList.join("")});
+                    sequences.push ({chainName: c.chainname, chainIndex: c.index, modelIndex: c.modelIndex, residueOffset: c.residueOffset, data: resList.join("")});
 					//console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName(), resList.join(""));
                 }
             });
@@ -1261,6 +1261,20 @@ CLMSUI.modelUtils = {
 	totalProteinLength: function (interactors) {
 		return d3.sum (interactors, function (d) { return d.size; })
 	},
+    
+    nearestPoint: function (points, accessor, sorted) {
+        accessor = accessor || function (d) { return d; };
+        if (!sorted) {
+            points.sort (function (a,b) {
+                return accessor(a)[0] - accessor(b)[0];
+            });
+        }
+        sorted = true;
+        
+        
+        
+        
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert (CLMSUI.modelUtils.amino3to1Map);

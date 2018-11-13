@@ -192,8 +192,8 @@ function callback (model) {
 	
 	QUnit.test ("Sequence generation from PDB chains", function (assert) {
 		var expected = [
-			{chainName: "A", chainIndex: 0, residueOffset: 0, data: dseq1AO6},
-			{chainName: "B", chainIndex: 1, residueOffset: 578, data: dseq1AO6},
+			{chainName: "A", chainIndex: 0, modelIndex: 0, residueOffset: 0, data: dseq1AO6},
+			{chainName: "B", chainIndex: 1, modelIndex: 0, residueOffset: 578, data: dseq1AO6},
 		];
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");

@@ -10,9 +10,13 @@ CLMSUI.DistancesObj.prototype = {
     
     constructor: CLMSUI.DistancesObj,
     
-    getShortestLinks: function (links) {
+    getShortestLinks: function (links, angstromAccuracy) {
+        angstromAccuracy = angstromAccuracy || 1;
+        
         links.forEach (function (link) {
-            link.distance = this.getXLinkDistanceFromChainCoords (this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex);
+            link.distance = this.getXLinkDistanceFromChainCoords (
+                this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex
+            );
         }, this);
         
         var nestedLinks = d3.nest()
@@ -20,8 +24,21 @@ CLMSUI.DistancesObj.prototype = {
             .sortValues (function (a, b) {
                 var d = a.distance - b.distance;
                 // if link distances are v. similar try and pick ones from the same chain(s) (the lowest numbered one)
-                if (Math.abs(d) < 0.01) {
-                    d = (a.residueA.chainIndex + a.residueB.chainIndex) - (b.residueA.chainIndex + b.residueB.chainIndex);
+                if (Math.abs(d) < angstromAccuracy) {
+                    var mitotalDiff = (a.residueA.modelIndex + a.residueB.modelIndex) - (b.residueA.modelIndex + b.residueB.modelIndex);
+                    if (mitotalDiff) {
+                        d = mitotalDiff;
+                    } else {
+                        var citotalDiff = (a.residueA.chainIndex + a.residueB.chainIndex) - (b.residueA.chainIndex + b.residueB.chainIndex);
+                        if (citotalDiff) { 
+                            d = citotalDiff; 
+                        } else {
+                            var minDiff = Math.min (a.residueA.chainIndex, a.residueB.chainIndex) - Math.min (b.residueA.chainIndex, b.residueB.chainIndex);
+                            if (minDiff) {
+                                d = minDiff;
+                            }
+                        }
+                    }
                 }
                 return (d < 0 ? -1 : (d > 0 ? 1 : 0));
             })
