@@ -99,24 +99,23 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }
 
         var chainMap = this.get("chainMap");
+        // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
         var modelIndexedChainMap = this.makeModelSubIndexedChainMap (chainMap);
 
         linkModel.forEach (function (xlink) {
-            // loop through fromChainIndices / toChainIndices to pick out all possible links between two residues in different chains
-            var fromChainIndices = _.pluck (chainMap[xlink.fromProtein.id], "index");
-            var toChainIndices = _.pluck (chainMap[xlink.toProtein.id], "index");
-            var combinations = fromChainIndices.length * toChainIndices.length;
+            // loop through fromProtein's models/chains in modelIndexedChainMap
+            // Within that have an inner loop through toProtein's models/chains in modelIndexedChainMap
+            // Match by model index so can't have crosslinks between different models
             var fromPerModelChains = modelIndexedChainMap[xlink.fromProtein.id];
             var toPerModelChains = modelIndexedChainMap[xlink.toProtein.id];
-            var toPerModelChainMap = d3.map(toPerModelChains, function (d) { return d.key; });
-            //console.log ("tpmcp", toPerModelChainMap, toPerModelChains);
 
             if (fromPerModelChains.length && toPerModelChains.length) {
+                var toPerModelChainMap = d3.map(toPerModelChains, function (d) { return d.key; });
                 
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
                     var fromModelIndex = fromPerModelChainEntry.key;
                     var toChains = toPerModelChainMap.get (fromModelIndex);
-                    if (toChains) { // only proceed if the model index in from has a corresponding entry in toPerModelChainMap (only look for links in same model)
+                    if (toChains) { // only proceed if the model index in 'from' has a corresponding entry in toPerModelChainMap (only look for links within same model)
                     
                         fromPerModelChainEntry.values.forEach (function (fromChainValue) {
                             var fromChainIndex = fromChainValue.index;
@@ -172,13 +171,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var residueIdMap = {};
 
         function insertResidue (residue, link) {
-            var list = residueIdToLinkIds[residue.residueId];
+            var resID = residue.residueId;
+            var list = residueIdToLinkIds[resID];
             if (list === undefined) {
-                residueIdToLinkIds[residue.residueId] = [link.linkId];
+                residueIdToLinkIds[resID] = [link.linkId];
             } else if (! _.includes (list, link.linkId)) {
                 list.push (link.linkId);
             }
-            residueIdMap[residue.residueId] = residue;
+            residueIdMap[resID] = residue;
         }
 
         linkList.forEach (function(rl) {
@@ -273,7 +273,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 viableChainIndices.push (cp.index);
             }
         });
-		return {"viableChainIndices": viableChainIndices, "resCount": resCount};
+		return {viableChainIndices: viableChainIndices, resCount: resCount};
 	},
 	
 	calculateCAtomsAllResidues: function (chainIndices) {

@@ -287,7 +287,7 @@ CLMSUI.modelUtils = {
 
     repopulateNGL: function (pdbInfo) {
         pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
-        var params = {assembly: "BU1", defaultAssembly: "BU1" /* "BU1" */};    // {sele: ":A"};    // example: show just 'A' chain
+        var params = {};    // {sele: ":A"};    // example: show just 'A' chain
         if (pdbInfo.ext) {
             params.ext = pdbInfo.ext;
         }
@@ -893,8 +893,9 @@ CLMSUI.modelUtils = {
 				}
 			}
         });
+
         if (columns) {
-            CLMSUI.vent.trigger ("proteinMetadataUpdated", {columns: columns, items: proteins, matchedItemCount: matchedProteinCount});
+            CLMSUI.vent.trigger ("proteinMetadataUpdated", {columns: columns, items: proteins, matchedItemCount: matchedProteinCount}, {source: "file"});
         }
     },
 	

@@ -235,7 +235,25 @@ function callback (model) {
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as alignment result, Passed!");
 	});
+    
+    
+    QUnit.module ("NGL Model Wrapper");
 	
+    QUnit.test ("Divide protein to ngl chain mapping by intermediate model step", function (assert) {
+		var data = {
+            10001: [{modelIndex:1, chain: "A"}, {modelIndex:1, chain: "B"}, {modelIndex:2, chain: "C"}],
+            10002: [{modelIndex:1, chain: "4"}]
+        };
+        var expectedValue = {
+            10001: [{key: "1", values: [{modelIndex:1, chain: "A"}, {modelIndex:1, chain: "B"}]}, {key:"2", values: [{modelIndex:2, chain: "C"}]}],
+            10002: [{key: "1", values: [{modelIndex:1, chain: "4"}]}]
+        };
+		
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+        var actualValue = stageModel.makeModelSubIndexedChainMap (data);
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" when mapping from "+JSON.stringify(data));
+	});
+    
 	
 	QUnit.module ("NGL Selection Language");
 	
@@ -279,7 +297,7 @@ function callback (model) {
 		
 		var expectedValue = "(( /0 AND (( :A AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) ) OR ( :B AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) )) ) ) AND .CA";
 		var data = [
-			{"resindex":410,"residueId":0,"resno":415,"chainIndex":0,"structureId":null},{"resindex":492,"residueId":1,"resno":497,"chainIndex":0,"structureId":null},{"resindex":492,"residueId":2,"resno":497,"chainIndex":1,"structureId":null},{"resindex":410,"residueId":3,"resno":415,"chainIndex":1,"structureId":null},{"resindex":185,"residueId":4,"resno":190,"chainIndex":0,"structureId":null},{"resindex":420,"residueId":5,"resno":425,"chainIndex":0,"structureId":null},{"resindex":420,"residueId":6,"resno":425,"chainIndex":1,"structureId":null},{"resindex":185,"residueId":7,"resno":190,"chainIndex":1,"structureId":null},{"resindex":120,"residueId":8,"resno":125,"chainIndex":0,"structureId":null},{"resindex":156,"residueId":9,"resno":161,"chainIndex":0,"structureId":null},{"resindex":156,"residueId":10,"resno":161,"chainIndex":1,"structureId":null},{"resindex":120,"residueId":11,"resno":125,"chainIndex":1,"structureId":null},{"resindex":126,"residueId":12,"resno":131,"chainIndex":0,"structureId":null},{"resindex":157,"residueId":13,"resno":162,"chainIndex":0,"structureId":null},{"resindex":157,"residueId":14,"resno":162,"chainIndex":1,"structureId":null},{"resindex":126,"residueId":15,"resno":131,"chainIndex":1,"structureId":null},{"resindex":102,"residueId":16,"resno":107,"chainIndex":0,"structureId":null},{"resindex":461,"residueId":17,"resno":466,"chainIndex":0,"structureId":null},{"resindex":461,"residueId":18,"resno":466,"chainIndex":1,"structureId":null},{"resindex":102,"residueId":19,"resno":107,"chainIndex":1,"structureId":null}
+			{resindex:410, residueId:0, resno:415, chainIndex:0, structureId:null},{resindex:492, residueId:1, resno:497, chainIndex:0, structureId:null},{resindex:492, residueId:2, resno:497, chainIndex:1, structureId:null},{resindex:410, residueId:3, resno:415, chainIndex:1, structureId:null},{resindex:185, residueId:4, resno:190, chainIndex:0, structureId:null},{resindex:420, residueId:5, resno:425, chainIndex:0, structureId:null},{resindex:420, residueId:6, resno:425, chainIndex:1, structureId:null},{resindex:185, residueId:7, resno:190, chainIndex:1, structureId:null},{resindex:120, residueId:8, resno:125, chainIndex:0, structureId:null},{resindex:156, residueId:9, resno:161, chainIndex:0, structureId:null},{resindex:156, residueId:10, resno:161, chainIndex:1, structureId:null},{resindex:120, residueId:11, resno:125, chainIndex:1, structureId:null},{resindex:126, residueId:12, resno:131, chainIndex:0, structureId:null},{resindex:157, residueId:13, resno:162, chainIndex:0, structureId:null},{resindex:157, residueId:14, resno:162, chainIndex:1, structureId:null},{resindex:126, residueId:15, resno:131, chainIndex:1, structureId:null},{resindex:102, residueId:16, resno:107, chainIndex:0, structureId:null},{resindex:461, residueId:17, resno:466, chainIndex:0, structureId:null},{resindex:461, residueId:18, resno:466, chainIndex:1, structureId:null},{resindex:102, residueId:19, resno:107, chainIndex:1, structureId:null}
 		];
 		
 		var expectedValue2 = "(( /0 AND (( 415:A ) OR ( 497:B )) ) ) AND .CA";
