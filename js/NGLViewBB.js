@@ -71,6 +71,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         .updateOptions (self.options, ["defaultAssembly"])
                         .updateAssemblyType ()
                     ;
+                    self.setAssemblyChains();
                 }
             },
             initialSelectionFunc: function(d) { return d === self.options.defaultAssembly; }
@@ -234,7 +235,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             }); 
             // First time distancesObj fires we should setup the display for a new data set
             this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
-                this.repopulate();
+                this
+                    .setAssemblyChains()
+                    .repopulate()
+                ;
             });
         });
 		
@@ -244,6 +248,22 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 			}
 		});
 
+    },
+    
+    setAssemblyChains: function () {
+        var structure = this.model.get("stageModel").get("structureComp").structure;
+        var biomolDict = structure.biomolDict;
+        var dictEntry = biomolDict[this.options.defaultAssembly];
+        var chainNames = dictEntry ? d3.merge (dictEntry.partList.map (function (part) { return part.chainList; })) : [];
+        if (!chainNames.length) {
+            structure.eachChain (function (cp) {
+                chainNames.push (cp.chainname);
+            });
+        }
+        var chainNameSet = d3.set (chainNames);
+        this.model.get("clmsModel").get("distancesObj").setAllowedChainNameSet (chainNameSet);
+        
+        return this;
     },
 
     repopulate: function () {
@@ -287,6 +307,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         );
         
         this.showFiltered();
+        return this;
     },
 
     render: function () {
@@ -572,7 +593,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     updateAssemblyType: function (assemblyType) {
-        this.structureComp.setDefaultAssembly (assemblyType || this.options.defaultAssembly);
+        assemblyType = assemblyType || this.options.defaultAssembly;
+        this.structureComp.setDefaultAssembly (assemblyType);
         return this;
     },
     

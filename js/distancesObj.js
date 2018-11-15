@@ -4,6 +4,15 @@ CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID) {
     this.matrices = matrices;
     this.chainMap = chainMap;
     this.pdbBaseSeqID = pdbBaseSeqID;
+    this.chainNameSet = d3.set();
+    
+    this.chainIndexToNameMap = d3.map();
+    d3.values(this.chainMap).map (function (valueArr) {
+        valueArr.map (function (d) { 
+            this.chainIndexToNameMap.set(d.index, d.name); 
+        }, this)
+    }, this);
+    console.log ("DDDD", this.chainIndexToNameMap);
 };
 
 CLMSUI.DistancesObj.prototype = {
@@ -127,17 +136,22 @@ CLMSUI.DistancesObj.prototype = {
     // resIndex1 and 2 are 0-based
     getXLinkDistanceFromChainCoords: function (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var dist;
-        var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
-        var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
-        //CLMSUI.utils.xilog ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
-        if (distanceMatrix[minIndex] && distanceMatrix[minIndex][resIndex2]) {
-            var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
-            dist = distanceMatrix[minIndex][maxIndex];
-        } else {
-			var sm = CLMSUI.compositeModelInst.get("stageModel");
-            dist = sm ? sm.getSingleDistanceBetween2Residues (resIndex1, resIndex2, chainIndex1, chainIndex2) : 0;
+        if (this.chainNameSet.has (this.chainIndexToNameMap.get (chainIndex1)) && this.chainNameSet.has (this.chainIndexToNameMap.get (chainIndex2))) {
+            var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
+            var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
+            //CLMSUI.utils.xilog ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
+            if (distanceMatrix[minIndex] && distanceMatrix[minIndex][resIndex2]) {
+                var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
+                dist = distanceMatrix[minIndex][maxIndex];
+            } else {
+                var sm = CLMSUI.compositeModelInst.get("stageModel");
+                dist = sm ? sm.getSingleDistanceBetween2Residues (resIndex1, resIndex2, chainIndex1, chainIndex2) : 0;
+            }
         }
-        //CLMSUI.utils.xilog ("dist", dist);
+        else {
+            dist = Math.POSITIVE_INFINITY;
+        }
+            //CLMSUI.utils.xilog ("dist", dist);
         return dist;
     },
 	
@@ -373,5 +387,12 @@ CLMSUI.DistancesObj.prototype = {
 				})
 			})
 		}
-	}
+	},
+    
+    // set of chain names that are allowed to be in distance calculations
+    // usually due to others being restricted by the assembly in the ngl model
+    setAllowedChainNameSet: function (chainNameSet) {
+        this.chainNameSet = chainNameSet;
+        return this;
+    }
 };
