@@ -607,7 +607,7 @@ CLMSUI.modelUtils = {
 		var totalProteinLength = CLMSUI.modelUtils.totalProteinLength (proteinSeqs);
 
         for (var n = 0; n < sequenceObjs.length; n++) {
-            var max = {key: undefined, seqObj: undefined, bitScore: 50, eScore: 0.00000001};
+            var max = {key: undefined, seqObj: undefined, bitScore: 100, eScore: 0.000000001};
             var seqObj = sequenceObjs[n];
             entries.forEach (function (entry) {
 				var protAlignModel = protAlignCollection ? protAlignCollection.get (entry.key) : undefined;

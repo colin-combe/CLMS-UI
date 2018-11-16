@@ -4,15 +4,7 @@ CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID) {
     this.matrices = matrices;
     this.chainMap = chainMap;
     this.pdbBaseSeqID = pdbBaseSeqID;
-    this.chainNameSet = d3.set();
-    
-    this.chainIndexToNameMap = d3.map();
-    d3.values(this.chainMap).map (function (valueArr) {
-        valueArr.map (function (d) { 
-            this.chainIndexToNameMap.set(d.index, d.name); 
-        }, this)
-    }, this);
-    console.log ("DDDD", this.chainIndexToNameMap);
+    this.permittedChainIndicesSet = d3.set();
 };
 
 CLMSUI.DistancesObj.prototype = {
@@ -101,6 +93,7 @@ CLMSUI.DistancesObj.prototype = {
                         
                         if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, chainIndex1, chainIndex2)) {
                             var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
+
                             if (dist !== undefined) {
                                 if (average) {
                                     totalDist += dist;
@@ -136,7 +129,7 @@ CLMSUI.DistancesObj.prototype = {
     // resIndex1 and 2 are 0-based
     getXLinkDistanceFromChainCoords: function (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var dist;
-        if (this.chainNameSet.has (this.chainIndexToNameMap.get (chainIndex1)) && this.chainNameSet.has (this.chainIndexToNameMap.get (chainIndex2))) {
+        if (this.permittedChainIndicesSet.has (chainIndex1) && this.permittedChainIndicesSet.has (chainIndex2)) {
             var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
             var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
             //CLMSUI.utils.xilog ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
@@ -147,11 +140,11 @@ CLMSUI.DistancesObj.prototype = {
                 var sm = CLMSUI.compositeModelInst.get("stageModel");
                 dist = sm ? sm.getSingleDistanceBetween2Residues (resIndex1, resIndex2, chainIndex1, chainIndex2) : 0;
             }
+        } else {
+            dist = Number.POSITIVE_INFINITY;
         }
-        else {
-            dist = Math.POSITIVE_INFINITY;
-        }
-            //CLMSUI.utils.xilog ("dist", dist);
+        
+        //CLMSUI.utils.xilog ("dist", dist);
         return dist;
     },
 	
@@ -213,19 +206,24 @@ CLMSUI.DistancesObj.prototype = {
         return sampleDists;
     },
 	
-	// Collect together sequence data that is available to do sample 3d distances on, by mapping
-    // the 3d sequences to the search sequences, and taking those sub-portions of the search sequence
+	// Collect together sequence data that is available to do sample 3d distances on, by 
+    // 1. Filtering out chains which aren't admissible to calculate distances on
+    // 2. Mapping the remaining 3d chain sequences to the search sequences
+    // 3. Then extracting those sub-portions of the search sequence that the 3d sequences cover
 	calcDistanceableSequenceData: function () {
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         
         var seqs = d3.entries(this.chainMap).map (function (chainEntry) {
             var protID = chainEntry.key;
-            return chainEntry.value.map (function (chain) {
-                var alignID = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chain.name, chain.index);
-                var range = alignCollBB.getSearchRangeIndexOfMatches (protID, alignID);
-				$.extend (range, {chainIndex: chain.index, protID: protID, alignID: alignID});
-                return range;
-            }, this);
+            return chainEntry.value
+                .filter (function (chain) { return this.permittedChainIndicesSet.has (chain.index); }, this)    // remove chains that are currently distance barred
+                .map (function (chain) {
+                    var alignID = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chain.name, chain.index);
+                    var range = alignCollBB.getSearchRangeIndexOfMatches (protID, alignID);
+                    $.extend (range, {chainIndex: chain.index, protID: protID, alignID: alignID});
+                    return range;
+                }, this)
+            ;
         }, this);
         seqs = d3.merge (seqs); // collapse nested arrays
         CLMSUI.utils.xilog ("seqs", seqs);
@@ -390,9 +388,21 @@ CLMSUI.DistancesObj.prototype = {
 	},
     
     // set of chain names that are allowed to be in distance calculations
-    // usually due to others being restricted by the assembly in the ngl model
+    // needed as others are restricted by the assembly in the ngl model
     setAllowedChainNameSet: function (chainNameSet) {
-        this.chainNameSet = chainNameSet;
+        this.permittedChainIndicesSet = d3.set();
+        d3.values(this.chainMap).map (function (valueArr) {
+            valueArr.map (function (d) { 
+                if (chainNameSet.has (d.name)) {
+                    this.permittedChainIndicesSet.add(d.index); 
+                }
+            }, this);
+        }, this);
+        
+        console.log ("PCIS", this.permittedChainIndicesSet);
+        
+        CLMSUI.vent.trigger ("PDBPermittedChainSetsUpdated", true);
+        
         return this;
     }
 };

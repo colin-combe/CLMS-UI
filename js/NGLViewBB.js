@@ -35,7 +35,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 		colourScheme: "uniform",
 		showAllProteins: false,
 		chainLabelSetting: "Short",
-        defaultAssembly: "AU",
+        defaultAssembly: "default",
 	},
 
     initialize: function (viewOptions) {
@@ -59,23 +59,34 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         
         
         // Assembly choice dropdown
-        var assemblys = ["BU1", "AU"];
-        CLMSUI.utils.addMultipleSelectControls ({
-            addToElem: toolbar,
-            selectList: ["Assembly"], 
-            optionList: assemblys, 
-            changeFunc: function () {
-                if (self.xlRepr) {
-                    self.options.defaultAssembly = d3.event.target.value;
-                    self.xlRepr
-                        .updateOptions (self.options, ["defaultAssembly"])
-                        .updateAssemblyType ()
-                    ;
-                    self.setAssemblyChains();
-                }
-            },
-            initialSelectionFunc: function(d) { return d === self.options.defaultAssembly; }
-        });
+        var buildAssemblySelector = function () {
+            var stageModel = this.model.get("stageModel");
+            var assemblys = stageModel ? d3.keys(stageModel.get("structureComp").structure.biomolDict) : ["BU1", "AU"];
+            assemblys.unshift("Default");
+            var labelPairs = assemblys.map (function (ass) {
+                return {label: ass.replace("AU", "Asymmetric Unit").replace("BU", "Biological Unit "), key: ass};
+            });
+            CLMSUI.utils.addMultipleSelectControls ({
+                addToElem: toolbar,
+                selectList: ["Assembly"], 
+                optionList: labelPairs, 
+                optionLabelFunc: function (d) { return d.label; }, 
+			     optionValueFunc: function (d) { return d.key; },
+			     idFunc: function (d) { return d.key; },
+                changeFunc: function () {
+                    if (self.xlRepr) {
+                        self.options.defaultAssembly = d3.event.target.value;
+                        self.xlRepr
+                            .updateOptions (self.options, ["defaultAssembly"])
+                            .updateAssemblyType ()
+                        ;
+                        self.setAssemblyChains();
+                    }
+                },
+                initialSelectionFunc: function(d) { return d.key === self.options.defaultAssembly; }
+            });
+        };
+        buildAssemblySelector.call(this);
 
 
         // Various view options set up...
@@ -235,6 +246,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             }); 
             // First time distancesObj fires we should setup the display for a new data set
             this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
+                buildAssemblySelector.call (this);
                 this
                     .setAssemblyChains()
                     .repopulate()
@@ -247,6 +259,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 				this.xlRepr.redoChainLabels ();
 			}
 		});
+        
+        // if the assembly structure has changed the chain sets that can be used in distance calculations, recalc and redraw distances
+        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated", function () {
+            this.showFiltered().centerView();
+        });
 
     },
     

@@ -64,6 +64,7 @@
             				.set("contents", tooltipObj.contents)
             				.set("location", d3.event)
 						;
+                        self.options.tooltipModel.trigger ("change:location");
 					})
 					.on ("mouseleave", function () {
 						self.options.tooltipModel.set ("contents", null);

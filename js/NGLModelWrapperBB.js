@@ -24,13 +24,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 this.setupLinks (this.getModel().get("clmsModel"));
             });
         });
-        
-        this.listenTo (CLMSUI.vent, "request3DDistance", function () {
-            console.log ("args", arguments, this);
-        });
     },
     
-
     getModel: function () {
         return this.get("masterModel");
     },
