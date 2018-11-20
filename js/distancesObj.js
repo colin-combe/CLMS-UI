@@ -30,11 +30,11 @@ CLMSUI.DistancesObj.prototype = {
         return d;
     },
     
-    getShortestLinks: function (links, angstromAccuracy) {
+    getShortestLinks: function (linkWrappers, angstromAccuracy) {
         angstromAccuracy = angstromAccuracy || 1;
         var self = this;
         
-        links.forEach (function (link) {
+        linkWrappers.forEach (function (link) {
             link.distance = this.getXLinkDistanceFromChainCoords (
                 this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex
             );
@@ -45,19 +45,21 @@ CLMSUI.DistancesObj.prototype = {
             .sortValues (function (a, b) {
                 var d = a.distance - b.distance;
                 // if link distances are v. similar try and pick ones from the same chain(s) (the lowest numbered one)
+                /*
                 if (Math.abs(d) < angstromAccuracy) {
                     d = d || self.leewayFunc (a, b);
                 }
+                */
                 return (d < 0 ? -1 : (d > 0 ? 1 : 0));
             })
-            .entries (links)
+            .entries (linkWrappers)
         ;
         
         var shortestLinks = nestedLinks.map (function (group) {
             return group.values[0];
         });
         
-        CLMSUI.utils.xilog ("nestedLinks", links, nestedLinks, shortestLinks);
+        CLMSUI.utils.xilog ("nestedLinks", linkWrappers, nestedLinks, shortestLinks);
         
         return shortestLinks;
     },
@@ -68,7 +70,7 @@ CLMSUI.DistancesObj.prototype = {
         var average = options.average || false;
         var angstromAccuracy = options.angstromAccuracy || 1;
         var returnChainInfo = options.returnChainInfo || false;
-        var chainInfo = returnChainInfo ? {from: [], to: [], fromRes: [], toRes: []} : null;
+        var chainInfo = returnChainInfo ? (average ? {from: [], to: [], fromRes: [], toRes: []} : {from: null, to: null, fromRes: null, toRes: null}) : null;
         var chainMap = this.chainMap;
         var matrices = this.matrices;
         var pid1 = options.realFromPid || xlink.fromProtein.id; // use pids if passed in by options as first choice
@@ -89,37 +91,41 @@ CLMSUI.DistancesObj.prototype = {
                 var chainName1 = chains1[n].name;
                 var alignId1 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName1, chainIndex1);
                 var resIndex1 = alignCollBB.getAlignedIndex (xlink.fromResidue, pid1, false, alignId1, true) - 1;   // -1 for ZERO-INDEXED
+                var modelIndex1 = chains1[n].modelIndex;
                 
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
-                        var chainIndex2 = chains2[m].index;
-                        var chainName2 = chains2[m].name;
-                        var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName2, chainIndex2);
-                        var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
-                        // align from 3d to search index. resindex is 0-indexed so -1 before querying
-                        //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
-                        
-                        if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, chainIndex1, chainIndex2)) {
-                            var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
+                        var modelIndex2 = chains2[n].modelIndex;
+                        if (modelIndex1 === modelIndex2) {
+                            var chainIndex2 = chains2[m].index;
+                            var chainName2 = chains2[m].name;
+                            var alignId2 = CLMSUI.modelUtils.make3DAlignID (this.pdbBaseSeqID, chainName2, chainIndex2);
+                            var resIndex2 = alignCollBB.getAlignedIndex (xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
+                            // align from 3d to search index. resindex is 0-indexed so -1 before querying
+                            //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
-                            if (dist !== undefined) {
-                                if (average) {
-                                    totalDist += dist;
-                                    distCount++;
-                                    if (returnChainInfo) {
-                                        chainInfo.from.push (chainName1);
-                                        chainInfo.to.push (chainName2);
-                                        chainInfo.fromRes.push (resIndex1);
-                                        chainInfo.toRes.push (resIndex2);
-                                    }
-                                } else if (dist < minDist || minDist === undefined) {
-                                    //if (Math.abs(dist - minDist) < angstromAccuracy)
-                                    minDist = dist;
-                                    if (returnChainInfo) {
-                                        chainInfo.from = chainName1;
-                                        chainInfo.to = chainName2;
-                                        chainInfo.fromRes = resIndex1;
-                                        chainInfo.toRes = resIndex2;
+                            if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, chainIndex1, chainIndex2)) {
+                                var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
+
+                                if (dist !== undefined) {
+                                    if (average) {
+                                        totalDist += dist;
+                                        distCount++;
+                                        if (returnChainInfo) {
+                                            chainInfo.from.push (chainName1);
+                                            chainInfo.to.push (chainName2);
+                                            chainInfo.fromRes.push (resIndex1);
+                                            chainInfo.toRes.push (resIndex2);
+                                        }
+                                    } else if (minDist === undefined || dist < minDist) {
+                                        //if (dist >= minDist && )
+                                        minDist = dist;
+                                        if (returnChainInfo) {
+                                            chainInfo.from = chainName1;
+                                            chainInfo.to = chainName2;
+                                            chainInfo.fromRes = resIndex1;
+                                            chainInfo.toRes = resIndex2;
+                                        }
                                     }
                                 }
                             }
@@ -141,7 +147,6 @@ CLMSUI.DistancesObj.prototype = {
         if (this.permittedChainIndicesSet.has (chainIndex1) && this.permittedChainIndicesSet.has (chainIndex2)) {
             var distanceMatrix = matrices[chainIndex1+"-"+chainIndex2].distanceMatrix;
             var minIndex = resIndex1;   // < resIndex2 ? resIndex1 : resIndex2;
-            //CLMSUI.utils.xilog ("matrix", matrix, chainIndex1+"-"+chainIndex2, resIndex1, resIndex2);
             if (distanceMatrix[minIndex] && distanceMatrix[minIndex][resIndex2]) {
                 var maxIndex = resIndex2;   // < resIndex1 ? resIndex1 : resIndex2;
                 dist = distanceMatrix[minIndex][maxIndex];
@@ -417,6 +422,21 @@ CLMSUI.DistancesObj.prototype = {
 		}
 	},
     
+    setAssemblyChains: function (nglPdbStructure, assemblyKey) {
+        var biomolDict = nglPdbStructure.biomolDict;
+        var dictEntry = biomolDict[assemblyKey];
+        var chainNames = dictEntry ? d3.merge (dictEntry.partList.map (function (part) { return part.chainList; })) : [];
+        if (!chainNames.length) {
+            nglPdbStructure.eachChain (function (cp) {
+                chainNames.push (cp.chainname);
+            });
+        }
+        var chainNameSet = d3.set (chainNames);
+        this.setAllowedChainNameSet (chainNameSet);
+        
+        return this;
+    },
+    
     // set of chain names that are allowed to be in distance calculations
     // needed as others are restricted by the assembly in the ngl model
     // If chainNameSet is undefined all chain names are permitted
@@ -431,7 +451,7 @@ CLMSUI.DistancesObj.prototype = {
         }, this);
         
         console.log ("PCIS", this.permittedChainIndicesSet);
-        CLMSUI.vent.trigger ("PDBPermittedChainSetsUpdated", true);
+        CLMSUI.vent.trigger ("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
         
         return this;
     }

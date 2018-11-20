@@ -50,8 +50,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         var buttonData = [
-            {label: CLMSUI.utils.commonLabels.downloadImg+"PNG", class:"downloadButton", type: "button", id: "download"},
-            {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre"},
+            {label: CLMSUI.utils.commonLabels.downloadImg+"PNG", class:"downloadButton", type: "button", id: "download", tooltip: "Save a PNG image of the view"},
+            {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre", tooltip: "Automatically pans and zooms so all visible structure is within window"},
         ];
 
         var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar");
@@ -262,24 +262,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         
         // if the assembly structure has changed the chain sets that can be used in distance calculations, recalc and redraw distances
         this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated", function () {
-            this.showFiltered().centerView();
+            if (this.xlRepr) {
+                this.showFiltered().centerView();
+            }
         });
 
     },
     
     setAssemblyChains: function () {
-        var structure = this.model.get("stageModel").get("structureComp").structure;
-        var biomolDict = structure.biomolDict;
-        var dictEntry = biomolDict[this.options.defaultAssembly];
-        var chainNames = dictEntry ? d3.merge (dictEntry.partList.map (function (part) { return part.chainList; })) : [];
-        if (!chainNames.length) {
-            structure.eachChain (function (cp) {
-                chainNames.push (cp.chainname);
-            });
-        }
-        var chainNameSet = d3.set (chainNames);
-        this.model.get("clmsModel").get("distancesObj").setAllowedChainNameSet (chainNameSet);
-        
+        this.model.get("clmsModel").get("distancesObj").setAssemblyChains (this.model.get("stageModel").get("structureComp").structure, this.options.defaultAssembly);
         return this;
     },
 
@@ -462,7 +453,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 }
                 return linkList;
             };
-            //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
             stageModel.setLinkList (filteredCrossLinks, filterFunc);
         }
         return this;
@@ -595,18 +585,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _getAtomPairsFromResidue: function (residue) {
         var linkList = this.crosslinkData.getLinks (residue);
         return this._getAtomPairsFromLinks (linkList);
-    },
-    
-    getPerChainAtomSelection: function (chainIndexSet) {
-        var comp = this.structureComp.structure;
-        var sels = [];
-        comp.eachChain (function (cp) {
-            // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
-				sels.push (cp.atomOffset);
-            }
-        });
-        return "@"+sels.join(",");
     },
     
     updateAssemblyType: function (assemblyType) {
@@ -759,7 +737,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLabelRepr: function () {
         var customText = this.getLabelTexts ();
         
-        var atomSelection = this.getPerChainAtomSelection ();
+        var atomSelection = this.crosslinkData.getFirstAtomPerChainSelection ();
         //CLMSUI.utils.xilog ("LABEL SELE", atomSelection);
         this.labelRepr = this.structureComp.addRepresentation ("label", {
             color: "#222",
@@ -959,54 +937,18 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
     
     defaultDisplayedProteins: function (getSelectionOnly) {
-        var showableChains = this.getShowableChains();
-        var chainSele = this.getShowProteinNGLSelection (showableChains);
+        var showableChains = this.crosslinkData.getShowableChains (this.options.showAllProteins);
+        var chainSele = this.crosslinkData.getChainSelection (showableChains);
         CLMSUI.utils.xilog ("showable chains", showableChains, chainSele);
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
-                var labelSele = this.getPerChainAtomSelection (d3.set(showableChains.chainIndices));
+                var labelSele = this.crosslinkData.getFirstAtomPerChainSelection (d3.set(showableChains.chainIndices));
                 //CLMSUI.utils.xilog ("LABEL SELE", labelSele);
                 this.labelRepr.setSelection (labelSele);
             }
         }
         return chainSele;
-    },
-    
-    getShowableChains: function () {
-        var protMap = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
-        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        
-        var chainIndices;
-        if (protMap.length !== prots.length && !this.options.showAllProteins) {
-            chainIndices = prots.map (function (prot) {
-                var protChains = this.chainMap[prot] || [];
-                return _.pluck (protChains, "index");
-            }, this);
-        } else {
-            chainIndices = d3.entries(this.chainMap).map (function (chainEntry) {
-                return _.pluck (chainEntry.value, "index");
-            });
-        }
-        chainIndices = d3.merge (chainIndices);
-        CLMSUI.utils.xilog ("SHOW CHAINS", chainIndices);
-        return {showAll: this.options.showAllProteins, chainIndices: chainIndices};
-    },
-    
-    getShowProteinNGLSelection: function (showableChains) {
-        var selectionString = "all";
-        var showAll = showableChains.showAll || false;
-        var chains = showableChains.chainIndices || [];
-        
-        if (!showAll) {
-            var chainList = chains.map (function (chainIndex) {
-                return {chainIndex: chainIndex};
-            });
-            selectionString = this.crosslinkData.getSelectionFromResidueList (chainList, {chainsOnly: true});
-        }
-        
-        //CLMSUI.utils.xilog ("CHAIN SELE", selectionString);
-        return selectionString;
     },
 	
 	redoChainLabels: function () {

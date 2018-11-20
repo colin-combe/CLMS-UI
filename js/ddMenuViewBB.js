@@ -127,7 +127,7 @@
                 if (d.name) {
                     ind.text(d.name);
                 } else if (d.id) {
-                    var targetSel = d3.select("#"+d.id.replace(/ /g, "_")); 
+                    var targetSel = d3.select("#"+CLMSUI.utils.makeLegalDomID (d.id)); 
                     if (!targetSel.empty()) {
                         var targetNode = targetSel.node();
                         if (targetNode.parentElement) {
@@ -136,7 +136,7 @@
                         ind.node().appendChild (targetNode);
 
                         if (targetSel.datum() == undefined) {
-                            ind.select("#"+d.id.replace(/ /g, "_"));	//martin magic
+                            ind.select("#"+CLMSUI.utils.makeLegalDomID (d.id));	//martin magic
                         }
                     }
                 }

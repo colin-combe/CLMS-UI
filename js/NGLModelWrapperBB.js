@@ -104,7 +104,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             var fromPerModelChains = modelIndexedChainMap[xlink.fromProtein.id];
             var toPerModelChains = modelIndexedChainMap[xlink.toProtein.id];
 
-            if (fromPerModelChains.length && toPerModelChains.length) {
+            if (fromPerModelChains && fromPerModelChains.length && toPerModelChains && toPerModelChains.length) {
                 var toPerModelChainMap = d3.map(toPerModelChains, function (d) { return d.key; });
                 
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
@@ -365,13 +365,13 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             ap1.index = chainAtomIndices1[idA];
             ap2.index = chainAtomIndices2[idB];
             if (ap1.index !== undefined && ap2.index !== undefined) {
-                var d = ap1.distanceTo (ap2);
+                var d = this.getAtomProxyDistance (ap1, ap2);
                 //console.log ("link", link, chainIndex1, chainIndex2, idA, idB, ap1.index, ap2.index, d);
                 matrix[idA] = matrix[idA] || [];
                 matrix[idA][idB] = matrix[idA][idB] || [];
                 matrix[idA][idB] = d;
             }
-        });
+        }, this);
         
         return matrix;
     },
@@ -391,7 +391,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             for (var m = 0; m < cai2length; m++) {
                 if (m !== n || diffChains) {
                     ap2.index = chainAtomIndices2[m];
-                    row.push ((ap2.index === undefined || ap1undef) ? undefined : ap1.distanceTo(ap2));
+                    row.push ((ap1undef || ap2.index === undefined) ? undefined : this.getAtomProxyDistance (ap1, ap2));
                 } else {
                     row.push(0);
                 }
@@ -399,6 +399,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }
         
         return matrix;
+    },
+    
+    getAtomProxyDistance: function (ap1, ap2) {
+        return ap1.modelIndex === ap2.modelIndex ? ap1.distanceTo(ap2) : undefined;
     },
     
     // resIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
@@ -412,13 +416,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         ap1.index = ci1[resIndex1];
         ap2.index = ci2[resIndex2];
         
-		/*
-        if (ap1.index === ap2.index) {
-            console.log ("same atom", chainIndex1, chainIndex2, resIndex1, resIndex2, this.get("chainCAtomIndices"));
-        }
-		*/
-
-        return ap1.distanceTo(ap2);
+        return this.getAtomProxyDistance (ap1, ap2);
     },
 	
 	getCAlphaAtomSelectionForChain: function (chainProxy) {
@@ -592,5 +590,55 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             }
         }
         return aIndex;
+    },
+    
+    getFirstAtomPerChainSelection: function (chainIndexSet) {
+        var comp = this.get("structureComp").structure;
+        var sels = [];
+        comp.eachChain (function (cp) {
+            // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
+            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+				sels.push (cp.atomOffset);
+            }
+        });
+        return "@"+sels.join(",");
+    },
+    
+    // Get a NGL selection for chains listing only the chainIndices passed in as a property of chainItems
+    getChainSelection: function (chainItems) {
+        var selectionString = "all";
+        var showAll = chainItems.showAll || false;
+        var chainIndices = chainItems.chainIndices || [];
+        
+        if (!showAll) {
+            var chainList = chainIndices.map (function (chainIndex) {
+                return {chainIndex: chainIndex};
+            });
+            selectionString = this.getSelectionFromResidueList (chainList, {chainsOnly: true});
+        }
+        
+        //CLMSUI.utils.xilog ("CHAIN SELE", selectionString);
+        return selectionString;
+    },
+    
+    // Return chain indices covered by currently visible proteins
+    getShowableChains: function (showAll) {
+        var protMap = CLMS.arrayFromMapValues(this.getModel().get("clmsModel").get("participants"));
+        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        
+        var chainIndices;
+        if (protMap.length !== prots.length && !showAll) {
+            chainIndices = prots.map (function (prot) {
+                var protChains = this.get("chainMap")[prot] || [];
+                return _.pluck (protChains, "index");
+            }, this);
+        } else {
+            chainIndices = d3.entries(this.get("chainMap")).map (function (chainEntry) {
+                return _.pluck (chainEntry.value, "index");
+            });
+        }
+        chainIndices = d3.merge (chainIndices);
+        CLMSUI.utils.xilog ("SHOW CHAINS", chainIndices);
+        return {showAll: showAll, chainIndices: chainIndices};
     },
 });

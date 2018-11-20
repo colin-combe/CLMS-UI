@@ -257,7 +257,7 @@ function callback (model) {
 	
 	QUnit.module ("NGL Selection Language");
 	
-	QUnit.test ("Generate Selection with range", function (assert) {
+	QUnit.test ("Range Concatenation", function (assert) {
 		var examples = [
 			{data: undefined, expected: undefined},
 			{data: [], expected: []},
@@ -273,7 +273,7 @@ function callback (model) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		examples.forEach (function (example) {
 			var actualValue = stageModel.joinConsecutiveNumbersIntoRanges (example.data);
-			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when mapping from "+example.data);
+			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when concatenating "+example.data);
 		})
 	});
 	
@@ -318,6 +318,21 @@ function callback (model) {
 		
 		actualValue = stageModel.getSelectionFromResidueList (data2, {chainsOnly: true});
 		assert.deepEqual (actualValue, expectedValue4, "Expected "+expectedValue4+" when mapping from "+JSON.stringify(data2)+" with option chainsOnly");
+	});
+    
+    QUnit.test ("Get Chain Start Positions as Atom Indices (for label representation)", function (assert) {
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		var chainStartSele = stageModel.getFirstAtomPerChainSelection (d3.set([0,1 ]));
+        var expectedValue = "@0,4599";
+		assert.deepEqual (chainStartSele, expectedValue, "Expected "+expectedValue+" for chain start atom NGL selection, Passed!");
+	});
+    
+    
+    QUnit.test ("Get Just Chain Selection", function (assert) {
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		var chainSele = stageModel.getChainSelection ({showAll: false, chainIndices: [0,1]});
+        var expectedValue = "(( /0 AND (:A OR :B) ) )";
+		assert.deepEqual (chainSele, expectedValue, "Expected "+expectedValue+" for just chain selection, Passed!");
 	});
 	
 	
@@ -430,7 +445,6 @@ function callback (model) {
 	
 	
 	QUnit.module ("Random Distance Generation");
-	
 	
 	QUnit.test ("Calc Distanceable Sequence MetaData", function (assert) {
 		var expectedValue = [

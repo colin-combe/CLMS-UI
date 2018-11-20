@@ -248,6 +248,7 @@
 			this.makeProteinPairingOptions();
 			this.updateAxisLabels();
 		});
+        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated", this.distancesChanged);
 		
         var entries = this.makeProteinPairingOptions();
         var startPairing = entries && entries.length ? entries[0].value : undefined;
@@ -319,7 +320,8 @@
         
     // New PDB File in town
     distancesChanged: function () {
-        d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns
+        // comment out, let chain visibility be controlled by distanceobj chain permissions - set in turn in 3d view assembly choice
+        //d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns - null restores default display state
         this
             .makeNewChainShowSets()
             .makeChainOptions (this.getCurrentProteinIDs())
@@ -367,9 +369,12 @@
         }
         return this;
     },
-        
+    
+    // chain may show if checked in dropdown and if allowed by chainset in distancesobj (i.e. not cutoff by assembly choice)
     chainMayShow: function (dropdownIndex, chainIndex) {
-        return this.showChains[dropdownIndex].has(chainIndex);    
+        var distanceObj = this.model.get("clmsModel").get("distancesObj");
+        var allowedChains = distanceObj ? distanceObj.permittedChainIndicesSet : null;
+        return this.showChains[dropdownIndex].has(chainIndex) && (allowedChains ? allowedChains.has(chainIndex) : true);    
     },
         
     setChainShowState: function (dropdownIndex, chainIndex, show) {
@@ -392,13 +397,19 @@
             ;
         };
 
+        var distanceObj = self.model.get("clmsModel").get("distancesObj");
+        var allowedChains = distanceObj ? distanceObj.permittedChainIndicesSet : null;
         var axisOrientations = ["X", "Y"];
         this.chainDropdowns.forEach (function (dropdown, i) {
-            var distanceObj = self.model.get("clmsModel").get("distancesObj");
+            
             if (distanceObj) {
                 var pid = proteinIDs[i].proteinID;
                 var chainMap = distanceObj.chainMap;
                 var chains = chainMap[pid] || [];
+                chains = chains.filter (function (chainInfo) {
+                    return allowedChains.has (chainInfo.index);
+                });
+                
                 dropdown.updateTitle (axisOrientations[i]+": "+proteinIDs[i].labelText+" Chains ▼");
                 
                 // make button data for this protein and dropdown combination
