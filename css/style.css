@@ -628,6 +628,11 @@ div.toolbar[disabled], label.fakeButton[disabled] {
 	padding-left: 0.5em;
 }
 
+.toolbar hr.toolbarSeparator {
+    display: block;
+    margin: 0.4em 0 0 0;
+}
+
 .pdbWindowButton {
 	vertical-align: text-bottom;
 }

@@ -931,26 +931,28 @@ CLMSUI.modelUtils = {
 		var groupIndices = valuesByColumn.map (function (zscore) { return zscore.groupIndex; });
 		var colRange = _.range (d3.max (groupIndices) + 1);
 		var avgColumns = colRange.map(function() { return []; });
+        
+        if (valuesByColumn.length) {
+            for (var n = 0; n < valuesByColumn[0].length; n++) {  // go from top to bottom of columns
+                var groups = colRange.map(function() { return []; });
 
-		for (var n = 0; n < valuesByColumn[0].length; n++) {  // go from top to bottom of columns
-			var groups = colRange.map(function() { return []; });
+                // so this is now going through a row (same index in each column)
+                for (var c = 0; c < valuesByColumn.length; c++) {    
+                    if (groupIndices[c] !== undefined) {    // if column in group...
+                        var val = valuesByColumn[c][n];
+                        if (val) { // ...push val into correct group bucket
+                            groups[groupIndices[c]].push (val);
+                        }
+                    }
+                }
 
-            // so this is now going through a row (same index in each column)
-			for (var c = 0; c < valuesByColumn.length; c++) {    
-				if (groupIndices[c] !== undefined) {    // if column in group...
-					var val = valuesByColumn[c][n];
-					if (val) { // ...push val into correct group bucket
-						groups[groupIndices[c]].push (val);
-					}
-				}
-			}
-
-            // Now average the group buckets into new column value datasets
-			var avgs = groups.map (function (group, i) {
-				var avg = group.length ? averageFuncEntry.value(group) : undefined;
-				avgColumns[i].push (avg);
-			});
-		}
+                // Now average the group buckets into new column value datasets
+                var avgs = groups.map (function (group, i) {
+                    var avg = group.length ? averageFuncEntry.value(group) : undefined;
+                    avgColumns[i].push (avg);
+                });
+            }
+        }
 
 		avgColumns.forEach (function (avgColumn, i) {
 			avgColumn.colName = averageFuncEntry.key+" ["+colNameGroups[i].join(";")+"]";

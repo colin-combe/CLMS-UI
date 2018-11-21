@@ -33,6 +33,7 @@
 		outputStatColumns: d3.set(),
 		showClusterControls: true,
         showZValues: true,
+        groupColumns: d3.set(),
 		groupRegex: "\\d+",
         groupAverageFunc: {key: "mean", value: d3.mean}
 	},
@@ -66,7 +67,11 @@
 			initialize: function () {
                 this.listenTo (this, "change:statDistance change:statLinkage change:statColumns", function (vsmodel) { 
 					var colCount = vsmodel.get("statColumns").size();
-					self.indicateRecalcNeeded (colCount ? true : false); 
+					self.permitClusterCalculation (colCount ? true : false); 
+				});
+                this.listenTo (this, "change:groupColumns change:groupAverageFunc", function (vsmodel) { 
+					var colCount = vsmodel.get("groupColumns").size();
+					self.permitGroupAverageCalculation (colCount ? true : false); 
 				});
 				this.listenTo (this, "change:heatMap change:sortColumn", function () { self.showDendrogram(); });
 				this.listenTo (this, "change:outputStatColumns", function () { self.updateColumnSelectors2 (self.controlDiv2); });
@@ -80,7 +85,7 @@
 		// Add download button
         var buttonData = [
 			{class: "downloadButton3", label: "Download Image", type: "button", id: "download3"},
-			{class: "toggleClusterControls", label: "Toggle Cluster Controls", type: "button", id: "clusterToggle"},
+			{class: "toggleClusterControls", label: "Toggle Statistics Controls", type: "button", id: "clusterToggle"},
             {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap", tooltip: "Shows table as heatmap"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
@@ -206,7 +211,7 @@
         CLMSUI.utils.addMultipleSelectControls ({
             addToElem: this.controlDiv2, 
             selectList: ["Average Groups By"], 
-			optionList: d3.entries ({mean: d3.mean, median: d3.median, max: d3.max, min: d3.min}),
+			optionList: d3.entries ({"mean Z": d3.mean, "median Z": d3.median, "max Z": d3.max, "min Z": d3.min}),
 			optionLabelFunc: function (d) { return d.key; },
 			optionValueFunc: function (d) { return d.value; },
 			keepOldOptions: false,
@@ -231,7 +236,7 @@
         CLMSUI.utils.makeBackboneButtons (this.controlDiv2, self.el.id, buttonDataGroups);
 		
 		// Column grouping controls
-		this.controlDiv2.append("hr").style("display", "block");
+		this.controlDiv2.append("hr").attr("class", "toolbarSeparator");
 		this.controlDiv2.append("label")
 			.text ("Cluster Rows")
 			.attr ("class", "btn staticLabel")
@@ -269,7 +274,7 @@
 		
 		
 		// Z Score colour scheme controls
-		this.controlDiv2.append("hr").style("display", "block");
+		this.controlDiv2.append("hr").attr("class", "toolbarSeparator");
 		this.controlDiv2.append("label")
 			.text ("Z Scores")
 			.attr ("class", "btn staticLabel")
@@ -286,7 +291,10 @@
 		
 		// rerender crosslinks if selection/highlight changed or filteringDone
         this.listenTo (this.model, "filteringDone", function() {
-			this.indicateRecalcNeeded(true).render({refilter: true});
+            self.viewStateModel
+                .trigger ("change:statColumns", self.viewStateModel)
+                .trigger ("change:groupColumns", self.viewStateModel)
+            ;
 		});
 		this.listenTo (this.model, "change:selection change:highlights", function() {
 			colourRows (this.d3table.getAllRowsSelection());
@@ -305,6 +313,7 @@
 		
 		this
 			.toggleClusterControls()
+            .permitGroupAverageCalculation (false)
 			.showDendrogram()
 			.render({refilter: true})
 		;
@@ -434,8 +443,13 @@
 				.attr("type", "text")
 				.attr("title", "Set group identifier")
 				.on ("input", function (d) {
-					self.options.groups[d.key] = d3.select(this).property("value");
-					self.viewStateModel.trigger ("change:groupColumns", self.viewStateModel)
+                    var newVal = d3.select(this).property("value");
+					self.options.groups[d.key] = newVal;
+                    var vsval = self.viewStateModel.get("groupColumns");
+                    vsval[newVal === "" ? "remove" : "add"] (d.key);
+					self.viewStateModel
+                        .trigger ("change:groupColumns", self.viewStateModel)
+                    ;
 				})
 		;
         items.selectAll("input[type='checkbox']").style("display", "none");
@@ -546,7 +560,7 @@
 		 
 		 var selects2 = CLMSUI.utils.addMultipleSelectControls ({
 			addToElem: containerSelector, 
-            selectList: ["Normalise Other Columns To", "Build Colour Scheme On"], 
+            selectList: ["Normalise Other Columns To", "Base Colour Scheme On"], 
             optionList: columnNames, 
 			keepOldOptions: true,
             selectLabelFunc: function (d) { return d + " ►"; }, 
@@ -669,6 +683,8 @@
         
         this.normalise();
         
+        this.permitGroupAverageCalculation (false);
+        
         return this;
     },
       
@@ -686,7 +702,6 @@
 			distance: this.viewStateModel.get("statDistance"), 
 			linkage: this.viewStateModel.get("statLinkage"),
 			columns: this.viewStateModel.get("statColumns").values(),	// values 'cos d3.set not array
-			groups: this.options.groups,
 			accessor: accessor,
 		}
 		
@@ -700,7 +715,7 @@
 			title: "Distance "+this.viewStateModel.get("statDistance")+", Linkage "+this.viewStateModel.get("statLinkage"),
 		});
 		
-		this.indicateRecalcNeeded (false);
+		this.permitClusterCalculation (false);
         
 		return this;
 	},
@@ -764,8 +779,13 @@
 		return this;
 	},
 	  
-	indicateRecalcNeeded: function (truthy) {
+	permitClusterCalculation: function (truthy) {
 		d3.select(this.el).select("button.generateClusters").property ("disabled", !truthy);
+		return this;
+	},
+      
+    permitGroupAverageCalculation: function (truthy) {
+		d3.select(this.el).select("button.generateGroups").property ("disabled", !truthy);
 		return this;
 	},
 	  
