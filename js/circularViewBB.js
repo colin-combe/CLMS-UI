@@ -104,6 +104,7 @@
               "click .showResLabelsButton": "showResLabelsIfRoom",
               "click .showLinkless": "toggleLinklessVisibility",
 			  "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
+              "click .showSelectedOnly": "toggleSelectedOnly",
 			  "click .backdrop": "clearSelection",
           });
         },
@@ -121,6 +122,7 @@
 			intraOutside: true,
 			showResLabels: true,
 			homomOpposite: true,
+            showSelectedOnly: false,
 			sort: "alpha",
 			sortDir: 1,
 			showLinkless: true,
@@ -232,6 +234,7 @@
                 {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, d3tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
 				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside, d3tooltip: "Flips the display of Self cross-links between inside and outside"},
 				{class: "toggleHomomOpposition", label: "Links with Overlapping Peptides Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite, d3tooltip: "Show cross-links with overlapping peptides on the opposite side (in/out) to Self cross-links. Often these may be homomultimeric - links between different copies of the same protein."},
+                {class: "showSelectedOnly", label: "Selected Cross-Links Only", id: "showSelectedOnly", initialState: this.options.showSelectedOnly, d3tooltip: "Show selected cross-links only (yellow highlighting is removed also.)"},
 			];
 			showOptionsButtonData
                 .forEach (function (d) {
@@ -352,7 +355,9 @@
                     self.renderPartial (["links", "nodes"]);
                 }
             });
-            this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
+            this.listenTo (this.model, "change:selection", function () { 
+                this.options.showSelectedOnly ? this.renderPartial (["links"]) : this.showAccentedLinks ("selection"); 
+            });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
 			this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
 			this.listenTo (this.model, "change:highlightedProteins", function () { this.showAccentedNodes ("highlights"); });
@@ -403,21 +408,31 @@
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
             this.render ();	// nodes move position too (radially)
+            return this;
         },
 
         showResLabelsIfRoom: function () {
             this.options.showResLabels = !this.options.showResLabels;
             this.renderPartial (["linkLabels"]);
+            return this;
         },
 
         toggleLinklessVisibility : function () {
             this.options.showLinkless = !this.options.showLinkless;
             this.render();
+            return this;
         },
 
 		toggleHomomOppositeIntra : function () {
             this.options.homomOpposite = !this.options.homomOpposite;
             this.renderPartial (["links"]);
+            return this;
+        },
+        
+        toggleSelectedOnly: function () {
+            this.options.showSelectedOnly = !this.options.showSelectedOnly;
+            this.renderPartial (["links"]);
+            return this;
         },
 
         idFunc: function (d) { return d.id; },
@@ -589,6 +604,11 @@
 
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.model.getFilteredCrossLinks();    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                if (this.options.showSelectedOnly) {
+                    var selectedIDs = d3.set (this.model.getMarkedCrossLinks("selection").map (function (xlink) { return xlink.id; }));
+                    filteredCrossLinks = filteredCrossLinks.filter (function (xlink) { return selectedIDs.has (xlink.id); });
+                }
+                console.log ("fcl", filteredCrossLinks, this.model.getMarkedCrossLinks("selection"));
 
                 // If only one protein hide some options, and make links go in middle
                 // make it so menu stays if we've filtered down to one protein, rather than just one protein in the search
@@ -697,7 +717,7 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             //CLMSUI.utils.xilog ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
-
+            
             var lineCopy = {};  // make cache as linkJoin and ghostLinkJoin will have same 'd' paths for the same link
 
             // draw thin links

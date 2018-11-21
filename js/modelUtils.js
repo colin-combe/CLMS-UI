@@ -962,11 +962,14 @@ CLMSUI.modelUtils = {
 	},
 	
 	// add group indices to columns, and return columnNames grouped in an array under the appropriate index
-    // e.g. options.groups = {a: "cat", b: "cat", c: "dog"};
+    // e.g. options.groups = d3.map({a: "cat", b: "cat", c: "dog"});
     // then a.groupIndex = 0, b.groupIndex = 0, c.groupIndex = 1, colNameGroups = [0: [a,b], 1: [c]]
 	makeColumnGroupIndices: function (valuesByColumn, options) {
-		var columnNames = valuesByColumn.map (function (columnValues) { return columnValues.colName; });
-		var columnNameGroups = _.pick (options.groups, columnNames);
+		var columnNamesSet = d3.set (valuesByColumn.map (function (columnValues) { return columnValues.colName; }));
+        var columnNameGroups = {};
+        options.groups.forEach (function (k, v) {
+            if (columnNamesSet.has(k)) { columnNameGroups[k] = v; }
+        });
 		var uniqGroupValues = _.uniq (d3.values (columnNameGroups));
 		var groupIndices = {};
 		var colNameGroups = [];
@@ -1021,7 +1024,7 @@ CLMSUI.modelUtils = {
     
     averageGroupsMaster: function (crossLinks, myOptions) {
         var defaults = {
-			groups: {"pH4 1": undefined},
+			groups: d3.map({"pH4 1": undefined}),
 			accessor: function (crossLinks, dim) {
 				return crossLinks.map (function (crossLink) {
 					return crossLink[dim] || crossLink.getMeta(dim);
@@ -1029,7 +1032,7 @@ CLMSUI.modelUtils = {
 			}
 		};
         var options = $.extend ({}, defaults, myOptions);
-        options.columns = d3.entries(options.groups)
+        options.columns = options.groups.entries()
             .filter (function (entry) { return entry.value !== undefined; })
             .map (function (entry) { return entry.key; })
         ;

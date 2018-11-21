@@ -15,6 +15,7 @@
       return _.extend({},parentEvents,{
 		  "mouseleave .d3table tbody": "clearHighlight",
 		  "click button.toggleHeatMapMode": "toggleHeatMapMode",
+          "click button.selectAllRows": "selectAllRows",
           "click button.generateGroups": "generateGroups",
 		  "click button.generateClusters": "generateClusters",
 		  "click .downloadButton3": "downloadImage",
@@ -29,11 +30,10 @@
 		heatMap: false,
 		statDistance: "euclidean",
 		statLinkage: "average",
-		groups: {},
 		outputStatColumns: d3.set(),
 		showClusterControls: true,
         showZValues: true,
-        groupColumns: d3.set(),
+        groupColumns: d3.map(),
 		groupRegex: "\\d+",
         groupAverageFunc: {key: "mean", value: d3.mean}
 	},
@@ -87,6 +87,7 @@
 			{class: "downloadButton3", label: "Download Image", type: "button", id: "download3"},
 			{class: "toggleClusterControls", label: "Toggle Statistics Controls", type: "button", id: "clusterToggle"},
             {class: "toggleHeatMapMode", label: "Toggle HeatMap", type: "button", id: "heatmap", tooltip: "Shows table as heatmap"},
+            {class: "selectAllRows", label: "Select All Rows", type: "button", id: "selectAllRows", tooltip: "Select all cross-links currently in the list"},
         ];
         CLMSUI.utils.makeBackboneButtons (this.controlDiv, self.el.id, buttonData);
         
@@ -130,10 +131,10 @@
             };
             var addRowListeners = function (rowSelection) {
                 rowSelection.on ("click", function (d) {
-                    self.model.setMarkedCrossLinks ("selection", [d], false, d3.event.ctrlKey);	
+                    self.model.setMarkedCrossLinks ("selection", [d], false, d3.event.ctrlKey || d3.event.shiftKey);	
                 });
                 rowSelection.on ("mouseover", function (d) {
-                    self.model.setMarkedCrossLinks ("highlights", [d], false, d3.event.ctrlKey);
+                    self.model.setMarkedCrossLinks ("highlights", [d], false, false);
                     var ttm = self.model.get("tooltipModel");
                     ttm
                         .set ("header", CLMSUI.modelUtils.makeTooltipTitle.link (d))
@@ -142,6 +143,34 @@
                     ;
                     ttm.trigger ("change:location");
                 });
+                
+                var drag = d3.behavior.drag();
+                rowSelection.call (drag);
+                drag
+                    .on ("dragstart", function (d) {
+                        drag.rowStart = d;
+                    })
+                    .on ("dragend", function (d) {
+                        var target = d3.event.sourceEvent.target;
+                        var endRowData = d3.select(target.parentNode).datum();
+                    
+                        if (drag.rowStart) {
+                            var links = [];
+                            var include = false;
+                            rowSelection.each (function (rowd) {
+                                if (rowd === drag.rowStart || rowd === endRowData) {
+                                    include = !include;
+                                    links.push (rowd);  // push on change, so selection is exclusive
+                                }
+                                else if (include) {
+                                    links.push (rowd);
+                                }
+                            });
+                            self.model.setMarkedCrossLinks ("selection", links, false, d3.event.ctrlKey || d3.event.shiftKey);	
+                            drag.rowStart = null;
+                        }
+                    })
+                ;
             };
             var empowerRows = function (rowSelection) {
                 colourRows (rowSelection);
@@ -167,9 +196,7 @@
             ;
             var d3table = CLMSUI.d3Table ();
             d3table (d3tableElem);
-
-            //console.log ("table", d3table);
-
+            
             // Bespoke filter type to hide rows not in current filtered crosslinks
             d3table.typeSettings ("numericGt", {
                 preprocessFunc: function (d) { return d; },
@@ -295,6 +322,7 @@
                 .trigger ("change:statColumns", self.viewStateModel)
                 .trigger ("change:groupColumns", self.viewStateModel)
             ;
+            self.render({refilter: true});
 		});
 		this.listenTo (this.model, "change:selection change:highlights", function() {
 			colourRows (this.d3table.getAllRowsSelection());
@@ -324,6 +352,11 @@
 		this.model.get("tooltipModel").set("contents", null);
         return this;
 	},
+      
+    selectAllRows: function (evt) {
+        this.model.setMarkedCrossLinks ("selection", this.d3table.getFilteredData(), false, evt.ctrlKey || evt.shiftKey);	
+        return this;
+    },
 	  
 	getColour: function (columnKey, value) {
 		var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
@@ -444,24 +477,20 @@
 				.attr("title", "Set group identifier")
 				.on ("input", function (d) {
                     var newVal = d3.select(this).property("value");
-					self.options.groups[d.key] = newVal;
-                    var vsval = self.viewStateModel.get("groupColumns");
-                    vsval[newVal === "" ? "remove" : "add"] (d.key);
-					self.viewStateModel
-                        .trigger ("change:groupColumns", self.viewStateModel)
-                    ;
+                    self.viewStateModel.get("groupColumns")[newVal === "" ? "remove" : "set"] (d.key, newVal);
+                    restoreGroupsToInputs();
+					self.viewStateModel.trigger ("change:groupColumns", self.viewStateModel);
 				})
 		;
         items.selectAll("input[type='checkbox']").style("display", "none");
 		
 		function restoreGroupsToInputs () {
-            var keys = [];
+            var groupColumns = self.viewStateModel.get("groupColumns");
 			items.selectAll("input.group").property ("value", function(d) { 
-                var value = self.options.groups[d.key];
-                if (value !== undefined) { keys.push (d.key); }
+                var value = groupColumns.get(d.key);
                 return value !== undefined ? value : "";
             });
-            jqSelectNode.multipleSelect ("setSelects", keys);
+            jqSelectNode.multipleSelect ("setSelects", groupColumns.keys());
 		}
 		restoreGroupsToInputs();
 		
@@ -472,18 +501,17 @@
 			.text ("Auto Group")
 			.on ("click", function() {
 				var regex = new RegExp (self.viewStateModel.get("groupRegex"));
-				var keys = [];
+				var groupVals = {};
 				items.data().forEach (function (d) {
 					var match = regex.exec (d.key);
 					var val = match && match.length ? match[0] : undefined;
-					self.options.groups[d.key] = val;
 					if (val !== undefined) {
-						keys.push (d.key);
+						groupVals[d.key] = val;
 					}
 				});
                 
 				self.viewStateModel
-					.set("groupColumns", d3.set(keys), {silent: true})
+					.set("groupColumns", d3.map(groupVals), {silent: true})
 					.trigger ("change:groupColumns", self.viewStateModel)
 				;
 				restoreGroupsToInputs ();
@@ -671,7 +699,7 @@
 			});
 		};
         var options = {
-			groups: this.options.groups,
+			groups: this.viewStateModel.get("groupColumns"),
 			accessor: accessor,
             averageFuncEntry: this.viewStateModel.get("groupAverageFunc")
 		};
