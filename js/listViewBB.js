@@ -328,11 +328,16 @@
 			colourRows (this.d3table.getAllRowsSelection());
 		});
         this.listenTo (CLMSUI.linkColour.Collection, "aColourModelChanged", this.render);   // redraw if any colour model chanegs
-        this.listenTo (this.model.get("clmsModel"), "change:distancesObj change:matches", this.render);  // Entire new set of distances or new matches added (via csv generally)
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.render);  // Entire new set of distances 
+        // Entire new set of new matches added (via csv generally)
+        this.listenTo (this.model.get("clmsModel"), "change:matches", function () {
+            this.updateTableRows (Array.from (this.model.get("clmsModel").get("crossLinks").values()));
+            this.render({refilter: true})
+        });  
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render);  // Existing residues/pdb but distances changed
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaData) {
 			this
-				.updateTableData (metaData)
+				.addTableColumns (metaData)
 				.updateClusterColumnSelectors (this.controlDiv2, this.d3table, undefined)
                 .updateGroupColumnSelectors (this.controlDiv2, this.d3table, undefined)
 				.render({refilter: true})
@@ -375,8 +380,15 @@
 			});
 		};
 	},
+      
+    updateTableRows: function (crossLinks) {
+        var selection = this.d3table.getSelection();
+        selection.datum().data = crossLinks;
+        this.d3table (selection);
+        return this;
+    },
 	  
-	updateTableData: function (metaData) {
+	addTableColumns: function (metaData) {
 		var columnSettings = this.d3table.columnSettings();
 		var self = this;
 
