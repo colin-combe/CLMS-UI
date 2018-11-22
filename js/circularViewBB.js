@@ -104,6 +104,7 @@
               "click .showResLabelsButton": "showResLabelsIfRoom",
               "click .showLinkless": "toggleLinklessVisibility",
 			  "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
+              "click .showSelectedOnly": "toggleSelectedOnly",
 			  "click .backdrop": "clearSelection",
           });
         },
@@ -121,6 +122,7 @@
 			intraOutside: true,
 			showResLabels: true,
 			homomOpposite: true,
+            showSelectedOnly: false,
 			sort: "alpha",
 			sortDir: 1,
 			showLinkless: true,
@@ -232,6 +234,7 @@
                 {class: "showResLabelsButton", label: "Residue Labels (If Few Links)", id: "resLabels", initialState: this.options.showResLabels, d3tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"},
 				{class: "flipIntraButton", label: "Self Links on Outside", id: "flip", initialState: this.options.intraOutside, d3tooltip: "Flips the display of Self cross-links between inside and outside"},
 				{class: "toggleHomomOpposition", label: "Links with Overlapping Peptides Opposite to Self Links", id: "homomOpposite", initialState: this.options.homomOpposite, d3tooltip: "Show cross-links with overlapping peptides on the opposite side (in/out) to Self cross-links. Often these may be homomultimeric - links between different copies of the same protein."},
+                {class: "showSelectedOnly", label: "Selected Cross-Links Only", id: "showSelectedOnly", initialState: this.options.showSelectedOnly, d3tooltip: "Show selected cross-links only (yellow highlighting is removed also.)"},
 			];
 			showOptionsButtonData
                 .forEach (function (d) {
@@ -264,24 +267,68 @@
             var degToRad = Math.PI / 180;
 
             // Lets user rotate diagram
-            var drag = d3.behavior.drag();
-            drag.on ("dragstart", function() {
+            var backgroundDrag = d3.behavior.drag();
+            backgroundDrag.on ("dragstart", function() {
                 var curTheta = d3.transform (svg.select("g g").attr("transform")).rotate * degToRad;
                 var mc = d3.mouse(this);
                 var dragStartTheta = Math.atan2 (mc[1] - self.radius, mc[0] - self.radius);
-                drag.offTheta = curTheta - dragStartTheta;
+                backgroundDrag.offTheta = curTheta - dragStartTheta;
             })
             .on ("drag", function() {
                 var dmc = d3.mouse(this);
                 var theta = Math.atan2 (dmc[1] - self.radius, dmc[0] - self.radius);
-                theta += drag.offTheta;
+                theta += backgroundDrag.offTheta;
                 svg.select("g g").attr("transform", "rotate("+(theta / degToRad)+")");
             });
 
             var svg = mainDivSel.select("svg")
-                .call (drag)
+                .call (backgroundDrag)
             ;
-
+            
+            this.nodeDrag = d3.behavior.drag();
+            this.nodeDrag.reOrder = function (d) {
+                var mc = d3.mouse(svg.node());
+                var dragTheta = Math.atan2 (mc[1] - self.radius, mc[0] - self.radius);
+                var deg = (((dragTheta / degToRad) + 90) + 360) % 360;
+                var offsetDeg = deg - self.nodeDrag.startDeg;
+                
+                var newStart = (d.start + offsetDeg + 360) % 360;
+                var newEnd = (d.end + offsetDeg + 360) % 360;
+                
+                var nodeData = d3.select(self.el).select(".nodeLayer").selectAll(".circleNode").data()
+                    .map (function (nd) { return {id: nd.id, start: nd.start, end: nd.end}; })
+                ;
+                var thisNode = nodeData.filter (function (nd) { return nd.id === d.id; })[0];
+                thisNode.start = newStart;
+                thisNode.end = newEnd;
+                
+                nodeData.sort (function (a,b) { 
+                    return (((a.start + a.end) % (a.end < a.start ? 360 : 720)) - ((b.start + b.end) % (b.end < b.start ? 360 : 720))); 
+                });
+                var bespokeOrder = {};
+                nodeData.forEach (function (nd, i) {
+                    bespokeOrder[nd.id] = i;
+                });
+                if (!_.isEqual (bespokeOrder, this.bespokeOrder)) {
+                    self.bespokeOrder = bespokeOrder;
+                    self.options.sort = "bespoke";
+                    self.reOrderAndRender ({bespokeOrder: bespokeOrder});
+                }
+            }
+            this.nodeDrag.on ("dragstart", function () {
+                var mc = d3.mouse(svg.node());
+                var dragStartTheta = Math.atan2 (mc[1] - self.radius, mc[0] - self.radius);
+                self.nodeDrag.startDeg = (((dragStartTheta / degToRad) + 90) + 360) % 360;
+                d3.event.sourceEvent.stopPropagation();
+                d3.select(this).classed ("draggedNode", true);
+            })
+            .on ("drag", function (d) { self.nodeDrag.reOrder (d); })
+            .on ("dragend", function (d) { 
+                d3.select(this).classed ("draggedNode", false);
+                self.nodeDrag.reOrder (d); 
+            });
+            
+            
             // for internal circle paths
             this.line = d3.svg.line.radial()
                 .interpolate("bundle")
@@ -352,7 +399,9 @@
                     self.renderPartial (["links", "nodes"]);
                 }
             });
-            this.listenTo (this.model, "change:selection", function () { this.showAccentedLinks ("selection"); });
+            this.listenTo (this.model, "change:selection", function () { 
+                this.options.showSelectedOnly ? this.renderPartial (["links"]) : this.showAccentedLinks ("selection"); 
+            });
             this.listenTo (this.model, "change:highlights", function () { this.showAccentedLinks ("highlights"); });
 			this.listenTo (this.model, "change:selectedProteins", function () { this.showAccentedNodes ("selection"); });
 			this.listenTo (this.model, "change:highlightedProteins", function () { this.showAccentedNodes ("highlights"); });
@@ -391,6 +440,13 @@
                 best: function () { return CLMSUI.utils.circleArrange (self.filterInteractors (this.model.get("clmsModel").get("participants"))); },
                 size: function() { return proteinSort.call (this, "size"); },
                 alpha: function() { return proteinSort.call (this, "name"); },
+                bespoke: function() {
+                    var bespokeOrder = orderOptions.bespokeOrder || self.bespokeOrder;
+                    prots.sort (function (a,b) {
+                       return bespokeOrder[a.id] - bespokeOrder[b.id]; 
+                    });
+                    return _.pluck (prots, "id");
+                }
             };
             this.interactorOrder = sortFuncs[this.options.sort] ? sortFuncs[this.options.sort].call(this) : _.pluck (prots, "id");
             return this;
@@ -403,21 +459,31 @@
         flipIntra: function () {
             this.options.intraOutside = !this.options.intraOutside;
             this.render ();	// nodes move position too (radially)
+            return this;
         },
 
         showResLabelsIfRoom: function () {
             this.options.showResLabels = !this.options.showResLabels;
             this.renderPartial (["linkLabels"]);
+            return this;
         },
 
         toggleLinklessVisibility : function () {
             this.options.showLinkless = !this.options.showLinkless;
             this.render();
+            return this;
         },
 
 		toggleHomomOppositeIntra : function () {
             this.options.homomOpposite = !this.options.homomOpposite;
             this.renderPartial (["links"]);
+            return this;
+        },
+        
+        toggleSelectedOnly: function () {
+            this.options.showSelectedOnly = !this.options.showSelectedOnly;
+            this.renderPartial (["links"]);
+            return this;
         },
 
         idFunc: function (d) { return d.id; },
@@ -429,6 +495,7 @@
 
         showAccentOnTheseLinks: function (d3Selection, accentType) {
             var accentedLinkList = this.model.getMarkedCrossLinks(accentType);
+            if (accentType === "selection" && this.options.showSelectedOnly) { accentedLinkList = []; }
             if (accentedLinkList && this.isVisible()) {
                 var linkType = {"selection": "selectedCircleLink", "highlights": "highlightedCircleLink"};
                 var accentedLinkIDs = _.pluck (accentedLinkList, "id");
@@ -440,6 +507,7 @@
 
 		showAccentedNodes: function (accentType) {
 			this.showAccentOnTheseNodes (d3.select(this.el).selectAll(".circleNode"), accentType);
+            return this;
 		},
 
 		showAccentOnTheseNodes: function (d3Selection, accentType) {
@@ -589,6 +657,10 @@
 
                 var filteredInteractors = this.filterInteractors (interactors);
                 var filteredCrossLinks = this.model.getFilteredCrossLinks();    //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+                if (this.options.showSelectedOnly) {
+                    var selectedIDs = d3.set (this.model.getMarkedCrossLinks("selection").map (function (xlink) { return xlink.id; }));
+                    filteredCrossLinks = filteredCrossLinks.filter (function (xlink) { return selectedIDs.has (xlink.id); });
+                }
 
                 // If only one protein hide some options, and make links go in middle
                 // make it so menu stays if we've filtered down to one protein, rather than just one protein in the search
@@ -697,7 +769,7 @@
             var crossLinks = this.model.get("clmsModel").get("crossLinks");
             //CLMSUI.utils.xilog ("clinks", crossLinks);
             var colourScheme = this.model.get("linkColourAssignment");
-
+            
             var lineCopy = {};  // make cache as linkJoin and ghostLinkJoin will have same 'd' paths for the same link
 
             // draw thin links
@@ -740,14 +812,14 @@
                         var add = d3.event.ctrlKey || d3.event.shiftKey;
                         self.model.setMarkedCrossLinks ("selection", [crossLinks.get(d.id)], false, add);
                     })
-                    .call (function () {
-                        self.showAccentOnTheseLinks.call (self, this, "selection");
-                    })
             ;
             ghostLinkJoin
                 .attr("d", function(d) {
                     var path = lineCopy[d.id] || (d.outside ? self.outsideLine : self.line)(d.coords);
                     return path;
+                })
+                .call (function () {
+                    self.showAccentOnTheseLinks.call (self, this, "selection");
                 })
             ;
         },
@@ -781,6 +853,7 @@
 						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
                         self.model.setSelectedProteins ([interactor], add);
                     })
+                    .call (self.nodeDrag)
             ;
 
             nodeJoin
@@ -1038,8 +1111,9 @@
                 showResLabels: "RESLBLS",
                 intraOutside: "SELFOUTER",
                 showLinkless: "SHOWIFNOLINKS",
+                showSelectedOnly: "SELONLY",
             };
-            var fields = ["showResLabels"];
+            var fields = ["showResLabels", "showSelectedOnly"];
             if (this.model.get("clmsModel").targetProteinCount > 1) {
                 fields.push ("intraOutside", "showLinkLess", "sort");
             }

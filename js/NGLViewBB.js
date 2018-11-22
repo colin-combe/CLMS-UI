@@ -35,6 +35,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 		colourScheme: "uniform",
 		showAllProteins: false,
 		chainLabelSetting: "Short",
+        defaultAssembly: "default",
 	},
 
     initialize: function (viewOptions) {
@@ -49,12 +50,43 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         var buttonData = [
-            {label: CLMSUI.utils.commonLabels.downloadImg+"PNG", class:"downloadButton", type: "button", id: "download"},
-            {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre"},
+            {label: CLMSUI.utils.commonLabels.downloadImg+"PNG", class:"downloadButton", type: "button", id: "download", tooltip: "Save a PNG image of the view"},
+            {label: "Re-Centre", class: "centreButton", type: "button", id: "recentre", tooltip: "Automatically pans and zooms so all visible structure is within window"},
         ];
 
         var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar");
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+        
+        
+        // Assembly choice dropdown
+        var buildAssemblySelector = function () {
+            var stageModel = this.model.get("stageModel");
+            var assemblys = stageModel ? d3.keys(stageModel.get("structureComp").structure.biomolDict) : ["BU1", "AU"];
+            assemblys.unshift("Default");
+            var labelPairs = assemblys.map (function (ass) {
+                return {label: ass.replace("AU", "Asymmetric Unit").replace("BU", "Biological Unit "), key: ass};
+            });
+            CLMSUI.utils.addMultipleSelectControls ({
+                addToElem: toolbar,
+                selectList: ["Assembly"], 
+                optionList: labelPairs, 
+                optionLabelFunc: function (d) { return d.label; }, 
+			     optionValueFunc: function (d) { return d.key; },
+			     idFunc: function (d) { return d.key; },
+                changeFunc: function () {
+                    if (self.xlRepr) {
+                        self.options.defaultAssembly = d3.event.target.value;
+                        self.xlRepr
+                            .updateOptions (self.options, ["defaultAssembly"])
+                            .updateAssemblyType ()
+                        ;
+                        self.setAssemblyChains();
+                    }
+                },
+                initialSelectionFunc: function(d) { return d.key === self.options.defaultAssembly; }
+            });
+        };
+        buildAssemblySelector.call(this);
 
 
         // Various view options set up...
@@ -110,8 +142,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             changeFunc: function () {
                 if (self.xlRepr) {
                     self.options.chainRep = d3.event.target.value;
-                    self.xlRepr.updateOptions (self.options, ["chainRep"]);
-                    self.xlRepr.replaceChainRepresentation (self.options.chainRep);
+                    self.xlRepr
+                        .updateOptions (self.options, ["chainRep"])
+                        .replaceChainRepresentation (self.options.chainRep)
+                    ;
                 }
             },
             initialSelectionFunc: function(d) { return d === self.options.chainRep; }
@@ -212,7 +246,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             }); 
             // First time distancesObj fires we should setup the display for a new data set
             this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function () {
-                this.repopulate();
+                buildAssemblySelector.call (this);
+                this
+                    .setAssemblyChains()
+                    .repopulate()
+                ;
             });
         });
 		
@@ -221,7 +259,19 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 				this.xlRepr.redoChainLabels ();
 			}
 		});
+        
+        // if the assembly structure has changed the chain sets that can be used in distance calculations, recalc and redraw distances
+        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated", function () {
+            if (this.xlRepr) {
+                this.showFiltered().centerView();
+            }
+        });
 
+    },
+    
+    setAssemblyChains: function () {
+        this.model.get("clmsModel").get("distancesObj").setAssemblyChains (this.model.get("stageModel").get("structureComp").structure, this.options.defaultAssembly);
+        return this;
     },
 
     repopulate: function () {
@@ -253,6 +303,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.model.get("stageModel"),
             {
                 chainRep: this.options.chainRep,
+                defaultAssembly: this.options.defaultAssembly,
                 selectedColor: "yellow",
                 selectedLinksColor: "yellow",
                 sstrucColor: "gray",
@@ -264,6 +315,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         );
         
         this.showFiltered();
+        return this;
     },
 
     render: function () {
@@ -401,7 +453,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 }
                 return linkList;
             };
-            //this.xlRepr.crosslinkData.setLinkList (filteredCrossLinks, filterFunc);
             stageModel.setLinkList (filteredCrossLinks, filterFunc);
         }
         return this;
@@ -490,10 +541,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.origIds = {};
         
         this.colorOptions = {};
-        this._initColorSchemes ();
-        this._initStructureRepr();
-        this._initLinkRepr();
-        this._initLabelRepr();
+        this
+            ._initColorSchemes()
+            ._initStructureRepr()
+            ._initLinkRepr()
+            ._initLabelRepr()
+            .updateAssemblyType()
+        ;
+        this.stage.autoView ();
     },
 
     _getAtomPairsFromLinks: function (linkList) {
@@ -532,16 +587,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this._getAtomPairsFromLinks (linkList);
     },
     
-    getPerChainAtomSelection: function (chainIndexSet) {
-        var comp = this.structureComp.structure;
-        var sels = [];
-        comp.eachChain (function (cp) {
-            // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
-				sels.push (cp.atomOffset);
-            }
-        });
-        return "@"+sels.join(",");
+    updateAssemblyType: function (assemblyType) {
+        assemblyType = assemblyType || this.options.defaultAssembly;
+        this.structureComp.setDefaultAssembly (assemblyType);
+        return this;
     },
     
     replaceChainRepresentation: function (newType) {
@@ -560,8 +609,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "sstruc",
             opacity: 0.67,
             side: "front",
-            sele: chainSelector,
+            sele: chainSelector
         });
+        
+        return this;
     },
 
     _initStructureRepr: function() {
@@ -589,7 +640,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "resEmph"
         });
 
-        this.stage.autoView ();
+        return this;
     },
 
     _initLinkRepr: function() {
@@ -652,6 +703,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "linkHigh",
             useCylinder: true,
         });
+        
+        return this;
     },
 	
 	getLabelTexts: function () {
@@ -684,7 +737,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLabelRepr: function () {
         var customText = this.getLabelTexts ();
         
-        var atomSelection = this.getPerChainAtomSelection ();
+        var atomSelection = this.crosslinkData.getFirstAtomPerChainSelection ();
         //CLMSUI.utils.xilog ("LABEL SELE", atomSelection);
         this.labelRepr = this.structureComp.addRepresentation ("label", {
             color: "#222",
@@ -697,6 +750,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             backgroundOpacity: 0.6,
             name: "chainText",
         });
+        
+        return this;
     },
 
     _initColorSchemes: function () {
@@ -728,6 +783,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
         
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme (linkColourScheme, "xlink");
+        
+        return this;
     },
 
     _highlightPicking: function (pickingData) {
@@ -869,78 +926,46 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         CLMSUI.utils.xilog ("HANDLE DATA CHANGE 3D");
         this.defaultDisplayedProteins();
         
-        this.setDisplayedResidues (this.crosslinkData.getResidues());
-        this.setSelectedResidues ([]);
-
         var links = this.crosslinkData.getLinks();
-        this.setDisplayedLinks (links);
-        this.setSelectedLinks (links);
+        
+        this
+            .setDisplayedResidues (this.crosslinkData.getResidues())
+            .setSelectedResidues ([])
+            .setDisplayedLinks (links)
+            .setSelectedLinks (links)
+        ;
     },
     
     defaultDisplayedProteins: function (getSelectionOnly) {
-        var showableChains = this.getShowableChains();
-        var chainSele = this.getShowProteinNGLSelection (showableChains);
+        var showableChains = this.crosslinkData.getShowableChains (this.options.showAllProteins);
+        var chainSele = this.crosslinkData.getChainSelection (showableChains);
         CLMSUI.utils.xilog ("showable chains", showableChains, chainSele);
         if (!getSelectionOnly) {
             this.sstrucRepr.setSelection (chainSele);
             if (this.labelRepr) {
-                var labelSele = this.getPerChainAtomSelection (d3.set(showableChains.chainIndices));
+                var labelSele = this.crosslinkData.getFirstAtomPerChainSelection (d3.set(showableChains.chainIndices));
                 //CLMSUI.utils.xilog ("LABEL SELE", labelSele);
                 this.labelRepr.setSelection (labelSele);
             }
         }
         return chainSele;
     },
-    
-    getShowableChains: function () {
-        var protMap = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
-        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
-        
-        var chainIndices;
-        if (protMap.length !== prots.length && !this.options.showAllProteins) {
-            chainIndices = prots.map (function (prot) {
-                var protChains = this.chainMap[prot] || [];
-                return _.pluck (protChains, "index");
-            }, this);
-        } else {
-            chainIndices = d3.entries(this.chainMap).map (function (chainEntry) {
-                return _.pluck (chainEntry.value, "index");
-            });
-        }
-        chainIndices = d3.merge (chainIndices);
-        CLMSUI.utils.xilog ("SHOW CHAINS", chainIndices);
-        return {showAll: this.options.showAllProteins, chainIndices: chainIndices};
-    },
-    
-    getShowProteinNGLSelection: function (showableChains) {
-        var selectionString = "all";
-        var showAll = showableChains.showAll || false;
-        var chains = showableChains.chainIndices || [];
-        
-        if (!showAll) {
-            var chainList = chains.map (function (chainIndex) {
-                return {chainIndex: chainIndex};
-            });
-            selectionString = this.crosslinkData.getSelectionFromResidueList (chainList, {chainsOnly: true});
-        }
-        
-        //CLMSUI.utils.xilog ("CHAIN SELE", selectionString);
-        return selectionString;
-    },
 	
 	redoChainLabels: function () {
 		this.labelRepr.setParameters ({labelText: this.getLabelTexts()});		
+        return this;
 	},
     
     setDisplayedResidues: function (residues) {
         var a = performance.now();
         this.setResidues (residues, this.resRepr);
         CLMSUI.utils.xilog ("set displayed residues, time", performance.now() - a);
+        return this;
     },
 
     setSelectedResidues: function (residues) {
         CLMSUI.utils.xilog ("set selected residues");
-        this.setResidues (residues, this.resEmphRepr);
+        return this.setResidues (residues, this.resEmphRepr);
     },
     
     setResidues: function (residues, residueRepr) {
@@ -948,18 +973,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         residueRepr.setSelection (
             this.crosslinkData.getSelectionFromResidueList (availableResidues)
         );
+        return this;
     },
 
     setDisplayedLinks: function (links) {
-        this.setLinks (links, this.linkRepr, undefined);
+        return this.setLinks (links, this.linkRepr, undefined);
     },
     
     setSelectedLinks: function (links) {
-        this.setLinks (links, this.linkEmphRepr, "selection");
+        return this.setLinks (links, this.linkEmphRepr, "selection");
     },
     
     setHighlightedLinks: function (links) {
-        this.setLinks (links, this.linkHighRepr, "highlights");
+        return this.setLinks (links, this.linkHighRepr, "highlights");
     },
     
     setLinks: function (links, aLinkRepr, linkState) {
@@ -968,6 +994,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         aLinkRepr.setParameters ({
             atomPair: atomPairs,
         });
+        return this;
     },
     
     filterByLinkState: function (links, linkState) {  
@@ -983,11 +1010,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.stage.signals.hovered.remove (this._highlightPicking, this);
 		// console.log ("dispose called");
         // this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
+        return this;
     },
     
     updateOptions: function (options, changeThese) {
         changeThese.forEach (function (changeThis) {
             this.options[changeThis] = options[changeThis];
         }, this);
+        return this;
     }
 };
