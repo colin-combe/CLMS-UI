@@ -798,6 +798,6 @@ sup {font-size:xx-small; vertical-align:super;}
 	background: white;
 }
 
-input:invalid {
+input:invalid:focus {
 	background: pink;
 }
