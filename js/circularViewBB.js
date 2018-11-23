@@ -303,12 +303,12 @@
                 thisNode.end = newEnd;
                 
                 nodeData.sort (function (a,b) { 
-                    return (((a.start + a.end) % (a.end < a.start ? 360 : 720)) - ((b.start + b.end) % (b.end < b.start ? 360 : 720))); 
+                    var aMid = (a.start + a.end + (a.end < a.start ? 360 : 0)) % 720;   // add 360 to end values smaller than start (zero wraparound)
+                    var bMid = (b.start + b.end + (b.end < b.start ? 360 : 0)) % 720;
+                    return aMid - bMid; 
                 });
-                var bespokeOrder = {};
-                nodeData.forEach (function (nd, i) {
-                    bespokeOrder[nd.id] = i;
-                });
+                var bespokeOrder = _.object (nodeData.map (function(d) { return d.id; }), _.range(0, nodeData.length)); // generate {7890: 0, 1234: 1, 2345: 2} etc
+                
                 if (!_.isEqual (bespokeOrder, this.bespokeOrder)) {
                     self.bespokeOrder = bespokeOrder;
                     self.options.sort = "bespoke";
@@ -322,7 +322,9 @@
                 d3.event.sourceEvent.stopPropagation();
                 d3.select(this).classed ("draggedNode", true);
             })
-            .on ("drag", function (d) { self.nodeDrag.reOrder (d); })
+            .on ("drag", function (d) { 
+                self.nodeDrag.reOrder (d);
+            })
             .on ("dragend", function (d) { 
                 d3.select(this).classed ("draggedNode", false);
                 self.nodeDrag.reOrder (d); 
@@ -649,9 +651,10 @@
 
             if (this.isVisible()) {
                 //CLMSUI.utils.xilog ("re-rendering circular view");
-
+                var svg = d3.select(this.el).select("svg");
+                this.radius = this.getMaxRadius (svg);
+                
                 var interactors = this.model.get("clmsModel").get("participants");
-                //var crossLinks = this.model.get("clmsModel").get("crossLinks");
                 //CLMSUI.utils.xilog ("interactorOrder", this.interactorOrder);
                 //CLMSUI.utils.xilog ("model", this.model);
 
@@ -700,8 +703,6 @@
                 var layout = CLMSUI.circleLayout (filteredInteractors, filteredCrossLinks, filteredFeatures, [0,360], this.options);
                 //CLMSUI.utils.xilog ("layout", layout);
 
-                var svg = d3.select(this.el).select("svg");
-                this.radius = this.getMaxRadius (svg);
                 var tickRadius = (this.radius - this.options.tickWidth) * (this.options.intraOutside ? 0.8 : 1.0); // shrink radius if some links drawn on outside
                 var innerNodeRadius = tickRadius * ((100 - this.options.nodeWidth) / 100);
                 var innerFeatureRadius = tickRadius * ((100 - (this.options.nodeWidth * 0.7)) / 100);
