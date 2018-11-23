@@ -425,7 +425,7 @@
                 this.options.sortDir = -this.options.sortDir;   // reverse direction of consecutive resorts
             }
             //var prots = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants"));
-            var prots = CLMS.arrayFromMapValues (this.filterInteractors (this.model.get("clmsModel").get("participants")));
+            var prots = this.filterInteractors (this.model.get("clmsModel").get("participants"));
             var proteinSort = function (field) {
                 var numberSort = prots.length ? !isNaN(prots[0][field]) : false;	// stop undefined 'prots[0].field' bug when no prots
                 var sortDir = this.options.sortDir;
@@ -826,7 +826,9 @@
 
         drawNodes: function (g, nodes) {
             var self = this;
-
+            
+            var multipleNodes = this.filterInteractors (this.model.get("clmsModel").get("participants")).length > 1;
+            
             var nodeLayer = this.addOrGetGroupLayer (g, "nodeLayer");
             var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
 
@@ -853,7 +855,9 @@
 						var interactor = self.model.get("clmsModel").get("participants").get(d.id);
                         self.model.setSelectedProteins ([interactor], add);
                     })
-                    .call (self.nodeDrag)
+                    .call (function(sel) {
+                        if (multipleNodes) { sel.call (self.nodeDrag); }
+                    })
             ;
 
             nodeJoin
