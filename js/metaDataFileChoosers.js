@@ -118,8 +118,7 @@
         },
 		
 		onLoadFunction: function (fileContents) {
-			var clmsModel = this.model.get("clmsModel");
-			CLMSUI.modelUtils.updateProteinMetadata (fileContents, clmsModel);
+			CLMSUI.modelUtils.updateProteinMetadata (fileContents, this.model.get("clmsModel"));
 		},
         
         identifier: "Protein MetaData File Chooser",
@@ -149,8 +148,7 @@
         },
 		
 		onLoadFunction: function (fileContents) {
-			var clmsModel = this.model.get("clmsModel");
-			CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);
+			CLMSUI.modelUtils.updateLinkMetadata (fileContents, this.model.get("clmsModel"));
 		},
         
         identifier: "Cross-Link MetaData File Chooser",

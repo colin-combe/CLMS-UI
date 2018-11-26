@@ -188,7 +188,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 				},
 			},
 			padding: {
-				left: 45, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
+				left: 56, // need this fixed amount if y labels change magnitude i.e. single figures only to double figures causes a horizontal jump
 				right: 20,
 				top: 6
 			},
@@ -276,15 +276,15 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 		this.listenTo (this.model, "change:linkColourAssignment", function() { this.render ({newColourModel: true}); });    // listen for colour model getting swapped in and out
 		this.listenTo (this.model, "selectionMatchesLinksChanged", function () {this.render ({noAxesRescale: true}); });	// update selection series
 		this.listenTo (this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
-		this.listenTo (CLMSUI.vent, "distancesAdjusted", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change)
+		this.listenTo (CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated", distancesAvailable);   // changes to distancesObj with existing pdb (usually alignment change) or change in pdb assembly meaning certain chains can't be used
 		this.listenTo (CLMSUI.vent, "linkMetadataUpdated", function (metaMetaData) {
 			var columns = metaMetaData.columns;
 			//console.log ("HELLO", arguments);
 			var newOptions = columns.map (function (column) {
 				return {
 					id: column, label: column, decimalPlaces: 2, matchLevel: false,
-					linkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
-					unfilteredLinkFunc: function (c) {return c.meta ? [c.meta[column]] : []; },
+					linkFunc: function (c) {return c.getMeta() ? [c.getMeta(column)] : []; },
+					unfilteredLinkFunc: function (c) {return c.getMeta() ? [c.getMeta(column)] : []; },
 				};
 			});
 

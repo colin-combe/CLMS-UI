@@ -14,14 +14,16 @@
             )[0];
             
             var refResult = {str: fullResult.fmt[1], label: this.get("holderModel").get("refID")}; 
-            
+			
             var compResult = {
                str: fullResult.fmt[0], 
                refStr: fullResult.fmt[1], 
                convertToRef: fullResult.indx.qToTarget, 
                convertFromRef: fullResult.indx.tToQuery, 
                cigar: fullResult.res[2], 
-               score: fullResult.res[0], 
+               score: fullResult.res[0],
+				bitScore: fullResult.bitScore,
+                eScore: fullResult.eScore,
                label: this.get("compID"),
             }; 
             
@@ -103,10 +105,43 @@
         },
         
         alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
-            var matrix = this.get("scoreMatrix");
-            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+			return this.alignWithoutStoringWithSettings (compSeqArray, tempSemiLocal, this.getSettings());
+        },
+		
+		alignWithoutStoringWithSettings: function (compSeqArray, tempSemiLocal, settings) {
+			var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
+            var localAlign = (tempSemiLocal && tempSemiLocal.local);
+            var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
+
+            var fullResults = compSeqArray.map (function (cSeq) {
+                var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
+				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
+                bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.refSeq.length, cSeq.length); 
+				return bioseqResults;
+            }, this);
             
-            var scores = {
+            //console.log ("fr", fullResults);
+            
+            return fullResults;
+        },
+		
+		getBitScore: function (rawScore, blosumData) {
+			var lambda = (blosumData ? blosumData.lambda : 0.254) || 0.254;
+			var K = (blosumData ? blosumData.K : 0.225042) || 0.225042;
+			var bitScore = ((lambda * rawScore) - Math.log(K)) / Math.LN2;
+			return bitScore;
+		},
+        
+        alignmentSignificancy: function (bitScore, dbLength, seqLength) {
+            var exp = Math.pow (2, -bitScore);
+            return dbLength * seqLength * exp;	// escore
+        },
+
+		getSettings: function () {
+			var matrix = this.get("scoreMatrix");
+            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
+			
+			var scoringSystem = {
                 matrix: matrix,
                 match: this.get("matchScore"), 
                 mis: this.get("misScore"), 
@@ -114,20 +149,12 @@
                 gapExt: this.get("gapExtendScore"),
                 gapAtStart: this.get("gapAtStartScore")
             };
-            var refSeq = this.get("refSeq");
+			
+			var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
-
-            var fullResults = compSeqArray.map (function (cSeq) {
-                var alignWindowSize = (refSeq.length > this.get("maxAlignWindow") ? this.get("maxAlignWindow") : undefined);
-                var localAlign = (tempSemiLocal && tempSemiLocal.local);// || this.get("local")[i];
-                var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);// || this.get("semiLocal")[i];
-                return aligner.align (cSeq, refSeq, scores, !!localAlign, !!semiLocalAlign, alignWindowSize);
-            }, this);
-            
-            //console.log ("fr", fullResults);
-            
-            return fullResults;
-        },
+			
+			return {scoringSystem: scoringSystem, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow")};
+		},
         
         getCompSequence: function (seqName) {
             var seqModel = this.get("seqCollection").get(seqName);
@@ -182,6 +209,28 @@
             var last = index >= 0 ? compSeq.convertToRef[index] + 1 : undefined;
             var subSeq = first && last ? this.get("refSeq").substring (first - 1, last) : "";
             return {first: first, last: last, subSeq: subSeq};
+        },
+        
+        // For a given sequence return a list of the sequential indices
+        // i.e. as above but split for gaps
+        blockify: function (seqName) {
+            var seq = this.getCompSequence (seqName);
+			var index = seq.convertToRef;
+			var blocks = [];
+			var start = index[0];
+			for (var n = 0; n < index.length - 1; n++) {
+				if (Math.abs (index[n+1] - index[n]) > 1) {  // if non-contiguous numbers i.e. a break
+                    if (index[n] >= 0) {
+					   blocks.push ({begin: start + 1, end: index[n] + 1});
+                    }
+					start = index[n + 1];
+				}
+			}
+			blocks.push ({begin: start + 1, end: _.last(index) + 1});
+            
+            blocks = CLMSUI.modelUtils.mergeContiguousFeatures (blocks);
+            
+			return blocks;
         },
     });
     

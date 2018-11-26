@@ -47,11 +47,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},
             ],
             navigationFilters: [
-                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links with matches involving a peptide including this AA sequence e.g. FAKR"},
+                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE", pattern: "[A-Za-z]+-?[A-Za-z]*"},
                 {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"},
-                {"label":"Charge", "id":"charge", "chars":1, tooltip: "Filter to cross-links with matches with this charge state e.g. 3"},
+                {"label":"Charge", "id":"charge", "chars":3, tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6", pattern:"\\d+-?\\d*"},
                 {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
-                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565"},
+                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565", pattern: "\\d*"},
             ],
             navigationNumberFilters: [
                 {"label":"Residue Pairs per PPI", "id":"urpPpi", min: 1, max: 99, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
@@ -259,6 +259,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 				.attr ("type", "textbox")
 				.attr ("size", function(d) { return d.chars; })
 				//.property ("value", function(d) { return self.model.get(d.id); })
+				.filter(function(d) { return d.pattern; })
+					.attr ("pattern", function(d) { return d.pattern; })
 			;
 		}
 
@@ -356,8 +358,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     textFilter: function (evt) {
         var target = evt.target;
+		if (evt.target.checkValidity()) {
         console.log ("filter set", target.id, target.value);
         this.model.set (target.id, target.value);
+		}
     },
 
     subsetToggleFilter: function (evt) {

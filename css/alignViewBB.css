@@ -18,7 +18,8 @@ DIV.tableWrapper TABLE {
 DIV.tableWrapper DIV.seqDiv {
      /* always show scrollbar even if not needed so content underneath doesn't jump (which it does with auto) */
     overflow-x: scroll;
-    overflow-y: hidden;
+    overflow-y: auto;
+    max-height: 25em;
 	border-left: 8em solid #eee;
 }
 
@@ -162,4 +163,10 @@ DIV.alignSettings {
 .alignSettings .alignChoiceGroup label:not(:last-of-type) {
 	border-right: 1px solid #aaa;
 	margin-right: 0.5em;
+}
+
+.alignSettings span.subduedText {
+	margin-left: 2em;
+	color: #668;
+	font-size: 0.8em;
 }

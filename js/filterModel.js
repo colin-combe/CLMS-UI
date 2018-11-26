@@ -45,7 +45,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 				//this.scoreExtent = this.matches.extent (fu)
                 this.valMap = d3.map();
                 this.valMap.set("?", "Q");
-                this.textSet = d3.map();
+                this.preprocessedInputText = d3.map();	// preprocessed user input values so they're not constantly reparsed for every match
 				
 				this.resetValues = this.toJSON();	// Store copy of original values if needed to restore later
             },
@@ -59,10 +59,21 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
             processTextFilters: function () {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
-                this.textSet.set("protNames", protSplit1.map(function (prot) {
+                this.preprocessedInputText.set("protNames", protSplit1.map(function (prot) {
                     return prot.split("-");
                 })); // split these in turn by hyphens
-                //console.log ("textSet", this.textSet.get("protNames"));
+                //console.log ("preprocessedInputText", this.preprocessedInputText.get("protNames"));
+				
+				var chargeRange = this.get("charge").split("-").map(function (val, i) {
+					return +val || [0, Infinity][i];
+				});	
+				this.preprocessedInputText.set("chargeRange", chargeRange);
+				
+				var pepSeq = this.get("pepSeq");
+				var splitPepSeq = pepSeq.split("-").map (function (part) {
+					return {upper: part.toUpperCase(), lower: part.toLowerCase()}
+				});
+				this.preprocessedInputText.set("pepSeq", splitPepSeq);
             },
 
             naiveProteinMatch: function (p1, p2) {
@@ -153,7 +164,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             proteinNameCheck: function (match, searchString) {
                 if (searchString) {
                     //protein name check
-                    var stringPartArrays = this.textSet.get("protNames");
+                    var stringPartArrays = this.preprocessedInputText.get("protNames");
                     var participants = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
                     var matchedPeptides = match.matchedPeptides;
                     var matchedPepCount = matchedPeptides.length;
@@ -257,7 +268,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 //charge check
                 var chargeFilter = this.get("charge");
-                if (chargeFilter && match.precursorCharge != chargeFilter) {
+				var chargeRange = this.preprocessedInputText.get("chargeRange");
+				var mpCharge = match.precursorCharge;
+                if (chargeFilter && (chargeRange.length === 1 ? mpCharge !== chargeRange[0] : (mpCharge < chargeRange[0] || mpCharge > chargeRange[1]))) {
                     return false;
                 }
 
@@ -283,7 +296,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
 
                 //peptide seq check
-                if (seqCheck(this.get("pepSeq")) === false) {
+                if (seqCheck(this.get("pepSeq"), this.preprocessedInputText.get("pepSeq")) === false) {
                     return false;
                 }
 
@@ -293,46 +306,49 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //util functions used in nav filter check:
 
                 //peptide seq check function
-                function seqCheck(searchString) {
+                function seqCheck (searchString, preprocPepStrings) {	//preprocPepStrings: "KK-KR" will be [{upper:"KK", lower:"kk}, {upper:"KR", lower:"kr"}]
                     if (searchString) {
                         var matchedPeptides = match.matchedPeptides;
                         var matchedPepCount = matchedPeptides.length;
 
-                        var pepStrings = searchString.split('-');
-                        var pepStringsCount = pepStrings.length;
+                        //var pepStrings = searchString.split('-');
+						//var pepStringsCount = pepStrings.length;
+                        var pepStringsCount = preprocPepStrings.length;
 
                         if (pepStringsCount == 1) {
-                            for (var mp = 0; mp < matchedPepCount; mp++) {
-                                var matchedPeptide = matchedPeptides[mp];
-                                if (matchedPeptide.sequence.indexOf(searchString.toUpperCase()) != -1 ||
-                                    matchedPeptide.seq_mods.toLowerCase().indexOf(searchString.toLowerCase()) != -1) {
+							var uppercasePep = preprocPepStrings[0].upper;
+							var lowercasePep = preprocPepStrings[0].lower
+                            for (var i = 0; i < matchedPepCount; i++) {
+                                var matchedPeptide = matchedPeptides[i];
+                                if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
+                                    matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1) {
                                     return true;
                                 }
                             }
                             return false;
                         }
 
-                        var used = [];
-                        var pepStringCount = pepStrings.length;
-                        //TODO: theres a problem here, order of search strings is affecting results
-                        // (if one pep seq occurs in both peptides and the other in only one)
-                        for (var ps = 0; ps < pepStringCount; ps++) {
-                            var pepString = pepStrings[ps];
-                            if (pepString) {
-                                var found = false;
+                        var aggMatchedCount = 0;
+                        for (var ps = 0; ps < pepStringsCount; ps++) {
+                            var pepStringCases = preprocPepStrings[ps];
+							var uppercasePep = pepStringCases.upper;
+							var lowercasePep = pepStringCases.lower;
+							var matchCount = 0;
                                 for (var i = 0; i < matchedPepCount; i++) {
                                     var matchedPeptide = matchedPeptides[i];
-                                    if (found === false && typeof used[i] == 'undefined') {
-                                        if (matchedPeptide.sequence.indexOf(pepString.toUpperCase()) != -1 ||
-                                            matchedPeptide.seq_mods.toLowerCase().indexOf(pepString.toLowerCase()) != -1) {
-                                            found = true;
-                                            used[i] = true;
+								if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
+									matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1) {
+									matchCount += (i + 1);	// add 1 for first matched peptide, add 2 for second. So will be 3 if both.
                                         }
                                     }
+							if (matchCount === 0) return false;	// neither peptide matches this part of the input string, so match can't pass the filter
+							aggMatchedCount |= matchCount;	// logically aggregate to aggMatchedCount
                                 }
-                                if (found === false) return false;
-                            }
-                        }
+						// If 1, both pepstrings matched first peptide. If 2, both pepstrings matched second peptide.
+						// Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop 
+						// (so can't be 0 in total either)
+						// So 3 must be the case where both peptides contain the pepstrings, such that one or both pepstrings are present at alternate ends
+						return aggMatchedCount === 3;
                     }
                     return true;
                 }
