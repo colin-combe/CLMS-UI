@@ -23,6 +23,7 @@
                cigar: fullResult.res[2], 
                score: fullResult.res[0],
 				bitScore: fullResult.bitScore,
+                eScore: fullResult.eScore,
                label: this.get("compID"),
             }; 
             
@@ -115,6 +116,7 @@
             var fullResults = compSeqArray.map (function (cSeq) {
                 var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
 				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
+                bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.refSeq.length, cSeq.length); 
 				return bioseqResults;
             }, this);
             
@@ -129,6 +131,11 @@
 			var bitScore = ((lambda * rawScore) - Math.log(K)) / Math.LN2;
 			return bitScore;
 		},
+        
+        alignmentSignificancy: function (bitScore, dbLength, seqLength) {
+            var exp = Math.pow (2, -bitScore);
+            return dbLength * seqLength * exp;	// escore
+        },
 
 		getSettings: function () {
 			var matrix = this.get("scoreMatrix");
@@ -202,6 +209,28 @@
             var last = index >= 0 ? compSeq.convertToRef[index] + 1 : undefined;
             var subSeq = first && last ? this.get("refSeq").substring (first - 1, last) : "";
             return {first: first, last: last, subSeq: subSeq};
+        },
+        
+        // For a given sequence return a list of the sequential indices
+        // i.e. as above but split for gaps
+        blockify: function (seqName) {
+            var seq = this.getCompSequence (seqName);
+			var index = seq.convertToRef;
+			var blocks = [];
+			var start = index[0];
+			for (var n = 0; n < index.length - 1; n++) {
+				if (Math.abs (index[n+1] - index[n]) > 1) {  // if non-contiguous numbers i.e. a break
+                    if (index[n] >= 0) {
+					   blocks.push ({begin: start + 1, end: index[n] + 1});
+                    }
+					start = index[n + 1];
+				}
+			}
+			blocks.push ({begin: start + 1, end: _.last(index) + 1});
+            
+            blocks = CLMSUI.modelUtils.mergeContiguousFeatures (blocks);
+            
+			return blocks;
         },
     });
     

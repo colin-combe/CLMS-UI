@@ -633,29 +633,13 @@
 	// draw white blocks in background to demarcate areas covered by active pdb chains
 	renderChainBlocks: function (alignInfo) {
 		
-		// Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
-		var splitChain = function (alignInfo) {
-			var seq = this.model.get("alignColl").get(alignInfo.proteinID).getCompSequence(alignInfo.alignID);
-			var index = seq.convertToRef;
-			var blocks = [];
-			var start = index[0];
-			for (var n = 0; n < index.length - 1; n++) {
-				if ((index[n+1] - index[n]) > 1) {  // if non-contiguous numbers
-					blocks.push ({first: start + 1, last: index[n] + 1});
-					start = index[n + 1];
-				}
-			}
-			blocks.push ({first: start + 1, last: _.last(index) + 1});
-			return blocks;
-		};
-		
 		var seqLengths = this.getSeqLengthData();
         var seqLengthB = seqLengths.lengthB - 1;   
 
-		// Work out blocks for each chain, using routine above
+		// Find continuous blocks for each chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
 		var blockMap = {};
 		d3.merge(alignInfo).forEach (function (alignDatum) {
-			blockMap[alignDatum.alignID] = splitChain.call (this, alignDatum);    
+			blockMap[alignDatum.alignID] = this.model.get("alignColl").get(alignDatum.proteinID).blockify (alignDatum.alignID);
 		}, this);
 		//console.log ("blockMap", blockMap);
 
@@ -663,6 +647,8 @@
 		var blockAreas = this.zoomGroup.select(".blockAreas");
 		var blockSel = blockAreas.selectAll(".chainArea");
 		blockSel.remove();
+        
+        //console.log ("BLOX", blockMap);
 		
 		alignInfo[0].forEach (function (alignInfo1) {
 			var blocks1 = blockMap[alignInfo1.alignID];
@@ -673,10 +659,10 @@
 				blocks1.forEach (function (brange1) {
 					blocks2.forEach (function (brange2) {
 						blockAreas.append ("rect")
-							.attr ("x", brange1.first - 1)
-							.attr ("y", seqLengthB - (brange2.last - 1))
-							.attr ("width", brange1.last - brange1.first + 1)
-							.attr ("height", brange2.last - brange2.first + 1)
+							.attr ("x", brange1.begin - 1)
+							.attr ("y", seqLengthB - (brange2.end - 1))
+							.attr ("width", brange1.end - brange1.begin + 1)
+							.attr ("height", brange2.end - brange2.begin + 1)
 							.attr ("class", "chainArea")
 							.style ("fill", this.options.chainBackground)
 						;
