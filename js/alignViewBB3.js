@@ -435,6 +435,7 @@
                             ["Align Sequence Length", nformat(seqInfo.convertToRef.length)], 
                             ["Align Raw Score", scoreFormat(seqInfo.score)],
 							["Align Bit Score", rformat(seqInfo.bitScore)],
+                            ["Align E Score", seqInfo.eScore],
                         ])
                         .set("location", d3.event)
                     ;

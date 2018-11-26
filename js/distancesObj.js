@@ -95,7 +95,7 @@ CLMSUI.DistancesObj.prototype = {
                 
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
-                        var modelIndex2 = chains2[n].modelIndex;
+                        var modelIndex2 = chains2[m].modelIndex;
                         if (modelIndex1 === modelIndex2) {
                             var chainIndex2 = chains2[m].index;
                             var chainName2 = chains2[m].name;
