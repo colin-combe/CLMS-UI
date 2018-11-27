@@ -189,6 +189,40 @@ function callback (model) {
 	
 	
 	QUnit.module ("Alignment Tests");
+    
+    
+    QUnit.test ("Scoring", function (assert) {
+        var scoringSystem = {
+            matrix: CLMSUI.blosumCollInst.findWhere({key:"Blosum100"}).attributes,
+            match: 10, 
+            mis: -6, 
+            gapOpen: 10, 
+            gapExt: 1,
+            gapAtStart: 0
+        };
+        var refSeq = "ABCDEFGHIIKLMNNPQRSTTVWXYZ";
+        
+        var tests = [
+            // * means any, X means missing
+            {seq: "ABCDEFGHIIKLMNNPQRSTTVWXYZ", expScore: 251},
+            {seq: "BCDEFGHIIKLMNNPQRSTTVWXYZ", expScore: 241},
+            {seq: "BCDEFGHIIKLMNNPQRSTTVWXY", expScore: 235},
+            {seq: "ABCD", expScore: 38},
+            {seq: "XYZ", expScore: 18},
+             {seq: "Z", expScore: 7},   // in the blosum100 matrix Z matches to E (score:7) better than it matches to itself (6). Weird.
+            {seq: "BCDH", expScore: 30 + 13 - 13},   // aligner puts in gap and matches H-H as H-H score (13) plus gap penalty (-13 = 0) exceeds E-H score (-2)
+            {seq: "BCDY", expScore: 30 + 12 - 19},   // aligner goes for matching E-Y as gap penalty too long (19) for Y-Y score (12) to recover from
+        ];
+		
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		var actual = tests.map (function (test) {
+            return this.CLMSUI.GotohAligner.align (test.seq, refSeq, scoringSystem, false, true, 1000);
+        });
+        var actualScores = actual.map (function (v) { return v.res[0]; });
+        var expectedScores = tests.map (function (v) { return v.expScore; });
+        var cigars = actual.map (function (v) { return v.fmt[0]; });
+		assert.deepEqual (actualScores, expectedScores, "Expected "+JSON.stringify(expectedScores)+JSON.stringify(cigars)+" when generating scores from bioseq32.js");
+	});
 	
 	QUnit.test ("Sequence generation from PDB chains", function (assert) {
 		var expected = [
@@ -198,7 +232,7 @@ function callback (model) {
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var actual = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
-		assert.deepEqual (actual, expected, "Expected "+expected+" when generating sequences from `1AO6`");
+		assert.deepEqual (actual, expected, "Expected "+JSON.stringify(expected)+" when generating sequences from `1AO6`");
 	});
 	
 	
@@ -221,7 +255,7 @@ function callback (model) {
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as matrix pairing, Passed!");
 	});
 	
-	
+	/*
 	QUnit.test ("Align test", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var chainSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
@@ -235,7 +269,7 @@ function callback (model) {
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as alignment result, Passed!");
 	});
-    
+    */
     
     QUnit.module ("NGL Model Wrapper");
 	

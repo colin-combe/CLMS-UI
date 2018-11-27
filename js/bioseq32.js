@@ -274,13 +274,13 @@
         // adjust band width
         //console.log ("orig w", w);
         var max_len = Math.max (qlen, t.length);
-        w = w == null || w < 0? max_len : w;
+        w = w == null || w < 0 ? max_len : w;
         var len_diff = Math.abs (t.length - qlen); // MJG - think t.target was a mistake, replace with t.length
         w = Math.max (w, len_diff); // mjg - dunno why this needs to be done, would just make w massive for small target and big query  
         //console.log ("w", w, qlen, t.length, len_diff);
 
         // set gap score
-		      var gapo, gape; // these are penalties which should be non-negative
+        var gapo, gape; // these are penalties which should be non-negative
         if (typeof gapsc == 'number') { gapo = 0, gape = Math.abs (gapsc); }
         else { 
             gapo = Math.abs(gapsc[0]), gape = Math.abs(gapsc[1]);
@@ -339,10 +339,11 @@
                 h1 = h;              // save H(i,j) to h1 for the next column
                 if (h >= m) {
                     mj = j;
+                    mj = j;
                     m = h;  // update the max score in this row
                 }
                 
-                h -= gapoe;
+                h -= (j === end - 1 && is_semi_local ? 0 : gapoe);  // gaps don't matter after last query character in semi_local alignment
                 h = !is_local || h > 0 ? h : 0;
                 
                 // E(i+1,j) = max{H(i,j)-q, E(i,j)} - r
@@ -362,15 +363,13 @@
                     f = h;
                 }  
                 zi[j - beg] = d;           // z[i,j] keeps h for the current cell and e/f for the next cell // MJG: j-beg -- crucial
-                if (j === end - 1) {    // mjg. keep last scores in each row (forms last column of scores)
-                    C[i] = h1;
-                }
             }
-            H[end] = h1, E[end] = is_local? 0 : NEG_INF;
+            C[i] = h1;  // mjg. keep last scores in each row (forms last column of scores)
+            H[end] = h1, E[end] = is_local ? 0 : NEG_INF;
             if (m > max) max = m, end_i = i, end_j = mj;
         }
         //if (is_local && max === 0) return null;
-        score = is_local? max : H[qlen];
+        score = is_local ? max : H[H.length - 1]; // H[qlen];
         
         //console.log ("\H", H.length, indexOfMax(H), "\nC", C.length, indexOfMax(C));
 
@@ -384,7 +383,7 @@
         var cigar = [], tmp, which = 0, i, k, start_i = 0;
         if (is_local) {
             i = end_i; k = end_j;
-            if (end_j != qlen - 1) // then add soft cliping
+            if (end_j != qlen - 1) // then add soft clipping
                 push_cigar(cigar, 4, qlen - 1 - end_j);
         } else if (is_semi_local) { // mjg
             var qlonger = (t.length < qlen);
@@ -397,7 +396,7 @@
                 push_cigar (cigar, qlonger ? 1 : 2, trailIndelCount);
             }
             //console.log ("r", roff, qlen, i, qlonger, w, trailIndelCount);
-            k = (roff < qlen? roff : qlen) - 1;
+            k = (roff < qlen ? roff : qlen) - 1;
         } else {
             i = t.length - 1;
             var roff = i + w - 1;
@@ -546,7 +545,9 @@
         var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
         var fmt = bsa_cigar2gaps (target, query, rst[1], rst[2]);
         var indx = bsa_cigar2indexArrays (target, query, rst[1], rst[2]);
-        return {res: rst, fmt: fmt, str: str, indx: indx};
+        var alignment = {res: rst, fmt: fmt, str: str, indx: indx};
+        //console.log ("ALIGNMENT", alignment);
+        return alignment;
     }
     
     if (typeof module == 'object') {
