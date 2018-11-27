@@ -628,6 +628,11 @@ div.toolbar[disabled], label.fakeButton[disabled] {
 	padding-left: 0.5em;
 }
 
+.toolbar hr.toolbarSeparator {
+    display: block;
+    margin: 0.4em 0 0 0;
+}
+
 .pdbWindowButton {
 	vertical-align: text-bottom;
 }
@@ -745,10 +750,12 @@ select {
 	font-family: Lato-Bold;
 }
 
+/*
 label.selectHolder select {
 	margin-top: 0.8em;
 	margin-bottom: 0.8em;
 }
+*/
 
 input {
 	color: #091d42;
@@ -791,6 +798,6 @@ sup {font-size:xx-small; vertical-align:super;}
 	background: white;
 }
 
-input:invalid {
+input:invalid:focus {
 	background: pink;
 }

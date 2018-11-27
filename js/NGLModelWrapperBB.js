@@ -24,13 +24,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 this.setupLinks (this.getModel().get("clmsModel"));
             });
         });
-        
-        this.listenTo (CLMSUI.vent, "request3DDistance", function () {
-            console.log ("args", arguments, this);
-        });
     },
     
-
     getModel: function () {
         return this.get("masterModel");
     },
@@ -66,6 +61,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
     // residueStore maps the NGL-indexed resides to PDB-index
     // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
     // then need to subtract 1, then --> which goes to PDB index with residueStore
+    
+    makeModelSubIndexedChainMap: function (chainMap) {
+        var modelSubIndexedChainMap = {};
+        d3.entries(chainMap).forEach (function (proteinEntry) { 
+            modelSubIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) { return d.modelIndex; }).entries(proteinEntry.value); 
+        });
+        return modelSubIndexedChainMap;
+    },
+    
     makeLinkList: function (linkModel) {
         var structure = this.get("structureComp").structure;
         var pdbBaseSeqID = this.get("pdbBaseSeqID");
@@ -90,55 +94,69 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }
 
         var chainMap = this.get("chainMap");
+        // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
+        var modelIndexedChainMap = this.makeModelSubIndexedChainMap (chainMap);
 
         linkModel.forEach (function (xlink) {
-            // loop through fromChainIndices / toChainIndices to pick out all possible links between two residues in different chains
-            var fromChainIndices = _.pluck (chainMap[xlink.fromProtein.id], "index");
-            var toChainIndices = _.pluck (chainMap[xlink.toProtein.id], "index");
+            // loop through fromProtein's models/chains in modelIndexedChainMap
+            // Within that have an inner loop through toProtein's models/chains in modelIndexedChainMap
+            // Match by model index so can't have crosslinks between different models
+            var fromPerModelChains = modelIndexedChainMap[xlink.fromProtein.id];
+            var toPerModelChains = modelIndexedChainMap[xlink.toProtein.id];
 
-            if (fromChainIndices && toChainIndices && fromChainIndices.length && toChainIndices.length) {
-                fromChainIndices.forEach (function (fromChainIndex) {
-                    chainProxy.index = fromChainIndex;
-					
-                    var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1;  // residues are 0-indexed in NGL so -1
+            if (fromPerModelChains && fromPerModelChains.length && toPerModelChains && toPerModelChains.length) {
+                var toPerModelChainMap = d3.map(toPerModelChains, function (d) { return d.key; });
+                
+                fromPerModelChains.forEach (function (fromPerModelChainEntry) {
+                    var fromModelIndex = fromPerModelChainEntry.key;
+                    var toChains = toPerModelChainMap.get (fromModelIndex);
+                    if (toChains) { // only proceed if the model index in 'from' has a corresponding entry in toPerModelChainMap (only look for links within same model)
+                    
+                        fromPerModelChainEntry.values.forEach (function (fromChainValue) {
+                            var fromChainIndex = fromChainValue.index;
+                            chainProxy.index = fromChainIndex;
+                            var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, xlink.fromProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1;  // residues are 0-indexed in NGL so -1
 
-                    if (fromResidue >= 0) {
-                        residueProxy1.index = fromResidue + chainProxy.residueOffset;
+                            if (fromResidue >= 0) {
+                                residueProxy1.index = fromResidue + chainProxy.residueOffset;
 
-                        toChainIndices.forEach (function (toChainIndex) {
-                            chainProxy.index = toChainIndex;
-                            var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex), true) - 1;    // residues are 0-indexed in NGL so -1
+                                toChains.values.forEach (function (toChainValue) {
+                                    var toChainIndex = toChainValue.index;
+                                    chainProxy.index = toChainIndex;
+                                    var toResidue = alignColl.getAlignedIndex (xlink.toResidue, xlink.toProtein.id, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex), true) - 1;    // residues are 0-indexed in NGL so -1
 
-                            //console.log ("fr", fromResidue, "tr", toResidue);
-                            if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
-                                residueProxy2.index = toResidue + chainProxy.residueOffset;
+                                    //console.log ("fr", fromResidue, "tr", toResidue);
+                                    if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {                   
+                                        residueProxy2.index = toResidue + chainProxy.residueOffset;
 
-                                linkList.push ({
-                                    origId: xlink.id,
-                                    linkId: linkList.length,
-                                    residueA: {
-                                        resindex: fromResidue,
-                                        residueId: getResidueId (fromResidue, fromChainIndex),
-                                        resno: residueProxy1.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                                        chainIndex: fromChainIndex,
-                                        structureId: structureId
-                                    },
-                                    residueB: {
-                                        resindex: toResidue,
-                                        residueId: getResidueId (toResidue, toChainIndex),
-                                        resno: residueProxy2.resno,   // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                                        chainIndex: toChainIndex,
-                                        structureId: structureId
+                                        linkList.push ({
+                                            origId: xlink.id,
+                                            linkId: linkList.length,
+                                            residueA: {
+                                                resindex: fromResidue,
+                                                residueId: getResidueId (fromResidue, fromChainIndex),
+                                                resno: residueProxy1.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
+                                                chainIndex: fromChainIndex,
+                                                structureId: structureId
+                                            },
+                                            residueB: {
+                                                resindex: toResidue,
+                                                residueId: getResidueId (toResidue, toChainIndex),
+                                                resno: residueProxy2.resno,   // ngl resindex to resno conversion, as Selection() works with resno not resindex
+                                                chainIndex: toChainIndex,
+                                                structureId: structureId
+                                            }
+                                        });
                                     }
-                                });
+                                }, this);
                             }
-                        }, this);
+                        });
                     }
                 }, this);
             }
         }, this);
 
-        //console.log ("linklist", linkList);        
+        console.log ("linklist", linkList);        
         return linkList;
     },
 
@@ -148,13 +166,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         var residueIdMap = {};
 
         function insertResidue (residue, link) {
-            var list = residueIdToLinkIds[residue.residueId];
+            var resID = residue.residueId;
+            var list = residueIdToLinkIds[resID];
             if (list === undefined) {
-                residueIdToLinkIds[residue.residueId] = [link.linkId];
+                residueIdToLinkIds[resID] = [link.linkId];
             } else if (! _.includes (list, link.linkId)) {
                 list.push (link.linkId);
             }
-            residueIdMap[residue.residueId] = residue;
+            residueIdMap[resID] = residue;
         }
 
         linkList.forEach (function(rl) {
@@ -249,7 +268,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
                 viableChainIndices.push (cp.index);
             }
         });
-		return {"viableChainIndices": viableChainIndices, "resCount": resCount};
+		return {viableChainIndices: viableChainIndices, resCount: resCount};
 	},
 	
 	calculateCAtomsAllResidues: function (chainIndices) {
@@ -346,13 +365,13 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             ap1.index = chainAtomIndices1[idA];
             ap2.index = chainAtomIndices2[idB];
             if (ap1.index !== undefined && ap2.index !== undefined) {
-                var d = ap1.distanceTo (ap2);
+                var d = this.getAtomProxyDistance (ap1, ap2);
                 //console.log ("link", link, chainIndex1, chainIndex2, idA, idB, ap1.index, ap2.index, d);
                 matrix[idA] = matrix[idA] || [];
                 matrix[idA][idB] = matrix[idA][idB] || [];
                 matrix[idA][idB] = d;
             }
-        });
+        }, this);
         
         return matrix;
     },
@@ -372,7 +391,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             for (var m = 0; m < cai2length; m++) {
                 if (m !== n || diffChains) {
                     ap2.index = chainAtomIndices2[m];
-                    row.push ((ap2.index === undefined || ap1undef) ? undefined : ap1.distanceTo(ap2));
+                    row.push ((ap1undef || ap2.index === undefined) ? undefined : this.getAtomProxyDistance (ap1, ap2));
                 } else {
                     row.push(0);
                 }
@@ -380,6 +399,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         }
         
         return matrix;
+    },
+    
+    getAtomProxyDistance: function (ap1, ap2) {
+        return ap1.modelIndex === ap2.modelIndex ? ap1.distanceTo(ap2) : undefined;
     },
     
     // resIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
@@ -393,13 +416,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
         ap1.index = ci1[resIndex1];
         ap2.index = ci2[resIndex2];
         
-		/*
-        if (ap1.index === ap2.index) {
-            console.log ("same atom", chainIndex1, chainIndex2, resIndex1, resIndex2, this.get("chainCAtomIndices"));
-        }
-		*/
-
-        return ap1.distanceTo(ap2);
+        return this.getAtomProxyDistance (ap1, ap2);
     },
 	
 	getCAlphaAtomSelectionForChain: function (chainProxy) {
@@ -573,5 +590,55 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend ({
             }
         }
         return aIndex;
+    },
+    
+    getFirstAtomPerChainSelection: function (chainIndexSet) {
+        var comp = this.get("structureComp").structure;
+        var sels = [];
+        comp.eachChain (function (cp) {
+            // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
+            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index)) ) {
+				sels.push (cp.atomOffset);
+            }
+        });
+        return "@"+sels.join(",");
+    },
+    
+    // Get a NGL selection for chains listing only the chainIndices passed in as a property of chainItems
+    getChainSelection: function (chainItems) {
+        var selectionString = "all";
+        var showAll = chainItems.showAll || false;
+        var chainIndices = chainItems.chainIndices || [];
+        
+        if (!showAll) {
+            var chainList = chainIndices.map (function (chainIndex) {
+                return {chainIndex: chainIndex};
+            });
+            selectionString = this.getSelectionFromResidueList (chainList, {chainsOnly: true});
+        }
+        
+        //CLMSUI.utils.xilog ("CHAIN SELE", selectionString);
+        return selectionString;
+    },
+    
+    // Return chain indices covered by currently visible proteins
+    getShowableChains: function (showAll) {
+        var protMap = CLMS.arrayFromMapValues(this.getModel().get("clmsModel").get("participants"));
+        var prots = Array.from(protMap).filter(function(prot) { return !prot.hidden; }).map(function(prot) { return prot.id; });
+        
+        var chainIndices;
+        if (protMap.length !== prots.length && !showAll) {
+            chainIndices = prots.map (function (prot) {
+                var protChains = this.get("chainMap")[prot] || [];
+                return _.pluck (protChains, "index");
+            }, this);
+        } else {
+            chainIndices = d3.entries(this.get("chainMap")).map (function (chainEntry) {
+                return _.pluck (chainEntry.value, "index");
+            });
+        }
+        chainIndices = d3.merge (chainIndices);
+        CLMSUI.utils.xilog ("SHOW CHAINS", chainIndices);
+        return {showAll: showAll, chainIndices: chainIndices};
     },
 });
