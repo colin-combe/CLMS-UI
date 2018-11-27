@@ -542,10 +542,11 @@
         } else {
             rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
         }
-        var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+bsa_cigar2str(rst[2])+"\n";
+        var cigarString = bsa_cigar2str(rst[2]);
+        var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+cigarString+"\n";
         var fmt = bsa_cigar2gaps (target, query, rst[1], rst[2]);
         var indx = bsa_cigar2indexArrays (target, query, rst[1], rst[2]);
-        var alignment = {res: rst, fmt: fmt, str: str, indx: indx};
+        var alignment = {res: rst, fmt: fmt, str: str, indx: indx, cigar: cigarString};
         //console.log ("ALIGNMENT", alignment);
         return alignment;
     }

@@ -109,13 +109,13 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
         url: "R/blosums.json",
         parse: function (response) {
             // turn json object into array, add keys to value parts, then export just the values
-            var entries = d3.entries(response);
+            var entries = d3.entries (response);
             var values = entries.map(function (entry) {
-                entry.value.key = entry.key;
+                entry.value.id = entry.key;
                 return entry.value;
             });
 
-            console.log("response", response, values);
+            console.log ("response", response, values);
             return values;
         }
     }),

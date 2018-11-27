@@ -61,6 +61,7 @@
                 collection: CLMSUI.blosumCollInst,
                 label: "Set <a href='https://en.wikipedia.org/wiki/BLOSUM' target='_blank'>BLOSUM</a> Matrix",
                 name: "BlosumSelector",
+                optionLabelField: "id",
             });
             
             var firstModel = this.collection.models[0];

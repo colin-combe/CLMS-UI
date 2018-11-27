@@ -490,7 +490,7 @@ CLMSUI.modelUtils = {
 		}
 		
 		function updateMatchMatrix (protID, alignResults) {
-			var uniqScores = alignResults.map (function (indRes) { return indRes.bitScore; });
+			var uniqScores = alignResults.map (function (indRes) { return indRes.eScore; });
 			matchMatrix[protID] = uniqScores;
 		}
 		
@@ -581,25 +581,6 @@ CLMSUI.modelUtils = {
 		return matchMatrix;
 	},
 
-    // call with alignmentCollection as this context through .call
-    addNewSequencesToAlignment : function (clmsModel) {
-        clmsModel.get("participants").forEach (function (entry) {
-            //console.log ("entry", entry);
-            if (!entry.is_decoy) {
-                this.add ([{
-                    id: entry.id,
-                    displayLabel: entry.name.replace("_", " "),
-                    refID: "Search",
-                    refSeq: entry.sequence,
-                }]);
-                if (entry.uniprot){
-					this.addSeq (entry.id, "Canonical", entry.uniprot.sequence);
-				}
-                //~ console.log ("alignColl", this);
-            }
-        }, this);
-    },
-
     matrixPairings: function (matrix, sequenceObjs, protAlignCollection) {
         var entries = d3.entries(matrix);
         var pairings = [];
@@ -607,17 +588,15 @@ CLMSUI.modelUtils = {
 		var totalProteinLength = CLMSUI.modelUtils.totalProteinLength (proteinSeqs);
 
         for (var n = 0; n < sequenceObjs.length; n++) {
-            var max = {key: undefined, seqObj: undefined, bitScore: 100, eScore: 1e-15};
+            var max = {key: undefined, seqObj: undefined, eScore: 1e-25};
             var seqObj = sequenceObjs[n];
             entries.forEach (function (entry) {
 				var protAlignModel = protAlignCollection ? protAlignCollection.get (entry.key) : undefined;
-				var bitScore = entry.value[n];
-				var eScore = CLMSUI.modelUtils.alignmentSignificancy (bitScore, totalProteinLength, seqObj.data.length);
+				var eScore = entry.value[n];
 
                 if (eScore < max.eScore) {	// lower eScore is better
                     max.key = entry.key;
                     max.seqObj = seqObj;
-					max.bitScore = bitScore;
 					max.eScore = eScore;
                 }
             });
@@ -629,12 +608,6 @@ CLMSUI.modelUtils = {
 		
         return pairings;
     },
-	
-	
-	alignmentSignificancy: function (bitScore, dbLength, seqLength) {
-		var exp = Math.pow (2, -bitScore);
-		return dbLength * seqLength * exp;	// escore
-	},
 
     not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
         return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;

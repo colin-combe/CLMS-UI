@@ -98,9 +98,10 @@
         },
         
         initialize: function (viewOptions) {
+            this.options = $.extend ({optionLabelField: "name", label: "label", name: "name"}, viewOptions);
             var topElem = d3.select(this.el).append("DIV").attr("class", "controlBlock");
             var tpl = _.template ("<LABEL><%= label %></LABEL><SELECT name='<%= name %>'></SELECT>");
-            topElem.html (tpl ({label: viewOptions.label || "Label", name: viewOptions.name || "Name"})); 
+            topElem.html (tpl ({label: viewOptions.label, name: viewOptions.name})); 
             
             this
                 .listenTo (this.collection, "sync", function () { 
@@ -125,9 +126,9 @@
             options
                 .enter()
                 .append("option")
-                // because d will be a Backbone Model we use the .get notation to get values
-                .attr("value", function(d) { return d.get("key"); })  
-                .text (function(d) { return d.get("key"); })
+                .attr("value", function(d) { return d.cid; })  
+                // because d will be a Backbone Model we use the .get notation to get attribute values
+                .text (function(d) { return d.get(self.options.optionLabelField); })
             ;
             
             options.property ("selected", function(d) { return d.cid == self.lastSelected; });

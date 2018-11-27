@@ -56,18 +56,18 @@
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
         defaults: function() {
             return {
-                "displayLabel": "A Protein",    // label to display in collection view for this model
-                "scoreMatrix": undefined,   // slot for a BLOSUM type matrix
-                "matchScore": 6,    // match and mis should be superceded by the score matrix if present
-                "misScore": -6,
-                "gapOpenScore" : 10,
-                "gapExtendScore" : 1,
-                "gapAtStartScore": 0,   // fixed penalty for starting with a gap (semi-global alignment)
-                "refSeq": "CHATTER",
-                "refID": "Example",
-                "maxAlignWindow": 1000,
-                "sequenceAligner": CLMSUI.GotohAligner,
-                "seqCollection": new CLMSUI.BackboneModelTypes.SeqCollection (),
+                displayLabel: "A Protein",    // label to display in collection view for this model
+                scoreMatrix: undefined,   // slot for a BLOSUM type matrix
+                matchScore: 6,    // match and mis should be superceded by the score matrix if present
+                misScore: -6,
+                gapOpenScore : 10,
+                gapExtendScore : 1,
+                gapAtStartScore: 0,   // fixed penalty for starting with a gap (semi-global alignment)
+                refSeq: "CHATTER",
+                refID: "Example",
+                maxAlignWindow: 1000,
+                sequenceAligner: CLMSUI.GotohAligner,
+                seqCollection: new CLMSUI.BackboneModelTypes.SeqCollection (),
             };
         },
         
@@ -116,12 +116,11 @@
             var fullResults = compSeqArray.map (function (cSeq) {
                 var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
 				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
-                bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.refSeq.length, cSeq.length); 
+                bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length); 
 				return bioseqResults;
             }, this);
             
             //console.log ("fr", fullResults);
-            
             return fullResults;
         },
 		
@@ -134,7 +133,7 @@
         
         alignmentSignificancy: function (bitScore, dbLength, seqLength) {
             var exp = Math.pow (2, -bitScore);
-            return dbLength * seqLength * exp;	// escore
+            return (dbLength || 100) * seqLength * exp;	// escore
         },
 
 		getSettings: function () {
@@ -153,7 +152,7 @@
 			var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
 			
-			return {scoringSystem: scoringSystem, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow")};
+			return {scoringSystem: scoringSystem, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow"), totalRefSeqLength: this.collection.totalRefSeqLength};
 		},
         
         getCompSequence: function (seqName) {
@@ -267,6 +266,27 @@
                 );
             }
             return this;
+        },
+        
+        addNewProteins : function (proteinArray) {
+            proteinArray
+                .filter (function (prot) {
+                    return !prot.is_decoy;
+                })
+                .forEach (function (prot) {
+                //console.log ("entry", entry);
+                    this.add ([{
+                        id: prot.id,
+                        displayLabel: prot.name.replace("_", " "),
+                        refID: "Search",
+                        refSeq: prot.sequence,
+                    }]);
+                    if (prot.uniprot){
+                        this.addSeq (prot.id, "Canonical", prot.uniprot.sequence);
+                    }
+            }, this);
+            
+            this.totalRefSeqLength = d3.sum (this.pluck("refSeq").map(function (refSeq) { return refSeq.length; }));                          
         },
         
         bulkAlignChangeFinished: function () {
