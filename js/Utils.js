@@ -14,6 +14,7 @@ CLMSUI.utils = {
         uniprotAccession: new RegExp ("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
         pdbPattern: "[A-Za-z0-9]{4}",
         hexColour: new RegExp ("#[0-9A-F]{3}([0-9A-F]{3})?", "i"),   // matches #3-char or #6-char hex colour strings
+        validDomID: /^[^a-z]+|[^\w:.-]+/gi
     },
 
     // return comma-separated list of protein names from array of protein ids
@@ -146,7 +147,7 @@ CLMSUI.utils = {
 			// this.el is the dom element this should be getting added to, replaces targetDiv
 			var sel = d3.select(this.el);
 			if (!sel.attr("id")) {
-				sel.attr("id", this.options.id.replace(/ /g, "_"));
+				sel.attr("id", CLMSUI.utils.makeLegalDomID (this.options.id));
 			}
 
 			var labs = sel.append("label")
@@ -198,7 +199,7 @@ CLMSUI.utils = {
             // this.el is the dom element this should be getting added to, replaces targetDiv
             var sel = d3.select(this.el);
             if (!sel.attr("id")) {
-                sel.attr("id", this.options.id.replace(/ /g, "_"));
+                sel.attr("id", CLMSUI.utils.makeLegalDomID (this.options.id));
             }
 
             var labs = sel.append("label")
@@ -399,13 +400,17 @@ CLMSUI.utils = {
          }
      }),
 
+    makeLegalDomID: function (id) {
+        return id.replace (CLMSUI.utils.commonRegexes.validDomID, "");
+    },
+
     // Routine assumes on click methods are added via backbone definitions, though they could be added later with d3
     // targetDiv is a d3 select element
     // buttonData array of objects of type:
     // {class: "circRadio", label: "Alphabetical", id: "alpha", type: "radio"|"checkbox"|"button",
     // initialState: true|false, group: "sort", tooltip: "tooltipText", noBreak: true|false},
     makeBackboneButtons: function (targetDiv, baseID, buttonData) {
-        var makeID = function (d) { return baseID + d.id.replace(/(\|)/g, '_'); };
+        var makeID = function (d) { return CLMSUI.utils.makeLegalDomID (baseID + d.id); };
 
         // Don't make buttons whose id already exists
         buttonData = buttonData.filter (function (d) {

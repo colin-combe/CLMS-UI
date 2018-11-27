@@ -248,6 +248,7 @@
 			this.makeProteinPairingOptions();
 			this.updateAxisLabels();
 		});
+        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated", this.distancesChanged);
 		
         var entries = this.makeProteinPairingOptions();
         var startPairing = entries && entries.length ? entries[0].value : undefined;
@@ -319,7 +320,8 @@
         
     // New PDB File in town
     distancesChanged: function () {
-        d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns
+        // comment out, let chain visibility be controlled by distanceobj chain permissions - set in turn in 3d view assembly choice
+        //d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns - null restores default display state
         this
             .makeNewChainShowSets()
             .makeChainOptions (this.getCurrentProteinIDs())
@@ -367,9 +369,12 @@
         }
         return this;
     },
-        
+    
+    // chain may show if checked in dropdown and if allowed by chainset in distancesobj (i.e. not cutoff by assembly choice)
     chainMayShow: function (dropdownIndex, chainIndex) {
-        return this.showChains[dropdownIndex].has(chainIndex);    
+        var distanceObj = this.model.get("clmsModel").get("distancesObj");
+        var allowedChains = distanceObj ? distanceObj.permittedChainIndicesSet : null;
+        return this.showChains[dropdownIndex].has(chainIndex) && (allowedChains ? allowedChains.has(chainIndex) : true);    
     },
         
     setChainShowState: function (dropdownIndex, chainIndex, show) {
@@ -392,13 +397,19 @@
             ;
         };
 
+        var distanceObj = self.model.get("clmsModel").get("distancesObj");
+        var allowedChains = distanceObj ? distanceObj.permittedChainIndicesSet : null;
         var axisOrientations = ["X", "Y"];
         this.chainDropdowns.forEach (function (dropdown, i) {
-            var distanceObj = self.model.get("clmsModel").get("distancesObj");
+            
             if (distanceObj) {
                 var pid = proteinIDs[i].proteinID;
                 var chainMap = distanceObj.chainMap;
                 var chains = chainMap[pid] || [];
+                chains = chains.filter (function (chainInfo) {
+                    return allowedChains.has (chainInfo.index);
+                });
+                
                 dropdown.updateTitle (axisOrientations[i]+": "+proteinIDs[i].labelText+" Chains ▼");
                 
                 // make button data for this protein and dropdown combination
@@ -622,29 +633,13 @@
 	// draw white blocks in background to demarcate areas covered by active pdb chains
 	renderChainBlocks: function (alignInfo) {
 		
-		// Find continuous blocks in chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
-		var splitChain = function (alignInfo) {
-			var seq = this.model.get("alignColl").get(alignInfo.proteinID).getCompSequence(alignInfo.alignID);
-			var index = seq.convertToRef;
-			var blocks = [];
-			var start = index[0];
-			for (var n = 0; n < index.length - 1; n++) {
-				if ((index[n+1] - index[n]) > 1) {  // if non-contiguous numbers
-					blocks.push ({first: start + 1, last: index[n] + 1});
-					start = index[n + 1];
-				}
-			}
-			blocks.push ({first: start + 1, last: _.last(index) + 1});
-			return blocks;
-		};
-		
 		var seqLengths = this.getSeqLengthData();
         var seqLengthB = seqLengths.lengthB - 1;   
 
-		// Work out blocks for each chain, using routine above
+		// Find continuous blocks for each chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
 		var blockMap = {};
 		d3.merge(alignInfo).forEach (function (alignDatum) {
-			blockMap[alignDatum.alignID] = splitChain.call (this, alignDatum);    
+			blockMap[alignDatum.alignID] = this.model.get("alignColl").get(alignDatum.proteinID).blockify (alignDatum.alignID);
 		}, this);
 		//console.log ("blockMap", blockMap);
 
@@ -652,6 +647,8 @@
 		var blockAreas = this.zoomGroup.select(".blockAreas");
 		var blockSel = blockAreas.selectAll(".chainArea");
 		blockSel.remove();
+        
+        //console.log ("BLOX", blockMap);
 		
 		alignInfo[0].forEach (function (alignInfo1) {
 			var blocks1 = blockMap[alignInfo1.alignID];
@@ -662,10 +659,10 @@
 				blocks1.forEach (function (brange1) {
 					blocks2.forEach (function (brange2) {
 						blockAreas.append ("rect")
-							.attr ("x", brange1.first - 1)
-							.attr ("y", seqLengthB - (brange2.last - 1))
-							.attr ("width", brange1.last - brange1.first + 1)
-							.attr ("height", brange2.last - brange2.first + 1)
+							.attr ("x", brange1.begin - 1)
+							.attr ("y", seqLengthB - (brange2.end - 1))
+							.attr ("width", brange1.end - brange1.begin + 1)
+							.attr ("height", brange2.end - brange2.begin + 1)
 							.attr ("class", "chainArea")
 							.style ("fill", this.options.chainBackground)
 						;

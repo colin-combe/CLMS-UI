@@ -18,7 +18,8 @@ DIV.tableWrapper TABLE {
 DIV.tableWrapper DIV.seqDiv {
      /* always show scrollbar even if not needed so content underneath doesn't jump (which it does with auto) */
     overflow-x: scroll;
-    overflow-y: hidden;
+    overflow-y: auto;
+    max-height: 25em;
 	border-left: 8em solid #eee;
 }
 
