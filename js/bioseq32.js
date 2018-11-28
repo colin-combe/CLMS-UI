@@ -558,18 +558,13 @@ function arrayMax(arr) {
     return max;
 }
 
-function align(query, target, myScores, isLocal, isSemiLocal, windowSize) {
+function align (query, target, myScores, isLocal, isSemiLocal, windowSize) {
     var target = target || 'ATAGCTAGCTAGCATAAGC';
-    var query = query || 'AGCTAcCGCAT';
+    var query  = query || 'AGCTAcCGCAT';
     var isLocal = isLocal || false;
-    var defaults = {
-        match: 1,
-        mis: -1,
-        gapOpen: -1,
-        gapExt: -1
-    };
+    var defaults = {match: 1, mis: -1, gapOpen: -1, gapExt: -1};
     var scores = myScores || {};
-    Object.keys(scores).forEach(function(key) {
+    Object.keys(scores).forEach (function (key) {
         defaults[key] = scores[key];
     });
     scores = defaults;
@@ -577,28 +572,22 @@ function align(query, target, myScores, isLocal, isSemiLocal, windowSize) {
     var matrix = scores.matrix || Blosum80Map;
 
     var rst;
-    var table = matrix ? makeAlphabetMap(matrix.alphabetInOrder) : aminos;
+    var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
     if (target === query) {
-        var maxValues = matrix.scoreMatrix.map(function(row) {
-            return arrayMax(row);
-        });
+        var maxValues = matrix.scoreMatrix.map (function (row) { return arrayMax (row); });
         var score = 0;
         for (var n = 0; n < target.length; n++) {
             score += maxValues[table[target.charCodeAt(n)]];
         }
-        rst = [score, 0, [target.length << 4]]; // completely equal
+        rst = [score, 0, [target.length << 4]];  // completely equal
     } else {
-        rst = bsa_align(isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match, scores.mis], [scores.gapOpen, scores.gapExt], windowSize, table);
+        rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
     }
-    var str = 'score=' + rst[0] + '; pos=' + rst[1] + '; cigar=' + bsa_cigar2str(rst[2]) + "\n";
-    var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
-    var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);
-    var alignment = {
-        res: rst,
-        fmt: fmt,
-        str: str,
-        indx: indx
-    };
+    var cigarString = bsa_cigar2str(rst[2]);
+    var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+cigarString+"\n";
+    var fmt = bsa_cigar2gaps (target, query, rst[1], rst[2]);
+    var indx = bsa_cigar2indexArrays (target, query, rst[1], rst[2]);
+    var alignment = {res: rst, fmt: fmt, str: str, indx: indx, cigar: cigarString};
     //console.log ("ALIGNMENT", alignment);
     return alignment;
 }
