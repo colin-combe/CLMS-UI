@@ -52,9 +52,10 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 			
 			resetFilter: function () {
 				this
-					.clear ({silent:true})
-					.set (this.resetValues)
-				;
+                    .clear({
+                        silent: true
+                    })
+                    .set(this.resetValues);
 			},
 
             processTextFilters: function () {
@@ -71,7 +72,10 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 				
 				var pepSeq = this.get("pepSeq");
 				var splitPepSeq = pepSeq.split("-").map (function (part) {
-					return {upper: part.toUpperCase(), lower: part.toLowerCase()}
+                    return {
+                        upper: part.toUpperCase(),
+                        lower: part.toLowerCase()
+                    }
 				});
 				this.preprocessedInputText.set("pepSeq", splitPepSeq);
             },
@@ -103,9 +107,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var showHomomultimericLinks = this.get("homomultimericLinks");
                 // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
 
-                    if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer)
-                        || (match.couldBelongToBetweenLink == true && showBetweenLinks)
-                        || (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
+                if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer) ||
+                        (match.couldBelongToBetweenLink == true && showBetweenLinks) ||
+                        (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
                         return false;
                     }
 
@@ -140,7 +144,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             scoreFilter: function (match) {
                 var msc = this.get("matchScoreCutoff");
                 //defend against not having a score (from a CSV file without such a column)
-                if (!match.score()) {return true;}
+                if (!match.score()) {
+                    return true;
+                }
                 return (msc[0] == undefined || match.score() >= msc[0]) && (msc[1] == undefined || match.score() <= msc[1]);	// == undefined cos shared links get undefined json'ified to null
             },
 
@@ -210,57 +216,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
                 // return true if no string to match against
                 return true;
-
-                /*
-                if (searchString) {
-                    var searchStringLower = searchString.toLowerCase();
-
-
-                    var nameStrings = searchString.split('-');
-                    var nameStringCount = nameStrings.length;
-
-                    if (nameStringCount ==1) {
-                        for (var mp = 0; mp < matchedPepCount; mp++) {
-                            var pids = matchedPeptides[mp].prt;
-                            var pidCount = pids.length;
-                            for (var p = 0; p < pidCount; p++ ) {
-
-                                var interactor = participants.get(pids[p]);
-                                var toSearch = interactor.name + " " + interactor.description;
-                                if (toSearch.toLowerCase().indexOf(searchStringLower) != -1) {
-                                    return true;
-                                }
-
-                            }
-                        }
-                        return false;
-                    }
-
-                    var used = [];
-                    for (var ns = 0; ns < nameStringCount; ns++) {
-                        var nameString  = nameStrings[ns];
-                        if (nameString){
-                            var found = false;
-                            for (var i = 0; i < matchedPepCount; i++){
-                                var matchedPeptide = matchedPeptides[i];
-                                if (found === false && typeof used[i] == 'undefined'){
-                                    var pids = matchedPeptide.prt;
-                                    var pidCount = pids.length;
-                                    for (var p = 0; p < pidCount; p++ ) {
-                                        var interactor = participants.get(pids[p]);
-                                        var toSearch = interactor.name + " " + interactor.description;
-                                        if (toSearch.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
-                                            found = true;
-                                            used[i] = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (found === false) return false;
-                        }
-                    }
-                }
-                */
             },
 
             navigationFilter: function (match) {

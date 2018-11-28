@@ -456,10 +456,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 			},
 
 			fromSequences: function (sequences, categoryCount) {
-				var max = d3.max (sequences, function (seq) { return seq.length; });
+                var max = d3.max(sequences, function(seq) {
+                    return seq.length;
+                });
 				var maxRange = d3.range (0, max);
-				var baseCounts = maxRange.map (function() { return {}; });
-				var seqCounts = maxRange.map (function() { return 0; });
+                var baseCounts = maxRange.map(function() {
+                    return {};
+                });
+                var seqCounts = maxRange.map(function() {
+                    return 0;
+                });
 
 				for (var i = 0; i < max; i++) {
 					sequences.forEach (function (seq) {
@@ -515,7 +521,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
             // turn json object into array, add keys to value parts, then export just the values
             var entries = d3.entries(response);
             var values = entries.map(function (entry) {
-                entry.value.key = entry.key;
+                entry.value.id = entry.key;
                 return entry.value;
             });
 
@@ -527,7 +533,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
 
 
 CLMS.model.CrossLink.prototype.getMeta = function (metaField) {
-	if (arguments.length === 0) { return this.meta; }
+    if (arguments.length === 0) {
+        return this.meta;
+    }
 	return this.meta ? this.meta[metaField] : undefined;
 };
 

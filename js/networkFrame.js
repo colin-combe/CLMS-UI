@@ -26,7 +26,7 @@ _.extend(CLMSUI.vent, Backbone.Events);
 var allDataLoaded = _.after(3, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
-    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.models[3]);
+    CLMSUI.blosumCollInst.trigger ("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
 
     //init annotation types
     var annotationTypes = [];
@@ -102,6 +102,7 @@ var allDataLoaded = _.after(3, function() {
 
 CLMSUI.init = CLMSUI.init || {};
 
+// for qunit testing
 CLMSUI.init.pretendLoad = function() {
     allDataLoaded();
 };
@@ -113,7 +114,7 @@ CLMSUI.init.models = function(options) {
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call(this, clmsModel);
+        this.addNewProteins (CLMS.arrayFromMapValues (clmsModel.get("participants")));
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
@@ -161,7 +162,7 @@ CLMSUI.init.models = function(options) {
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
     alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call(this, CLMSUI.compositeModelInst.get("clmsModel"));
+        this.addNewProteins (CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("participants")));
         // this triggers an event to say loads has changed in the alignment collection
         // more efficient to listen to that then redraw/recalc for every seq addition
         this.bulkAlignChangeFinished();
@@ -365,8 +366,12 @@ CLMSUI.init.views = function() {
         },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend({labelFirst: false}, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView({myOptions: options});
+        var options = $.extend({
+            labelFirst: false
+        }, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView({
+            myOptions: options
+        });
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
@@ -739,8 +744,7 @@ CLMSUI.init.viewsEssential = function(options) {
                         window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
                     },
                     tooltip: "About Xi View (opens external web page)"
-                },
-            ],
+            }, ],
             tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
@@ -841,33 +845,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
-    // moved to models()
-    /*
-    // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
-        if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
-            sequences.forEach (function (entry) {
-                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
-            }, this);
-            // this triggers an event to say loads has changed in the alignment collection
-            // more efficient to listen to that then redraw/recalc for every seq addition
-            this.bulkAlignChangeFinished ();
-
-            console.log ("3D sequences poked to collection", this);
-        }
-    });
-
-    // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
-    // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, CLMSUI.compositeModelInst.get("clmsModel"));
-        // this triggers an event to say loads has changed in the alignment collection
-        // more efficient to listen to that then redraw/recalc for every seq addition
-        this.bulkAlignChangeFinished ();
-
-        console.log ("CSV sequences poked to collection", this);
-    });
-	*/
 
     new CLMSUI.DistogramBB({
         el: "#distoPanel",

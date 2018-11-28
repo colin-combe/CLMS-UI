@@ -17,27 +17,71 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         "click input.thresholdToggle": "thresholdToggleFilter",
         "keyup input.subsetNumberFilter": "subsetNumberFilter",
         "mouseup input.subsetNumberFilter": "subsetNumberFilter",
-		"dblclick button.filterReset": function() { this.model.resetFilter(); },
+        "dblclick button.filterReset": function() {
+            this.model.resetFilter();
+        },
     },
 
     initialize: function (viewOptions) {
         var defaultOptions = {
-            modes: [
-                {"label":"Manual", "id":"manualMode", tooltip: "Filter using cross-link metadata"},
-                {"label":"FDR", "id":"fdrMode", tooltip: "Filter using a False Discovery Rate cutoff"},
+            modes: [{
+                    "label": "Manual",
+                    "id": "manualMode",
+                    tooltip: "Filter using cross-link metadata"
+                },
+                {
+                    "label": "FDR",
+                    "id": "fdrMode",
+                    tooltip: "Filter using a False Discovery Rate cutoff"
+                },
             ],
-            subsetToggles: [
-                {"label":"Linear", "id":"linears", tooltip: "Show linear peptides"},
-                {"label":"Cross-links", "id":"crosslinks", tooltip: "Show cross-links"},
-                {"label":"Ambig.", "id":"ambig", tooltip: "Show ambiguous cross-links"},
-                {"label":"Between", "id":"betweenLinks", tooltip: "Show cross-links between different proteins"},
-                {"label":"Self", "id":"selfLinks", tooltip: "Show cross-links between the same protein"},
-                {"label":"Homomult.", "id":"homomultimericLinks", tooltip: "Show cross-links with overlapping linked peptides "},
+            subsetToggles: [{
+                    "label": "Linear",
+                    "id": "linears",
+                    tooltip: "Show linear peptides"
+                },
+                {
+                    "label": "Cross-links",
+                    "id": "crosslinks",
+                    tooltip: "Show cross-links"
+                },
+                {
+                    "label": "Ambig.",
+                    "id": "ambig",
+                    tooltip: "Show ambiguous cross-links"
+                },
+                {
+                    "label": "Between",
+                    "id": "betweenLinks",
+                    tooltip: "Show cross-links between different proteins"
+                },
+                {
+                    "label": "Self",
+                    "id": "selfLinks",
+                    tooltip: "Show cross-links between the same protein"
+                },
+                {
+                    "label": "Homomult.",
+                    "id": "homomultimericLinks",
+                    tooltip: "Show cross-links with overlapping linked peptides "
+                },
             ],
-            subsetNumberFilters: [
-                {"label":"AA apart", "id":"aaApart", min: 0, max: 999, tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"},
-                {"label":"Pep. length", "id":"pepLength", min: 1, max: 99, tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4"},
+            subsetNumberFilters: [{
+                    "label": "AA apart",
+                    "id": "aaApart",
+                    min: 0,
+                    max: 999,
+                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"
+                },
+                {
+                    "label": "Pep. length",
+                    "id": "pepLength",
+                    min: 1,
+                    max: 99,
+                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4"
+                },
             ],
+<<<<<<< HEAD
             validationStatusToggles: [
                 {"label":"All", "id":"thresholdAll"},
                 {"label":"Pass", "id":"thresholdPass"},
@@ -45,17 +89,81 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             ],
             decoysToggle: [
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},
+=======
+            validationStatusToggles: [{
+                    "label": "A",
+                    "id": "A"
+                },
+                {
+                    "label": "B",
+                    "id": "B"
+                },
+                {
+                    "label": "C",
+                    "id": "C"
+                },
+                {
+                    "label": "?",
+                    "id": "Q"
+                },
+                {
+                    "label": "Auto",
+                    "id": "AUTO",
+                    tooltip: "Show autovalidated cross-links"
+                },
+                {
+                    "label": "Unval.",
+                    "id": "unval",
+                    tooltip: "Show unvalidated cross-links"
+                },
+                {
+                    "label": "Decoy",
+                    "id": "decoys",
+                    tooltip: "Show decoy cross-links"
+                },
+>>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
             ],
-            navigationFilters: [
-                {"label":"Peptide", "id":"pepSeq", "chars":7, tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE", pattern: "[A-Za-z]+-?[A-Za-z]*"},
-                {"label":"Protein", "id":"protNames", "chars":7, tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"},
-                {"label":"Charge", "id":"charge", "chars":3, tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6", pattern:"\\d+-?\\d*"},
-                {"label":"Run", "id":"runName","chars":5, tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"},
-                {"label":"Scan", "id":"scanNumber", "chars":5, tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565", pattern: "\\d*"},
+            navigationFilters: [{
+                    "label": "Peptide",
+                    "id": "pepSeq",
+                    "chars": 7,
+                    tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
+                    pattern: "[A-Za-z]+-?[A-Za-z]*"
+                },
+                {
+                    "label": "Protein",
+                    "id": "protNames",
+                    "chars": 7,
+                    tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                },
+                {
+                    "label": "Charge",
+                    "id": "charge",
+                    "chars": 3,
+                    tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6",
+                    pattern: "\\d+-?\\d*"
+                },
+                {
+                    "label": "Run",
+                    "id": "runName",
+                    "chars": 5,
+                    tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"
+                },
+                {
+                    "label": "Scan",
+                    "id": "scanNumber",
+                    "chars": 5,
+                    tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565",
+                    pattern: "\\d*"
+                },
             ],
-            navigationNumberFilters: [
-                {"label":"Residue Pairs per PPI", "id":"urpPpi", min: 1, max: 99, tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"}
-            ]
+            navigationNumberFilters: [{
+                "label": "Residue Pairs per PPI",
+                "id": "urpPpi",
+                min: 1,
+                max: 99,
+                tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"
+            }]
         };
         this.options = _.extend (defaultOptions, viewOptions.myOptions || {});
 
@@ -71,8 +179,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			resetDivSel.append("button")
 				.attr("class", "filterReset btn btn-1a btn-tight")
 				.attr("title", "Double-click to reset filter to originally set values")
-				.text("Reset")
-			;
+                .text("Reset");
 		}
 
 
@@ -82,19 +189,27 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			//~ modeDivSel.append("span").attr("class", "sideOn").text("MODE");
 
 			var modeElems = modeDivSel.selectAll("div.modeToggles")
-				.data(this.options.modes, function(d) { return d.id; })
+                .data(this.options.modes, function(d) {
+                    return d.id;
+                })
 				.enter()
 				.append ("div")
 				.attr ("class", "toggles")
-				.attr("id", function(d) { return "toggles_" + d.id; })
-				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-				.append ("label")
-			;
+                .attr("id", function(d) {
+                    return "toggles_" + d.id;
+                })
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label");
 			modeElems.append ("span")
-				.text (function(d) { return d.label; })
-			;
+                .text(function(d) {
+                    return d.label;
+                });
 			modeElems.append ("input")
-				.attr ("id", function(d) { return d.id; })
+                .attr("id", function(d) {
+                    return d.id;
+                })
 				.attr ("class", "modeToggle")
 				.attr ("name", "modeSelect")
 				.attr ("type", "radio")
@@ -107,42 +222,65 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			var dataSubsetDivSel = mainDivSel.append("div").attr ("class", "filterControlGroup");
 
 			var subsetToggles = dataSubsetDivSel.selectAll("div.subsetToggles")
-				.data(this.options.subsetToggles, function(d) { return d.id; })
+                .data(this.options.subsetToggles, function(d) {
+                    return d.id;
+                })
 				.enter()
 				.append ("div")
 				.attr ("class", "toggles subsetToggles")
-				.attr("id", function(d) { return "toggles_" + d.id; })
-				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-				.append ("label")
-			;
+                .attr("id", function(d) {
+                    return "toggles_" + d.id;
+                })
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label");
 			subsetToggles.append ("span")
-				.text (function(d) { return d.label; })
-			;
+                .text(function(d) {
+                    return d.label;
+                });
 			subsetToggles.append ("input")
-				.attr ("id", function(d) { return d.id; })
+                .attr("id", function(d) {
+                    return d.id;
+                })
 				.attr ("class", "subsetToggleFilterToggle")
 				.attr ("type", "checkbox")
 				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 
 			var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
-				.data(this.options.subsetNumberFilters, function(d) { return d.id; })
+                .data(this.options.subsetNumberFilters, function(d) {
+                    return d.id;
+                })
 				.enter()
 				.append ("div")
 				.attr ("class", "toggles subsetNumberFilterDiv")
 				//.attr("id", function(d) { return "toggles_" + d.id; }) // not a toggle, change id?
-				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-				.append ("label")
-			;
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label");
 			subsetNumberFilters.append ("span")
-				.text (function(d) { return d.label; })
-			;
+                .text(function(d) {
+                    return d.label;
+                });
 
 			subsetNumberFilters.append("p").classed("cutoffLabel",true).append("span").html("&ge;");
 
 			subsetNumberFilters.append ("input")
-				.attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
-							min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+                .attr({
+                    id: function(d) {
+                        return d.id;
+                    },
+                    class: "subsetNumberFilter",
+                    type: "number",
+                    min: function(d) {
+                        return d.min;
+                    },
+                    max: function(d) {
+                        return d.max;
+                    }
+                })
 				//.property ("value", function(d) { return self.model.get(d.id); })
 			;
 		}
@@ -153,24 +291,40 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 									.attr ("class", "filterControlGroup")
 									.attr ("id", "validationStatus");
 			var validationElems = validationDivSel.selectAll("div.validationToggles")
-				.data(this.options.validationStatusToggles, function(d) { return d.id; })
+                .data(this.options.validationStatusToggles, function(d) {
+                    return d.id;
+                })
 				.enter()
 				.append ("div")
 				.attr ("class", "toggles validationToggles")
-				.attr("id", function(d) { return "toggles_" + d.id; })
-				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-				.append ("label")
-			;
+                .attr("id", function(d) {
+                    return "toggles_" + d.id;
+                })
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label");
 
 			validationElems.append ("span")
-				.text (function(d) { return d.label; })
-			;
+                .text(function(d) {
+                    return d.label;
+                });
 
 			validationElems.append ("input")
+<<<<<<< HEAD
 				.attr ("id", function(d) { return d.id; })
 				.attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
 				.attr ("type", "radio")
 				.attr ("name", "valStatus")
+=======
+                .attr("id", function(d) {
+                    return d.id;
+                })
+                .attr("class", function(d) {
+                    return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle";
+                })
+                .attr("type", "checkbox")
+>>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
 				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 		}
@@ -185,7 +339,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			var sliderSection = cutoffDivSel.append ("div").attr("class", "scoreSlider");
 			// Can validate template output at http://validator.w3.org/#validate_by_input+with_options
 			var tpl = _.template ("<div><p>Match score</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>Match score</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div>");
-			sliderSection.html (tpl ({eid: self.el.id+"SliderHolder"}));
+            sliderSection.html(tpl({
+                eid: self.el.id + "SliderHolder"
+            }));
 			// sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
 			sliderSection.selectAll("p.cutoffLabel")
 				.attr ("title", function () {
@@ -213,16 +369,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 					// take new values, along with score extents, sort them and discard extremes for new cutoff settings
 					var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]),
 								   isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val,
-								   scoreExtent[0], scoreExtent[1]]
-						.filter (function (v) { return v !== undefined; })
-						.sort(function(a,b) { return a - b;})
-					;
+                            scoreExtent[0], scoreExtent[1]
+                        ]
+                        .filter(function(v) {
+                            return v !== undefined;
+                        })
+                        .sort(function(a, b) {
+                            return a - b;
+                        });
 					//console.log ("newVals", newVals);
 					newVals = newVals.slice ((newVals.length / 2) - 1, (newVals.length / 2) + 1);
 
 					self.model.set("matchScoreCutoff", newVals);
-				})
-			;
+                });
 		}
 
 
@@ -230,62 +389,85 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 			//following may not be best practice, its here to get the placeholder divs in the right place in the filter div (the grey bar at bottom)
 			mainDivSel.append ("div")
 				.attr("class", "filterControlGroup")
-				.attr("id", "fdrPanel")
-			;
+                .attr("id", "fdrPanel");
 		}
 
 
 		function initNavigationGroup () {
 			var navDivSel = mainDivSel.append ("div")
 				.attr("class", "filterControlGroup")
-				.attr("id", "navFilters")
-			;
+                .attr("id", "navFilters");
 			//~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
 
 			var textFilters = navDivSel.selectAll("div.textFilters")
-				.data(this.options.navigationFilters, function(d) { return d.id; })
+                .data(this.options.navigationFilters, function(d) {
+                    return d.id;
+                })
 				.enter()
 				.append("div")
 				.attr("class", "textFilters")
-				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-				.append ("label")
-			;
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label");
 			textFilters.append("span")
-				.text (function(d) { return d.label; })
-			;
+                .text(function(d) {
+                    return d.label;
+                });
 			textFilters.append ("input")
-				.attr ("id", function(d) { return d.id; })
+                .attr("id", function(d) {
+                    return d.id;
+                })
 				.attr ("class", "filterTypeText")
 				.attr ("type", "textbox")
-				.attr ("size", function(d) { return d.chars; })
+                .attr("size", function(d) {
+                    return d.chars;
+                })
 				//.property ("value", function(d) { return self.model.get(d.id); })
-				.filter(function(d) { return d.pattern; })
-					.attr ("pattern", function(d) { return d.pattern; })
-			;
+                .filter(function(d) {
+                    return d.pattern;
+                })
+                .attr("pattern", function(d) {
+                    return d.pattern;
+                });
 		}
 
 
 		function initNavigationGroup2 () {
 			var navNumberDivSel = mainDivSel.append ("div")
 				.attr("class", "filterControlGroup")
-				.attr("id", "navNumberFilters")
-			;
+                .attr("id", "navNumberFilters");
 			var navigationNumberFilters = navNumberDivSel.selectAll("div.navNumberFilterDiv")
-				.data(this.options.navigationNumberFilters, function(d) { return d.id; })
+                .data(this.options.navigationNumberFilters, function(d) {
+                    return d.id;
+                })
 				.enter()
 				.append ("div")
 				.attr ("class", "navNumberFilterDiv")
-				.attr ("title", function(d) { return d.tooltip ? d.tooltip : undefined; })
-				.append ("label")
-			;
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label");
 			navigationNumberFilters.append ("span")
 				.style("display", "block")
-				.text (function(d) { return d.label; })
-			;
+                .text(function(d) {
+                    return d.label;
+                });
 			navigationNumberFilters.append("p").classed("cutoffLabel",true).append("span").html ("&ge;");
 			navigationNumberFilters.append ("input")
-				.attr ({id: function(d) { return d.id; }, class: "subsetNumberFilter", type: "number",
-							min: function(d) { return d.min; }, max: function(d) { return d.max; }})
+                .attr({
+                    id: function(d) {
+                        return d.id;
+                    },
+                    class: "subsetNumberFilter",
+                    type: "number",
+                    min: function(d) {
+                        return d.min;
+                    },
+                    max: function(d) {
+                        return d.max;
+                    }
+                })
 				//.property ("value", function(d) { return self.model.get(d.id); })
 			;
 		}
@@ -293,8 +475,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		function addScrollRightButton () {
 			var fixedBox = mainDivSel
 				.append ("div")
-				.attr ("class", "fixedBottomRight")
-			;
+                .attr("class", "fixedBottomRight");
 
 			var button = fixedBox
 				.append("button")
@@ -306,12 +487,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 					mainDivSel.style("right", rightSet ? "auto" : "20px");
 
 					d3.select(this).select("i").attr("class", rightSet ? "fa fa-angle-double-right" : "fa fa-angle-double-left");
-				})
-			;
+                });
 
 			button.append("i")
-				.attr("class", "fa fa-angle-double-right")
-			;
+                .attr("class", "fa fa-angle-double-right");
 		}
 
 		initResetGroup.call (this);
@@ -327,12 +506,15 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
             var entries = d3.entries(this.options.hide);
-            var hideEntries = entries.filter (function (entry) { return entry.value; });
+            var hideEntries = entries.filter(function(entry) {
+                return entry.value;
+            });
             var hideEntrySet = d3.set (_.pluck (hideEntries, "key"));
             mainDivSel.selectAll(".subsetToggles,.validationToggles,.textFilters")
-                .filter (function(d) { return hideEntrySet.has (d.id); })
-                .style ("display", "none")
-            ;
+                .filter(function(d) {
+                    return hideEntrySet.has(d.id);
+                })
+                .style("display", "none");
         }
 
         this.displayEventName = viewOptions.displayEventName;
@@ -346,7 +528,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         mainDivSel.selectAll(".filterControlGroup").classed("noBreak", true);
 
-		this.model.trigger ("change", this.model, {showHide: true});	// Forces first call of setInputValuesFromModel
+        this.model.trigger("change", this.model, {
+            showHide: true
+        }); // Forces first call of setInputValuesFromModel
 		this.modeChanged();
     },
 
@@ -410,7 +594,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     modeChanged: function () {
 		var fdrMode = d3.select("#fdrMode").node().checked;
-		this.model.set ({fdrMode: fdrMode, manualMode: !fdrMode});
+        this.model.set({
+            fdrMode: fdrMode,
+            manualMode: !fdrMode
+        });
     },
 
 	setInputValuesFromModel: function (model, options) {
@@ -420,12 +607,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 		var mainDiv = d3.select(this.el);
 
 		mainDiv.selectAll("input.filterTypeText, input.subsetNumberFilter")
-			.property ("value", function(d) { return model.get(d.id); })
-		;
+            .property("value", function(d) {
+                return model.get(d.id);
+            });
 
 		mainDiv.selectAll("input.subsetToggleFilterToggle, input.modeToggle, input.filterTypeToggle")
-			.property ("checked", function (d) { return Boolean (model.get(d.id)); })
-		;
+            .property("checked", function(d) {
+                return Boolean(model.get(d.id));
+            });
 
 		// hide parts of the filter panel if mode (manual/fdr) setting has changed, or if setInputValuesFromModelcalled directly (change is empty)
 		if (options.showHide || model.changed.manualMode !== undefined || model.changed.fdrMode !== undefined) {
@@ -452,7 +641,9 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
         chartDiv.html ("<div class='fdrCalculation'><p>Basic link-level FDR calculation</p><span></span></div>");
         var self = this;
         var options = [0.01, 0.05, 0.1, 0.2, 0.5/*, undefined*/];
-        var labelFunc = function (d) { return d === undefined ? "Off" : d3.format("%")(d); };
+        var labelFunc = function(d) {
+            return d === undefined ? "Off" : d3.format("%")(d);
+        };
 
         chartDiv.select("span").selectAll("label.fixed").data(options)
             .enter()
@@ -463,12 +654,13 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
                 .text(labelFunc)
                 .append("input")
                     .attr("type", "radio")
-                    .attr("value", function(d) { return d; })
+            .attr("value", function(d) {
+                return d;
+            })
                     .attr("name", "fdrPercent")
                     .on ("click", function(d) {
                         self.model.set("fdrThreshold", d);
-                    })
-        ;
+            });
 
         chartDiv.select("span")
             .append("label")
@@ -484,8 +676,7 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
 					.attr ("class", "fdrValue")
                     .on ("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                         self.model.set("fdrThreshold", (+this.value) / 100);
-                    })
-        ;
+            });
 
 		this.listenTo (this.model, "change:fdrThreshold", this.setInputValuesFromModel);
 		this.model.trigger ("change:fdrThreshold", this.model);
@@ -498,8 +689,12 @@ CLMSUI.FDRViewBB = Backbone.View.extend  ({
 		var fdrThreshold = model.get("fdrThreshold");
 		var d3el = d3.select(this.el);
 		d3el.style ("display", model.get("fdrMode") ? null : "none");
-		d3el.selectAll("input[name='fdrPercent']").property("checked", function(d) { return d === fdrThreshold; });
-		d3el.selectAll(".fdrValue").property("value", function() { return fdrThreshold * 100; });
+        d3el.selectAll("input[name='fdrPercent']").property("checked", function(d) {
+            return d === fdrThreshold;
+        });
+        d3el.selectAll(".fdrValue").property("value", function() {
+            return fdrThreshold * 100;
+        });
 	}
 });
 
@@ -512,8 +707,7 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         this.allTemplate = _.template (targetTemplateString+" ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)");
 
         this.listenTo (this.model, "filteringDone", this.render)
-            .render()
-        ;
+            .render();
     },
 
     render: function () {
@@ -540,18 +734,21 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
         d3.select(this.el).selectAll("p").data(fdrTypes)
             .enter()
             .append("p")
-            .attr("class", function(d) { return d+"Elem"; })
-        ;
+            .attr("class", function(d) {
+                return d + "Elem";
+            });
 
         this.pctFormat = d3.format("%");
 
         this.listenTo (this.model, "filteringDone", this.render)
-            .render()
-        ;
+            .render();
     },
 
     render: function () {
-        var fdrTypes = {"interFdrCut": "Between", "intraFdrCut": "Within"};
+        var fdrTypes = {
+            "interFdrCut": "Between",
+            "intraFdrCut": "Within"
+        };
 
         var filterModel = this.model.get("filterModel");
         var threshold = filterModel.get("fdrThreshold");
@@ -579,8 +776,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
             // Hide between protein score if only 1 real protein (will always be an undefined score)
             .style ("display", function(d) {
                 return fdrMode && decoysPresent && d === "interFdrCut" && singleTargetProtein ? "none" : null;
-            })
-        ;
+            });
 
         return this;
     },

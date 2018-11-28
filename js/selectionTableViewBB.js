@@ -128,30 +128,70 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return d.matchedPeptides[0].prt.length *
                     ((d.matchedPeptides[1].prt.length != 0) ? d.matchedPeptides[1].prt.length : 1);
             },
-            "protein1": function (d) { return CLMSUI.utils.proteinConcat (d, 0, self.model.get("clmsModel")); },
-            "protein2": function (d) { return CLMSUI.utils.proteinConcat (d, 1, self.model.get("clmsModel")); },
-            "runName": function (d) { return d.runName(); },
-            "group": function (d) { return d.group(); },
-			"pos1": function (d) { return CLMSUI.utils.fullPosConcat (d, 0); },
-			"pos2": function (d) { return CLMSUI.utils.fullPosConcat (d, 1); },
-            "pepPos1": function (d) { return CLMSUI.utils.pepPosConcat (d, 0); },
-            "pepPos2": function (d) { return CLMSUI.utils.pepPosConcat (d, 1); },
-            "pepSeq1raw": function (d) { return d.matchedPeptides[0].seq_mods; },
+            "protein1": function(d) {
+                return CLMSUI.utils.proteinConcat(d, 0, self.model.get("clmsModel"));
+            },
+            "protein2": function(d) {
+                return CLMSUI.utils.proteinConcat(d, 1, self.model.get("clmsModel"));
+            },
+            "runName": function(d) {
+                return d.runName();
+            },
+            "group": function(d) {
+                return d.group();
+            },
+            "pos1": function(d) {
+                return CLMSUI.utils.fullPosConcat(d, 0);
+            },
+            "pos2": function(d) {
+                return CLMSUI.utils.fullPosConcat(d, 1);
+            },
+            "pepPos1": function(d) {
+                return CLMSUI.utils.pepPosConcat(d, 0);
+            },
+            "pepPos2": function(d) {
+                return CLMSUI.utils.pepPosConcat(d, 1);
+            },
+            "pepSeq1raw": function(d) {
+                return d.matchedPeptides[0].seq_mods;
+            },
             "pepSeq2raw": function (d) {
                 var dmp1 = d.matchedPeptides[1];
                 return dmp1 ? dmp1.seq_mods : "";
             },
-            "linkPos1": function (d) { return d.linkPos1; },
-            "linkPos2": function (d) { return d.linkPos2; },
-            "score": function (d) { return twoZeroPadder (d.score()); },
-            "expMZ": function (d) { return massZeroPadder (d.expMZ()); },
-            "expMass": function (d) { return massZeroPadder (d.expMass()); },
-            "calcMZ": function (d) { return massZeroPadder (d.calcMZ()); },
-            "calcMass": function (d) { return massZeroPadder (d.calcMass()); },
-            "massError": function (d) { return massZeroPadder (d.massError()); },
-            "precursorIntensity": function(d) { return scientific (d.precursor_intensity); },
-            "elutionStart": function(d) { return d.elution_time_start; },
-            "elutionEnd": function(d) { return d.elution_time_end; },
+            "linkPos1": function(d) {
+                return d.linkPos1;
+            },
+            "linkPos2": function(d) {
+                return d.linkPos2;
+            },
+            "score": function(d) {
+                return twoZeroPadder(d.score());
+            },
+            "expMZ": function(d) {
+                return massZeroPadder(d.expMZ());
+            },
+            "expMass": function(d) {
+                return massZeroPadder(d.expMass());
+            },
+            "calcMZ": function(d) {
+                return massZeroPadder(d.calcMZ());
+            },
+            "calcMass": function(d) {
+                return massZeroPadder(d.calcMass());
+            },
+            "massError": function(d) {
+                return massZeroPadder(d.massError());
+            },
+            "precursorIntensity": function(d) {
+                return scientific(d.precursor_intensity);
+            },
+            "elutionStart": function(d) {
+                return d.elution_time_start;
+            },
+            "elutionEnd": function(d) {
+                return d.elution_time_end;
+            },
         };
 
         this.page = 1;
@@ -184,7 +224,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 		this.viewStateModel = new (Backbone.Model.extend ({
 			initialize: function () {
-                this.listenTo (this, "change:topOnly", function() { self.render.call(self); });
+                this.listenTo(this, "change:topOnly", function() {
+                    self.render.call(self);
+                });
 				this.listenTo (this, "change:hidden", function (model, val) {
 					d3.select(self.el).selectAll("table").style("display", val ? "none" : null);
 					if (self.options.mainModel) {
@@ -192,7 +234,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					}
 				});
             },
-		}))({topOnly: false, topCount: 2, hidden: false});
+        }))({
+            topOnly: false,
+            topCount: 2,
+            hidden: false
+        });
 
 		new CLMSUI.utils.checkBoxView ({
 			el: d3el.select(".rightSpan:last-child").node(),
@@ -240,7 +286,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             // map to reduce filtered matches to selected matches only
              .map (function (xlink) {
                 var selectedMatches = this.getMatches (xlink);
-                return {id: xlink.id, link: xlink, matches: selectedMatches};
+                return {
+                    id: xlink.id,
+                    link: xlink,
+                    matches: selectedMatches
+                };
             }, this)
             // Then get rid of links with no selected and filtered matches
             .filter(function (selLinkMatchData) {
@@ -249,8 +299,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
            // Then sort links by top remaining match score for each link
             .sort(function (a, b) {
                 return b.matches[0].score() - a.matches[0].score();
-            })
-        ;
+            });
 
 		// filter to top match per link if requested
 		if (options.topMatchesOnly) {
@@ -277,7 +326,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             console.log("rendering table view of selected crosslinks", this, this.model);
 
             var headerRow = d3.select(this.el).select("THEAD TR");
-            var headerJoin = headerRow.selectAll("TH").data(this.filteredProps, function (d) { return d; });
+            var headerJoin = headerRow.selectAll("TH").data(this.filteredProps, function(d) {
+                return d;
+            });
 
             headerJoin.exit().remove();
             // See https://github.com/mbostock/d3/issues/2722 as I kick off about case sensitivity
@@ -327,7 +378,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         var lowerPageCount = (this.page - 1) * this.pageSize;
         var upperPageCount = lowerPageCount + this.pageSize;
-        var bisect = d3.bisector (function(d) { return d.runningTotalEnd; });
+        var bisect = d3.bisector(function(d) {
+            return d.runningTotalEnd;
+        });
         var lowerLink = bisect.right (mci, lowerPageCount);
         var upperLink = bisect.left (mci, upperPageCount);
         upperLink = Math.min (upperLink, mci.length - 1);
@@ -420,15 +473,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             .append("TBODY")
             .append("TR")
             .append("TD")
-            .attr("colspan", colspan)
-        ;
+            .attr("colspan", colspan);
         xlinkTBodyJoin.order(); // reorder existing dom elements so they are in same order as data (selectedLinkArray)
 
         // all tbody
         xlinkTBodyJoin
             .select("TR>TD")
-            .text(niceCrossLinkName)
-        ;
+            .text(niceCrossLinkName);
 
 
         // Within each tbody section, match table rows up to matches within each crosslink
@@ -565,7 +616,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     },
 
 	highlightFromDatum: function (datum, evt) {
-        this.model.setMarkedMatches ("highlights", datum ? [{match: datum}] : [], true, evt.ctrlKey || evt.shiftKey);
+        this.model.setMarkedMatches("highlights", datum ? [{
+            match: datum
+        }] : [], true, evt.ctrlKey || evt.shiftKey);
         return this;
     },
 
@@ -584,8 +637,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					if ((d3.select(this).classed("spectrumShown2") && currentWithinPageIndex === -1) || d3.select(this).classed("highlighted")) {
 						currentWithinPageIndex = i;
 					}
-				})
-			;
+                });
 
 			//console.log ("cwpi", currentWithinPageIndex);
 
@@ -601,8 +653,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 					} else {
 						isNew = false;
 					}
-				}
-				else if (newIndex >= this.pageSize) {
+                } else if (newIndex >= this.pageSize) {
 					if (this.getPageCount() > this.page) {
 						this.page++;
 						console.log ("next page", this.page, this);
@@ -626,8 +677,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 							} else {
 								self.highlightFromDatum (d, evt);
 							}
-						})
-					;
+                        });
 				}
 			}
 
@@ -655,10 +705,21 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		//if (d.src) { // if the src att is missing its from a csv file
 			// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
 			this.model
+<<<<<<< HEAD
 				.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
 				.trigger ("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"))
 			;
 		//}
+=======
+                .set("lastSelectedMatch", {
+                    match: d,
+                    directSelection: true
+                }, {
+                    silent: true
+                })
+                .trigger("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"));
+        }
+>>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
 	},
 
     identifier: "Selected Match Table",
