@@ -70,11 +70,11 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
         buttonHtml = "<span class='noBreak panOrSelect'>" +
             "<span>Drag To </span>" +
-                "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
-                "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
+            "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
+            "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
             "</span>" +
             "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
-                "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
+            "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
         if (CLMSUI.loggedIn == true) {
             buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +

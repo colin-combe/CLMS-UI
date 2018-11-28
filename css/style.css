@@ -21,8 +21,8 @@ span, label {
 
 #hiddenProteinsMessage{
   display: none;
-  z-index: 900;
-  position: absolute;
+  z-index: 1;
+  position: fixed;
   overflow: hidden;
   white-space: nowrap;
   background-color: #091D42;
