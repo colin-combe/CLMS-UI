@@ -32,8 +32,16 @@ function downloadResidueCount() {
     download(getResidueCount(), 'text/csv', downloadFilename("residueCount"));
 }
 
-function download(content, contentType, fileName, modernWeb) {
+function download(content, contentType, fileName) {
     //var b64svg = window.btoa(content);
+    
+    var modernWeb;
+    try {
+      modernWeb = !!new Blob();
+    } catch (e) {
+      modernWeb = false;
+    }
+    
     console.log("svg filename", fileName, modernWeb);
 
     if (!modernWeb) {

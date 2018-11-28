@@ -28,7 +28,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
                         return search.id;
                     })
                     .join("-");
-                download(self.exportDescriptions(), "plain/text", "search_description_" + searchString + ".txt", true);
+                download(self.exportDescriptions(), "plain/text", "search_description_" + searchString + ".txt");
             });
         descriptionButton.style("display", self.model.get("crosslinkerSpecificity") ? null : "none");
 
