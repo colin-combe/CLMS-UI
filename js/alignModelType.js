@@ -2,7 +2,7 @@
     CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
     // Model for one sequence pairing
-    CLMSUI.BackboneModelTypes.SeqModel = Backbone.Model.extend ({
+    CLMSUI.BackboneModelTypes.SeqModel = Backbone.Model.extend({
         defaults: {
             local: false,
             semiLocal: false,
@@ -16,21 +16,25 @@
             var refResult = {str: fullResult.fmt[1], label: this.collection.containingModel.get("refID")}; 
 			
             var compResult = {
-               str: fullResult.fmt[0], 
-               refStr: fullResult.fmt[1], 
-               convertToRef: fullResult.indx.qToTarget, 
-               convertFromRef: fullResult.indx.tToQuery, 
-               cigar: fullResult.res[2], 
-               score: fullResult.res[0],
-				bitScore: fullResult.bitScore,
+                str: fullResult.fmt[0],
+                refStr: fullResult.fmt[1],
+                convertToRef: fullResult.indx.qToTarget,
+                convertFromRef: fullResult.indx.tToQuery,
+                cigar: fullResult.res[2],
+                score: fullResult.res[0],
+                bitScore: fullResult.bitScore,
                 eScore: fullResult.eScore,
-               label: this.get("compID"),
-            }; 
-            
-            //console.log ("align results", refResult, compResult);    
+                label: this.get("compID"),
+            };
+
+            //console.log ("align results", refResult, compResult);
             // redundant looking alignStr variable is used so we can directly monitor changes in it with backbone rather than dig through compAlignment object
-            this.set ({refAlignment: refResult, compAlignment: compResult, alignStr: fullResult.fmt[0]});
-            
+            this.set({
+                refAlignment: refResult,
+                compAlignment: compResult,
+                alignStr: fullResult.fmt[0]
+            });
+
             return this;
         },
         
@@ -148,11 +152,11 @@
     });
 
     // Collection of multiple single sequence pairing models from above
-    CLMSUI.BackboneModelTypes.SeqCollection = Backbone.Collection.extend ({
+    CLMSUI.BackboneModelTypes.SeqCollection = Backbone.Collection.extend({
         model: CLMSUI.BackboneModelTypes.SeqModel,
-        
-        initialize: function () {
-            this.listenTo (this, "add", function (addedModel) { 
+
+        initialize: function() {
+            this.listenTo(this, "add", function(addedModel) {
                 //~ console.log ("new sequence added. align it.", arguments);
                 this.currentlyAddingModel = addedModel;
                 addedModel.align();
@@ -163,7 +167,7 @@
     });
 
     // Model of sequence alignment settings for a protein (including the above collection as an attribute)
-    CLMSUI.BackboneModelTypes.ProtAlignModel = Backbone.Model.extend ({
+    CLMSUI.BackboneModelTypes.ProtAlignModel = Backbone.Model.extend({
         // return defaults as result of a function means arrays aren't shared between model instances
         // http://stackoverflow.com/questions/17318048/should-my-backbone-defaults-be-an-object-or-a-function
         defaults: function() {
@@ -188,43 +192,43 @@
             this.get("seqCollection").containingModel = this;  // Reference to parent model for this collection
             
             // this is where changes to gap scores and blosum choices are picked up
-            this.listenTo (this, "change", function() { 
-                // console.log ("something in per protein align settings changed so realign all prot seqs", this.changed); 
-				// change to displayLabel doesn't affect alignment so ignore if just this has changed
-				if (!(this.hasChanged("displayLabel") && d3.keys(this.changedAttributes()).length === 1)) {
-					this.get("seqCollection").forEach (function (model) {
-						model.align();
-					});
-				}
+            this.listenTo(this, "change", function() {
+                // console.log ("something in per protein align settings changed so realign all prot seqs", this.changed);
+                // change to displayLabel doesn't affect alignment so ignore if just this has changed
+                if (!(this.hasChanged("displayLabel") && d3.keys(this.changedAttributes()).length === 1)) {
+                    this.get("seqCollection").forEach(function(model) {
+                        model.align();
+                    });
+                }
             });
-            
-			// if the alignStr between a refAlignment and compAlignment has changed then declare a non-trivial change
-            this.listenTo (this.get("seqCollection"), "change:alignStr", function (seqModel) {
+
+            // if the alignStr between a refAlignment and compAlignment has changed then declare a non-trivial change
+            this.listenTo(this.get("seqCollection"), "change:alignStr", function(seqModel) {
                 //console.log ("collection catching one of its model's alignStr changing", arguments);
-                this.trigger ("nonTrivialAlignmentChange", seqModel); 
+                this.trigger("nonTrivialAlignmentChange", seqModel);
             });
-			
-			// redo sequence name labels if protein metadata updates names
-			this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function (metaMetaData) {
-				var columns = metaMetaData.columns;
-				var interactors = metaMetaData.items;
-				if (!columns || columns.indexOf("name") >= 0) {
-					var interactor = interactors.get (this.get("id"));
-					if (interactor) {
-						this.set("displayLabel", interactor.name.replace("_", " "));
-					}
-				}
-			});
-            
+
+            // redo sequence name labels if protein metadata updates names
+            this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function(metaMetaData) {
+                var columns = metaMetaData.columns;
+                var interactors = metaMetaData.items;
+                if (!columns || columns.indexOf("name") >= 0) {
+                    var interactor = interactors.get(this.get("id"));
+                    if (interactor) {
+                        this.set("displayLabel", interactor.name.replace("_", " "));
+                    }
+                }
+            });
+
             return this;
         },
-        
-        alignWithoutStoring: function (compSeqArray, tempSemiLocal) {
-			return this.alignWithoutStoringWithSettings (compSeqArray, tempSemiLocal, this.getSettings());
+
+        alignWithoutStoring: function(compSeqArray, tempSemiLocal) {
+            return this.alignWithoutStoringWithSettings(compSeqArray, tempSemiLocal, this.getSettings());
         },
-		
-		alignWithoutStoringWithSettings: function (compSeqArray, tempSemiLocal, settings) {
-			var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
+
+        alignWithoutStoringWithSettings: function(compSeqArray, tempSemiLocal, settings) {
+            var alignWindowSize = (settings.refSeq.length > settings.maxAlignWindow ? settings.maxAlignWindow : undefined);
             var localAlign = (tempSemiLocal && tempSemiLocal.local);
             var semiLocalAlign = (tempSemiLocal && tempSemiLocal.semiLocal);
 
@@ -234,7 +238,7 @@
                 bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length); 
 				return bioseqResults;
             }, this);
-            
+
             //console.log ("fr", fullResults);
             return fullResults;
         },
@@ -252,20 +256,22 @@
             return (dbLength || 100) * seqLength * exp;	// escore
         },
 
-		getSettings: function () {
-			var matrix = this.get("scoreMatrix");
-            if (matrix) { matrix = matrix.attributes; } // matrix will be a Backbone Model
-			
-			var scoringSystem = {
+        getSettings: function() {
+            var matrix = this.get("scoreMatrix");
+            if (matrix) {
+                matrix = matrix.attributes;
+            } // matrix will be a Backbone Model
+
+            var scoringSystem = {
                 matrix: matrix,
-                match: this.get("matchScore"), 
-                mis: this.get("misScore"), 
-                gapOpen: this.get("gapOpenScore"), 
+                match: this.get("matchScore"),
+                mis: this.get("misScore"),
+                gapOpen: this.get("gapOpenScore"),
                 gapExt: this.get("gapExtendScore"),
                 gapAtStart: this.get("gapAtStartScore")
             };
-			
-			var refSeq = this.get("refSeq");
+
+            var refSeq = this.get("refSeq");
             var aligner = this.get("sequenceAligner");
 			
 			return {scoringSystem: scoringSystem, refSeq: refSeq, aligner: aligner, maxAlignWindow: this.get("maxAlignWindow"), totalRefSeqLength: this.collection.totalRefSeqLength};
@@ -274,7 +280,7 @@
         getSequenceModel: function (seqName) {
             return this.get("seqCollection").get(seqName);
         },
-        
+
         // These following routines assume that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
         // if no compSeq will return undefined
         // will return NaN for out of bound indices
@@ -309,7 +315,7 @@
             var seqModel = this.getSequenceModel (seqName);
             return seqModel.getSearchRangeIndexOfMatches();
         },
-        
+
         // For a given sequence return a list of the sequential indices
         // i.e. as above but split for gaps
         blockify: function (seqName) {
@@ -341,28 +347,40 @@
             ;
         },
     });
-    
-    
+
+
     // A collection of the above protein level models
-    CLMSUI.BackboneModelTypes.ProtAlignCollection = Backbone.Collection.extend ({
+    CLMSUI.BackboneModelTypes.ProtAlignCollection = Backbone.Collection.extend({
         model: CLMSUI.BackboneModelTypes.ProtAlignModel,
-        
-        initialize: function () {
-             this.listenTo (this, "nonTrivialAlignmentChange", function () {
+
+        initialize: function() {
+            this.listenTo(this, "nonTrivialAlignmentChange", function() {
                 this.nonTrivialChange = true;
             });
         },
-        
+
         comparator: "displayLabel",
-		
-		possibleComparators: [
-			{label: "Name", compFunc: "displayLabel"},
-			{label: "No. of Aligned Sequences", compFunc: function (m) { return m.get("seqCollection").length; }},
-			{label: "Total Alignment Score", compFunc: function (m) { 
-				return d3.sum (m.get("seqCollection").pluck("compAlignment").map(function(ca) { return ca.score; }))
-			}}
-		],
-        
+
+        possibleComparators: [{
+                label: "Name",
+                compFunc: "displayLabel"
+            },
+            {
+                label: "No. of Aligned Sequences",
+                compFunc: function(m) {
+                    return m.get("seqCollection").length;
+                }
+            },
+            {
+                label: "Total Alignment Score",
+                compFunc: function(m) {
+                    return d3.sum(m.get("seqCollection").pluck("compAlignment").map(function(ca) {
+                        return ca.score;
+                    }))
+                }
+            }
+        ],
+
         nonTrivialChange: undefined,
          
         addSeq: function (proteinID, seqID, seq, otherSettingsObj) {
@@ -397,12 +415,12 @@
         
         bulkAlignChangeFinished: function () {
             if (this.nonTrivialChange !== false) {
-                this.trigger ("bulkAlignChange", true);
-                console.log ("BULK ALIGN CHANGE");
+                this.trigger("bulkAlignChange", true);
+                console.log("BULK ALIGN CHANGE");
                 this.nonTrivialChange = false;
             }
         },
-        
+
         // Moved here from NGLViewBB.js, convenience function to convert an index in a given align sequence in a given align model to the search sequence
         // (or vice versa)
         // TODO, need to check for decoys (protein has no alignment)
@@ -412,10 +430,10 @@
             var protAlignModel = this.get (proteinID);
             return protAlignModel ? protAlignModel.getAlignedIndex (resIndex, toSearchSeq, sequenceID, keepNegativeValue) : resIndex;   // this will be 1-indexed or null
         },
-        
-        getSearchRangeIndexOfMatches: function (proteinID, sequenceID) {
-            var protAlignModel = this.get (proteinID);
-            return protAlignModel ? protAlignModel.getSearchRangeIndexOfMatches (sequenceID) : [undefined, undefined];
+
+        getSearchRangeIndexOfMatches: function(proteinID, sequenceID) {
+            var protAlignModel = this.get(proteinID);
+            return protAlignModel ? protAlignModel.getSearchRangeIndexOfMatches(sequenceID) : [undefined, undefined];
         },
         
         getAlignmentsAsFeatures: function (protID, includeCanonical) {
@@ -423,4 +441,3 @@
             return protAlignModel ? protAlignModel.PDBAlignmentsAsFeatures (includeCanonical) : [];
         },
     });
-    
