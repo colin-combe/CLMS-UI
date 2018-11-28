@@ -594,6 +594,45 @@ CLMSUI.modelUtils = {
 			finished (matchMatrix);
 		}
     },
+    
+    	// return array of indices of first occurrence of a sequence when encountering a repetition
+	// e.g. ["CAT", "DOG", "CAT", "DOG"] -> [undefined, undefined, 0, 1];
+	indexSameSequencesToFirstOccurrence: function (sequences) {
+		var firstIndex = [];
+		sequences.forEach (function (seq, i) {
+			firstIndex[i] = undefined;
+			for (var j = 0; j < i; j++) {
+				if (seq === sequences[j]) {
+					firstIndex[i] = j;
+					break;
+				}
+			}
+		});
+		return firstIndex;
+	},
+	
+	filterRepeatedSequences: function (sequences) {
+		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
+		var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence (sequences);
+		var uniqSeqs = sequences.filter (function (seq, i) { return sameSeqIndices[i] === undefined; });	// unique sequences...
+		var uniqSeqIndices = d3.range(0, sequences.length).filter (function (i) { return sameSeqIndices[i] === undefined; });	// ...and their indices in 'seqs'...
+		var uniqSeqReverseIndex = _.invert (uniqSeqIndices);	// ...and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
+		return {sameSeqIndices: sameSeqIndices, uniqSeqs: uniqSeqs, uniqSeqIndices: uniqSeqIndices, uniqSeqReverseIndex: uniqSeqReverseIndex};
+	},
+	
+	reinflateSequenceMap: function (matchMatrix, sequences, filteredSeqInfo) {
+		d3.keys(matchMatrix).forEach (function (protID) {
+			var matchMatrixProt = matchMatrix[protID];
+			matchMatrix[protID] = d3.range(0, sequences.length).map (function (i) {
+				var sameSeqIndex = filteredSeqInfo.sameSeqIndices[i];
+				var seqIndex = sameSeqIndex === undefined ? i : sameSeqIndex;
+				var uniqSeqIndex = +filteredSeqInfo.uniqSeqReverseIndex[seqIndex];	// + 'cos invert above turns numbers into strings
+				return matchMatrixProt[uniqSeqIndex]; 	
+			});
+		});
+
+		return matchMatrix;
+	},
 
     matrixPairings: function (matrix, sequenceObjs) {
         var entries = d3.entries(matrix);
