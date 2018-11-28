@@ -316,7 +316,7 @@ CLMSUI.modelUtils = {
 					function matchByAlignment () {
 						var protAlignCollection = bbmodel.get("alignColl");
 						CLMSUI.vent.listenToOnce (CLMSUI.vent, "sequenceMatchingDone", function (matchMatrix) {
-							var pdbUniProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, nglSequences, protAlignCollection);
+							var pdbUniProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, nglSequences);
 							sequenceMapsAvailable (pdbUniProtMap);
 						});
 						// sequenceMatchingDone event triggered in matchSequencesToExistingProteins when alignments done, sync or async
@@ -581,17 +581,14 @@ CLMSUI.modelUtils = {
 		return matchMatrix;
 	},
 
-    matrixPairings: function (matrix, sequenceObjs, protAlignCollection) {
+    matrixPairings: function (matrix, sequenceObjs) {
         var entries = d3.entries(matrix);
         var pairings = [];
-		var proteinSeqs = protAlignCollection.pluck("refSeq").map (function(seq) { return {size: seq.length};});
-		var totalProteinLength = CLMSUI.modelUtils.totalProteinLength (proteinSeqs);
 
         for (var n = 0; n < sequenceObjs.length; n++) {
             var max = {key: undefined, seqObj: undefined, eScore: 1e-25};
             var seqObj = sequenceObjs[n];
             entries.forEach (function (entry) {
-				var protAlignModel = protAlignCollection ? protAlignCollection.get (entry.key) : undefined;
 				var eScore = entry.value[n];
 
                 if (eScore < max.eScore) {	// lower eScore is better

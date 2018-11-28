@@ -40,8 +40,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 var chainValues = d3.values(this.options.chainMap);
                 chainValues = d3.merge(chainValues); // flatten array
-                chainValues.forEach(function (chainValue) {
-                    this.set(chainValue.index, true);
+                chainValues.forEach (function (chainValue) {
+                    this.set (chainValue.index, true);
                 }, this);
             },
         }),

@@ -242,10 +242,10 @@ function callback (model) {
 	
 	
 	QUnit.test ("Matrix pairings", function (assert) {
-		var testMatrix = {
-			"1AO6": [24, 12, 1000],
-			"1AO7": [36, 14, 79],
-			"1AO8": [500, 800, 24],
+		var testMatrix = {    // E-values per search sequence per pdb id
+			"1AO6": [0.01, 0.001, 1e-35],
+			"1AO7": [1e-30, 1e-15, 1e-30],
+			"1AO8": [1e-40, 1e-50, 1e-10],
 		};
 		var testSeqs = [{data: "ABCD"}, {data: "EFGH"}, {data: "IJKL"}];
 		var expectedValue = [
@@ -253,8 +253,7 @@ function callback (model) {
 			{id: "1AO8", seqObj: {data: "EFGH"}},
 			{id: "1AO6", seqObj: {data: "IJKL"}},
 		];
-		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
-		var actualValue = CLMSUI.modelUtils.matrixPairings (testMatrix, testSeqs, alignCollection);
+		var actualValue = CLMSUI.modelUtils.matrixPairings (testMatrix, testSeqs);
 		
 		// stringify turns undefined to null for printout, but it's a match
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as matrix pairing, Passed!");

@@ -132,30 +132,6 @@ function getMatchesCSV () {
 			matchMap.set (match.match.id, match.match);
 		})
 	});
-	//console.log ("CL", crossLinks, matchMap);
-
-	/*
-	var count = 0;
-	var matchCount = matches.length;
-	var matches = clmsModel.get("matches");
-
-    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
-	
-    for (var m = 0; m < matchCount; ++m){
-		var match = matches[m];
-        var result;
-        if (filterModel.get("fdrMode") === true) {
-			result = match.fdrPass;
-		} else {
-			result = filterModel.subsetFilter (match, proteinMatchFunc)
-						&& filterModel.validationStatusFilter(match)
-      && filterModel.scoreFilter(match)
-						&& filterModel.navigationFilter(match);
-		}
-        if (result === true){
-			count++;
-		*/
 			
 	matchMap.values().forEach (function (match) {
 			var peptides1 = match.matchedPeptides[0];

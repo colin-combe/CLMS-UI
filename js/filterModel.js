@@ -210,57 +210,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
                 // return true if no string to match against
                 return true;
-
-                /*
-                if (searchString) {
-                    var searchStringLower = searchString.toLowerCase();
-
-
-                    var nameStrings = searchString.split('-');
-                    var nameStringCount = nameStrings.length;
-
-                    if (nameStringCount ==1) {
-                        for (var mp = 0; mp < matchedPepCount; mp++) {
-                            var pids = matchedPeptides[mp].prt;
-                            var pidCount = pids.length;
-                            for (var p = 0; p < pidCount; p++ ) {
-
-                                var interactor = participants.get(pids[p]);
-                                var toSearch = interactor.name + " " + interactor.description;
-                                if (toSearch.toLowerCase().indexOf(searchStringLower) != -1) {
-                                    return true;
-                                }
-
-                            }
-                        }
-                        return false;
-                    }
-
-                    var used = [];
-                    for (var ns = 0; ns < nameStringCount; ns++) {
-                        var nameString  = nameStrings[ns];
-                        if (nameString){
-                            var found = false;
-                            for (var i = 0; i < matchedPepCount; i++){
-                                var matchedPeptide = matchedPeptides[i];
-                                if (found === false && typeof used[i] == 'undefined'){
-                                    var pids = matchedPeptide.prt;
-                                    var pidCount = pids.length;
-                                    for (var p = 0; p < pidCount; p++ ) {
-                                        var interactor = participants.get(pids[p]);
-                                        var toSearch = interactor.name + " " + interactor.description;
-                                        if (toSearch.toLowerCase().indexOf(nameString.toLowerCase()) != -1) {
-                                            found = true;
-                                            used[i] = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (found === false) return false;
-                        }
-                    }
-                }
-                */
             },
 
             navigationFilter: function (match) {

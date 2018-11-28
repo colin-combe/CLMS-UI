@@ -109,16 +109,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
     getValue: function (crossLink) {    
         //check if link uniquely belongs to one group
         var filteredMatchesAndPepPositions = crossLink.filteredMatches_pp;
-        /*
-        var groupCheck = d3.set();
-        for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
-            var match = filteredMatchesAndPepPositions[fm_pp].match; 
-            var group = this.searchMap.get(match.searchId).group;   
-            groupCheck.add(group);
-        }
-        var groupCheckArr = groupCheck.values();
-        var value = (groupCheckArr.length === 1 ? groupCheckArr[0] : undefined);
-        */
+
         var foundGroup = null;
         for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
             var match = filteredMatchesAndPepPositions[fm_pp].match; 
