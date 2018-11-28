@@ -31,17 +31,11 @@ CLMSUI.loadSpectrum = function (match, randId, spectrumModel) {
                     console.log ("error getting peak list", error);
                 } else {
                 	d3.select("#range-error").text ("");
-<<<<<<< HEAD
                     peakArray = text.trim().split(/\r?\n/);
                     for (var p =0; p < peakArray.length; p++) {
                         peakArray[p] = peakArray[p].split(/\s/);
                     }
                     formatted_data.peakList = peakArray;//JSON.parse(text).map(function(p){ return [p.mz, p.intensity]; });
-=======
-                formatted_data.peakList = JSON.parse(text).map(function(p) {
-                    return [p.mz, p.intensity];
-                });
->>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
                     console.log(formatted_data);
                     xiSPEC.setData(formatted_data);
                 }

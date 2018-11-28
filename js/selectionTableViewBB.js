@@ -542,7 +542,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             var cellFunc = self.cellFuncs[d];
             return cellFunc ? cellFunc(link) : (link[d] || "");
         };
-		
+
 		var deemphasiseFraction = function (text) {
 			var z = text ? text.toString().indexOf(".") : -1;
 			if (z < 0 ) return text;
@@ -705,21 +705,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 		//if (d.src) { // if the src att is missing its from a csv file
 			// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
 			this.model
-<<<<<<< HEAD
 				.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
 				.trigger ("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"))
 			;
 		//}
-=======
-                .set("lastSelectedMatch", {
-                    match: d,
-                    directSelection: true
-                }, {
-                    silent: true
-                })
-                .trigger("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"));
-        }
->>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
 	},
 
     identifier: "Selected Match Table",

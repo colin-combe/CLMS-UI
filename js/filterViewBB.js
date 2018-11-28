@@ -81,7 +81,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4"
                 },
             ],
-<<<<<<< HEAD
             validationStatusToggles: [
                 {"label":"All", "id":"thresholdAll"},
                 {"label":"Pass", "id":"thresholdPass"},
@@ -89,39 +88,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             ],
             decoysToggle: [
                 {"label":"Decoy", "id":"decoys", tooltip: "Show decoy cross-links"},
-=======
-            validationStatusToggles: [{
-                    "label": "A",
-                    "id": "A"
-                },
-                {
-                    "label": "B",
-                    "id": "B"
-                },
-                {
-                    "label": "C",
-                    "id": "C"
-                },
-                {
-                    "label": "?",
-                    "id": "Q"
-                },
-                {
-                    "label": "Auto",
-                    "id": "AUTO",
-                    tooltip: "Show autovalidated cross-links"
-                },
-                {
-                    "label": "Unval.",
-                    "id": "unval",
-                    tooltip: "Show unvalidated cross-links"
-                },
-                {
-                    "label": "Decoy",
-                    "id": "decoys",
-                    tooltip: "Show decoy cross-links"
-                },
->>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
             ],
             navigationFilters: [{
                     "label": "Peptide",
@@ -311,20 +277,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 });
 
 			validationElems.append ("input")
-<<<<<<< HEAD
 				.attr ("id", function(d) { return d.id; })
 				.attr ("class", function(d) { return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle"; })
 				.attr ("type", "radio")
 				.attr ("name", "valStatus")
-=======
-                .attr("id", function(d) {
-                    return d.id;
-                })
-                .attr("class", function(d) {
-                    return d.special ? "subsetToggleFilterToggle" : "filterTypeToggle";
-                })
-                .attr("type", "checkbox")
->>>>>>> 064cf4538d2b7509c05736f763a2961c01c8dd33
 				//.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
 			;
 		}
