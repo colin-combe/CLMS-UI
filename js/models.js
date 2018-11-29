@@ -40,8 +40,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 var chainValues = d3.values(this.options.chainMap);
                 chainValues = d3.merge(chainValues); // flatten array
-                chainValues.forEach(function(chainValue) {
-                    this.set(chainValue.index, true);
+                chainValues.forEach (function (chainValue) {
+                    this.set (chainValue.index, true);
                 }, this);
             },
         }),
@@ -115,13 +115,13 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
         url: "R/blosums.json",
         parse: function(response) {
             // turn json object into array, add keys to value parts, then export just the values
-            var entries = d3.entries(response);
-            var values = entries.map(function(entry) {
-                entry.value.key = entry.key;
+            var entries = d3.entries (response);
+            var values = entries.map(function (entry) {
+                entry.value.id = entry.key;
                 return entry.value;
             });
 
-            console.log("response", response, values);
+            console.log ("response", response, values);
             return values;
         }
     }),
