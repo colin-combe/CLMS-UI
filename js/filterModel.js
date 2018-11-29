@@ -35,56 +35,56 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 urpPpi: 1,
             },
 
-            initialize: function (options, secondarySettings) {
+            initialize: function(options, secondarySettings) {
                 if (!this.get("matchScoreCutoff")) {
                     this.set("matchScoreCutoff", [0, 100]);
-					// ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
+                    // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 }
                 // scoreExtent used to restrain text input values
                 this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
-				//this.scoreExtent = this.matches.extent (fu)
+                //this.scoreExtent = this.matches.extent (fu)
                 this.valMap = d3.map();
                 this.valMap.set("?", "Q");
-                this.preprocessedInputText = d3.map();	// preprocessed user input values so they're not constantly reparsed for every match
-				
-				this.resetValues = this.toJSON();	// Store copy of original values if needed to restore later
+                this.preprocessedInputText = d3.map(); // preprocessed user input values so they're not constantly reparsed for every match
+
+                this.resetValues = this.toJSON(); // Store copy of original values if needed to restore later
             },
-			
-			resetFilter: function () {
-				this
+
+            resetFilter: function() {
+                this
                     .clear({
                         silent: true
                     })
                     .set(this.resetValues);
-			},
+            },
 
-            processTextFilters: function () {
+            processTextFilters: function() {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
-                this.preprocessedInputText.set("protNames", protSplit1.map(function (prot) {
+                this.preprocessedInputText.set("protNames", protSplit1.map(function(prot) {
                     return prot.split("-");
                 })); // split these in turn by hyphens
                 //console.log ("preprocessedInputText", this.preprocessedInputText.get("protNames"));
-				
-				var chargeRange = this.get("charge").split("-").map(function (val, i) {
-					return +val || [0, Infinity][i];
-				});	
-				this.preprocessedInputText.set("chargeRange", chargeRange);
-				
-				var pepSeq = this.get("pepSeq");
-				var splitPepSeq = pepSeq.split("-").map (function (part) {
+
+                var chargeRange = this.get("charge").split("-").map(function(val, i) {
+                    return +val || [0, Infinity][i];
+                });
+                this.preprocessedInputText.set("chargeRange", chargeRange);
+
+                var pepSeq = this.get("pepSeq");
+                var splitPepSeq = pepSeq.split("-").map(function(part) {
                     return {
                         upper: part.toUpperCase(),
                         lower: part.toLowerCase()
                     }
-				});
-				this.preprocessedInputText.set("pepSeq", splitPepSeq);
+                });
+                this.preprocessedInputText.set("pepSeq", splitPepSeq);
             },
 
-            naiveProteinMatch: function (p1, p2) {
+            naiveProteinMatch: function(p1, p2) {
                 return p1 === p2;
             },
 
-            subsetFilter: function (match, matchingProteinPairFunc) {
+            subsetFilter: function(match, matchingProteinPairFunc) {
                 matchingProteinPairFunc = matchingProteinPairFunc || this.naiveProteinMatch; // naive default match
                 var linear = match.isLinear();
                 var ambig = match.isAmbig();
@@ -110,8 +110,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer) ||
                         (match.couldBelongToBetweenLink == true && showBetweenLinks) ||
                         (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
-                        return false;
-                    }
+                    return false;
+                }
 
                 // }
 
@@ -119,10 +119,10 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var aaApart = +this.get("aaApart");
                 if (!isNaN(aaApart)) {
                     // if not homomultimer and not ambig and is a selfLink
-                    if (/*!match.confirmedHomomultimer &&*/ !ambig && match.crossLinks[0].isSelfLink()) {
+                    if ( /*!match.confirmedHomomultimer &&*/ !ambig && match.crossLinks[0].isSelfLink()) {
                         // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
                         var unambigCrossLink = match.crossLinks[0];
-                        var calc = Math.abs (unambigCrossLink.toResidue - unambigCrossLink.fromResidue);
+                        var calc = Math.abs(unambigCrossLink.toResidue - unambigCrossLink.fromResidue);
                         if (calc < aaApart) {
                             return false;
                         }
@@ -141,22 +141,22 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return true;
             },
 
-            scoreFilter: function (match) {
+            scoreFilter: function(match) {
                 var msc = this.get("matchScoreCutoff");
                 //defend against not having a score (from a CSV file without such a column)
                 if (!match.score()) {
                     return true;
                 }
-                return (msc[0] == undefined || match.score() >= msc[0]) && (msc[1] == undefined || match.score() <= msc[1]);	// == undefined cos shared links get undefined json'ified to null
+                return (msc[0] == undefined || match.score() >= msc[0]) && (msc[1] == undefined || match.score() <= msc[1]); // == undefined cos shared links get undefined json'ified to null
             },
 
-            decoyFilter: function (match) {
-               return !match.isDecoy() || this.get("decoys");
+            decoyFilter: function(match) {
+                return !match.isDecoy() || this.get("decoys");
             },
 
-            validationStatusFilter: function (match) {
+            validationStatusFilter: function(match) {
                 if (this.get("thresholdAll")) {
-                     return true;
+                    return true;
                 }
                 if (this.get("thresholdPass") && match.passThreshold == true) {
                     return true;
@@ -167,7 +167,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return false;
             },
 
-            proteinNameCheck: function (match, searchString) {
+            proteinNameCheck: function(match, searchString) {
                 if (searchString) {
                     //protein name check
                     var stringPartArrays = this.preprocessedInputText.get("protNames");
@@ -218,13 +218,13 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return true;
             },
 
-            navigationFilter: function (match) {
+            navigationFilter: function(match) {
                 // Arranged so cheaper checks are done first
 
                 //charge check
                 var chargeFilter = this.get("charge");
-				var chargeRange = this.preprocessedInputText.get("chargeRange");
-				var mpCharge = match.precursorCharge;
+                var chargeRange = this.preprocessedInputText.get("chargeRange");
+                var mpCharge = match.precursorCharge;
                 if (chargeFilter && (chargeRange.length === 1 ? mpCharge !== chargeRange[0] : (mpCharge < chargeRange[0] || mpCharge > chargeRange[1]))) {
                     return false;
                 }
@@ -261,18 +261,18 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //util functions used in nav filter check:
 
                 //peptide seq check function
-                function seqCheck (searchString, preprocPepStrings) {	//preprocPepStrings: "KK-KR" will be [{upper:"KK", lower:"kk}, {upper:"KR", lower:"kr"}]
+                function seqCheck(searchString, preprocPepStrings) { //preprocPepStrings: "KK-KR" will be [{upper:"KK", lower:"kk}, {upper:"KR", lower:"kr"}]
                     if (searchString) {
                         var matchedPeptides = match.matchedPeptides;
                         var matchedPepCount = matchedPeptides.length;
 
                         //var pepStrings = searchString.split('-');
-						//var pepStringsCount = pepStrings.length;
+                        //var pepStringsCount = pepStrings.length;
                         var pepStringsCount = preprocPepStrings.length;
 
                         if (pepStringsCount == 1) {
-							var uppercasePep = preprocPepStrings[0].upper;
-							var lowercasePep = preprocPepStrings[0].lower
+                            var uppercasePep = preprocPepStrings[0].upper;
+                            var lowercasePep = preprocPepStrings[0].lower
                             for (var i = 0; i < matchedPepCount; i++) {
                                 var matchedPeptide = matchedPeptides[i];
                                 if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
@@ -286,24 +286,24 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         var aggMatchedCount = 0;
                         for (var ps = 0; ps < pepStringsCount; ps++) {
                             var pepStringCases = preprocPepStrings[ps];
-							var uppercasePep = pepStringCases.upper;
-							var lowercasePep = pepStringCases.lower;
-							var matchCount = 0;
-                                for (var i = 0; i < matchedPepCount; i++) {
-                                    var matchedPeptide = matchedPeptides[i];
-								if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
-									matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1) {
-									matchCount += (i + 1);	// add 1 for first matched peptide, add 2 for second. So will be 3 if both.
-                                        }
-                                    }
-							if (matchCount === 0) return false;	// neither peptide matches this part of the input string, so match can't pass the filter
-							aggMatchedCount |= matchCount;	// logically aggregate to aggMatchedCount
+                            var uppercasePep = pepStringCases.upper;
+                            var lowercasePep = pepStringCases.lower;
+                            var matchCount = 0;
+                            for (var i = 0; i < matchedPepCount; i++) {
+                                var matchedPeptide = matchedPeptides[i];
+                                if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
+                                    matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1) {
+                                    matchCount += (i + 1); // add 1 for first matched peptide, add 2 for second. So will be 3 if both.
                                 }
-						// If 1, both pepstrings matched first peptide. If 2, both pepstrings matched second peptide.
-						// Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop 
-						// (so can't be 0 in total either)
-						// So 3 must be the case where both peptides contain the pepstrings, such that one or both pepstrings are present at alternate ends
-						return aggMatchedCount === 3;
+                            }
+                            if (matchCount === 0) return false; // neither peptide matches this part of the input string, so match can't pass the filter
+                            aggMatchedCount |= matchCount; // logically aggregate to aggMatchedCount
+                        }
+                        // If 1, both pepstrings matched first peptide. If 2, both pepstrings matched second peptide.
+                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop
+                        // (so can't be 0 in total either)
+                        // So 3 must be the case where both peptides contain the pepstrings, such that one or both pepstrings are present at alternate ends
+                        return aggMatchedCount === 3;
                     }
                     return true;
                 }
@@ -311,7 +311,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
 
 
-            stateString: function () {
+            stateString: function() {
                 // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
                 var fields = [];
 
@@ -349,41 +349,41 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     //console.log ("filter fieldset", this.attributes, fields);
                 }
 
-                var str = CLMSUI.utils.objectStateToAbbvString (this, fields, zeroFormatFields, abbvMap);
+                var str = CLMSUI.utils.objectStateToAbbvString(this, fields, zeroFormatFields, abbvMap);
                 return str;
             },
 
-			generateUrlString: function () {
-				// make url parts from current filter attributes
-				var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
+            generateUrlString: function() {
+                // make url parts from current filter attributes
+                var parts = CLMSUI.modelUtils.makeURLQueryString(this.attributes, "F");
 
-				// return parts of current url query string that aren't filter flags or values
-				var search = window.location.search.slice(1);
-				var nonFilterKeys = d3.set (["upload", "decoys", "unval", "lowestScore", "anon"]);
-				var nonFilterParts = search.split("&").filter (function (nfpart) {
-					return nonFilterKeys.has (nfpart.split("=")[0]);
-				});
-				// and queue them to be at the start of new url query string (before filter attributes)
-				parts = nonFilterParts.concat (parts);
+                // return parts of current url query string that aren't filter flags or values
+                var search = window.location.search.slice(1);
+                var nonFilterKeys = d3.set(["upload", "decoys", "unval", "lowestScore", "anon"]);
+                var nonFilterParts = search.split("&").filter(function(nfpart) {
+                    return nonFilterKeys.has(nfpart.split("=")[0]);
+                });
+                // and queue them to be at the start of new url query string (before filter attributes)
+                parts = nonFilterParts.concat(parts);
 
-				return window.location.origin + window.location.pathname + "?" + parts.join("&");
-			},
+                return window.location.origin + window.location.pathname + "?" + parts.join("&");
+            },
 
-			getFilterUrlSettings: function (urlChunkMap) {
-				var urlChunkKeys = d3.keys (urlChunkMap).filter(function(key) {
-					return key[0] === "F";
-				});
-				var filterUrlSettingsMap = {};
-				urlChunkKeys.forEach (function (key) {
-					filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
-				});
-				var allowableFilterKeys = d3.keys (this.defaults);
-				allowableFilterKeys.push ("matchScoreCutoff");
-				var intersectingKeys = _.intersection (d3.keys(filterUrlSettingsMap), allowableFilterKeys);
-				var filterChunkMap = _.pick (filterUrlSettingsMap, intersectingKeys);
-				console.log ("FCM", filterChunkMap);
-				return filterChunkMap;
-			},
+            getFilterUrlSettings: function(urlChunkMap) {
+                var urlChunkKeys = d3.keys(urlChunkMap).filter(function(key) {
+                    return key[0] === "F";
+                });
+                var filterUrlSettingsMap = {};
+                urlChunkKeys.forEach(function(key) {
+                    filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
+                });
+                var allowableFilterKeys = d3.keys(this.defaults);
+                allowableFilterKeys.push("matchScoreCutoff");
+                var intersectingKeys = _.intersection(d3.keys(filterUrlSettingsMap), allowableFilterKeys);
+                var filterChunkMap = _.pick(filterUrlSettingsMap, intersectingKeys);
+                console.log("FCM", filterChunkMap);
+                return filterChunkMap;
+            },
 
         }),
 

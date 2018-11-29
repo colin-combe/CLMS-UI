@@ -4,64 +4,64 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     events: {
         "mouseenter tr.matchRow": "highlight",
         "mouseleave table": "highlight",
-		"mouseenter table": "focusTable",
-		"keydown table": "selectByKey",
-		"click .pageUp": "pageUp",
-		"click .pageDown": "pageDown",
+        "mouseenter table": "focusTable",
+        "keydown table": "selectByKey",
+        "click .pageUp": "pageUp",
+        "click .pageDown": "pageDown",
 
     },
 
-    initialize: function (options) {
+    initialize: function(options) {
         this.options = options || {};
 
-		var d3el = d3.select(this.el);
+        var d3el = d3.select(this.el);
 
         var holdingDiv = d3el.append("DIV").attr("class", "selectView verticalFlexContainer");
         holdingDiv.html("<div class='controlBar'><span class='pager'></span><span class='crossLinkTotal'></span><span class='rightSpan'></span><span class='rightSpan'></span></DIV><DIV class='scrollHolder'><TABLE><THEAD><TR></TR></THEAD></TABLE></DIV>");
 
         // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
-        this.listenTo (this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function () {
+        this.listenTo(this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function() {
             //~ if (this.model.get("selection").length > 0) {
             this.render();
             //~ }
         });
 
-		// redraw datable on protein metadata change (possible protein name change)
-		this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", this.render);
+        // redraw datable on protein metadata change (possible protein name change)
+        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", this.render);
 
         // emphasise selected match table row (or not if nothing selected)
-        this.listenTo (this.model, "change:lastSelectedMatch", function (model) {
-			var selMatch = model.get("lastSelectedMatch");
+        this.listenTo(this.model, "change:lastSelectedMatch", function(model) {
+            var selMatch = model.get("lastSelectedMatch");
             this.clearCurrentRowHighlight();
             if (selMatch && selMatch.match) {
                 d3.select(this.el).select("tr#match" + selMatch.match.id).classed("spectrumShown2", true);
             }
         });
 
-		// emphasise highlighted (brushed) match table rows
-        this.listenTo (this.model, "change:match_highlights", function (model, highlightedMatches) {
-            this.setTableHighlights (highlightedMatches.values());
+        // emphasise highlighted (brushed) match table rows
+        this.listenTo(this.model, "change:match_highlights", function(model, highlightedMatches) {
+            this.setTableHighlights(highlightedMatches.values());
         });
 
 
         var tableDataPropOrder = [
-                "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
-                "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
-                "autovalidated", "validated", "group", "runName", "scanNumber",
-                "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
-                "precursorIntensity", "elutionStart", "elutionEnd",
-            ];
+            "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
+            "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
+            "autovalidated", "validated", "group", "runName", "scanNumber",
+            "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
+            "precursorIntensity", "elutionStart", "elutionEnd",
+        ];
 
         this.headerLabels = {
             id: "PSM ID",
             ambiguity: "Ambiguity",
             protein1: "Protein 1",
-			pos1: "Pos",
+            pos1: "Pos",
             pepPos1: "Pep Pos",
             pepSeq1raw: "Pep 1 Sequence",
             linkPos1: "Link Pos",
             protein2: "Protein 2",
-			pos2: "Pos",
+            pos2: "Pos",
             pepPos2: "Pep Pos",
             pepSeq2raw: "Pep 2 Sequence",
             linkPos2: "Link Pos",
@@ -86,31 +86,37 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
-		this.minWidthColumns = d3.set(["massError"]);
-		this.emphasiseColumns = d3.set(["pos1", "pos2"]);
+        this.minWidthColumns = d3.set(["massError"]);
+        this.emphasiseColumns = d3.set(["pos1", "pos2"]);
 
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
-            ambiguity: function () {
+            ambiguity: function() {
                 return false;
             },
             //~ "protein1": function () { return false; },
             //~ "protein2": function () { return false; },
             //~ "pepPos1": function () { return false; },
             //~ "pepPos2": function () { return false; },
-            "autovalidated": function () {
-                return false;//CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
+            "autovalidated": function() {
+                return false; //CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
             },
-            "validated": function () {
+            "validated": function() {
                 return false;
             }, //CLMS.model.manualValidatedFound; },
-            "precursorIntensity": function () {return false;},
-            "elutionStart": function () {return false;},
-            "elutionEnd": function () {return false;}
+            "precursorIntensity": function() {
+                return false;
+            },
+            "elutionStart": function() {
+                return false;
+            },
+            "elutionEnd": function() {
+                return false;
+            }
         };
 
         this.filteredProps = tableDataPropOrder.filter(
-            function (prop) {
+            function(prop) {
                 var f = headerFilterFuncs[prop];
                 return f ? f() : true;
             }
@@ -119,12 +125,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var self = this;
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
-		var scientific = d3.format(".4e");
+        var scientific = d3.format(".4e");
         this.cellFuncs = {
-            "id": function (d) {
+            "id": function(d) {
                 return d.id;
             },
-            "ambiguity": function (d) {
+            "ambiguity": function(d) {
                 return d.matchedPeptides[0].prt.length *
                     ((d.matchedPeptides[1].prt.length != 0) ? d.matchedPeptides[1].prt.length : 1);
             },
@@ -155,7 +161,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "pepSeq1raw": function(d) {
                 return d.matchedPeptides[0].seq_mods;
             },
-            "pepSeq2raw": function (d) {
+            "pepSeq2raw": function(d) {
                 var dmp1 = d.matchedPeptides[1];
                 return dmp1 ? dmp1.seq_mods : "";
             },
@@ -220,19 +226,19 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         d3el.select(".controlBar").insert("span", ":first-child").text(this.identifier);
 
-		d3el.select("table").attr("tabindex", 0);	// so table can capture key events
+        d3el.select("table").attr("tabindex", 0); // so table can capture key events
 
-		this.viewStateModel = new (Backbone.Model.extend ({
-			initialize: function () {
+        this.viewStateModel = new(Backbone.Model.extend({
+            initialize: function() {
                 this.listenTo(this, "change:topOnly", function() {
                     self.render.call(self);
                 });
-				this.listenTo (this, "change:hidden", function (model, val) {
-					d3.select(self.el).selectAll("table").style("display", val ? "none" : null);
-					if (self.options.mainModel) {
-						CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					}
-				});
+                this.listenTo(this, "change:hidden", function(model, val) {
+                    d3.select(self.el).selectAll("table").style("display", val ? "none" : null);
+                    if (self.options.mainModel) {
+                        CLMSUI.vent.trigger("resizeSpectrumSubViews", true);
+                    }
+                });
             },
         }))({
             topOnly: false,
@@ -240,52 +246,52 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             hidden: false
         });
 
-		new CLMSUI.utils.checkBoxView ({
-			el: d3el.select(".rightSpan:last-child").node(),
-			model: this.viewStateModel,
-			myOptions: {
-				toggleAttribute: "topOnly",
-				id: self.el.id +"TopOnly",
-				label: "Only Show "+this.viewStateModel.get("topCount")+" Top-Scoring Matches per Link"
-			},
-		});
+        new CLMSUI.utils.checkBoxView({
+            el: d3el.select(".rightSpan:last-child").node(),
+            model: this.viewStateModel,
+            myOptions: {
+                toggleAttribute: "topOnly",
+                id: self.el.id + "TopOnly",
+                label: "Only Show " + this.viewStateModel.get("topCount") + " Top-Scoring Matches per Link"
+            },
+        });
 
-		d3el.select(".rightSpan").classed ("selectionTableHideToggle", true);
-		new CLMSUI.utils.checkBoxView ({
-			el: d3el.select(".rightSpan").node(),
-			model: this.viewStateModel,
-			myOptions: {
-				toggleAttribute: "hidden",
-				id: self.el.id +"HideToggle",
-				label: "Hide",
-			}
-		});
+        d3el.select(".rightSpan").classed("selectionTableHideToggle", true);
+        new CLMSUI.utils.checkBoxView({
+            el: d3el.select(".rightSpan").node(),
+            model: this.viewStateModel,
+            myOptions: {
+                toggleAttribute: "hidden",
+                id: self.el.id + "HideToggle",
+                label: "Hide",
+            }
+        });
 
     },
 
-    render: function () {
-        this.updateTable ({
-			topMatchesOnly: this.viewStateModel.get("topOnly"),
-			topCount: this.viewStateModel.get("topCount")
-		});
+    render: function() {
+        this.updateTable({
+            topMatchesOnly: this.viewStateModel.get("topOnly"),
+            topCount: this.viewStateModel.get("topCount")
+        });
     },
 
-    getMatches: function (xlink) {
+    getMatches: function(xlink) {
         var selectedMatches = this.model.getMarkedMatches("selection");
         return _.pluck(xlink.filteredMatches_pp, "match")
-            .filter(function (m) {
+            .filter(function(m) {
                 return selectedMatches.has(m.id);
             }) // selection now done on a per-match basis
         ;
     },
 
-    updateTable: function (options) {
-		options = options || {};
+    updateTable: function(options) {
+        options = options || {};
 
         this.matchCountIndices = this.model.getMarkedCrossLinks("selection")
             // map to reduce filtered matches to selected matches only
-             .map (function (xlink) {
-                var selectedMatches = this.getMatches (xlink);
+            .map(function(xlink) {
+                var selectedMatches = this.getMatches(xlink);
                 return {
                     id: xlink.id,
                     link: xlink,
@@ -293,24 +299,24 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 };
             }, this)
             // Then get rid of links with no selected and filtered matches
-            .filter(function (selLinkMatchData) {
+            .filter(function(selLinkMatchData) {
                 return selLinkMatchData.matches.length;
             })
-           // Then sort links by top remaining match score for each link
-            .sort(function (a, b) {
+            // Then sort links by top remaining match score for each link
+            .sort(function(a, b) {
                 return b.matches[0].score() - a.matches[0].score();
             });
 
-		// filter to top match per link if requested
-		if (options.topMatchesOnly) {
-			this.matchCountIndices.forEach (function (mci) {
-				mci.matches = mci.matches.slice (0, options.topCount || 1);
-			});
-		}
+        // filter to top match per link if requested
+        if (options.topMatchesOnly) {
+            this.matchCountIndices.forEach(function(mci) {
+                mci.matches = mci.matches.slice(0, options.topCount || 1);
+            });
+        }
 
         var count = 0;
         // add count metadata to matchCountIndices
-        this.matchCountIndices.forEach (function (selLinkMatchData) {
+        this.matchCountIndices.forEach(function(selLinkMatchData) {
             selLinkMatchData.runningTotalStart = count;
             count += selLinkMatchData.matches.length;
             selLinkMatchData.runningTotalEnd = count;
@@ -333,10 +339,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             headerJoin.exit().remove();
             // See https://github.com/mbostock/d3/issues/2722 as I kick off about case sensitivity
             headerJoin.enter().append("th")
-                .html(function (d) {
+                .html(function(d) {
                     return self.headerLabels[d];
                 })
-                .classed("colSectionStart", function (d) {
+                .classed("colSectionStart", function(d) {
                     return self.colSectionStarts.has(d);
                 });
 
@@ -344,15 +350,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         }
     },
 
-    pageUp: function () {
-        if (this.page < this.getPageCount()){
+    pageUp: function() {
+        if (this.page < this.getPageCount()) {
             var newpage = this.page + 1;
             d3.select("#page").text(newpage);
             this.setPage(newpage);
         }
     },
 
-    pageDown: function () {
+    pageDown: function() {
         if (this.page > 1) {
             var newpage = this.page - 1;
             d3.select("#page").text(newpage);
@@ -360,13 +366,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         }
     },
 
-    setPage: function (pg) {
+    setPage: function(pg) {
         // limit page number and set text elements
         var mci = this.matchCountIndices;
         var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
 
         var pageCount = this.getPageCount();
-        pg = Math.max (Math.min (pg, pageCount), 1);
+        pg = Math.max(Math.min(pg, pageCount), 1);
         this.page = pg;
         // var input = d3.select(this.el).select(".pager>input");
         // input.property("value", pg);
@@ -374,16 +380,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         var limit = totalSelectedFilteredMatches; // selectedXLinkCount;
         var lower = (limit === 0) ? 0 : ((pg - 1) * this.pageSize) + 1;
-        var upper = Math.min (pg * this.pageSize, limit);
+        var upper = Math.min(pg * this.pageSize, limit);
 
         var lowerPageCount = (this.page - 1) * this.pageSize;
         var upperPageCount = lowerPageCount + this.pageSize;
         var bisect = d3.bisector(function(d) {
             return d.runningTotalEnd;
         });
-        var lowerLink = bisect.right (mci, lowerPageCount);
-        var upperLink = bisect.left (mci, upperPageCount);
-        upperLink = Math.min (upperLink, mci.length - 1);
+        var lowerLink = bisect.right(mci, lowerPageCount);
+        var upperLink = bisect.left(mci, upperPageCount);
+        upperLink = Math.min(upperLink, mci.length - 1);
         var matchBounds = {};
         if (mci.length) {
             // set bounds for start and end matches
@@ -395,59 +401,59 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var panelHeading = d3.select(this.el).select(".crossLinkTotal");
         var commaFormat = d3.format(",");
         var selectedXLinkCount = this.matchCountIndices.length;
-		var repeats = this.countRepeatedAmbiguousMatches (this.matchCountIndices);
-		var TSFUniqueMatches = totalSelectedFilteredMatches - repeats;
+        var repeats = this.countRepeatedAmbiguousMatches(this.matchCountIndices);
+        var TSFUniqueMatches = totalSelectedFilteredMatches - repeats;
 
-		if (selectedXLinkCount === 0) {
-			panelHeading.html("Currently empty<sup>?</sup>").attr("title", "Select Cross-Links / Matches in other views to populate this table")
-		} else {
-			panelHeading.text (
-				commaFormat(lower) + " - " + commaFormat(upper) + " of " +
-				(repeats > 0 ? commaFormat(totalSelectedFilteredMatches) + " combinations of " : "") +
-				commaFormat(TSFUniqueMatches) + " Selected Match"+((TSFUniqueMatches != 1) ? "es" : "") +
-				" shared across " +
-				commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
-			);
-			panelHeading.attr ("title", "Combinations? Some matches may be ambiguous and associated with multiple Cross-Links");
-		}
+        if (selectedXLinkCount === 0) {
+            panelHeading.html("Currently empty<sup>?</sup>").attr("title", "Select Cross-Links / Matches in other views to populate this table")
+        } else {
+            panelHeading.text(
+                commaFormat(lower) + " - " + commaFormat(upper) + " of " +
+                (repeats > 0 ? commaFormat(totalSelectedFilteredMatches) + " combinations of " : "") +
+                commaFormat(TSFUniqueMatches) + " Selected Match" + ((TSFUniqueMatches != 1) ? "es" : "") +
+                " shared across " +
+                commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
+            );
+            panelHeading.attr("title", "Combinations? Some matches may be ambiguous and associated with multiple Cross-Links");
+        }
 
-        var tablePage = this.matchCountIndices.slice (lowerLink, upperLink + 1);
-        this.addRows (tablePage, this.filteredProps, matchBounds);
+        var tablePage = this.matchCountIndices.slice(lowerLink, upperLink + 1);
+        this.addRows(tablePage, this.filteredProps, matchBounds);
     },
 
-	countRepeatedAmbiguousMatches: function (arrayOfMatchLists) {
-		var ambigSet = d3.set();
-		var repeatedAmbigCount = 0;
+    countRepeatedAmbiguousMatches: function(arrayOfMatchLists) {
+        var ambigSet = d3.set();
+        var repeatedAmbigCount = 0;
 
-		arrayOfMatchLists.forEach (function (mci) {
-			mci.matches.forEach (function (match) {
-				var crossLinks = match.crossLinks;
-				if (crossLinks.length > 1) {
-					var mid = match.id;
-					if (ambigSet.has (mid)) {
-						repeatedAmbigCount++;
-					} else {
-						ambigSet.add (mid);
-					}
-				}
-			})
-		});
+        arrayOfMatchLists.forEach(function(mci) {
+            mci.matches.forEach(function(match) {
+                var crossLinks = match.crossLinks;
+                if (crossLinks.length > 1) {
+                    var mid = match.id;
+                    if (ambigSet.has(mid)) {
+                        repeatedAmbigCount++;
+                    } else {
+                        ambigSet.add(mid);
+                    }
+                }
+            })
+        });
 
-		return repeatedAmbigCount;
-	},
+        return repeatedAmbigCount;
+    },
 
-	getPageCount: function () {
-		var mci = this.matchCountIndices;
+    getPageCount: function() {
+        var mci = this.matchCountIndices;
         var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
-        return Math.floor (totalSelectedFilteredMatches / this.pageSize) + 1;
-	},
+        return Math.floor(totalSelectedFilteredMatches / this.pageSize) + 1;
+    },
 
     // code that maintains the rows in the table
-    addRows: function (selectedLinkArray, filteredProps, firstLastLinkMatchBounds) {
+    addRows: function(selectedLinkArray, filteredProps, firstLastLinkMatchBounds) {
         filteredProps = filteredProps || this.filteredProps;
         var self = this;
         //var proteinMap = this.model.get("clmsModel").get("participants");
-        var identityFunc = function (d) {
+        var identityFunc = function(d) {
             return d.id;
         };
 
@@ -455,10 +461,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         // helper function
         // make nice id string from cross link object
-        var niceCrossLinkName = function (crosslink /*, i */ ) {
+        var niceCrossLinkName = function(crosslink /*, i */ ) {
             var matchCount = crosslink.runningTotalEnd - crosslink.runningTotalStart;
             crosslink = crosslink.link;
-            return /*(i+1)+". "+*/ matchCount+" Selected Match"+(matchCount > 1 ? "es" : "")+" for " + crosslink.fromProtein.name + ", " +
+            return /*(i+1)+". "+*/ matchCount + " Selected Match" + (matchCount > 1 ? "es" : "") + " for " + crosslink.fromProtein.name + ", " +
                 (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue + " --- " +
                     crosslink.toProtein.name + ", " + crosslink.toResidue));
         };
@@ -483,11 +489,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
 
         // Within each tbody section, match table rows up to matches within each crosslink
-        var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data(function (d, i) {
+        var tjoin = xlinkTBodyJoin.selectAll("TR.matchRow").data(function(d, i) {
             var md = d.matches; //self.getMatches (d.link);
             // paging by matches means we may begin part way through a link's matches and end partway through a link's matches
             if (i === 0 || i === selectedLinkArray.length - 1) {
-                md = md.slice (
+                md = md.slice(
                     i === 0 ? firstLastLinkMatchBounds.startMatch || 0 : 0,
                     i === selectedLinkArray.length - 1 ? firstLastLinkMatchBounds.endMatch || md.length : md.length
                 );
@@ -497,15 +503,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         tjoin.exit().remove();
         tjoin.enter().append("tr")
             .attr("class", "matchRow")
-            .attr("id", function (d) {
+            .attr("id", function(d) {
                 return 'match' + d.id;
             }) // since we key the rows on d.id this won't change, so we can set it for all time in enter()
-            .on("click", function (d) {
-                self.select (d);
+            .on("click", function(d) {
+                self.select(d);
             });
         tjoin.order();
         tjoin
-            .classed("spectrumShown2", function (d) {
+            .classed("spectrumShown2", function(d) {
                 var lsm = self.model.get("lastSelectedMatch");
                 return lsm && lsm.match ? lsm.match.id === d.id : false;
             });
@@ -520,16 +526,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             // this is quicker than doing individual .classed (or an aggregated .classed even)
             // but only safe to use if confident these are the only possible classes applicable to these elements
             // individual .classed = ~37.5% of addRows time, .attr("class") = ~11% of addRows time
-            .attr("class", function (d) {
+            .attr("class", function(d) {
                 var states = [
-                        self.numberColumns.has(d),
-                        self.colSectionStarts.has(d),
-                        self.monospacedColumns.has(d),
-                        self.maxWidthColumns.has(d),
-						self.minWidthColumns.has(d),
-						self.emphasiseColumns.has(d),
-                    ];
-                var classes = possClasses.filter(function (cd, ci) {
+                    self.numberColumns.has(d),
+                    self.colSectionStarts.has(d),
+                    self.monospacedColumns.has(d),
+                    self.maxWidthColumns.has(d),
+                    self.minWidthColumns.has(d),
+                    self.emphasiseColumns.has(d),
+                ];
+                var classes = possClasses.filter(function(cd, ci) {
                     return states[ci];
                 });
                 return classes.join(" ");
@@ -537,17 +543,17 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         // The above states shouldn't change over the cells lifetime, so do it once in enter rather than repeatedly in the () selection below
         ;
 
-        var getText = function (d) {
+        var getText = function(d) {
             var link = d3.select(this.parentNode).datum();
             var cellFunc = self.cellFuncs[d];
             return cellFunc ? cellFunc(link) : (link[d] || "");
         };
 
-		var deemphasiseFraction = function (text) {
-			var z = text ? text.toString().indexOf(".") : -1;
-			if (z < 0 ) return text;
-			return text.slice(0, z+1)+"<span class='smallText'>"+text.slice(z+1)+"</span>";
-		};
+        var deemphasiseFraction = function(text) {
+            var z = text ? text.toString().indexOf(".") : -1;
+            if (z < 0) return text;
+            return text.slice(0, z + 1) + "<span class='smallText'>" + text.slice(z + 1) + "</span>";
+        };
 
         cellJoin
             /*
@@ -566,7 +572,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             })
             */
             //.text(getText)
-            .each(function (d) {
+            .each(function(d) {
                 /*
                 d3.select(this).classed ({
                     number: self.numberColumns.has(d),
@@ -575,12 +581,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                     maxWidth: self.maxWidthColumns.has (d),
                 });
                 */
-				var d3this = d3.select(this);
-				if (self.numberColumns.has(d)) {
-					d3this.html (deemphasiseFraction (getText.call(this, d)))
-				} else {
-					d3this.text (getText);
-				}
+                var d3this = d3.select(this);
+                if (self.numberColumns.has(d)) {
+                    d3this.html(deemphasiseFraction(getText.call(this, d)))
+                } else {
+                    d3this.text(getText);
+                }
 
                 if (self.maxWidthColumns.has(d)) {
                     d3this.attr("title", getText.call(this, d));
@@ -588,128 +594,132 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             });
     },
 
-    setVisible: function (show) {
+    setVisible: function(show) {
         d3.select(this.el).style('display', show ? 'block' : 'none');
         if (show) {
             this.render();
         }
     },
 
-    clearCurrentRowHighlight: function () {
+    clearCurrentRowHighlight: function() {
         d3.select(this.el).selectAll("tr").classed('spectrumShown2', false);
         return this;
     },
 
-    setTableHighlights: function (highlightedMatches) {
-        var highlightedMatchIDs = d3.set (_.pluck (highlightedMatches, "id"));
+    setTableHighlights: function(highlightedMatches) {
+        var highlightedMatchIDs = d3.set(_.pluck(highlightedMatches, "id"));
         d3.select(this.el).selectAll("tr.matchRow").classed("highlighted", function(d) {
-            return highlightedMatchIDs.has (d.id);
+            return highlightedMatchIDs.has(d.id);
         });
         return this;
     },
 
     // this is called when mouse moved over a row
     // and should via the backbone models and events eventually call setTableHighlights above too
-    highlight: function (evt) {
+    highlight: function(evt) {
         var datum = d3.select(evt.currentTarget).datum();
-        return this.highlightFromDatum (datum, evt);
+        return this.highlightFromDatum(datum, evt);
     },
 
-	highlightFromDatum: function (datum, evt) {
+    highlightFromDatum: function(datum, evt) {
         this.model.setMarkedMatches("highlights", datum ? [{
             match: datum
         }] : [], true, evt.ctrlKey || evt.shiftKey);
         return this;
     },
 
-	focusTable: function () {
-		this.el.focus();
-	},
+    focusTable: function() {
+        this.el.focus();
+    },
 
-	selectByKey: function (evt) {
-		var kcode = evt.keyCode;
+    selectByKey: function(evt) {
+        var kcode = evt.keyCode;
 
-		if (kcode === 38 || kcode === 40 || kcode === 13) {
-			var currentWithinPageIndex = -1;
+        if (kcode === 38 || kcode === 40 || kcode === 13) {
+            var currentWithinPageIndex = -1;
 
-			d3.select(this.el).selectAll("tr.matchRow")
-				.each (function (d, i) {
-					if ((d3.select(this).classed("spectrumShown2") && currentWithinPageIndex === -1) || d3.select(this).classed("highlighted")) {
-						currentWithinPageIndex = i;
-					}
+            d3.select(this.el).selectAll("tr.matchRow")
+                .each(function(d, i) {
+                    if ((d3.select(this).classed("spectrumShown2") && currentWithinPageIndex === -1) || d3.select(this).classed("highlighted")) {
+                        currentWithinPageIndex = i;
+                    }
                 });
 
-			//console.log ("cwpi", currentWithinPageIndex);
+            //console.log ("cwpi", currentWithinPageIndex);
 
-			if (currentWithinPageIndex >= 0) {
-				var newIndex = currentWithinPageIndex + (kcode === 40 ? 1 : 0) + (kcode === 38 ? -1 : 0);
-				//console.log ("NI", newIndex, this.page, this.getPageCount());
-				var isNew = true;
-				if (newIndex < 0) {
-					if (this.page > 1) {
-						this.page--;
-						this.render();
-						newIndex = this.pageSize - 1;
-					} else {
-						isNew = false;
-					}
+            if (currentWithinPageIndex >= 0) {
+                var newIndex = currentWithinPageIndex + (kcode === 40 ? 1 : 0) + (kcode === 38 ? -1 : 0);
+                //console.log ("NI", newIndex, this.page, this.getPageCount());
+                var isNew = true;
+                if (newIndex < 0) {
+                    if (this.page > 1) {
+                        this.page--;
+                        this.render();
+                        newIndex = this.pageSize - 1;
+                    } else {
+                        isNew = false;
+                    }
                 } else if (newIndex >= this.pageSize) {
-					if (this.getPageCount() > this.page) {
-						this.page++;
-						console.log ("next page", this.page, this);
-						this.render();
-						newIndex = 0;
-					} else {
-						isNew = false;
-					}
-				}
+                    if (this.getPageCount() > this.page) {
+                        this.page++;
+                        console.log("next page", this.page, this);
+                        this.render();
+                        newIndex = 0;
+                    } else {
+                        isNew = false;
+                    }
+                }
 
 
-				if (isNew) {
-					var self = this;
-					d3.select(this.el).selectAll("tr.matchRow")
-						.filter (function (d, i) {
-							return i === newIndex;
-						})
-						.each (function (d) {
-							if (kcode === 13) {
-								self.select (d);
-							} else {
-								self.highlightFromDatum (d, evt);
-							}
+                if (isNew) {
+                    var self = this;
+                    d3.select(this.el).selectAll("tr.matchRow")
+                        .filter(function(d, i) {
+                            return i === newIndex;
+                        })
+                        .each(function(d) {
+                            if (kcode === 13) {
+                                self.select(d);
+                            } else {
+                                self.highlightFromDatum(d, evt);
+                            }
                         });
-				}
-			}
+                }
+            }
 
-			//console.log ("CI", currentWithinPageIndex);
-		}
-	},
+            //console.log ("CI", currentWithinPageIndex);
+        }
+    },
 
-	select: function (d) {
-		console.log ("this", this);
-		var mainModel = this.options.mainModel;
-		if (mainModel) {
-			//TODO: fix?
-			//~ if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
-			//~ d3.select(".validationControls").style("display", "block");
-			//~ } else {
-			//~ d3.select(".validationControls").style("display", "none");
-			//~ }
-			mainModel.set("lastSelectedMatch", {
-				match: d,
-				directSelection: true
-			});
-		} else {
-			//d3.select(".validationControls").style("display", "block");
-		}
-		//if (d.src) { // if the src att is missing its from a csv file
-			// always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
-			this.model
-				.set("lastSelectedMatch", {match: d, directSelection: true}, {silent: true})
-				.trigger ("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"))
-			;
-		//}
-	},
+    select: function(d) {
+        console.log("this", this);
+        var mainModel = this.options.mainModel;
+        if (mainModel) {
+            //TODO: fix?
+            //~ if (mainModel.get("clmsModel").get("matches").has(d.id) == true) {
+            //~ d3.select(".validationControls").style("display", "block");
+            //~ } else {
+            //~ d3.select(".validationControls").style("display", "none");
+            //~ }
+            mainModel.set("lastSelectedMatch", {
+                match: d,
+                directSelection: true
+            });
+        } else {
+            //d3.select(".validationControls").style("display", "block");
+        }
+        //if (d.src) { // if the src att is missing its from a csv file
+            // always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
+            this.model
+                .set("lastSelectedMatch", {
+                    match: d,
+                    directSelection: true
+                }, {
+                    silent: true
+                })
+                .trigger("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"));
+        //}
+    },
 
     identifier: "Selected Match Table",
 });

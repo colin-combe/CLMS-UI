@@ -646,13 +646,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         var distObj = this.model.get("clmsModel").get("distancesObj");
         var rscope = this.options.randomScope;
         var randArr = distObj ? distObj.getSampleDistances(
-                d3.median([10000, linkCount * 100, 100000]),
-                d3.values(crosslinkerSpecificityMap), {
-                    withinProtein: rscope === "Intra" || rscope === "Chain",
-                    withinChain: rscope === "Chain"
-                }
-            ) :
-            [];
+            d3.median([10000, linkCount * 100, 100000]),
+            d3.values(crosslinkerSpecificityMap), {
+                withinProtein: rscope === "Intra" || rscope === "Chain",
+                withinChain: rscope === "Chain"
+            }
+        ) : [];
         var thresholds = this.getBinThresholds([
             []
         ]);

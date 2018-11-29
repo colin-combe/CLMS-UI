@@ -60,7 +60,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // residueStore maps the NGL-indexed resides to PDB-index
-    // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
+    // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() -->
     // then need to subtract 1, then --> which goes to PDB index with residueStore
 
     makeModelSubIndexedChainMap: function(chainMap) {
@@ -443,14 +443,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             }
         });
 
-        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
+        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)
         var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
         return sel;
     },
 
 
     getSelectionFromResidueList: function(resnoList, options) { // set allAtoms to true to not restrict selection to alpha carbon atoms
-        // options are 
+        // options are
         // allAtoms:true to not add on the AND .CA qualifier
         // chainsOnly:true when the resnoList only has chainIndices defined and no res
         options = options || {};
@@ -505,7 +505,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             });
 
             //sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
-            //console.log ("sele", sele);  
+            //console.log ("sele", sele);
             //console.log ("MODELTREE", modelTree);
 
             // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
@@ -514,7 +514,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var modelBranch = modelEntry.value;
                 var perChainResidues = modelBranch.entries().map(function(chainEntry) {
                     var chainBranch = chainEntry.value;
-                    // selection syntax picks up ":123" as residue 123 in chain "empty name", but ": AND 123" doesn't work. 
+                    // selection syntax picks up ":123" as residue 123 in chain "empty name", but ": AND 123" doesn't work.
                     // Similarly ":/0 " works but "/0 AND :" doesn't.
                     // Shouldn't have many pdbs with empty chain names though.
                     if (chainEntry.key) {

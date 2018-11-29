@@ -505,11 +505,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     },
 
-    proteinSelectionTextFilter: function () {
+    proteinSelectionTextFilter: function() {
         var filterText = d3.select("#proteinSelectionFilter").property("value").trim().toLowerCase();
         var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
-        
-        var toSelect = participantsArr.filter (function (p) {
+
+        var toSelect = participantsArr.filter(function(p) {
             return (p.name.toLowerCase().indexOf(filterText) != -1 || p.description.toLowerCase().indexOf(filterText) != -1);
         });
         this.setSelectedProteins(toSelect);
