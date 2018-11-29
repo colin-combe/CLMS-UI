@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.Strings = { 
+CLMSUI.Strings = {
     "strings": {
         "en": {
             "distogram": {
@@ -10,8 +10,8 @@ CLMSUI.Strings = {
             },
         },
     },
-    
-    "getString": function (descriptor, language) {
+
+    "getString": function(descriptor, language) {
         language = language || "en";
         return this[language][descriptor];
     },

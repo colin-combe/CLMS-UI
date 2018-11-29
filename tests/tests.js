@@ -193,7 +193,7 @@ function callback (model) {
     
     QUnit.test ("Scoring", function (assert) {
         var scoringSystem = {
-            matrix: CLMSUI.blosumCollInst.findWhere({key:"Blosum100"}).attributes,
+            matrix: CLMSUI.blosumCollInst.get("Blosum100").attributes,
             match: 10, 
             mis: -6, 
             gapOpen: 10, 
@@ -207,11 +207,15 @@ function callback (model) {
             {seq: "ABCDEFGHIIKLMNNPQRSTTVWXYZ", expScore: 251},
             {seq: "BCDEFGHIIKLMNNPQRSTTVWXYZ", expScore: 241},
             {seq: "BCDEFGHIIKLMNNPQRSTTVWXY", expScore: 235},
+            {seq: "BCDETVWXY", expScore: 6 + 14 + 10 + 10 + -25 + 9 + 8 + 17 + -3 + 12},
             {seq: "ABCD", expScore: 38},
             {seq: "XYZ", expScore: 18},
-             {seq: "Z", expScore: 7},   // in the blosum100 matrix Z matches to E (score:7) better than it matches to itself (6). Weird.
+            {seq: "Z", expScore: 7},   // in the blosum100 matrix Z matches to E (score:7) better than it matches to itself (6). Weird.
             {seq: "BCDH", expScore: 30 + 13 - 13},   // aligner puts in gap and matches H-H as H-H score (13) plus gap penalty (-13 = 0) exceeds E-H score (-2)
-            {seq: "BCDY", expScore: 30 + 12 - 19},   // aligner goes for matching E-Y as gap penalty too long (19) for Y-Y score (12) to recover from
+            {seq: "BCDY", expScore: 30 - 7},   // aligner goes for matching E-Y (-7) as gap penalty too long (30+) for Y-Y score (12) to recover from
+            {seq: "BCDDEF", expScore: 6 + 14 + 10 + 10 + 11 - 11},   // aligner inserts gap (-11) in target to accommodate extra D
+            {seq: "BCDDDDDDDDEF", expScore: 6 + 14 + 10 + 10 + 11 - 17},   // aligner inserts gap (-17) in target to accommodate lots of D's
+            {seq: "BY", expScore: 12},   // aligner inserts B (no penalty as at start) and matches Y-Y
         ];
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
@@ -220,8 +224,9 @@ function callback (model) {
         });
         var actualScores = actual.map (function (v) { return v.res[0]; });
         var expectedScores = tests.map (function (v) { return v.expScore; });
-        var cigars = actual.map (function (v) { return v.fmt[0]; });
-		assert.deepEqual (actualScores, expectedScores, "Expected "+JSON.stringify(expectedScores)+JSON.stringify(cigars)+" when generating scores from bioseq32.js");
+        var fmts = actual.map (function (v) { return v.fmt[0]; });
+        var cigars = actual.map (function (v) { return v.cigar; });
+		assert.deepEqual (actualScores, expectedScores, "Expected "+JSON.stringify(expectedScores)+JSON.stringify(cigars)+JSON.stringify(fmts)+" when generating scores from bioseq32.js");
 	});
 	
 	QUnit.test ("Sequence generation from PDB chains", function (assert) {
@@ -237,10 +242,10 @@ function callback (model) {
 	
 	
 	QUnit.test ("Matrix pairings", function (assert) {
-		var testMatrix = {
-			"1AO6": [24, 12, 1000],
-			"1AO7": [36, 14, 79],
-			"1AO8": [500, 800, 24],
+		var testMatrix = {    // E-values per search sequence per pdb id
+			"1AO6": [0.01, 0.001, 1e-35],
+			"1AO7": [1e-30, 1e-15, 1e-30],
+			"1AO8": [1e-40, 1e-50, 1e-10],
 		};
 		var testSeqs = [{data: "ABCD"}, {data: "EFGH"}, {data: "IJKL"}];
 		var expectedValue = [
@@ -248,14 +253,13 @@ function callback (model) {
 			{id: "1AO8", seqObj: {data: "EFGH"}},
 			{id: "1AO6", seqObj: {data: "IJKL"}},
 		];
-		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
-		var actualValue = CLMSUI.modelUtils.matrixPairings (testMatrix, testSeqs, alignCollection);
+		var actualValue = CLMSUI.modelUtils.matrixPairings (testMatrix, testSeqs);
 		
 		// stringify turns undefined to null for printout, but it's a match
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as matrix pairing, Passed!");
 	});
 	
-	/*
+	
 	QUnit.test ("Align test", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var chainSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
@@ -265,11 +269,11 @@ function callback (model) {
 			chainSequences.map (function (cs) { return cs.data; }), 
 			{semiLocal: true}
 		).map (function (res) { return res.str; });	
-		var expectedValue = ["score=5722; pos=0; cigar=4D578M3D\n", "score=5722; pos=0; cigar=4D578M3D\n"];
+		var expectedValue = ["score=5735; pos=0; cigar=4D578M3D\n", "score=5735; pos=0; cigar=4D578M3D\n"];
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as alignment result, Passed!");
 	});
-    */
+    
     
     QUnit.module ("NGL Model Wrapper");
 	

@@ -26,7 +26,7 @@ _.extend(CLMSUI.vent, Backbone.Events);
 var allDataLoaded = _.after(3, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
-    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.models[3]);
+    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
 
     //init annotation types
     var annotationTypes = [];
@@ -102,6 +102,7 @@ var allDataLoaded = _.after(3, function() {
 
 CLMSUI.init = CLMSUI.init || {};
 
+// for qunit testing
 CLMSUI.init.pretendLoad = function() {
     allDataLoaded();
 };
@@ -112,8 +113,8 @@ CLMSUI.init.models = function(options) {
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
-    alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call(this, clmsModel);
+    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
+        this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
@@ -123,18 +124,18 @@ CLMSUI.init.models = function(options) {
     CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection(); // options if we want to override defaults
 
     // when the blosum Collection is fetched (an async process), we select one of its models as being selected
-    CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
+    CLMSUI.blosumCollInst.listenToOnce(CLMSUI.blosumCollInst, "sync", function() {
         console.log("ASYNC. blosum models loaded");
         allDataLoaded();
     });
 
     // and when the blosum Collection fires a blosumModelGlobalSetevent (via bothSyncsDone) it is accompanied by the chosen blosum Model
     // and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value
-    alignmentCollectionInst.listenToOnce (CLMSUI.blosumCollInst, "blosumModelGlobalSet", function (blosumModel) {
+    alignmentCollectionInst.listenToOnce(CLMSUI.blosumCollInst, "blosumModelGlobalSet", function(blosumModel) {
         // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
         // (done internally within alignmentModelInst)
-        this.models.forEach (function (protAlignModel) {
-            protAlignModel.set ("scoreMatrix", blosumModel);
+        this.models.forEach(function(protAlignModel) {
+            protAlignModel.set("scoreMatrix", blosumModel);
         });
     });
 
@@ -144,7 +145,7 @@ CLMSUI.init.models = function(options) {
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function(sequences) {
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences) {
         if (sequences && sequences.length) { // if sequences passed and it has a non-zero length...
             sequences.forEach(function(entry) {
                 this.addSeq(entry.id, entry.name, entry.data, entry.otherAlignSettings);
@@ -160,8 +161,8 @@ CLMSUI.init.models = function(options) {
 
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call(this, CLMSUI.compositeModelInst.get("clmsModel"));
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
+        this.addNewProteins(CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants")));
         // this triggers an event to say loads has changed in the alignment collection
         // more efficient to listen to that then redraw/recalc for every seq addition
         this.bulkAlignChangeFinished();
@@ -241,9 +242,9 @@ CLMSUI.init.modelsEssential = function(options) {
         matchScoreCutoff: scoreExtentInstance.slice()
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
-    filterSettings = _.extend (filterSettings, urlFilterSettings);	// overwrite default settings with url settings
-    console.log ("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {
+    filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
+    console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
         scoreExtent: scoreExtentInstance
     });
 
@@ -337,13 +338,13 @@ CLMSUI.init.views = function() {
             eventName: "scatterplotShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
         },
-		{
-			id: "listChkBxPlaceholder",
-			label: "List / HeatMap",
-			eventName: "listShow",
-			tooltip: "Sortable list of cross-links, can convert to heatmap",
-			sectionEnd: true
-		},
+        {
+            id: "listChkBxPlaceholder",
+            label: "List / HeatMap",
+            eventName: "listShow",
+            tooltip: "Sortable list of cross-links, can convert to heatmap",
+            sectionEnd: true
+        },
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
@@ -365,8 +366,12 @@ CLMSUI.init.views = function() {
         },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend({labelFirst: false}, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView({myOptions: options});
+        var options = $.extend({
+            labelFirst: false
+        }, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView({
+            myOptions: options
+        });
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
@@ -480,7 +485,7 @@ CLMSUI.init.views = function() {
     // Set up a one-time event listener that is then called from allDataLoaded
     // Once this is done, the views depending on async loading data (blosum, uniprot) can be set up
     // Doing it here also means that we don't have to set up these views at all if these views aren't needed (e.g. for some testing or validation pages)
-    CLMSUI.compositeModelInst.listenToOnce (CLMSUI.vent, "buildAsyncViews", function() {
+    CLMSUI.compositeModelInst.listenToOnce(CLMSUI.vent, "buildAsyncViews", function() {
         CLMSUI.init.viewsThatNeedAsyncData();
     })
 };
@@ -716,31 +721,30 @@ CLMSUI.init.viewsEssential = function(options) {
         myOptions: {
             title: "Help",
             menu: [{
-                    name: "Xi Docs",
-                    func: function() {
-                        window.open("../xidocs/html/xiview.html", "_blank");
-                    },
-                    tooltip: "Documentation for Xi View"
-                },{
-                    name: "Online Videos",
-                    func: function() {
-                        window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank");
-                    },
-                    tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
-                },{
-                    name: "Report Issue on Github",
-                    func: function() {
-                        window.open("https://github.com/Rappsilber-Laboratory/xiView_container/issues", "_blank");
-                    },
-                    tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
-                },{
-                    name: "About Xi View",
-                    func: function() {
-                        window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
-                    },
-                    tooltip: "About Xi View (opens external web page)"
+                name: "Xi Docs",
+                func: function() {
+                    window.open("../xidocs/html/xiview.html", "_blank");
                 },
-            ],
+                tooltip: "Documentation for Xi View"
+            }, {
+                name: "Online Videos",
+                func: function() {
+                    window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank");
+                },
+                tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
+            }, {
+                name: "Report Issue on Github",
+                func: function() {
+                    window.open("https://github.com/Rappsilber-Laboratory/xiView_container/issues", "_blank");
+                },
+                tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
+            }, {
+                name: "About Xi View",
+                func: function() {
+                    window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
+                },
+                tooltip: "About Xi View (opens external web page)"
+            }, ],
             tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
         }
     });
@@ -841,33 +845,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
     });
 
-    // moved to models()
-    /*
-    // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst, "3dsync", function (sequences) {
-        if (sequences && sequences.length) {    // if sequences passed and it has a non-zero length...
-            sequences.forEach (function (entry) {
-                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
-            }, this);
-            // this triggers an event to say loads has changed in the alignment collection
-            // more efficient to listen to that then redraw/recalc for every seq addition
-            this.bulkAlignChangeFinished ();
-
-            console.log ("3D sequences poked to collection", this);
-        }
-    });
-
-    // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
-    // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-     CLMSUI.compositeModelInst.get("alignColl").listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function () {
-        CLMSUI.modelUtils.addNewSequencesToAlignment.call (this, CLMSUI.compositeModelInst.get("clmsModel"));
-        // this triggers an event to say loads has changed in the alignment collection
-        // more efficient to listen to that then redraw/recalc for every seq addition
-        this.bulkAlignChangeFinished ();
-
-        console.log ("CSV sequences poked to collection", this);
-    });
-	*/
 
     new CLMSUI.DistogramBB({
         el: "#distoPanel",
@@ -891,7 +868,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // This makes a list viewer
-    new CLMSUI.ListViewBB ({
+    new CLMSUI.ListViewBB({
         el: "#listPanel",
         model: CLMSUI.compositeModelInst,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
