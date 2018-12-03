@@ -42,7 +42,7 @@ function download(content, contentType, fileName) {
       modernWeb = false;
     }
     
-    console.log("svg filename", fileName, modernWeb);
+    //console.log ("svg filename", fileName, modernWeb);
 
     if (!modernWeb) {
         // because btoa borks on unicode characters > 1 byte. http://ecmanaut.blogspot.co.uk/2006/07/encoding-decoding-utf8-in-javascript.html
@@ -85,12 +85,19 @@ function download(content, contentType, fileName) {
 
         function dataURItoBlob(binary) {
             var array = [];
+            var te;
             
-            // https://stackoverflow.com/a/18729931/368214
-            // fixes unicode bug
-            if (false /*TextEncoder*/) {
-                array = new TextEncoder("utf-8").encode(binary);
+            try {
+                te = new TextEncoder("utf-8");
+            } catch (e) {
+                te = undefined;
+            }
+            
+            if (te) {
+                array = te.encode (binary); // html5 encoding api way
             } else {
+                // https://stackoverflow.com/a/18729931/368214
+                // fixes unicode bug
                  for (var i=0; i < binary.length; i++) {
                     var charcode = binary.charCodeAt(i);
                     if (charcode < 0x80) array.push(charcode);
@@ -214,9 +221,9 @@ function getLinksCSV() {
 
     var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
     var searchIDs = Array.from(clmsModel.get("searches").keys());
-    for (var i = 0; i < searchIDs.length; i++) {
-        headerArray.push("Search_" + searchIDs[i]);
-    }
+    searchIDs.forEach (function (sid) {
+        headerArray.push ("Search_" + sid);
+    });
     console.log("searchIds", searchIDs);
 
     var metaColumns = (clmsModel.get("crossLinkMetaRegistry") || d3.set()).values();
@@ -278,10 +285,7 @@ function getLinksCSV() {
         // Add metadata information
         for (var m = 0; m < metaColumns.length; m++) {
             var mval = crossLink.getMeta(metaColumns[m]);
-            if (mval === undefined) {
-                mval = "";
-            }
-            row.push(mval);
+            row.push (mval === undefined ? "" : mval);
         }
 
         return '"' + row.join('","') + '"';
@@ -296,51 +300,36 @@ function getResidueCount() {
     var csv = '"Residue(s)","Occurences(in_unique_links)"\r\n';
     //~ var matches = xlv.matches;//.values();
     //~ var matchCount = matches.length;
-    var residueCounts = d3.map();
-    var residuePairCounts = d3.map();
+    var residueCountMap = d3.map();
+    var residuePairCountMap = d3.map();
 
     var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all"); // already pre-filtered
-    crossLinks.forEach(function(residueLink) {
-        var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1];
-        if (!linkedRes1) {
-            linkedRes1 = ""
-        }
+    crossLinks.forEach (function (residueLink) {
+        var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1] || "";
         var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
-        incrementCount(linkedRes1);
-        incrementCount(linkedRes2);
+        incrementCount (residueCountMap, linkedRes1);
+        incrementCount (residueCountMap, linkedRes2);
 
-        var pairId;
-        if (linkedRes1 > linkedRes2) {
-            pairId = linkedRes2 + "-" + linkedRes1;
-        } else {
-            pairId = linkedRes1 + "-" + linkedRes2;
-        }
-
-        var c = parseInt(residuePairCounts.get(pairId));
-        if (isNaN(c)) {
-            residuePairCounts.set(pairId, 1);
-        } else {
-            c++;
-            residuePairCounts.set(pairId, c);
-        }
+        var pairId = (linkedRes1 > linkedRes2) ? linkedRes2 + "-" + linkedRes1 : linkedRes1 + "-" + linkedRes2;
+        incrementCount (residuePairCountMap, pairId);
     });
 
-    residuePairCounts.forEach(function(k, v) {
+    residuePairCountMap.forEach(function(k, v) {
         csv += '"' + k + '","' +
             v + '"\r\n';
     });
-    residueCounts.forEach(function(k, v) {
+    residueCountMap.forEach(function(k, v) {
         csv += '"' + k + '","' +
             v + '"\r\n';
     });
 
-    function incrementCount(res) {
-        var c = parseInt(residueCounts.get(res));
+    function incrementCount (map, res) {
+        var c = parseInt(map.get(res));
         if (isNaN(c)) {
-            residueCounts.set(res, 1);
+            map.set(res, 1);
         } else {
             c++;
-            residueCounts.set(res, c);
+            map.set(res, c);
         }
     }
     return csv;
