@@ -58,6 +58,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         silent: true
                     })
                     .set(this.resetValues);
+                
+                return this;
             },
 
             processTextFilters: function() {
@@ -77,7 +79,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return {
                         upper: part.toUpperCase(),
                         lower: part.toLowerCase()
-                    }
+                    };
                 });
                 this.preprocessedInputText.set("pepSeq", splitPepSeq);
             },

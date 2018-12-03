@@ -35,7 +35,7 @@ CLMSUI.DistancesObj.prototype = {
         var self = this;
 
         linkWrappers.forEach(function(link) {
-            link.distance = this.getXLinkDistanceFromChainCoords(
+            link.distance = this.getXLinkDistanceFromChainCoords (
                 this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex
             );
         }, this);
@@ -107,7 +107,7 @@ CLMSUI.DistancesObj.prototype = {
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var modelIndex2 = chains2[m].modelIndex;
-                        if (modelIndex1 === modelIndex2) {
+                        if (modelIndex1 === modelIndex2) {  // bar distances between models
                             var chainIndex2 = chains2[m].index;
                             var chainName2 = chains2[m].name;
                             var alignId2 = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chainName2, chainIndex2);
@@ -116,7 +116,7 @@ CLMSUI.DistancesObj.prototype = {
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
                             if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
-                                var dist = this.getXLinkDistanceFromChainCoords(matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
+                                var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
 
                                 if (dist !== undefined) {
                                     if (average) {
@@ -468,8 +468,8 @@ CLMSUI.DistancesObj.prototype = {
                     if (!isNaN(dist) && dist > 0) {
                         randDists.push(dist);
                     }
-                })
-            })
+                });
+            });
         }
     },
 

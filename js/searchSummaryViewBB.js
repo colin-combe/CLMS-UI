@@ -60,7 +60,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
             // https://stackoverflow.com/questions/15069587/is-there-a-way-to-join-the-elements-in-an-js-array-but-let-the-last-separator-b
             var niceJoin = function(arr) {
                 return arr.length < 2 ? arr.join("") : arr.slice(0, -1).join(', ') + ' and ' + arr.slice(-1);
-            }
+            };
 
             // crosslinker descriptions for each search
             var crossLinkerDescs = search.crosslinkers ? search.crosslinkers.map(function(clink) {

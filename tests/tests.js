@@ -18,19 +18,7 @@ function callback (model) {
 	QUnit.module ("Filtering");
 	QUnit.test("Filter testing", function (assert) {
 		var expectedLinks = 5;
-		model.get("filterModel").set ({
-			decoys: false,
-			betweenLinks: true,
-			A: true,
-			B: true,
-			C: true,
-			Q: true,
-			AUTO: false,
-			ambig: false,
-			linears: false,
-			matchScoreCutoff: [undefined, undefined],
-			pepLength: 0,
-		});
+		model.get("filterModel").resetFilter().set ({AUTO: false});
 		// changes to filtermodel changes getFilteredCrossLinks contents via backbone event
 		assert.deepEqual(model.getFilteredCrossLinks().length, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" filtered crosslinks, Passed!");
 		
@@ -41,13 +29,15 @@ function callback (model) {
 		expectedLinks = 156;
 		model.get("filterModel").set ({pepLength: 6});
 		assert.deepEqual(model.getFilteredCrossLinks().length, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" filtered crosslinks with adding peplength=6, Passed!");
+        
+        model.get("filterModel").resetFilter();
 	});
 	
 	
 	
 	QUnit.module ("Selecting", {
 		beforeEach : function () {
-			model.get("filterModel").set ({AUTO: true}, {pepLength: 0});
+			model.get("filterModel").resetFilter().set ({AUTO: true}, {pepLength: 0});
 			model.setMarkedCrossLinks ("selection", [], false, false, false);	// Tidy up. Clear selection.
 		}
 	});
@@ -984,6 +974,57 @@ function callback (model) {
 		var actualValue = testLinks.map (function (testLink) { return testLink.getMeta(); });
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as updated metadata values, Passed!");
+	});
+    
+    QUnit.module ("File download string generation");
+    
+    QUnit.test ("Residues CSV", function (assert) {
+        model.get("filterModel")
+            .resetFilter()
+            .set ({AUTO: false})
+        ;
+		var expectedValue = "\"Residue(s)\",\"Occurences(in_unique_links)\"\r\n\"V-Y\",\"1\"\r\n\"E-K\",\"2\"\r\n\"T-Y\",\"1\"\r\n\"D-K\",\"1\"\r\n\"V\",\"1\"\r\n\"Y\",\"2\"\r\n\"K\",\"3\"\r\n\"E\",\"2\"\r\n\"T\",\"1\"\r\n\"D\",\"1\"\r\n";
+		var actualValue = getResidueCount();
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as Residues CSV, Passed!");
+        
+        model.get("filterModel").resetFilter();
+	});
+    
+    QUnit.test ("Links CSV", function (assert) {
+        model.get("filterModel")
+            .resetFilter()
+            .set ({AUTO: false})
+        ;
+		var expectedValue = "\"Protein1\",\"SeqPos1\",\"LinkedRes1\",\"Protein2\",\"SeqPos2\",\"LinkedRes2\",\"Highest Score\",\"Match Count\",\"AutoValidated\",\"Validated\",\"Link FDR\",\"3D Distance\",\"From Chain\",\"To Chain\",\"PDB SeqPos 1\",\"PDB SeqPos 2\",\"Search_10003\",\"cat\",\"dog\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"415\",\"V\",\"sp|P02768-A|ALBU_HUMAN\",\"497\",\"Y\",\"19.0000\",\"2\",\"true\",\"B,B\",\"\",\"8.79\",\"B\",\"B\",\"411\",\"493\",\"X\",\"2\",\"4\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"190\",\"K\",\"sp|P02768-A|ALBU_HUMAN\",\"425\",\"E\",\"17.3400\",\"4\",\"true\",\"A,C,A,A\",\"\",\"12.07\",\"B\",\"B\",\"186\",\"421\",\"X\",\"3\",\"5\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"125\",\"T\",\"sp|P02768-A|ALBU_HUMAN\",\"161\",\"Y\",\"17.3200\",\"1\",\"true\",\"C\",\"\",\"15.26\",\"A\",\"A\",\"121\",\"157\",\"X\",\"\",\"\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"131\",\"E\",\"sp|P02768-A|ALBU_HUMAN\",\"162\",\"K\",\"17.0300\",\"1\",\"true\",\"?\",\"\",\"8.30\",\"A\",\"A\",\"127\",\"158\",\"X\",\"\",\"\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"107\",\"D\",\"sp|P02768-A|ALBU_HUMAN\",\"466\",\"K\",\"13.9400\",\"1\",\"true\",\"B\",\"\",\"8.37\",\"B\",\"B\",\"103\",\"462\",\"X\",\"\",\"\"\r\n";
+        
+        // add the metadata from the other test, so it's always the same columns/values (i.e. test order doesn't change outcome of this test)
+        var fileContents = "Protein 1,SeqPos 1,Protein 2,SeqPos 2,cat,dog\n"
+			+"ALBU_HUMAN,415,ALBU_HUMAN,497,2,4\n"
+			+"ALBU_HUMAN,190,ALBU_HUMAN,425,3,5\n"
+		;
+		CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);	
+        
+		var actualValue = getLinksCSV();
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as Cross-Links CSV, Passed!");
+        
+        model.get("filterModel").resetFilter();
+	});
+    
+    
+    QUnit.test ("Matches CSV", function (assert) {
+        model.get("filterModel")
+            .resetFilter()
+            .set ({AUTO: false})
+        ;
+		var expectedValue = 	"\"Id\",\"Protein1\",\"SeqPos1\",\"PepPos1\",\"PepSeq1\",\"LinkPos1\",\"Protein2\",\"SeqPos2\",\"PepPos2\",\"PepSeq2\",\"LinkPos2\",\"Score\",\"Charge\",\"ExpMz\",\"ExpMass\",\"CalcMz\",\"CalcMass\",\"MassError\",\"AutoValidated\",\"Validated\",\"Search\",\"RawFileName\",\"ScanNumber\",\"ScanIndex\",\"CrossLinkerModMass\",\"FragmentTolerance\",\"IonTypes\",\"Decoy1\",\"Decoy2\",\"3D Distance\",\"From Chain\",\"To Chain\",\"PDB SeqPos 1\",\"PDB SeqPos 2\"\r\n\"625824830\",\"ALBU_HUMAN\",\"425\",\"415\",\"VPQVSTPTLVEVSR\",\"11\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"15.42\",\"5\",\"623.13706032591\",\"3110.6489192951553\",\"623.136349226899\",\"3110.6453638001\",\"1.1430088099583773\",\"true\",\"C\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"23756\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625825062\",\"ALBU_HUMAN\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"14.8\",\"5\",\"648.75679602991\",\"3238.747597815155\",\"648.755341826899\",\"3238.7403268001\",\"2.245013283436167\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"21558\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625825067\",\"ALBU_HUMAN\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"15.19\",\"5\",\"648.75676475862\",\"3238.747441458705\",\"648.755341826899\",\"3238.7403268001\",\"2.196736350321131\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"22016\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625825068\",\"ALBU_HUMAN\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"17.34\",\"4\",\"810.69382619827\",\"3238.746198925564\",\"810.692358166904\",\"3238.7403268001\",\"1.8130893099008054\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"21877\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625826126\",\"ALBU_HUMAN\",\"497\",\"485\",\"RPCcmFSALEVDETYVPK\",\"13\",\"ALBU_HUMAN\",\"415\",\"414\",\"KVPQVSTPTLVEVSR\",\"2\",\"10.59\",\"3\",\"1211.3077209543\",\"3630.901333462263\",\"1211.3060024002457\",\"3630.8961778001\",\"1.4199420503630487\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"32246\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.79\",\"B\",\"B\",\"410\",\"492\"\r\n\"625826136\",\"ALBU_HUMAN\",\"497\",\"485\",\"RPCcmFSALEVDETYVPK\",\"13\",\"ALBU_HUMAN\",\"415\",\"414\",\"KVPQVSTPTLVEVSR\",\"2\",\"19\",\"4\",\"908.73262202769\",\"3630.901382243244\",\"908.731320916904\",\"3630.8961778001\",\"1.4333770202208327\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"32195\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.79\",\"B\",\"B\",\"410\",\"492\"\r\n\"625827037\",\"ALBU_HUMAN\",\"466\",\"446\",\"MoxPCcmAEDYLSVVLNQLCcmVLHEKTPVSDR\",\"21\",\"ALBU_HUMAN\",\"107\",\"107\",\"DDNPNLPR\",\"1\",\"13.94\",\"5\",\"843.01100363988\",\"4210.018635865004\",\"843.009827426899\",\"4210.0127548001\",\"1.3969232985363071\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"50388\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.37\",\"B\",\"B\",\"102\",\"461\"\r\n\"625827168\",\"ALBU_HUMAN\",\"125\",\"115\",\"LVRPEVDVMCcmTAFHDNEETFLK\",\"11\",\"ALBU_HUMAN\",\"161\",\"161\",\"YKAAFTECcmCcmQAADK\",\"1\",\"17.32\",\"6\",\"733.17742554659\",\"4393.020894478266\",\"733.1765762668957\",\"4393.0157988001\",\"1.1599498839643183\",\"true\",\"C\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"33444\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"15.26\",\"A\",\"A\",\"120\",\"156\"\r\n\"625828211\",\"ALBU_HUMAN\",\"131\",\"115\",\"LVRPEVDVMCcmTAFHDNEETFLK\",\"17\",\"ALBU_HUMAN\",\"162\",\"161\",\"YKAAFTECcmCcmQAADK\",\"2\",\"17.03\",\"6\",\"733.17716390522\",\"4393.019324630046\",\"733.1765762668957\",\"4393.0157988001\",\"0.8025989678416844\",\"true\",\"?\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"35032\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.30\",\"A\",\"A\",\"126\",\"157\"\r\n";
+        
+		var actualValue = getMatchesCSV();
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as Matches CSV, Passed!");
+        
+        model.get("filterModel").resetFilter();
 	});
 	
 }
