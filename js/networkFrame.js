@@ -146,7 +146,7 @@ CLMSUI.init.models = function(options) {
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
     alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences) {
-        if (sequences && sequences.length) { // if sequences passed and it has a non-zero length...
+        if (!_.isEmpty(sequences)) { // if sequences passed and it has a non-zero length...
             sequences.forEach(function(entry) {
                 this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
             }, this);
@@ -182,18 +182,16 @@ CLMSUI.init.models = function(options) {
 CLMSUI.init.modelsEssential = function(options) {
     CLMSUI.oldDB = options.oldDB || false;
 
-    var arrIsPopulated = function(arr) {
-        return arr && arr.length;
-    }
-    var hasMissing = arrIsPopulated(options.missingSearchIDs);
-    var hasIncorrect = arrIsPopulated(options.incorrectSearchIDs);
+    var hasMissing = !_.isEmpty(options.missingSearchIDs);
+    var hasIncorrect = !_.isEmpty(options.incorrectSearchIDs);
+    var hasNoMatches = _.isEmpty(options.rawMatches);
 
-    CLMSUI.utils.displayError(function() {
-            return options.missingSearchIDs || options.incorrectSearchIDs || !options.rawMatches || !options.rawMatches.length;
+    CLMSUI.utils.displayError (function() {
+            return hasMissing || hasIncorrect || hasNoMatches;
         },
         (hasMissing ? "Cannot find Search ID" + (options.missingSearchIDs.length > 1 ? "s " : " ") + options.missingSearchIDs.join(", ") + ".<br>" : "") +
         (hasIncorrect ? "Wrong ID Key for Search ID" + (options.incorrectSearchIDs.length > 1 ? "s " : " ") + options.incorrectSearchIDs.join(", ") + ".<br>" : "") +
-        (!hasMissing && !hasIncorrect && !arrIsPopulated(options.rawMatches) ? "No cross-links detected for this search.<br>" : "") +
+        (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "") +
         "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
     );
 

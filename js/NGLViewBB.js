@@ -20,6 +20,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
             "click .shortestLinkCB": "toggleShortestLinksOnly",
+            "click .allowInterModelDistancesCB": "toggleAllowInterModelDistances",
             "click .showAllProteinsCB": "toggleShowAllProteins",
             "click .chainLabelLengthRB": "setChainLabelLength",
             "mouseleave canvas": "clearHighlighted",
@@ -38,9 +39,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         defaultAssembly: "default",
     },
 
-    initialize: function(viewOptions) {
+    initialize: function (viewOptions) {
         CLMSUI.NGLViewBB.__super__.initialize.apply(this, arguments);
         var self = this;
+        
+        this.options.allowInterModelDistances = this.model.get("allowInterModelDistances") || false;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
@@ -65,7 +68,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         ];
 
         var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar");
-        CLMSUI.utils.makeBackboneButtons(toolbar, self.el.id, buttonData);
+        CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
 
         // Assembly choice dropdown
@@ -123,6 +126,13 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 label: "Shortest Possible Cross-Links Only",
                 id: "shortestOnly",
                 d3tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"
+            },
+            {
+                initialState: this.options.allowInterModelDistances,
+                class: "allowInterModelDistancesCB",
+                label: "Inter-Model Distances",
+                id: "allowInterModelDistances",
+                d3tooltip: "Allow Inter-Model Distances - Warning: Different Models may not be correctly spatially aligned"
             },
             {
                 initialState: this.options.showResidues,
@@ -326,7 +336,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             var prevStageModel = model.previous("stageModel");
             CLMSUI.utils.xilog("STAGE MODEL CHANGED", arguments, this, prevStageModel);
             if (prevStageModel) {
-                this.stopListening(prevStageModel); // remove old stagemodel linklist change listener
+                this.stopListening (prevStageModel); // remove old stagemodel linklist change listener
                 prevStageModel.stopListening();
             }
             // set xlRepr to null on stage model change as it's now an overview of old data
@@ -342,13 +352,20 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.xlRepr.dispose(); // remove old mouse handlers or they keep firing and cause errors
                 this.xlRepr = null;
             }
-            this.listenTo(newStageModel, "change:linkList", function(stageModel, newLinkList) {
+            this.listenTo (newStageModel, "change:linkList", function () {
                 if (this.xlRepr) {
                     this.xlRepr._handleDataChange();
                 }
             });
+            this.listenTo (newStageModel, "change:allowInterModelDistances", function (stageModel, value) {
+                this.options.allowInterModelDistances = value;
+                d3.select(this.el).selectAll(".allowInterModelDistancesCB input").property("checked", value);
+                if (this.xlRepr) {
+                    this.showFiltered();
+                }
+            });
             // First time distancesObj fires we should setup the display for a new data set
-            this.listenToOnce(this.model.get("clmsModel"), "change:distancesObj", function() {
+            this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function() {
                 buildAssemblySelector.call(this);
                 this
                     .setAssemblyChains()
@@ -377,11 +394,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     repopulate: function() {
-        CLMSUI.utils.xilog("REPOPULATE", this.model, this.model.get("stageModel"));
-        var pdbID = this.model.get("stageModel").get("pdbBaseSeqID");
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.utils.xilog("REPOPULATE", this.model, stageModel);
+        var pdbID = stageModel.get("pdbBaseSeqID");
         var overText = "PDB File: " + (pdbID.length === 4 ?
                 "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId=" + pdbID + "'>" + pdbID + "</A>" : pdbID) +
-            " - " + this.model.get("stageModel").get("structureComp").structure.title;
+            " - " + stageModel.get("structureComp").structure.title;
 
         var interactors = Array.from(this.model.get("clmsModel").get("participants").values());
         var alignColl = this.model.get("alignColl");
@@ -402,8 +420,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         overText += " - covers approx " + commaFormat(totalPDBLength) + " of " + commaFormat(totalProteinLength) + " AAs (" + pcent + ")";
         this.chartDiv.select("div.overlayInfo").html(overText);
 
-        this.xlRepr = new CLMSUI.CrosslinkRepresentation(
-            this.model.get("stageModel"), {
+        this.xlRepr = new CLMSUI.CrosslinkRepresentation (stageModel, 
+            {
                 chainRep: this.options.chainRep,
                 defaultAssembly: this.options.defaultAssembly,
                 selectedColor: "yellow",
@@ -429,8 +447,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     relayout: function() {
-        if (this.model.get("stageModel")) {
-            var stage = this.model.get("stageModel").get("structureComp").stage;
+        var stageModel = this.model.get("stageModel");
+        if (stageModel) {
+            var stage = stageModel.get("structureComp").stage;
             if (stage) {
                 stage.handleResize();
             }
@@ -440,9 +459,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     downloadImage: function() {
         // https://github.com/arose/ngl/issues/33
-        if (this.model.get("stageModel")) {
+        var stageModel = this.model.get("stageModel");
+        if (stageModel) {
             var self = this;
-            this.model.get("stageModel").get("structureComp").stage.makeImage({
+            stageModel.get("structureComp").stage.makeImage({
                 factor: 4, // make it big so it can be used for piccy
                 antialias: true,
                 trim: true, // https://github.com/arose/ngl/issues/188
@@ -455,8 +475,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     centerView: function() {
-        if (this.model.get("stageModel")) {
-            this.model.get("stageModel").get("structureComp").stage.autoView(1000);
+        var stageModel = this.model.get("stageModel");
+        if (stageModel) {
+            stageModel.get("structureComp").stage.autoView(1000);
         }
         return this;
     },
@@ -493,9 +514,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     toggleShortestLinksOnly: function(event) {
         this.options.shortestLinksOnly = event.target.checked;
-        //this.model.get("stageModel").set("linkFilter", this.options.shortestLinksOnly ? this.model.get("clmsModel").get("distancesObj").getShortestLinks () : null);
         this.showFiltered();
         return this;
+    },
+    
+    toggleAllowInterModelDistances: function (event) {
+        var bool = event.target.checked;
+        this.model.get("stageModel").set("allowInterModelDistances", bool);
+        return this;  
     },
 
     toggleShowAllProteins: function(event) {
@@ -535,29 +561,25 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     showHighlightedLinks: function() {
         if (this.xlRepr && this.isVisible()) {
-            this.xlRepr.setHighlightedLinks(this.xlRepr.crosslinkData.getLinks());
+            this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
     showSelectedLinks: function() {
         if (this.xlRepr && this.isVisible()) {
-            this.xlRepr.setSelectedLinks(this.xlRepr.crosslinkData.getLinks());
+            this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
         }
         return this;
     },
 
     showFiltered: function() {
         if (this.xlRepr && this.isVisible()) {
-            //~ var crossLinks = this.model.get("clmsModel").get("crossLinks");
             var stageModel = this.model.get("stageModel");
             var filteredCrossLinks = this.model.getFilteredCrossLinks();
             var self = this;
-            var filterFunc = function(linkList) {
-                if (self.options.shortestLinksOnly) {
-                    return self.model.get("clmsModel").get("distancesObj").getShortestLinks(linkList);
-                }
-                return linkList;
+            var filterFunc = function (linkList) {
+                return self.options.shortestLinksOnly ? self.model.get("clmsModel").get("distancesObj").getShortestLinks(linkList) : linkList;
             };
             stageModel.setLinkList(filteredCrossLinks, filterFunc);
         }
@@ -581,8 +603,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             selectedOnly: "SELONLY",
             showResidues: "RES",
             shortestLinksOnly: "SHORTONLY",
+            allowInterModelDistances: "INTRMOD"
         };
-        var fields = ["rep", "labelVisible", "selectedOnly", "showResidues", "shortestLinksOnly"];
+        var fields = ["rep", "labelVisible", "selectedOnly", "showResidues", "shortestLinksOnly", "allowInterModelDistances"];
         var optionsPlus = $.extend({}, this.options);
         optionsPlus.rep = this.xlRepr.options.chainRep;
 
@@ -951,8 +974,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     //CLMSUI.utils.xilog (pdtrans.residue, "links", pdtrans.links); 
                     //CLMSUI.utils.xilog (crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
 
-                    var distances = pdtrans.xlinks.map(function(xlink) {
-                        var dist = crosslinkData.getModel().getSingleCrosslinkDistance(xlink);
+                    var distances = pdtrans.xlinks.map (function (xlink) {
+                        var dist = crosslinkData.getModel().getSingleCrosslinkDistance (xlink);
                         if (dist) {
                             dist = d3.format(".2f")(dist);
                         }

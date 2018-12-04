@@ -10,6 +10,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         linkList: null,
         lastFilterFunc: null,
         fullDistanceCalcCutoff: 1200,
+        allowInterModelDistances: false,
     },
 
     initialize: function() {
@@ -18,11 +19,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
         // this is in case 3d stuff has been set up before main model (used to happen that pdb's were autoloaded for some searches)
-        this.listenToOnce(this, "change:masterModel", function() { // only do this once (should only happen once anyways but better safe than sorry)
+        this.listenToOnce (this, "change:masterModel", function() { // only do this once (should only happen once anyways but better safe than sorry)
             this.listenTo(this.getModel().get("alignColl"), "bulkAlignChange", function() {
                 console.log("SET UP LINKS");
                 this.setupLinks(this.getModel().get("clmsModel"));
             });
+        });
+        
+        this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
+            CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
         });
     },
 
@@ -31,7 +36,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     setupLinks: function(clmsModel) {
-        this.setLinkList(this.getModel().getFilteredCrossLinks());
+        this.setLinkList (this.getModel().getFilteredCrossLinks());
         var distancesObj = this.makeDistances();
 
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
@@ -42,7 +47,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             .trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
     },
 
-    setLinkList: function(crossLinks, filterFunc) {
+    setLinkList: function (crossLinks, filterFunc) {
         var linkList = this.makeLinkList(crossLinks);
         // NASTY HACK. A view can supply an extra filter usually to strip out long links, depending on view option.
         // However, if setLinkList is called from a model rather than a view, we don't know the filter the view is using.
@@ -101,6 +106,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var modelIndexedChainMap = this.makeModelSubIndexedChainMap(chainMap);
         var toChainModelMapMap = d3.map();
         var toChainMapMap = d3.map();
+        var allowInterModelDistances = this.get("allowInterModelDistances");
 
         linkModel.forEach (function (xlink) {
             // loop through fromProtein's models/chains in modelIndexedChainMap
@@ -111,7 +117,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             var fromPerModelChains = modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
-            if (fromPerModelChains && fromPerModelChains.length && toPerModelChains && toPerModelChains.length) {
+            if (!_.isEmpty(fromPerModelChains) && !_.isEmpty(toPerModelChains)) {
                 
                 // get or make a map (key -> value) of the toPerModelChains entries 
                 var toPerModelChainMap = toChainModelMapMap.get (toProtID);
@@ -130,7 +136,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
                     var fromModelIndex = fromPerModelChainEntry.key;    
-                    var toChains = /*toChainMap*/ toPerModelChainMap.get (fromModelIndex);  // bar possible crosslinks between models
+                    var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromModelIndex);  // bar possible crosslinks between models
                     if (toChains) { // only proceed if the model index in 'from' has a corresponding entry in toPerModelChainMap (only look for links within same model)
 
                         fromPerModelChainEntry.values.forEach (function (fromChainValue) {
@@ -177,7 +183,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             }
         }, this);
 
-        console.log("linklist", linkList);
+        //console.log("linklist", linkList);
         return linkList;
     },
 
@@ -264,10 +270,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this._linkIdMap[link.linkId] === undefined ? false : true;
     },
 
-
-
     makeDistances: function() {
-        return new CLMSUI.DistancesObj(this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
+        return new CLMSUI.DistancesObj (this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
     },
 
     // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
@@ -342,7 +346,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var matrixMap = {};
         var links = this.getLinks();
 
-        keys.forEach(function(chain1) {
+        keys.forEach (function (chain1) {
             for (var m = 0; m < keys.length; m++) {
                 var chain2 = keys[m];
                 var cindices1 = chainCAtomIndices[chain1];
@@ -430,7 +434,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     getAtomProxyDistance: function(ap1, ap2) {
-        return ap1.modelIndex === ap2.modelIndex ? ap1.distanceTo(ap2) : undefined;
+        return ap1.modelIndex === ap2.modelIndex || this.get("allowInterModelDistances") ? ap1.distanceTo(ap2) : undefined;
     },
 
     // resIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
@@ -566,7 +570,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // assumes vals are already sorted numerically (though each val is a string)
-    joinConsecutiveNumbersIntoRanges: function(vals, joinString) {
+    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
         joinString = joinString || "-";
 
         if (vals && vals.length > 1) {

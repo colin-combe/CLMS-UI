@@ -660,7 +660,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var groupVals = {};
                 items.data().forEach(function(d) {
                     var match = regex.exec(d.key);
-                    var val = match && match.length ? match[0] : undefined;
+                    var val = _.isEmpty(match) ? undefined : match[0];
                     if (val !== undefined) {
                         groupVals[d.key] = val;
                     }

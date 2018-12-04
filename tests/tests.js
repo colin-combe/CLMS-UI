@@ -647,7 +647,32 @@ function callback (model) {
 		var sampleDists = [];
         var cimimap = d3.map({0: 0, 1: 1}); // artifically associate each chain with a different model
 		// heterobidirectional crosslinker, between same chains only
-        var options = {linksPerSearch: 100, heterobi: true, restrictToChain: false, restrictToProtein: true};
+        var options = {linksPerSearch: 100, heterobi: true, restrictToChain: false, restrictToModel: true, restrictToProtein: true};
+		distObj.generateSubDividedSampleDistancesBySearch (filteredResidueMap, sampleDists, options, cimimap);
+		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
+	});
+    
+    
+     QUnit.test ("Sample Distance Generation, 1 Search, 2 different models, but inter-model distance flag set to true, rounded to nearest integer", function (assert) {
+		var expectedValue = [27, 36, 58, 41, 99, 77, 88, 93, 84, 44, 29, 48, 64, 47, 55, 38, 55, 69, 53, 26, 21, 17, 33, 23, 91, 68, 72, 73, 70, 44, 28, 29, 15, 11, 89, 69, 63, 66, 69, 41, 19, 47, 44, 20, 78, 64, 61, 78, 74, 99, 78, 88, 93, 84, 27, 36, 58, 41, 55, 38, 55, 69, 53, 45, 29, 48, 64, 47, 90, 68, 72, 73, 70, 26, 21, 17, 33, 23, 89, 69, 64, 66, 69, 44, 28, 29, 15, 11, 78, 64, 61, 78, 74, 42, 19, 48, 44, 20];
+		
+		var searchArray = CLMS.arrayFromMapValues (clmsModel.get("searches"));
+		var crosslinkerSpecificityList = d3.values (CLMSUI.modelUtils.crosslinkerSpecificityPerLinker(searchArray));
+		var distanceableSequences = [
+			{first: 5, last: 582, subSeq: dseq1AO6, chainIndex: 0, modelIndex: 0, protID: "2000171", alignID: "1AO6:A:0"},
+			{first: 5, last: 582, subSeq: dseq1AO6, chainIndex: 1, modelIndex: 1, protID: "2000171", alignID: "1AO6:B:1"}
+		];
+		var alignedTerminalIndices = {ntermList: [], ctermList: []};
+		
+		var distObj = clmsModel.get("distancesObj");
+		var filteredResidueMap = distObj.calcFilteredSequenceResidues (crosslinkerSpecificityList[0], distanceableSequences, alignedTerminalIndices);
+		var sampleDists = [];
+        var cimimap = d3.map({0: 0, 1: 1}); // artifically associate each chain with a different model
+		// heterobidirectional crosslinker, between same chains only
+         
+        var options = {linksPerSearch: 100, heterobi: true, restrictToChain: false, restrictToModel: false, restrictToProtein: true};
 		distObj.generateSubDividedSampleDistancesBySearch (filteredResidueMap, sampleDists, options, cimimap);
 		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
 		

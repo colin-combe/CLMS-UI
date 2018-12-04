@@ -386,7 +386,7 @@ CLMSUI.modelUtils = {
 					function sequenceMapsAvailable (sequenceMap) {
 
 						console.log ("seqmpa", sequenceMap);
-						//if (sequenceMap && sequenceMap.length) {
+						//if (!_.isEmpty(sequenceMap)) {
 							sequenceMap.pdbid = pdbInfo.baseSeqId;
 							var chainMap = {};
 							sequenceMap.forEach (function (pMatch) {
@@ -504,7 +504,7 @@ CLMSUI.modelUtils = {
                                 var minLength = Math.min(i.accession.length, mapping.uniprot.length);
                                 return i.accession.substr(0, minLength) === mapping.uniprot.substr(0, minLength);
                             });
-                            mapping.id = matchingInteractors && matchingInteractors.length ? matchingInteractors[0].id : "none";
+                            mapping.id = _.isEmpty(matchingInteractors) ? "none" : matchingInteractors[0].id;
                         });
 
                         mapArr = mapArr.filter(function(mapping) {
@@ -667,7 +667,7 @@ CLMSUI.modelUtils = {
     },
 
     intersectObjectArrays: function(a, b, compFunc) {
-        if (a && b && a.length && b.length && compFunc) {
+        if (!_.isEmpty(a) && !_.isEmpty(b) && compFunc) {
             var map = d3.map(a, compFunc);
             var result = b.filter(function(elem) {
                 return map.has(compFunc(elem));
@@ -731,7 +731,7 @@ CLMSUI.modelUtils = {
         var matchProts = entries.filter(function(entry) {
             return _.includes(_.pluck(entry.value, "index"), chainIndex);
         });
-        return matchProts && matchProts.length ? matchProts[0].key : null;
+        return _.isEmpty(matchProts) ? null : matchProts[0].key;
     },
 
     // this avoids going via the ngl functions using data in a chainMap

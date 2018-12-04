@@ -271,6 +271,14 @@ CLMSUI.utils = {
         val = Math.floor(val);
         return val / pow;
     },
+    
+    toNearest: function (val, interval) {
+        // adapted from https://stackoverflow.com/a/27861660/368214 - inverting small intervals avoids .00000001 stuff
+        return interval ? 
+            (Math.abs(interval) > 0 ? Math.round (val * interval) / interval : Math.round (val / interval) * interval)
+             : val
+        ;    
+    },
 
     displayError: function(condition, message, borderColour, scale) {
         if (condition()) {
@@ -883,7 +891,7 @@ CLMSUI.utils = {
         //console.log ("nodes", nodes, links, crange);
 
         nodes.forEach(function(d) {
-            d.y = scaleDown(d.children && d.children.length ? d.dist || 0 : 0);
+            d.y = scaleDown (_.isEmpty(d.children) ? 0 : d.dist || 0);
             d.x = scaleAlong(d.x);
         });
 
