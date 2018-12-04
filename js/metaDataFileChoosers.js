@@ -115,16 +115,16 @@ CLMSUI.ProteinMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.exten
                 header: "Accession,{MetaData1 Name}*,{MetaData2 Name} etc",
                 data: "{Protein Accession Number},{number or string},{number or string}",
                 example: [{
-                        "csv file": ["Accession", "Name", "Value"]
+                        "csv file": ["Accession", "Name", "Value", "Group"]
                     },
                     {
-                        csv: ["P02768-A,Human Protein,0.79"]
+                        csv: ["P02768-A,Human Protein,0.79, myComplex"]
                     },
                     {
-                        csv: ["G3RE98,Gorilla Protein,0.58"]
+                        csv: ["G3RE98,Gorilla Protein,0.58, myComplex"]
                     },
                 ],
-                notes: "*If a MetaData column name is 'Name' it will change displayed protein names"
+                notes: "*If a MetaData column name is 'Name' it will change displayed protein names. <BR> If a MetaData column name is 'Group' it will be used to group proteins. "
             }
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
