@@ -1,6 +1,6 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.DistancesObj = function(matrices, chainMap, pdbBaseSeqID) {
+CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID) {
     this.matrices = matrices;
     this.chainMap = chainMap;
     this.pdbBaseSeqID = pdbBaseSeqID;
@@ -34,10 +34,11 @@ CLMSUI.DistancesObj.prototype = {
         angstromAccuracy = angstromAccuracy || 1;
         var self = this;
 
-        linkWrappers.forEach(function(link) {
-            link.distance = this.getXLinkDistanceFromChainCoords(
+        linkWrappers.forEach (function (link) {
+            var distance = this.getXLinkDistanceFromChainCoords (
                 this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex
             );
+            link.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
         }, this);
 
         var nestedLinks = d3.nest()
@@ -46,13 +47,7 @@ CLMSUI.DistancesObj.prototype = {
             })
             .sortValues(function(a, b) {
                 var d = a.distance - b.distance;
-                // if link distances are v. similar try and pick ones from the same chain(s) (the lowest numbered one)
-                /*
-                if (Math.abs(d) < angstromAccuracy) {
-                    d = d || self.leewayFunc (a, b);
-                }
-                */
-                return (d < 0 ? -1 : (d > 0 ? 1 : 0));
+                return (d < 0 ? -1 : (d > 0 ? 1 : self.leewayFunc (a, b)));
             })
             .entries(linkWrappers);
 
@@ -107,7 +102,7 @@ CLMSUI.DistancesObj.prototype = {
                 if (resIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var modelIndex2 = chains2[m].modelIndex;
-                        if (modelIndex1 === modelIndex2) {
+                        if (modelIndex1 === modelIndex2 || options.allowInterModelDistances) {  // bar distances between models
                             var chainIndex2 = chains2[m].index;
                             var chainName2 = chains2[m].name;
                             var alignId2 = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chainName2, chainIndex2);
@@ -116,7 +111,7 @@ CLMSUI.DistancesObj.prototype = {
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
                             if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
-                                var dist = this.getXLinkDistanceFromChainCoords(matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
+                                var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
 
                                 if (dist !== undefined) {
                                     if (average) {
@@ -179,7 +174,7 @@ CLMSUI.DistancesObj.prototype = {
 
 
     // options - withinProtein:true for no cross-protein sample links
-    getSampleDistances: function(sampleLinkQuantity, crosslinkerSpecificityList, options) {
+    getSampleDistances: function (sampleLinkQuantity, crosslinkerSpecificityList, options) {
         options = options || {};
         var specificitySearchTotal = d3.sum(crosslinkerSpecificityList, function(rdata) {
             return rdata.searches.size;
@@ -204,8 +199,8 @@ CLMSUI.DistancesObj.prototype = {
 
 
         var sampleDists = []; // store for sample distances
-        // For each crosslinker...
-        crosslinkerSpecificityList.forEach(function(crosslinkerSpecificity) {
+        // For each crosslinker... (if no crosslinker specificities, then no random distribution can be or is calculated)
+        crosslinkerSpecificityList.forEach (function (crosslinkerSpecificity) {
 
             var rmap = this.calcFilteredSequenceResidues(crosslinkerSpecificity, distanceableSequences, alignedTerminalIndices);
 
@@ -232,7 +227,8 @@ CLMSUI.DistancesObj.prototype = {
                     heterobi: crosslinkerSpecificity.heterobi,
                     linksPerSearch: sampleLinksPerSearch,
                     restrictToProtein: options.withinProtein || false,
-                    restrictToChain: options.withinChain || false
+                    restrictToChain: options.withinChain || false,
+                    restrictToModel: options.withinModel || false,
                 };
                 this.generateSubDividedSampleDistancesBySearch(srmap, sampleDists, searchMeta);
             }, this);
@@ -369,19 +365,22 @@ CLMSUI.DistancesObj.prototype = {
         return cimimap;
     },
 
-    // sameChainOnly == true for sample distances internal to same chains only, == false for sample distances internal to same protein (could be multiple chains)
-    generateSubDividedSampleDistancesBySearch: function(srmap, randDists, metaData, chainToModelMap) {
+    // metaData.restrictToChain == true for sample distances internal to same PDB chain only
+    // metaData.restrictToModel == true for sample distances internal to same PDB model only
+    // metaData.restrictToProtein == true for sample distances internal to same protein only
+    // Note: same protein may be present in multiple models
+    generateSubDividedSampleDistancesBySearch: function (srmap, randDists, metaData, chainToModelMap) {
 
         chainToModelMap = chainToModelMap || this.makeChainIndexToModelIndexMap();
-        console.log("chainMap", this.chainMap, chainToModelMap, srmap);
-        // if not dividing random generation by chain or protein and all model indices are the same, shortcut with the following
-        if (!metaData.restrictToChain && !metaData.restrictToProtein && d3.set(chainToModelMap.values()).size() === 1) {
+        //console.log ("chainMap", this.chainMap, chainToModelMap, srmap);
+        // if not dividing random generation by chain or protein or model (or all model indices are the same), shortcut with the following
+        if (!metaData.restrictToChain && !metaData.restrictToProtein && (!metaData.restrictToModel || d3.set(chainToModelMap.values()).size() === 1)) {
             this.generateSampleDistancesBySearch(srmap[0], srmap[1], randDists, metaData);
         } else {
             // Convenience: Divide into list per protein / chain / model for selecting intra-protein or intra-chain samples only
             var srmapPerProtChain = [{}, {}];
             var protChainSet = d3.set();
-            srmap.forEach(function(dirMap, i) {
+            srmap.forEach (function (dirMap, i) {
                 var perProtChainMap = srmapPerProtChain[i];
 
                 dirMap.forEach(function(res) {
@@ -389,7 +388,7 @@ CLMSUI.DistancesObj.prototype = {
                     var chainID = res.chainIndex;
                     var protChainID = metaData.restrictToProtein ? protID : "";
                     protChainID += metaData.restrictToChain ? "|" + chainID : "";
-                    protChainID += "|" + chainToModelMap.get(chainID);
+                    protChainID += metaData.restrictToModel ? "|" + chainToModelMap.get(chainID) : "";
 
                     var perProtChainList = perProtChainMap[protChainID];
                     if (!perProtChainList) {
@@ -405,7 +404,6 @@ CLMSUI.DistancesObj.prototype = {
                 srmapPerProtChain[1] = srmapPerProtChain[0];
             }
 
-            console.log("SSSSS", srmap, srmapPerProtChain);
             CLMSUI.utils.xilog("intra spp", srmapPerProtChain);
 
             // Assign randoms to inter-protein links based on number of possible pairings
@@ -468,8 +466,8 @@ CLMSUI.DistancesObj.prototype = {
                     if (!isNaN(dist) && dist > 0) {
                         randDists.push(dist);
                     }
-                })
-            })
+                });
+            });
         }
     },
 

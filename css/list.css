@@ -121,6 +121,11 @@ table.heatmap.d3table {
 	stroke: none;
 }
 
+svg.dendroContainer {
+    min-width: 170px;
+    overflow: visible;
+}
+
 g.dendro {
 	shape-rendering: crispEdges;
 	font-size: 5px;

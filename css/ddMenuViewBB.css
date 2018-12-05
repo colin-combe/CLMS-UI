@@ -95,3 +95,16 @@
 	visibility: hidden;
 	max-width: 0px;
 }
+
+.dropdown .disabledItem {
+    color: #888;
+}
+
+.dropdown.disabledMenu {    /* no space cos it's two classes in conjunction, not parent > child */
+    color: #888;
+}
+
+.dropdown.disabledMenu .menuTitle:hover {
+    color: inherit;
+    background: #444;
+}

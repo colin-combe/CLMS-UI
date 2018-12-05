@@ -58,6 +58,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         silent: true
                     })
                     .set(this.resetValues);
+                
+                return this;
             },
 
             processTextFilters: function() {
@@ -77,7 +79,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return {
                         upper: part.toUpperCase(),
                         lower: part.toLowerCase()
-                    }
+                    };
                 });
                 this.preprocessedInputText.set("pepSeq", splitPepSeq);
             },
@@ -276,7 +278,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                             for (var i = 0; i < matchedPepCount; i++) {
                                 var matchedPeptide = matchedPeptides[i];
                                 if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
-                                    matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1) {
+                                    (matchedPeptide.seq_mods && matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1)) {
                                     return true;
                                 }
                             }
@@ -292,7 +294,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                             for (var i = 0; i < matchedPepCount; i++) {
                                 var matchedPeptide = matchedPeptides[i];
                                 if (matchedPeptide.sequence.indexOf(uppercasePep) != -1 ||
-                                    matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1) {
+                                    (matchedPeptide.seq_mods && matchedPeptide.seq_mods.toLowerCase().indexOf(lowercasePep) != -1)) {
                                     matchCount += (i + 1); // add 1 for first matched peptide, add 2 for second. So will be 3 if both.
                                 }
                             }

@@ -29,8 +29,9 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
                     })
                     .join("-");
                 download(self.exportDescriptions(), "plain/text", "search_description_" + searchString + ".txt");
-            });
-        descriptionButton.style("display", self.model.get("crosslinkerSpecificity") ? null : "none");
+            })
+        ;
+        descriptionButton.style ("display", _.isEmpty(self.model.get("crosslinkerSpecificity")) ? "none" : null);
 
         mainPanel.append("div").attr("class", "searchSummaryDiv");
 
@@ -60,7 +61,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
             // https://stackoverflow.com/questions/15069587/is-there-a-way-to-join-the-elements-in-an-js-array-but-let-the-last-separator-b
             var niceJoin = function(arr) {
                 return arr.length < 2 ? arr.join("") : arr.slice(0, -1).join(', ') + ' and ' + arr.slice(-1);
-            }
+            };
 
             // crosslinker descriptions for each search
             var crossLinkerDescs = search.crosslinkers ? search.crosslinkers.map(function(clink) {
@@ -125,12 +126,12 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
                         return modDesc(mod);
                     })
                     .join(", ") : "",
-                crossLinkerDesc: crossLinkerDescs
+                crossLinkerDesc: crossLinkerDescs ? crossLinkerDescs
                     .map(function(clinkDesc) {
-                        return clinkDesc.name + " on " + clinkDesc.first + (clinkDesc.second ? " at one end of the cross-link to " + clinkDesc.second + " at the other" : "")
+                        return clinkDesc.name + " on " + clinkDesc.first + (clinkDesc.second ? " at one end of the cross-link to " + clinkDesc.second + " at the other" : "");
                     })
-                    .join(", ")
-            }
+                    .join(", ") : "",
+            };
 
             // turn crosslinker and other values into description per search
             return template(values);

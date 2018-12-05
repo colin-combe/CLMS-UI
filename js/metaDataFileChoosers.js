@@ -75,7 +75,7 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             if (sourceData && sourceData.source === "file") {
                 var columns = metaMetaData.columns;
                 var matchedItemCount = metaMetaData.matchedItemCount;
-                var success = columns && columns.length && matchedItemCount ? true : false;
+                var success = !_.isEmpty(columns) && matchedItemCount ? true : false;
                 var msg1 = _.template(this.options.parseMsgTemplate)({
                     attrCount: columns ? columns.length : 0,
                     itemCount: matchedItemCount
