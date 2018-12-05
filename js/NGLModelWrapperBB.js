@@ -8,9 +8,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         chainMap: null,
         pdbBaseSeqID: null,
         linkList: null,
-        lastFilterFunc: null,
         fullDistanceCalcCutoff: 1200,
         allowInterModelDistances: false,
+        showShortestLinksOnly: true,
     },
 
     initialize: function() {
@@ -22,7 +22,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.listenToOnce (this, "change:masterModel", function() { // only do this once (should only happen once anyways but better safe than sorry)
             this.listenTo(this.getModel().get("alignColl"), "bulkAlignChange", function() {
                 console.log("SET UP LINKS");
-                this.setupLinks(this.getModel().get("clmsModel"));
+                this.setupLinks();
             });
         });
         
@@ -35,8 +35,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this.get("masterModel");
     },
 
-    setupLinks: function(clmsModel) {
-        this.setLinkList (this.getModel().getFilteredCrossLinks());
+    setupLinks: function() {
+        var clmsModel = this.getModel().get("clmsModel");
+        this.setFilteredLinkList ();
         var distancesObj = this.makeDistances();
 
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
@@ -44,25 +45,24 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             .set("distancesObj", distancesObj, {
                 silent: true
             })
-            .trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
-    },
-
-    setLinkList: function (crossLinks, filterFunc) {
-        var linkList = this.makeLinkList(crossLinks);
-        // NASTY HACK. A view can supply an extra filter usually to strip out long links, depending on view option.
-        // However, if setLinkList is called from a model rather than a view, we don't know the filter the view is using.
-        // Nasty hack is to use the last used filter.
-        // Ideally filtering should be done in view, but would then a) have to be done for every view rather than just once in the model
-        // and b) would require a lot of refiltering of residues etc that are calculated next in setLinkListWrapped
-        if (filterFunc) {
-            this.set("lastFilterFunc", filterFunc);
-        }
-        if (this.get("lastFilterFunc")) {
-            linkList = this.get("lastFilterFunc")(linkList);
-        }
-        this.setLinkListWrapped(linkList);
+            .trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
+        ;
         return this;
     },
+
+    setLinkList: function (crossLinks) {
+        var linkList = this.makeLinkList (crossLinks);
+        var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
+        linkList = this.get("showShortestLinksOnly") && distanceObj ? distanceObj.getShortestLinks(linkList) : linkList;
+        this.setLinkListWrapped (linkList);
+        return this;
+    },
+    
+    setFilteredLinkList: function () {
+        this.setLinkList (this.getModel().getFilteredCrossLinks());
+        return this;
+    },
+
 
     // residueStore maps the NGL-indexed resides to PDB-index
     // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 

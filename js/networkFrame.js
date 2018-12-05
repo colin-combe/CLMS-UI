@@ -365,17 +365,14 @@ CLMSUI.init.views = function() {
         },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend({
-            labelFirst: false
-        }, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView({
-            myOptions: options
-        });
+        var options = $.extend ({labelFirst: false}, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: options});
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
     // Add them to a drop-down menu (this rips them away from where they currently are - document)
     var maybeViews = ["#nglChkBxPlaceholder" /*, "#distoChkBxPlaceholder"*/ ];
+    var mostViews = checkBoxData.map(function(d) { return "#"+d.id;}).filter(function(id) { return id !== "#keyChkBxPlaceholder" && id !== "#nglChkBxPlaceholder";});
     new CLMSUI.DropDownMenuViewBB({
             el: "#viewDropdownPlaceholder",
             model: compModel.get("clmsModel"),
@@ -386,51 +383,62 @@ CLMSUI.init.views = function() {
             }
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
-        .filter(maybeViews, false)
-        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
-            this.filter(maybeViews, !!newDistancesObj);
-        });
+        .enableItemsByID (maybeViews, false)
+        .enableItemsByID (mostViews, !_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
+            this.enableItemsByID (maybeViews, !!newDistancesObj);
+        })
+        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
+            this.enableItemsByID (mostViews, true);
+        })
+    ;
 
 
     // Generate protein selection drop down
     d3.select("body").append("input")
         .attr("type", "text")
-        .attr("id", "proteinSelectionFilter");
+        .attr("id", "proteinSelectionFilter")
+    ;
     new CLMSUI.DropDownMenuViewBB({
-        el: "#proteinSelectionDropdownPlaceholder",
-        model: compModel.get("clmsModel"),
-        myOptions: {
-            title: "Protein-Selection",
-            menu: [{
-                    name: "Invert",
-                    func: compModel.invertSelectedProteins,
-                    context: compModel,
-                    tooltip: "Switch selected and unselected proteins"
-                },
-                {
-                    name: "Hide",
-                    func: compModel.hideSelectedProteins,
-                    context: compModel,
-                    tooltip: "Hide selected proteins"
-                },
-                {
-                    name: "+Neighbours",
-                    func: compModel.stepOutSelectedProteins,
-                    context: compModel,
-                    tooltip: "Select proteins which are cross-linked to already selected proteins"
-                },
-                {
-                    id: "proteinSelectionFilter",
-                    func: compModel.proteinSelectionTextFilter,
-                    closeOnClick: false,
-                    context: compModel,
-                    label: "Protein Selection by Description",
-                    tooltip: "Select proteins whose descriptions include input text"
-                }
-            ],
-            tooltipModel: compModel.get("tooltipModel")
-        }
-    });
+            el: "#proteinSelectionDropdownPlaceholder",
+            model: compModel.get("clmsModel"),
+            myOptions: {
+                title: "Protein-Selection",
+                menu: [{
+                        name: "Invert",
+                        func: compModel.invertSelectedProteins,
+                        context: compModel,
+                        tooltip: "Switch selected and unselected proteins"
+                    },
+                    {
+                        name: "Hide",
+                        func: compModel.hideSelectedProteins,
+                        context: compModel,
+                        tooltip: "Hide selected proteins"
+                    },
+                    {
+                        name: "+Neighbours",
+                        func: compModel.stepOutSelectedProteins,
+                        context: compModel,
+                        tooltip: "Select proteins which are cross-linked to already selected proteins"
+                    },
+                    {
+                        id: "proteinSelectionFilter",
+                        func: compModel.proteinSelectionTextFilter,
+                        closeOnClick: false,
+                        context: compModel,
+                        label: "Protein Selection by Description",
+                        tooltip: "Select proteins whose descriptions include input text"
+                    }
+                ],
+                tooltipModel: compModel.get("tooltipModel")
+            }
+        })
+        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
+            this.wholeMenuEnabled (true);
+        })
+    ;
 
     // Generate buttons for load dropdown
     var loadButtonData = [{
@@ -460,14 +468,19 @@ CLMSUI.init.views = function() {
         };
     });
     new CLMSUI.DropDownMenuViewBB({
-        el: "#loadDropdownPlaceholder",
-        model: compModel.get("clmsModel"),
-        myOptions: {
-            title: "Load",
-            menu: loadButtonData,
-            tooltipModel: compModel.get("tooltipModel"),
-        }
-    });
+            el: "#loadDropdownPlaceholder",
+            model: compModel.get("clmsModel"),
+            myOptions: {
+                title: "Load",
+                menu: loadButtonData,
+                tooltipModel: compModel.get("tooltipModel"),
+            }
+        })// hide/disable view choices that depend on certain data being present until that data arrives
+        .enableItemsByIndex ([0, 2, 3], !_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
+            this.enableItemsByIndex ([0, 2, 3], true);
+        })
+    ;
 
     new CLMSUI.URLSearchBoxViewBB({
         el: "#urlSearchBox",
@@ -484,16 +497,18 @@ CLMSUI.init.views = function() {
     // Set up a one-time event listener that is then called from allDataLoaded
     // Once this is done, the views depending on async loading data (blosum, uniprot) can be set up
     // Doing it here also means that we don't have to set up these views at all if these views aren't needed (e.g. for some testing or validation pages)
-    CLMSUI.compositeModelInst.listenToOnce(CLMSUI.vent, "buildAsyncViews", function() {
+    compModel.listenToOnce(CLMSUI.vent, "buildAsyncViews", function() {
         CLMSUI.init.viewsThatNeedAsyncData();
-    })
+    });
 };
 
 
 CLMSUI.init.viewsEssential = function(options) {
 
-    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
-    var singleTargetProtein = CLMSUI.compositeModelInst.get("clmsModel").targetProteinCount < 2;
+    var compModel = CLMSUI.compositeModelInst;
+    var filterModel = compModel.get("filterModel");
+    
+    var singleTargetProtein = compModel.get("clmsModel").targetProteinCount < 2;
     new CLMSUI.FilterViewBB({
         el: "#filterPlaceholder",
         model: filterModel,
@@ -504,10 +519,10 @@ CLMSUI.init.viewsEssential = function(options) {
                 /*
                 "selfLinks": singleTargetProtein,
                 "betweenLinks": singleTargetProtein,
-                "AUTO": !CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent"),
-                "ambig": !CLMSUI.compositeModelInst.get("clmsModel").get("ambiguousPresent"),
-                "unval": !CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent"),
-                "linear": !CLMSUI.compositeModelInst.get("clmsModel").get("linearsPresent"),
+                "AUTO": !compModel.get("clmsModel").get("autoValidatedPresent"),
+                "ambig": !compModel.get("clmsModel").get("ambiguousPresent"),
+                "unval": !compModel.get("clmsModel").get("unvalidatedPresent"),
+                "linear": !compModel.get("clmsModel").get("linearsPresent"),
                 "protNames": singleTargetProtein,
                 */
             }
@@ -516,10 +531,10 @@ CLMSUI.init.viewsEssential = function(options) {
 
     new CLMSUI.FilterSummaryViewBB({
         el: "#filterReportPlaceholder",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
     });
 
-    if (CLMSUI.compositeModelInst.get("clmsModel").get("unvalidatedPresent") !== true) {
+    if (compModel.get("clmsModel").get("unvalidatedPresent") !== true) {
         d3.select("#filterModeDiv").style("display", "none");
     }
 
@@ -529,7 +544,7 @@ CLMSUI.init.viewsEssential = function(options) {
         domainEnd: miniMod[1] || 1,
     });
     miniDistModelInst.data = function() {
-        return CLMSUI.modelUtils.flattenMatches(CLMSUI.compositeModelInst.get("clmsModel").get("matches")); // matches is now an array of arrays - [matches, []];
+        return CLMSUI.modelUtils.flattenMatches(compModel.get("clmsModel").get("matches")); // matches is now an array of arrays - [matches, []];
     };
 
     // When the range changes on the mini histogram model pass the values onto the filter model
@@ -555,7 +570,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
-        .listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
         .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
             this.model.set({
                 domainStart: newCutoff[0],
@@ -573,7 +588,7 @@ CLMSUI.init.viewsEssential = function(options) {
     // 4. Thus selectionViewer must do its routine for event A before spectrumWrapper, so we initialise it first
     var selectionViewer = new CLMSUI.SelectionTableViewBB({
         el: "#bottomDiv",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
     });
 
     selectionViewer.lastCount = 1;
@@ -581,7 +596,7 @@ CLMSUI.init.viewsEssential = function(options) {
 
     new SpectrumViewWrapper({
             el: options.specWrapperDiv,
-            model: CLMSUI.compositeModelInst,
+            model: compModel,
             displayEventName: "spectrumShow",
             myOptions: {
                 wrapperID: "spectrumPanel",
@@ -681,42 +696,47 @@ CLMSUI.init.viewsEssential = function(options) {
 
     // Generate data export drop down
     new CLMSUI.DropDownMenuViewBB({
-        el: "#expDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
-        myOptions: {
-            title: "Export",
-            menu: [{
-                    name: "Filtered Cross-Links as CSV",
-                    func: downloadLinks,
-                    tooltip: "Produces a CSV File of Filtered Cross-Link data"
-                },
-                {
-                    name: "Filtered Matches as CSV",
-                    func: downloadMatches,
-                    tooltip: "Produces a CSV File of Filtered Matches data"
-                },
-                {
-                    name: "Filtered Residues as CSV",
-                    func: downloadResidueCount,
-                    tooltip: "Produces a CSV File of Count of Filtered Residues ",
-                    sectionEnd: true
-                },
-                {
-                    name: "Make Filtered XI URL",
-                    func: function() {
-                        CLMSUI.vent.trigger("shareURL", true);
+            el: "#expDropdownPlaceholder",
+            model: compModel.get("clmsModel"),
+            myOptions: {
+                title: "Export",
+                menu: [{
+                        name: "Filtered Cross-Links as CSV",
+                        func: downloadLinks,
+                        tooltip: "Produces a CSV File of Filtered Cross-Link data"
                     },
-                    tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility"
-                },
-            ],
-            tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
-        }
-    });
+                    {
+                        name: "Filtered Matches as CSV",
+                        func: downloadMatches,
+                        tooltip: "Produces a CSV File of Filtered Matches data"
+                    },
+                    {
+                        name: "Filtered Residues as CSV",
+                        func: downloadResidueCount,
+                        tooltip: "Produces a CSV File of Count of Filtered Residues ",
+                        sectionEnd: true
+                    },
+                    {
+                        name: "Make Filtered XI URL",
+                        func: function() {
+                            CLMSUI.vent.trigger("shareURL", true);
+                        },
+                        tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility"
+                    },
+                ],
+                tooltipModel: compModel.get("tooltipModel"),
+            }
+        })
+        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
+            this.wholeMenuEnabled (true);
+        })
+    ;
 
     // Generate help drop down
     new CLMSUI.DropDownMenuViewBB({
         el: "#helpDropdownPlaceholder",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        model: compModel.get("clmsModel"),
         myOptions: {
             title: "Help",
             menu: [{
@@ -744,7 +764,7 @@ CLMSUI.init.viewsEssential = function(options) {
                 },
                 tooltip: "About Xi View (opens external web page)"
             }, ],
-            tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+            tooltipModel: compModel.get("tooltipModel"),
         }
     });
     d3.select("#helpDropdownPlaceholder > div").append("img")
@@ -756,67 +776,74 @@ CLMSUI.init.viewsEssential = function(options) {
 
 
     d3.select("body").append("div").attr({
-        "id": "tooltip2",
-        "class": "CLMStooltip"
+        id: "tooltip2",
+        class: "CLMStooltip"
     });
     new CLMSUI.TooltipViewBB({
         el: "#tooltip2",
-        model: CLMSUI.compositeModelInst.get("tooltipModel")
+        model: compModel.get("tooltipModel")
     });
 };
 
 CLMSUI.init.viewsThatNeedAsyncData = function() {
 
+    var compModel = CLMSUI.compositeModelInst;
+    
     // This generates the legend div, we don't keep a handle to it - the event object has one
     new CLMSUI.KeyViewBB({
         el: "#keyPanel",
         displayEventName: "keyShow",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
     });
 
     new CLMSUI.SearchSummaryViewBB({
         el: "#searchSummaryPanel",
         displayEventName: "searchesShow",
-        model: CLMSUI.compositeModelInst.get("clmsModel"),
+        model: compModel.get("clmsModel"),
     });
 
     /* 'cos circle listens to annotation model which is formed from uniprot async data */
     new CLMSUI.CircularViewBB({
         el: "#circularPanel",
         displayEventName: "circularShow",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
     });
 
 
     // Make a drop down menu constructed from the annotations collection
     new CLMSUI.AnnotationDropDownMenuViewBB({
-        el: "#annotationsDropdownPlaceholder",
-        collection: CLMSUI.compositeModelInst.get("annotationTypes"),
-        myOptions: {
-            title: "Annotations",
-            closeOnClick: false,
-            groupByAttribute: "category",
-            labelByAttribute: "type",
-            toggleAttribute: "shown",
-            tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
-            sectionHeader: function(d) {
-                return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
-                    (d.source ? " (" + d.source + ")" : "");
-            },
-        }
-    });
+            el: "#annotationsDropdownPlaceholder",
+            collection: compModel.get("annotationTypes"),
+            myOptions: {
+                title: "Annotations",
+                closeOnClick: false,
+                groupByAttribute: "category",
+                labelByAttribute: "type",
+                toggleAttribute: "shown",
+                tooltipModel: compModel.get("tooltipModel"),
+                sectionHeader: function(d) {
+                    return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
+                        (d.source ? " (" + d.source + ")" : "");
+                },
+            }
+        })
+        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
+            this.wholeMenuEnabled (true);
+        })
+    ;
 
 
     new CLMSUI.utils.ColourCollectionOptionViewBB({
         el: "#linkColourDropdownPlaceholder",
         model: CLMSUI.linkColour.Collection,
         storeSelectedAt: {
-            model: CLMSUI.compositeModelInst,
+            model: compModel,
             attr: "linkColourAssignment"
         },
     });
 
-    CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.Collection, "aColourModelChanged", function(colourModel, newDomain) {
+    compModel.listenTo(CLMSUI.linkColour.Collection, "aColourModelChanged", function(colourModel, newDomain) {
         console.log("col change args", arguments, this);
         if (this.get("linkColourAssignment") === colourModel) {
             this.trigger("currentColourModelChanged", colourModel, newDomain);
@@ -824,14 +851,14 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
-    CLMSUI.compositeModelInst.set(
+    compModel.set(
         "linkColourAssignment",
-        CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
+        compModel.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
     );
 
     new CLMS.xiNET.CrosslinkViewer({
         el: "#networkDiv",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         //     myOptions: {layout: storedLayout}
     });
 
@@ -839,15 +866,15 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     // Alignment View
     new CLMSUI.AlignCollectionViewBB({
         el: "#alignPanel",
-        collection: CLMSUI.compositeModelInst.get("alignColl"),
+        collection: compModel.get("alignColl"),
         displayEventName: "alignShow",
-        tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
+        tooltipModel: compModel.get("tooltipModel")
     });
 
 
     new CLMSUI.DistogramBB({
         el: "#distoPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         //colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         //colourScaleModel: CLMSUI.linkColour.defaultColoursBB,
         colourScaleModel: CLMSUI.linkColour.groupColoursBB,
@@ -861,7 +888,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     // This makes a matrix viewer
     new CLMSUI.DistanceMatrixViewBB({
         el: "#matrixPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "matrixShow",
     });
@@ -869,7 +896,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     // This makes a list viewer
     new CLMSUI.ListViewBB({
         el: "#listPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         displayEventName: "listShow",
     });
@@ -879,60 +906,60 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     // event that other views are waiting for.
     new CLMSUI.NGLViewBB({
         el: "#nglPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         displayEventName: "nglShow",
     });
 
     new CLMSUI.PDBFileChooserBB({
         el: "#pdbPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         displayEventName: "pdbShow",
     });
 
     new CLMSUI.ScatterplotViewBB({
         el: "#scatterplotPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         displayEventName: "scatterplotShow",
     });
 
     new CLMSUI.CSVFileChooserBB({
         el: "#csvPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         displayEventName: "csvShow",
     });
 
     new CLMSUI.LinkMetaDataFileChooserBB({
         el: "#linkMetaLoadPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         displayEventName: "linkMetaShow",
     });
 
     new CLMSUI.ProteinMetaDataFileChooserBB({
         el: "#proteinMetaLoadPanel",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
         displayEventName: "proteinMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({
         el: "#proteinInfoPanel",
         displayEventName: "proteinInfoShow",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
     });
 
     new CLMSUI.FDRViewBB({
         el: "#fdrPanel",
         //displayEventName: "fdrShow",
-        model: CLMSUI.compositeModelInst.get("filterModel"),
+        model: compModel.get("filterModel"),
     });
 
     new CLMSUI.FDRSummaryViewBB({
         el: "#fdrSummaryPlaceholder",
         //displayEventName: "fdrShow",
-        model: CLMSUI.compositeModelInst,
+        model: compModel,
     });
 
     //make sure things that should be hidden are hidden
-    CLMSUI.compositeModelInst.trigger("hiddenChanged");
+    compModel.trigger("hiddenChanged");
 
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm

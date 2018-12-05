@@ -181,12 +181,47 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
     },
 
     // hide/show or disable menu items by id array ["#myid", "#id2", etc]
-    filter: function(idArr, show) {
-        //d3.selectAll(idArr.join(",")).style ("display", show ? null : "none");
-        d3.selectAll(idArr.join(","))
-            .style("color", show ? null : "#888")
-            .selectAll("input")
-            .property("disabled", !show);
+    filter: function (idArr, show) {
+        return this.enableItemsByID (idArr, show);
+    },   
+    
+    enableItemsByID: function (idArr, enable) {
+        var selection = d3.select(this.el).selectAll("li").selectAll(idArr.join(","));
+        selection.forEach (function (nestedSel) {
+            if (nestedSel.length) {
+                var li = d3.select(nestedSel.parentNode);
+                li.classed ("disabledItem", !enable)
+                    .selectAll("input")
+                    .property("disabled", !enable)
+                ;
+            }
+        });
+        return this;
+    },
+    
+    enableItemsByIndex: function (indices, enable) {
+        var indexSet = d3.set(indices);
+        
+        d3.select(this.el).selectAll("li")
+            .each (function (d,i) {
+                if (indexSet.has(i)) {
+                    var li = d3.select(this);
+                    li.classed ("disabledItem", !enable)
+                        .selectAll("input")
+                        .property("disabled", !enable)
+                    ;
+                }     
+            })
+        ;
+        return this;
+    },
+    
+    wholeMenuEnabled: function (enabled) {
+        d3.select(this.el).classed ("disabledMenu", !enabled);
+        
+        if (this.isShown() && !enabled) {
+            this.hideVis();
+        }
         return this;
     },
 
@@ -201,35 +236,43 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
             d3.selectAll(".dropdown div").style("display", "none");
         }
         this.setVis(!show);
+        return this;
     },
 
     hideVis: function() {
-        this.setVis(false);
+        return this.setVis(false);
     },
 
     setVis: function(show) {
-        CLMSUI.DropDownMenuViewBB.anyOpen = show; // static var. Set to true if any menu clicked open.
-        d3.select(this.el).select("div")
-            .style("display", show ? "block" : "none");
+        if (!show || !d3.select(this.el).classed ("disabledMenu")) {
+            CLMSUI.DropDownMenuViewBB.anyOpen = show; // static var. Set to true if any menu clicked open.
+            d3.select(this.el).select("div")
+                .style("display", show ? "block" : "none");
+        }
+        return this;
     },
 
     switchVis: function() {
         if (CLMSUI.DropDownMenuViewBB.anyOpen && !this.isShown()) {
             this.toggleVis();
         }
+        return this;
     },
 
     menuSelection: function(evt) {
         var d3target = d3.select(evt.target);
-        if (d3target && d3target.datum() && d3target.datum().func) {
-            var context = d3target.datum().context || this;
-            (d3target.datum().func).call(context, d3target); // as value holds function reference
-        }
+        if (d3target && !d3target.classed("disabledItem")) {    // if enabled item
+            var datum = d3target.datum();
+            if (datum && datum.func) {
+                var context = datum.context || this;
+                (datum.func).call(context, d3target); // as value holds function reference
+            }
 
-        if (this.options.closeOnClick) {
-            var definitelyClose = d3target && d3target.datum() && d3target.datum().closeOnClick !== false;
-            if (definitelyClose) {
-                this.hideVis();
+            if (this.options.closeOnClick) {
+                var definitelyClose = datum && datum.closeOnClick !== false;
+                if (definitelyClose) {
+                    this.hideVis();
+                }
             }
         }
     }
@@ -305,6 +348,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
             shown: true
         }).length;
         d3.select(this.el).select("Button.downloadAnnotationKey").property("disabled", shownCount === 0);
+        return this;
     },
 
     setColour: function(featureTypeModel, shown) {
@@ -322,6 +366,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
             });
 
         this.decideSVGButtonEnabled();
+        return this;
     },
 
     downloadKey: function() {
@@ -344,6 +389,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
         tempSVG.attr("width", contentsSize.width).attr("height", contentsSize.height); // make svg adjust to contents
         this.downloadSVG(null, tempSVG);
         tempSVG.remove();
+        return this;
     },
 
     // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
@@ -355,6 +401,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
 
         var fileName = this.filenameStateString().substring(0, 240);
         download(svgXML, 'application/svg', fileName + ".svg");
+        return this;
     },
 
     // return any relevant view states that can be used to label a screenshot etc

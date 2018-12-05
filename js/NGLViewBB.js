@@ -37,13 +37,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         showAllProteins: false,
         chainLabelSetting: "Short",
         defaultAssembly: "default",
+        allowInterModelDistances: false,
     },
 
     initialize: function (viewOptions) {
         CLMSUI.NGLViewBB.__super__.initialize.apply(this, arguments);
         var self = this;
-        
-        this.options.allowInterModelDistances = this.model.get("allowInterModelDistances") || false;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
@@ -352,18 +351,34 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.xlRepr.dispose(); // remove old mouse handlers or they keep firing and cause errors
                 this.xlRepr = null;
             }
-            this.listenTo (newStageModel, "change:linkList", function () {
-                if (this.xlRepr) {
-                    this.xlRepr._handleDataChange();
-                }
-            });
-            this.listenTo (newStageModel, "change:allowInterModelDistances", function (stageModel, value) {
-                this.options.allowInterModelDistances = value;
-                d3.select(this.el).selectAll(".allowInterModelDistancesCB input").property("checked", value);
-                if (this.xlRepr) {
-                    this.showFiltered();
-                }
-            });
+            this
+                .listenTo (newStageModel, "change:linkList", function () {
+                    if (this.xlRepr) {
+                        this.xlRepr._handleDataChange();
+                    }
+                })
+                .listenTo (newStageModel, "change:allowInterModelDistances", function (stageModel, value) {
+                    this.options.allowInterModelDistances = value;
+                    d3.select(this.el).selectAll(".allowInterModelDistancesCB input").property("checked", value);
+                    if (this.xlRepr) {
+                        this.showFiltered();
+                    }
+                })
+                .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
+                    this.options.shortestLinksOnly = value;
+                    d3.select(this.el).selectAll(".shortestLinkCB input").property("checked", value);
+                    if (this.xlRepr) {
+                        this.showFiltered();
+                    }
+                })
+            ;
+            
+            // Copy view state settings to new model
+            newStageModel
+                .set ("allowInterModelDistances", this.options.allowInterModelDistances)
+                .set ("showShortestLinksOnly", this.options.shortestLinksOnly)
+            ;
+            
             // First time distancesObj fires we should setup the display for a new data set
             this.listenToOnce (this.model.get("clmsModel"), "change:distancesObj", function() {
                 buildAssemblySelector.call(this);
@@ -513,8 +528,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     toggleShortestLinksOnly: function(event) {
-        this.options.shortestLinksOnly = event.target.checked;
-        this.showFiltered();
+        var bool = event.target.checked;
+        this.model.get("stageModel").set("showShortestLinksOnly", bool);
         return this;
     },
     
@@ -575,13 +590,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     showFiltered: function() {
         if (this.xlRepr && this.isVisible()) {
-            var stageModel = this.model.get("stageModel");
-            var filteredCrossLinks = this.model.getFilteredCrossLinks();
-            var self = this;
-            var filterFunc = function (linkList) {
-                return self.options.shortestLinksOnly ? self.model.get("clmsModel").get("distancesObj").getShortestLinks(linkList) : linkList;
-            };
-            stageModel.setLinkList(filteredCrossLinks, filterFunc);
+            this.model.get("stageModel").setFilteredLinkList ();
         }
         return this;
     },

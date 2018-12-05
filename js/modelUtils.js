@@ -416,7 +416,7 @@ CLMSUI.modelUtils = {
 							// important that the new stagemodel is set first ^^^ before we setupLinks() on the model
 							// otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
 							// changed:linklist event is received. (i.e. it broke the other way round)
-							crosslinkData.setupLinks (bbmodel.get("clmsModel"));
+							crosslinkData.setupLinks ();
 					}
 				}
             })

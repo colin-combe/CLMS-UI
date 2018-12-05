@@ -288,8 +288,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
             var d3tableWrapper = d3.select(self.el).select(".d3table-wrapper");
-            d3tableWrapper.style("display", "flex").style("flex-direction", "row");
-            self.dendrosvg = d3tableWrapper.append("svg").style("min-width", "170px").style("overflow", "visible");
+            d3tableWrapper.classed("horizontalFlexContainer", true);
+            self.dendrosvg = d3tableWrapper.append("svg").classed("dendroContainer", "true");
             d3table.dispatch().on("ordering2.colord", self.columnOrdering.bind(self));
 
             //table.getFilterCells().style("display", "none");
