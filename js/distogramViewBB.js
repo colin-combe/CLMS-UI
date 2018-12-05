@@ -332,7 +332,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             });
         }); // update selection series
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
-        this.listenTo(CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated", distancesAvailable); // changes to distancesObj with existing pdb (usually alignment change) or change in pdb assembly meaning certain chains can't be used
+        this.listenTo(CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated changeAllowInterModelDistances", distancesAvailable); // changes to distancesObj with existing pdb (usually alignment change) or change in pdb assembly meaning certain chains can't be used
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
             var columns = metaMetaData.columns;
             //console.log ("HELLO", arguments);
@@ -649,7 +649,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             d3.median([10000, linkCount * 100, 100000]),
             d3.values(crosslinkerSpecificityMap), {
                 withinProtein: rscope === "Intra" || rscope === "Chain",
-                withinChain: rscope === "Chain"
+                    withinChain: rscope === "Chain",
+                    withinModel: !this.model.get("stageModel").get("allowInterModelDistances"),
             }
         ) : [];
         var thresholds = this.getBinThresholds([

@@ -484,7 +484,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             var clCount = crossLinks.length;
             for (var cl = 0; cl < clCount; cl++) {
                 var crossLink = crossLinks[cl];
-                if (crossLink.filteredMatches_pp.length > 0) {
+                if (crossLink.filteredMatches_pp.length) {
                     var fromProtein = crossLink.fromProtein;
                     if (fromProtein.is_decoy != true) {
                         fromProtein.manuallyHidden = false;
@@ -505,23 +505,24 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     },
 
-    proteinSelectionTextFilter: function() {
+    proteinSelectionTextFilter: function () {
         var filterText = d3.select("#proteinSelectionFilter").property("value").trim().toLowerCase();
         var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
-
-        var toSelect = participantsArr.filter(function(p) {
+        
+        var toSelect = participantsArr.filter (function (p) {
             return (p.name.toLowerCase().indexOf(filterText) != -1 || p.description.toLowerCase().indexOf(filterText) != -1);
         });
         this.setSelectedProteins(toSelect);
     },
 
-    getSingleCrosslinkDistance: function(xlink, distancesObj, protAlignCollection, options) {
+    getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
         distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
         protAlignCollection = protAlignCollection || this.get("alignColl");
         options = options || {
             average: false
         };
+        options.allowInterModelDistances = options.allowInterModel || this.get("stageModel").get("allowInterModelDistances");
         if (options.calcDecoyProteinDistances) {
             options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
             options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;

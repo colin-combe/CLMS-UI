@@ -281,10 +281,10 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.makeProteinPairingOptions();
             this.updateAxisLabels();
         });
-        this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated", this.distancesChanged);
+        this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.distancesChanged);
 
         var entries = this.makeProteinPairingOptions();
-        var startPairing = entries && entries.length ? entries[0].value : undefined;
+        var startPairing = _.isEmpty(entries) ? undefined : entries[0].value;
         this.setAndShowPairing(startPairing);
 
         this.setMatrixDragMode({
@@ -692,14 +692,14 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     // draw white blocks in background to demarcate areas covered by active pdb chains
-    renderChainBlocks: function(alignInfo) {
+    renderChainBlocks: function (alignInfo) {
 
         var seqLengths = this.getSeqLengthData();
         var seqLengthB = seqLengths.lengthB - 1;
 
         // Find continuous blocks for each chain when mapped to search sequence (as chain sequence may have gaps in) (called in next bit of code)
         var blockMap = {};
-        d3.merge(alignInfo).forEach(function(alignDatum) {
+        d3.merge(alignInfo).forEach (function (alignDatum) {
             blockMap[alignDatum.alignID] = this.model.get("alignColl").get(alignDatum.proteinID).blockify(alignDatum.alignID);
         }, this);
         //console.log ("blockMap", blockMap);
@@ -710,26 +710,30 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         blockSel.remove();
 
         //console.log ("BLOX", blockMap);
+        
+        var allowInterModel = this.model.get("stageModel").get("allowInterModelDistances");
 
-        alignInfo[0].forEach(function(alignInfo1) {
+        alignInfo[0].forEach (function (alignInfo1) {
             var blocks1 = blockMap[alignInfo1.alignID];
 
-            alignInfo[1].forEach(function(alignInfo2) {
-                var blocks2 = blockMap[alignInfo2.alignID];
+            alignInfo[1].forEach (function (alignInfo2) {
+                if ((alignInfo1.modelID === alignInfo2.modelID) || allowInterModel) {
+                    var blocks2 = blockMap[alignInfo2.alignID];
 
-                blocks1.forEach(function(brange1) {
-                    blocks2.forEach(function(brange2) {
-                        blockAreas.append("rect")
-                            .attr("x", brange1.begin - 1)
-                            .attr("y", seqLengthB - (brange2.end - 1))
-                            .attr("width", brange1.end - brange1.begin + 1)
-                            .attr("height", brange2.end - brange2.begin + 1)
-                            .attr("class", "chainArea")
-                            .style("fill", this.options.chainBackground);
+                    blocks1.forEach (function (brange1) {
+                        blocks2.forEach (function (brange2) {
+                            blockAreas.append("rect")
+                                .attr("x", brange1.begin - 1)
+                                .attr("y", seqLengthB - (brange2.end - 1))
+                                .attr("width", brange1.end - brange1.begin + 1)
+                                .attr("height", brange2.end - brange2.begin + 1)
+                                .attr("class", "chainArea")
+                                .style("fill", this.options.chainBackground);
+                        }, this);
                     }, this);
-                }, this);
-
+                }
             }, this);
+            
         }, this);
     },
 
@@ -752,7 +756,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                         .map(function(chain) {
                             return {
                                 proteinID: pid,
-                                chainID: chain.index
+                                chainID: chain.index,
+                                modelID: chain.modelIndex,
                             };
                         });
                     return this.addAlignIDs(chainIDs);

@@ -106,15 +106,15 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             return str.replace(/[^a-z0-9 ,.?!]/ig, '');
         }
 
-        this.listenTo(this.model.get("clmsModel"), "change:matches", function() {
+        this.listenTo (this.model.get("clmsModel"), "change:matches", function() {
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
-        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
 
-        this.listenTo(this.model, "3dsync", function(sequences) {
-            var count = sequences && sequences.length ? sequences.length : 0;
+        this.listenTo (this.model, "3dsync", function(sequences) {
+            var count = _.isEmpty(sequences) ? 0 : sequences.length;
             var success = count > 0;
             this.setCompletedEffect();
 
@@ -125,9 +125,9 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setStatusText(msg, success);
         });
 
-        this.listenTo(CLMSUI.vent, "alignmentProgress", function(msg) {
+        this.listenTo (CLMSUI.vent, "alignmentProgress", function(msg) {
             this.setStatusText(msg);
-        })
+        });
     },
 
     updateProteinDropdown: function(parentElem) {
