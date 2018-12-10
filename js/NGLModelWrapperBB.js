@@ -14,7 +14,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     initialize: function() {
-        this.residueToAtomIndexMap = {};
+        this.residueToAtomIndexMap = {};    // this partially keys on ngl resno property, i.e. (5-582 for 1AO6), rather than resindex (0-577)
 
         // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
@@ -305,7 +305,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var chainProxy = this.get("structureComp").structure.getChainProxy();
         var atomProxy = this.get("structureComp").structure.getAtomProxy();
         var sele = new NGL.Selection();
-        var chainCAtomIndices = {};
+        var chainCAtomIndices = {}; // keys on chain index, and within this keys on residue index
         var self = this;
 
         if (chainIndices) {
@@ -326,7 +326,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                     resMap[atomProxy.resno] = atomIndex;
                 }, this);
 
+                // resno can run from N to M, but atomIndices will be ordered 0 to no. of residues
                 chainProxy.eachResidue(function(rp) {
+                    //console.log ("RP", rp.resno, rp.index);
                     var key = rp.resno + (ci !== undefined ? ":" + ci : ""); // chainIndex is unique across models
                     var atomIndex = resMap[rp.resno];
                     self.residueToAtomIndexMap[key] = atomIndex;
@@ -437,16 +439,27 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return ap1.modelIndex === ap2.modelIndex || this.get("allowInterModelDistances") ? ap1.distanceTo(ap2) : undefined;
     },
 
+    // Residue indexes for this function start from zero per chain
+    getAtomIndex: function (resIndex, chainIndex, chainAtomIndices) {
+        var cai = chainAtomIndices || this.get("chainCAtomIndices");
+        var ci = cai[chainIndex];
+        var ai = ci[resIndex];
+        
+        if (ai === undefined) {
+            
+        }
+        
+        return ai;
+    },
+    
     // resIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
     getSingleDistanceBetween2Residues: function(resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var struc = this.get("structureComp").structure;
         var ap1 = struc.getAtomProxy();
         var ap2 = struc.getAtomProxy();
         var cai = this.get("chainCAtomIndices");
-        var ci1 = cai[chainIndex1];
-        var ci2 = cai[chainIndex2];
-        ap1.index = ci1[resIndex1];
-        ap2.index = ci2[resIndex2];
+        ap1.index = this.getAtomIndex (resIndex1, chainIndex1, cai);
+        ap2.index = this.getAtomIndex (resIndex2, chainIndex2, cai);
 
         return this.getAtomProxyDistance(ap1, ap2);
     },
@@ -606,7 +619,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return resno + (chainName ? ":" + chainName : "") + ".CA" + (modelIndex !== undefined ? "/" + modelIndex : ""); // + " AND .CA";
     },
 
-    // used to generate a cache to speed up distance selections / calculations
+    // used to generate a cache to speed up distance selections / calculations, resno is NGL resno property
     _getAtomIndexFromResidue: function(resno, cproxy, sele) {
         var aIndex;
 
@@ -687,5 +700,33 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             showAll: showAll,
             chainIndices: chainIndices
         };
+    },
+    
+    
+    getMinimumDistance: function (points1, points2, idAccessor, maxDistance) {
+        var octreeA = d3.octree (points1);
+        var octreeB = d3.octree (points2);
+        maxDistance = maxDistance || 200;
+        idAccessor = idAccessor || function (d) { return d; };
+        
+        var nmap1 = d3.map();
+        points1.forEach (function (p1) {
+            nmap1.set (idAccessor(p1), octreeB.find (p1[0], p1[1], p1[2], maxDistance));
+        });
+        
+        var nmap2 = d3.map();
+        points2.forEach (function (p2) {
+            nmap2.set (idAccessor(p2), octreeA.find (p2[0], p2[1], p2[2], maxDistance));
+        });
+        
+        var res = [];
+        nmap1.entries().forEach (function (map1entry) {
+            var counterpart = nmap2.get(idAccessor(map1entry.value));
+            if (idAccessor (counterpart) === map1entry.key) {
+                res.push ({from: counterpart, to: map1entry.value});
+            }    
+        });
+    
+        console.log (nmap1.entries(), nmap2.entries(), res);
     },
 });

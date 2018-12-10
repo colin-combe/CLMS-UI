@@ -299,12 +299,15 @@ CLMSUI.utils = {
                 .style("display", "block")
                 .style("border-color", borderColour || null)
                 .style("transform", "scale(" + (scale || "1") + ")")
+                .style("margin", "3em 9em")
                 .select("div")
-                .html(message);
+                    .html(message)
+            ;
             box
                 .transition()
                 .duration(500)
-                .style("opacity", 1);
+                .style("opacity", 1)
+            ;
         }
     },
 

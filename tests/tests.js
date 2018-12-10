@@ -451,6 +451,24 @@ function callback (model) {
 			
 		assert.deepEqual (actualDistance, actualDistance2, "Expected "+actualDistance2+" distance in both methods (B chain 415-497 crosslink), Passed!");
 	});
+    
+    
+    QUnit.test ("2 different functions for returning atom indices", function (assert) {
+		var crossLinks = clmsModel.get("crossLinks");
+		var singleCrossLink = crossLinks.get("2000171_415-2000171_497");
+		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+		
+		// this will be shortest distance of chain possibilities - 0-0, 0-1, 1-0, 1-1
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+        var cproxy = stageModel.get("structureComp").structure.getChainProxy();
+        var sele = new NGL.Selection();
+        cproxy.index = 0;
+        var atomIndexA = stageModel.getAtomIndex (0, 0); // residue 0-indexed here
+        var atomIndexB = stageModel._getAtomIndexFromResidue (5, cproxy, sele); // residue is NGL resno (5 resno = 0 resindex)
+			
+		assert.deepEqual (atomIndexA, atomIndexB, "Expected "+atomIndexA+" index in both methods (A chain 415 residue), Passed!");
+	});
+    
 	
 	QUnit.test ("Compare Link-Only Distance Generation with All Distance Generation", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");

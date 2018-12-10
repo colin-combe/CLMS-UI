@@ -703,6 +703,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             linkList.forEach(function(rl) {
                 cp1.index = rl.residueA.chainIndex;
                 cp2.index = rl.residueB.chainIndex;
+                console.log ("RAAAA", rl.residueA); // see if getAtomIndex (rl.residueA.resindex, cp1) can do job as well
                 var atomA = this.crosslinkData._getAtomIndexFromResidue(rl.residueA.resno, cp1, sele);
                 var atomB = this.crosslinkData._getAtomIndexFromResidue(rl.residueB.resno, cp2, sele);
 
@@ -995,7 +996,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
                     //console.log ("cp", cp, pdtrans, this, this.structureComp);
                     crosslinkData.getModel().get("tooltipModel")
-                        .set("header", "Cross-Linked with " + CLMSUI.modelUtils.makeTooltipTitle.residue(protein, srindex, ":" + cp.chainname))
+                        .set("header", "Cross-Linked with " + CLMSUI.modelUtils.makeTooltipTitle.residue(protein, srindex, ":" + cp.chainname+"/"+cp.modelIndex))
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks(pdtrans.xlinks, protein.id, srindex, {
                             "Distance (Å)": distances
                         }))
