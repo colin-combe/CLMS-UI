@@ -116,7 +116,7 @@
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/Link.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/NaryLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/Molecule.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/Group.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/Complex.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
