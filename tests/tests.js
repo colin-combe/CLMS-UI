@@ -305,22 +305,6 @@ function callback (model) {
 		})
 	});
 	
-	QUnit.test ("Generate Single Residue Selection", function (assert) {
-		
-		var examples = [
-			{data: {chainIndex: 0, resno: 282}, expected: "282:A.CA/0"},
-			{data: {chainIndex: 1, resno: 281}, expected: "281:B.CA/0"},
-		];
-		
-		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-		var chainProxy = stageModel.get("structureComp").structure.getChainProxy();
-		examples.forEach (function (example) {
-			chainProxy.index = example.data.chainIndex;
-			var actualValue = stageModel.makeResidueSelectionString (example.data.resno, chainProxy);
-			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when mapping from "+JSON.stringify(example.data));
-		})
-	});
-	
 	QUnit.test ("Generate Nested Selection", function (assert) {
 		
 		var expectedValue = "(( /0 AND (( :A AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) ) OR ( :B AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) )) ) ) AND .CA";
@@ -461,10 +445,9 @@ function callback (model) {
 		// this will be shortest distance of chain possibilities - 0-0, 0-1, 1-0, 1-1
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
         var cproxy = stageModel.get("structureComp").structure.getChainProxy();
-        var sele = new NGL.Selection();
-        cproxy.index = 0;
         var atomIndexA = stageModel.getAtomIndex (0, 0); // residue 0-indexed here
-        var atomIndexB = stageModel._getAtomIndexFromResidue (5, cproxy, sele); // residue is NGL resno (5 resno = 0 resindex)
+        var resObj = {resno: 5, resindex: 0, chainIndex: 0};
+        var atomIndexB = stageModel._getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 resindex)
 			
 		assert.deepEqual (atomIndexA, atomIndexB, "Expected "+atomIndexA+" index in both methods (A chain 415 residue), Passed!");
 	});

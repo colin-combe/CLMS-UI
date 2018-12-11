@@ -697,19 +697,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 linkList = this.crosslinkData.getLinks();
             }
 
-            var sele = new NGL.Selection();
-            var cp1 = this.structureComp.structure.getChainProxy();
-            var cp2 = this.structureComp.structure.getChainProxy();
             linkList.forEach(function(rl) {
-                cp1.index = rl.residueA.chainIndex;
-                cp2.index = rl.residueB.chainIndex;
-                console.log ("RAAAA", rl.residueA); // see if getAtomIndex (rl.residueA.resindex, cp1) can do job as well
-                var atomA = this.crosslinkData._getAtomIndexFromResidue(rl.residueA.resno, cp1, sele);
-                var atomB = this.crosslinkData._getAtomIndexFromResidue(rl.residueB.resno, cp2, sele);
+                var atomA = this.crosslinkData._getAtomIndexFromResidueObj (rl.residueA);
+                var atomB = this.crosslinkData._getAtomIndexFromResidueObj (rl.residueB);
 
                 if (atomA !== undefined && atomB !== undefined) {
                     atomPairs.push([atomA, atomB, rl.origId]);
-                    this.origIds[rl.residueA.resno + "-" + rl.residueB.resno] = rl.origId;
+                    this.origIds[rl.residueA.globalIndex + "-" + rl.residueB.globalIndex] = rl.origId;
                 } else {
                     CLMSUI.utils.xilog("dodgy pair", rl);
                 }
@@ -899,14 +893,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var colCache = {};
             //var first = true;
             this.bondColor = function(b) {
-                //if (first) {
-                //   CLMSUI.utils.xilog ("bond", b, b.atom1.resno, b.atom2.resno, b.atomIndex1, b.atomIndex2);
-                //   first = false;
-                //}
-                var origLinkId = self.origIds[b.atom1.resno + "-" + b.atom2.resno];
-                if (!origLinkId) {
-                    origLinkId = self.origIds[b.atom2.resno + "-" + b.atom1.resno];
-                }
+                var origLinkId = self.origIds[b.atom1.residueIndex + "-" + b.atom2.residueIndex] || self.origIds[b.atom2.residueIndex + "-" + b.atom1.residueIndex];
                 var model = self.crosslinkData.getModel();
                 var link = model.get("clmsModel").get("crossLinks").get(origLinkId);
                 var colRGBString = model.get("linkColourAssignment").getColour(link); // returns an 'rgb(r,g,b)' string
@@ -966,8 +953,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var bond = pickingData.bond || pickingData.distance; // pickingData.distance is now where picks are returned for crosslinks
 
             if (atom !== undefined && bond === undefined) {
-                CLMSUI.utils.xilog("picked atom", atom, atom.resno, atom.chainIndex);
-                var residues = crosslinkData.findResidues(atom.resno, atom.chainIndex);
+                CLMSUI.utils.xilog("picked atom", atom, atom.residueIndex, atom.resno, atom.chainIndex);
+                var residues = crosslinkData.findResidues(atom.residueIndex);
                 if (residues) {
                     pdtrans.residue = residues[0];
 
@@ -982,7 +969,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     pdtrans.links = crosslinkData.getLinks(pdtrans.residue);
                     pdtrans.xlinks = this.getOriginalCrossLinks(pdtrans.links);
                     //CLMSUI.utils.xilog (pdtrans.residue, "links", pdtrans.links); 
-                    //CLMSUI.utils.xilog (crosslinkData.residueToAtomIndexMap, this.structureComp.structure.chainStore);
 
                     var distances = pdtrans.xlinks.map (function (xlink) {
                         var dist = crosslinkData.getModel().getSingleCrosslinkDistance (xlink);
@@ -1007,18 +993,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
                 CLMSUI.utils.xilog("picked bond", bond, bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
 
-                var bstructure = bond.structure;
-                var ap1 = bstructure.getAtomProxy(bond.atomIndex1); // (ai1)
-                var ap2 = bstructure.getAtomProxy(bond.atomIndex2); // (ai2)
-                var rp1 = bstructure.getResidueProxy(ap1.residueIndex);
-                var rp2 = bstructure.getResidueProxy(ap2.residueIndex);
-                var c1 = rp1.chainIndex;
-                var c2 = rp2.chainIndex;
-                //CLMSUI.utils.xilog ("aaaa", rp1, rp2, c1, c2);
-
-                var residuesA = crosslinkData.findResidues(rp1.resno, c1);
-                var residuesB = crosslinkData.findResidues(rp2.resno, c2);
-                CLMSUI.utils.xilog("res", ap1.residueIndex, ap2.residueIndex, c1, c2, residuesA, residuesB);
+                var residuesA = crosslinkData.findResidues (bond.atom1.residueIndex);
+                var residuesB = crosslinkData.findResidues (bond.atom2.residueIndex);
+                CLMSUI.utils.xilog("res", bond.atom1.residueIndex, bond.atom2.residueIndex);
                 if (pickType === "selection") {
                     var selectionSelection = this.crosslinkData.getSelectionFromResidueList(residuesA.concat(residuesB));
                     CLMSUI.utils.xilog("seleSele", selectionSelection);
