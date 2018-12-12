@@ -34,11 +34,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     setupLinks: function() {
-        var clmsModel = this.getModel().get("clmsModel");
+        this.calculateCAtomsAllResidues(this.getChainInfo().viableChainIndices);
         this.setFilteredLinkList ();
         var distancesObj = this.makeDistances();
 
-        // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
+        var clmsModel = this.getModel().get("clmsModel");
+        // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
         clmsModel
             .set("distancesObj", distancesObj, {
                 silent: true
@@ -109,31 +110,41 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 residueId: getResidueId (ri),
                 resno: residueProxy.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
                 chainIndex: chainIndex,
+                modelIndex: residueProxy.modelIndex,
                 structureId: structureID    
             };
         }
         
-        function makeAtomPoints (perModelChainEntry, searchIndexResidue, protID) {
-            var atomData = perModelChainEntry.values.map (function (chainInfo) {
-                return {
-                    chainIndex: chainInfo.index, 
-                    residueIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainInfo.name, chainInfo.index), true) - 1
-                };
-            })
-            .filter (function (fat) { return fat.residueIndex >= 0; })
-            ;
-            atomData.forEach (function (fat) {
-                var atomIndex = this.getAtomIndex (fat.residueIndex, fat.chainIndex);
+        function addAtomPoints (pdbIndexedResidues) {
+            pdbIndexedResidues.forEach (function (fat) {
+                var atomIndex = this.getAtomIndex (fat.seqIndex, fat.chainIndex);
                 fat.atomIndex = atomIndex;
                 atomProxy.index = atomIndex;
                 var coords = this.getAtomCoordinates (atomProxy);
                 fat.coords = coords;
-            }, this)
-            ;
-            
-            return atomData;
+            }, this);
+        }
+        
+        function makePDBIndexedResidues (perModelChainEntry, searchIndexResidue, protID) {
+            var PDBResidues = perModelChainEntry.values.map (function (chainValue) {
+                var chainIndex = chainValue.index;
+                return {chainIndex: chainIndex, modelIndex: chainValue.modelIndex, seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex), true) - 1}; // residues are 0-indexed in NGL so -1
+            }).filter (function (datum) {
+               return datum.seqIndex >= 0;
+            });
+            return PDBResidues;
+        }
+        
+        function addExtraInfo (pdbIndexedResidue, residueProxy) {
+            var ri = residueProxy.index;
+            pdbIndexedResidue.globalIndex = ri;
+            pdbIndexedResidue.resindex = pdbIndexedResidue.seqIndex;
+            pdbIndexedResidue.residueId = getResidueId (ri);
+            pdbIndexedResidue.resno = residueProxy.resno;   // ngl resindex to resno conversion, as NGL.Selection() works with resno values
+            pdbIndexedResidue.structureId = null;
         }
 
+        var t = performance.now();
         var chainMap = this.get("chainMap");
         // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
         var modelIndexedChainMap = this.makeModelSubIndexedChainMap(chainMap);
@@ -145,6 +156,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         });
         var allowInterModelDistances = this.get("allowInterModelDistances");
         console.log ("chainValueMap", chainValueMap, modelIndexedChainMap);
+        var octAccessorObj = {
+            id: function (d) { return d; },
+            x: function (d) { return d.coords[0]; },
+            y: function (d) { return d.coords[1]; },
+            z: function (d) { return d.coords[2]; },
+        };
 
         linkModel.forEach (function (xlink) {
             // loop through fromProtein's models/chains in modelIndexedChainMap
@@ -165,85 +182,76 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                     var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
                     if (toChains) { // don't proceed if inter model distances barred and no 'to' chains within current model
                         
-                        var fromPDBResidues = fromPerModelChainEntry.values.map (function (fromChainValue) {
-                            var fromChainIndex = fromChainValue.index;
-                            return {chainIndex: fromChainIndex, seqIndex: alignColl.getAlignedIndex (xlink.fromResidue, fromProtID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, fromChainValue.name, fromChainIndex), true) - 1}; // residues are 0-indexed in NGL so -1
-                        }).filter (function (datum) {
-                           return datum.seqIndex >= 0;
-                        });
-
-                        var toPDBResidues = toChains.values.map (function (toChainValue) {
-                            var toChainIndex = toChainValue.index;
-                            return {chainIndex: toChainIndex, seqIndex: alignColl.getAlignedIndex (xlink.toResidue, toProtID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, toChainValue.name, toChainIndex), true) - 1}; // residues are 0-indexed in NGL so -1
-                        }).filter (function (datum) {
-                           return datum.seqIndex >= 0;
-                        });
-                        
+                        var fromPDBResidues = makePDBIndexedResidues (fromPerModelChainEntry, xlink.fromResidue, fromProtID);
+                        var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
                         //console.log (fromPDBResidues, toPDBResidues);
                         
                         var alternativeCount = fromPDBResidues.length * toPDBResidues.length;
-                        if (alternativeCount > 8) {
-                            console.log ("aa", alternativeCount, fromPerModelChainEntry, toChains);
-                            var fromAtoms = makeAtomPoints.call (this, fromPerModelChainEntry, xlink.fromResidue, fromProtID);
-                            var toAtoms = makeAtomPoints.call (this, toChains, xlink.toResidue, toProtID);
-                            console.log ("fromAtoms", fromAtoms, toAtoms);
-                        } /*else*/
+                        if (alternativeCount > 4) {
+                            addAtomPoints.call (this, fromPDBResidues);
+                            addAtomPoints.call (this, toPDBResidues);
+                            var results = this.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, xlink);
+                            results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
+                            results.sort (function (a,b) {
+                                var d = a[2] - b[2];
+                                if (!d) {
+                                    d = (a[0].modelIndex + a[1].modelIndex) - (b[0].modelIndex + b[1].modelIndex);
+                                    if (!d) {
+                                        d = (a[0].chainIndex + a[1].chainIndex) - (b[0].chainIndex + b[1].chainIndex);
+                                        if (!d) {
+                                            d = Math.min(a[0].chainIndex, a[1].chainIndex) - Math.min(b[0].chainIndex, b[1].chainIndex);
+                                        }
+                                    }
+                                }
+                                return d;
+                            });
+                            //console.log ("aa", alternativeCount, results);
+                            fromPDBResidues = [results[0][0]];  // take top result for new fromPDBResidues array
+                            toPDBResidues = [results[0][1]];    // take top result for new toPDBResidues array
+                        }
+                        
                         if (alternativeCount > 0) {
+                        
+                            fromPDBResidues.forEach (function (residueObj) {
+                                chainProxy.index = residueObj.chainIndex;
+                                residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
+                                addExtraInfo (residueObj, residueProxy1);
+                            }, this);
+
+                            toPDBResidues.forEach (function (residueObj) {
+                                chainProxy.index = residueObj.chainIndex;
+                                residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
+                                addExtraInfo (residueObj, residueProxy1);
+                            }, this);
 
                             fromPDBResidues.forEach (function (fromPDB) {
-                                chainProxy.index = fromPDB.chainIndex;
-                                residueProxy1.index = fromPDB.seqIndex + chainProxy.residueOffset;
-                                
+                                //chainProxy.index = fromPDB.chainIndex;
+                                //residueProxy1.index = fromPDB.seqIndex + chainProxy.residueOffset;
+
                                 toPDBResidues.forEach (function (toPDB) {
-                                    
+
                                     if (CLMSUI.modelUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
-                                        chainProxy.index = toPDB.chainIndex;
-                                        residueProxy2.index = toPDB.seqIndex + chainProxy.residueOffset;
+                                        //chainProxy.index = toPDB.chainIndex;
+                                        //residueProxy2.index = toPDB.seqIndex + chainProxy.residueOffset;
 
                                         linkList.push({
                                             origId: xlink.id,
                                             linkId: linkList.length,
-                                            residueA: makeResidueObj (fromPDB.seqIndex, fromPDB.chainIndex, residueProxy1, structureId),
-                                            residueB: makeResidueObj (toPDB.seqIndex, toPDB.chainIndex, residueProxy2, structureId),
+                                            residueA: fromPDB,
+                                            residueB: toPDB,
+                                            //residueA: makeResidueObj (fromPDB.seqIndex, fromPDB.chainIndex, residueProxy1, structureId),
+                                            //residueB: makeResidueObj (toPDB.seqIndex, toPDB.chainIndex, residueProxy2, structureId),
                                         });
                                     }
                                 }, this);
                             }, this);
-                            
-                            /*
-                            fromPerModelChainEntry.values.forEach (function (fromChainValue) {
-                                var fromChainIndex = fromChainValue.index;
-                                chainProxy.index = fromChainIndex;
-                                var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, fromProtID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1; // residues are 0-indexed in NGL so -1
-
-                                if (fromResidue >= 0) {
-                                    residueProxy1.index = fromResidue + chainProxy.residueOffset;
-
-                                    toChains.values.forEach (function (toChainValue) {
-                                        var toChainIndex = toChainValue.index;
-                                        chainProxy.index = toChainIndex;
-                                        var toResidue = alignColl.getAlignedIndex(xlink.toResidue, toProtID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex), true) - 1; // residues are 0-indexed in NGL so -1
-
-                                        if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {
-                                            residueProxy2.index = toResidue + chainProxy.residueOffset;
-
-                                            linkList.push({
-                                                origId: xlink.id,
-                                                linkId: linkList.length,
-                                                residueA: makeResidueObj (fromResidue, fromChainIndex, residueProxy1, structureId),
-                                                residueB: makeResidueObj (toResidue, toChainIndex, residueProxy2, structureId),
-                                            });
-                                        }
-                                    }, this);
-                                }
-                            }, this);
-                            */
                         }
                     }
                 }, this);
             }
         }, this);
 
+        console.log ("TIME", (performance.now() - t) / 1000, "seconds");
         console.log("linklist", linkList.length, linkList);
         return linkList;
     },
@@ -494,6 +502,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return matrix;
     },
     
+    getDistanceSquared: function (coords1, coords2) {
+        var d2 = 0;
+        for (var n = 0; n < coords1.length; n++) {
+            var diff = coords1[n] - coords2[n];
+            d2 += diff * diff;
+        }
+        return d2;
+    },
+    
     getAtomCoordinates: function (atomProxy) {
         return [atomProxy.x, atomProxy.y, atomProxy.z];
     },
@@ -738,30 +755,33 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
     
     
-    getMinimumDistance: function (points1, points2, idAccessor, maxDistance) {
-        var octreeA = d3.octree (points1);
-        var octreeB = d3.octree (points2);
+    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, xlink) {
+        
+        accessorObj = accessorObj || {};
+        var points1Bigger = points1.length > points2.length;
+        
+        var bigPointArr = points1Bigger ? points1 : points2;
+        var smallPointArr = points1Bigger ? points2 : points1;
+        var octree = d3.octree ();
+        octree
+            .x(accessorObj.x || octree.x())
+            .y(accessorObj.y || octree.y())
+            .z(accessorObj.z || octree.z())
+            .addAll (bigPointArr)
+        ;
+        
         maxDistance = maxDistance || 200;
-        idAccessor = idAccessor || function (d) { return d; };
+        var ignoreFunc = function (point, treePoint) {
+            return CLMSUI.modelUtils.not3DHomomultimeric (xlink, point.chainIndex, treePoint.chainIndex);
+        };
         
-        var nmap1 = d3.map();
-        points1.forEach (function (p1) {
-            nmap1.set (idAccessor(p1), octreeB.find (p1[0], p1[1], p1[2], maxDistance));
+        var nearest = smallPointArr.map (function (point) {
+            return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
+        var dist = smallPointArr.map (function (point, i) {
+            return this.getDistanceSquared (point.coords, nearest[i].coords);
+        }, this);
         
-        var nmap2 = d3.map();
-        points2.forEach (function (p2) {
-            nmap2.set (idAccessor(p2), octreeA.find (p2[0], p2[1], p2[2], maxDistance));
-        });
-        
-        var res = [];
-        nmap1.entries().forEach (function (map1entry) {
-            var counterpart = nmap2.get(idAccessor(map1entry.value));
-            if (idAccessor (counterpart) === map1entry.key) {
-                res.push ({from: counterpart, to: map1entry.value});
-            }    
-        });
-    
-        console.log (nmap1.entries(), nmap2.entries(), res);
+        return d3.zip (points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
     },
 });
