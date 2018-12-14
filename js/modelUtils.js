@@ -1384,23 +1384,7 @@ CLMSUI.modelUtils = {
     totalProteinLength: function(interactors) {
         return d3.sum(interactors, function(d) {
             return d.size;
-        })
-    },
-
-    nearestPoint: function(points, accessor, sorted) {
-        accessor = accessor || function(d) {
-            return d;
-        };
-        if (!sorted) {
-            points.sort(function(a, b) {
-                return accessor(a)[0] - accessor(b)[0];
-            });
-        }
-        sorted = true;
-
-
-
-
+        });
     },
 };
 

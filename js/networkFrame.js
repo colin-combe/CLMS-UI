@@ -274,6 +274,7 @@ CLMSUI.init.modelsEssential = function(options) {
 CLMSUI.init.views = function() {
 
     var compModel = CLMSUI.compositeModelInst;
+    var matchesFound = !_.isEmpty(compModel.get("clmsModel").get("matches"));
     console.log("MODEL", compModel);
 
     //todo: only if there is validated {
@@ -384,7 +385,7 @@ CLMSUI.init.views = function() {
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .enableItemsByID (maybeViews, false)
-        .enableItemsByID (mostViews, !_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .enableItemsByID (mostViews, matchesFound)
         .listenTo (compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
             this.enableItemsByID (maybeViews, !!newDistancesObj);
         })
@@ -434,7 +435,7 @@ CLMSUI.init.views = function() {
                 tooltipModel: compModel.get("tooltipModel")
             }
         })
-        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .wholeMenuEnabled (matchesFound)
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.wholeMenuEnabled (true);
         })
@@ -476,10 +477,11 @@ CLMSUI.init.views = function() {
                 tooltipModel: compModel.get("tooltipModel"),
             }
         })// hide/disable view choices that depend on certain data being present until that data arrives
-        .enableItemsByIndex ([0, 2, 3], !_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .enableItemsByIndex ([0, 2, 3], matchesFound)
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.enableItemsByIndex ([0, 2, 3], true);
         })
+        .setVis (!matchesFound) // open as default if empty search
     ;
 
     new CLMSUI.URLSearchBoxViewBB({
@@ -851,8 +853,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
-    compModel.set(
-        "linkColourAssignment",
+    compModel.set("linkColourAssignment",
         compModel.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
     );
 

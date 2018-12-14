@@ -305,22 +305,6 @@ function callback (model) {
 		})
 	});
 	
-	QUnit.test ("Generate Single Residue Selection", function (assert) {
-		
-		var examples = [
-			{data: {chainIndex: 0, resno: 282}, expected: "282:A.CA/0"},
-			{data: {chainIndex: 1, resno: 281}, expected: "281:B.CA/0"},
-		];
-		
-		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-		var chainProxy = stageModel.get("structureComp").structure.getChainProxy();
-		examples.forEach (function (example) {
-			chainProxy.index = example.data.chainIndex;
-			var actualValue = stageModel.makeResidueSelectionString (example.data.resno, chainProxy);
-			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when mapping from "+JSON.stringify(example.data));
-		})
-	});
-	
 	QUnit.test ("Generate Nested Selection", function (assert) {
 		
 		var expectedValue = "(( /0 AND (( :A AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) ) OR ( :B AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) )) ) ) AND .CA";
@@ -451,6 +435,23 @@ function callback (model) {
 			
 		assert.deepEqual (actualDistance, actualDistance2, "Expected "+actualDistance2+" distance in both methods (B chain 415-497 crosslink), Passed!");
 	});
+    
+    
+    QUnit.test ("2 different functions for returning atom indices", function (assert) {
+		var crossLinks = clmsModel.get("crossLinks");
+		var singleCrossLink = crossLinks.get("2000171_415-2000171_497");
+		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
+		
+		// this will be shortest distance of chain possibilities - 0-0, 0-1, 1-0, 1-1
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+        var cproxy = stageModel.get("structureComp").structure.getChainProxy();
+        var atomIndexA = stageModel.getAtomIndex (0, 0); // residue 0-indexed here
+        var resObj = {resno: 5, resindex: 0, chainIndex: 0};
+        var atomIndexB = stageModel._getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 resindex)
+			
+		assert.deepEqual (atomIndexA, atomIndexB, "Expected "+atomIndexA+" index in both methods (A chain 415 residue), Passed!");
+	});
+    
 	
 	QUnit.test ("Compare Link-Only Distance Generation with All Distance Generation", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
@@ -469,6 +470,55 @@ function callback (model) {
 		});
 		
 		assert.deepEqual (list1, list2, "Expected "+list1.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
+	});
+    
+    
+    QUnit.test ("Octree test with negative match function", function (assert) {
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+        
+        var octAccessorObj = {
+            id: function (d) { return d; },
+            x: function (d) { return d.coords[0]; },
+            y: function (d) { return d.coords[1]; },
+            z: function (d) { return d.coords[2]; },
+        };
+		
+        var pointsA = [];
+		for (var n = 0; n < 64; n++) {
+            var newPoint = {coords: [(n >> 4) & 3, (n >> 2) & 3, n & 3]};
+            newPoint.chainIndex = (n === 4 ? 13 : 12);
+            pointsA.push (newPoint);
+        }
+        
+        var pointsB = [];
+		for (var n = 0; n < 8; n++) {
+            var newPoint = {coords: [((n >> 2) & 1) + 1.25, ((n >> 1) & 1) + 1.4, (n & 1) + 1.6]};
+            newPoint.chainIndex = (n === 4 ? 12 : 13);
+            pointsB.push (newPoint);
+        }
+        
+        var octreeIgnoreFunc = function (point1, point2) {
+            return CLMSUI.modelUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
+        };
+        
+        var cdist = CLMSUI.utils.toNearest ((0.25 * 0.25) + (0.4 * 0.4) + (0.4 * 0.4), 0.25);
+        var odddist = CLMSUI.utils.toNearest ((2.25 * 2.25) + (0.4 * 0.4) + (1.6 * 1.6), 0.25);
+        var expected = [
+            [pointsA[parseInt(112, 4)], pointsB[0], cdist],
+            [pointsA[parseInt(113, 4)], pointsB[1], cdist],
+            [pointsA[parseInt(122, 4)], pointsB[2], cdist],
+            [pointsA[parseInt(123, 4)], pointsB[3], cdist],
+            [pointsA[parseInt('010', 4)], pointsB[4], odddist],
+            [pointsA[parseInt(213, 4)], pointsB[5], cdist],
+            [pointsA[parseInt(222, 4)], pointsB[6], cdist], 
+            [pointsA[parseInt(223, 4)], pointsB[7], cdist], 
+        ];
+
+		var actual = stageModel.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
+        actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
+        console.log ("results", actual);
+		
+		assert.deepEqual (actual, expected, "Expected "+expected.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
 	});
 	
 	

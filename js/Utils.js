@@ -275,7 +275,7 @@ CLMSUI.utils = {
     toNearest: function (val, interval) {
         // adapted from https://stackoverflow.com/a/27861660/368214 - inverting small intervals avoids .00000001 stuff
         return interval ? 
-            (Math.abs(interval) > 0 ? Math.round (val * interval) / interval : Math.round (val / interval) * interval)
+            (Math.abs(interval) > 1 ? Math.round (val * interval) / interval : Math.round (val / interval) * interval)
              : val
         ;    
     },
@@ -299,12 +299,15 @@ CLMSUI.utils = {
                 .style("display", "block")
                 .style("border-color", borderColour || null)
                 .style("transform", "scale(" + (scale || "1") + ")")
+                .style("margin", "3em 9em")
                 .select("div")
-                .html(message);
+                    .html(message)
+            ;
             box
                 .transition()
                 .duration(500)
-                .style("opacity", 1);
+                .style("opacity", 1)
+            ;
         }
     },
 
