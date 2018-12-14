@@ -177,6 +177,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 // get a map (key -> value) of the toPerModelChains entries 
                 var toPerModelChainMap = chainModelMapMap.get (toProtID);
                 var toChainMap = chainValueMap.get (toProtID); 
+                
+                var octreeIgnoreFunc = function (point1, point2) {
+                    return CLMSUI.modelUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
+                };
                     
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
                     var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
@@ -190,24 +194,28 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         if (alternativeCount > 4) {
                             addAtomPoints.call (this, fromPDBResidues);
                             addAtomPoints.call (this, toPDBResidues);
-                            var results = this.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, xlink);
+                            var results = this.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
                             results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
-                            results.sort (function (a,b) {
-                                var d = a[2] - b[2];
-                                if (!d) {
-                                    d = (a[0].modelIndex + a[1].modelIndex) - (b[0].modelIndex + b[1].modelIndex);
-                                    if (!d) {
-                                        d = (a[0].chainIndex + a[1].chainIndex) - (b[0].chainIndex + b[1].chainIndex);
-                                        if (!d) {
-                                            d = Math.min(a[0].chainIndex, a[1].chainIndex) - Math.min(b[0].chainIndex, b[1].chainIndex);
+                            var prime = results[0];
+                            results.forEach (function (res) {
+                                var d = prime[2] - res[2];
+                                if (d === 0) {
+                                    d = (prime[0].modelIndex + prime[1].modelIndex) - (res[0].modelIndex + res[1].modelIndex);
+                                    if (d === 0) {
+                                        d = (prime[0].chainIndex + prime[1].chainIndex) - (res[0].chainIndex + res[1].chainIndex);
+                                        if (d === 0) {
+                                            d = Math.min(prime[0].chainIndex, prime[1].chainIndex) - Math.min(res[0].chainIndex, res[1].chainIndex);
                                         }
                                     }
                                 }
-                                return d;
+                                if (d > 0) {
+                                    prime = res;
+                                }
                             });
+
                             //console.log ("aa", alternativeCount, results);
-                            fromPDBResidues = [results[0][0]];  // take top result for new fromPDBResidues array
-                            toPDBResidues = [results[0][1]];    // take top result for new toPDBResidues array
+                            fromPDBResidues = [prime[0]];  // take top result for new fromPDBResidues array
+                            toPDBResidues = [prime[1]];    // take top result for new toPDBResidues array
                         }
                         
                         if (alternativeCount > 0) {
@@ -755,7 +763,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
     
     
-    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, xlink) {
+    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, ignoreFunc) {
         
         accessorObj = accessorObj || {};
         var points1Bigger = points1.length > points2.length;
@@ -771,9 +779,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         ;
         
         maxDistance = maxDistance || 200;
-        var ignoreFunc = function (point, treePoint) {
-            return CLMSUI.modelUtils.not3DHomomultimeric (xlink, point.chainIndex, treePoint.chainIndex);
-        };
         
         var nearest = smallPointArr.map (function (point) {
             return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);

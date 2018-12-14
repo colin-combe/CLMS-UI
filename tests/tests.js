@@ -471,6 +471,55 @@ function callback (model) {
 		
 		assert.deepEqual (list1, list2, "Expected "+list1.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
 	});
+    
+    
+    QUnit.test ("Octree test with negative match function", function (assert) {
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+        
+        var octAccessorObj = {
+            id: function (d) { return d; },
+            x: function (d) { return d.coords[0]; },
+            y: function (d) { return d.coords[1]; },
+            z: function (d) { return d.coords[2]; },
+        };
+		
+        var pointsA = [];
+		for (var n = 0; n < 64; n++) {
+            var newPoint = {coords: [(n >> 4) & 3, (n >> 2) & 3, n & 3]};
+            newPoint.chainIndex = (n === 4 ? 13 : 12);
+            pointsA.push (newPoint);
+        }
+        
+        var pointsB = [];
+		for (var n = 0; n < 8; n++) {
+            var newPoint = {coords: [((n >> 2) & 1) + 1.25, ((n >> 1) & 1) + 1.4, (n & 1) + 1.6]};
+            newPoint.chainIndex = (n === 4 ? 12 : 13);
+            pointsB.push (newPoint);
+        }
+        
+        var octreeIgnoreFunc = function (point1, point2) {
+            return CLMSUI.modelUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
+        };
+        
+        var cdist = CLMSUI.utils.toNearest ((0.25 * 0.25) + (0.4 * 0.4) + (0.4 * 0.4), 0.25);
+        var odddist = CLMSUI.utils.toNearest ((2.25 * 2.25) + (0.4 * 0.4) + (1.6 * 1.6), 0.25);
+        var expected = [
+            [pointsA[parseInt(112, 4)], pointsB[0], cdist],
+            [pointsA[parseInt(113, 4)], pointsB[1], cdist],
+            [pointsA[parseInt(122, 4)], pointsB[2], cdist],
+            [pointsA[parseInt(123, 4)], pointsB[3], cdist],
+            [pointsA[parseInt('010', 4)], pointsB[4], odddist],
+            [pointsA[parseInt(213, 4)], pointsB[5], cdist],
+            [pointsA[parseInt(222, 4)], pointsB[6], cdist], 
+            [pointsA[parseInt(223, 4)], pointsB[7], cdist], 
+        ];
+
+		var actual = stageModel.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
+        actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
+        console.log ("results", actual);
+		
+		assert.deepEqual (actual, expected, "Expected "+expected.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
+	});
 	
 	
 	QUnit.module ("Random Distance Generation");
