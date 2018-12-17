@@ -160,3 +160,10 @@ input.group {
 .listView .regexInput {
 	width: 6em;
 }
+
+.listView canvas.listHeatmap {
+    transform-origin: top left;
+    image-rendering: -moz-crisp-edges;          /* Firefox */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE */
+    image-rendering: pixelated;                 /* Opera 'n' Chrome */
+}

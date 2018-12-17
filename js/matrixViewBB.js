@@ -785,13 +785,15 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 // shrink canvas / hide image if not showing it
                 this.canvas
                     .attr("width", 1)
-                    .attr("height", 1);
+                    .attr("height", 1)
+                ;
                 this.zoomGroup.select(".backgroundImage").select("image").style("display", "none");
             } else {
                 var seqLengths = this.getSeqLengthData();
                 this.canvas
                     .attr("width", seqLengths.lengthA)
-                    .attr("height", seqLengths.lengthB);
+                    .attr("height", seqLengths.lengthB)
+                ;
                 var canvasNode = this.canvas.node();
                 var ctx = canvasNode.getContext("2d");
                 ctx.clearRect(0, 0, canvasNode.width, canvasNode.height);

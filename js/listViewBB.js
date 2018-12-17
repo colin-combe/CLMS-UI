@@ -289,6 +289,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var d3tableWrapper = d3.select(self.el).select(".d3table-wrapper");
             d3tableWrapper.classed("horizontalFlexContainer", true);
+            self.heatmap = d3tableWrapper.append("canvas").classed("listHeatmap", "true");
             self.dendrosvg = d3tableWrapper.append("svg").classed("dendroContainer", "true");
             d3table.dispatch().on("ordering2.colord", self.columnOrdering.bind(self));
 
@@ -314,7 +315,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         this.controlDiv2.append("label")
-            .text("Group & Average Columns")
+            .text("Column Group & Average")
             .attr("class", "btn staticLabel");
 
         this.updateGroupColumnSelectors(this.controlDiv2, this.d3table);
@@ -369,7 +370,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Column grouping controls
         this.controlDiv2.append("hr").attr("class", "toolbarSeparator");
         this.controlDiv2.append("label")
-            .text("Cluster Rows")
+            .text("Row Clusters")
             .attr("class", "btn staticLabel");
 
         this.updateClusterColumnSelectors(this.controlDiv2, this.d3table);
@@ -494,23 +495,26 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.model.setMarkedCrossLinks("selection", this.d3table.getFilteredData(), false, evt.ctrlKey || evt.shiftKey);
         return this;
     },
-
-    getColour: function(columnKey, value) {
+    
+    getColour: function (d, columnKey) {   // d.key is columnKey, d.value is crossLink
+        var colour = this.zCellColourer(d);
+        if (colour) {
+            return colour;
+        }
         var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
-        return colScheme.getValue(value);
+        if (colScheme) {
+            var dValue = colScheme.getValue(d.value); // d.value is crosslink
+            return dValue !== undefined ? colScheme.getColour(d.value) : "none";
+        }
+        return "none";
     },
 
     makeColourSchemeBackgroundHook: function(columnKey) {
         var self = this;
         return function(cellSel) {
             cellSel.style("background", function(d) {
-                var colour = self.zCellColourer(d);
-                if (colour) {
-                    return colour;
-                }
-                var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
-                var dValue = colScheme.getValue(d.value); // d.value is crosslink
-                return dValue !== undefined ? colScheme.getColour(d.value) : "none";
+                //console.log ("d", d, columnKey);
+                return self.getColour.call (self, d, columnKey);
             });
         };
     },
@@ -549,7 +553,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return zscoreRoundFormat(val);
                 }
                 return val;
-            }
+            };
 
             var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ?
                 this.makeColourSchemeBackgroundHook(mcol) : undefined;
@@ -616,7 +620,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         jqSelectNode.multipleSelect({
             selectAll: false,
             width: 200,
-            placeholder: "Use same value to group columns"
+            placeholder: "Group columns with keys"
         });
         jqSelectNode.multipleSelect("uncheckAll");
 
@@ -752,7 +756,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var selects2 = CLMSUI.utils.addMultipleSelectControls({
             addToElem: containerSelector,
-            selectList: ["Normalise Other Columns To", "Base Colour Scheme On"],
+            selectList: ["Normalise Other Columns To", "Set Colour Scheme To"],
             optionList: columnNames,
             keepOldOptions: true,
             selectLabelFunc: function(d) {
@@ -821,7 +825,6 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.viewStateModel.set("heatMap", heatMap);
 
         var csettings = d3.entries(this.d3table.columnSettings());
-        console.log("cs", csettings);
 
         var ps = this.d3table.pageSize();
         this.d3table.pageSize(120 - ps);
@@ -851,8 +854,12 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             csettings.forEach(function(cEntry) {
                 this.d3table.showColumnByKey(cEntry.key, showSet.has(cEntry.key));
             }, this);
+            
+            this.makeHeatmapCanvas();
         }
 
+        d3.select(this.el).select(".d3table").style ("display", heatMap ? "none" : null);
+        d3.select(this.el).select("canvas.listHeatmap").style ("display", heatMap ? null : "none");
         this.d3table.update();
 
         return this;
@@ -902,7 +909,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             linkage: this.viewStateModel.get("statLinkage"),
             columns: this.viewStateModel.get("statColumns").values(), // values 'cos d3.set not array
             accessor: accessor,
-        }
+        };
 
         var clusterResults = CLMSUI.modelUtils.metaClustering(crossLinks, options);
         this.stats.clusterDistances = clusterResults.cfk_distances;
@@ -997,9 +1004,49 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     getTableBackgroundColourArray: function(d3table) {
         d3table = d3table || this.d3table;
 
-        var fdata = d3table.getFilteredData();
+        return d3table.getFilteredData();
+    },
+    
+    drawPixel: function(cd, pixi, r, g, b, a) {
+        var index = pixi * 4;
+        cd[index] = r;
+        cd[index + 1] = g;
+        cd[index + 2] = b;
+        cd[index + 3] = a;
     },
 
+    
+    makeHeatmapCanvas: function () {
+        var data = this.getTableBackgroundColourArray ();
+        var dataObj = {key: "", value: ""};
+        
+        var columnOrder = this.d3table.columnOrder();
+        var visibleColumns = columnOrder.filter (function (columnKey) {
+            return this.d3table.showColumnByKey (columnKey); 
+        }, this);
+        
+        var canvasObj = CLMSUI.utils.makeCanvas (visibleColumns.length, data.length, d3.select(".listHeatmap"));
+        var canvas = canvasObj.canvas;
+        var cd = canvasObj.dataStructure.data;
+        
+        for (var row = 0; row < data.length; row++) {
+            var rowData = data[row];
+            dataObj.value = rowData;
+            for (var column = 0; column < visibleColumns.length; column++) {
+                dataObj.key = visibleColumns[column];
+                //console.log ("DO", dataObj);
+                var colour = this.getColour (dataObj, dataObj.key);
+                if (colour !== "none") {
+                    var rgb = d3.rgb (colour);
+                    this.drawPixel (cd, (row * canvas.width) + column, rgb.r, rgb.g, rgb.b, 255);
+                }
+            }
+        }
+
+        canvasObj.context.putImageData(canvasObj.dataStructure, 0, 0);
+        canvasObj.d3canvas.style ("transform", "scale(20, 6)");
+    },
+    
     downloadImage: function() {
         var self = this;
         this.getHTMLAsDataURL(d3.select(this.el).select(".d3table"), {

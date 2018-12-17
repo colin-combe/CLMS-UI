@@ -522,7 +522,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         options = options || {
             average: false
         };
-        options.allowInterModelDistances = options.allowInterModel || this.get("stageModel").get("allowInterModelDistances");
+        options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
         if (options.calcDecoyProteinDistances) {
             options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
             options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
@@ -539,8 +539,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var distArr = [];
         var distModel = this.get("clmsModel").get("distancesObj");
         var protAlignCollection = this.get("alignColl");
-        var clCount = crossLinks.length;
-        for (var cl = 0; cl < clCount; cl++) {
+        for (var cl = 0; cl < crossLinks.length; cl++) {
             var dist = this.getSingleCrosslinkDistance(crossLinks[cl], distModel, protAlignCollection, options);
             if (dist != null) {
                 distArr.push(options.returnChainInfo ? dist : +dist); // + is to stop it being a string

@@ -359,8 +359,20 @@ CLMSUI.linkColour.setupColourModels = function() {
         var newModel = CLMSUI.linkColour.makeMapBasedLinkColourModel(data.columnIndex, data.label, data.linkMap);
         newModel.set("id", data.id);
         this.add(newModel);
+        CLMSUI.compositeModelInst.set("linkColourAssignment", newModel);
         replaceCurrentLinkColourAssignment(this);
     });
+};
+
+CLMSUI.linkColour.colourRangeMaker = function (extents) {
+    var range = ["green", "blue"];
+    if (extents[0] < 0 && extents[1] > 0) {
+        extents.splice(1, 0, 0);
+        range.splice(1, 0, "#888");
+    } else if (extents[0] === extents[1]) {
+        range = ["#888"];
+    }
+    return range;
 };
 
 CLMSUI.linkColour.makeColourModel = function(field, label, links) {
@@ -369,11 +381,7 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
     var extents = d3.extent(linkArr, function(link) {
         return link.getMeta(field);
     });
-    var range = ["red", "blue"];
-    if (extents[0] < 0 && extents[1] > 0) {
-        extents.splice(1, 0, 0);
-        range.splice(1, 0, "#888");
-    }
+    var range = CLMSUI.linkColour.colourRangeMaker (extents);
 
     // see if it is a list of colours
     var hexRegex = CLMSUI.utils.commonRegexes.hexColour;
@@ -418,11 +426,7 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
 
 CLMSUI.linkColour.makeNonCrossLinkColourModel = function(id, domain) {
     var extents = d3.extent(domain);
-    var range = ["red", "blue"];
-    if (extents[0] < 0 && extents[1] > 0) {
-        extents.splice(1, 0, 0);
-        range.splice(1, 0, "#888");
-    }
+    var range = CLMSUI.linkColour.colourRangeMaker (extents);
 
     var newColourModel = new CLMSUI.BackboneModelTypes.NonCrossLinkColourModel({
         colScale: d3.scale.linear().domain(extents).range(range),
@@ -445,11 +449,7 @@ CLMSUI.linkColour.makeMapBasedLinkColourModel = function(columnIndex, label, lin
     console.log("dfv", domain, fieldValueMap);
 
     var extents = d3.extent(domain);
-    var range = ["red", "blue"];
-    if (extents[0] < 0 && extents[1] > 0) {
-        extents.splice(1, 0, 0);
-        range.splice(1, 0, "#888");
-    }
+    var range = CLMSUI.linkColour.colourRangeMaker (extents);
 
     var newColourModel = new CLMSUI.BackboneModelTypes.MapBasedLinkColourModel({
         colScale: d3.scale.linear().domain(extents).range(range),

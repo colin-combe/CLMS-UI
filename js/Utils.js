@@ -310,6 +310,21 @@ CLMSUI.utils = {
             ;
         }
     },
+    
+    makeCanvas: function (width, height, existingD3CanvasSel) {
+        var canvas = (existingD3CanvasSel ? existingD3CanvasSel.node() : null) || document.createElement("canvas");
+        var d3canvas = d3.select(canvas);
+        d3canvas
+            .attr("width", width)
+            .attr("height", height)
+        ;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        var canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var cd = canvasData.data;
+        return {canvas: canvas, context: ctx, dataStructure: canvasData, d3canvas: d3canvas};
+    },
 
     convertCanvasToImage: function(d3canvas, image, callback) { // d3canvas is a canvas wrapped in a d3 selection
         image
@@ -1060,12 +1075,13 @@ CLMSUI.utils = {
 
             var fo = detachedSVGD3.append(function() {
                     //aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
-                    return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")
+                    return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
                 })
                 .attr("width", "100%").attr("height", "100%")
                 .append("div")
                 .attr("xmlns", "http://www.w3.org/1999/xhtml")
-                .html(origElem.node().outerHTML);;
+                .html(origElem.node().outerHTML)
+            ;
             origElem.remove();
             //$(fo.node()).append($(table.node()));
             if (options.removeChildren) {
@@ -1092,7 +1108,7 @@ CLMSUI.utils = {
             img.setAttribute("crossOrigin", "anonymous");
             img.onerror = function() {
                 callbackFunc(undefined);
-            }
+            };
             img.onload = function() {
                 ctx.drawImage(img, 0, 0);
                 //console.log ("img", img, url);
@@ -1329,13 +1345,15 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
         })
         .style("display", function(d, i) {
             return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
-        });
+        })
+    ;
     newTables.selectAll("thead th").data(function(d) {
             return d.columnHeaders || columnHeaders
         })
         .text(function(d) {
             return d;
-        });
+        })
+    ;
 
     var tables = dataJoin.selectAll("table");
 
@@ -1379,7 +1397,8 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
             return arrayExpandFunc(d, rowFilterFunc(d));
         }, function(d) {
             return d.key;
-        });
+        })
+    ;
     rowJoin.exit().remove();
     var newRows = rowJoin.enter().append("tr");
 
@@ -1392,19 +1411,19 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
                 key: d.key,
                 value: d.value
             }];
-        });
+        })
+    ;
     cells
         .enter()
         .append("td")
         .classed("fixedSizeFont", function(d, i) {
             return self.options.fixedFontKeys && self.options.fixedFontKeys.has(d.key) && i;
-        });
+        })
+    ;
     rowJoin.selectAll("td").each(cellFunc); // existing rows in existing tables may have seen data change
 
     dataJoin.selectAll("h2").each(setArrow);
 };
-
-
 
 
 CLMSUI.utils.c3mods = function() {
