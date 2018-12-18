@@ -821,7 +821,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     toggleHeatMapMode: function() {
         var heatMap = this.viewStateModel.get("heatMap");
         heatMap = !heatMap;
-        d3.select(this.el).select(".d3table").classed("heatmap", heatMap);
+        var d3el = d3.select(this.el);
+        d3el.select(".d3table").classed("heatmap", heatMap);
         this.viewStateModel.set("heatMap", heatMap);
 
         var csettings = d3.entries(this.d3table.columnSettings());
@@ -855,11 +856,12 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.d3table.showColumnByKey(cEntry.key, showSet.has(cEntry.key));
             }, this);
             
-            this.makeHeatmapCanvas();
+            this.makeHeatmapCanvas (d3.select(".listHeatmap"));
         }
 
-        d3.select(this.el).select(".d3table").style ("display", heatMap ? "none" : null);
-        d3.select(this.el).select("canvas.listHeatmap").style ("display", heatMap ? null : "none");
+        d3el.select(".d3table").style ("display", heatMap ? "none" : null);
+        d3el.select(".d3table-wrapper").classed ("freezeFlex", heatMap);
+        d3el.select("canvas.listHeatmap").style ("display", heatMap ? null : "none");
         this.d3table.update();
 
         return this;
@@ -916,6 +918,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         //console.log ("stat", stats);
         CLMSUI.utils.drawDendrogram(this.dendrosvg, this.stats.clusterDistances.tree, {
+            height: this.stats.clusterDistances.tree.size * 5,
             ltor: false,
             labelFunc: function(d) {
                 return d.origValue.clink.id;
@@ -1016,7 +1019,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     
-    makeHeatmapCanvas: function () {
+    makeHeatmapCanvas: function (d3canvas) {
         var data = this.getTableBackgroundColourArray ();
         var dataObj = {key: "", value: ""};
         
@@ -1025,18 +1028,18 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             return this.d3table.showColumnByKey (columnKey); 
         }, this);
         
-        var canvasObj = CLMSUI.utils.makeCanvas (visibleColumns.length, data.length, d3.select(".listHeatmap"));
+        var canvasObj = CLMSUI.utils.makeCanvas (visibleColumns.length, data.length, d3canvas);
         var canvas = canvasObj.canvas;
+        //canvasObj.context
         var cd = canvasObj.dataStructure.data;
         
         for (var row = 0; row < data.length; row++) {
-            var rowData = data[row];
-            dataObj.value = rowData;
+            dataObj.value = data[row];
             for (var column = 0; column < visibleColumns.length; column++) {
                 dataObj.key = visibleColumns[column];
                 //console.log ("DO", dataObj);
                 var colour = this.getColour (dataObj, dataObj.key);
-                if (colour !== "none") {
+                if (colour !== "none" && colour !== undefined) {
                     var rgb = d3.rgb (colour);
                     this.drawPixel (cd, (row * canvas.width) + column, rgb.r, rgb.g, rgb.b, 255);
                 }
@@ -1044,28 +1047,43 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
 
         canvasObj.context.putImageData(canvasObj.dataStructure, 0, 0);
-        canvasObj.d3canvas.style ("transform", "scale(20, 6)");
+        canvasObj.d3canvas.style ("transform", "scale(20, 5)");
     },
     
     downloadImage: function() {
         var self = this;
-        this.getHTMLAsDataURL(d3.select(this.el).select(".d3table"), {
-                removeChildren: "svg.d3table-arrow,tfoot,input",
-            },
-            function(dataURL, size) {
-                var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                var d3svg = d3.select(svg);
-
-                var img = d3svg.append("image").attr("xlink:href", dataURL);
-                var nestedSvg = self.dendrosvg;
-                //console.log ("g", nestedSvg, img);
-                var clone = nestedSvg.node().cloneNode(true);
-                d3.select(clone).attr("x", size.width);
-                d3svg.node().appendChild(clone);
-
-                self.downloadSVG(undefined, d3svg);
-            }
-        );
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        var d3svg = d3.select(svg);
+        var img = d3svg.append("image");
+        img.attr("class", "sharpImage");
+        
+        function addDendro (width) {
+            var nestedSvg = self.dendrosvg;
+            //console.log ("g", nestedSvg, img);
+            var clone = nestedSvg.node().cloneNode(true);
+            d3.select(clone).attr("x", width);
+            d3svg.node().appendChild(clone);
+        }
+        
+        if (this.viewStateModel.get("heatMap")) {
+             var d3canvas = d3.select(".listHeatmap");
+             CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, function () {
+                 addDendro (d3canvas.attr("width"));
+                 self.downloadSVG(undefined, d3svg);
+             });
+        } else {
+            this.getHTMLAsDataURL(d3.select(this.el).select(".d3table"), {
+                    removeChildren: "svg.d3table-arrow,tfoot,input",
+                },
+                function(dataURL, size) {
+                    img.on ("load", function () {
+                        addDendro (size.width);
+                        self.downloadSVG(undefined, d3svg);
+                    });
+                    img.attr("xlink:href", dataURL);
+                }
+            );
+        }
     },
 
     identifier: "List View",

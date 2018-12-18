@@ -326,41 +326,43 @@ CLMSUI.utils = {
         return {canvas: canvas, context: ctx, dataStructure: canvasData, d3canvas: d3canvas};
     },
 
-    convertCanvasToImage: function(d3canvas, image, callback) { // d3canvas is a canvas wrapped in a d3 selection
-        image
+    drawCanvasToSVGImage: function(d3canvas, svgImage, callback) { // d3canvas is a canvas wrapped in a d3 selection
+        var destinationCanvas;
+        svgImage.on ("load", function () {
+            //destinationCanvas.dispose();
+            callback (svgImage);
+        });
+        svgImage
             .attr("width", d3canvas.attr("width"))
             .attr("height", d3canvas.attr("height"))
             .attr("transform", d3canvas.style("transform"))
             .attr("xlink:href", function() {
                 // from https://stackoverflow.com/a/19539048/368214
                 // use dummy canvas and fill with background colour so exported png is not transparent
-                var destinationCanvas = document.createElement("canvas");
-                destinationCanvas.width = d3canvas.attr("width");
-                destinationCanvas.height = d3canvas.attr("height");
-
-                var destCtx = destinationCanvas.getContext('2d');
+                var destinationCanvasObj = CLMSUI.utils.makeCanvas (d3canvas.attr("width"), d3canvas.attr("height"));
+                destinationCanvas = destinationCanvasObj.canvas;
 
                 //create a rectangle with the desired color
                 var background = d3canvas.style("background-color");
+                /*
                 console.log("background", background, d3canvas);
                 // convert if background style string in rgb() format
                 if (background && background[0] !== '#') {
                     var rgb = d3.rgb(background);
                     background = rgb.toString();
                 }
-                //console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
-                destCtx.fillStyle = background;
-                destCtx.fillRect(0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
+                */
+                console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
+                destinationCanvasObj.context.fillStyle = background;
+                destinationCanvasObj.context.fillRect(0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
 
                 //draw the original canvas onto the destination canvas
-                destCtx.drawImage(d3canvas.node(), 0, 0);
+                destinationCanvasObj.context.drawImage(d3canvas.node(), 0, 0);
 
                 var url = destinationCanvas.toDataURL("image/png");
-                //var url = d3canvas.node().toDataURL ("image/png");
-                //destinationCanvas.dispose();
                 return url;
-            });
-        callback(image);
+            })
+        ;
     },
 
     declutterAxis: function(d3AxisElem) {
@@ -864,7 +866,8 @@ CLMSUI.utils = {
             title: "A Dendrogram",
             height: cfckDistances.size * 5,
             width: 100,
-        }
+        };
+        
         options = $.extend({}, defaultOptions, options);
 
         function recurse(tree, parent) {
@@ -1040,7 +1043,8 @@ CLMSUI.utils = {
             // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
             var img = detachedSVGD3
                 .select(self.canvasImageParent) // where to add image
-                .insert("svg:image", ":first-child");
+                .insert("svg:image", ":first-child")
+            ;
 
             // Add a rule to stop the image being anti-aliased (i.e. blurred)
             img.attr("class", "sharpImage");
@@ -1050,7 +1054,7 @@ CLMSUI.utils = {
 
             var fileName = this.filenameStateString() + ".svg";
             // Now convert the canvas and its data to the image element we just added and download the whole svg when done
-            CLMSUI.utils.convertCanvasToImage(this.canvas, img, function() {
+            CLMSUI.utils.drawCanvasToSVGImage(this.canvas, img, function() {
                 var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), detachedSVG);
                 download(svgXML, "application/svg", fileName);
             });
@@ -1094,7 +1098,8 @@ CLMSUI.utils = {
                 .attr("id", "tempCanvas")
                 .style("display", "none")
                 .attr("width", $(detachedSVGD3.node()).width())
-                .attr("height", $(detachedSVGD3.node()).height());
+                .attr("height", $(detachedSVGD3.node()).height())
+            ;
             var ctx = canvas.getContext("2d");
 
             var svg = new Blob([data], {
@@ -1125,7 +1130,7 @@ CLMSUI.utils = {
 
                 callbackFunc(dataURL, size);
                 //console.log ("dd", dataURL);
-            }
+            };
 
             // Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129
             img.src = "data:image/svg+xml;charset=utf-8," + data;

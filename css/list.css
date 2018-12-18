@@ -166,4 +166,10 @@ input.group {
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
     image-rendering: pixelated;                 /* Opera 'n' Chrome */
+    background-color: transparent;
+}
+
+.listView .d3table-wrapper.freezeFlex {
+    flex-grow: 0;
+    flex-shrink: 0;
 }
