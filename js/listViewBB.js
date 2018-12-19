@@ -269,7 +269,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
                 .datum({
-                    data: Array.from(self.model.get("clmsModel").get("crossLinks").values()),
+                    data: self.model.getAllTTCrossLinks(),
                     columnSettings: columnSettings,
                     columnOrder: d3.keys(columnSettings),
                 });
@@ -289,7 +289,6 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var d3tableWrapper = d3.select(self.el).select(".d3table-wrapper");
             d3tableWrapper.classed("horizontalFlexContainer", true);
-            self.heatmap = d3tableWrapper.append("canvas").classed("listHeatmap", "true");
             self.dendrosvg = d3tableWrapper.append("svg").classed("dendroContainer", "true");
             d3table.dispatch().on("ordering2.colord", self.columnOrdering.bind(self));
 
@@ -460,10 +459,10 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.render); // Entire new set of distances 
         // Entire new set of new matches added (via csv generally)
         this.listenTo(this.model.get("clmsModel"), "change:matches", function() {
-            this.updateTableRows(Array.from(this.model.get("clmsModel").get("crossLinks").values()));
+            this.updateTableRows(self.model.getAllTTCrossLinks());
             this.render({
                 refilter: true
-            })
+            });
         });
         this.listenTo(CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaData) {
@@ -855,13 +854,11 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             csettings.forEach(function(cEntry) {
                 this.d3table.showColumnByKey(cEntry.key, showSet.has(cEntry.key));
             }, this);
-            
-            this.makeHeatmapCanvas (d3.select(".listHeatmap"));
         }
 
-        d3el.select(".d3table").style ("display", heatMap ? "none" : null);
-        d3el.select(".d3table-wrapper").classed ("freezeFlex", heatMap);
-        d3el.select("canvas.listHeatmap").style ("display", heatMap ? null : "none");
+        //d3el.select(".d3table").style ("display", heatMap ? "none" : null);
+        //d3el.select(".d3table-wrapper").classed ("freezeFlex", heatMap);
+        //d3el.select("canvas.listHeatmap").style ("display", heatMap ? null : "none");
         this.d3table.update();
 
         return this;
@@ -897,7 +894,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     generateClusters: function() {
-        var crossLinks = this.model.getFilteredCrossLinks();
+        var filteredCrossLinks = this.model.getFilteredCrossLinks();
         var columnSettings = this.d3table.columnSettings();
         var accessor = function(crossLinks, dim) {
             var accessFunc = columnSettings[dim].accessor;
@@ -913,7 +910,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             accessor: accessor,
         };
 
-        var clusterResults = CLMSUI.modelUtils.metaClustering(crossLinks, options);
+        var clusterResults = CLMSUI.modelUtils.metaClustering(filteredCrossLinks, CLMSUI.compositeModelInst.getAllTTCrossLinks(), options);
         this.stats.clusterDistances = clusterResults.cfk_distances;
 
         //console.log ("stat", stats);
@@ -1019,7 +1016,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     
-    makeHeatmapCanvas: function (d3canvas) {
+    makeHeatMapCanvas: function (d3canvas) {
         var data = this.getTableBackgroundColourArray ();
         var dataObj = {key: "", value: ""};
         
@@ -1038,7 +1035,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 dataObj.key = visibleColumns[column];
                 //console.log ("DO", dataObj);
                 var colour = this.getColour (dataObj, dataObj.key);
-                if (colour !== "none" && colour !== undefined) {
+                if (colour !== "none" && colour !== undefined && colour !== "transparent") {
                     var rgb = d3.rgb (colour);
                     this.drawPixel (cd, (row * canvas.width) + column, rgb.r, rgb.g, rgb.b, 255);
                 }
@@ -1046,7 +1043,35 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
 
         canvasObj.context.putImageData(canvasObj.dataStructure, 0, 0);
-        canvasObj.d3canvas.style ("transform", "scale(20, 5)");
+        var headerSize = d3.select(this.el).select(".d3table thead").node().getBoundingClientRect();
+        var columnWidth = headerSize.width / visibleColumns.length;
+        canvasObj.d3canvas
+            .style ("transform", "translate(0,"+headerSize.height+"px) scale("+columnWidth+", 5)")
+            .classed ("listHeatmap", true)
+        ;
+        return canvasObj;
+    },
+    
+    makeSVGTableHeaderGroup: function () {
+        var columnOrder = this.d3table.columnOrder();
+        var visibleColumns = columnOrder.filter (function (columnKey) {
+            return this.d3table.showColumnByKey (columnKey); 
+        }, this);
+        
+        var headerSize = d3.select(this.el).select(".d3table thead").node().getBoundingClientRect();
+        var columnWidth = headerSize.width / visibleColumns.length;
+        
+        var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        var d3g = d3.select(g);
+        visibleColumns.forEach (function (columnKey, i) {
+            d3g.append("text")
+                .attr ("class", "columnHeader")
+                .text(columnKey)
+                .attr("transform", "rotate(90) translate("+(headerSize.height-10)+","+((-i - 0.5) * columnWidth)+")")
+            ;
+        });
+        
+        return d3g;
     },
     
     downloadImage: function() {
@@ -1065,9 +1090,13 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
         
         if (this.viewStateModel.get("heatMap")) {
-             var d3canvas = d3.select(".listHeatmap");
-             CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, function () {
-                 addDendro (d3canvas.attr("width"));
+             var canvasObj = this.makeHeatMapCanvas();
+                d3.select("body").node().appendChild(canvasObj.canvas);
+            console.log ("canvasObj", canvasObj);
+             CLMSUI.utils.drawCanvasToSVGImage (canvasObj.d3canvas, img, function () {
+                 addDendro (canvasObj.canvas.getBoundingClientRect().width);
+                 d3svg.node().appendChild (self.makeSVGTableHeaderGroup().node());
+                 d3.select("body").node().removeChild(canvasObj.canvas);
                  self.downloadSVG(undefined, d3svg);
              });
         } else {

@@ -668,8 +668,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
     actionNodeLinks: function(nodeId, actionType, add, startPos, endPos) {
-        //var crossLinks = this.model.get("clmsModel").get("crossLinks");
-        var filteredCrossLinks = this.model.getFilteredCrossLinks(); //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+        var filteredCrossLinks = this.model.getFilteredCrossLinks();
         var anyPos = startPos == undefined && endPos == undefined;
         startPos = startPos || 0;
         endPos = endPos || 100000;

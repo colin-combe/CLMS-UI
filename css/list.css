@@ -161,7 +161,7 @@ input.group {
 	width: 6em;
 }
 
-.listView canvas.listHeatmap {
+canvas.listHeatmap {
     transform-origin: top left;
     image-rendering: -moz-crisp-edges;          /* Firefox */
     -ms-interpolation-mode: nearest-neighbor;   /* IE */
@@ -172,4 +172,13 @@ input.group {
 .listView .d3table-wrapper.freezeFlex {
     flex-grow: 0;
     flex-shrink: 0;
+}
+
+text.columnHeader {
+    text-anchor: end;
+    font-family: "Lato-Bold", Helvetica, Arial, sans-serif;
+    font-size: 0.65em;
+    font-weight: bold;
+    fill: #a40;
+    text-transform: capitalize;
 }

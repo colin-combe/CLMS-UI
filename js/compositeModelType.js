@@ -263,14 +263,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredCrossLinks: function(type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
     },
-
-    calcAndStoreTTCrossLinkCount: function() {
+    
+    getAllTTCrossLinks: function () {
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
             var crossLinks = clmsModel.get("crossLinks");
             var ttCrossLinks = CLMS.arrayFromMapValues(crossLinks).filter(function(link) {
                 return !link.isDecoyLink() && !link.isLinearLink();
             });
+            return ttCrossLinks;
+        }
+        return null;
+    },
+
+    calcAndStoreTTCrossLinkCount: function() {
+        var ttCrossLinks = this.getAllTTCrossLinks();
+        if (ttCrossLinks !== null) {
             this.set("TTCrossLinkCount", ttCrossLinks.length);
         }
     },

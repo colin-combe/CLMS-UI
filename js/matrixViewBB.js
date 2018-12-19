@@ -307,7 +307,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     makeProteinPairingOptions: function() {
-        var crossLinks = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("crossLinks"));
+        var crossLinks = this.model.getAllTTCrossLinks();
         var totals = CLMSUI.modelUtils.crosslinkCountPerProteinPairing(crossLinks);
         var entries = d3.entries(totals);
 
