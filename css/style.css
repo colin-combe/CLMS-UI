@@ -801,3 +801,10 @@ sup {font-size:xx-small; vertical-align:super;}
 input:invalid:focus {
 	background: pink;
 }
+
+image.sharpImage {
+    image-rendering: optimizeSpeed; 
+    image-rendering: -moz-crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+    image-rendering: pixelated;
+}

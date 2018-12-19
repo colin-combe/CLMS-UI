@@ -62,7 +62,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             if (showSection && d.id === "colourKey" && self.sliderSubView) {
                 self.sliderSubView.show(true);
             }
-        }
+        };
 
         CLMSUI.utils.sectionTable.call(this, sectionDiv, sectionData, "colourInfo", ["Colour (Editable)", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], clickFunc);
 
@@ -307,6 +307,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             ;
             rowSel.exit().remove();
             rowSel.enter().append("tr");
+            rowSel.sort (function (a,b) { return a[2] - b[2]; });   // sort so rows are in same order as colourSection[0].rows
 
             var cellSel = rowSel.selectAll("td").data(function(d) {
                 return d.slice(0, 2);

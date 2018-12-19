@@ -423,7 +423,7 @@ CLMSUI.DistancesObj.prototype = {
             });
             var propMap = d3.map(proportions, function(d) {
                 return d.protChainID;
-            })
+            });
 
             //var samplesPerProtein = metaData.linksPerSearch / protSet.size();
             protChainSet.values().forEach(function(protChainID) {

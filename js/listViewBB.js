@@ -269,7 +269,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
                 .datum({
-                    data: Array.from(self.model.get("clmsModel").get("crossLinks").values()),
+                    data: self.model.getAllTTCrossLinks(),
                     columnSettings: columnSettings,
                     columnOrder: d3.keys(columnSettings),
                 });
@@ -314,7 +314,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         this.controlDiv2.append("label")
-            .text("Group & Average Columns")
+            .text("Column Group & Average")
             .attr("class", "btn staticLabel");
 
         this.updateGroupColumnSelectors(this.controlDiv2, this.d3table);
@@ -369,7 +369,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Column grouping controls
         this.controlDiv2.append("hr").attr("class", "toolbarSeparator");
         this.controlDiv2.append("label")
-            .text("Cluster Rows")
+            .text("Row Clusters")
             .attr("class", "btn staticLabel");
 
         this.updateClusterColumnSelectors(this.controlDiv2, this.d3table);
@@ -459,10 +459,10 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.render); // Entire new set of distances 
         // Entire new set of new matches added (via csv generally)
         this.listenTo(this.model.get("clmsModel"), "change:matches", function() {
-            this.updateTableRows(Array.from(this.model.get("clmsModel").get("crossLinks").values()));
+            this.updateTableRows(self.model.getAllTTCrossLinks());
             this.render({
                 refilter: true
-            })
+            });
         });
         this.listenTo(CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaData) {
@@ -494,23 +494,26 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.model.setMarkedCrossLinks("selection", this.d3table.getFilteredData(), false, evt.ctrlKey || evt.shiftKey);
         return this;
     },
-
-    getColour: function(columnKey, value) {
+    
+    getColour: function (d, columnKey) {   // d.key is columnKey, d.value is crossLink
+        var colour = this.zCellColourer(d);
+        if (colour) {
+            return colour;
+        }
         var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
-        return colScheme.getValue(value);
+        if (colScheme) {
+            var dValue = colScheme.getValue(d.value); // d.value is crosslink
+            return dValue !== undefined ? colScheme.getColour(d.value) : "none";
+        }
+        return "none";
     },
 
     makeColourSchemeBackgroundHook: function(columnKey) {
         var self = this;
         return function(cellSel) {
             cellSel.style("background", function(d) {
-                var colour = self.zCellColourer(d);
-                if (colour) {
-                    return colour;
-                }
-                var colScheme = CLMSUI.linkColour.Collection.get(columnKey);
-                var dValue = colScheme.getValue(d.value); // d.value is crosslink
-                return dValue !== undefined ? colScheme.getColour(d.value) : "none";
+                //console.log ("d", d, columnKey);
+                return self.getColour.call (self, d, columnKey);
             });
         };
     },
@@ -549,7 +552,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return zscoreRoundFormat(val);
                 }
                 return val;
-            }
+            };
 
             var cellD3Hook = columnType === "numeric" && CLMSUI.linkColour.Collection.get(mcol) ?
                 this.makeColourSchemeBackgroundHook(mcol) : undefined;
@@ -616,7 +619,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         jqSelectNode.multipleSelect({
             selectAll: false,
             width: 200,
-            placeholder: "Use same value to group columns"
+            placeholder: "Group columns with keys"
         });
         jqSelectNode.multipleSelect("uncheckAll");
 
@@ -752,7 +755,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var selects2 = CLMSUI.utils.addMultipleSelectControls({
             addToElem: containerSelector,
-            selectList: ["Normalise Other Columns To", "Base Colour Scheme On"],
+            selectList: ["Normalise Other Columns To", "Set Colour Scheme To"],
             optionList: columnNames,
             keepOldOptions: true,
             selectLabelFunc: function(d) {
@@ -817,11 +820,11 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     toggleHeatMapMode: function() {
         var heatMap = this.viewStateModel.get("heatMap");
         heatMap = !heatMap;
-        d3.select(this.el).select(".d3table").classed("heatmap", heatMap);
+        var d3el = d3.select(this.el);
+        d3el.select(".d3table").classed("heatmap", heatMap);
         this.viewStateModel.set("heatMap", heatMap);
 
         var csettings = d3.entries(this.d3table.columnSettings());
-        console.log("cs", csettings);
 
         var ps = this.d3table.pageSize();
         this.d3table.pageSize(120 - ps);
@@ -853,6 +856,9 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             }, this);
         }
 
+        //d3el.select(".d3table").style ("display", heatMap ? "none" : null);
+        //d3el.select(".d3table-wrapper").classed ("freezeFlex", heatMap);
+        //d3el.select("canvas.listHeatmap").style ("display", heatMap ? null : "none");
         this.d3table.update();
 
         return this;
@@ -888,7 +894,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     generateClusters: function() {
-        var crossLinks = this.model.getFilteredCrossLinks();
+        var filteredCrossLinks = this.model.getFilteredCrossLinks();
         var columnSettings = this.d3table.columnSettings();
         var accessor = function(crossLinks, dim) {
             var accessFunc = columnSettings[dim].accessor;
@@ -902,13 +908,14 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             linkage: this.viewStateModel.get("statLinkage"),
             columns: this.viewStateModel.get("statColumns").values(), // values 'cos d3.set not array
             accessor: accessor,
-        }
+        };
 
-        var clusterResults = CLMSUI.modelUtils.metaClustering(crossLinks, options);
+        var clusterResults = CLMSUI.modelUtils.metaClustering(filteredCrossLinks, CLMSUI.compositeModelInst.getAllTTCrossLinks(), options);
         this.stats.clusterDistances = clusterResults.cfk_distances;
 
         //console.log ("stat", stats);
         CLMSUI.utils.drawDendrogram(this.dendrosvg, this.stats.clusterDistances.tree, {
+            height: this.stats.clusterDistances.tree.size * 5,
             ltor: false,
             labelFunc: function(d) {
                 return d.origValue.clink.id;
@@ -997,28 +1004,114 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     getTableBackgroundColourArray: function(d3table) {
         d3table = d3table || this.d3table;
 
-        var fdata = d3table.getFilteredData();
+        return d3table.getFilteredData();
+    },
+    
+    drawPixel: function(cd, pixi, r, g, b, a) {
+        var index = pixi * 4;
+        cd[index] = r;
+        cd[index + 1] = g;
+        cd[index + 2] = b;
+        cd[index + 3] = a;
     },
 
+    
+    makeHeatMapCanvas: function (d3canvas) {
+        var data = this.getTableBackgroundColourArray ();
+        var dataObj = {key: "", value: ""};
+        
+        var columnOrder = this.d3table.columnOrder();
+        var visibleColumns = columnOrder.filter (function (columnKey) {
+            return this.d3table.showColumnByKey (columnKey); 
+        }, this);
+        
+        var canvasObj = CLMSUI.utils.makeCanvas (visibleColumns.length, data.length, d3canvas);
+        var canvas = canvasObj.canvas;
+        var cd = canvasObj.dataStructure.data;
+        
+        for (var row = 0; row < data.length; row++) {
+            dataObj.value = data[row];
+            for (var column = 0; column < visibleColumns.length; column++) {
+                dataObj.key = visibleColumns[column];
+                //console.log ("DO", dataObj);
+                var colour = this.getColour (dataObj, dataObj.key);
+                if (colour !== "none" && colour !== undefined && colour !== "transparent") {
+                    var rgb = d3.rgb (colour);
+                    this.drawPixel (cd, (row * canvas.width) + column, rgb.r, rgb.g, rgb.b, 255);
+                }
+            }
+        }
+
+        canvasObj.context.putImageData(canvasObj.dataStructure, 0, 0);
+        var headerSize = d3.select(this.el).select(".d3table thead").node().getBoundingClientRect();
+        var columnWidth = headerSize.width / visibleColumns.length;
+        canvasObj.d3canvas
+            .style ("transform", "translate(0,"+headerSize.height+"px) scale("+columnWidth+", 5)")
+            .classed ("listHeatmap", true)
+        ;
+        return canvasObj;
+    },
+    
+    makeSVGTableHeaderGroup: function () {
+        var columnOrder = this.d3table.columnOrder();
+        var visibleColumns = columnOrder.filter (function (columnKey) {
+            return this.d3table.showColumnByKey (columnKey); 
+        }, this);
+        
+        var headerSize = d3.select(this.el).select(".d3table thead").node().getBoundingClientRect();
+        var columnWidth = headerSize.width / visibleColumns.length;
+        
+        var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        var d3g = d3.select(g);
+        visibleColumns.forEach (function (columnKey, i) {
+            d3g.append("text")
+                .attr ("class", "columnHeader")
+                .text(columnKey)
+                .attr("transform", "rotate(90) translate("+(headerSize.height-10)+","+((-i - 0.5) * columnWidth)+")")
+            ;
+        });
+        
+        return d3g;
+    },
+    
     downloadImage: function() {
         var self = this;
-        this.getHTMLAsDataURL(d3.select(this.el).select(".d3table"), {
-                removeChildren: "svg.d3table-arrow,tfoot,input",
-            },
-            function(dataURL, size) {
-                var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                var d3svg = d3.select(svg);
-
-                var img = d3svg.append("image").attr("xlink:href", dataURL);
-                var nestedSvg = self.dendrosvg;
-                //console.log ("g", nestedSvg, img);
-                var clone = nestedSvg.node().cloneNode(true);
-                d3.select(clone).attr("x", size.width);
-                d3svg.node().appendChild(clone);
-
-                self.downloadSVG(undefined, d3svg);
-            }
-        );
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        var d3svg = d3.select(svg);
+        var img = d3svg.append("image");
+        img.attr("class", "sharpImage");
+        
+        function addDendro (width) {
+            var nestedSvg = self.dendrosvg;
+            //console.log ("g", nestedSvg, img);
+            var clone = nestedSvg.node().cloneNode(true);
+            d3.select(clone).attr("x", width);
+            d3svg.node().appendChild(clone);
+        }
+        
+        if (this.viewStateModel.get("heatMap")) {
+             var canvasObj = this.makeHeatMapCanvas();
+                d3.select("body").node().appendChild(canvasObj.canvas);
+            console.log ("canvasObj", canvasObj);
+             CLMSUI.utils.drawCanvasToSVGImage (canvasObj.d3canvas, img, function () {
+                 addDendro (canvasObj.canvas.getBoundingClientRect().width);
+                 d3svg.node().appendChild (self.makeSVGTableHeaderGroup().node());
+                 d3.select("body").node().removeChild(canvasObj.canvas);
+                 self.downloadSVG(undefined, d3svg);
+             });
+        } else {
+            this.getHTMLAsDataURL(d3.select(this.el).select(".d3table"), {
+                    removeChildren: "svg.d3table-arrow,tfoot,input",
+                },
+                function(dataURL, size) {
+                    img.on ("load", function () {
+                        addDendro (size.width);
+                        self.downloadSVG(undefined, d3svg);
+                    });
+                    img.attr("xlink:href", dataURL);
+                }
+            );
+        }
     },
 
     identifier: "List View",

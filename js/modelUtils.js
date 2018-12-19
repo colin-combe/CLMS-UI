@@ -457,7 +457,7 @@ CLMSUI.modelUtils = {
     matchPDBChainsToUniprot: function(pdbCode, nglSequences, interactorArr, callback) {
 
         function handleError(data, status) {
-            console.log("error", data, status)
+            console.log("error", data, status);
             var emptySequenceMap = [];
             emptySequenceMap.fail = true;
             callback(emptySequenceMap);
@@ -875,7 +875,7 @@ CLMSUI.modelUtils = {
                     if (val !== undefined) {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
-                })
+                });
             });
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
@@ -894,6 +894,18 @@ CLMSUI.modelUtils = {
                 source: "file"
             });
         }
+    },
+    
+    clearCrossLinkMetaData: function (crossLinkArr, metaFields) {
+        crossLinkArr.forEach (function (crossLink) {
+            if (crossLink.getMeta()) {
+                metaFields.forEach (function (metaField) {
+                    if (crossLink.getMeta(metaField) !== undefined) {
+                        crossLink.setMeta(metaField, undefined);
+                    }
+                });
+            }
+        });
     },
 
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {
@@ -958,6 +970,18 @@ CLMSUI.modelUtils = {
                 source: "file"
             });
         }
+    },
+    
+    clearProteinMetaData: function (proteinArr, metaFields) {
+        proteinArr.forEach (function (protein) {
+            if (protein.meta) {
+                metaFields.forEach (function (metaField) {
+                    if (protein.meta[metaField] !== undefined) {
+                        protein.meta[metaField] = undefined;
+                    }
+                });
+            }
+        });
     },
 
     // Column clustering functions
@@ -1169,7 +1193,7 @@ CLMSUI.modelUtils = {
         };
     },
 
-    metaClustering: function(crossLinks, myOptions) {
+    metaClustering: function (filteredCrossLinks, allCrossLinks, myOptions) {
         var defaults = {
             distance: "euclidean",
             linkage: "average",
@@ -1184,13 +1208,15 @@ CLMSUI.modelUtils = {
         var options = $.extend({}, defaults, myOptions);
 
         // Get Z-Scores - Zscoring existing ZScores won't chnage anything, bit inefficient but ok
-        var zResults = CLMSUI.modelUtils.makeZScores(crossLinks, options);
+        var zResults = CLMSUI.modelUtils.makeZScores(filteredCrossLinks, options);
         var zScoresByLink = zResults.zScoresByLink;
         // Calculate K-means and dimension tree on non-grouped dimensions
         var kmeans = clusterfck.kmeans(zScoresByLink, undefined, options.distance);
         var zdistances = clusterfck.hcluster(zScoresByLink, options.distance, options.linkage);
         var treeOrder = this.flattenBinaryTree(zdistances.tree);
 
+        CLMSUI.modelUtils.clearCrossLinkMetaData (allCrossLinks, ["kmcluster", "treeOrder"]);
+        
         kmeans.forEach(function(cluster, i) {
             cluster.forEach(function(arr) {
                 arr.clink.setMeta("kmcluster", i + 1);
@@ -1208,7 +1234,7 @@ CLMSUI.modelUtils = {
             columnTypes: _.object(newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() {
                 return "numeric";
             })),
-            items: crossLinks,
+            items: filteredCrossLinks,
             matchedItemCount: zScoresByLink.length
         });
 
@@ -1224,9 +1250,8 @@ CLMSUI.modelUtils = {
             var clink = zlinkScore.clink;
             columnNameIndexPairs.forEach(function(columnNameIndexPair) {
                 clink.setMeta(columnNameIndexPair.name, zlinkScore[columnNameIndexPair.index]);
-            })
+            });
         });
-
     },
 
     normalize2DArrayToColumn: function(orig2DArr, normalColIndex) {
@@ -1258,22 +1283,18 @@ CLMSUI.modelUtils = {
     crosslinkCountPerProteinPairing: function(crossLinkArr) {
         var obj = {};
         crossLinkArr.forEach(function(crossLink) {
-
-            // only show non-decoys, non-linears as we're only interested in real links with two ends
-            if (!crossLink.isLinearLink() && !crossLink.isDecoyLink()) {
-                var fromProtein = crossLink.fromProtein;
-                var toProtein = crossLink.toProtein;
-                var key = fromProtein.id + "-" + toProtein.id;
-                if (!obj[key]) {
-                    obj[key] = {
-                        crossLinks: [],
-                        fromProtein: fromProtein,
-                        toProtein: toProtein,
-                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
-                    };
-                }
-                obj[key].crossLinks.push(crossLink);
+            var fromProtein = crossLink.fromProtein;
+            var toProtein = crossLink.toProtein;
+            var key = fromProtein.id + "-" + toProtein.id;
+            if (!obj[key]) {
+                obj[key] = {
+                    crossLinks: [],
+                    fromProtein: fromProtein,
+                    toProtein: toProtein,
+                    label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                };
             }
+            obj[key].crossLinks.push(crossLink);
         });
         return obj;
     },

@@ -263,14 +263,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredCrossLinks: function(type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
     },
-
-    calcAndStoreTTCrossLinkCount: function() {
+    
+    getAllTTCrossLinks: function () {
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
             var crossLinks = clmsModel.get("crossLinks");
             var ttCrossLinks = CLMS.arrayFromMapValues(crossLinks).filter(function(link) {
                 return !link.isDecoyLink() && !link.isLinearLink();
             });
+            return ttCrossLinks;
+        }
+        return null;
+    },
+
+    calcAndStoreTTCrossLinkCount: function() {
+        var ttCrossLinks = this.getAllTTCrossLinks();
+        if (ttCrossLinks !== null) {
             this.set("TTCrossLinkCount", ttCrossLinks.length);
         }
     },
@@ -522,7 +530,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         options = options || {
             average: false
         };
-        options.allowInterModelDistances = options.allowInterModel || this.get("stageModel").get("allowInterModelDistances");
+        options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
         if (options.calcDecoyProteinDistances) {
             options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
             options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
@@ -539,8 +547,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var distArr = [];
         var distModel = this.get("clmsModel").get("distancesObj");
         var protAlignCollection = this.get("alignColl");
-        var clCount = crossLinks.length;
-        for (var cl = 0; cl < clCount; cl++) {
+        for (var cl = 0; cl < crossLinks.length; cl++) {
             var dist = this.getSingleCrosslinkDistance(crossLinks[cl], distModel, protAlignCollection, options);
             if (dist != null) {
                 distArr.push(options.returnChainInfo ? dist : +dist); // + is to stop it being a string
