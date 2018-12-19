@@ -1030,7 +1030,6 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         
         var canvasObj = CLMSUI.utils.makeCanvas (visibleColumns.length, data.length, d3canvas);
         var canvas = canvasObj.canvas;
-        //canvasObj.context
         var cd = canvasObj.dataStructure.data;
         
         for (var row = 0; row < data.length; row++) {
