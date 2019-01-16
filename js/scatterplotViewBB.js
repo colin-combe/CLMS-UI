@@ -189,14 +189,14 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         // Brush
-        var brushEnded = function(options) {
+        var brushEnded = function (options) {
             options = options || {};
             options.extent = self.brush.extent();
             options.add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
             self.selectPoints(options);
         };
 
-        var brushSnap = function() {
+        var brushSnap = function () {
             if (d3.event.sourceEvent.type === "brush") {
                 return;
             }
@@ -783,6 +783,8 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         renderOptions = renderOptions || {};
 
         if (renderOptions.isVisible || this.isVisible()) {
+            
+            //console.log ("renderOptions", renderOptions);
 
             var highlightsOnly = renderOptions.rehighlightOnly;
             var pointSize = this.options.pointSize;
@@ -793,6 +795,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var filteredCrossLinks = this.getFilteredCrossLinks();
             var highlightedCrossLinkIDs = d3.set(_.pluck(this.model.getMarkedCrossLinks("highlights"), "id"));
+            var selectedCrossLinkIDs = d3.set();
 
             var selectedMatchMap = this.model.getMarkedMatches("selection");
             var highlightedMatchMap = this.model.getMarkedMatches("highlights");
@@ -801,7 +804,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             if (highlightsOnly) {
                 sortedFilteredCrossLinks = filteredCrossLinks.filter (function (link) { return highlightedCrossLinkIDs.has(link.id); });
             } else {
-                var selectedCrossLinkIDs = d3.set(_.pluck(this.model.getMarkedCrossLinks("selection"), "id"));
+                selectedCrossLinkIDs = d3.set(_.pluck(this.model.getMarkedCrossLinks("selection"), "id"));
                 sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (4, filteredCrossLinks, function(link) {
                     return highlightedCrossLinkIDs.has(link.id) ? 3 : (selectedCrossLinkIDs.has(link.id) ? 2 : (link.isDecoyLink() ? 0 : 1));
                 });
@@ -880,7 +883,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                 if (!matchLevel) {
                     high = highlightedCrossLinkIDs.has(link.id);
                     ambig = link.ambiguous;
-                    if (!highlightsOnly && !high) { // skip setting non-highlighted canvas styles if this is a highlighted link
+                    if (!highlightsOnly) { // skip setting non-highlighted canvas styles if this is a highlighted link
                         selected = selectedCrossLinkIDs.has(link.id);
                         ctx.fillStyle = selected ? this.options.selectedColour : colour;
                         ctx.strokeStyle = selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
@@ -898,7 +901,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                         var match = link.filteredMatches_pp[ii].match;
                         high = highlightedMatchMap.has(match.id);
                         ambig = match.isAmbig();
-                        if (!highlightsOnly && !high) {  // skip setting non-highlighted canvas styles if this is a highlighted match
+                        if (!highlightsOnly) {  // skip setting non-highlighted canvas styles if this is a highlighted match
                             selected = selectedMatchMap.has(match.id);
                             ctx.fillStyle = selected ? this.options.selectedColour : colour;
                             ctx.strokeStyle = selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
