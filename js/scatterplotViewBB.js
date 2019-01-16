@@ -115,11 +115,18 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         // Canvas
-        this.canvas = viewDiv.append("div")
+        var canvasDiv = viewDiv.append("div")
             .style("position", "absolute")
             .style("transform", "translate(" + this.margin.left + "px," + this.margin.top + "px)")
-            .append("canvas")
-            .style("transform", "translate(0px,0px)");
+        ;
+        
+        // canvas for drawing the current filtered and selected node sets
+        this.filteredCanvas = canvasDiv.append("canvas");
+        // canvas for drawing the currently highlighted node set (should be faster than redrawing everything on one canvas)
+        this.highlightedCanvas = canvasDiv.append("canvas");
+        [this.filteredCanvas, this.highlightedCanvas].forEach (function (canvas) {
+            canvas.attr("class", "toSvgImage").style("position", "absolute").style("transform", "translate(0px,0px)");
+        });
 
         // Scales
         this.x = d3.scale.linear();
@@ -182,14 +189,14 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         // Brush
-        var brushEnded = function(options) {
+        var brushEnded = function (options) {
             options = options || {};
             options.extent = self.brush.extent();
             options.add = d3.event.ctrlKey || d3.event.shiftKey || (d3.event.sourceEvent ? d3.event.sourceEvent.ctrlKey || d3.event.sourceEvent.shiftKey : false);
             self.selectPoints(options);
         };
 
-        var brushSnap = function() {
+        var brushSnap = function () {
             if (d3.event.sourceEvent.type === "brush") {
                 return;
             }
@@ -264,15 +271,10 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // Listen to these events (and generally re-render in some fashion)
         // if highlighted/selection matches change, or colour model change, then recolour cross links
-        this.listenTo(this.model, "selectionMatchesLinksChanged highlightsMatchesLinksChanged change:linkColourAssignment currentColourModelChanged", this.recolourCrossLinks);
-        this.listenTo(this.model, "filteringDone", function() {
-            this.renderCrossLinks({
-                isFiltering: true
-            });
-        });
-        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", function() {
-            this.axisChosen().render();
-        });
+        this.listenTo(this.model, "selectionMatchesLinksChanged change:linkColourAssignment currentColourModelChanged", this.recolourCrossLinks);
+        this.listenTo(this.model, "highlightsMatchesLinksChanged", this.rehighlightCrossLinks);
+        this.listenTo(this.model, "filteringDone", function() { this.renderCrossLinks({isFiltering: true}); });
+        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
             //console.log ("HELLO", arguments);
             var columns = metaMetaData.columns;
@@ -717,18 +719,74 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
     recolourCrossLinks: function() {
-        this.renderCrossLinks({
-            recolourOnly: true
-        });
+        this.renderCrossLinks({recolourOnly: true});
         return this;
     },
+    
+    rehighlightCrossLinks: function() {
+        this.renderCrossLinks({rehighlightOnly: true});
+        return this;
+    },
+    
+    /*
+    preRenderSquares: function () {
+        if (!this.prerendered) {
+            this.prerendered = [];
+            for (var m = 0; m < 2; m++) {
+                for (var d = 0; d < 2; d++) {
+                    for (var a = 0; a < 2; a++) {
+                        for (var sh = 0; sh < 3; sh++) {
+                            var index = (d * 6) + (a * 3) + sh;
+                            var canvasObj = CLMSUI.utils.makeCanvas (this.pointSize + 1, this.pointSize + 1);
+                            var ctx = canvasObj.context;
+
+                            if (m === 1) {
+                                ctx.fillStyle = (sh === 2) ? this.options.highlightedColour : (sh === 1 ? this.options.selectedColour : colour);
+                                ctx.strokeStyle = (sh === 2) || sh === 1 ? "black" : (d === 1 || a === 1 ? ctx.fillStyle : null);
+                            }
+
+                            if (d === 1) {
+                                ctx.strokeRect(0.5, 0.5, this.pointSize, this.pointSize);
+                            } else {
+                                if (a === 1) {
+                                    ctx.globalAlpha = 0.7;
+                                }
+                                ctx.fillRect(1, 1, this.pointSize, this.pointSize);
+                                if (a === 1) {
+                                    ctx.globalAlpha = 1;
+                                    ctx.setLineDash([3]);
+                                    ctx.strokeRect(0.5, 0.5, this.pointSize, this.pointSize);
+                                    ctx.setLineDash([]);
+                                } else if (high || selected) {
+                                    ctx.strokeRect(0.5, 0.5, this.pointSize, this.pointSize);
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+    },
+    
+    getPreRenderSquare: function (select, highlight, ambig, decoy, matchLevel) {
+        var index = (highlight ? 2 : (select ? 1 : 0));
+        index += (ambig ? 3 : 0);
+        index += (decoy ? 6 : 0);
+        index += (matchLevel ? 12 : 0);
+        return this.prerendered[index];
+    },
+    */
 
 
-    renderCrossLinks: function(options) {
-        options = options || {};
+    renderCrossLinks: function (renderOptions) {
+        renderOptions = renderOptions || {};
 
-        if (options.isVisible || this.isVisible()) {
+        if (renderOptions.isVisible || this.isVisible()) {
+            
+            //console.log ("renderOptions", renderOptions);
 
+            var highlightsOnly = renderOptions.rehighlightOnly;
             var pointSize = this.options.pointSize;
             var halfPointSize = pointSize / 2;
 
@@ -736,15 +794,22 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             var colourScheme = this.model.get("linkColourAssignment");
 
             var filteredCrossLinks = this.getFilteredCrossLinks();
-            var selectedCrossLinkIDs = d3.set(_.pluck(this.model.getMarkedCrossLinks("selection"), "id"));
             var highlightedCrossLinkIDs = d3.set(_.pluck(this.model.getMarkedCrossLinks("highlights"), "id"));
+            var selectedCrossLinkIDs = d3.set();
 
             var selectedMatchMap = this.model.getMarkedMatches("selection");
             var highlightedMatchMap = this.model.getMarkedMatches("highlights");
+            
+            var sortedFilteredCrossLinks;
+            if (highlightsOnly) {
+                sortedFilteredCrossLinks = filteredCrossLinks.filter (function (link) { return highlightedCrossLinkIDs.has(link.id); });
+            } else {
+                selectedCrossLinkIDs = d3.set(_.pluck(this.model.getMarkedCrossLinks("selection"), "id"));
+                sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort (4, filteredCrossLinks, function(link) {
+                    return highlightedCrossLinkIDs.has(link.id) ? 3 : (selectedCrossLinkIDs.has(link.id) ? 2 : (link.isDecoyLink() ? 0 : 1));
+                });
+            }
 
-            var sortedFilteredCrossLinks = CLMSUI.modelUtils.radixSort(4, filteredCrossLinks, function(link) {
-                return highlightedCrossLinkIDs.has(link.id) ? 3 : (selectedCrossLinkIDs.has(link.id) ? 2 : (link.isDecoyLink() ? 0 : 1));
-            });
 
             var makeCoords = function(datax, datay) {
                 return datax.data.map(function(xd, i) {
@@ -772,74 +837,32 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return pairs;
                 });
             };
-
-            /*
-            var linkSel = this.scatg.selectAll("g.crossLinkGroup")
-                .data (filteredCrossLinks, function(d) { return d.id; })
-                .order()
-            ;
-            linkSel.exit().remove();
-            linkSel.enter().append("g")
-                .attr ("class", "crossLinkGroup")
-            ;
-            linkSel.each (function (d) {
-                var high = highlightedCrossLinkIDs.has (d.id);
-                var selected = selectedCrossLinkIDs.has (d.id);
-                d3.select(this)
-                    .style ("fill", high ?  self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour (d)))
-                    .style ("stroke", high || selected ? "black" : null)
-                    .style ("stroke-opacity", high || selected ? 0.4 : null)
-                ;
-            });
             
+            var p = performance.now();
             
-            if (!options.recolourOnly) {
-                var jitter = this.options.jitter;
-                var datax = this.getAxisData ("X", true, filteredCrossLinks);
-                var datay = this.getAxisData ("Y", true, filteredCrossLinks);
-
-                var coords = makeCoords (datax, datay);
-
-                //console.log ("coords", datax, datay, coords);
-
-                var matchSel = linkSel.selectAll("rect.datapoint").data (function(d,i) { return coords[i]; });
-
-                matchSel.exit().remove();
-                matchSel.enter().append("rect")
-                    .attr ("class", "datapoint")
-                    .attr ("width", pointSize)
-                    .attr ("height", pointSize)
-                ;
-
-                matchSel
-                    .attr("x", function(d) { 
-                        var xr = Math.random() - 0.5;
-                        var z = (d[0] * d[1]) + d[0] + d[1];
-                        return self.x (d[0]) + (jitter ? xr * self.jitterRanges.x : 0); 
-                    })
-                    .attr("y", function(d) { 
-                        var yr = Math.random() - 0.5;
-                        return self.y (d[1]) + (jitter ? yr * self.jitterRanges.y : 0);
-                    })
-                ;
-            }
-            */
-
-            var canvasNode = this.canvas.node();
-            var ctx = canvasNode.getContext("2d");
-            //ctx.fillStyle = this.options.background;
-            ctx.clearRect(0, 0, canvasNode.width, canvasNode.height);
-            ctx.imageSmoothingEnabled = false;
-
+            var contexts = [
+                {d3canvas: this.filteredCanvas, clear: !highlightsOnly}, 
+                {d3canvas: this.highlightedCanvas, clear: true}
+            ].map (function (canvasInfo) {
+                var canvasNode = canvasInfo.d3canvas.node();
+                var context = canvasNode.getContext("2d");
+                //context.fillStyle = this.options.background;
+                if (canvasInfo.clear) {
+                    context.clearRect (0, 0, canvasNode.width, canvasNode.height);
+                }
+                context.imageSmoothingEnabled = false;
+                return context;
+            }, this);
+            var ctx = contexts[0];
+            var hctx = contexts[1];
+            
+            // set constant styles for highlighted canvas
+            hctx.fillStyle = this.options.highlightedColour;
+            hctx.strokeStyle = "black";
 
             var datax = this.getAxisData("X", true, sortedFilteredCrossLinks);
             var datay = this.getAxisData("Y", true, sortedFilteredCrossLinks);
 
-            /*
-            if (options.isFiltering) {
-                this.scaleAxes (datax, datay);
-            }
-            */
             var matchLevel = datax.matchLevel || datay.matchLevel;
             var coords = makeCoords(datax, datay);
             var jitterOn = this.options.jitter;
@@ -859,10 +882,12 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var high, selected, ambig;
                 if (!matchLevel) {
                     high = highlightedCrossLinkIDs.has(link.id);
-                    selected = selectedCrossLinkIDs.has(link.id);
                     ambig = link.ambiguous;
-                    ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
-                    ctx.strokeStyle = high || selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
+                    if (!highlightsOnly) { // skip setting non-highlighted canvas styles if this is a highlighted link
+                        selected = selectedCrossLinkIDs.has(link.id);
+                        ctx.fillStyle = selected ? this.options.selectedColour : colour;
+                        ctx.strokeStyle = selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
+                    }
                 }
 
                 // try to make jitter deterministic so points don't jump on filtering, recolouring etc
@@ -875,40 +900,48 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if (matchLevel) {
                         var match = link.filteredMatches_pp[ii].match;
                         high = highlightedMatchMap.has(match.id);
-                        selected = selectedMatchMap.has(match.id);
                         ambig = match.isAmbig();
-                        ctx.fillStyle = high ? this.options.highlightedColour : (selected ? this.options.selectedColour : colour);
-                        ctx.strokeStyle = high || selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
+                        if (!highlightsOnly) {  // skip setting non-highlighted canvas styles if this is a highlighted match
+                            selected = selectedMatchMap.has(match.id);
+                            ctx.fillStyle = selected ? this.options.selectedColour : colour;
+                            ctx.strokeStyle = selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
+                        }
                     }
+                    
                     var x = this.x(coord[0]) + xjr - halfPointSize;
                     var y = this.y(coord[1]) + yjr - halfPointSize;
                     if (x === x && y === y) { // Quick test for either of x or y being a NaN
-                        x = Math.round(x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
-                        y = Math.round(y);
-                        if (decoy) {
-                            //var offset = Math.floor (halfPointSize);
-                            ctx.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
-                            //ctx.fillRect (x, y + offset, pointSize + 1, 1);
-                            //ctx.fillRect (x + offset, y, 1, pointSize + 1);
-                        } else {
-                            if (ambig) {
-                                ctx.globalAlpha = 0.7;
-                            }
-                            ctx.fillRect(x, y, pointSize, pointSize);
-                            if (ambig) {
-                                ctx.globalAlpha = 1;
-                                ctx.setLineDash([3]);
-                                ctx.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
-                                ctx.setLineDash([]);
-                            } else if (high || selected) {
-                                ctx.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
-                            }
-
-                            if (countable) {
-                                if (linkDomainInd === undefined) {
-                                    linkDomainInd = counts.length - 1;
+                        
+                        if (high || !highlightsOnly) {
+                            var context = (high && highlightsOnly) ? hctx : ctx;
+                            x = Math.round(x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
+                            y = Math.round(y);
+                            
+                            if (decoy) {
+                                //var offset = Math.floor (halfPointSize);
+                                context.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
+                                //ctx.fillRect (x, y + offset, pointSize + 1, 1);
+                                //ctx.fillRect (x + offset, y, 1, pointSize + 1);
+                            } else {
+                                if (ambig) {
+                                    context.globalAlpha = 0.7;
                                 }
-                                counts[linkDomainInd]++;
+                                context.fillRect (x, y, pointSize, pointSize);
+                                if (ambig) {
+                                    context.globalAlpha = 1;
+                                    context.setLineDash([3]);
+                                    context.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
+                                    context.setLineDash([]);
+                                } else if (high || selected) {
+                                    context.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
+                                }
+
+                                if (countable) {
+                                    if (linkDomainInd === undefined) {
+                                        linkDomainInd = counts.length - 1;
+                                    }
+                                    counts[linkDomainInd]++;
+                                }
                             }
                         }
                     }
@@ -920,13 +953,17 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.redrawAxes (this.getSizeData());
             }
             */
+            
+            //console.log ("scatter render", renderOptions, (performance.now() - p)/1000, "s");
 
             // Remove unknown from appearing in title if no data falls into this category
             //console.log ("COUNTS", this.counts);
-            if (_.last(counts) === 0) {
-                counts.pop();
+            if (!highlightsOnly) {
+                if (_.last(counts) === 0) {
+                    counts.pop();
+                }
+                this.makeChartTitle(counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
             }
-            this.makeChartTitle(counts, colourScheme, d3.select(this.el).select(".chartHeader"), matchLevel);
         }
         return this;
     },
@@ -988,11 +1025,17 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("width", sizeData.width)
             .attr("height", sizeData.height);
 
-        this.canvas
+        this.filteredCanvas
             .attr("width", sizeData.width)
             .attr("height", sizeData.height)
-            .attr("class", "backdrop");
-
+            .classed ("backdrop", true)
+        ;
+        
+        this.highlightedCanvas
+            .attr("width", sizeData.width)
+            .attr("height", sizeData.height)
+        ;
+        
         var extent = this.brush.extent(); // extent saved before x and y ranges updated
         var chartMargin = this.options.chartMargin;
 
