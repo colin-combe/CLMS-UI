@@ -99,8 +99,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             backgroundColor: "white",
             tooltip: false
         });
-        console.log("STAGE", this.stage);
-        // populate 3D network viewer if hard-coded pdb id present
+        //console.log("STAGE", this.stage);
 
         function sanitise(str) {
             return str.replace(/[^a-z0-9 ,.?!]/ig, '');

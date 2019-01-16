@@ -1040,23 +1040,30 @@ CLMSUI.utils = {
             var detachedSVGD3 = d3.select(detachedSVG);
             var self = this;
 
-            // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
-            var img = detachedSVGD3
-                .select(self.canvasImageParent) // where to add image
-                .insert("svg:image", ":first-child")
-            ;
-
-            // Add a rule to stop the image being anti-aliased (i.e. blurred)
-            img.attr("class", "sharpImage");
-            var extraRule = "image.sharpImage {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
-            var style = detachedSVGD3.select("style");
-            style.text(style.text() + "\n" + extraRule);
-
+            var d3canvases = d3.select(this.el).selectAll("canvas.toSvgImage");
             var fileName = this.filenameStateString() + ".svg";
-            // Now convert the canvas and its data to the image element we just added and download the whole svg when done
-            CLMSUI.utils.drawCanvasToSVGImage(this.canvas, img, function() {
+            // _.after means finalDownload only gets called after all canvases finished converting to svg images
+            var finalDownload = _.after (d3canvases.size(), function() {
                 var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), detachedSVG);
                 download(svgXML, "application/svg", fileName);
+            });
+            
+            d3canvases.each (function (d) {
+                var d3canvas = d3.select(this);
+                // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
+                var img = detachedSVGD3
+                    .select(self.canvasImageParent) // where to add image
+                    .insert("svg:image", ":first-child")
+                ;
+
+                // Add a rule to stop the image being anti-aliased (i.e. blurred)
+                img.attr("class", "sharpImage");
+                var extraRule = "image.sharpImage {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
+                var style = detachedSVGD3.select("style");
+                style.text(style.text() + "\n" + extraRule);
+
+                // Now convert the canvas and its data to the image element we just added and download the whole svg when done
+                CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, finalDownload);
             });
         },
 

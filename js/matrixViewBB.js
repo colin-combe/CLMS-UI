@@ -183,11 +183,14 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.canvas = canvasViewport
             .append("canvas")
+            .attr ("class", "toSvgImage")
             .style("background", this.options.background) // override standard background colour with option
-            .style("display", "none");
+            .style("display", "none")
+        ;
 
         canvasViewport.append("div")
-            .attr("class", "mouseMat");
+            .attr("class", "mouseMat")
+        ;
 
 
         // SVG element
