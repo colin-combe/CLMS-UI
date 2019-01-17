@@ -148,7 +148,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             scoreFilter: function(match) {
                 var msc = this.get("matchScoreCutoff");
                 //defend against not having a score (from a CSV file without such a column)
-                if (!match.score()) {
+                if (match.score() === undefined) {
                     return true;
                 }
                 return (msc[0] == undefined || match.score() >= msc[0]) && (msc[1] == undefined || match.score() <= msc[1]); // == undefined cos shared links get undefined json'ified to null

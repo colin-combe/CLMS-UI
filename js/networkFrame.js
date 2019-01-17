@@ -579,7 +579,8 @@ CLMSUI.init.viewsEssential = function(options) {
                 domainEnd: newCutoff[1]
             });
             //console.log ("cutoff changed");
-        });
+        })
+    ;
 
 
     // World of code smells vol.1
