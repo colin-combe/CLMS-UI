@@ -633,31 +633,39 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (accentType === "selection" && this.options.showSelectedOnly) {
             accentedLinkList = [];
         }
-        if (accentedLinkList && this.isVisible()) {
-            var linkType = {
-                "selection": "selectedCircleLink",
-                "highlights": "highlightedCircleLink"
+        if (accentedLinkList) {
+            var linkTypes = {
+                selection: "selectedCircleLink",
+                highlights: "highlightedCircleLink"
             };
+            var linkType = linkTypes[accentType] || "link";
             var accentedLinkIDs = _.pluck(accentedLinkList, "id");
             var idset = d3.set(accentedLinkIDs);
-            d3Selection.classed(linkType[accentType] || "link", function(d) {
-                return idset.has(d.id);
-            });
+            d3Selection.filter("."+linkType)
+                .filter(function(d) { return !idset.has(d.id); })
+                .classed(linkType, false)
+            ;
+            
+            d3Selection.filter(function(d) { return idset.has(d.id); })
+                .classed(linkType, true)
+            ;
         }
         return this;
     },
 
     showAccentedNodes: function(accentType) {
-        this.showAccentOnTheseNodes(d3.select(this.el).selectAll(".circleNode"), accentType);
+        if (this.isVisible()) {
+            this.showAccentOnTheseNodes(d3.select(this.el).selectAll(".circleNode"), accentType);
+        }
         return this;
     },
 
     showAccentOnTheseNodes: function(d3Selection, accentType) {
         var accentedNodeList = this.model.get(accentType === "selection" ? "selectedProteins" : "highlightedProteins");
-        if (accentedNodeList && this.isVisible()) {
+        if (accentedNodeList) {
             var linkType = {
-                "selection": "selected",
-                "highlights": "highlighted"
+                selection: "selected",
+                highlights: "highlighted"
             };
             var accentedLinkIDs = _.pluck(accentedNodeList, "id");
             var idset = d3.set(accentedLinkIDs);
@@ -683,11 +691,12 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     clearSelection: function(evt) {
+        evt = evt || {};
         // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
         // this is also logically consistent as it's adding 'nothing' to the existing selection
         if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
-            this.model.setMarkedCrossLinks("selection", [], false, false);
-            this.model.setSelectedProteins([], false);
+            this.model.setMarkedCrossLinks ("selection", [], false, false);
+            this.model.setSelectedProteins ([], false);
         }
     },
 
@@ -838,10 +847,11 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
     },
 
-    render: function(options) {
+    render: function (renderOptions) {
 
-        //CLMSUI.utils.xilog ("render args", arguments);
-        var changed = options ? options.changed : undefined;
+        renderOptions = renderOptions || {};
+        //CLMSUI.utils.xilog ("render options", renderOptions);
+        var changed = renderOptions.changed;
 
         if (this.isVisible()) {
             //CLMSUI.utils.xilog ("re-rendering circular view");
