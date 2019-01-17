@@ -183,11 +183,14 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.canvas = canvasViewport
             .append("canvas")
+            .attr ("class", "toSvgImage")
             .style("background", this.options.background) // override standard background colour with option
-            .style("display", "none");
+            .style("display", "none")
+        ;
 
         canvasViewport.append("div")
-            .attr("class", "mouseMat");
+            .attr("class", "mouseMat")
+        ;
 
 
         // SVG element
@@ -271,7 +274,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         // rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
-        this.listenTo(this.model, "change:selection change:highlights filteringDone currentColourModelChanged", this.renderCrossLinks);
+        this.listenTo(this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
+        this.listenTo(this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
         this.listenTo(this.model, "change:linkColourAssignment", this.render);
         this.listenTo(this.colourScaleModel, "colourModelChanged", this.render); // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
@@ -887,12 +891,15 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    renderCrossLinks: function(options) {
+    renderCrossLinks: function (renderOptions) {
+        
+        renderOptions = renderOptions || {};
 
-        if ((options && options.isVisible) || (this.options.matrixObj && this.isVisible())) {
+        if (renderOptions.isVisible || (this.options.matrixObj && this.isVisible())) {
             var self = this;
 
             if (this.options.matrixObj) {
+                var highlightOnly = renderOptions.rehighlightOnly;
                 var colourScheme = this.model.get("linkColourAssignment");
 
                 var seqLengths = this.getSeqLengthData();
@@ -914,24 +921,64 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
                 }, this);
 
-                var sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort(3, finalCrossLinks, function(link) {
-                    return highlightedCrossLinkIDs.has(link.id) ? 2 : (selectedCrossLinkIDs.has(link.id) ? 1 : 0);
-                });
+                var sortedFinalCrossLinks;
+                if (highlightOnly) {
+                    sortedFinalCrossLinks = finalCrossLinks.filter (function (link) { return highlightedCrossLinkIDs.has(link.id); });
+                } else {
+                    sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort (3, finalCrossLinks, function(link) {
+                        return highlightedCrossLinkIDs.has(link.id) ? 2 : (selectedCrossLinkIDs.has(link.id) ? 1 : 0);
+                    });
+                }
+
 
                 var fromToStore = sortedFinalCrossLinks.map(function(crossLink) {
                     return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
                 });
-
+                
+                var indLinkPlot = function (d) {
+                    var high = highlightedCrossLinkIDs.has(d.id);
+                    var selected = high ? false : selectedCrossLinkIDs.has(d.id);
+                    var ambig = d.ambiguous;
+                    d3.select(this)
+                        .attr ("class", "crossLink" + (high ? " high" : ""))
+                        .style("fill-opacity", ambig ? 0.6 : null)
+                        .style("fill", high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour(d)))
+                        .style("stroke-dasharray", ambig ? 3 : null)
+                        .style("stroke", high || selected ? "black" : (ambig ? colourScheme.getColour(d) : null))
+                        //.style ("stroke-opacity", high || selected ? 0.4 : null)
+                    ;
+                };
+                
+                // if redoing highlights only, find previously highlighted links not part of current set and restore them
+                // to a non-highlighted state
+                if (highlightOnly) {
+                    var oldHighLinkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.high")
+                        .filter (function (d) {
+                            return ! highlightedCrossLinkIDs.has(d.id);
+                        })
+                        .each (indLinkPlot)
+                    ;
+                }
+                
                 var linkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.crossLink")
                     .data(sortedFinalCrossLinks, function(d) {
                         return d.id;
                     })
-                    .order();
-                linkSel.exit().remove();
-                linkSel.enter().append("rect")
-                    .attr("class", "crossLink")
-                    .attr("width", xLinkWidth)
-                    .attr("height", yLinkWidth);
+                    // Equivalent of d3 v4 selection.raise - https://github.com/d3/d3-selection/blob/master/README.md#selection_raise
+                    .each(function() {
+                        this.parentNode.appendChild(this);
+                    })
+                    //.order()
+                ;
+                
+                if (!highlightOnly) {
+                    linkSel.exit().remove();
+                    linkSel.enter().append("rect")
+                        .attr("class", "crossLink")
+                        .attr("width", xLinkWidth)
+                        .attr("height", yLinkWidth)
+                    ;
+                }
                 linkSel
                     .attr("x", function(d, i) {
                         return fromToStore[i][0] - linkWidthOffset;
@@ -939,18 +986,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .attr("y", function(d, i) {
                         return (seqLengthB - fromToStore[i][1]) - linkWidthOffset;
                     })
-                    .each(function(d) {
-                        var high = highlightedCrossLinkIDs.has(d.id);
-                        var selected = selectedCrossLinkIDs.has(d.id);
-                        var ambig = d.ambiguous;
-                        d3.select(this)
-                            .style("fill-opacity", ambig ? 0.6 : null)
-                            .style("fill", high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour(d)))
-                            .style("stroke-dasharray", ambig ? 3 : null)
-                            .style("stroke", high || selected ? "black" : (ambig ? colourScheme.getColour(d) : null))
-                        //.style ("stroke-opacity", high || selected ? 0.4 : null)
-                        ;
-                    });
+                    .each (indLinkPlot);
             }
         }
 

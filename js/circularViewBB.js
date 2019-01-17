@@ -622,7 +622,9 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     showAccentedLinks: function(accentType) {
-        this.showAccentOnTheseLinks(d3.select(this.el).selectAll(".circleGhostLink"), accentType);
+        if (this.isVisible()) {
+            this.showAccentOnTheseLinks(d3.select(this.el).selectAll(".circleGhostLink"), accentType);
+        }
         return this;
     },
 
