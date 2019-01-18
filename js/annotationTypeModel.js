@@ -19,6 +19,13 @@ CLMSUI.BackboneModelTypes.AnnotationType = Backbone.Model.extend({
 });
 
 CLMSUI.BackboneModelTypes.AnnotationTypeCollection = Backbone.Collection.extend({
+    initialize: function (models, options) {
+        this.listenTo (CLMSUI.vent, "userAnnotationsUpdated", function (details) {
+            if (details.types) {
+                this.add (details.types);
+            }
+        });
+    },
     model: CLMSUI.BackboneModelTypes.AnnotationType,
     comparator: function(model) {
         return model.get("id");

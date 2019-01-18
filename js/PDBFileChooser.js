@@ -27,6 +27,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
+        mainDivSel.classed ("metaLoadPanel", true);
 
         var wrapperPanel = mainDivSel.append("div")
             .attr("class", "panelInner");

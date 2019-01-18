@@ -79,6 +79,7 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
 
     update: function() {
         var self = this;
+        console.log ("UPDATE THIS", this);
         if (this.collection) {
             var lastCat = null;
             var adata = [];
@@ -128,6 +129,7 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
         choices.exit().remove();
 
         var ttm = this.options.tooltipModel;
+        var self = this;
 
         choices.enter().append("li").each(function(d) {
             var ind = d3.select(this);
@@ -164,18 +166,25 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
                     ind.attr("title", d.tooltip || d.title);
                 }
             }
-        }, this);
+        }, this)
+            .filter(function(d) {
+                return d.sectionBegin;
+            })
+            .insert("span", ":first-child").attr("class", "ddSectionHeader").text(self.options.sectionHeader)
+        ;
 
-        var self = this;
         choices.classed("sectionEnd", function(d) {
             return d.sectionEnd;
         });
 
+        /*
         choices
             .filter(function(d) {
                 return d.sectionBegin;
             })
-            .insert("span", ":first-child").attr("class", "ddSectionHeader").text(self.options.sectionHeader);
+            .insert("span", ":first-child").attr("class", "ddSectionHeader").text(self.options.sectionHeader)
+        ;
+        */
 
         return this;
     },
@@ -340,6 +349,12 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
         // listen to a checkbox on one of this collection's models getting clicked and firing a change in the model
         this.listenTo(this.collection, "change:shown", function(featureTypeModel, shown) {
             this.setColour(featureTypeModel, shown);
+        });
+        
+        // new annotation types added (usually user defined)
+        this.listenTo (this.collection, "update", function () {
+            
+            this.update().render();
         });
     },
 

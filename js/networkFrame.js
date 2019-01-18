@@ -280,7 +280,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -461,6 +461,11 @@ CLMSUI.init.views = function() {
             name: "Protein Metadata",
             eventName: "proteinMetaShow",
             tooltip: "Load Protein Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"
+        },
+        {
+            name: "User Annotations",
+            eventName: "userAnnotationsMetaShow",
+            tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
     ];
     loadButtonData.forEach(function(bdata) {
@@ -940,6 +945,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#proteinMetaLoadPanel",
         model: compModel,
         displayEventName: "proteinMetaShow",
+    });
+    
+    new CLMSUI.UserAnnotationsMetaDataFileChooserBB({
+        el: "#userAnnotationsMetaLoadPanel",
+        model: compModel,
+        displayEventName: "userAnnotationsMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({
