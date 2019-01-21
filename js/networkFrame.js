@@ -81,7 +81,10 @@ var allDataLoaded = _.after(3, function() {
                 var key = feature.category + "-" + feature.type;
                 if (uniprotFeatureTypes.has(key) === false) {
                     var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
-                    annotationType.set("source", "Uniprot");
+                    annotationType
+                        .set("source", "Uniprot")
+                        .set("typeAlignmentID", "Canonical")
+                    ;
                     uniprotFeatureTypes.set(key, annotationType);
                 }
             }

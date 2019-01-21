@@ -160,21 +160,27 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             var convEnd = +feature.end;
             var type = feature.type.toLowerCase();
             var protAlignModel = self.model.get("alignColl").get(nodeid);
+            
+            var annotationColl = self.model.get ("annotationTypes");
+            var annotationTypeModel = annotationColl.get (annotationColl.modelId (feature));
+            var annotationTypeModelAlignmentID = annotationTypeModel ? annotationTypeModel.get("typeAlignmentID") : undefined; 
 
-            if (protAlignModel && (type !== "cross-linkable-1" && type !== "cross-linkable-2" && type !== "digestible")) {
-                var alignmentID = feature.alignmentID || "Canonical";
+            if (protAlignModel) {
+                var alignmentID = feature.alignmentID || annotationTypeModelAlignmentID; // individual feature alignment ids trump feature type alignment ids
                 /*
                 convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
                 convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
                 if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
                 if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                 */
-                var convertedRange = protAlignModel.rangeToSearch(alignmentID, convStart, convEnd);
-                if (!convertedRange) {
-                    return null;
+                if (alignmentID) {
+                    var convertedRange = protAlignModel.rangeToSearch(alignmentID, convStart, convEnd);
+                    if (!convertedRange) {
+                        return null;
+                    }
+                    convStart = convertedRange[0];
+                    convEnd = convertedRange[1];
                 }
-                convStart = convertedRange[0];
-                convEnd = convertedRange[1];
             }
             convStart = Math.max(0, convStart - 1); // subtract one, but don't have negative values
             if (isNaN(convEnd) || convEnd === undefined) {
@@ -801,46 +807,6 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         return filteredInteractors;
     },
 
-    filterFeatures: function(featureArrays, participant) {
-
-        var features = d3.merge(featureArrays.filter(function(arr) {
-            return arr !== undefined;
-        }));
-        var annots = this.model.get("annotationTypes").where({
-            shown: true
-        });
-        var featureFilterSet = d3.set(annots.map(function(annot) {
-            return annot.get("type");
-        }));
-        // 'cos some features report as upper case
-        featureFilterSet.values().forEach(function(value) {
-            featureFilterSet.add(value.toUpperCase());
-        });
-
-        if (featureFilterSet.has("Digestible")) {
-            var digestFeatures = this.model.get("clmsModel").getDigestibleResiduesAsFeatures(participant);
-            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(digestFeatures);
-            features = d3.merge([mergedFeatures, features]);
-        }
-
-        if (featureFilterSet.has("Cross-linkable-1")) {
-            var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures(participant, 1);
-            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(crossLinkableFeatures);
-            features = d3.merge([mergedFeatures, features]);
-        }
-
-        if (featureFilterSet.has("Cross-linkable-2")) {
-            var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures(participant, 2);
-            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(crossLinkableFeatures);
-            features = d3.merge([mergedFeatures, features]);
-        }
-
-        CLMSUI.utils.xilog("annots", annots, "f", features);
-        return features ? features.filter(function(f) {
-            return featureFilterSet.has(f.type);
-        }, this) : [];
-    },
-
     renderPartial: function(renderPartArr) {
         this.render({
             changed: d3.set(renderPartArr)
@@ -906,7 +872,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             // After rearrange interactors, because filtered features depends on the interactor order
             var alignColl = this.model.get("alignColl");
             var filteredFeatures = filteredInteractors.map(function(inter) {
-                return this.filterFeatures([inter.uniprot ? inter.uniprot.features : [], alignColl.getAlignmentsAsFeatures(inter.id)], inter);
+                return this.model.getFilteredFeatures (inter);
             }, this);
             //CLMSUI.utils.xilog ("filteredFeatures", filteredFeatures);
 

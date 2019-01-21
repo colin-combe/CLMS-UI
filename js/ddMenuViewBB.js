@@ -90,6 +90,7 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
                     label: model.get(self.options.labelByAttribute),
                     tooltip: model.get("tooltip"),
                 });
+               
                 var cat = model.get(self.options.groupByAttribute);
                 if (lastCat !== cat) { // have to access last datum to say it's the last in its category
                     if (adata.length) { // ignore sectionEnd for first item
@@ -100,18 +101,21 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
                 adata.push(cbdata);
                 lastCat = cat;
 
-                var options = $.extend({
-                    toggleAttribute: self.options.toggleAttribute,
-                    labelFirst: self.options.labelFirst
-                }, cbdata);
-                if (self.options.tooltipModel) {
-                    options.tooltipModel = self.options.tooltipModel;
+                 if (d3.select("#"+CLMSUI.utils.makeLegalDomID(cbdata.id)).empty()) {
+                    var options = $.extend({
+                        toggleAttribute: self.options.toggleAttribute,
+                        labelFirst: self.options.labelFirst
+                    }, cbdata);
+                    if (self.options.tooltipModel) {
+                        options.tooltipModel = self.options.tooltipModel;
+                    }
+
+                    var cbView = new CLMSUI.utils.checkBoxView({
+                        model: model,
+                        myOptions: options,
+                    });
+                    self.$el.append(cbView.$el);
                 }
-                var cbView = new CLMSUI.utils.checkBoxView({
-                    model: model,
-                    myOptions: options,
-                });
-                self.$el.append(cbView.$el);
             });
 
             this.options.menu = adata;
@@ -124,12 +128,24 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
         var choices = listHolder.selectAll("li")
             .data(this.options.menu, function(d) {
                 return d.name || d.id;
-            });
+            })
+        ;
 
         choices.exit().remove();
 
         var ttm = this.options.tooltipModel;
         var self = this;
+        
+        /*
+        choices.each (function (d) {
+            if (d.id) {
+                var targetSel = d3.select("#" + CLMSUI.utils.makeLegalDomID(d.id));
+                if (!targetSel.empty()) {
+                    targetSel.remove();
+                }
+            }    
+        });
+        */
 
         choices.enter().append("li").each(function(d) {
             var ind = d3.select(this);
@@ -145,7 +161,7 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
                     ind.node().appendChild(targetNode);
 
                     if (targetSel.datum() == undefined) {
-                        ind.select("#" + CLMSUI.utils.makeLegalDomID(d.id)); //martin magic
+                        ind.select("#" + CLMSUI.utils.makeLegalDomID(d.id)); // this pushes parent d3 datum onto this element
                     }
                 }
             }
@@ -301,43 +317,6 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
 
     initialize: function() {
         CLMSUI.AnnotationDropDownMenuViewBB.__super__.initialize.apply(this, arguments);
-        var self = this;
-
-        var items = d3.select(this.el).selectAll("li");
-
-        var colourControls = items
-            .insert("label", ":nth-last-child(1)") // insert pushes data to label
-            .attr("class", "colourSwatchLabel")
-            .style("visibility", function(d) {
-                return self.collection.get(d.id).get("shown") ? null : "hidden";
-            });
-
-        colourControls
-            .append("span")
-            .attr("class", "colourSwatchSquare")
-            .attr("title", "Click to change colour");
-
-
-        function colourChange(d) {
-            var value = d3.select(this).property("value");
-            CLMSUI.domainColours.set(d.category, d.type, value);
-            var model = self.collection.get(d.id); // d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
-            self.collection.trigger("change:shown", model, model.get("shown"));
-        }
-
-        // add colour input widgets, but hide them and call them when pressing the colour swatch
-        colourControls
-            .append("input")
-            .attr("type", "color")
-            .attr("class", "hiddenColourInput")
-            .property("value", function(d) {
-                return CLMSUI.domainColours(d.category, d.type);
-            })
-            .on("change", colourChange)
-            .on("input", colourChange);
-
-
-        items.select(".buttonPlaceholder").classed("aaButtonPlaceholder", true).select("label"); // .select pushes data to label
 
         d3.select(this.el).select("div")
             .append("button")
@@ -353,9 +332,60 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
         
         // new annotation types added (usually user defined)
         this.listenTo (this.collection, "update", function () {
-            
             this.update().render();
         });
+    },
+    
+    render: function () {
+        CLMSUI.AnnotationDropDownMenuViewBB.__super__.render.apply(this, arguments);
+        
+        var self = this;
+        var items = d3.select(this.el).selectAll("li");
+        
+        console.log ("render hello", items);
+        
+        function colourChange(d) {
+            var value = d3.select(this).property("value");
+            CLMSUI.domainColours.set(d.category, d.type, value);
+            var model = self.collection.get(d.id); // d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
+            self.collection.trigger("change:shown", model, model.get("shown"));
+        }
+
+        items.each (function (d, i) {
+            var d3this = d3.select(this);
+            
+            if (d3this.select(".colourSwatchLabel").empty()) {
+                var colourControl = d3this
+                    .insert("label", ":nth-last-child(1)") // insert pushes data to label
+                    .attr("class", "colourSwatchLabel")
+                    .style("visibility", function(d) {
+                        return self.collection.get(d.id).get("shown") ? null : "hidden";
+                    })
+                ;
+
+                colourControl
+                    .append("span")
+                    .attr("class", "colourSwatchSquare")
+                    .attr("title", "Click to change colour")
+                ;
+
+                // add colour input widgets, but hide them and call them when pressing the colour swatch
+                colourControl
+                    .append("input")
+                    .attr("type", "color")
+                    .attr("class", "hiddenColourInput")
+                    .property("value", function(d) {
+                        return CLMSUI.domainColours(d.category, d.type);
+                    })
+                    .on("change", colourChange)
+                    .on("input", colourChange)
+                ;
+            }
+        });
+        
+        items.select(".buttonPlaceholder").classed("aaButtonPlaceholder", true).select("label"); // .select pushes data to label
+        
+        return this;
     },
 
     decideSVGButtonEnabled: function() {

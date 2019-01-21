@@ -1034,7 +1034,8 @@ CLMSUI.modelUtils = {
                     if (!annotationMap.has (dl.annotname)) {
                         annotationMap.set (dl.annotname, {
                             category: "User Defined",
-                            type: dl.annotname
+                            type: dl.annotname,
+                            source: "Search"    // these will be matched to the search sequence
                         });
                     }
                     proteinSet.add (proteinID);
