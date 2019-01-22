@@ -346,8 +346,8 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
         
         function colourChange(d) {
             var value = d3.select(this).property("value");
-            CLMSUI.domainColours.set(d.category, d.type, value);
             var model = self.collection.get(d.id); // d3 id's are same as model id's ('cos ddmenu generates the d3 elements using the collection)
+            model.set ("colour", value);
             self.collection.trigger("change:shown", model, model.get("shown"));
         }
 
@@ -375,7 +375,8 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
                     .attr("type", "color")
                     .attr("class", "hiddenColourInput")
                     .property("value", function(d) {
-                        return CLMSUI.domainColours(d.category, d.type);
+                        console.log ("d", d);
+                        return self.collection.getColour (d.category, d.type);
                     })
                     .on("change", colourChange)
                     .on("input", colourChange)
@@ -397,6 +398,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
     },
 
     setColour: function(featureTypeModel, shown) {
+        var self = this;
         d3.select(this.el).selectAll("li")
             .filter(function(d) {
                 return d.id === featureTypeModel.id;
@@ -405,7 +407,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
             .style("visibility", shown ? null : "hidden")
             .select(".colourSwatchSquare")
             .style("background", function(d) {
-                var col = CLMSUI.domainColours(d.category, d.type);
+                var col = self.collection.getColour (d.category, d.type);
                 var scale = d3.scale.linear().domain([0, 1]).range(["white", col]);
                 return shown ? scale(0.5) : "none";
             });
@@ -420,9 +422,10 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
             this.collection.where({
                 shown: true
             }),
-            tempSVG, {
+            tempSVG, 
+            {
                 colour: function(d) {
-                    return CLMSUI.domainColours(d.category, d.type);
+                    return this.collection.getColour(d.category, d.type);
                 },
                 label: function(d) {
                     return (d.category ? d.category.replace(/_/g, " ") + ": " : "") + d.type;

@@ -1027,15 +1027,16 @@ CLMSUI.modelUtils = {
                         type: dl.annotname,
                         description: dl.description,
                         category: "User Defined",
-                        start: dl.start,
-                        end: dl.end,
+                        begin: dl.startres,
+                        end: dl.endres,
                         colour: dl.color || dl.colour
                     });
                     if (!annotationMap.has (dl.annotname)) {
                         annotationMap.set (dl.annotname, {
                             category: "User Defined",
                             type: dl.annotname,
-                            source: "Search"    // these will be matched to the search sequence
+                            source: "Search",    // these will be matched to the search sequence,
+                            colour: dl.color || dl.colour,  // default colour for this type - undefined if not declared
                         });
                     }
                     proteinSet.add (proteinID);

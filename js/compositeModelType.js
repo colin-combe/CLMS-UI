@@ -560,12 +560,12 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return distArr;
     },
     
-    getParticipantFeatures: function (particpant) {
+    getParticipantFeatures: function (participant) {
         var alignColl = this.get("alignColl");
         var featuresArray = [
-            particpant.uniprot ? particpant.uniprot.features : [], 
-            alignColl.getAlignmentsAsFeatures(particpant.id),
-            particpant.userAnnotations || [],
+            participant.uniprot ? participant.uniprot.features : [], 
+            alignColl.getAlignmentsAsFeatures(participant.id),
+            participant.userAnnotations || [],
         ];    
         return d3.merge(featuresArray.filter(function(arr) {
             return arr !== undefined;

@@ -29,43 +29,36 @@ var allDataLoaded = _.after(3, function() {
     CLMSUI.blosumCollInst.trigger ("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
 
     //init annotation types
-    var annotationTypes = [];
-
-    //add option for showing digestible residues
-    var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Digestible",
-        tooltip: "Mark Digestible Residues",
-        source: "Search",
-    });
-    annotationTypes.push(digestibleAnnotationType);
-
-    //add option for showing crosslinkable residues
-    var crosslinkable1AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Cross-linkable-1",
-        tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
-        source: "Search",
-    });
-    annotationTypes.push(crosslinkable1AnnotationType);
-
-    //add option for showing crosslinkable residues
-    var crosslinkable2AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Cross-linkable-2",
-        tooltip: "Mark Cross-Linkable residues (second reative group if heterobifunctional cross-linker)",
-        source: "Search",
-    });
-    annotationTypes.push(crosslinkable2AnnotationType);
-
-    //add option for showing PDB aligned regions
-    var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "Alignment",
-        type: "PDB aligned region",
-        tooltip: "Show regions that align to currently loaded PDB Data",
-        source: "PDB",
-    });
-    annotationTypes.push(alignedAnnotationType);
+    var annotationTypes = [
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "AA",
+            type: "Digestible",
+            tooltip: "Mark Digestible Residues",
+            source: "Search",
+            colour: "#1f78b4",
+        }),
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "AA",
+            type: "Cross-linkable-1",
+            tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
+            source: "Search",
+            colour: "#a6cee3",
+        }),
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "AA",
+            type: "Cross-linkable-2",
+            tooltip: "Mark Cross-Linkable residues (second reactive group if heterobifunctional cross-linker)",
+            source: "Search",
+            colour: "#a6cee3",
+        }),
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "Alignment",
+            type: "PDB aligned region",
+            tooltip: "Show regions that align to currently loaded PDB Data",
+            source: "PDB",
+            colour: "#b2df8a",
+        })
+    ];
 
     //get uniprot feature types
     var uniprotFeatureTypes = new Map();
