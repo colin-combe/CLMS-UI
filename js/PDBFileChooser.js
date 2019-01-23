@@ -109,6 +109,9 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo (this.model.get("clmsModel"), "change:matches", function() {
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
+        this.listenTo (this.model, "change:selectedProteins", function() {
+            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
+        });
         this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
@@ -131,26 +134,23 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     updateProteinDropdown: function(parentElem) {
+        var selectedProteins = this.model.get("selectedProteins");
+        var options = _.isEmpty (selectedProteins) ? CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")) : selectedProteins;
+        
         CLMSUI.utils.addMultipleSelectControls({
             addToElem: parentElem,
             selectList: ["Proteins"],
-            optionList: CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")).filter(function(prot) {
+            optionList: options.filter(function(prot) {
                 return !prot.is_decoy;
             }),
             keepOldOptions: false,
             selectLabelFunc: function() {
                 return "Select Protein for EBI Sequence Search ►";
             },
-            optionLabelFunc: function(d) {
-                return d.name;
-            },
-            optionValueFunc: function(d) {
-                return d.id;
-            },
-            idFunc: function(d) {
-                return d.id;
-            },
-            //changeFunc: function () { self.axisChosen().render(); },
+            optionLabelFunc: function (d) { return d.name; },
+            optionValueFunc: function(d) { return d.id; },
+            optionSortFunc: function (a, b) { return a.name.localeCompare (b.name); },
+            idFunc: function(d) { return d.id; },
         });
 
     },
