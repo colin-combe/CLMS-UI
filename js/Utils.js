@@ -783,24 +783,13 @@ CLMSUI.utils = {
         var defaults = {
             selectList: [],
             optionList: [],
-            selectLabelFunc: function(d) {
-                return d;
-            },
-            optionLabelFunc: function(d) {
-                return d;
-            },
-            optionValueFunc: function(d) {
-                return d;
-            },
-            selectLabelTooltip: function(d) {
-                return undefined;
-            },
-            initialSelectionFunc: function(d, i) {
-                return i === 0;
-            },
-            idFunc: function(d, i) {
-                return i;
-            },
+            selectLabelFunc: function(d) { return d; },
+            optionLabelFunc: function(d) { return d; },
+            optionValueFunc: function(d) { return d; },
+            optionSortFunc: undefined,
+            selectLabelTooltip: function(d) { return undefined; },
+            initialSelectionFunc: function(d, i) { return i === 0; },
+            idFunc: function(d, i) { return i; },
         };
         settings = _.extend(defaults, settings);
 
@@ -849,7 +838,11 @@ CLMSUI.utils = {
         ;
         options
             .text(settings.optionLabelFunc)
-            .property("value", settings.optionValueFunc);
+            .property("value", settings.optionValueFunc)
+        ;
+        if (settings.optionSortFunc) {
+            options.sort (settings.optionSortFunc);
+        }
 
         return selects;
     },
