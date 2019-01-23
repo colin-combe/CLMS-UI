@@ -932,39 +932,6 @@ function callback (model) {
 	});
 	
 	
-	QUnit.test ("Update Protein Metadata", function (assert) {
-		var expectedValue = {columns: ["cat", "dog"], items: clmsModel.get("participants"), matchedItemCount: 1};
-		CLMSUI.vent.listenToOnce (CLMSUI.vent, "proteinMetadataUpdated", function (actualValue) {
-			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as proteinmetadata event data, Passed!");
-			
-			var actualValue2 = clmsModel.get("participants").get("2000171").meta;
-			var expectedValue2 = {cat: 2, dog: 4};
-			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as protein meta value, Passed!");
-		})
-		
-		var fileContents = "ProteinID,cat,dog\n2000171,2,4\n";
-		var actualValue = CLMSUI.modelUtils.updateProteinMetadata (fileContents, clmsModel);	
-	});
-	
-	
-	QUnit.test ("Update Crosslink Metadata", function (assert) {
-		var expectedValue = {columns: ["cat", "dog"], columnTypes: {cat: "numeric", dog: "numeric"}, items: clmsModel.get("crossLinks"), matchedItemCount: 2};
-		CLMSUI.vent.listenToOnce (CLMSUI.vent, "linkMetadataUpdated", function (actualValue) {
-			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as linkmetadata event data, Passed!");
-			
-			var actualValue2 = clmsModel.get("crossLinks").get("2000171_415-2000171_497").getMeta();
-			var expectedValue2 = {cat: 2, dog: 4};
-			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as link meta value, Passed!");
-		});
-		
-		var fileContents = "Protein 1,SeqPos 1,Protein 2,SeqPos 2,cat,dog\n"
-			+"ALBU_HUMAN,415,ALBU_HUMAN,497,2,4\n"
-			+"ALBU_HUMAN,190,ALBU_HUMAN,425,3,5\n"
-		;
-		var actualValue = CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);	
-	});
-	
-	
 	QUnit.test ("ZScore array of values", function (assert) {
 		var expectedValue = [-1.49, -1.16, -0.83, -0.5, -0.17, 0.17, 0.5, 0.83, 1.16, 1.49];
 		var testNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -1050,6 +1017,94 @@ function callback (model) {
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as updated metadata values, Passed!");
 	});
+    
+    QUnit.module ("Metadata parsing testing");
+    
+    
+    QUnit.test ("Update Protein Metadata", function (assert) {
+		var expectedValue = {columns: ["cat", "dog"], items: clmsModel.get("participants"), matchedItemCount: 1};
+		CLMSUI.vent.listenToOnce (CLMSUI.vent, "proteinMetadataUpdated", function (actualValue) {
+			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as proteinmetadata event data, Passed!");
+			
+			var actualValue2 = clmsModel.get("participants").get("2000171").meta;
+			var expectedValue2 = {cat: 2, dog: 4};
+			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as protein meta value, Passed!");
+		});
+		
+		var fileContents = "ProteinID,cat,dog\n2000171,2,4\n";
+		CLMSUI.modelUtils.updateProteinMetadata (fileContents, clmsModel);	
+	});
+	
+	
+	QUnit.test ("Update Crosslink Metadata", function (assert) {
+		var expectedValue = {columns: ["cat", "dog"], columnTypes: {cat: "numeric", dog: "numeric"}, items: clmsModel.get("crossLinks"), matchedItemCount: 2};
+		CLMSUI.vent.listenToOnce (CLMSUI.vent, "linkMetadataUpdated", function (actualValue) {
+			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as linkmetadata event data, Passed!");
+			
+			var actualValue2 = clmsModel.get("crossLinks").get("2000171_415-2000171_497").getMeta();
+			var expectedValue2 = {cat: 2, dog: 4};
+			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as link meta value, Passed!");
+		});
+		
+		var fileContents = "Protein 1,SeqPos 1,Protein 2,SeqPos 2,cat,dog\n"
+			+"ALBU_HUMAN,415,ALBU_HUMAN,497,2,4\n"
+			+"ALBU_HUMAN,190,ALBU_HUMAN,425,3,5\n"
+		;
+		CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);	
+	});
+    
+    
+    QUnit.test ("Parse User Annotations", function (assert) {
+        model.get("filterModel")
+            .resetFilter()
+        ;
+        
+        CLMSUI.vent.listenToOnce (CLMSUI.vent, "userAnnotationsUpdated", function (actualValue) {
+            var expectedAnnotationTypes = [
+                {category: "User Defined", type: "Helix", source: "Search", colour: "blue"},
+                {category: "User Defined", type: "Strand", source: "Search", colour: "yellow"},
+                {category: "User Defined", type: "Sheet", source: "Search", colour: "red"},
+            ];
+            var expectedAnnotationItems = [
+                {category: "User Defined", type: "Helix", colour: "blue", description: undefined, begin: "10", end: "20"},
+                {category: "User Defined", type: "Strand", colour: "yellow", description: undefined, begin: "20", end: "30"},
+                {category: "User Defined", type: "Helix", colour: "red", description: undefined, begin: "40", end: "70"},
+                {category: "User Defined", type: "Sheet", colour: "red", description: undefined, begin: "100", end: "120"},
+            ];
+            
+            var expectedValue = {
+                types: expectedAnnotationTypes,
+                columns: expectedAnnotationTypes,
+                items: expectedAnnotationItems,
+                matchedItemCount: 4
+            };
+            
+            assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as passed userAnnotations value, Passed!");
+            
+            var annotColl = model.get("annotationTypes");
+            expectedValue = expectedAnnotationTypes;
+            expectedValue.forEach (function (type) {
+                type.id = annotColl.modelId (type);
+                type.shown = false;
+            });
+            // sort array by id, like collection is
+            expectedValue.sort (function (a,b) {
+                return a.id.localeCompare (b.id);
+            });
+            
+            var modelsFromCollection = annotColl.where ({category: "User Defined"});
+            actualValue = modelsFromCollection.map (function (model) { return model.toJSON(); });
+            
+            assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as generated userAnnotation Models, Passed!");
+            
+            
+            
+        });
+        
+        var input = "ProteinID,AnnotName,StartRes,EndRes,Color\r\nP02768-A,Helix,10,20,blue\r\nP02768-A,Strand,20,30,yellow\r\nP02768-A,Helix,40,70,red\r\nP02768-A,Sheet,100,120,red\r\n";
+        CLMSUI.modelUtils.updateUserAnnotationsMetadata (input, clmsModel);
+	});
+    
     
     QUnit.module ("File download string generation");
     

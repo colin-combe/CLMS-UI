@@ -375,7 +375,6 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
                     .attr("type", "color")
                     .attr("class", "hiddenColourInput")
                     .property("value", function(d) {
-                        console.log ("d", d);
                         return self.collection.getColour (d.category, d.type);
                     })
                     .on("change", colourChange)

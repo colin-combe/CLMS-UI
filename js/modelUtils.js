@@ -990,7 +990,6 @@ CLMSUI.modelUtils = {
         var proteins = clmsModel.get("participants");
         var first = true;
         var columns = [];
-        var matchedAnnotationCount = 0;
 
         var protMap = d3.map();
         proteins.forEach(function(value, key) {
@@ -998,6 +997,7 @@ CLMSUI.modelUtils = {
             protMap.set(value.name, key);
             protMap.set(value.id, key);
         });
+        var newAnnotations = [];
         var annotationMap = d3.map();
         var proteinSet = d3.set();
 
@@ -1021,16 +1021,17 @@ CLMSUI.modelUtils = {
                 var protein = proteins.get(proteinID);
 
                 if (protein) {
-                    matchedAnnotationCount++;
                     protein.userAnnotations = protein.userAnnotations || [];
-                    protein.userAnnotations.push ({
+                    var newAnno = {
                         type: dl.annotname,
                         description: dl.description,
                         category: "User Defined",
                         begin: dl.startres,
                         end: dl.endres,
                         colour: dl.color || dl.colour
-                    });
+                    };
+                    newAnnotations.push (newAnno);
+                    protein.userAnnotations.push (newAnno);
                     if (!annotationMap.has (dl.annotname)) {
                         annotationMap.set (dl.annotname, {
                             category: "User Defined",
@@ -1047,8 +1048,8 @@ CLMSUI.modelUtils = {
         CLMSUI.vent.trigger("userAnnotationsUpdated", {
             types:  annotationMap.values(),
             columns: annotationMap.values(),
-            items: annotationMap.values(),
-            matchedItemCount: matchedAnnotationCount
+            items: newAnnotations,
+            matchedItemCount: newAnnotations.length
         }, {
             source: "file"
         });
