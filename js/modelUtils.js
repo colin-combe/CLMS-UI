@@ -984,6 +984,77 @@ CLMSUI.modelUtils = {
             }
         });
     },
+    
+    
+    updateUserAnnotationsMetadata: function(userAnnotationsFileContents, clmsModel) {
+        var proteins = clmsModel.get("participants");
+        var first = true;
+        var columns = [];
+
+        var protMap = d3.map();
+        proteins.forEach(function(value, key) {
+            protMap.set(value.accession, key);
+            protMap.set(value.name, key);
+            protMap.set(value.id, key);
+        });
+        var newAnnotations = [];
+        var annotationMap = d3.map();
+        var proteinSet = d3.set();
+
+        d3.csv.parse(userAnnotationsFileContents, function(d) {
+            if (first) {
+                var keys = d3.keys(d).map(function(key) {
+                    return key.toLocaleLowerCase();
+                });
+                first = false;
+                columns = keys;
+            }
+            
+            var dl = {};
+            d3.keys(d).forEach(function(key) {
+                dl[key.toLocaleLowerCase()] = d[key];
+            });
+
+            var proteinIDValue = dl.proteinid;
+            var proteinID = protMap.get(proteinIDValue);
+            if (proteinID !== undefined) {
+                var protein = proteins.get(proteinID);
+
+                if (protein) {
+                    protein.userAnnotations = protein.userAnnotations || [];
+                    var newAnno = {
+                        type: dl.annotname,
+                        description: dl.description,
+                        category: "User Defined",
+                        begin: dl.startres,
+                        end: dl.endres,
+                        colour: dl.color || dl.colour
+                    };
+                    newAnnotations.push (newAnno);
+                    protein.userAnnotations.push (newAnno);
+                    if (!annotationMap.has (dl.annotname)) {
+                        annotationMap.set (dl.annotname, {
+                            category: "User Defined",
+                            type: dl.annotname,
+                            source: "Search",    // these will be matched to the search sequence,
+                            colour: dl.color || dl.colour,  // default colour for this type - undefined if not declared
+                        });
+                    }
+                    proteinSet.add (proteinID);
+                }
+            }
+        });
+
+        CLMSUI.vent.trigger("userAnnotationsUpdated", {
+            types:  annotationMap.values(),
+            columns: annotationMap.values(),
+            items: newAnnotations,
+            matchedItemCount: newAnnotations.length
+        }, {
+            source: "file"
+        });
+    },
+    
 
     // Column clustering functions
 

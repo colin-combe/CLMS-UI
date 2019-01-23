@@ -559,4 +559,55 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         return distArr;
     },
+    
+    getParticipantFeatures: function (participant) {
+        var alignColl = this.get("alignColl");
+        var featuresArray = [
+            participant.uniprot ? participant.uniprot.features : [], 
+            alignColl.getAlignmentsAsFeatures(participant.id),
+            participant.userAnnotations || [],
+        ];    
+        return d3.merge(featuresArray.filter(function(arr) {
+            return arr !== undefined;
+        }));
+    },
+    
+    getFilteredFeatures: function (participant) {
+
+        var features = this.getParticipantFeatures (participant);
+        
+        var annots = this.get("annotationTypes").where({
+            shown: true
+        });
+        var featureFilterSet = d3.set(annots.map(function(annot) {
+            return annot.get("type");
+        }));
+        // 'cos some features report as upper case
+        featureFilterSet.values().forEach(function(value) {
+            featureFilterSet.add(value.toUpperCase());
+        });
+
+        if (featureFilterSet.has("Digestible")) {
+            var digestFeatures = this.get("clmsModel").getDigestibleResiduesAsFeatures(participant);
+            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(digestFeatures);
+            features = d3.merge([mergedFeatures, features]);
+        }
+
+        if (featureFilterSet.has("Cross-linkable-1")) {
+            var crossLinkableFeatures = this.get("clmsModel").getCrosslinkableResiduesAsFeatures(participant, 1);
+            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(crossLinkableFeatures);
+            features = d3.merge([mergedFeatures, features]);
+        }
+
+        if (featureFilterSet.has("Cross-linkable-2")) {
+            var crossLinkableFeatures = this.get("clmsModel").getCrosslinkableResiduesAsFeatures(participant, 2);
+            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(crossLinkableFeatures);
+            features = d3.merge([mergedFeatures, features]);
+        }
+
+        CLMSUI.utils.xilog("annots", annots, "f", features);
+        return features ? features.filter(function(f) {
+            return featureFilterSet.has(f.type);
+        }, this) : [];
+    },
 });
