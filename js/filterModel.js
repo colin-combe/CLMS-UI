@@ -331,6 +331,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     matchScoreCutoff: "MATCHSCORES",
                     aaApart: "APART",
                     crosslinks: "XLINKS",
+                    homomultimericLinks: "HOMOM",
                 };
                 var zeroFormatFields = d3.set(["intraFdrCut", "interFdrCut", "scores"]);
                 if (this.get("fdrMode")) {
