@@ -47,7 +47,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
     isCategorical: function() {
         return this.get("type") !== "linear";
     },
-    undefinedColour: "#ddd",
+    undefinedColour: "#aaa",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend({
