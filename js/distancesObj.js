@@ -1,9 +1,10 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID) {
+CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID, residueCoords) {
     this.matrices = matrices;
     this.chainMap = chainMap;
     this.pdbBaseSeqID = pdbBaseSeqID;
+    this.residueCoords = residueCoords;
     this.setAllowedChainNameSet();
 };
 

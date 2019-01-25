@@ -34,16 +34,20 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     setupLinks: function() {
-        this.calculateCAtomsAllResidues(this.getChainInfo().viableChainIndices);
+        var chainInfo = this.getChainInfo();
+        this.calculateCAtomsAllResidues(chainInfo.viableChainIndices);
         this.setFilteredLinkList ();
-        var distancesObj = this.makeDistances();
+
+        // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
+        // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
+        // generally at CLMSUI.modelUtils.get3DDistance
+        var distances = this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
+        var distancesObj = new CLMSUI.DistancesObj (distances, this.get("chainMap"), this.get("pdbBaseSeqID"));
 
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
         clmsModel
-            .set("distancesObj", distancesObj, {
-                silent: true
-            })
+            .set("distancesObj", distancesObj, {silent: true})
             .trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
         ;
         return this;
@@ -61,24 +65,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.setLinkList (this.getModel().getFilteredCrossLinks());
         return this;
     },
-
-
-    // residueStore maps the NGL-indexed resides to PDB-index
-    // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
-    // then need to subtract 1, then --> which goes to PDB index with residueStore
-
-    makeModelSubIndexedChainMap: function(chainMap) {
-        var modelSubIndexedChainMap = {};
-        d3.entries(chainMap).forEach(function(proteinEntry) {
-            modelSubIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) {
-                return d.modelIndex;
-            }).entries(proteinEntry.value);
-        });
-        return modelSubIndexedChainMap;
-    },
-    
    
-
     makeLinkList: function(linkModel) {
         var structure = this.get("structureComp").structure;
         var pdbBaseSeqID = this.get("pdbBaseSeqID");
@@ -147,7 +134,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var t = performance.now();
         var chainMap = this.get("chainMap");
         // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
-        var modelIndexedChainMap = this.makeModelSubIndexedChainMap(chainMap);
+        var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedChainMap(chainMap, "modelIndex");
         var chainModelMapMap = d3.map();
         var chainValueMap = d3.map();
         d3.entries(chainMap).forEach (function (protEntry) { chainValueMap.set (protEntry.key, {values: protEntry.value}); });
@@ -194,7 +181,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         if (alternativeCount > 4) {
                             addAtomPoints.call (this, fromPDBResidues);
                             addAtomPoints.call (this, toPDBResidues);
-                            var results = this.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
+                            var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
                             results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
                             var prime = results[0];
                             results.forEach (function (res) {
@@ -347,19 +334,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this._linkIdMap[link.linkId] === undefined ? false : true;
     },
 
-    makeDistances: function() {
-        return new CLMSUI.DistancesObj (this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
-    },
-
-    // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
-    // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
-    // generally at CLMSUI.modelUtils.get3DDistance
-    getDistances: function() {
-        var chainInfo = this.getChainInfo();
-        this.calculateCAtomsAllResidues(chainInfo.viableChainIndices);
-        return this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
-    },
-
     getChainInfo: function() {
         var resCount = 0;
         var viableChainIndices = [];
@@ -383,7 +357,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var atomProxy = this.get("structureComp").structure.getAtomProxy();
         var sele = new NGL.Selection();
         var chainCAtomIndices = {}; // keys on chain index, and within this keys on residue index
-        var self = this;
 
         if (chainIndices) {
             chainIndices.forEach(function(ci) {
@@ -391,7 +364,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var atomIndices = chainCAtomIndices[ci] = [];
                 // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
 
-                var sel = self.getCAlphaAtomSelectionForChain(chainProxy);
+                var sel = CLMSUI.modelUtils.getRangedCAlphaResidueSelectionForChain(chainProxy);
                 sele.setString(sel, true); // true = doesn't fire unnecessary dispatch events in ngl
                 var ai = this.get("structureComp").structure.getAtomIndices(sele);
 
@@ -417,17 +390,18 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     getChainDistances: function (linksOnly) {
-        var chainCAtomIndices = this.get("chainCAtomIndices");
-        var keys = d3.keys(chainCAtomIndices);
-
+        var entries = d3.entries(this.get("chainCAtomIndices"));
         var matrixMap = {};
         var links = this.getLinks();
 
-        keys.forEach (function (chain1) {
-            for (var m = 0; m < keys.length; m++) {
-                var chain2 = keys[m];
-                var cindices1 = chainCAtomIndices[chain1];
-                var cindices2 = chainCAtomIndices[chain2];
+        entries.forEach (function (chain1Entry) {
+            var chain1 = chain1Entry.key;
+            var cindices1 = chain1Entry.value;
+            
+            entries.forEach (function (chain2Entry) {
+                var chain2 = chain2Entry.key;
+                var cindices2 = chain2Entry.value;
+                
                 matrixMap[chain1 + "-" + chain2] = {
                     chain1: chain1,
                     chain2: chain2,
@@ -438,7 +412,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         this.getLinkDistancesBetween2Chains(cindices1, cindices2, +chain1, +chain2, links) :
                         this.getAllDistancesBetween2Chains(cindices1, cindices2, chain1, chain2)
                 };
-            }
+            }, this);
         }, this);
 
         return matrixMap;
@@ -449,14 +423,16 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return chain ? chain.length : undefined;
     },
 
-    notHomomultimeric: function(xlinkID, c1, c2) {
-        var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
-        return CLMSUI.modelUtils.not3DHomomultimeric(xlink, c1, c2);
-    },
 
     getLinkDistancesBetween2Chains: function(chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
+        
+        var notHomomultimeric = function (xlinkID, c1, c2) {
+            var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
+            return CLMSUI.modelUtils.not3DHomomultimeric(xlink, c1, c2);
+        };
+        
         links = links.filter(function(link) {
-            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && this.notHomomultimeric(link.origId, chainIndex1, chainIndex2))
+            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && notHomomultimeric.call (this, link.origId, chainIndex1, chainIndex2))
             /*||
                            (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1)*/
             ;
@@ -510,15 +486,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return matrix;
     },
     
-    getDistanceSquared: function (coords1, coords2) {
-        var d2 = 0;
-        for (var n = 0; n < coords1.length; n++) {
-            var diff = coords1[n] - coords2[n];
-            d2 += diff * diff;
-        }
-        return d2;
-    },
-    
     getAtomCoordinates: function (atomProxy) {
         return [atomProxy.x, atomProxy.y, atomProxy.z];
     },
@@ -547,22 +514,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this.getAtomProxyDistance(ap1, ap2);
     },
 
-    getCAlphaAtomSelectionForChain: function(chainProxy) {
-        var min, max;
-        chainProxy.eachResidue(function(rp) {
-            var rno = rp.resno;
-            if (!min || rno < min) {
-                min = rno;
-            }
-            if (!max || rno > max) {
-                max = rno;
-            }
-        });
 
-        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
-        var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
-        return sel;
-    },
 
 
     getSelectionFromResidueList: function(resnoList, options) { // set allAtoms to true to not restrict selection to alpha carbon atoms
@@ -640,7 +592,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         } else if (vals.length === 1) {
                             return "( " + vals[0] + ":" + chainEntry.key + " )"; // if single val, chain:resno is quicker
                         } else {
-                            vals = this.joinConsecutiveNumbersIntoRanges(vals);
+                            vals = CLMSUI.modelUtils.joinConsecutiveNumbersIntoRanges(vals);
                             return "( :" + chainEntry.key + " AND (" + vals.join(" OR ") + ") )";
                         }
                     } else {
@@ -665,36 +617,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return sele;
     },
 
-    // assumes vals are already sorted numerically (though each val is a string)
-    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
-        joinString = joinString || "-";
-
-        if (vals && vals.length > 1) {
-            var newVals = [];
-            var last = +vals[0],
-                start = +vals[0],
-                run = 1; // initialise variables to first value
-
-            for (var n = 1; n < vals.length + 1; n++) { // note + 1
-                // add extra loop iteration using MAX_SAFE_INTEGER as last value.
-                // loop will thus detect non-consecutive numbers on last iteration and output the last proper value in some form.
-                var v = (n < vals.length ? +vals[n] : Number.MAX_SAFE_INTEGER);
-                if (v - last === 1) { // if consecutive to last number just increase the run length
-                    run++;
-                } else { // but if not consecutive to last number...
-                    // add the previous numbers either as a sequence (if run > 1) or as a single value (last value was not part of a sequence itself)
-                    newVals.push(run > 1 ? start + joinString + last : last.toString());
-                    run = 1; // then reset the run and start variables to begin at current value
-                    start = v;
-                }
-                last = v; // make last value the current value for next iteration of loop
-            }
-
-            //CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
-            vals = newVals;
-        }
-        return vals;
-    },
 
     _getAtomIndexFromResidueObj: function (resObj) {
         var resno = resObj.resno;
@@ -762,31 +684,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         };
     },
     
-    
-    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, ignoreFunc) {
-        
-        accessorObj = accessorObj || {};
-        var points1Bigger = points1.length > points2.length;
-        
-        var bigPointArr = points1Bigger ? points1 : points2;
-        var smallPointArr = points1Bigger ? points2 : points1;
-        var octree = d3.octree ();
-        octree
-            .x(accessorObj.x || octree.x())
-            .y(accessorObj.y || octree.y())
-            .z(accessorObj.z || octree.z())
-            .addAll (bigPointArr)
-        ;
-        
-        maxDistance = maxDistance || 200;
-        
-        var nearest = smallPointArr.map (function (point) {
-            return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
-        });
-        var dist = smallPointArr.map (function (point, i) {
-            return this.getDistanceSquared (point.coords, nearest[i].coords);
+    getAllResidueCoordsForChain: function (chainIndex) {
+        var structure = this.get("structureComp").structure;
+        var atomProxy = structure.getAtomProxy();
+        var nglAtomIndices = this.get("chainCAtomIndices")[chainIndex] || [];
+        var atomCoords = nglAtomIndices.map (function (atomIndex) {
+            atomProxy.index = atomIndex;
+            var coords = this.getAtomCoordinates (atomProxy);
+            return coords;
         }, this);
-        
-        return d3.zip (points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
+        return atomCoords;
     },
 });
