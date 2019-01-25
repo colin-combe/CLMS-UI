@@ -827,7 +827,6 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var drawDistanceMatrix = function(imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
                     var alignColl = this.model.get("alignColl");
                     var distanceMatrix = matrixValue.distanceMatrix;
-                    console.log ("dm", distanceMatrix, matrixValue);
                     var linksOnly = matrixValue.linksOnly;
                     var pw = this.canvas.attr("width");
 
@@ -839,7 +838,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                     var atoms1 = linksOnly ? stageModel.getAllResidueCoordsForChain (matrixValue.chain1) : []; 
                     var atoms2 = linksOnly ? ((matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1) : []; 
-                    console.log ("atoms", atoms1, atoms2);
+                    //console.log ("atoms", atoms1, atoms2);
                     
                     // draw chain values, aligned to search sequence
                     if (linksOnly) {
