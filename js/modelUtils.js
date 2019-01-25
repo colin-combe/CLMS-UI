@@ -744,6 +744,33 @@ CLMSUI.modelUtils = {
         });
         return matchChains[0] ? matchChains[0].name : undefined;
     },
+    
+    makeSubIndexedChainMap: function(chainMap, subIndexingProperty) {
+        var subIndexedChainMap = {};
+        d3.entries(chainMap).forEach(function(proteinEntry) {
+            subIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) {
+                return d[subIndexingProperty];
+            }).entries(proteinEntry.value);
+        });
+        return subIndexedChainMap;
+    },
+    
+    getRangedCAlphaResidueSelectionForChain: function(chainProxy) { // chainProxy is NGL Object
+        var min, max;
+        chainProxy.eachResidue(function(rp) {
+            var rno = rp.resno;
+            if (!min || rno < min) {
+                min = rno;
+            }
+            if (!max || rno > max) {
+                max = rno;
+            }
+        });
+
+        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
+        var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
+        return sel;
+    },
 
     crosslinkerSpecificityPerLinker: function(searchArray) {
         var crossSpec = CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
@@ -1371,7 +1398,9 @@ CLMSUI.modelUtils = {
         return obj;
     },
 
+    // merges array of ranges
     // features should be pre-filtered to an individual protein and to an individual type
+    // this can be reused for any array containing elements with properties 'begin' and 'end'
     mergeContiguousFeatures: function(features) {
         features.sort(function(f1, f2) {
             return +f1.begin - +f2.begin;
@@ -1412,6 +1441,76 @@ CLMSUI.modelUtils = {
         //console.log ("mergedFeatures", features, merged);
         return merged;
     },
+    
+    
+    // merges array of single numbers
+    // assumes vals are already sorted numerically (though each val is a string)
+    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
+        joinString = joinString || "-";
+
+        if (vals && vals.length > 1) {
+            var newVals = [];
+            var last = +vals[0],
+                start = +vals[0],
+                run = 1; // initialise variables to first value
+
+            for (var n = 1; n < vals.length + 1; n++) { // note + 1
+                // add extra loop iteration using MAX_SAFE_INTEGER as last value.
+                // loop will thus detect non-consecutive numbers on last iteration and output the last proper value in some form.
+                var v = (n < vals.length ? +vals[n] : Number.MAX_SAFE_INTEGER);
+                if (v - last === 1) { // if consecutive to last number just increase the run length
+                    run++;
+                } else { // but if not consecutive to last number...
+                    // add the previous numbers either as a sequence (if run > 1) or as a single value (last value was not part of a sequence itself)
+                    newVals.push(run > 1 ? start + joinString + last : last.toString());
+                    run = 1; // then reset the run and start variables to begin at current value
+                    start = v;
+                }
+                last = v; // make last value the current value for next iteration of loop
+            }
+
+            //CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
+            vals = newVals;
+        }
+        return vals;
+    },
+    
+    getDistanceSquared: function (coords1, coords2) {
+        var d2 = 0;
+        for (var n = 0; n < coords1.length; n++) {
+            var diff = coords1[n] - coords2[n];
+            d2 += diff * diff;
+        }
+        return d2;
+    },
+    
+    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, ignoreFunc) {
+        
+        accessorObj = accessorObj || {};
+        var points1Bigger = points1.length > points2.length;
+        
+        var bigPointArr = points1Bigger ? points1 : points2;
+        var smallPointArr = points1Bigger ? points2 : points1;
+        var octree = d3.octree ();
+        octree
+            .x(accessorObj.x || octree.x())
+            .y(accessorObj.y || octree.y())
+            .z(accessorObj.z || octree.z())
+            .addAll (bigPointArr)
+        ;
+        
+        maxDistance = maxDistance || 200;
+        
+        var nearest = smallPointArr.map (function (point) {
+            return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
+        });
+        var dist = smallPointArr.map (function (point, i) {
+            return CLMSUI.modelUtils.getDistanceSquared (point.coords, nearest[i].coords);
+        });
+        
+        return d3.zip (points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
+    },
+    
 
     radixSort: function(categoryCount, data, bucketFunction) {
         var radixSortBuckets = Array.apply(null, Array(categoryCount)).map(function() {

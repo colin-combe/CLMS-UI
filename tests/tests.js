@@ -278,7 +278,7 @@ function callback (model) {
         };
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        var actualValue = stageModel.makeModelSubIndexedChainMap (data);
+        var actualValue = CLMSUI.modelUtils.makeSubIndexedChainMap (data, "modelIndex");
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" when mapping from "+JSON.stringify(data));
 	});
     
@@ -298,9 +298,8 @@ function callback (model) {
 			{data: ["6", "7", "8", "22"], expected: ["6-8","22"]},
 		];
 		
-		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		examples.forEach (function (example) {
-			var actualValue = stageModel.joinConsecutiveNumbersIntoRanges (example.data);
+			var actualValue = CLMSUI.modelUtils.joinConsecutiveNumbersIntoRanges (example.data);
 			assert.deepEqual (actualValue, example.expected, "Expected "+example.expected+" when concatenating "+example.data);
 		})
 	});
@@ -385,9 +384,7 @@ function callback (model) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var chainProxy = stageModel.get("structureComp").structure.getChainProxy();
 		chainProxy.index = 0;
-		var actualMapping = stageModel.getCAlphaAtomSelectionForChain (chainProxy);
-	
-		console.log ("SM", stageModel);
+		var actualMapping = CLMSUI.modelUtils.getRangedCAlphaResidueSelectionForChain (chainProxy);
 		
 		assert.deepEqual (actualMapping, expectedMapping, "Expected "+expectedMapping+" NGL Selection String generated, Passed!");
 	});
@@ -468,15 +465,41 @@ function callback (model) {
 			list1.push (matrices1[chainIndex].distanceMatrix[crossLink.residueA.resindex][crossLink.residueB.resindex]);
 			list2.push (matrices2[chainIndex].distanceMatrix[crossLink.residueA.resindex][crossLink.residueB.resindex]);
 		});
+        
+        list1 = list1.map (function (v) { return v.toFixed (2); });
+        list2 = list2.map (function (v) { return v.toFixed (2); });
+		
+		assert.deepEqual (list1, list2, "Expected "+list1.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
+	});
+    
+    
+    QUnit.test ("Compare Distances from Atom Coords with All Distance Generation", function (assert) {
+		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
+		var crossLinks = stageModel.get("linkList");
+		
+		var matrices1 = stageModel.getChainDistances (true);
+		var list1 = [];
+		var list2 = [];
+        
+        var atoms = stageModel.getAllResidueCoordsForChain(0);
+
+		crossLinks.forEach (function (crossLink) {
+            var resIndexA = crossLink.residueA.resindex;
+            var resIndexB = crossLink.residueB.resindex;
+			list1.push (matrices1["0-0"].distanceMatrix[resIndexA][resIndexB]);
+            var distanceSquared = CLMSUI.modelUtils.getDistanceSquared (atoms[resIndexA], atoms[resIndexB]);
+			list2.push (Math.sqrt (distanceSquared));
+		});
+        
+        list1 = list1.map (function (v) { return v.toFixed (2); });
+        list2 = list2.map (function (v) { return v.toFixed (2); });
 		
 		assert.deepEqual (list1, list2, "Expected "+list1.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
 	});
     
     
     QUnit.test ("Octree test with negative match function", function (assert) {
-		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        
-        var octAccessorObj = {
+       var octAccessorObj = {
             id: function (d) { return d; },
             x: function (d) { return d.coords[0]; },
             y: function (d) { return d.coords[1]; },
@@ -514,7 +537,7 @@ function callback (model) {
             [pointsA[parseInt(223, 4)], pointsB[7], cdist], 
         ];
 
-		var actual = stageModel.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
+		var actual = CLMSUI.modelUtils.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
         actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
         console.log ("results", actual);
 		
