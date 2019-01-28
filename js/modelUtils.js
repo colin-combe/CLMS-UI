@@ -368,6 +368,7 @@ CLMSUI.modelUtils = {
 					// If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
 					// between ngl protein chains and clms proteins. This is asynchronous so we use a callback
 					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
+                        console.log ("WEB SERVICE CALLED");
 						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences, interactorArr, function (pdbUniProtMap) {
 							if (pdbUniProtMap.fail) {	// No data returned for this pdb codem fall back to aligning
 								matchByAlignment();
@@ -678,10 +679,14 @@ CLMSUI.modelUtils = {
         return [];
     },
 
+    // interactorMap can also now be an array
     getLegalAccessionIDs: function(interactorMap) {
         var ids = [];
         if (interactorMap) {
-            ids = CLMS.arrayFromMapValues(interactorMap)
+            if (interactorMap.length === undefined) {
+                interactorMap = CLMS.arrayFromMapValues(interactorMap);
+            }
+            ids = interactorMap
                 .filter(function(prot) {
                     return !prot.is_decoy;
                 })
@@ -690,7 +695,8 @@ CLMSUI.modelUtils = {
                 })
                 .filter(function(accession) {
                     return accession.match(CLMSUI.utils.commonRegexes.uniprotAccession);
-                });
+                })
+            ;
         }
         return ids;
     },
