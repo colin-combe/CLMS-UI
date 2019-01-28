@@ -641,6 +641,10 @@ div.toolbar[disabled], label.fakeButton[disabled] {
 	vertical-align: text-bottom;
 }
 
+button.pdbWindowButton {
+    margin-bottom: 2em;
+}
+
 DIV.messagebar {
 	font-size: 1.4em;
 	height: 3em;

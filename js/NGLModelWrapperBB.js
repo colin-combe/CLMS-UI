@@ -159,6 +159,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             var fromPerModelChains = allowInterModelDistances ? [chainValueMap.get(fromProtID)] : modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
+            // Don't continue if neither end of crosslink within pdb
             if (!_.isEmpty(fromPerModelChains) && !_.isEmpty(toPerModelChains)) {
                 
                 // get a map (key -> value) of the toPerModelChains entries 
@@ -171,6 +172,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                     
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
                     var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
+                    
+                    console.log ("XLINK CHAINS", fromPerModelChains, toPerModelChains);
+                    
                     if (toChains) { // don't proceed if inter model distances barred and no 'to' chains within current model
                         
                         var fromPDBResidues = makePDBIndexedResidues (fromPerModelChainEntry, xlink.fromResidue, fromProtID);
