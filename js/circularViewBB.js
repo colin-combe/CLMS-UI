@@ -416,20 +416,31 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                     bespokeOrder: bespokeOrder
                 });
             }
-        }
+        };
         this.nodeDrag.on("dragstart", function() {
+                d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.preventDefault();
+                console.log ("d3e", d3.event.sourceEvent);
                 var mc = d3.mouse(svg.node());
+                self.nodeDrag.startClick = mc;
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
                 self.nodeDrag.startDeg = (((dragStartTheta / degToRad) + 90) + 360) % 360;
-                d3.event.sourceEvent.stopPropagation();
                 d3.select(this).classed("draggedNode", true);
             })
             .on("drag", function(d) {
+                d3.event.sourceEvent.stopPropagation();
                 self.nodeDrag.reOrder(d);
             })
             .on("dragend", function(d) {
+                d3.event.sourceEvent.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
+                d3.event.sourceEvent.preventDefault();
                 d3.select(this).classed("draggedNode", false);
                 self.nodeDrag.reOrder(d);
+                var mc = d3.mouse(svg.node());
+                var movementSq = Math.pow (mc[0] - self.nodeDrag.startClick[0], 2) + Math.pow (mc[1] - self.nodeDrag.startClick[1], 2);
+                if (movementSq < 9) {
+                    self.selectNode.call (self, d);
+                }
             });
 
 
@@ -698,6 +709,8 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     clearSelection: function(evt) {
         evt = evt || {};
+        console.log ("evt", evt);
+        if (evt.originalEvent.defaultPrevented) return; // click suppressed
         // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
         // this is also logically consistent as it's adding 'nothing' to the existing selection
         if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
@@ -1015,6 +1028,14 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.showAccentOnTheseLinks.call(self, this, "selection");
             });
     },
+    
+    selectNode: function (d) {
+        console.log ("d3.event", d3.event);
+        var add = d3.event.ctrlKey || d3.event.shiftKey;
+        this.actionNodeLinks(d.id, "selection", add);
+        var interactor = this.model.get("clmsModel").get("participants").get(d.id);
+        this.model.setSelectedProteins([interactor], add);    
+    },
 
     drawNodes: function(g, nodes) {
         var self = this;
@@ -1040,18 +1061,17 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.model.setHighlightedProteins([]);
                 self.model.setMarkedCrossLinks("highlights", [], false, false);
             })
-            .on("click", function(d) {
-                d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
-                var add = d3.event.ctrlKey || d3.event.shiftKey;
-                self.actionNodeLinks(d.id, "selection", add);
-                var interactor = self.model.get("clmsModel").get("participants").get(d.id);
-                self.model.setSelectedProteins([interactor], add);
-            })
             .call(function(sel) {
                 if (multipleNodes) {
                     sel.call(self.nodeDrag);
                 }
-            });
+            })
+            // now integrated into node mouse drag code
+            .on("click", function(d) {
+                d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
+                self.selectNode.call (self, d);
+            })
+        ;
 
         nodeJoin
             .attr("d", this.arc);

@@ -120,7 +120,7 @@ span, label {
 
 
 #topDiv {
-    /*overflow:hidden; */
+    overflow:hidden;    /* restored so xinet shrinking / expanding context menu doesn't trigger scroll bars */
     position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
