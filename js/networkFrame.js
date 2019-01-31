@@ -30,27 +30,27 @@ var allDataLoaded = _.after(3, function() {
 
     //init annotation types
     var annotationTypes = [
-        new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Digestible",
-        tooltip: "Mark Digestible Residues",
-        source: "Search",
-            colour: "#1f78b4",
-        }),
-        new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Cross-linkable-1",
-        tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
-        source: "Search",
-            colour: "#a6cee3",
-        }),
-        new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Cross-linkable-2",
-            tooltip: "Mark Cross-Linkable residues (second reactive group if heterobifunctional cross-linker)",
-        source: "Search",
-            colour: "#a6cee3",
-        }),
+        // new CLMSUI.BackboneModelTypes.AnnotationType({
+        // category: "AA",
+        // type: "Digestible",
+        // tooltip: "Mark Digestible Residues",
+        // source: "Search",
+        //     colour: "#1f78b4",
+        // }),
+        // new CLMSUI.BackboneModelTypes.AnnotationType({
+        // category: "AA",
+        // type: "Cross-linkable-1",
+        // tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
+        // source: "Search",
+        //     colour: "#a6cee3",
+        // }),
+        // new CLMSUI.BackboneModelTypes.AnnotationType({
+        // category: "AA",
+        // type: "Cross-linkable-2",
+        //     tooltip: "Mark Cross-Linkable residues (second reactive group if heterobifunctional cross-linker)",
+        // source: "Search",
+        //     colour: "#a6cee3",
+        // }),
         new CLMSUI.BackboneModelTypes.AnnotationType({
         category: "Alignment",
         type: "PDB aligned region",
