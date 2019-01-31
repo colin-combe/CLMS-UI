@@ -1,9 +1,10 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID) {
+CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID, residueCoords) {
     this.matrices = matrices;
     this.chainMap = chainMap;
     this.pdbBaseSeqID = pdbBaseSeqID;
+    this.residueCoords = residueCoords;
     this.setAllowedChainNameSet();
 };
 
@@ -423,7 +424,7 @@ CLMSUI.DistancesObj.prototype = {
             });
             var propMap = d3.map(proportions, function(d) {
                 return d.protChainID;
-            })
+            });
 
             //var samplesPerProtein = metaData.linksPerSearch / protSet.size();
             protChainSet.values().forEach(function(protChainID) {

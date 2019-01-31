@@ -214,10 +214,14 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend({
                 endPoints[fromRes].push(xlink);
             }
             //added check for no toProtein (for linears)
-            if ( /*!xlink.isLinearLink() &&*/ xlink.isSelfLink()) { // if linear then will fail for selflink anyways
+            //if ( /*!xlink.isLinearLink() &&*/ xlink.isSelfLink()) { // if linear then will fail for selflink anyways
+            if (!xlink.isLinearLink() && proteinId === xlink.toProtein.id) { // if linear then will fail for selflink anyways
                 var toRes = xlink.toResidue;
-                endPoints[toRes] = endPoints[toRes] || [];
-                endPoints[toRes].push(xlink);
+                // In cases of homomultimers linking same residue indices, don't add twice
+                if (toRes !== xlink.fromResidue || proteinId !== xlink.fromProtein.id) {
+                    endPoints[toRes] = endPoints[toRes] || [];
+                    endPoints[toRes].push(xlink);
+                }
             }
         });
         var endPointEntries = d3.entries(endPoints);
