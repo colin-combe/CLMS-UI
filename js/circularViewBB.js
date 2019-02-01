@@ -121,7 +121,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .showLinkless": "toggleLinklessVisibility",
             "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
             "click .showSelectedOnly": "toggleSelectedOnly",
-            "click .backdrop": "clearSelection",
+            //"click .backdrop": "clearSelection",
         });
     },
 
@@ -210,7 +210,12 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 })
             );
 
-        mainDivSel.select(".backdrop").style("background-color", this.options.background); // can replace .backdrop class colouring with this option if defined
+        mainDivSel.select(".backdrop")
+            // can replace .backdrop class colouring with this option if defined
+            .style("background-color", this.options.background)
+            .on ("click", function () { self.clearSelection (d3.event.sourceEvent); })
+        ; 
+
 
         var buttonData = [{
             class: "downloadButton",
@@ -420,7 +425,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.nodeDrag.on("dragstart", function() {
                 d3.event.sourceEvent.stopPropagation();
                 d3.event.sourceEvent.preventDefault();
-                console.log ("d3e", d3.event.sourceEvent);
+                //console.log ("d3e", d3.event.sourceEvent);
                 var mc = d3.mouse(svg.node());
                 self.nodeDrag.startClick = mc;
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
@@ -709,8 +714,8 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     clearSelection: function(evt) {
         evt = evt || {};
-        console.log ("evt", evt);
-        if (evt.originalEvent.defaultPrevented) return; // click suppressed
+        //console.log ("evt", evt);
+        if (evt.defaultPrevented) return; // click suppressed
         // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
         // this is also logically consistent as it's adding 'nothing' to the existing selection
         if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
@@ -869,7 +874,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
             if (filteredInteractors.length !== this.interactorOrder.length) { // interactors is map so size, interactorOrder is array so length
-                console.log("REORDERING OK", filteredInteractors.length, this.interactorOrder.length)
+                //console.log("REORDERING OK", filteredInteractors.length, this.interactorOrder.length)
                 this.reOrder();
             }
 
@@ -1030,7 +1035,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
     
     selectNode: function (d) {
-        console.log ("d3.event", d3.event);
+        //console.log ("d3.event", d3.event);
         var add = d3.event.ctrlKey || d3.event.shiftKey;
         this.actionNodeLinks(d.id, "selection", add);
         var interactor = this.model.get("clmsModel").get("participants").get(d.id);
