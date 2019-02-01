@@ -208,12 +208,17 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 template({
                     svgClass: "circularView",
                 })
-            );
+            )
+        ;
 
+        
         mainDivSel.select(".backdrop")
             // can replace .backdrop class colouring with this option if defined
             .style("background-color", this.options.background)
-            .on ("click", function () { self.clearSelection (d3.event.sourceEvent); })
+            .on ("click", function () { 
+                if (!self.nodeDrag.visited) { self.clearSelection (d3.event.sourceEvent); } 
+                self.nodeDrag.visited = false;
+            })
         ; 
 
 
@@ -366,6 +371,9 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Lets user rotate diagram
         var backgroundDrag = d3.behavior.drag();
         backgroundDrag.on("dragstart", function() {
+                d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.stopImmediatePropagation();
+                d3.event.sourceEvent.preventDefault();
                 var curTheta = d3.transform(svg.select("g g").attr("transform")).rotate * degToRad;
                 var mc = d3.mouse(this);
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
@@ -376,10 +384,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var theta = Math.atan2(dmc[1] - self.radius, dmc[0] - self.radius);
                 theta += backgroundDrag.offTheta;
                 svg.select("g g").attr("transform", "rotate(" + (theta / degToRad) + ")");
-            });
+            })
+        ;
 
-        var svg = mainDivSel.select("svg")
-            .call(backgroundDrag);
+        var svg = mainDivSel.select("svg");//.call(backgroundDrag);
 
         this.nodeDrag = d3.behavior.drag();
         this.nodeDrag.reOrder = function(d) {
@@ -425,15 +433,16 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.nodeDrag.on("dragstart", function() {
                 d3.event.sourceEvent.stopPropagation();
                 d3.event.sourceEvent.preventDefault();
-                //console.log ("d3e", d3.event.sourceEvent);
                 var mc = d3.mouse(svg.node());
                 self.nodeDrag.startClick = mc;
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
                 self.nodeDrag.startDeg = (((dragStartTheta / degToRad) + 90) + 360) % 360;
                 d3.select(this).classed("draggedNode", true);
+                self.nodeDrag.visited = true;
             })
             .on("drag", function(d) {
                 d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.preventDefault();
                 self.nodeDrag.reOrder(d);
             })
             .on("dragend", function(d) {
@@ -446,6 +455,9 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 if (movementSq < 9) {
                     self.selectNode.call (self, d);
                 }
+                d3.event.sourceEvent.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
+                d3.event.sourceEvent.stopImmediatePropagation();
+                d3.event.sourceEvent.preventDefault();
             });
 
 
@@ -1035,7 +1047,6 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
     
     selectNode: function (d) {
-        //console.log ("d3.event", d3.event);
         var add = d3.event.ctrlKey || d3.event.shiftKey;
         this.actionNodeLinks(d.id, "selection", add);
         var interactor = this.model.get("clmsModel").get("participants").get(d.id);
@@ -1071,15 +1082,9 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                     sel.call(self.nodeDrag);
                 }
             })
-            // now integrated into node mouse drag code
-            .on("click", function(d) {
-                d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
-                self.selectNode.call (self, d);
-            })
         ;
 
-        nodeJoin
-            .attr("d", this.arc);
+        nodeJoin.attr("d", this.arc);
 
         this.showAccentOnTheseNodes(nodeJoin, "selection");
 
