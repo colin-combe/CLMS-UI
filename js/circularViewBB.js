@@ -121,7 +121,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .showLinkless": "toggleLinklessVisibility",
             "click .toggleHomomOpposition": "toggleHomomOppositeIntra",
             "click .showSelectedOnly": "toggleSelectedOnly",
-            //"click .backdrop": "clearSelection",
+            "click .backdrop": "clearSelection",
         });
     },
 
@@ -210,15 +210,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 })
             )
         ;
-
         
         mainDivSel.select(".backdrop")
             // can replace .backdrop class colouring with this option if defined
             .style("background-color", this.options.background)
-            .on ("click", function () { 
-                if (!self.nodeDrag.visited) { self.clearSelection (d3.event.sourceEvent); } 
-                self.nodeDrag.visited = false;
-            })
         ; 
 
 
@@ -722,18 +717,22 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
         this.model.setMarkedCrossLinks(actionType, matchLinks, actionType === "highlights", add);
         //this.model.set (actionType, matchLinks);
+        return this;
     },
 
     clearSelection: function(evt) {
         evt = evt || {};
         //console.log ("evt", evt);
-        if (evt.defaultPrevented) return; // click suppressed
-        // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
-        // this is also logically consistent as it's adding 'nothing' to the existing selection
-        if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
-            this.model.setMarkedCrossLinks ("selection", [], false, false);
-            this.model.setSelectedProteins ([], false);
+        if (!this.nodeDrag.visited) {
+            // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
+            // this is also logically consistent as it's adding 'nothing' to the existing selection
+            if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
+                this.model.setMarkedCrossLinks ("selection", [], false, false);
+                this.model.setSelectedProteins ([], false);
+            }
         }
+        this.nodeDrag.visited = false;
+        return this;
     },
 
     convertLinks: function(links, rad1, rad2) {
@@ -841,6 +840,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.render({
             changed: d3.set(renderPartArr)
         });
+        return this;
     },
 
     render: function (renderOptions) {
@@ -951,23 +951,20 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             var gRot = gTrans.select("g");
             //gRot.attr("transform", "rotate(0)");
 
-            // draw links
             if (!changed || changed.has("links")) {
-                this.drawLinks(gRot, linkCoords);
+                this.drawLinks(gRot, linkCoords);   // draw links
             }
             if (!changed || changed.has("nodes")) {
-                // draw nodes (around edge)
-                this.drawNodes(gRot, nodes);
-                // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
-                this.drawNodeTicks(gRot, nodes, tickRadius);
+                this
+                    .drawNodes(gRot, nodes) // draw nodes (around edge)
+                    .drawNodeTicks(gRot, nodes, tickRadius) // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
+                ;
             }
             if (!changed || changed.has("features")) {
-                // draw features
-                this.drawFeatures(gRot, features);
+                this.drawFeatures(gRot, features);  // draw features
             }
             if (!changed || changed.has("nodes")) {
-                // draw names on nodes
-                this.drawNodeText(gRot, nodes);
+                this.drawNodeText(gRot, nodes); // draw names on nodes
             }
             if (!changed || changed.has("links") || changed.has("linkLabels")) {
                 this.drawResidueLetters(gRot, linkCoords);
@@ -986,7 +983,6 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     drawLinks: function(g, links) {
-
         var self = this;
         var crossLinks = this.model.get("clmsModel").get("crossLinks");
         //CLMSUI.utils.xilog ("clinks", crossLinks);
@@ -1043,14 +1039,18 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .call(function() {
                 self.showAccentOnTheseLinks.call(self, this, "selection");
-            });
+            })
+        ;
+        
+        return this;
     },
     
     selectNode: function (d) {
         var add = d3.event.ctrlKey || d3.event.shiftKey;
         this.actionNodeLinks(d.id, "selection", add);
         var interactor = this.model.get("clmsModel").get("participants").get(d.id);
-        this.model.setSelectedProteins([interactor], add);    
+        this.model.setSelectedProteins([interactor], add);
+        return this;
     },
 
     drawNodes: function(g, nodes) {

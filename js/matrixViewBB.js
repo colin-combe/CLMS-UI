@@ -929,7 +929,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .style("display", null) // default value
                     .attr("width", this.canvas.attr("width"))
                     .attr("height", this.canvas.attr("height"))
-                    .attr("href", canvasNode.toDataURL("image/png"));
+                    .attr("xlink:href", canvasNode.toDataURL("image/png"));
             }
         }
         return this;
