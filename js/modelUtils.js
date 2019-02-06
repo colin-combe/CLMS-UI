@@ -20,7 +20,8 @@ CLMSUI.modelUtils = {
         });
         if (integerise) {
             extent = extent.map(function(val, i) {
-                return Math[i === 0 ? "ceil" : "floor"](val + (i === 0 ? -1 : 1));
+                return Math[i === 0 ? "floor" : "ceil"](val);
+                //return Math[i === 0 ? "ceil" : "floor"](val + (i === 0 ? -1 : 1));
             });
         }
         return extent;
@@ -367,6 +368,7 @@ CLMSUI.modelUtils = {
 					// If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
 					// between ngl protein chains and clms proteins. This is asynchronous so we use a callback
 					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
+                        console.log ("WEB SERVICE CALLED");
 						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences, interactorArr, function (pdbUniProtMap) {
 							if (pdbUniProtMap.fail) {	// No data returned for this pdb codem fall back to aligning
 								matchByAlignment();
@@ -457,7 +459,7 @@ CLMSUI.modelUtils = {
     matchPDBChainsToUniprot: function(pdbCode, nglSequences, interactorArr, callback) {
 
         function handleError(data, status) {
-            console.log("error", data, status)
+            console.log("error", data, status);
             var emptySequenceMap = [];
             emptySequenceMap.fail = true;
             callback(emptySequenceMap);
@@ -677,10 +679,14 @@ CLMSUI.modelUtils = {
         return [];
     },
 
+    // interactorMap can also now be an array
     getLegalAccessionIDs: function(interactorMap) {
         var ids = [];
         if (interactorMap) {
-            ids = CLMS.arrayFromMapValues(interactorMap)
+            if (interactorMap.length === undefined) {
+                interactorMap = CLMS.arrayFromMapValues(interactorMap);
+            }
+            ids = interactorMap
                 .filter(function(prot) {
                     return !prot.is_decoy;
                 })
@@ -689,7 +695,8 @@ CLMSUI.modelUtils = {
                 })
                 .filter(function(accession) {
                     return accession.match(CLMSUI.utils.commonRegexes.uniprotAccession);
-                });
+                })
+            ;
         }
         return ids;
     },
@@ -742,6 +749,33 @@ CLMSUI.modelUtils = {
             return entry.index === chainIndex;
         });
         return matchChains[0] ? matchChains[0].name : undefined;
+    },
+    
+    makeSubIndexedChainMap: function(chainMap, subIndexingProperty) {
+        var subIndexedChainMap = {};
+        d3.entries(chainMap).forEach(function(proteinEntry) {
+            subIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) {
+                return d[subIndexingProperty];
+            }).entries(proteinEntry.value);
+        });
+        return subIndexedChainMap;
+    },
+    
+    getRangedCAlphaResidueSelectionForChain: function(chainProxy) { // chainProxy is NGL Object
+        var min, max;
+        chainProxy.eachResidue(function(rp) {
+            var rno = rp.resno;
+            if (!min || rno < min) {
+                min = rno;
+            }
+            if (!max || rno > max) {
+                max = rno;
+            }
+        });
+
+        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
+        var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
+        return sel;
     },
 
     crosslinkerSpecificityPerLinker: function(searchArray) {
@@ -875,7 +909,7 @@ CLMSUI.modelUtils = {
                     if (val !== undefined) {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
-                })
+                });
             });
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
@@ -894,6 +928,18 @@ CLMSUI.modelUtils = {
                 source: "file"
             });
         }
+    },
+    
+    clearCrossLinkMetaData: function (crossLinkArr, metaFields) {
+        crossLinkArr.forEach (function (crossLink) {
+            if (crossLink.getMeta()) {
+                metaFields.forEach (function (metaField) {
+                    if (crossLink.getMeta(metaField) !== undefined) {
+                        crossLink.setMeta(metaField, undefined);
+                    }
+                });
+            }
+        });
     },
 
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {
@@ -959,6 +1005,89 @@ CLMSUI.modelUtils = {
             });
         }
     },
+    
+    clearProteinMetaData: function (proteinArr, metaFields) {
+        proteinArr.forEach (function (protein) {
+            if (protein.meta) {
+                metaFields.forEach (function (metaField) {
+                    if (protein.meta[metaField] !== undefined) {
+                        protein.meta[metaField] = undefined;
+                    }
+                });
+            }
+        });
+    },
+    
+    
+    updateUserAnnotationsMetadata: function(userAnnotationsFileContents, clmsModel) {
+        var proteins = clmsModel.get("participants");
+        var first = true;
+        var columns = [];
+
+        var protMap = d3.map();
+        proteins.forEach(function(value, key) {
+            protMap.set(value.accession, key);
+            protMap.set(value.name, key);
+            protMap.set(value.id, key);
+        });
+        var newAnnotations = [];
+        var annotationMap = d3.map();
+        var proteinSet = d3.set();
+
+        d3.csv.parse(userAnnotationsFileContents, function(d) {
+            if (first) {
+                var keys = d3.keys(d).map(function(key) {
+                    return key.toLocaleLowerCase();
+                });
+                first = false;
+                columns = keys;
+            }
+            
+            var dl = {};
+            d3.keys(d).forEach(function(key) {
+                dl[key.toLocaleLowerCase()] = d[key];
+            });
+
+            var proteinIDValue = dl.proteinid;
+            var proteinID = protMap.get(proteinIDValue);
+            if (proteinID !== undefined) {
+                var protein = proteins.get(proteinID);
+
+                if (protein) {
+                    protein.userAnnotations = protein.userAnnotations || [];
+                    var newAnno = {
+                        type: dl.annotname,
+                        description: dl.description,
+                        category: "User Defined",
+                        begin: dl.startres,
+                        end: dl.endres,
+                        colour: dl.color || dl.colour
+                    };
+                    newAnnotations.push (newAnno);
+                    protein.userAnnotations.push (newAnno);
+                    if (!annotationMap.has (dl.annotname)) {
+                        annotationMap.set (dl.annotname, {
+                            category: "User Defined",
+                            type: dl.annotname,
+                            source: "Search",    // these will be matched to the search sequence,
+                            colour: dl.color || dl.colour,  // default colour for this type - undefined if not declared
+                        });
+                    }
+                    proteinSet.add (proteinID);
+                }
+            }
+        });
+
+        CLMSUI.vent.trigger("userAnnotationsUpdated", {
+            types:  annotationMap.values(),
+            columns: annotationMap.values(),
+            items: newAnnotations,
+            matchedItemCount: newAnnotations.length
+        }, {
+            source: "file"
+        });
+    },
+    
 
     // Column clustering functions
 
@@ -1169,7 +1298,7 @@ CLMSUI.modelUtils = {
         };
     },
 
-    metaClustering: function(crossLinks, myOptions) {
+    metaClustering: function (filteredCrossLinks, allCrossLinks, myOptions) {
         var defaults = {
             distance: "euclidean",
             linkage: "average",
@@ -1184,13 +1313,15 @@ CLMSUI.modelUtils = {
         var options = $.extend({}, defaults, myOptions);
 
         // Get Z-Scores - Zscoring existing ZScores won't chnage anything, bit inefficient but ok
-        var zResults = CLMSUI.modelUtils.makeZScores(crossLinks, options);
+        var zResults = CLMSUI.modelUtils.makeZScores(filteredCrossLinks, options);
         var zScoresByLink = zResults.zScoresByLink;
         // Calculate K-means and dimension tree on non-grouped dimensions
         var kmeans = clusterfck.kmeans(zScoresByLink, undefined, options.distance);
         var zdistances = clusterfck.hcluster(zScoresByLink, options.distance, options.linkage);
         var treeOrder = this.flattenBinaryTree(zdistances.tree);
 
+        CLMSUI.modelUtils.clearCrossLinkMetaData (allCrossLinks, ["kmcluster", "treeOrder"]);
+        
         kmeans.forEach(function(cluster, i) {
             cluster.forEach(function(arr) {
                 arr.clink.setMeta("kmcluster", i + 1);
@@ -1208,7 +1339,7 @@ CLMSUI.modelUtils = {
             columnTypes: _.object(newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() {
                 return "numeric";
             })),
-            items: crossLinks,
+            items: filteredCrossLinks,
             matchedItemCount: zScoresByLink.length
         });
 
@@ -1224,9 +1355,8 @@ CLMSUI.modelUtils = {
             var clink = zlinkScore.clink;
             columnNameIndexPairs.forEach(function(columnNameIndexPair) {
                 clink.setMeta(columnNameIndexPair.name, zlinkScore[columnNameIndexPair.index]);
-            })
+            });
         });
-
     },
 
     normalize2DArrayToColumn: function(orig2DArr, normalColIndex) {
@@ -1258,27 +1388,25 @@ CLMSUI.modelUtils = {
     crosslinkCountPerProteinPairing: function(crossLinkArr) {
         var obj = {};
         crossLinkArr.forEach(function(crossLink) {
-
-            // only show non-decoys, non-linears as we're only interested in real links with two ends
-            if (!crossLink.isLinearLink() && !crossLink.isDecoyLink()) {
-                var fromProtein = crossLink.fromProtein;
-                var toProtein = crossLink.toProtein;
-                var key = fromProtein.id + "-" + toProtein.id;
-                if (!obj[key]) {
-                    obj[key] = {
-                        crossLinks: [],
-                        fromProtein: fromProtein,
-                        toProtein: toProtein,
-                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
-                    };
-                }
-                obj[key].crossLinks.push(crossLink);
+            var fromProtein = crossLink.fromProtein;
+            var toProtein = crossLink.toProtein;
+            var key = fromProtein.id + "-" + toProtein.id;
+            if (!obj[key]) {
+                obj[key] = {
+                    crossLinks: [],
+                    fromProtein: fromProtein,
+                    toProtein: toProtein,
+                    label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                };
             }
+            obj[key].crossLinks.push(crossLink);
         });
         return obj;
     },
 
+    // merges array of ranges
     // features should be pre-filtered to an individual protein and to an individual type
+    // this can be reused for any array containing elements with properties 'begin' and 'end'
     mergeContiguousFeatures: function(features) {
         features.sort(function(f1, f2) {
             return +f1.begin - +f2.begin;
@@ -1319,6 +1447,76 @@ CLMSUI.modelUtils = {
         //console.log ("mergedFeatures", features, merged);
         return merged;
     },
+    
+    
+    // merges array of single numbers
+    // assumes vals are already sorted numerically (though each val is a string)
+    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
+        joinString = joinString || "-";
+
+        if (vals && vals.length > 1) {
+            var newVals = [];
+            var last = +vals[0],
+                start = +vals[0],
+                run = 1; // initialise variables to first value
+
+            for (var n = 1; n < vals.length + 1; n++) { // note + 1
+                // add extra loop iteration using MAX_SAFE_INTEGER as last value.
+                // loop will thus detect non-consecutive numbers on last iteration and output the last proper value in some form.
+                var v = (n < vals.length ? +vals[n] : Number.MAX_SAFE_INTEGER);
+                if (v - last === 1) { // if consecutive to last number just increase the run length
+                    run++;
+                } else { // but if not consecutive to last number...
+                    // add the previous numbers either as a sequence (if run > 1) or as a single value (last value was not part of a sequence itself)
+                    newVals.push(run > 1 ? start + joinString + last : last.toString());
+                    run = 1; // then reset the run and start variables to begin at current value
+                    start = v;
+                }
+                last = v; // make last value the current value for next iteration of loop
+            }
+
+            //CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
+            vals = newVals;
+        }
+        return vals;
+    },
+    
+    getDistanceSquared: function (coords1, coords2) {
+        var d2 = 0;
+        for (var n = 0; n < coords1.length; n++) {
+            var diff = coords1[n] - coords2[n];
+            d2 += diff * diff;
+        }
+        return d2;
+    },
+    
+    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, ignoreFunc) {
+        
+        accessorObj = accessorObj || {};
+        var points1Bigger = points1.length > points2.length;
+        
+        var bigPointArr = points1Bigger ? points1 : points2;
+        var smallPointArr = points1Bigger ? points2 : points1;
+        var octree = d3.octree ();
+        octree
+            .x(accessorObj.x || octree.x())
+            .y(accessorObj.y || octree.y())
+            .z(accessorObj.z || octree.z())
+            .addAll (bigPointArr)
+        ;
+        
+        maxDistance = maxDistance || 200;
+        
+        var nearest = smallPointArr.map (function (point) {
+            return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
+        });
+        var dist = smallPointArr.map (function (point, i) {
+            return CLMSUI.modelUtils.getDistanceSquared (point.coords, nearest[i].coords);
+        });
+        
+        return d3.zip (points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
+    },
+    
 
     radixSort: function(categoryCount, data, bucketFunction) {
         var radixSortBuckets = Array.apply(null, Array(categoryCount)).map(function() {
@@ -1384,23 +1582,7 @@ CLMSUI.modelUtils = {
     totalProteinLength: function(interactors) {
         return d3.sum(interactors, function(d) {
             return d.size;
-        })
-    },
-
-    nearestPoint: function(points, accessor, sorted) {
-        accessor = accessor || function(d) {
-            return d;
-        };
-        if (!sorted) {
-            points.sort(function(a, b) {
-                return accessor(a)[0] - accessor(b)[0];
-            });
-        }
-        sorted = true;
-
-
-
-
+        });
     },
 };
 

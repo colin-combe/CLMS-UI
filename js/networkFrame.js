@@ -29,43 +29,36 @@ var allDataLoaded = _.after(3, function() {
     CLMSUI.blosumCollInst.trigger ("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
 
     //init annotation types
-    var annotationTypes = [];
-
-    //add option for showing digestible residues
-    var digestibleAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Digestible",
-        tooltip: "Mark Digestible Residues",
-        source: "Search",
-    });
-    annotationTypes.push(digestibleAnnotationType);
-
-    //add option for showing crosslinkable residues
-    var crosslinkable1AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Cross-linkable-1",
-        tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
-        source: "Search",
-    });
-    annotationTypes.push(crosslinkable1AnnotationType);
-
-    //add option for showing crosslinkable residues
-    var crosslinkable2AnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "AA",
-        type: "Cross-linkable-2",
-        tooltip: "Mark Cross-Linkable residues (second reative group if heterobifunctional cross-linker)",
-        source: "Search",
-    });
-    annotationTypes.push(crosslinkable2AnnotationType);
-
-    //add option for showing PDB aligned regions
-    var alignedAnnotationType = new CLMSUI.BackboneModelTypes.AnnotationType({
-        category: "Alignment",
-        type: "PDB aligned region",
-        tooltip: "Show regions that align to currently loaded PDB Data",
-        source: "PDB",
-    });
-    annotationTypes.push(alignedAnnotationType);
+    var annotationTypes = [
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "AA",
+            type: "Digestible",
+            tooltip: "Mark Digestible Residues",
+            source: "Search",
+            colour: "#1f78b4",
+        }),
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "AA",
+            type: "Cross-linkable-1",
+            tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
+            source: "Search",
+            colour: "#a6cee3",
+        }),
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "AA",
+            type: "Cross-linkable-2",
+            tooltip: "Mark Cross-Linkable residues (second reactive group if heterobifunctional cross-linker)",
+            source: "Search",
+            colour: "#a6cee3",
+        }),
+        new CLMSUI.BackboneModelTypes.AnnotationType({
+            category: "Alignment",
+            type: "PDB aligned region",
+            tooltip: "Show regions that align to currently loaded PDB Data",
+            source: "PDB",
+            colour: "#b2df8a",
+        })
+    ];
 
     //get uniprot feature types
     var uniprotFeatureTypes = new Map();
@@ -81,7 +74,10 @@ var allDataLoaded = _.after(3, function() {
                 var key = feature.category + "-" + feature.type;
                 if (uniprotFeatureTypes.has(key) === false) {
                     var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
-                    annotationType.set("source", "Uniprot");
+                    annotationType
+                        .set("source", "Uniprot")
+                        .set("typeAlignmentID", "Canonical")
+                    ;
                     uniprotFeatureTypes.set(key, annotationType);
                 }
             }
@@ -274,12 +270,13 @@ CLMSUI.init.modelsEssential = function(options) {
 CLMSUI.init.views = function() {
 
     var compModel = CLMSUI.compositeModelInst;
+    var matchesFound = !_.isEmpty(compModel.get("clmsModel").get("matches"));
     console.log("MODEL", compModel);
 
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -384,7 +381,7 @@ CLMSUI.init.views = function() {
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
         .enableItemsByID (maybeViews, false)
-        .enableItemsByID (mostViews, !_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .enableItemsByID (mostViews, matchesFound)
         .listenTo (compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
             this.enableItemsByID (maybeViews, !!newDistancesObj);
         })
@@ -434,7 +431,7 @@ CLMSUI.init.views = function() {
                 tooltipModel: compModel.get("tooltipModel")
             }
         })
-        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .wholeMenuEnabled (matchesFound)
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.wholeMenuEnabled (true);
         })
@@ -461,6 +458,11 @@ CLMSUI.init.views = function() {
             eventName: "proteinMetaShow",
             tooltip: "Load Protein Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
+        {
+            name: "User Annotations",
+            eventName: "userAnnotationsMetaShow",
+            tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
+        },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
@@ -476,10 +478,11 @@ CLMSUI.init.views = function() {
                 tooltipModel: compModel.get("tooltipModel"),
             }
         })// hide/disable view choices that depend on certain data being present until that data arrives
-        .enableItemsByIndex ([0, 2, 3], !_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .enableItemsByIndex ([0, 2, 3], matchesFound)
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.enableItemsByIndex ([0, 2, 3], true);
         })
+        .setVis (!matchesFound) // open as default if empty search
     ;
 
     new CLMSUI.URLSearchBoxViewBB({
@@ -577,7 +580,8 @@ CLMSUI.init.viewsEssential = function(options) {
                 domainEnd: newCutoff[1]
             });
             //console.log ("cutoff changed");
-        });
+        })
+    ;
 
 
     // World of code smells vol.1
@@ -851,8 +855,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
-    compModel.set(
-        "linkColourAssignment",
+    compModel.set("linkColourAssignment",
         compModel.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
     );
 
@@ -938,6 +941,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#proteinMetaLoadPanel",
         model: compModel,
         displayEventName: "proteinMetaShow",
+    });
+    
+    new CLMSUI.UserAnnotationsMetaDataFileChooserBB({
+        el: "#userAnnotationsMetaLoadPanel",
+        model: compModel,
+        displayEventName: "userAnnotationsMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({

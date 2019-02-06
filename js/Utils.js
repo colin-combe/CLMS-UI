@@ -275,7 +275,7 @@ CLMSUI.utils = {
     toNearest: function (val, interval) {
         // adapted from https://stackoverflow.com/a/27861660/368214 - inverting small intervals avoids .00000001 stuff
         return interval ? 
-            (Math.abs(interval) > 0 ? Math.round (val * interval) / interval : Math.round (val / interval) * interval)
+            (Math.abs(interval) > 1 ? Math.round (val * interval) / interval : Math.round (val / interval) * interval)
              : val
         ;    
     },
@@ -299,50 +299,70 @@ CLMSUI.utils = {
                 .style("display", "block")
                 .style("border-color", borderColour || null)
                 .style("transform", "scale(" + (scale || "1") + ")")
+                .style("margin", "3em 9em")
                 .select("div")
-                .html(message);
+                    .html(message)
+            ;
             box
                 .transition()
                 .duration(500)
-                .style("opacity", 1);
+                .style("opacity", 1)
+            ;
         }
     },
+    
+    makeCanvas: function (width, height, existingD3CanvasSel) {
+        var canvas = (existingD3CanvasSel ? existingD3CanvasSel.node() : null) || document.createElement("canvas");
+        var d3canvas = d3.select(canvas);
+        d3canvas
+            .attr("width", width)
+            .attr("height", height)
+        ;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        var canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var cd = canvasData.data;
+        return {canvas: canvas, context: ctx, dataStructure: canvasData, d3canvas: d3canvas};
+    },
 
-    convertCanvasToImage: function(d3canvas, image, callback) { // d3canvas is a canvas wrapped in a d3 selection
-        image
+    drawCanvasToSVGImage: function(d3canvas, svgImage, callback) { // d3canvas is a canvas wrapped in a d3 selection
+        var destinationCanvas;
+        svgImage.on ("load", function () {
+            //destinationCanvas.dispose();
+            callback (svgImage);
+        });
+        svgImage
             .attr("width", d3canvas.attr("width"))
             .attr("height", d3canvas.attr("height"))
             .attr("transform", d3canvas.style("transform"))
             .attr("xlink:href", function() {
                 // from https://stackoverflow.com/a/19539048/368214
                 // use dummy canvas and fill with background colour so exported png is not transparent
-                var destinationCanvas = document.createElement("canvas");
-                destinationCanvas.width = d3canvas.attr("width");
-                destinationCanvas.height = d3canvas.attr("height");
-
-                var destCtx = destinationCanvas.getContext('2d');
+                var destinationCanvasObj = CLMSUI.utils.makeCanvas (d3canvas.attr("width"), d3canvas.attr("height"));
+                destinationCanvas = destinationCanvasObj.canvas;
 
                 //create a rectangle with the desired color
                 var background = d3canvas.style("background-color");
+                /*
                 console.log("background", background, d3canvas);
                 // convert if background style string in rgb() format
                 if (background && background[0] !== '#') {
                     var rgb = d3.rgb(background);
                     background = rgb.toString();
                 }
-                //console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
-                destCtx.fillStyle = background;
-                destCtx.fillRect(0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
+                */
+                console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
+                destinationCanvasObj.context.fillStyle = background;
+                destinationCanvasObj.context.fillRect(0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
 
                 //draw the original canvas onto the destination canvas
-                destCtx.drawImage(d3canvas.node(), 0, 0);
+                destinationCanvasObj.context.drawImage(d3canvas.node(), 0, 0);
 
                 var url = destinationCanvas.toDataURL("image/png");
-                //var url = d3canvas.node().toDataURL ("image/png");
-                //destinationCanvas.dispose();
                 return url;
-            });
-        callback(image);
+            })
+        ;
     },
 
     declutterAxis: function(d3AxisElem) {
@@ -763,24 +783,13 @@ CLMSUI.utils = {
         var defaults = {
             selectList: [],
             optionList: [],
-            selectLabelFunc: function(d) {
-                return d;
-            },
-            optionLabelFunc: function(d) {
-                return d;
-            },
-            optionValueFunc: function(d) {
-                return d;
-            },
-            selectLabelTooltip: function(d) {
-                return undefined;
-            },
-            initialSelectionFunc: function(d, i) {
-                return i === 0;
-            },
-            idFunc: function(d, i) {
-                return i;
-            },
+            selectLabelFunc: function(d) { return d; },
+            optionLabelFunc: function(d) { return d; },
+            optionValueFunc: function(d) { return d; },
+            optionSortFunc: undefined,
+            selectLabelTooltip: function(d) { return undefined; },
+            initialSelectionFunc: function(d, i) { return i === 0; },
+            idFunc: function(d, i) { return i; },
         };
         settings = _.extend(defaults, settings);
 
@@ -829,7 +838,11 @@ CLMSUI.utils = {
         ;
         options
             .text(settings.optionLabelFunc)
-            .property("value", settings.optionValueFunc);
+            .property("value", settings.optionValueFunc)
+        ;
+        if (settings.optionSortFunc) {
+            options.sort (settings.optionSortFunc);
+        }
 
         return selects;
     },
@@ -846,7 +859,8 @@ CLMSUI.utils = {
             title: "A Dendrogram",
             height: cfckDistances.size * 5,
             width: 100,
-        }
+        };
+        
         options = $.extend({}, defaultOptions, options);
 
         function recurse(tree, parent) {
@@ -1019,22 +1033,30 @@ CLMSUI.utils = {
             var detachedSVGD3 = d3.select(detachedSVG);
             var self = this;
 
-            // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
-            var img = detachedSVGD3
-                .select(self.canvasImageParent) // where to add image
-                .insert("svg:image", ":first-child");
-
-            // Add a rule to stop the image being anti-aliased (i.e. blurred)
-            img.attr("class", "sharpImage");
-            var extraRule = "image.sharpImage {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
-            var style = detachedSVGD3.select("style");
-            style.text(style.text() + "\n" + extraRule);
-
+            var d3canvases = d3.select(this.el).selectAll("canvas.toSvgImage");
             var fileName = this.filenameStateString() + ".svg";
-            // Now convert the canvas and its data to the image element we just added and download the whole svg when done
-            CLMSUI.utils.convertCanvasToImage(this.canvas, img, function() {
+            // _.after means finalDownload only gets called after all canvases finished converting to svg images
+            var finalDownload = _.after (d3canvases.size(), function() {
                 var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), detachedSVG);
                 download(svgXML, "application/svg", fileName);
+            });
+            
+            d3canvases.each (function (d) {
+                var d3canvas = d3.select(this);
+                // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
+                var img = detachedSVGD3
+                    .select(self.canvasImageParent) // where to add image
+                    .insert("svg:image", ":first-child")
+                ;
+
+                // Add a rule to stop the image being anti-aliased (i.e. blurred)
+                img.attr("class", "sharpImage");
+                var extraRule = "image.sharpImage {image-rendering: optimizeSpeed; image-rendering: -moz-crisp-edges; -ms-interpolation-mode: nearest-neighbor; image-rendering: pixelated; }";
+                var style = detachedSVGD3.select("style");
+                style.text(style.text() + "\n" + extraRule);
+
+                // Now convert the canvas and its data to the image element we just added and download the whole svg when done
+                CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, finalDownload);
             });
         },
 
@@ -1057,12 +1079,13 @@ CLMSUI.utils = {
 
             var fo = detachedSVGD3.append(function() {
                     //aaargh, a whole day to find out foreignObject gets lower-cased and then doesn't work in regular append
-                    return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")
+                    return document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
                 })
                 .attr("width", "100%").attr("height", "100%")
                 .append("div")
                 .attr("xmlns", "http://www.w3.org/1999/xhtml")
-                .html(origElem.node().outerHTML);;
+                .html(origElem.node().outerHTML)
+            ;
             origElem.remove();
             //$(fo.node()).append($(table.node()));
             if (options.removeChildren) {
@@ -1075,7 +1098,8 @@ CLMSUI.utils = {
                 .attr("id", "tempCanvas")
                 .style("display", "none")
                 .attr("width", $(detachedSVGD3.node()).width())
-                .attr("height", $(detachedSVGD3.node()).height());
+                .attr("height", $(detachedSVGD3.node()).height())
+            ;
             var ctx = canvas.getContext("2d");
 
             var svg = new Blob([data], {
@@ -1089,7 +1113,7 @@ CLMSUI.utils = {
             img.setAttribute("crossOrigin", "anonymous");
             img.onerror = function() {
                 callbackFunc(undefined);
-            }
+            };
             img.onload = function() {
                 ctx.drawImage(img, 0, 0);
                 //console.log ("img", img, url);
@@ -1106,7 +1130,7 @@ CLMSUI.utils = {
 
                 callbackFunc(dataURL, size);
                 //console.log ("dd", dataURL);
-            }
+            };
 
             // Get around https://bugs.chromium.org/p/chromium/issues/detail?id=294129
             img.src = "data:image/svg+xml;charset=utf-8," + data;
@@ -1197,7 +1221,7 @@ CLMSUI.utils = {
             var commaed = d3.format(",");
             var total = d3.sum(counts);
             var linkCountStr = counts.map(function(count, i) {
-                return commaed(count) + " " + (labels[i] ? labels[i] : "Unknown");
+                return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] ? labels[i] : "Unknown");
             }, this);
 
             var titleText = this.identifier + ": " + commaed(total) + (matchLevel ? " Matches - " : " Cross-Links - ") + linkCountStr.join(", ");
@@ -1326,13 +1350,15 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
         })
         .style("display", function(d, i) {
             return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
-        });
+        })
+    ;
     newTables.selectAll("thead th").data(function(d) {
             return d.columnHeaders || columnHeaders
         })
         .text(function(d) {
             return d;
-        });
+        })
+    ;
 
     var tables = dataJoin.selectAll("table");
 
@@ -1376,7 +1402,8 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
             return arrayExpandFunc(d, rowFilterFunc(d));
         }, function(d) {
             return d.key;
-        });
+        })
+    ;
     rowJoin.exit().remove();
     var newRows = rowJoin.enter().append("tr");
 
@@ -1389,19 +1416,19 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
                 key: d.key,
                 value: d.value
             }];
-        });
+        })
+    ;
     cells
         .enter()
         .append("td")
         .classed("fixedSizeFont", function(d, i) {
             return self.options.fixedFontKeys && self.options.fixedFontKeys.has(d.key) && i;
-        });
+        })
+    ;
     rowJoin.selectAll("td").each(cellFunc); // existing rows in existing tables may have seen data change
 
     dataJoin.selectAll("h2").each(setArrow);
 };
-
-
 
 
 CLMSUI.utils.c3mods = function() {

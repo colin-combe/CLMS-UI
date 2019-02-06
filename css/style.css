@@ -120,7 +120,7 @@ span, label {
 
 
 #topDiv {
-    /*overflow:hidden; */
+    overflow:hidden;    /* restored so xinet shrinking / expanding context menu doesn't trigger scroll bars */
     position: relative; /* necessary so colour slider it contains can trigger overflow and resize events */
 }
 
@@ -284,10 +284,17 @@ span, label {
     user-select: none;
 }
 
-#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #pdbPanel, #csvPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel, #searchSummaryPanel, #urlSearchBox, #xiNetHelpPanel, #listPanel {
+#keyPanel, #spectrumPanelWrapper, #spectrumSettingsWrapper, #nglPanel, #distoPanel, #alignPanel, #proteinInfoPanel, #circularPanel, #clmsErrorBox, #csvPanel, #searchSummaryPanel, #urlSearchBox, #xiNetHelpPanel, #listPanel {
     display: none;
     top: 80px;
 }
+
+.metaLoadPanel {
+    display: none;
+    top: 80px;
+    left: 40px;
+}
+
 #keyPanel{
     left: 10px;
     height: 35em;
@@ -335,9 +342,6 @@ span, label {
     height: 50em;
 	min-width: 45em;
 	min-height: 30em;
-}
-#pdbPanel, #linkMetaLoadPanel, #proteinMetaLoadPanel {
-    left: 40px;
 }
 #distoPanel{
     left: 40px;
@@ -637,6 +641,10 @@ div.toolbar[disabled], label.fakeButton[disabled] {
 	vertical-align: text-bottom;
 }
 
+button.pdbWindowButton {
+    margin-bottom: 2em;
+}
+
 DIV.messagebar {
 	font-size: 1.4em;
 	height: 3em;
@@ -800,4 +808,11 @@ sup {font-size:xx-small; vertical-align:super;}
 
 input:invalid:focus {
 	background: pink;
+}
+
+image.sharpImage {
+    image-rendering: optimizeSpeed; 
+    image-rendering: -moz-crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+    image-rendering: pixelated;
 }

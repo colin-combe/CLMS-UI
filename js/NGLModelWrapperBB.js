@@ -14,8 +14,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     initialize: function() {
-        this.residueToAtomIndexMap = {};
-
         // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
         // this is in case 3d stuff has been set up before main model (used to happen that pdb's were autoloaded for some searches)
@@ -36,15 +34,20 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     setupLinks: function() {
-        var clmsModel = this.getModel().get("clmsModel");
+        var chainInfo = this.getChainInfo();
+        this.calculateCAtomsAllResidues(chainInfo.viableChainIndices);
         this.setFilteredLinkList ();
-        var distancesObj = this.makeDistances();
 
-        // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically
+        // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
+        // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
+        // generally at CLMSUI.modelUtils.get3DDistance
+        var distances = this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
+        var distancesObj = new CLMSUI.DistancesObj (distances, this.get("chainMap"), this.get("pdbBaseSeqID"));
+
+        var clmsModel = this.getModel().get("clmsModel");
+        // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
         clmsModel
-            .set("distancesObj", distancesObj, {
-                silent: true
-            })
+            .set("distancesObj", distancesObj, {silent: true})
             .trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
         ;
         return this;
@@ -62,22 +65,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.setLinkList (this.getModel().getFilteredCrossLinks());
         return this;
     },
-
-
-    // residueStore maps the NGL-indexed resides to PDB-index
-    // so we take our alignment index --> which goes to NGL-sequence index with Alignment Collection's getAlignedIndex() --> 
-    // then need to subtract 1, then --> which goes to PDB index with residueStore
-
-    makeModelSubIndexedChainMap: function(chainMap) {
-        var modelSubIndexedChainMap = {};
-        d3.entries(chainMap).forEach(function(proteinEntry) {
-            modelSubIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) {
-                return d.modelIndex;
-            }).entries(proteinEntry.value);
-        });
-        return modelSubIndexedChainMap;
-    },
-
+   
     makeLinkList: function(linkModel) {
         var structure = this.get("structureComp").structure;
         var pdbBaseSeqID = this.get("pdbBaseSeqID");
@@ -88,25 +76,79 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var residueProxy1 = structure.getResidueProxy();
         var residueProxy2 = structure.getResidueProxy();
         var chainProxy = structure.getChainProxy();
+        var atomProxy = structure.getAtomProxy();
         var alignColl = this.getModel().get("alignColl");
 
-        function getResidueId(resIndex, chainIndex) {
+        function getResidueId (globalNGLResIndex) {
             // TODO add structureId to key
             // TODO in NMR structures there are multiple models // mjg - chainIndex is unique across models
-            var key = resIndex + ":" + chainIndex;
-            if (residueDict[key] === undefined) {
-                residueDict[key] = nextResidueId;
+            if (residueDict[globalNGLResIndex] === undefined) {
+                residueDict[globalNGLResIndex] = nextResidueId;
                 nextResidueId++;
             }
-            return residueDict[key];
+            return residueDict[globalNGLResIndex];
+        }
+        
+        function makeResidueObj (resIndex, chainIndex, residueProxy, structureID) {
+            var ri = residueProxy.index;
+            return {
+                globalIndex: ri,
+                resindex: resIndex,
+                residueId: getResidueId (ri),
+                resno: residueProxy.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
+                chainIndex: chainIndex,
+                modelIndex: residueProxy.modelIndex,
+                structureId: structureID    
+            };
+        }
+        
+        function addAtomPoints (pdbIndexedResidues) {
+            pdbIndexedResidues.forEach (function (fat) {
+                var atomIndex = this.getAtomIndex (fat.seqIndex, fat.chainIndex);
+                fat.atomIndex = atomIndex;
+                atomProxy.index = atomIndex;
+                var coords = this.getAtomCoordinates (atomProxy);
+                fat.coords = coords;
+            }, this);
+        }
+        
+        function makePDBIndexedResidues (perModelChainEntry, searchIndexResidue, protID) {
+            var PDBResidues = perModelChainEntry.values.map (function (chainValue) {
+                var chainIndex = chainValue.index;
+                return {chainIndex: chainIndex, modelIndex: chainValue.modelIndex, seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex), true) - 1}; // residues are 0-indexed in NGL so -1
+            }).filter (function (datum) {
+               return datum.seqIndex >= 0;
+            });
+            return PDBResidues;
+        }
+        
+        function addExtraInfo (pdbIndexedResidue, residueProxy) {
+            var ri = residueProxy.index;
+            pdbIndexedResidue.globalIndex = ri;
+            pdbIndexedResidue.resindex = pdbIndexedResidue.seqIndex;
+            pdbIndexedResidue.residueId = getResidueId (ri);
+            pdbIndexedResidue.resno = residueProxy.resno;   // ngl resindex to resno conversion, as NGL.Selection() works with resno values
+            pdbIndexedResidue.structureId = null;
         }
 
+        var t = performance.now();
         var chainMap = this.get("chainMap");
         // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
-        var modelIndexedChainMap = this.makeModelSubIndexedChainMap(chainMap);
-        var toChainModelMapMap = d3.map();
-        var toChainMapMap = d3.map();
+        var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedChainMap(chainMap, "modelIndex");
+        var chainModelMapMap = d3.map();
+        var chainValueMap = d3.map();
+        d3.entries(chainMap).forEach (function (protEntry) { chainValueMap.set (protEntry.key, {values: protEntry.value}); });
+        d3.entries(modelIndexedChainMap).forEach (function (protEntry) { 
+            chainModelMapMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
+        });
         var allowInterModelDistances = this.get("allowInterModelDistances");
+        console.log ("chainValueMap", chainValueMap, modelIndexedChainMap);
+        var octAccessorObj = {
+            id: function (d) { return d; },
+            x: function (d) { return d.coords[0]; },
+            y: function (d) { return d.coords[1]; },
+            z: function (d) { return d.coords[2]; },
+        };
 
         linkModel.forEach (function (xlink) {
             // loop through fromProtein's models/chains in modelIndexedChainMap
@@ -114,76 +156,102 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             // Match by model index so can't have crosslinks between different models
             var fromProtID = xlink.fromProtein.id;
             var toProtID = xlink.toProtein.id;
-            var fromPerModelChains = modelIndexedChainMap[fromProtID];
+            var fromPerModelChains = allowInterModelDistances ? [chainValueMap.get(fromProtID)] : modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
+            // Don't continue if neither end of crosslink within pdb
             if (!_.isEmpty(fromPerModelChains) && !_.isEmpty(toPerModelChains)) {
                 
-                // get or make a map (key -> value) of the toPerModelChains entries 
-                var toPerModelChainMap = toChainModelMapMap.get (toProtID);
-                if (!toPerModelChainMap) {
-                    var newToChainModelMap = d3.map (toPerModelChains, function(d) { return d.key; });
-                    toChainModelMapMap.set (toProtID, newToChainModelMap);
-                    toPerModelChainMap = newToChainModelMap;
-                }
+                // get a map (key -> value) of the toPerModelChains entries 
+                var toPerModelChainMap = chainModelMapMap.get (toProtID);
+                var toChainMap = chainValueMap.get (toProtID); 
                 
-                var toChainMap = toChainMapMap.get (toProtID);
-                if (!toChainMap) {
-                    var newToChainMap = {values: chainMap[toProtID]};
-                    toChainMapMap.set (toProtID, newToChainMap);
-                    toChainMap = newToChainMap;
-                }
-
+                var octreeIgnoreFunc = function (point1, point2) {
+                    return CLMSUI.modelUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
+                };
+                    
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
-                    var fromModelIndex = fromPerModelChainEntry.key;    
-                    var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromModelIndex);  // bar possible crosslinks between models
-                    if (toChains) { // only proceed if the model index in 'from' has a corresponding entry in toPerModelChainMap (only look for links within same model)
+                    var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
+                    
+                    console.log ("XLINK CHAINS", fromPerModelChains, toPerModelChains);
+                    
+                    if (toChains) { // don't proceed if inter model distances barred and no 'to' chains within current model
+                        
+                        var fromPDBResidues = makePDBIndexedResidues (fromPerModelChainEntry, xlink.fromResidue, fromProtID);
+                        var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
+                        //console.log (fromPDBResidues, toPDBResidues);
+                        
+                        var alternativeCount = fromPDBResidues.length * toPDBResidues.length;
+                        if (alternativeCount > 4) {
+                            addAtomPoints.call (this, fromPDBResidues);
+                            addAtomPoints.call (this, toPDBResidues);
+                            var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
+                            results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
+                            var prime = results[0];
+                            results.forEach (function (res) {
+                                var d = prime[2] - res[2];
+                                if (d === 0) {
+                                    d = (prime[0].modelIndex + prime[1].modelIndex) - (res[0].modelIndex + res[1].modelIndex);
+                                    if (d === 0) {
+                                        d = (prime[0].chainIndex + prime[1].chainIndex) - (res[0].chainIndex + res[1].chainIndex);
+                                        if (d === 0) {
+                                            d = Math.min(prime[0].chainIndex, prime[1].chainIndex) - Math.min(res[0].chainIndex, res[1].chainIndex);
+                                        }
+                                    }
+                                }
+                                if (d > 0) {
+                                    prime = res;
+                                }
+                            });
 
-                        fromPerModelChainEntry.values.forEach (function (fromChainValue) {
-                            var fromChainIndex = fromChainValue.index;
-                            chainProxy.index = fromChainIndex;
-                            var fromResidue = alignColl.getAlignedIndex (xlink.fromResidue, fromProtID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, fromChainIndex), true) - 1; // residues are 0-indexed in NGL so -1
+                            //console.log ("aa", alternativeCount, results);
+                            fromPDBResidues = [prime[0]];  // take top result for new fromPDBResidues array
+                            toPDBResidues = [prime[1]];    // take top result for new toPDBResidues array
+                        }
+                        
+                        if (alternativeCount > 0) {
+                        
+                            fromPDBResidues.forEach (function (residueObj) {
+                                chainProxy.index = residueObj.chainIndex;
+                                residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
+                                addExtraInfo (residueObj, residueProxy1);
+                            }, this);
 
-                            if (fromResidue >= 0) {
-                                residueProxy1.index = fromResidue + chainProxy.residueOffset;
+                            toPDBResidues.forEach (function (residueObj) {
+                                chainProxy.index = residueObj.chainIndex;
+                                residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
+                                addExtraInfo (residueObj, residueProxy1);
+                            }, this);
 
-                                toChains.values.forEach (function (toChainValue) {
-                                    var toChainIndex = toChainValue.index;
-                                    chainProxy.index = toChainIndex;
-                                    var toResidue = alignColl.getAlignedIndex(xlink.toResidue, toProtID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainProxy.chainname, toChainIndex), true) - 1; // residues are 0-indexed in NGL so -1
+                            fromPDBResidues.forEach (function (fromPDB) {
+                                //chainProxy.index = fromPDB.chainIndex;
+                                //residueProxy1.index = fromPDB.seqIndex + chainProxy.residueOffset;
 
-                                    //console.log ("fr", fromResidue, "tr", toResidue);
-                                    if (toResidue >= 0 && CLMSUI.modelUtils.not3DHomomultimeric (xlink, toChainIndex, fromChainIndex)) {
-                                        residueProxy2.index = toResidue + chainProxy.residueOffset;
+                                toPDBResidues.forEach (function (toPDB) {
+
+                                    if (CLMSUI.modelUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
+                                        //chainProxy.index = toPDB.chainIndex;
+                                        //residueProxy2.index = toPDB.seqIndex + chainProxy.residueOffset;
 
                                         linkList.push({
                                             origId: xlink.id,
                                             linkId: linkList.length,
-                                            residueA: {
-                                                resindex: fromResidue,
-                                                residueId: getResidueId (fromResidue, fromChainIndex),
-                                                resno: residueProxy1.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                                                chainIndex: fromChainIndex,
-                                                structureId: structureId
-                                            },
-                                            residueB: {
-                                                resindex: toResidue,
-                                                residueId: getResidueId (toResidue, toChainIndex),
-                                                resno: residueProxy2.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                                                chainIndex: toChainIndex,
-                                                structureId: structureId
-                                            }
+                                            residueA: fromPDB,
+                                            residueB: toPDB,
+                                            //residueA: makeResidueObj (fromPDB.seqIndex, fromPDB.chainIndex, residueProxy1, structureId),
+                                            //residueB: makeResidueObj (toPDB.seqIndex, toPDB.chainIndex, residueProxy2, structureId),
                                         });
                                     }
                                 }, this);
-                            }
-                        });
+                            }, this);
+                        }
                     }
                 }, this);
             }
         }, this);
 
-        //console.log("linklist", linkList);
+        console.log ("TIME", (performance.now() - t) / 1000, "seconds");
+        console.log("linklist", linkList.length, linkList);
         return linkList;
     },
 
@@ -254,11 +322,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return sharedLinks.length ? sharedLinks : false;
     },
 
-    findResidues: function(resno, chainIndex) {
+    findResidues: function (nglGlobalResidueIndex) {
         var residues = this.getResidues().filter(function(r) {
-            return r.resno === resno && r.chainIndex === chainIndex;
+            return r.globalIndex === nglGlobalResidueIndex;
         });
-        console.log("find r", resno, chainIndex, residues);
+        console.log("find r", nglGlobalResidueIndex, residues);
         return residues.length ? residues : false;
     },
 
@@ -268,19 +336,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
     hasLink: function(link) {
         return this._linkIdMap[link.linkId] === undefined ? false : true;
-    },
-
-    makeDistances: function() {
-        return new CLMSUI.DistancesObj (this.getDistances(), this.get("chainMap"), this.get("pdbBaseSeqID"));
-    },
-
-    // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
-    // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
-    // generally at CLMSUI.modelUtils.get3DDistance
-    getDistances: function() {
-        var chainInfo = this.getChainInfo();
-        this.calculateCAtomsAllResidues(chainInfo.viableChainIndices);
-        return this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
     },
 
     getChainInfo: function() {
@@ -305,8 +360,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var chainProxy = this.get("structureComp").structure.getChainProxy();
         var atomProxy = this.get("structureComp").structure.getAtomProxy();
         var sele = new NGL.Selection();
-        var chainCAtomIndices = {};
-        var self = this;
+        var chainCAtomIndices = {}; // keys on chain index, and within this keys on residue index
 
         if (chainIndices) {
             chainIndices.forEach(function(ci) {
@@ -314,7 +368,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var atomIndices = chainCAtomIndices[ci] = [];
                 // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
 
-                var sel = self.getCAlphaAtomSelectionForChain(chainProxy);
+                var sel = CLMSUI.modelUtils.getRangedCAlphaResidueSelectionForChain(chainProxy);
                 sele.setString(sel, true); // true = doesn't fire unnecessary dispatch events in ngl
                 var ai = this.get("structureComp").structure.getAtomIndices(sele);
 
@@ -326,10 +380,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                     resMap[atomProxy.resno] = atomIndex;
                 }, this);
 
+                // resno can run from N to M, but atomIndices will be ordered 0 to no. of residues
                 chainProxy.eachResidue(function(rp) {
-                    var key = rp.resno + (ci !== undefined ? ":" + ci : ""); // chainIndex is unique across models
+                    //console.log ("RP", rp.resno, rp.index);
                     var atomIndex = resMap[rp.resno];
-                    self.residueToAtomIndexMap[key] = atomIndex;
                     atomIndices.push(atomIndex);
                 });
             }, this);
@@ -340,17 +394,18 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     getChainDistances: function (linksOnly) {
-        var chainCAtomIndices = this.get("chainCAtomIndices");
-        var keys = d3.keys(chainCAtomIndices);
-
+        var entries = d3.entries(this.get("chainCAtomIndices"));
         var matrixMap = {};
         var links = this.getLinks();
 
-        keys.forEach (function (chain1) {
-            for (var m = 0; m < keys.length; m++) {
-                var chain2 = keys[m];
-                var cindices1 = chainCAtomIndices[chain1];
-                var cindices2 = chainCAtomIndices[chain2];
+        entries.forEach (function (chain1Entry) {
+            var chain1 = chain1Entry.key;
+            var cindices1 = chain1Entry.value;
+            
+            entries.forEach (function (chain2Entry) {
+                var chain2 = chain2Entry.key;
+                var cindices2 = chain2Entry.value;
+                
                 matrixMap[chain1 + "-" + chain2] = {
                     chain1: chain1,
                     chain2: chain2,
@@ -361,7 +416,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         this.getLinkDistancesBetween2Chains(cindices1, cindices2, +chain1, +chain2, links) :
                         this.getAllDistancesBetween2Chains(cindices1, cindices2, chain1, chain2)
                 };
-            }
+            }, this);
         }, this);
 
         return matrixMap;
@@ -372,14 +427,16 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return chain ? chain.length : undefined;
     },
 
-    notHomomultimeric: function(xlinkID, c1, c2) {
-        var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
-        return CLMSUI.modelUtils.not3DHomomultimeric(xlink, c1, c2);
-    },
 
     getLinkDistancesBetween2Chains: function(chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
+        
+        var notHomomultimeric = function (xlinkID, c1, c2) {
+            var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
+            return CLMSUI.modelUtils.not3DHomomultimeric(xlink, c1, c2);
+        };
+        
         links = links.filter(function(link) {
-            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && this.notHomomultimeric(link.origId, chainIndex1, chainIndex2))
+            return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && notHomomultimeric.call (this, link.origId, chainIndex1, chainIndex2))
             /*||
                            (link.residueA.chainIndex === chainIndex2 && link.residueB.chainIndex === chainIndex1)*/
             ;
@@ -392,8 +449,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var ap2 = struc.getAtomProxy();
 
         links.forEach(function(link) {
-            var idA = link.residueA.resindex; // was previously link.residueA.resno;
-            var idB = link.residueB.resindex; // " " link.residueB.resno;
+            var idA = link.residueA.resindex;
+            var idB = link.residueB.resindex;
             ap1.index = chainAtomIndices1[idA];
             ap2.index = chainAtomIndices2[idB];
             if (ap1.index !== undefined && ap2.index !== undefined) {
@@ -432,41 +489,36 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
         return matrix;
     },
+    
+    getAtomCoordinates: function (atomProxy) {
+        return [atomProxy.x, atomProxy.y, atomProxy.z];
+    },
 
-    getAtomProxyDistance: function(ap1, ap2) {
+    getAtomProxyDistance: function (ap1, ap2) {
         return ap1.modelIndex === ap2.modelIndex || this.get("allowInterModelDistances") ? ap1.distanceTo(ap2) : undefined;
     },
 
+    // Residue indexes for this function start from zero per chain i.e. not global NGL index for residues
+    getAtomIndex: function (resIndex, chainIndex, chainAtomIndices) {
+        var cai = chainAtomIndices || this.get("chainCAtomIndices");
+        var ci = cai[chainIndex];
+        var ai = ci[resIndex];      
+        return ai;
+    },
+    
     // resIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
     getSingleDistanceBetween2Residues: function(resIndex1, resIndex2, chainIndex1, chainIndex2) {
         var struc = this.get("structureComp").structure;
         var ap1 = struc.getAtomProxy();
         var ap2 = struc.getAtomProxy();
         var cai = this.get("chainCAtomIndices");
-        var ci1 = cai[chainIndex1];
-        var ci2 = cai[chainIndex2];
-        ap1.index = ci1[resIndex1];
-        ap2.index = ci2[resIndex2];
+        ap1.index = this.getAtomIndex (resIndex1, chainIndex1, cai);
+        ap2.index = this.getAtomIndex (resIndex2, chainIndex2, cai);
 
         return this.getAtomProxyDistance(ap1, ap2);
     },
 
-    getCAlphaAtomSelectionForChain: function(chainProxy) {
-        var min, max;
-        chainProxy.eachResidue(function(rp) {
-            var rno = rp.resno;
-            if (!min || rno < min) {
-                min = rno;
-            }
-            if (!max || rno > max) {
-                max = rno;
-            }
-        });
 
-        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
-        var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
-        return sel;
-    },
 
 
     getSelectionFromResidueList: function(resnoList, options) { // set allAtoms to true to not restrict selection to alpha carbon atoms
@@ -544,7 +596,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         } else if (vals.length === 1) {
                             return "( " + vals[0] + ":" + chainEntry.key + " )"; // if single val, chain:resno is quicker
                         } else {
-                            vals = this.joinConsecutiveNumbersIntoRanges(vals);
+                            vals = CLMSUI.modelUtils.joinConsecutiveNumbersIntoRanges(vals);
                             return "( :" + chainEntry.key + " AND (" + vals.join(" OR ") + ") )";
                         }
                     } else {
@@ -569,63 +621,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return sele;
     },
 
-    // assumes vals are already sorted numerically (though each val is a string)
-    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
-        joinString = joinString || "-";
 
-        if (vals && vals.length > 1) {
-            var newVals = [];
-            var last = +vals[0],
-                start = +vals[0],
-                run = 1; // initialise variables to first value
-
-            for (var n = 1; n < vals.length + 1; n++) { // note + 1
-                // add extra loop iteration using MAX_SAFE_INTEGER as last value.
-                // loop will thus detect non-consecutive numbers on last iteration and output the last proper value in some form.
-                var v = (n < vals.length ? +vals[n] : Number.MAX_SAFE_INTEGER);
-                if (v - last === 1) { // if consecutive to last number just increase the run length
-                    run++;
-                } else { // but if not consecutive to last number...
-                    // add the previous numbers either as a sequence (if run > 1) or as a single value (last value was not part of a sequence itself)
-                    newVals.push(run > 1 ? start + joinString + last : last.toString());
-                    run = 1; // then reset the run and start variables to begin at current value
-                    start = v;
-                }
-                last = v; // make last value the current value for next iteration of loop
-            }
-
-            //CLMSUI.utils.xilog ("vals", vals, "joinedVals", newVals);
-            vals = newVals;
-        }
-        return vals;
-    },
-
-    makeResidueSelectionString: function(resno, chainProxy) {
-        var chainName = chainProxy.chainname;
-        var modelIndex = chainProxy.modelIndex;
-        return resno + (chainName ? ":" + chainName : "") + ".CA" + (modelIndex !== undefined ? "/" + modelIndex : ""); // + " AND .CA";
-    },
-
-    // used to generate a cache to speed up distance selections / calculations
-    _getAtomIndexFromResidue: function(resno, cproxy, sele) {
-        var aIndex;
-
-        if (resno !== undefined) {
-            var chainIndex = cproxy.index;
-            var key = resno + (chainIndex !== undefined ? ":" + chainIndex : ""); // chainIndex is unique across models
-            aIndex = this.residueToAtomIndexMap[key];
-
-            if (aIndex === undefined) {
-                sele.setString(this.makeResidueSelectionString(resno, cproxy), true); // true = doesn't fire unnecessary dispatch events in ngl
-                var ai = this.get("structureComp").structure.getAtomIndices(sele);
-                aIndex = ai[0];
-                if (aIndex === undefined) {
-                    console.log("undefined sele", sele.string, aIndex, ai);
-                }
-                this.residueToAtomIndexMap[key] = aIndex;
-            }
-        }
-        return aIndex;
+    _getAtomIndexFromResidueObj: function (resObj) {
+        var resno = resObj.resno;
+        return resno !== undefined ? this.getAtomIndex (resObj.resindex, resObj.chainIndex) : undefined;
     },
 
     getFirstAtomPerChainSelection: function(chainIndexSet) {
@@ -687,5 +686,17 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             showAll: showAll,
             chainIndices: chainIndices
         };
+    },
+    
+    getAllResidueCoordsForChain: function (chainIndex) {
+        var structure = this.get("structureComp").structure;
+        var atomProxy = structure.getAtomProxy();
+        var nglAtomIndices = this.get("chainCAtomIndices")[chainIndex] || [];
+        var atomCoords = nglAtomIndices.map (function (atomIndex) {
+            atomProxy.index = atomIndex;
+            var coords = this.getAtomCoordinates (atomProxy);
+            return coords;
+        }, this);
+        return atomCoords;
     },
 });

@@ -183,11 +183,14 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.canvas = canvasViewport
             .append("canvas")
+            .attr ("class", "toSvgImage")
             .style("background", this.options.background) // override standard background colour with option
-            .style("display", "none");
+            .style("display", "none")
+        ;
 
         canvasViewport.append("div")
-            .attr("class", "mouseMat");
+            .attr("class", "mouseMat")
+        ;
 
 
         // SVG element
@@ -271,7 +274,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         // rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
-        this.listenTo(this.model, "change:selection change:highlights filteringDone currentColourModelChanged", this.renderCrossLinks);
+        this.listenTo(this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
+        this.listenTo(this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
         this.listenTo(this.model, "change:linkColourAssignment", this.render);
         this.listenTo(this.colourScaleModel, "colourModelChanged", this.render); // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
@@ -307,7 +311,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     makeProteinPairingOptions: function() {
-        var crossLinks = CLMS.arrayFromMapValues(this.model.get("clmsModel").get("crossLinks"));
+        var crossLinks = this.model.getAllTTCrossLinks();
         var totals = CLMSUI.modelUtils.crosslinkCountPerProteinPairing(crossLinks);
         var entries = d3.entries(totals);
 
@@ -739,6 +743,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     renderBackgroundMap: function() {
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
+        var stageModel = this.model.get("stageModel");
 
         // only render background if distances available
         if (distancesObj) {
@@ -780,18 +785,22 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 }, this);
             }, this);
 
+            var seqLengths = this.getSeqLengthData();
             // If so, it's worth drawing the background, setting up the canvas etc
-            if (linksOnly) {
+            //if (linksOnly) {
+            // Don't draw backgrounds for huge protein combinations (2000 x 2000 is limit), begins to be memory issue
+            if (seqLengths.lengthA * seqLengths.lengthB > 4e6) {
                 // shrink canvas / hide image if not showing it
                 this.canvas
                     .attr("width", 1)
-                    .attr("height", 1);
+                    .attr("height", 1)
+                ;
                 this.zoomGroup.select(".backgroundImage").select("image").style("display", "none");
             } else {
-                var seqLengths = this.getSeqLengthData();
                 this.canvas
                     .attr("width", seqLengths.lengthA)
-                    .attr("height", seqLengths.lengthB);
+                    .attr("height", seqLengths.lengthB)
+                ;
                 var canvasNode = this.canvas.node();
                 var ctx = canvasNode.getContext("2d");
                 ctx.clearRect(0, 0, canvasNode.width, canvasNode.height);
@@ -818,6 +827,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var drawDistanceMatrix = function(imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
                     var alignColl = this.model.get("alignColl");
                     var distanceMatrix = matrixValue.distanceMatrix;
+                    var linksOnly = matrixValue.linksOnly;
                     var pw = this.canvas.attr("width");
 
                     // precalc some stuff that would get recalculatd a lot in the inner loop
@@ -826,24 +836,64 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     });
                     //console.log ("pcsi", preCalcSearchIndices, this);
 
+                    var atoms1 = linksOnly ? stageModel.getAllResidueCoordsForChain (matrixValue.chain1) : []; 
+                    var atoms2 = linksOnly ? ((matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1) : []; 
+                    //console.log ("atoms", atoms1, atoms2);
+                    
                     // draw chain values, aligned to search sequence
-                    for (var i = 0; i < distanceMatrix.length; i++) {
-                        var row = distanceMatrix[i];
-                        var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
-                        if (row && searchIndex1 >= 0) {
-                            for (var j = 0, len = row.length; j < len; j++) { // was seqLength     
-                                var distance = row[j];
-                                if (distance < max) {
-                                    var searchIndex2 = preCalcSearchIndices[j];
-                                    if (searchIndex2 > 0) {
-                                        var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
-                                        var val = minArray ? minArray[index] : 0;
-                                        if (val === 0 || val > distance) {
-                                            var col = colourArray[distance > min ? 1 : 0];
-                                            this.drawPixel(imgDataArr, index, col.r, col.g, col.b, 255);
-                                            //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
-                                            if (minArray) {
-                                                minArray[index] = val;
+                    if (linksOnly) {
+                        preCalcSearchIndices = d3.range(atoms2.length).map(function(resIndex) {
+                            return alignColl.getAlignedIndex(resIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
+                        });
+                        var max2 = max * max;
+                        var min2 = min * min;
+                        
+                        var p = performance.now();
+                        for (var i = 0; i < atoms1.length; i++) {
+                            var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
+                            if (searchIndex1 >= 0) {
+                                for (var j = 0, len = atoms2.length; j < len; j++) { // was seqLength     
+                                    var distance2 = CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
+                                    if (distance2 < max2) {
+                                        var searchIndex2 = preCalcSearchIndices[j];
+                                        if (searchIndex2 > 0) {
+                                            var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
+                                            var val = minArray ? minArray[index] : 0;
+                                            if (val === 0 || val > distance2) {
+                                                var col = colourArray[distance2 > min2 ? 1 : 0];
+                                                this.drawPixel(imgDataArr, index, col.r, col.g, col.b, 255);
+                                                //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                                                if (minArray) {
+                                                    minArray[index] = val;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        p = performance.now() - p;
+                        console.log (atoms1.length * atoms2.length, "coordinates drawn to canvas in ", p, " ms.");
+                    }
+                    else {
+                        for (var i = 0; i < distanceMatrix.length; i++) {
+                            var row = distanceMatrix[i];
+                            var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
+                            if (row && searchIndex1 >= 0) {
+                                for (var j = 0, len = row.length; j < len; j++) { // was seqLength     
+                                    var distance = !linksOnly ? row[j] : Math.sqrt (CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]));
+                                    if (distance < max) {
+                                        var searchIndex2 = preCalcSearchIndices[j];
+                                        if (searchIndex2 > 0) {
+                                            var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
+                                            var val = minArray ? minArray[index] : 0;
+                                            if (val === 0 || val > distance) {
+                                                var col = colourArray[distance > min ? 1 : 0];
+                                                this.drawPixel(imgDataArr, index, col.r, col.g, col.b, 255);
+                                                //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                                                if (minArray) {
+                                                    minArray[index] = val;
+                                                }
                                             }
                                         }
                                     }
@@ -879,18 +929,21 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .style("display", null) // default value
                     .attr("width", this.canvas.attr("width"))
                     .attr("height", this.canvas.attr("height"))
-                    .attr("href", canvasNode.toDataURL("image/png"));
+                    .attr("xlink:href", canvasNode.toDataURL("image/png"));
             }
         }
         return this;
     },
 
-    renderCrossLinks: function(options) {
+    renderCrossLinks: function (renderOptions) {
+        
+        renderOptions = renderOptions || {};
 
-        if ((options && options.isVisible) || (this.options.matrixObj && this.isVisible())) {
+        if (renderOptions.isVisible || (this.options.matrixObj && this.isVisible())) {
             var self = this;
 
             if (this.options.matrixObj) {
+                var highlightOnly = renderOptions.rehighlightOnly;
                 var colourScheme = this.model.get("linkColourAssignment");
 
                 var seqLengths = this.getSeqLengthData();
@@ -912,24 +965,64 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
                 }, this);
 
-                var sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort(3, finalCrossLinks, function(link) {
-                    return highlightedCrossLinkIDs.has(link.id) ? 2 : (selectedCrossLinkIDs.has(link.id) ? 1 : 0);
-                });
+                var sortedFinalCrossLinks;
+                if (highlightOnly) {
+                    sortedFinalCrossLinks = finalCrossLinks.filter (function (link) { return highlightedCrossLinkIDs.has(link.id); });
+                } else {
+                    sortedFinalCrossLinks = CLMSUI.modelUtils.radixSort (3, finalCrossLinks, function(link) {
+                        return highlightedCrossLinkIDs.has(link.id) ? 2 : (selectedCrossLinkIDs.has(link.id) ? 1 : 0);
+                    });
+                }
+
 
                 var fromToStore = sortedFinalCrossLinks.map(function(crossLink) {
                     return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
                 });
-
+                
+                var indLinkPlot = function (d) {
+                    var high = highlightedCrossLinkIDs.has(d.id);
+                    var selected = high ? false : selectedCrossLinkIDs.has(d.id);
+                    var ambig = d.ambiguous;
+                    d3.select(this)
+                        .attr ("class", "crossLink" + (high ? " high" : ""))
+                        .style("fill-opacity", ambig ? 0.6 : null)
+                        .style("fill", high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour(d)))
+                        .style("stroke-dasharray", ambig ? 3 : null)
+                        .style("stroke", high || selected ? "black" : (ambig ? colourScheme.getColour(d) : null))
+                        //.style ("stroke-opacity", high || selected ? 0.4 : null)
+                    ;
+                };
+                
+                // if redoing highlights only, find previously highlighted links not part of current set and restore them
+                // to a non-highlighted state
+                if (highlightOnly) {
+                    var oldHighLinkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.high")
+                        .filter (function (d) {
+                            return ! highlightedCrossLinkIDs.has(d.id);
+                        })
+                        .each (indLinkPlot)
+                    ;
+                }
+                
                 var linkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.crossLink")
                     .data(sortedFinalCrossLinks, function(d) {
                         return d.id;
                     })
-                    .order();
-                linkSel.exit().remove();
-                linkSel.enter().append("rect")
-                    .attr("class", "crossLink")
-                    .attr("width", xLinkWidth)
-                    .attr("height", yLinkWidth);
+                    // Equivalent of d3 v4 selection.raise - https://github.com/d3/d3-selection/blob/master/README.md#selection_raise
+                    .each(function() {
+                        this.parentNode.appendChild(this);
+                    })
+                    //.order()
+                ;
+                
+                if (!highlightOnly) {
+                    linkSel.exit().remove();
+                    linkSel.enter().append("rect")
+                        .attr("class", "crossLink")
+                        .attr("width", xLinkWidth)
+                        .attr("height", yLinkWidth)
+                    ;
+                }
                 linkSel
                     .attr("x", function(d, i) {
                         return fromToStore[i][0] - linkWidthOffset;
@@ -937,18 +1030,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .attr("y", function(d, i) {
                         return (seqLengthB - fromToStore[i][1]) - linkWidthOffset;
                     })
-                    .each(function(d) {
-                        var high = highlightedCrossLinkIDs.has(d.id);
-                        var selected = selectedCrossLinkIDs.has(d.id);
-                        var ambig = d.ambiguous;
-                        d3.select(this)
-                            .style("fill-opacity", ambig ? 0.6 : null)
-                            .style("fill", high ? self.options.highlightedColour : (selected ? self.options.selectedColour : colourScheme.getColour(d)))
-                            .style("stroke-dasharray", ambig ? 3 : null)
-                            .style("stroke", high || selected ? "black" : (ambig ? colourScheme.getColour(d) : null))
-                        //.style ("stroke-opacity", high || selected ? 0.4 : null)
-                        ;
-                    });
+                    .each (indLinkPlot);
             }
         }
 

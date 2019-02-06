@@ -160,21 +160,27 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             var convEnd = +feature.end;
             var type = feature.type.toLowerCase();
             var protAlignModel = self.model.get("alignColl").get(nodeid);
+            
+            var annotationColl = self.model.get ("annotationTypes");
+            var annotationTypeModel = annotationColl.get (annotationColl.modelId (feature));
+            var annotationTypeModelAlignmentID = annotationTypeModel ? annotationTypeModel.get("typeAlignmentID") : undefined; 
 
-            if (protAlignModel && (type !== "cross-linkable-1" && type !== "cross-linkable-2" && type !== "digestible")) {
-                var alignmentID = feature.alignmentID || "Canonical";
+            if (protAlignModel) {
+                var alignmentID = feature.alignmentID || annotationTypeModelAlignmentID; // individual feature alignment ids trump feature type alignment ids
                 /*
                 convStart = protAlignModel.mapToSearch (alignmentID, +feature.start);
                 convEnd = protAlignModel.mapToSearch (alignmentID, +feature.end);
                 if (convStart <= 0) { convStart = -convStart; }   // <= 0 indicates no equal index match, do the - to find nearest index
                 if (convEnd <= 0) { convEnd = -convEnd; }         // <= 0 indicates no equal index match, do the - to find nearest index
                 */
-                var convertedRange = protAlignModel.rangeToSearch(alignmentID, convStart, convEnd);
-                if (!convertedRange) {
-                    return null;
+                if (alignmentID) {
+                    var convertedRange = protAlignModel.rangeToSearch(alignmentID, convStart, convEnd);
+                    if (!convertedRange) {
+                        return null;
+                    }
+                    convStart = convertedRange[0];
+                    convEnd = convertedRange[1];
                 }
-                convStart = convertedRange[0];
-                convEnd = convertedRange[1];
             }
             convStart = Math.max(0, convStart - 1); // subtract one, but don't have negative values
             if (isNaN(convEnd) || convEnd === undefined) {
@@ -202,9 +208,14 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 template({
                     svgClass: "circularView",
                 })
-            );
+            )
+        ;
+        
+        mainDivSel.select(".backdrop")
+            // can replace .backdrop class colouring with this option if defined
+            .style("background-color", this.options.background)
+        ; 
 
-        mainDivSel.select(".backdrop").style("background-color", this.options.background); // can replace .backdrop class colouring with this option if defined
 
         var buttonData = [{
             class: "downloadButton",
@@ -355,6 +366,9 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Lets user rotate diagram
         var backgroundDrag = d3.behavior.drag();
         backgroundDrag.on("dragstart", function() {
+                d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.stopImmediatePropagation();
+                d3.event.sourceEvent.preventDefault();
                 var curTheta = d3.transform(svg.select("g g").attr("transform")).rotate * degToRad;
                 var mc = d3.mouse(this);
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
@@ -365,10 +379,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var theta = Math.atan2(dmc[1] - self.radius, dmc[0] - self.radius);
                 theta += backgroundDrag.offTheta;
                 svg.select("g g").attr("transform", "rotate(" + (theta / degToRad) + ")");
-            });
+            })
+        ;
 
-        var svg = mainDivSel.select("svg")
-            .call(backgroundDrag);
+        var svg = mainDivSel.select("svg");//.call(backgroundDrag);
 
         this.nodeDrag = d3.behavior.drag();
         this.nodeDrag.reOrder = function(d) {
@@ -410,20 +424,35 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                     bespokeOrder: bespokeOrder
                 });
             }
-        }
+        };
         this.nodeDrag.on("dragstart", function() {
+                d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.preventDefault();
                 var mc = d3.mouse(svg.node());
+                self.nodeDrag.startClick = mc;
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
                 self.nodeDrag.startDeg = (((dragStartTheta / degToRad) + 90) + 360) % 360;
-                d3.event.sourceEvent.stopPropagation();
                 d3.select(this).classed("draggedNode", true);
+                self.nodeDrag.visited = true;
             })
             .on("drag", function(d) {
+                d3.event.sourceEvent.stopPropagation();
+                d3.event.sourceEvent.preventDefault();
                 self.nodeDrag.reOrder(d);
             })
             .on("dragend", function(d) {
+                d3.event.sourceEvent.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
+                d3.event.sourceEvent.preventDefault();
                 d3.select(this).classed("draggedNode", false);
                 self.nodeDrag.reOrder(d);
+                var mc = d3.mouse(svg.node());
+                var movementSq = Math.pow (mc[0] - self.nodeDrag.startClick[0], 2) + Math.pow (mc[1] - self.nodeDrag.startClick[1], 2);
+                if (movementSq < 9) {
+                    self.selectNode.call (self, d);
+                }
+                d3.event.sourceEvent.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
+                d3.event.sourceEvent.stopImmediatePropagation();
+                d3.event.sourceEvent.preventDefault();
             });
 
 
@@ -622,7 +651,9 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     showAccentedLinks: function(accentType) {
-        this.showAccentOnTheseLinks(d3.select(this.el).selectAll(".circleGhostLink"), accentType);
+        if (this.isVisible()) {
+            this.showAccentOnTheseLinks(d3.select(this.el).selectAll(".circleGhostLink"), accentType);
+        }
         return this;
     },
 
@@ -631,31 +662,39 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (accentType === "selection" && this.options.showSelectedOnly) {
             accentedLinkList = [];
         }
-        if (accentedLinkList && this.isVisible()) {
-            var linkType = {
-                "selection": "selectedCircleLink",
-                "highlights": "highlightedCircleLink"
+        if (accentedLinkList) {
+            var linkTypes = {
+                selection: "selectedCircleLink",
+                highlights: "highlightedCircleLink"
             };
+            var linkType = linkTypes[accentType] || "link";
             var accentedLinkIDs = _.pluck(accentedLinkList, "id");
             var idset = d3.set(accentedLinkIDs);
-            d3Selection.classed(linkType[accentType] || "link", function(d) {
-                return idset.has(d.id);
-            });
+            d3Selection.filter("."+linkType)
+                .filter(function(d) { return !idset.has(d.id); })
+                .classed(linkType, false)
+            ;
+            
+            d3Selection.filter(function(d) { return idset.has(d.id); })
+                .classed(linkType, true)
+            ;
         }
         return this;
     },
 
     showAccentedNodes: function(accentType) {
-        this.showAccentOnTheseNodes(d3.select(this.el).selectAll(".circleNode"), accentType);
+        if (this.isVisible()) {
+            this.showAccentOnTheseNodes(d3.select(this.el).selectAll(".circleNode"), accentType);
+        }
         return this;
     },
 
     showAccentOnTheseNodes: function(d3Selection, accentType) {
         var accentedNodeList = this.model.get(accentType === "selection" ? "selectedProteins" : "highlightedProteins");
-        if (accentedNodeList && this.isVisible()) {
+        if (accentedNodeList) {
             var linkType = {
-                "selection": "selected",
-                "highlights": "highlighted"
+                selection: "selected",
+                highlights: "highlighted"
             };
             var accentedLinkIDs = _.pluck(accentedNodeList, "id");
             var idset = d3.set(accentedLinkIDs);
@@ -668,8 +707,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
     actionNodeLinks: function(nodeId, actionType, add, startPos, endPos) {
-        //var crossLinks = this.model.get("clmsModel").get("crossLinks");
-        var filteredCrossLinks = this.model.getFilteredCrossLinks(); //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
+        var filteredCrossLinks = this.model.getFilteredCrossLinks();
         var anyPos = startPos == undefined && endPos == undefined;
         startPos = startPos || 0;
         endPos = endPos || 100000;
@@ -679,15 +717,22 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
         this.model.setMarkedCrossLinks(actionType, matchLinks, actionType === "highlights", add);
         //this.model.set (actionType, matchLinks);
+        return this;
     },
 
     clearSelection: function(evt) {
-        // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
-        // this is also logically consistent as it's adding 'nothing' to the existing selection
-        if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
-            this.model.setMarkedCrossLinks("selection", [], false, false);
-            this.model.setSelectedProteins([], false);
+        evt = evt || {};
+        //console.log ("evt", evt);
+        if (!this.nodeDrag.visited) {
+            // don't cancel if any of alt/ctrl/shift held down as it's probably a mis-aimed attempt at adding to an existing search
+            // this is also logically consistent as it's adding 'nothing' to the existing selection
+            if (!evt.altKey && !evt.ctrlKey && !evt.shiftKey) {
+                this.model.setMarkedCrossLinks ("selection", [], false, false);
+                this.model.setSelectedProteins ([], false);
+            }
         }
+        this.nodeDrag.visited = false;
+        return this;
     },
 
     convertLinks: function(links, rad1, rad2) {
@@ -791,56 +836,18 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         return filteredInteractors;
     },
 
-    filterFeatures: function(featureArrays, participant) {
-
-        var features = d3.merge(featureArrays.filter(function(arr) {
-            return arr !== undefined;
-        }));
-        var annots = this.model.get("annotationTypes").where({
-            shown: true
-        });
-        var featureFilterSet = d3.set(annots.map(function(annot) {
-            return annot.get("type");
-        }));
-        // 'cos some features report as upper case
-        featureFilterSet.values().forEach(function(value) {
-            featureFilterSet.add(value.toUpperCase());
-        });
-
-        if (featureFilterSet.has("Digestible")) {
-            var digestFeatures = this.model.get("clmsModel").getDigestibleResiduesAsFeatures(participant);
-            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(digestFeatures);
-            features = d3.merge([mergedFeatures, features]);
-        }
-
-        if (featureFilterSet.has("Cross-linkable-1")) {
-            var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures(participant, 1);
-            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(crossLinkableFeatures);
-            features = d3.merge([mergedFeatures, features]);
-        }
-
-        if (featureFilterSet.has("Cross-linkable-2")) {
-            var crossLinkableFeatures = this.model.get("clmsModel").getCrosslinkableResiduesAsFeatures(participant, 2);
-            var mergedFeatures = CLMSUI.modelUtils.mergeContiguousFeatures(crossLinkableFeatures);
-            features = d3.merge([mergedFeatures, features]);
-        }
-
-        CLMSUI.utils.xilog("annots", annots, "f", features);
-        return features ? features.filter(function(f) {
-            return featureFilterSet.has(f.type);
-        }, this) : [];
-    },
-
     renderPartial: function(renderPartArr) {
         this.render({
             changed: d3.set(renderPartArr)
         });
+        return this;
     },
 
-    render: function(options) {
+    render: function (renderOptions) {
 
-        //CLMSUI.utils.xilog ("render args", arguments);
-        var changed = options ? options.changed : undefined;
+        renderOptions = renderOptions || {};
+        //CLMSUI.utils.xilog ("render options", renderOptions);
+        var changed = renderOptions.changed;
 
         if (this.isVisible()) {
             //CLMSUI.utils.xilog ("re-rendering circular view");
@@ -879,7 +886,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             // This line in case links are loaded via csv and interactorOrder isn't initialised or out of sync with interactors
             if (filteredInteractors.length !== this.interactorOrder.length) { // interactors is map so size, interactorOrder is array so length
-                console.log("REORDERING OK", filteredInteractors.length, this.interactorOrder.length)
+                //console.log("REORDERING OK", filteredInteractors.length, this.interactorOrder.length)
                 this.reOrder();
             }
 
@@ -895,7 +902,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             // After rearrange interactors, because filtered features depends on the interactor order
             var alignColl = this.model.get("alignColl");
             var filteredFeatures = filteredInteractors.map(function(inter) {
-                return this.filterFeatures([inter.uniprot ? inter.uniprot.features : [], alignColl.getAlignmentsAsFeatures(inter.id)], inter);
+                return this.model.getFilteredFeatures (inter);
             }, this);
             //CLMSUI.utils.xilog ("filteredFeatures", filteredFeatures);
 
@@ -944,23 +951,20 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             var gRot = gTrans.select("g");
             //gRot.attr("transform", "rotate(0)");
 
-            // draw links
             if (!changed || changed.has("links")) {
-                this.drawLinks(gRot, linkCoords);
+                this.drawLinks(gRot, linkCoords);   // draw links
             }
             if (!changed || changed.has("nodes")) {
-                // draw nodes (around edge)
-                this.drawNodes(gRot, nodes);
-                // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
-                this.drawNodeTicks(gRot, nodes, tickRadius);
+                this
+                    .drawNodes(gRot, nodes) // draw nodes (around edge)
+                    .drawNodeTicks(gRot, nodes, tickRadius) // draw scales on nodes - adapted from http://bl.ocks.org/mbostock/4062006
+                ;
             }
             if (!changed || changed.has("features")) {
-                // draw features
-                this.drawFeatures(gRot, features);
+                this.drawFeatures(gRot, features);  // draw features
             }
             if (!changed || changed.has("nodes")) {
-                // draw names on nodes
-                this.drawNodeText(gRot, nodes);
+                this.drawNodeText(gRot, nodes); // draw names on nodes
             }
             if (!changed || changed.has("links") || changed.has("linkLabels")) {
                 this.drawResidueLetters(gRot, linkCoords);
@@ -979,7 +983,6 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     drawLinks: function(g, links) {
-
         var self = this;
         var crossLinks = this.model.get("clmsModel").get("crossLinks");
         //CLMSUI.utils.xilog ("clinks", crossLinks);
@@ -1036,7 +1039,18 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .call(function() {
                 self.showAccentOnTheseLinks.call(self, this, "selection");
-            });
+            })
+        ;
+        
+        return this;
+    },
+    
+    selectNode: function (d) {
+        var add = d3.event.ctrlKey || d3.event.shiftKey;
+        this.actionNodeLinks(d.id, "selection", add);
+        var interactor = this.model.get("clmsModel").get("participants").get(d.id);
+        this.model.setSelectedProteins([interactor], add);
+        return this;
     },
 
     drawNodes: function(g, nodes) {
@@ -1063,21 +1077,14 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.model.setHighlightedProteins([]);
                 self.model.setMarkedCrossLinks("highlights", [], false, false);
             })
-            .on("click", function(d) {
-                d3.event.stopPropagation(); // stop event getting picked up by backdrop listener which cancels all selections
-                var add = d3.event.ctrlKey || d3.event.shiftKey;
-                self.actionNodeLinks(d.id, "selection", add);
-                var interactor = self.model.get("clmsModel").get("participants").get(d.id);
-                self.model.setSelectedProteins([interactor], add);
-            })
             .call(function(sel) {
                 if (multipleNodes) {
                     sel.call(self.nodeDrag);
                 }
-            });
+            })
+        ;
 
-        nodeJoin
-            .attr("d", this.arc);
+        nodeJoin.attr("d", this.arc);
 
         this.showAccentOnTheseNodes(nodeJoin, "selection");
 
@@ -1259,11 +1266,13 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         //CLMSUI.utils.xilog ("FEATURES", features);
 
+        var annotColl = this.model.get("annotationTypes");
+        
         featureJoin
             .order()
             .attr("d", this.featureArc)
             .style("fill", function(d) {
-                return CLMSUI.domainColours(d.category, d.type); /*((d.category + "-" + d.type).toUpperCase())*/ ;
+                return annotColl.getColour (d.category, d.type);
             });
 
         return this;

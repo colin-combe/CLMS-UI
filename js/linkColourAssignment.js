@@ -47,7 +47,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
     isCategorical: function() {
         return this.get("type") !== "linear";
     },
-    undefinedColour: "#ddd",
+    undefinedColour: "#aaa",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend({
@@ -359,8 +359,20 @@ CLMSUI.linkColour.setupColourModels = function() {
         var newModel = CLMSUI.linkColour.makeMapBasedLinkColourModel(data.columnIndex, data.label, data.linkMap);
         newModel.set("id", data.id);
         this.add(newModel);
+        CLMSUI.compositeModelInst.set("linkColourAssignment", newModel);
         replaceCurrentLinkColourAssignment(this);
     });
+};
+
+CLMSUI.linkColour.colourRangeMaker = function (extents) {
+    var range = ["green", "blue"];
+    if (extents[0] < 0 && extents[1] > 0) {
+        extents.splice(1, 0, 0);
+        range.splice(1, 0, "#888");
+    } else if (extents[0] === extents[1]) {
+        range = ["#888"];
+    }
+    return range;
 };
 
 CLMSUI.linkColour.makeColourModel = function(field, label, links) {
@@ -369,11 +381,7 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
     var extents = d3.extent(linkArr, function(link) {
         return link.getMeta(field);
     });
-    var range = ["red", "blue"];
-    if (extents[0] < 0 && extents[1] > 0) {
-        extents.splice(1, 0, 0);
-        range.splice(1, 0, "#888");
-    }
+    var range = CLMSUI.linkColour.colourRangeMaker (extents);
 
     // see if it is a list of colours
     var hexRegex = CLMSUI.utils.commonRegexes.hexColour;
@@ -418,11 +426,7 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
 
 CLMSUI.linkColour.makeNonCrossLinkColourModel = function(id, domain) {
     var extents = d3.extent(domain);
-    var range = ["red", "blue"];
-    if (extents[0] < 0 && extents[1] > 0) {
-        extents.splice(1, 0, 0);
-        range.splice(1, 0, "#888");
-    }
+    var range = CLMSUI.linkColour.colourRangeMaker (extents);
 
     var newColourModel = new CLMSUI.BackboneModelTypes.NonCrossLinkColourModel({
         colScale: d3.scale.linear().domain(extents).range(range),
@@ -445,11 +449,7 @@ CLMSUI.linkColour.makeMapBasedLinkColourModel = function(columnIndex, label, lin
     console.log("dfv", domain, fieldValueMap);
 
     var extents = d3.extent(domain);
-    var range = ["red", "blue"];
-    if (extents[0] < 0 && extents[1] > 0) {
-        extents.splice(1, 0, 0);
-        range.splice(1, 0, "#888");
-    }
+    var range = CLMSUI.linkColour.colourRangeMaker (extents);
 
     var newColourModel = new CLMSUI.BackboneModelTypes.MapBasedLinkColourModel({
         colScale: d3.scale.linear().domain(extents).range(range),
@@ -459,59 +459,4 @@ CLMSUI.linkColour.makeMapBasedLinkColourModel = function(columnIndex, label, lin
     });
 
     return newColourModel;
-};
-
-
-//CLMSUI.domainColours = d3.scale.ordinal().range(colorbrewer.Set1[7]);//.slice().reverse());
-
-CLMSUI.domainColours = function(catName, typeName) {
-    catName = (catName || "undefined").replace(/_/g, " ").toLocaleLowerCase();
-    catName = CLMSUI.domainColours.dict[catName] || catName;
-    typeName = (typeName || "undefined").toLocaleLowerCase();
-    var id = catName + "-" + typeName;
-
-    if (!CLMSUI.domainColours.cols[id]) {
-        var catColour = CLMSUI.domainColours.baseScale(catName);
-        var hash = 0,
-            i, chr;
-        if (typeName) {
-            for (i = 0; i < typeName.length; i++) {
-                chr = typeName.charCodeAt(i);
-                hash = ((hash << 5) - hash) + chr;
-                hash |= 0; // Convert to 32bit integer
-            }
-        }
-
-        var shade = (hash & 255) / 255;
-        shade = (shade * 0.7) + 0.2;
-        var hsl = d3.hsl(catColour);
-        var newHsl = d3.hsl(hsl.h, shade, shade);
-        CLMSUI.domainColours.cols[id] = newHsl.toString();
-    }
-    return CLMSUI.domainColours.cols[id];
-};
-
-CLMSUI.domainColours.cols = {
-    "aa-cross-linkable": "#a6cee3",
-    "aa-digestible": "#1f78b4",
-    "alignment-pdb aligned region": "#b2df8a",
-};
-CLMSUI.domainColours.baseScale = d3.scale.ordinal()
-    .range(colorbrewer.Set3[11])
-    .domain(["aa", "alignment", "molecule processing", "regions", "sites", "amino acid modifications", "natural variations", "experimental info", "secondary structure", "undefined"]);
-CLMSUI.domainColours.dict = {
-    "domains and sites": "sites",
-    "structural": "secondary structure",
-    "variants": "natural variations",
-    "ptm": "amino acid modifications",
-    "mutagenesis": "experimental info",
-    "sequence information": "experimental info",
-};
-CLMSUI.domainColours.set = function(catName, typeName, colour) {
-    catName = (catName || "undefined").replace(/_/g, " ").toLocaleLowerCase();
-    catName = CLMSUI.domainColours.dict[catName] || catName;
-    typeName = (typeName || "undefined").toLocaleLowerCase();
-    var id = catName + "-" + typeName;
-    CLMSUI.domainColours.cols[id] = colour;
-    // some sort of redraw trigger / backbone event firing?
 };

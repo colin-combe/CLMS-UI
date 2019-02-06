@@ -34,7 +34,6 @@
                 selectList: ["Sort Tabs By"],
                 optionList: this.collection.possibleComparators,
                 optionLabelFunc: function(d) {
-                    console.log(d);
                     return d.label;
                 },
                 optionValueFunc: function(d) {

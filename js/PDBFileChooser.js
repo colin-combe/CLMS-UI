@@ -27,6 +27,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
+        mainDivSel.classed ("metaLoadPanel", true);
 
         var wrapperPanel = mainDivSel.append("div")
             .attr("class", "panelInner");
@@ -79,16 +80,19 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         queryBox.append("button")
             .attr("class", "pdbWindowButton btn btn-1 btn-1a")
-            .text("Show PDBs Matching UniProt Accessions @ RCSB.Org")
-            .attr("title", "Queries via uniprot accession numbers (can be multiple)");
+            .text("Show PDBs Matching UniProt Accessions @ RCSB.org")
+            .attr("title", "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)")
+        ;
 
         queryBox.append("button")
             .attr("class", "ebiPdbWindowButton btn btn-1 btn-1a")
-            .text("Show PDBs Matching Protein Sequence @ EBI")
-            .attr("title", "Queries via individual protein sequence");
+            .text("Show PDBs Matching a Protein Sequence @ EBI")
+            .attr("title", "Queries EBI with an individual protein sequence to find relevant PDBs")
+        ;
 
         queryBox.selectAll("button")
-            .append("i").attr("class", "fa fa-xi fa-external-link");
+            .append("i").attr("class", "fa fa-xi fa-external-link")
+        ;
 
         this.updateProteinDropdown(queryBox);
 
@@ -99,14 +103,16 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             backgroundColor: "white",
             tooltip: false
         });
-        console.log("STAGE", this.stage);
-        // populate 3D network viewer if hard-coded pdb id present
+        //console.log("STAGE", this.stage);
 
         function sanitise(str) {
             return str.replace(/[^a-z0-9 ,.?!]/ig, '');
         }
 
         this.listenTo (this.model.get("clmsModel"), "change:matches", function() {
+            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
+        });
+        this.listenTo (this.model, "change:selectedProteins", function() {
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
         this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
@@ -129,28 +135,30 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setStatusText(msg);
         });
     },
+    
+    // Return selected proteins, or all proteins if nothing selected
+    getSelectedProteins: function () {
+        var selectedProteins = this.model.get("selectedProteins");
+        return _.isEmpty (selectedProteins) ? CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")) : selectedProteins;
+    },
 
     updateProteinDropdown: function(parentElem) {
+        var proteins = this.getSelectedProteins();
+        
         CLMSUI.utils.addMultipleSelectControls({
             addToElem: parentElem,
             selectList: ["Proteins"],
-            optionList: CLMS.arrayFromMapValues(this.model.get("clmsModel").get("participants")).filter(function(prot) {
+            optionList: proteins.filter(function(prot) {
                 return !prot.is_decoy;
             }),
             keepOldOptions: false,
             selectLabelFunc: function() {
                 return "Select Protein for EBI Sequence Search ►";
             },
-            optionLabelFunc: function(d) {
-                return d.name;
-            },
-            optionValueFunc: function(d) {
-                return d.id;
-            },
-            idFunc: function(d) {
-                return d.id;
-            },
-            //changeFunc: function () { self.axisChosen().render(); },
+            optionLabelFunc: function (d) { return d.name; },
+            optionValueFunc: function(d) { return d.id; },
+            optionSortFunc: function (a, b) { return a.name.localeCompare (b.name); },
+            idFunc: function(d) { return d.id; },
         });
 
     },
@@ -163,7 +171,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         // Basically chrome has this point in this function as being traceable back to a user click event but the
         // callback from the ajax isn't.
         var newtab = window.open("", "_blank");
-        var accessionIDs = CLMSUI.modelUtils.getLegalAccessionIDs(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
+        var accessionIDs = CLMSUI.modelUtils.getLegalAccessionIDs(this.getSelectedProteins());
         if (accessionIDs.length) {
             CLMSUI.modelUtils.getPDBIDsForProteins(
                 accessionIDs,

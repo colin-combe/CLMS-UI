@@ -190,7 +190,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
 
     render: function() {
         var self = this;
-
         var dataSeries = this.model.data();
 
         // aggregate data into bar chart friendly form
