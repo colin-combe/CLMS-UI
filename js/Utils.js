@@ -1008,14 +1008,33 @@ CLMSUI.utils = {
 
         // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
         downloadSVG: function(event, thisSVG) {
+            var keyHeight = 0;
+            if (this.options.exportKey) {
+                var svgKey = this.addKey();
+                keyHeight = svgKey.node().getBoundingClientRect().height + 10;
+            }
+            
             var svgSel = thisSVG || d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture(svgArr);
+            var detachedSVG = svgStrings[0];
+            var detachedSVGD3 = d3.select(detachedSVG);
+            
+            if (keyHeight) {
+                // make a gap to reposition the key into
+                detachedSVGD3.attr("height", (parseFloat(detachedSVGD3.attr("height")) + keyHeight) + "px");
+                detachedSVGD3.style("height", (parseFloat(detachedSVGD3.attr("height")) + keyHeight) + "px"); // .style("height") returns "" - dunno why?
+                detachedSVGD3.select("svg").attr("y", keyHeight+"px");
+                this.removeKey (detachedSVGD3); // remove key that's currently on top of svg
+                this.addKey (detachedSVGD3);    // and make a new one in the gap we just made
+            }
+            
             var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), svgStrings[0]);
             //console.log ("xml", svgXML);
 
             var fileName = this.filenameStateString().substring(0, 240);
             download(svgXML, 'application/svg', fileName + ".svg");
+            this.removeKey();
         },
 
         canvasImageParent: "svg",
@@ -1026,19 +1045,35 @@ CLMSUI.utils = {
         And add an extra css rule after the style element's already been generated to try and stop the image anti-aliasing
         */
         downloadSVGWithCanvas: function() {
+            var keyHeight = 0;
+            if (this.options.exportKey) {
+                var svgKey = this.addKey();
+                keyHeight = svgKey.node().getBoundingClientRect().height + 10;
+            }
+            
             var svgSel = d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture(svgArr);
             var detachedSVG = svgStrings[0];
             var detachedSVGD3 = d3.select(detachedSVG);
-            var self = this;
+            
+            if (keyHeight) {
+                // make a gap to reposition the key into
+                detachedSVGD3.attr("height", (parseFloat(detachedSVGD3.attr("height")) + keyHeight) + "px");
+                detachedSVGD3.style("height", (parseFloat(detachedSVGD3.attr("height")) + keyHeight) + "px"); // .style("height") returns "" - dunno why?
+                detachedSVGD3.select("svg").attr("y", keyHeight+"px");
+                this.removeKey (detachedSVGD3); // remove key that's currently on top of svg
+                this.addKey (detachedSVGD3);    // and make a new one in the gap we just made
+            }
 
+            var self = this;
             var d3canvases = d3.select(this.el).selectAll("canvas.toSvgImage");
             var fileName = this.filenameStateString() + ".svg";
             // _.after means finalDownload only gets called after all canvases finished converting to svg images
             var finalDownload = _.after (d3canvases.size(), function() {
                 var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), detachedSVG);
                 download(svgXML, "application/svg", fileName);
+                self.removeKey();
             });
             
             d3canvases.each (function (d) {
@@ -1058,6 +1093,16 @@ CLMSUI.utils = {
                 // Now convert the canvas and its data to the image element we just added and download the whole svg when done
                 CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, finalDownload);
             });
+        },
+        
+        addKey: function (d3Sel) {
+            var tempSVG = (d3Sel || d3.select(this.el).select("svg")).append("svg").attr("class", "tempKey");
+            CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst, tempSVG);
+            return tempSVG;
+        },
+        
+        removeKey: function (d3Sel) {
+            (d3Sel || d3.select(this.el)).selectAll(".tempKey").remove();
         },
 
         getHTMLAsDataURL: function(d3Elem, options, callbackFunc) {

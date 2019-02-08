@@ -38,6 +38,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             bottom: 40,
             left: 60
         },
+        exportKey: true,
     },
 
     initialize: function(viewOptions) {
@@ -222,7 +223,9 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Add clippable and pan/zoomable viewport made of two group elements
         this.clipGroup = this.vis.append("g")
             .attr("class", "clipg")
-            .attr("clip-path", "url(#matrixClip)");
+            .attr("clip-path", "url(#matrixClip)")
+        ;
+        this.clipGroup.append("rect").attr("width","100%").attr("height","100%").style("fill", "#e4e4e4");
         this.zoomGroup = this.clipGroup.append("g");
         this.zoomGroup.append("g").attr("class", "blockAreas");
         this.zoomGroup.append("g").attr("class", "backgroundImage").append("image");
@@ -803,6 +806,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 ;
                 var canvasNode = this.canvas.node();
                 var ctx = canvasNode.getContext("2d");
+                //ctx.fillStyle = "rgba(255, 0, 0, 0)";
                 ctx.clearRect(0, 0, canvasNode.width, canvasNode.height);
 
                 var rangeDomain = this.colourScaleModel.get("colScale").domain();
@@ -929,7 +933,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .style("display", null) // default value
                     .attr("width", this.canvas.attr("width"))
                     .attr("height", this.canvas.attr("height"))
-                    .attr("xlink:href", canvasNode.toDataURL("image/png"));
+                    .attr("xlink:href", canvasNode.toDataURL("image/png"))
+                ;
             }
         }
         return this;

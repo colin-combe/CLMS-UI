@@ -708,20 +708,24 @@ DIV[class='messagebar']:not(:last-of-type) {
 	cursor: pointer;
 }
 
-svg.temp {
+svg.tempKey {
 	text-transform: initial;	/* reset text-transforms for temporary svgs */
 	letter-spacing: 0;
 	font-family: "Helvetica";
 }
 
-svg.temp .keyTitle {
+svg.tempKey .keyTitle {
 	font-style: italic;
 }
 
-svg.temp .keyPoint rect {
+svg.tempKey .keyPoint rect {
 	shape-rendering: crispedges;
 	stroke-width: 1px;
 	stroke: black;
+}
+
+svg.tempKey text {
+    text-anchor: start;
 }
 
 .errorCloseButton {
