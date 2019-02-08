@@ -36,7 +36,8 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         attributeOptions: null,
         standardTickFormat: d3.format(",d"),
         logX: false,
-        logY: false
+        logY: false,
+        exportKey: true,
     },
 
     initialize: function(viewOptions) {

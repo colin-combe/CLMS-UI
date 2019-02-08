@@ -38,6 +38,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             bottom: 40,
             left: 60
         },
+        exportKey: true,
     },
 
     initialize: function(viewOptions) {

@@ -364,7 +364,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     downloadKey: function() {
-        var tempSVG = d3.select(this.el).append("svg").attr("class", "temp");
+        var tempSVG = d3.select(this.el).append("svg").attr("class", "tempKey");
         CLMSUI.utils.updateColourKey(this.model, tempSVG);
         this.downloadSVG(null, tempSVG);
         tempSVG.remove();
