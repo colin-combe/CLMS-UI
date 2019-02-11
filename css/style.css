@@ -712,6 +712,11 @@ svg.tempKey {
 	text-transform: initial;	/* reset text-transforms for temporary svgs */
 	letter-spacing: 0;
 	font-family: "Helvetica";
+    font-size: 12px;
+}
+
+svg.tempKey text.imageTitle {
+    font-size: 8px;
 }
 
 svg.tempKey .keyTitle {
@@ -726,6 +731,8 @@ svg.tempKey .keyPoint rect {
 
 svg.tempKey text {
     text-anchor: start;
+    font-family: "Helvetica";
+    font-size: 12px;
 }
 
 .errorCloseButton {

@@ -38,6 +38,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         logX: false,
         logY: false,
         exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function(viewOptions) {

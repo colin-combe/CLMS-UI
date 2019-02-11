@@ -35,6 +35,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         randomScope: "All",
         unknownID: "Unknown",
         selectedColour: "#ff0",
+        exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function(viewOptions) {
