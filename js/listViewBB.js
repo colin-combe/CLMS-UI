@@ -961,7 +961,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                     var linkZScores = self.stats.normZScoresLinkMap[d.value.id]; // d.value is crosslink
                     if (linkZScores) {
                         var val = linkZScores[zcolumnIndex];
-                        colValue = val !== undefined ? colourScheme.getColourByValue(val) : "transparent"; //colourScheme.undefinedColour;
+                        colValue = val !== undefined ? colourScheme.getColourByValue(val) : "transparent"; //colourScheme.get("undefinedColour");
                     }
                 }
                 return colValue;
