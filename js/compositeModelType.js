@@ -169,12 +169,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         if (this.get("filterModel")) {
             var uniqueResiduePairsPerPPI = this.get("filterModel").get("urpPpi");
             if (uniqueResiduePairsPerPPI > 1) {
+                var value, key, crossLink;
                 var ppiMap = new Map();
                 var clmsModel = this.get("clmsModel");
                 var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
                 var clCount = crossLinksArr.length;
                 for (var c = 0; c < clCount; c++) {
-                    var crossLink = crossLinksArr[c];
+                    crossLink = crossLinksArr[c];
                     if (crossLink.filteredMatches_pp.length) {
                         var key = crossLink.toProtein.id + " - " + crossLink.fromProtein.id;
                         value = ppiMap.get(key);

@@ -652,7 +652,7 @@ CLMSUI.utils = {
                 pair[2] = isLinear ? heightScale(domain[i]) : 3 + ((i + 1) * 15); // y-position of colour swatches and labels
             });
             
-            pairUp.push ([colourAssign.undefinedColour, "Undefined", pairUp[pairUp.length-1][2] + 15]);
+            pairUp.push ([colourAssign.get("undefinedColour"), colourAssign.get("undefinedLabel"), _.last(pairUp)[2] + 15]);
 
             var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
             colourElems.exit().remove();
@@ -674,7 +674,8 @@ CLMSUI.utils = {
                 .style("fill", function(d, i) {
                     return d[0];
                 })
-                .style("display", isLinear ? "none" : null) // hide if showing linear scale
+                // hide individual colour swatches if showing linear scale
+                .style("display", function(d) { return isLinear && d[1] !== colourAssign.get("undefinedLabel") ? "none" : null; })
             ;
             colourElems.select("text").text(function(d, i) {
                 return d[1];
@@ -693,7 +694,8 @@ CLMSUI.utils = {
                     .attr("x1", "0%")
                     .attr("x2", "0%")
                     .attr("y1", "0%")
-                    .attr("y2", "100%");
+                    .attr("y2", "100%")
+                ;
                 newGrad.selectAll("stop").data(domain)
                     .enter()
                     .append("stop")
@@ -702,7 +704,8 @@ CLMSUI.utils = {
                     })
                     .attr("stop-color", function(d, i) {
                         return colScale.range()[i];
-                    });
+                    })
+                ;
 
                 svgElem.selectAll("rect.gradientScale").remove();
 
@@ -712,7 +715,8 @@ CLMSUI.utils = {
                     .attr("y", heightScale.range()[0] + 5)
                     .attr("width", "1em")
                     .attr("height", heightScale.range()[1] - heightScale.range()[0])
-                    .attr("fill", "url(#" + gradID + ")");
+                    .attr("fill", "url(#" + gradID + ")")
+                ;
             }
             
             // add undefined category
@@ -753,7 +757,7 @@ CLMSUI.utils = {
         var pairUp = bbModelArray.map(function(model) {
             var modelJSON = model.toJSON();
             return [options.colour(modelJSON), options.label(modelJSON)];
-        })
+        });
 
         var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
         colourElems.exit().remove();
@@ -1071,7 +1075,7 @@ CLMSUI.utils = {
             var fileName = this.filenameStateString().substring(0, 240);
             // _.after means finalDownload only gets called after all canvases finished converting to svg images
             var finalDownload = _.after (d3canvases.size(), function() {
-                var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), detachedSVG);
+                var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), svgStrings[0]);
                 download(svgXML, "application/svg", fileName + ".svg");
                 self.removeKey();
             });
@@ -1270,13 +1274,29 @@ CLMSUI.utils = {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
             var total = d3.sum(counts);
+            var itemStr = matchLevel ? " Matches" : " Cross-Links";
+            var pairs = _.zip (labels, counts);
             var linkCountStr = counts.map(function(count, i) {
-                return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] ? labels[i] : "Unknown");
+                return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
             }, this);
-
-            var titleText = this.identifier + ": " + commaed(total) + (matchLevel ? " Matches - " : " Cross-Links - ") + linkCountStr.join(", ");
-
+            
+            var titleText = this.identifier + ": " + commaed(total) + itemStr + " - " + linkCountStr.join(", ");
             titleElem.text(titleText);
+            
+            var self = this;
+            titleElem.on("mouseenter", function(d) {
+                self.model.get("tooltipModel")
+                    .set("header", self.identifier+", "+total+itemStr)
+                    .set("contents", linkCountStr)
+                    .set("location", {
+                        pageX: d3.event.pageX,
+                        pageY: d3.event.pageY
+                    });
+                })
+                .on("mouseleave", function() {
+                    self.model.get("tooltipModel").set("contents", null);
+                })
+            ;
 
             return this;
         },
