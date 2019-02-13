@@ -336,24 +336,25 @@ CLMSUI.utils = {
         var destinationCanvasObj;
         var url;
         
+        var width = d3canvas.attr("width");
+        var height = d3canvas.attr("height");
+        
         svgImage.on ("load", function () {
-            // tidy up canvas and url
-            CLMSUI.utils.nullCanvasObj (destinationCanvasObj);
-            var DOMURL = URL || webkitURL || this;
-            DOMURL.revokeObjectURL (url);
-            
-            // do callback
-            callback (svgImage);
-        });
-        svgImage
-            .attr("width", d3canvas.attr("width"))
-            .attr("height", d3canvas.attr("height"))
+                // tidy up canvas and url
+                CLMSUI.utils.nullCanvasObj (destinationCanvasObj);
+                var DOMURL = URL || webkitURL || this;
+                DOMURL.revokeObjectURL (url);
+
+                // do callback
+                callback (svgImage);
+            })
+            .attr("width", width)
+            .attr("height", height)
             .attr("transform", d3canvas.style("transform"))
             .attr("xlink:href", function() {
                 // from https://stackoverflow.com/a/19539048/368214
                 // use dummy canvas and fill with background colour so exported png is not transparent
-                var width = d3canvas.attr("width");
-                var height = d3canvas.attr("height");
+
                 destinationCanvasObj = CLMSUI.utils.makeCanvas (width, height);
                 var destinationCanvas = destinationCanvasObj.canvas;
 

@@ -1105,13 +1105,17 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                     removeChildren: "svg.d3table-arrow,tfoot,input",
                 },
                 function(dataURL, size) {
-                    img.on ("load", function () {
-                        addDendro (size.width);
-                        var DOMURL = URL || webkitURL || this;
-                        DOMURL.revokeObjectURL (dataURL);
-                        self.downloadSVG(undefined, d3svg);
-                    });
-                    img.attr("xlink:href", dataURL);
+                    img
+                        .on ("load", function () {
+                            addDendro (size.width);
+                            var DOMURL = URL || webkitURL || this;
+                            DOMURL.revokeObjectURL (dataURL);
+                            self.downloadSVG(undefined, d3svg);
+                        })
+                        .attr("width", size.width || 0)
+                        .attr("height", size.height || 0)
+                        .attr("xlink:href", dataURL)
+                    ;
                 }
             );
         }
