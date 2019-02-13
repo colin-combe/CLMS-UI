@@ -520,7 +520,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                             // turn canvas to blob and download it as a png file
                             canvasObj.canvas.toBlob (function (newBlob) {
                                 if (newBlob) {
-                                    canvasObj.canvas = null;
+                                    CLMSUI.utils.nullCanvasObj (canvasObj);
                                     NGL.download(newBlob, self.filenameStateString() + ".png");
                                 }
                             }, 'image/png');

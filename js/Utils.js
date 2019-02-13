@@ -325,11 +325,24 @@ CLMSUI.utils = {
         var cd = canvasData.data;
         return {canvas: canvas, context: ctx, dataStructure: canvasData, d3canvas: d3canvas};
     },
+    
+    nullCanvasObj: function (canvasObj) {
+        canvasObj.canvas = null;
+        canvasObj.context = null;
+        canvasObj.dataStructure = null;
+    },
 
     drawCanvasToSVGImage: function(d3canvas, svgImage, callback) { // d3canvas is a canvas wrapped in a d3 selection
-        var destinationCanvas;
+        var destinationCanvasObj;
+        var url;
+        
         svgImage.on ("load", function () {
-            //destinationCanvas.dispose();
+            // tidy up canvas and url
+            CLMSUI.utils.nullCanvasObj (destinationCanvasObj);
+            var DOMURL = URL || webkitURL || this;
+            DOMURL.revokeObjectURL (url);
+            
+            // do callback
             callback (svgImage);
         });
         svgImage
@@ -339,8 +352,10 @@ CLMSUI.utils = {
             .attr("xlink:href", function() {
                 // from https://stackoverflow.com/a/19539048/368214
                 // use dummy canvas and fill with background colour so exported png is not transparent
-                var destinationCanvasObj = CLMSUI.utils.makeCanvas (d3canvas.attr("width"), d3canvas.attr("height"));
-                destinationCanvas = destinationCanvasObj.canvas;
+                var width = d3canvas.attr("width");
+                var height = d3canvas.attr("height");
+                destinationCanvasObj = CLMSUI.utils.makeCanvas (width, height);
+                var destinationCanvas = destinationCanvasObj.canvas;
 
                 //create a rectangle with the desired color
                 var background = d3canvas.style("background-color");
@@ -352,14 +367,14 @@ CLMSUI.utils = {
                     background = rgb.toString();
                 }
                 */
-                console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
+                console.log ("background", background, width, height);
                 destinationCanvasObj.context.fillStyle = background;
-                destinationCanvasObj.context.fillRect(0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
+                destinationCanvasObj.context.fillRect(0, 0, width, height);
 
                 //draw the original canvas onto the destination canvas
                 destinationCanvasObj.context.drawImage(d3canvas.node(), 0, 0);
 
-                var url = destinationCanvas.toDataURL("image/png");
+                url = destinationCanvas.toDataURL("image/png");
                 return url;
             })
         ;

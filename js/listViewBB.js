@@ -1090,13 +1090,14 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
         
         if (this.viewStateModel.get("heatMap")) {
-             var canvasObj = this.makeHeatMapCanvas();
-                d3.select("body").node().appendChild(canvasObj.canvas);
+            var canvasObj = this.makeHeatMapCanvas();
+            d3.select("body").node().appendChild(canvasObj.canvas);
             console.log ("canvasObj", canvasObj);
-             CLMSUI.utils.drawCanvasToSVGImage (canvasObj.d3canvas, img, function () {
+            CLMSUI.utils.drawCanvasToSVGImage (canvasObj.d3canvas, img, function () {
                  addDendro (canvasObj.canvas.getBoundingClientRect().width);
                  d3svg.node().appendChild (self.makeSVGTableHeaderGroup().node());
                  d3.select("body").node().removeChild(canvasObj.canvas);
+                CLMSUI.utils.nullCanvasObj (canvasObj); // release canvas data
                  self.downloadSVG(undefined, d3svg);
              });
         } else {
@@ -1106,6 +1107,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 function(dataURL, size) {
                     img.on ("load", function () {
                         addDendro (size.width);
+                        var DOMURL = URL || webkitURL || this;
+                        DOMURL.revokeObjectURL (dataURL);
                         self.downloadSVG(undefined, d3svg);
                     });
                     img.attr("xlink:href", dataURL);
