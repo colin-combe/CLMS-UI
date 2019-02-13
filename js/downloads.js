@@ -144,7 +144,10 @@ function download(content, contentType, fileName) {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            window.URL.revokeObjectURL(a.href);   // clear up url reference to blob so it can be g.c.'ed
         }
+        
+        blob = null;
     }
 
     //var fileType = fileName.split(".").slice(-1).pop() || "";	// fancy way of getting last element in array without lots of a = arr, a.length-1 etc
