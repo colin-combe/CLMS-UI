@@ -751,14 +751,15 @@ CLMSUI.modelUtils = {
         return matchChains[0] ? matchChains[0].name : undefined;
     },
     
-    makeSubIndexedChainMap: function(chainMap, subIndexingProperty) {
-        var subIndexedChainMap = {};
-        d3.entries(chainMap).forEach(function(proteinEntry) {
-            subIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) {
-                return d[subIndexingProperty];
-            }).entries(proteinEntry.value);
+    makeSubIndexedMap: function(mmap, subIndexingProperty) {
+        var subIndexedMap = {};
+        d3.entries(mmap).forEach(function(entry) {
+            subIndexedMap[entry.key] = d3.nest()
+                .key(function(d) { return d[subIndexingProperty];})
+                .entries(entry.value)
+            ;
         });
-        return subIndexedChainMap;
+        return subIndexedMap;
     },
     
     getRangedCAlphaResidueSelectionForChain: function(chainProxy) { // chainProxy is NGL Object

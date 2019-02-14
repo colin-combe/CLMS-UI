@@ -278,7 +278,7 @@ function callback (model) {
         };
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        var actualValue = CLMSUI.modelUtils.makeSubIndexedChainMap (data, "modelIndex");
+        var actualValue = CLMSUI.modelUtils.makeSubIndexedMap (data, "modelIndex");
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" when mapping from "+JSON.stringify(data));
 	});
     

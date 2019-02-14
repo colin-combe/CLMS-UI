@@ -73,6 +73,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var structureId = null;
         var residueDict = {};
         var linkList = [];
+        var halfLinkResidueList = [];  // residues where only one end of crosslink is within pdb
         var residueProxy1 = structure.getResidueProxy();
         var residueProxy2 = structure.getResidueProxy();
         var chainProxy = structure.getChainProxy();
@@ -115,7 +116,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         function makePDBIndexedResidues (perModelChainEntry, searchIndexResidue, protID) {
             var PDBResidues = perModelChainEntry.values.map (function (chainValue) {
                 var chainIndex = chainValue.index;
-                return {chainIndex: chainIndex, modelIndex: chainValue.modelIndex, seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex), true) - 1}; // residues are 0-indexed in NGL so -1
+                var alignID = CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
+                return {chainIndex: chainIndex, modelIndex: chainValue.modelIndex, seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, alignID, true) - 1}; // residues are 0-indexed in NGL so -1
             }).filter (function (datum) {
                return datum.seqIndex >= 0;
             });
@@ -134,15 +136,20 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var t = performance.now();
         var chainMap = this.get("chainMap");
         // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
-        var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedChainMap(chainMap, "modelIndex");
+        var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedMap(chainMap, "modelIndex");
+        
+        // d3.mapped and wrapped versions of chainMap and modelIndexedChainMap. Easier to use for some operations.
+        var chainValueMap = d3.map(); 
         var chainModelMapMap = d3.map();
-        var chainValueMap = d3.map();
-        d3.entries(chainMap).forEach (function (protEntry) { chainValueMap.set (protEntry.key, {values: protEntry.value}); });
+        d3.entries(chainMap).forEach (function (protEntry) { 
+            chainValueMap.set (protEntry.key, {values: protEntry.value}); 
+        });
         d3.entries(modelIndexedChainMap).forEach (function (protEntry) { 
             chainModelMapMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
         });
+
         var allowInterModelDistances = this.get("allowInterModelDistances");
-        console.log ("chainValueMap", chainValueMap, modelIndexedChainMap);
+        console.log ("chainValueMap", chainValueMap, chainModelMapMap, modelIndexedChainMap);
         var octAccessorObj = {
             id: function (d) { return d; },
             x: function (d) { return d.coords[0]; },
@@ -159,8 +166,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             var fromPerModelChains = allowInterModelDistances ? [chainValueMap.get(fromProtID)] : modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
+            var fromEmpty = _.isEmpty(fromPerModelChains);
+            var toEmpty = _.isEmpty(toPerModelChains);
             // Don't continue if neither end of crosslink within pdb
-            if (!_.isEmpty(fromPerModelChains) && !_.isEmpty(toPerModelChains)) {
+            if (!fromEmpty && !toEmpty) {
                 
                 // get a map (key -> value) of the toPerModelChains entries 
                 var toPerModelChainMap = chainModelMapMap.get (toProtID);
@@ -244,14 +253,26 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                                     }
                                 }, this);
                             }, this);
+                        } else {
+                            // one or more of the residues isn't within a pdb-indexed portion of the protein
+                            halfLinkResidueList.push.apply (halfLinkResidueList, fromPDBResidues);
+                            halfLinkResidueList.push.apply (halfLinkResidueList, toPDBResidues);
                         }
                     }
                 }, this);
+            } else if (!toEmpty || !fromEmpty) {    // only one end of link in a pdb-indexed protein
+                var toChains = chainValueMap.get (toProtID); 
+                var fromChains = chainValueMap.get (fromProtID); 
+                var fromPDBResidues = makePDBIndexedResidues (fromChains, xlink.fromResidue, fromProtID);
+                var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
+                halfLinkResidueList.push.apply (halfLinkResidueList, fromPDBResidues);
+                halfLinkResidueList.push.apply (halfLinkResidueList, toPDBResidues);
             }
         }, this);
 
         console.log ("TIME", (performance.now() - t) / 1000, "seconds");
         console.log("linklist", linkList.length, linkList);
+        console.log ("halfLink", halfLinkResidueList);
         return linkList;
     },
 
