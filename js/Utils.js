@@ -740,11 +740,6 @@ CLMSUI.utils = {
         }
     },
 
-    testColourKey: function() {
-        var svg = d3.select("body").append("svg").attr("class", "testTopLeft").style("width", "300px").style("height", "200px");
-        CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst, svg);
-    },
-
     updateAnnotationColourKey: function(bbModelArray, svgElem, myOptions) {
         var defaults = {
             colour: function(d) {
@@ -1036,7 +1031,7 @@ CLMSUI.utils = {
         _makeDetachedSVG : function (thisSVG) {
             var keyHeight = 0;
             if (this.options.exportKey) {
-                var svgKey = this.addKey({addTitle: this.options.exportTitle});
+                var svgKey = this.addKey({addOrigin: this.options.exportTitle});
                 keyHeight = svgKey.node().getBoundingClientRect().height + 10;
             }
             var gap = keyHeight;
@@ -1054,7 +1049,7 @@ CLMSUI.utils = {
                 detachedSVGD3.style("height", (height + gap) + "px"); // .style("height") returns "" - dunno why?
                 detachedSVGD3.select("svg").attr("y", gap+"px");
                 this.removeKey (detachedSVGD3); // remove key that's currently on top of svg
-                this.addKey ({addToSelection: detachedSVGD3, addTitle: this.options.exportTitle});    // and make a new one in the gap we just made
+                var svgKey = this.addKey ({addToSelection: detachedSVGD3, addOrigin: this.options.exportTitle});    // and make a new one in the gap we just made
             }
             
             return {detachedSVGD3: detachedSVGD3, allSVGs: svgStrings};
@@ -1119,9 +1114,16 @@ CLMSUI.utils = {
             options = options || {};
             var tempSVG = (options.addToSelection || d3.select(this.el).select("svg")).append("svg").attr("class", "tempKey");
             CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst, tempSVG);
-            if (options.addTitle) {
+            if (options.addOrigin) {
                 tempSVG.select("g.key").attr("transform", "translate(0,20)");
-                tempSVG.append("text").text(this.imageTitleString().substring(0,240)).attr("dy", "1em").attr("class", "imageTitle");
+                var link = this.model.get("filterModel") ? 
+                    tempSVG.append("a")
+                        .attr ("class", "imageOrigin")
+                        .attr ("xlink:href", this.model.get("filterModel").generateUrlString())
+                        .attr ("target", "_blank")
+                    : tempSVG
+                ;
+                link.append("text").text(this.imageOriginString().substring(0,240)).attr("dy", "1em").attr("class", "imageOrigin");
             }
             return tempSVG;
         },
@@ -1328,7 +1330,7 @@ CLMSUI.utils = {
         },
         
         // Returns a useful image title string - omit type of view as user will see it
-        imageTitleString: function() {
+        imageOriginString: function() {
             return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + CLMSUI.utils.filterStateToString());
         },
     }, {

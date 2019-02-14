@@ -715,8 +715,12 @@ svg.tempKey {
     font-size: 12px;
 }
 
-svg.tempKey text.imageTitle {
+svg.tempKey text.imageOrigin {
     font-size: 8px;
+}
+
+svg.tempKey a.imageOrigin text {
+    fill: blue;
 }
 
 svg.tempKey .keyTitle {
