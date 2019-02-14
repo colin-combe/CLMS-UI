@@ -502,7 +502,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         canvasObj.context.drawImage(img, 0, gap);
 
                         // make key svg and turn it into a blob
-                        var tempSVG = self.addKey ({addToSelection: d3.select(self.el), addTitle: self.options.exportTitle});
+                        var tempSVG = self.addKey ({addToSelection: d3.select(self.el), addOrigin: self.options.exportTitle});
                         var svgString = new XMLSerializer().serializeToString(tempSVG.node());
                         var keyblob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
 
