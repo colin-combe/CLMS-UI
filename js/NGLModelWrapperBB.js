@@ -314,6 +314,13 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             }, this) : [];
         }
     },
+    
+    getLinksByResidueID: function (residueId) {
+        var linkIds = this._residueIdToLinkIds[residueId];
+        return linkIds ? linkIds.map(function(l) {
+            return this._linkIdMap[l];
+        }, this) : [];
+    },
 
     getResidues: function(link) {
         if (link === undefined) {
