@@ -993,7 +993,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
         var add = (false || (pickingData && (pickingData.ctrlKey || pickingData.shiftKey))) && (pickType === 'selection'); // should selection add to current selection?
 
-        console.log("pickingData", pickingData, pickType, add);
+        //console.log("pickingData", pickingData, pickType, add);
 
         if (pickingData) {
             var atom = pickingData.atom;
