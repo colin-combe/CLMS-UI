@@ -91,14 +91,14 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
-        //if (CLMSUI.loggedIn == true) {
-            buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
+        buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
                 "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
-        //}
 
         buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
             "</span>" +
-            "<button class='btn btn-1 btn-1a downloadButton'>IMAGE AS SVG</button>";
+            "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
+
+        buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXinetLabels' checked></label>"
 
         mainDivSel.html(
             buttonHtml
