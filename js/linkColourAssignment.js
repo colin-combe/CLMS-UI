@@ -7,6 +7,8 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
         longDescription: undefined,
         type: "linear",
         fixed: false,
+        undefinedColour: "#aaa",
+        undefinedLabel: "Unknown",
     },
     setDomain: function(newDomain) {
         this.get("colScale").domain(newDomain);
@@ -33,10 +35,10 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
     },
     getColour: function(crossLink) {
         var val = this.getValue(crossLink);
-        return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
+        return val !== undefined ? this.get("colScale")(val) : this.get("undefinedColour");
     },
     getColourByValue: function(val) {
-        return val !== undefined ? this.get("colScale")(val) : this.undefinedColour;
+        return val !== undefined ? this.get("colScale")(val) : this.get("undefinedColour");
     },
     triggerColourModelChanged: function(obj) {
         this.trigger("colourModelChanged", obj);
@@ -47,7 +49,6 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
     isCategorical: function() {
         return this.get("type") !== "linear";
     },
-    undefinedColour: "#aaa",
 });
 
 CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend({
@@ -411,10 +412,10 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
         // if data is just a list of colours make this colour scale just return the value for getColour
         newColourModel.getColour = function(crossLink) {
             var val = this.getValue(crossLink);
-            return val !== undefined ? val : this.undefinedColour;
+            return val !== undefined ? val : this.get("undefinedColour");
         };
         newColourModel.getColourByValue = function(val) {
-            return val !== undefined ? val : this.undefinedColour;
+            return val !== undefined ? val : this.get("undefinedColour");
         };
         newColourModel
             .set("fixed", true)

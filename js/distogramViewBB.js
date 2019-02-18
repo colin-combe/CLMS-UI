@@ -33,8 +33,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         attributeOptions: null,
         xStandardTickFormat: d3.format(","),
         randomScope: "All",
-        unknownID: "Unknown",
         selectedColour: "#ff0",
+        exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function(viewOptions) {
@@ -430,7 +431,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Add sub-series data
             // split TT list into sublists for length
-            var splitSeries = colModel.get("labels").range().concat([this.options.unknownID]).map(function(name) {
+            var splitSeries = colModel.get("labels").range().concat([colModel.get("undefinedLabel")]).map(function(name) {
                 return {
                     name: name,
                     linkValues: []
@@ -498,8 +499,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             }
 
             var redoChart = function() {
-                // Remove 'Unknown' category if empty
-                removeSeries.call(this, this.options.unknownID, true);
+                // Remove 'Undefined' category if empty
+                removeSeries.call(this, colModel.get("undefinedLabel"), true);
                 removeSeries.call(this, "Selected", true);
 
                 var currentlyLoaded = _.pluck(this.chart.data(), "id");
@@ -540,7 +541,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }
 
                 this
-                    .makeChartTitle(subSeriesLengths, colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption("X").matchLevel);
+                    .makeChartTitle(subSeriesLengths, colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption("X").matchLevel)
+                ;
 
                 return {
                     unload: unload,
@@ -902,7 +904,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         seriesNames.forEach(function(seriesName, i) {
             colMap[seriesName] = colRange[i];
         });
-        colMap[this.options.unknownID] = colModel.undefinedColour;
+        colMap[colModel.get("undefinedLabel")] = colModel.get("undefinedColour");
         return colMap;
     },
 

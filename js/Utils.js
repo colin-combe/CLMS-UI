@@ -325,22 +325,38 @@ CLMSUI.utils = {
         var cd = canvasData.data;
         return {canvas: canvas, context: ctx, dataStructure: canvasData, d3canvas: d3canvas};
     },
+    
+    nullCanvasObj: function (canvasObj) {
+        canvasObj.canvas = null;
+        canvasObj.context = null;
+        canvasObj.dataStructure = null;
+    },
 
     drawCanvasToSVGImage: function(d3canvas, svgImage, callback) { // d3canvas is a canvas wrapped in a d3 selection
-        var destinationCanvas;
+        var destinationCanvasObj;
+        var url;
+        
+        var width = d3canvas.attr("width");
+        var height = d3canvas.attr("height");
+        
         svgImage.on ("load", function () {
-            //destinationCanvas.dispose();
-            callback (svgImage);
-        });
-        svgImage
-            .attr("width", d3canvas.attr("width"))
-            .attr("height", d3canvas.attr("height"))
+                // tidy up canvas and url
+                CLMSUI.utils.nullCanvasObj (destinationCanvasObj);
+                var DOMURL = URL || webkitURL || this;
+                DOMURL.revokeObjectURL (url);
+
+                // do callback
+                callback (svgImage);
+            })
+            .attr("width", width)
+            .attr("height", height)
             .attr("transform", d3canvas.style("transform"))
             .attr("xlink:href", function() {
                 // from https://stackoverflow.com/a/19539048/368214
                 // use dummy canvas and fill with background colour so exported png is not transparent
-                var destinationCanvasObj = CLMSUI.utils.makeCanvas (d3canvas.attr("width"), d3canvas.attr("height"));
-                destinationCanvas = destinationCanvasObj.canvas;
+
+                destinationCanvasObj = CLMSUI.utils.makeCanvas (width, height);
+                var destinationCanvas = destinationCanvasObj.canvas;
 
                 //create a rectangle with the desired color
                 var background = d3canvas.style("background-color");
@@ -352,14 +368,14 @@ CLMSUI.utils = {
                     background = rgb.toString();
                 }
                 */
-                console.log ("background", background, d3canvas.attr("width"), d3canvas.attr("height"));
+                console.log ("background", background, width, height);
                 destinationCanvasObj.context.fillStyle = background;
-                destinationCanvasObj.context.fillRect(0, 0, d3canvas.attr("width"), d3canvas.attr("height"));
+                destinationCanvasObj.context.fillRect(0, 0, width, height);
 
                 //draw the original canvas onto the destination canvas
                 destinationCanvasObj.context.drawImage(d3canvas.node(), 0, 0);
 
-                var url = destinationCanvas.toDataURL("image/png");
+                url = destinationCanvas.toDataURL("image/png");
                 return url;
             })
         ;
@@ -624,7 +640,9 @@ CLMSUI.utils = {
         if (colourAssign) {
             keyGroup.select("text.keyTitle")
                 .attr("y", 12)
-                .text("Key: " + colourAssign.get("title"));
+                .text("Key: " + colourAssign.get("title"))
+            ;
+            console.log ("colour", colourAssign);
 
             var colScale = colourAssign.get("colScale");
             var labels = colourAssign.get("labels");
@@ -649,6 +667,8 @@ CLMSUI.utils = {
             pairUp.forEach(function(pair, i) {
                 pair[2] = isLinear ? heightScale(domain[i]) : 3 + ((i + 1) * 15); // y-position of colour swatches and labels
             });
+            
+            pairUp.push ([colourAssign.get("undefinedColour"), colourAssign.get("undefinedLabel"), _.last(pairUp)[2] + 15]);
 
             var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
             colourElems.exit().remove();
@@ -670,7 +690,8 @@ CLMSUI.utils = {
                 .style("fill", function(d, i) {
                     return d[0];
                 })
-                .style("display", isLinear ? "none" : null) // hide if showing linear scale
+                // hide individual colour swatches if showing linear scale
+                .style("display", function(d) { return isLinear && d[1] !== colourAssign.get("undefinedLabel") ? "none" : null; })
             ;
             colourElems.select("text").text(function(d, i) {
                 return d[1];
@@ -689,7 +710,8 @@ CLMSUI.utils = {
                     .attr("x1", "0%")
                     .attr("x2", "0%")
                     .attr("y1", "0%")
-                    .attr("y2", "100%");
+                    .attr("y2", "100%")
+                ;
                 newGrad.selectAll("stop").data(domain)
                     .enter()
                     .append("stop")
@@ -698,7 +720,8 @@ CLMSUI.utils = {
                     })
                     .attr("stop-color", function(d, i) {
                         return colScale.range()[i];
-                    });
+                    })
+                ;
 
                 svgElem.selectAll("rect.gradientScale").remove();
 
@@ -708,14 +731,13 @@ CLMSUI.utils = {
                     .attr("y", heightScale.range()[0] + 5)
                     .attr("width", "1em")
                     .attr("height", heightScale.range()[1] - heightScale.range()[0])
-                    .attr("fill", "url(#" + gradID + ")");
+                    .attr("fill", "url(#" + gradID + ")")
+                ;
             }
+            
+            // add undefined category
+            
         }
-    },
-
-    testColourKey: function() {
-        var svg = d3.select("body").append("svg").attr("class", "testTopLeft").style("width", "300px").style("height", "200px");
-        CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst, svg);
     },
 
     updateAnnotationColourKey: function(bbModelArray, svgElem, myOptions) {
@@ -746,7 +768,7 @@ CLMSUI.utils = {
         var pairUp = bbModelArray.map(function(model) {
             var modelJSON = model.toJSON();
             return [options.colour(modelJSON), options.label(modelJSON)];
-        })
+        });
 
         var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
         colourElems.exit().remove();
@@ -1005,17 +1027,46 @@ CLMSUI.utils = {
         relayout: function() {
             return this;
         },
-
-        // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
-        downloadSVG: function(event, thisSVG) {
+        
+        _makeDetachedSVG : function (thisSVG) {
+            var keyHeight = 0;
+            if (this.options.exportKey) {
+                var svgKey = this.addKey({addOrigin: this.options.exportTitle});
+                keyHeight = svgKey.node().getBoundingClientRect().height + 10;
+            }
+            var gap = keyHeight;
+            
             var svgSel = thisSVG || d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture(svgArr);
+            var detachedSVG = svgStrings[0];
+            var detachedSVGD3 = d3.select(detachedSVG);
+            var height = parseFloat(detachedSVGD3.attr("height"));
+            
+            if (keyHeight) {
+                // make a gap to reposition the key into
+                detachedSVGD3.attr("height", (height + gap) + "px");
+                detachedSVGD3.style("height", (height + gap) + "px"); // .style("height") returns "" - dunno why?
+                detachedSVGD3.select("svg").attr("y", gap+"px");
+                this.removeKey (detachedSVGD3); // remove key that's currently on top of svg
+                var svgKey = this.addKey ({addToSelection: detachedSVGD3, addOrigin: this.options.exportTitle});    // and make a new one in the gap we just made
+            }
+            
+            return {detachedSVGD3: detachedSVGD3, allSVGs: svgStrings};
+        },
+
+        // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
+        downloadSVG: function(event, thisSVG) {
+            var detachedSVG = this._makeDetachedSVG (thisSVG);
+            var detachedSVGD3 = detachedSVG.detachedSVGD3;
+            var svgStrings = detachedSVG.allSVGs;
+            
             var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), svgStrings[0]);
             //console.log ("xml", svgXML);
 
             var fileName = this.filenameStateString().substring(0, 240);
             download(svgXML, 'application/svg', fileName + ".svg");
+            this.removeKey();
         },
 
         canvasImageParent: "svg",
@@ -1026,19 +1077,18 @@ CLMSUI.utils = {
         And add an extra css rule after the style element's already been generated to try and stop the image anti-aliasing
         */
         downloadSVGWithCanvas: function() {
-            var svgSel = d3.select(this.el).selectAll("svg");
-            var svgArr = [svgSel.node()];
-            var svgStrings = CLMSUI.svgUtils.capture(svgArr);
-            var detachedSVG = svgStrings[0];
-            var detachedSVGD3 = d3.select(detachedSVG);
-            var self = this;
+            var detachedSVG = this._makeDetachedSVG();
+            var detachedSVGD3 = detachedSVG.detachedSVGD3;
+            var svgStrings = detachedSVG.allSVGs;
 
+            var self = this;
             var d3canvases = d3.select(this.el).selectAll("canvas.toSvgImage");
-            var fileName = this.filenameStateString() + ".svg";
+            var fileName = this.filenameStateString().substring(0, 240);
             // _.after means finalDownload only gets called after all canvases finished converting to svg images
             var finalDownload = _.after (d3canvases.size(), function() {
-                var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), detachedSVG);
-                download(svgXML, "application/svg", fileName);
+                var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), svgStrings[0]);
+                download(svgXML, "application/svg", fileName + ".svg");
+                self.removeKey();
             });
             
             d3canvases.each (function (d) {
@@ -1058,6 +1108,28 @@ CLMSUI.utils = {
                 // Now convert the canvas and its data to the image element we just added and download the whole svg when done
                 CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, finalDownload);
             });
+        },
+        
+        addKey: function (options) {
+            options = options || {};
+            var tempSVG = (options.addToSelection || d3.select(this.el).select("svg")).append("svg").attr("class", "tempKey");
+            CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst, tempSVG);
+            if (options.addOrigin) {
+                tempSVG.select("g.key").attr("transform", "translate(0,20)");
+                var link = this.model.get("filterModel") ? 
+                    tempSVG.append("a")
+                        .attr ("class", "imageOrigin")
+                        .attr ("xlink:href", this.model.get("filterModel").generateUrlString())
+                        .attr ("target", "_blank")
+                    : tempSVG
+                ;
+                link.append("text").text(this.imageOriginString().substring(0,240)).attr("dy", "1em").attr("class", "imageOrigin");
+            }
+            return tempSVG;
+        },
+        
+        removeKey: function (d3Sel) {
+            (d3Sel || d3.select(this.el)).selectAll(".tempKey").remove();
         },
 
         getHTMLAsDataURL: function(d3Elem, options, callbackFunc) {
@@ -1220,13 +1292,29 @@ CLMSUI.utils = {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
             var total = d3.sum(counts);
+            var itemStr = matchLevel ? " Matches" : " Cross-Links";
+            var pairs = _.zip (labels, counts);
             var linkCountStr = counts.map(function(count, i) {
-                return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] ? labels[i] : "Unknown");
+                return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
             }, this);
-
-            var titleText = this.identifier + ": " + commaed(total) + (matchLevel ? " Matches - " : " Cross-Links - ") + linkCountStr.join(", ");
-
+            
+            var titleText = this.identifier + ": " + commaed(total) + itemStr + " - " + linkCountStr.join(", ");
             titleElem.text(titleText);
+            
+            var self = this;
+            titleElem.on("mouseenter", function(d) {
+                self.model.get("tooltipModel")
+                    .set("header", self.identifier+", "+total+itemStr)
+                    .set("contents", linkCountStr)
+                    .set("location", {
+                        pageX: d3.event.pageX,
+                        pageY: d3.event.pageY
+                    });
+                })
+                .on("mouseleave", function() {
+                    self.model.get("tooltipModel").set("contents", null);
+                })
+            ;
 
             return this;
         },
@@ -1239,6 +1327,11 @@ CLMSUI.utils = {
         // Returns a useful filename given the view and filters current states
         filenameStateString: function() {
             return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "--" + CLMSUI.utils.filterStateToString());
+        },
+        
+        // Returns a useful image title string - omit type of view as user will see it
+        imageOriginString: function() {
+            return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + CLMSUI.utils.filterStateToString());
         },
     }, {
         staticLastTopID: 1, // stores id of last view which was 'brought to top' as class property. So I don't need to do expensive DOM operations sometimes.

@@ -256,8 +256,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             var newValue = evt.target.value;
             var rowData = d3.select(evt.target.parentNode.parentNode).datum();
             var i = _.last(rowData);
+            
             var colScale = colourAssign.get("colScale");
-            colScale.range()[i] = newValue;
+            var colScaleRange = colScale.range();
+            if (rowData[1] === colourAssign.get("undefinedLabel")) {
+                colourAssign.set("undefinedColour", newValue);
+            } else {
+                colScaleRange[i] = newValue;
+            }
             // this will fire a change event for this colour model
             colourAssign.setRange(colScale.range());
         }
@@ -284,8 +290,11 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (colourAssign) {
             var colScale = colourAssign.get("colScale");
 
-            colourSection[0].rows = colourAssign.get("labels").range().map(function(val, i) {
-                var rgbCol = colScale.range()[i];
+            var labels = colourAssign.get("labels").range().concat(colourAssign.get("undefinedLabel"));
+            var colScaleRange = colScale.range().concat(colourAssign.get("undefinedColour"));
+            
+            colourSection[0].rows = labels.map(function(val, i) {
+                var rgbCol = colScaleRange[i];
                 var rgbHex = d3.rgb(rgbCol).toString();
                 var span = "<input type='color' value='" + rgbHex + "' title='Press to change colour for " + val + "'/>";
                 return [span, val, i];
@@ -364,7 +373,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     downloadKey: function() {
-        var tempSVG = d3.select(this.el).append("svg").attr("class", "temp");
+        var tempSVG = d3.select(this.el).append("svg").attr("class", "tempKey");
         CLMSUI.utils.updateColourKey(this.model, tempSVG);
         this.downloadSVG(null, tempSVG);
         tempSVG.remove();
