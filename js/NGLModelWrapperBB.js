@@ -173,7 +173,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
                     var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
                     
-                    console.log ("XLINK CHAINS", fromPerModelChains, toPerModelChains);
+                    //console.log ("XLINK CHAINS", fromPerModelChains, toPerModelChains);
                     
                     if (toChains) { // don't proceed if inter model distances barred and no 'to' chains within current model
                         

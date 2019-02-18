@@ -38,6 +38,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         chainLabelSetting: "Short",
         defaultAssembly: "default",
         allowInterModelDistances: false,
+        exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function (viewOptions) {
@@ -476,14 +478,59 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // https://github.com/arose/ngl/issues/33
         var stageModel = this.model.get("stageModel");
         if (stageModel) {
+            var stage = stageModel.get("structureComp").stage;
             var self = this;
-            stageModel.get("structureComp").stage.makeImage({
-                factor: 4, // make it big so it can be used for piccy
+            var scale = 4;
+            
+            stage.makeImage({
+                factor: scale, // make it big so it can be used for piccy
                 antialias: true,
                 trim: true, // https://github.com/arose/ngl/issues/188
                 transparent: true
             }).then(function(blob) {
-                NGL.download(blob, self.filenameStateString() + ".png");
+                // All following to take NGL generated canvas blob and add a key to it...
+                // make fresh canvas
+                if (self.options.exportKey) {
+                    var gap = 50;
+                    var canvasObj = CLMSUI.utils.makeCanvas (stage.viewer.width * scale, (stage.viewer.height * scale) + gap);
+
+                    // draw blob as image to this canvas
+                    var DOMURL = URL || webkitURL || window;
+                    var url = DOMURL.createObjectURL(blob);
+                    var img = new Image();
+                    img.onload = function() {
+                        canvasObj.context.drawImage(img, 0, gap);
+
+                        // make key svg and turn it into a blob
+                        var tempSVG = self.addKey ({addToSelection: d3.select(self.el), addOrigin: self.options.exportTitle});
+                        var svgString = new XMLSerializer().serializeToString(tempSVG.node());
+                        var keyblob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+
+                        // add the key blob as an image to canvas
+                        var keyurl = DOMURL.createObjectURL(keyblob);
+                        var keyimg = new Image();
+                        keyimg.onload = function() {
+                            canvasObj.context.drawImage(keyimg, 0, 0);
+
+                            // remove / revoke all the intermediate stuff
+                            DOMURL.revokeObjectURL(url);
+                            DOMURL.revokeObjectURL(keyurl);
+                            self.removeKey();
+
+                            // turn canvas to blob and download it as a png file
+                            canvasObj.canvas.toBlob (function (newBlob) {
+                                if (newBlob) {
+                                    CLMSUI.utils.nullCanvasObj (canvasObj);
+                                    NGL.download(newBlob, self.filenameStateString() + ".png");
+                                }
+                            }, 'image/png');
+                        };
+                        keyimg.src = keyurl;
+                    };
+                    img.src = url;
+                } else {
+                    NGL.download(blob, self.filenameStateString() + ".png");
+                }
             });
         }
         return this;

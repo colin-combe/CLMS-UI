@@ -1,11 +1,22 @@
 .alignView {
     font-size: 1em;
     width: auto;
-    height: auto;
-    overflow: x-auto;
+    height: 100%;
+    overflow: auto;
 	position: relative;
     cursor: pointer;
 	border-top: 0.5em solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.alignView > * {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.alignView .proteinName {
+    font-weight: bold;
 }
 
 DIV.tableWrapper TABLE {

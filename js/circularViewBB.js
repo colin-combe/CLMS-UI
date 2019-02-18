@@ -146,6 +146,8 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         sort: "alpha",
         sortDir: 1,
         showLinkless: true,
+        exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function(viewOptions) {
