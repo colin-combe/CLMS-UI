@@ -44,7 +44,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                     if(xmlhttp.responseText == "false"){
-                        alert("You must be logged in to save layout. A new tab will open for you to log in, you can the return here and Save.")
+                        alert("You must be logged in to save layout. A new tab will open for you to log in, you can then return here and Save.")
                         window.open("../userGUI/userLogin.html", "_blank");
                     } else {
                         var callback = function(layoutJson) {
