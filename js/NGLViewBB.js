@@ -238,19 +238,31 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         // Residue colour scheme dropdown
-        var externalSchemeID = NGL.ColormakerRegistry.addScheme (function () {
-            this.atomColor = function( atom ){
-                var linkCount = self.xlRepr.crosslinkData.getLinksByResidueID (self.origResidueIds[atom.residueId]);
-                return linkCount === 0 ? 0x0000FF : 0x00FF00;
-            };
-        }, "externalAS");
         NGL.ColormakerRegistry.add ("external", function () {
-            this.atomColor = function( atom ){
-                var linkCount = self.xlRepr.crosslinkData.getLinksByResidueID (self.origResidueIds[atom.residueId]);
-                return linkCount === 0 ? 0x0000FF : 0x00FF00;
+            this.lastResidueIndex = null;
+            this.lastColour = null;
+            this.atomColor = function (atom) {
+                var arindex = atom.residueIndex;
+                if (this.lastResidueIndex === arindex) {    // saves recalculating, as colour is per residue
+                    return this.lastColour;
+                }
+                this.lastResidueIndex = arindex;
+                var residueID = self.xlRepr.origResidueIds[arindex];
+                //if (atom.residueIndex > 576 && residueID) {
+                //    console.log ("sss", atom, atom.residueIndex, atom.resno, self.xlRepr.origResidueIds);
+                //}
+                if (residueID !== undefined) {
+                    var linkCount = self.xlRepr.crosslinkData.getLinksByResidueID (residueID);
+                    //console.log ("lk", linkCount, self.xlRepr.origResidueIds, arindex);
+                    this.lastColour = linkCount.length === 0 ? 0x0000FF : 0x00FF00;
+                } else {
+                    this.lastColour = "0xaaaaaa";
+                }
+                //console.log ("rid", arindex, this.lastColour);
+                return this.lastColour;
             };
+            this.filterSensitive = true;
         });
-        console.log ("externalSchemeID", externalSchemeID);
         
         var allColourSchemes = d3.values(NGL.ColormakerRegistry.getSchemes());
         var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "densityfit", "chainid", "randomcoilindex"];
@@ -267,15 +279,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             entityindex: "Entity Index",
             entitytype: "Entity Type",
             partialcharge: "Partial Charge",
+            external: "External Cross-Links",
         };
-        aliases["external"] = "External Cross-Links";
         var labellabel = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference(allColourSchemes, ignoreColourSchemes);
 
         var colourChangeFunc = function() {
             if (self.xlRepr) {
                 var value = d3.event.target.value;
-                console.log ("VALUE", value);
                 var schemeObj = {
                     colorScheme: value || "uniform",
                     colorScale: undefined,
@@ -289,9 +300,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         scheme: schemeObj.colorScheme,
                         structure: structure
                     });
+                    self.options.subColourScheme = scheme;
+
                     var newSchemeClass = function(params) {
                         this.subScheme = scheme; //params.subScheme;
-                        console.log ("SSSS", this.subscheme);
                         this.greyness = 0.6;
 
                         this.atomColor = function(a) {
@@ -308,17 +320,18 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     };
 
                     schemeObj.colorScheme = NGL.ColormakerRegistry.addScheme(newSchemeClass, "custom");
+                    console.log ("ssss", schemeObj.colorScheme);
                 }
 
                 self.options.colourScheme = schemeObj.colorScheme;
-                self.xlRepr.updateOptions(self.options, ["colourScheme"]);
+                self.xlRepr.updateOptions(self.options, ["colourScheme", "subColourScheme"]);
 
                 self.xlRepr.resRepr.setParameters(schemeObj);
                 self.xlRepr.sstrucRepr.setParameters(schemeObj);
                 self.xlRepr.labelRepr.setParameters(labellabel.has(self.options.colourScheme) ? schemeObj : {
                     colorScheme: "uniform"
                 });
-                console.log ("lab el rep", self.xlRepr.labelRepr);
+                console.log ("label rep", self.xlRepr.labelRepr);
             }
         };
 
@@ -346,7 +359,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.chartDiv.append("div").attr("class", "overlayInfo").html("No PDB File Loaded");
 
         this.listenTo(this.model.get("filterModel"), "change", this.showFiltered); // any property changing in the filter model means rerendering this view
-        this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", this.rerenderColours); // if colour model changes internally, or is swapped for new one
+        this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function () {
+            this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.linkRepr, colourScheme: this.xlRepr.colorOptions.linkColourScheme} : {nglRep: null, colourSchcme: null}]);
+        }); // if colour model changes internally, or is swapped for new one
         this.listenTo(this.model, "change:selection", this.showSelectedLinks);
         this.listenTo(this.model, "change:highlights", this.showHighlightedLinks);
 
@@ -627,14 +642,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    rerenderColours: function() {
+    rerenderColourSchemes: function (repSchemePairs) {
         if (this.xlRepr && this.isVisible()) {
             CLMSUI.utils.xilog("rerendering ngl");
-            // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
-            this.xlRepr.linkRepr.update({
-                color: this.xlRepr.colorOptions.linkColourScheme
-            });
-            this.xlRepr.linkRepr.repr.viewer.requestRender();
+            this.xlRepr.rerenderColourSchemes (repSchemePairs);
         }
         return this;
     },
@@ -750,7 +761,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             ._initStructureRepr()
             ._initLinkRepr()
             ._initLabelRepr()
-            .updateAssemblyType();
+            .updateAssemblyType()
+        ;
         this.stage.autoView();
     },
 
@@ -786,8 +798,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     updateAssemblyType: function(assemblyType) {
-        assemblyType = assemblyType || this.options.defaultAssembly;
-        this.structureComp.setDefaultAssembly(assemblyType);
+        this.structureComp.setDefaultAssembly (assemblyType || this.options.defaultAssembly);
         return this;
     },
 
@@ -807,7 +818,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             name: "sstruc",
             opacity: 0.67,
             side: "front",
-            sele: chainSelector
+            sele: chainSelector,
         });
 
         return this;
@@ -977,6 +988,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         return this;
     },
+    
+    rerenderColourSchemes: function (repSchemePairs) {
+        repSchemePairs.forEach (function (repSchemePair) {
+            // using update dodges setParameters not firing a redraw if param is the same (i.e. a colour entry has changed in the existing scheme)
+            //console.log ("lssss", this.xlRepr.colorOptions.linkColourScheme);
+            var nglRep = repSchemePair.nglRep;
+            nglRep.update ({color: repSchemePair.colourScheme});
+            if (repSchemePair.immediateUpdate !== false) {
+                console.log ("viewer", nglRep.repr.viewer);
+                nglRep.repr.viewer.requestRender();
+            }
+        });
+    },
 
     _highlightPicking: function(pickingData) {
         this._handlePicking(pickingData, "highlights", true);
@@ -1123,13 +1147,25 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.defaultDisplayedProteins();
 
         var links = this.crosslinkData.getLinks();
-
         this
             .setDisplayedResidues(this.crosslinkData.getResidues())
             .setSelectedResidues([])
             .setDisplayedLinks(links)
             .setSelectedLinks(links)
         ;
+        
+        console.log ("cs", this.options.colourScheme, this, arguments);
+        console.log ("sss", this.sstrucRepr, this.sstrucRepr.getParameters(), this.options.subColourScheme);
+        var subScheme = this.options.subColourScheme || {};
+        if (subScheme.filterSensitive) {
+            console.log ("recolour structure");
+            //this.sstrucRepr.update();
+            //this.sstrucRepr.setParameters ({colorScheme: this.options.colourScheme});
+            this.rerenderColourSchemes ([
+                {nglRep: this.sstrucRepr, colourScheme: this.options.colourScheme, immediateUpdate: false},
+                {nglRep: this.resRepr, colourScheme: this.options.colourScheme, immediateUpdate: false},
+            ]);
+        }
     },
 
     defaultDisplayedProteins: function(getSelectionOnly) {
@@ -1156,7 +1192,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     setDisplayedResidues: function(residues) {
         var a = performance.now();
-        this.setResidues(residues, this.resRepr);
+        this.setResidues(residues, this.resRepr, true);
         CLMSUI.utils.xilog("set displayed residues, time", performance.now() - a);
         return this;
     },
@@ -1166,12 +1202,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this.setResidues(residues, this.resEmphRepr);
     },
 
-    setResidues: function(residues, residueRepr) {
+    setResidues: function(residues, residueRepr, resetIDMap) {
         var availableResidues = this._getAvailableResidues(residues);
-        availableResidues.forEach(function (robj) {
-            this.origResidueIds[robj.resindex] = robj.residueId;
-        }, this);
-        console.log ("aaaa", this.origResidueIds);
+        if (resetIDMap) {
+            this.origResidueIds = {};
+            availableResidues.forEach(function (robj) {
+                this.origResidueIds[robj.globalIndex] = robj.residueId;
+            }, this);
+            console.log ("aaaa", this.origResidueIds);
+        }
         residueRepr.setSelection(
             this.crosslinkData.getSelectionFromResidueList(availableResidues)
         );
