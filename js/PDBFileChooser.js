@@ -148,9 +148,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.utils.addMultipleSelectControls({
             addToElem: parentElem,
             selectList: ["Proteins"],
-            optionList: proteins.filter(function(prot) {
-                return !prot.is_decoy;
-            }),
+            optionList: CLMSUI.modelUtils.filterOutDecoyInteractors (proteins),
             keepOldOptions: false,
             selectLabelFunc: function() {
                 return "Select Protein for EBI Sequence Search ►";

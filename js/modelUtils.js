@@ -38,6 +38,10 @@ CLMSUI.modelUtils = {
     getDirectionalResidueType: function(xlink, getTo, seqAlignFunc) {
         return CLMSUI.modelUtils.getResidueType(getTo ? xlink.toProtein : xlink.fromProtein, getTo ? xlink.toResidue : xlink.fromResidue, seqAlignFunc);
     },
+    
+    filterOutDecoyInteractors: function (interactors) {
+        return interactors.filter (function (i) { return !i.is_decoy; });
+    },
 
     makeTooltipContents: {
         maxRows: 25,
@@ -491,9 +495,7 @@ CLMSUI.modelUtils = {
                     var mapArr = CLMS.arrayFromMapValues(map);
 
                     if (callback) {
-                        var interactors = interactorArr.filter(function(i) {
-                            return !i.is_decoy;
-                        });
+                        var interactors = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorArr);
 
                         mapArr.forEach(function(mapping) {
                             var dotIndex = mapping.pdb.indexOf(".");
@@ -526,13 +528,11 @@ CLMSUI.modelUtils = {
 
     // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline.
     matchSequencesToExistingProteins: function(protAlignCollection, sequenceObjs, proteins, extractFunc) {
-        proteins = proteins
-            .filter(function(protein) {
-                return !protein.is_decoy;
-            })
+        proteins = CLMSUI.modelUtils.filterOutDecoyInteractors (proteins)
             .filter(function(protein) {
                 return protAlignCollection.get(protein.id);
-            });
+            })
+        ;
         var matchMatrix = {};
 		var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
 		
@@ -679,17 +679,14 @@ CLMSUI.modelUtils = {
         return [];
     },
 
-    // interactorMap can also now be an array
-    getLegalAccessionIDs: function(interactorMap) {
+    // interactorCollection can be map or array
+    getLegalAccessionIDs: function(interactorCollection) {
         var ids = [];
-        if (interactorMap) {
-            if (interactorMap.length === undefined) {
-                interactorMap = CLMS.arrayFromMapValues(interactorMap);
+        if (interactorCollection) {
+            if (interactorCollection.length === undefined) {
+                interactorCollection = CLMS.arrayFromMapValues(interactorCollection);
             }
-            ids = interactorMap
-                .filter(function(prot) {
-                    return !prot.is_decoy;
-                })
+            ids = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorCollection)
                 .map(function(prot) {
                     return prot.accession;
                 })
