@@ -79,7 +79,6 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
 
     update: function() {
         var self = this;
-        console.log ("UPDATE THIS", this);
         if (this.collection) {
             var lastCat = null;
             var adata = [];

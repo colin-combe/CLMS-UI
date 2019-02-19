@@ -127,75 +127,75 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
         this.cellFuncs = {
-            "id": function(d) {
+            id: function(d) {
                 return d.id;
             },
-            "ambiguity": function(d) {
+            ambiguity: function(d) {
                 return d.matchedPeptides[0].prt.length *
                     ((d.matchedPeptides[1].prt.length != 0) ? d.matchedPeptides[1].prt.length : 1);
             },
-            "protein1": function(d) {
+            protein1: function(d) {
                 return CLMSUI.utils.proteinConcat(d, 0, self.model.get("clmsModel"));
             },
-            "protein2": function(d) {
+            protein2: function(d) {
                 return CLMSUI.utils.proteinConcat(d, 1, self.model.get("clmsModel"));
             },
-            "runName": function(d) {
+            runName: function(d) {
                 return d.runName();
             },
-            "group": function(d) {
+            group: function(d) {
                 return d.group();
             },
-            "pos1": function(d) {
+            pos1: function(d) {
                 return CLMSUI.utils.fullPosConcat(d, 0);
             },
-            "pos2": function(d) {
+            pos2: function(d) {
                 return CLMSUI.utils.fullPosConcat(d, 1);
             },
-            "pepPos1": function(d) {
+            pepPos1: function(d) {
                 return CLMSUI.utils.pepPosConcat(d, 0);
             },
-            "pepPos2": function(d) {
+            pepPos2: function(d) {
                 return CLMSUI.utils.pepPosConcat(d, 1);
             },
-            "pepSeq1raw": function(d) {
+            pepSeq1raw: function(d) {
                 return d.matchedPeptides[0].seq_mods;
             },
-            "pepSeq2raw": function(d) {
+            pepSeq2raw: function(d) {
                 var dmp1 = d.matchedPeptides[1];
                 return dmp1 ? dmp1.seq_mods : "";
             },
-            "linkPos1": function(d) {
+            linkPos1: function(d) {
                 return d.linkPos1;
             },
-            "linkPos2": function(d) {
+            linkPos2: function(d) {
                 return d.linkPos2;
             },
-            "score": function(d) {
+            score: function(d) {
                 return twoZeroPadder(d.score());
             },
-            "expMZ": function(d) {
+            expMZ: function(d) {
                 return massZeroPadder(d.expMZ());
             },
-            "expMass": function(d) {
+            expMass: function(d) {
                 return massZeroPadder(d.expMass());
             },
-            "calcMZ": function(d) {
+            calcMZ: function(d) {
                 return massZeroPadder(d.calcMZ());
             },
-            "calcMass": function(d) {
+            calcMass: function(d) {
                 return massZeroPadder(d.calcMass());
             },
-            "massError": function(d) {
+            massError: function(d) {
                 return massZeroPadder(d.massError());
             },
-            "precursorIntensity": function(d) {
+            precursorIntensity: function(d) {
                 return scientific(d.precursor_intensity);
             },
-            "elutionStart": function(d) {
+            elutionStart: function(d) {
                 return d.elution_time_start;
             },
-            "elutionEnd": function(d) {
+            elutionEnd: function(d) {
                 return d.elution_time_end;
             },
         };

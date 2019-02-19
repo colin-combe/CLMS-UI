@@ -36,26 +36,41 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
     },
 
     saveLayout: function() {
-        var callback = function(layoutJson) {
-            var xmlhttp = new XMLHttpRequest();
-            var url = "./php/saveLayout.php";
+        var xmlhttp = new XMLHttpRequest();
+            var url = "./php/isLoggedIn.php";
             xmlhttp.open("POST", url, true);
             //Send the proper header information along with the request
             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    console.log("Saved layout " + xmlhttp.responseText, true);
-                    alert("Layout Saved");
+                    if(xmlhttp.responseText == "false"){
+                        alert("You must be logged in to save layout. A new tab will open for you to log in, you can then return here and Save.")
+                        window.open("../userGUI/userLogin.html", "_blank");
+                    } else {
+                        var callback = function(layoutJson) {
+                            var xmlhttp = new XMLHttpRequest();
+                            var url = "./php/saveLayout.php";
+                            xmlhttp.open("POST", url, true);
+                            //Send the proper header information along with the request
+                            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                            xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
+                                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                                    console.log("Saved layout " + xmlhttp.responseText, true);
+                                    alert("Layout Saved");
+                                }
+                            };
+                            var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+                            var params = "sid=" + sid +
+                                "&layout=" + encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g, "")) +
+                                "&name=" + encodeURIComponent(d3.select("#name").property("value"));
+                            xmlhttp.send(params);
+                        };
+
+                        CLMSUI.vent.trigger("xiNetSaveLayout", callback);
+                    }
                 }
             };
-            var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
-            var params = "sid=" + sid +
-                "&layout=" + encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g, "")) +
-                "&name=" + encodeURIComponent(d3.select("#name").property("value"));
-            xmlhttp.send(params);
-        };
-
-        CLMSUI.vent.trigger("xiNetSaveLayout", callback);
+            xmlhttp.send();
     },
 
     initialize: function(viewOptions) {
@@ -76,14 +91,14 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
-        if (CLMSUI.loggedIn == true) {
-            buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
+        buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
                 "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
-        }
 
         buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
             "</span>" +
-            "<button class='btn btn-1 btn-1a downloadButton'>IMAGE AS SVG</button>";
+            "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
+
+        buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXinetLabels' checked></label>"
 
         mainDivSel.html(
             buttonHtml

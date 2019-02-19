@@ -34,7 +34,6 @@
                 selectList: ["Sort Tabs By"],
                 optionList: this.collection.possibleComparators,
                 optionLabelFunc: function(d) {
-                    console.log(d);
                     return d.label;
                 },
                 optionValueFunc: function(d) {
@@ -237,8 +236,9 @@
 
             var topElem = d3.select(this.el);
             var holdingDiv = topElem.append("DIV").attr("class", "alignView");
-            var template = _.template("<DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD></TABLE><DIV class='seqDiv'><TABLE class='seqTable'></TABLE></DIV></DIV><div class='alignChoiceGroup'></div>");
+            var template = _.template("<P class='proteinName'><%= proteinDescriptor %></P><DIV class='tableWrapper'><TABLE><THEAD><TR><TH><%= firstColHeader %></TH><TH><%= secondColHeader %></TH></TR></THEAD></TABLE><DIV class='seqDiv'><TABLE class='seqTable'></TABLE></DIV></DIV><div class='alignChoiceGroup'></div>");
             holdingDiv.html(template({
+                proteinDescriptor: this.model.get("displayLabel"),
                 firstColHeader: "Name",
                 secondColHeader: "Sequence",
             }));
@@ -259,7 +259,7 @@
                 .enter()
                 .append("label")
                 .text(function(d) {
-                    return d.label
+                    return d.label;
                 })
                 .append("input")
                 .attr("type", "radio")
@@ -281,7 +281,7 @@
                 console.log("BLOSUM", this, arguments);
                 this.model.set("scoreMatrix", blosumMatrix);
                 this.model.collection.bulkAlignChangeFinished();
-            })
+            });
 
             this.ellipStr = new Array(10).join("\"");
             //this.ellipStr = new Array(10).join("\u2026");

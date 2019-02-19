@@ -36,7 +36,9 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         attributeOptions: null,
         standardTickFormat: d3.format(",d"),
         logX: false,
-        logY: false
+        logY: false,
+        exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function(viewOptions) {
@@ -727,57 +729,6 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.renderCrossLinks({rehighlightOnly: true});
         return this;
     },
-    
-    /*
-    preRenderSquares: function () {
-        if (!this.prerendered) {
-            this.prerendered = [];
-            for (var m = 0; m < 2; m++) {
-                for (var d = 0; d < 2; d++) {
-                    for (var a = 0; a < 2; a++) {
-                        for (var sh = 0; sh < 3; sh++) {
-                            var index = (d * 6) + (a * 3) + sh;
-                            var canvasObj = CLMSUI.utils.makeCanvas (this.pointSize + 1, this.pointSize + 1);
-                            var ctx = canvasObj.context;
-
-                            if (m === 1) {
-                                ctx.fillStyle = (sh === 2) ? this.options.highlightedColour : (sh === 1 ? this.options.selectedColour : colour);
-                                ctx.strokeStyle = (sh === 2) || sh === 1 ? "black" : (d === 1 || a === 1 ? ctx.fillStyle : null);
-                            }
-
-                            if (d === 1) {
-                                ctx.strokeRect(0.5, 0.5, this.pointSize, this.pointSize);
-                            } else {
-                                if (a === 1) {
-                                    ctx.globalAlpha = 0.7;
-                                }
-                                ctx.fillRect(1, 1, this.pointSize, this.pointSize);
-                                if (a === 1) {
-                                    ctx.globalAlpha = 1;
-                                    ctx.setLineDash([3]);
-                                    ctx.strokeRect(0.5, 0.5, this.pointSize, this.pointSize);
-                                    ctx.setLineDash([]);
-                                } else if (high || selected) {
-                                    ctx.strokeRect(0.5, 0.5, this.pointSize, this.pointSize);
-                                }
-                            }
-
-                        }
-                    }
-                }
-            }
-        }
-    },
-    
-    getPreRenderSquare: function (select, highlight, ambig, decoy, matchLevel) {
-        var index = (highlight ? 2 : (select ? 1 : 0));
-        index += (ambig ? 3 : 0);
-        index += (decoy ? 6 : 0);
-        index += (matchLevel ? 12 : 0);
-        return this.prerendered[index];
-    },
-    */
-
 
     renderCrossLinks: function (renderOptions) {
         renderOptions = renderOptions || {};

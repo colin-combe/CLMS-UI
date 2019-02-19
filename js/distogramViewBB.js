@@ -33,8 +33,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         attributeOptions: null,
         xStandardTickFormat: d3.format(","),
         randomScope: "All",
-        unknownID: "Unknown",
         selectedColour: "#ff0",
+        exportKey: true,
+        exportTitle: true,
     },
 
     initialize: function(viewOptions) {
@@ -311,8 +312,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("patternUnits", "userSpaceOnUse")
             .attr("width", "10")
             .attr("height", "10")
-            .attr("patternTransform", "rotate(45)");
-        pattern.append("rect").attr("x", "0").attr("y", "0").attr("width", "10").attr("height", "10").style("fill", this.options.selectedColour)
+            .attr("patternTransform", "rotate(45)")
+        ;
+        pattern.append("rect").attr("x", "0").attr("y", "0").attr("width", "10").attr("height", "10").style("fill", this.options.selectedColour);
         pattern.append("line").attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "10");
         pattern.append("line").attr("x1", "5").attr("y1", "0").attr("x2", "5").attr("y2", "10");
 
@@ -429,7 +431,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Add sub-series data
             // split TT list into sublists for length
-            var splitSeries = colModel.get("labels").range().concat([this.options.unknownID]).map(function(name) {
+            var splitSeries = colModel.get("labels").range().concat([colModel.get("undefinedLabel")]).map(function(name) {
                 return {
                     name: name,
                     linkValues: []
@@ -497,8 +499,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             }
 
             var redoChart = function() {
-                // Remove 'Unknown' category if empty
-                removeSeries.call(this, this.options.unknownID, true);
+                // Remove 'Undefined' category if empty
+                removeSeries.call(this, colModel.get("undefinedLabel"), true);
                 removeSeries.call(this, "Selected", true);
 
                 var currentlyLoaded = _.pluck(this.chart.data(), "id");
@@ -539,7 +541,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }
 
                 this
-                    .makeChartTitle(subSeriesLengths, colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption("X").matchLevel);
+                    .makeChartTitle(subSeriesLengths, colModel, d3.select(this.el).select(".c3-title"), this.getSelectedOption("X").matchLevel)
+                ;
 
                 return {
                     unload: unload,
@@ -650,7 +653,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 this.model.getFilteredCrossLinks("decoysDD"),
                 this.model.getMarkedCrossLinks("selection"),
             ],
-            seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Selected"]
+            seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Decoys (DD)", "Selected"],
+            matchFilters: [undefined, undefined, undefined, function (m) {
+                return this.model.get("match_selection").has (m.match.id);
+            }]
         };
     },
 
@@ -683,9 +689,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
     getRelevantAttributeData: function(attrMetaData) {
         var linkFunc = attrMetaData.linkFunc;
+        var matchSelection = this.model.get("match_selection");
         var linkData = this.getFilteredLinksByDecoyStatus();
-        var seriesNames = linkData.seriesNames;
         var links = linkData.links;
+        var matchFilters = linkData.matchFilters;
         //console.log ("links", links);
 
         var extras = this.attrExtraOptions[attrMetaData.id] || {
@@ -695,6 +702,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
         var joinedCounts = links.map(function(linkArr, i) {
             var condition = conditions[i];
+            var matchFilter = matchFilters[i];
             var vals = [];
             linkArr.forEach(function(link) {
                 var res = linkFunc.call(this, link, condition);
@@ -702,8 +710,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     if (attrMetaData.matchLevel) { // if multiple values returned for a link (is match data)
                         var filteredMatches = link.filteredMatches_pp;
                         res.forEach(function(matchValue, i) {
-                            vals.push([link, matchValue, filteredMatches[i]]);
-                        });
+                            var fm = filteredMatches[i];
+                            if (!matchFilter || matchFilter.call(this, fm)) {
+                                vals.push([link, matchValue, fm]);
+                            }
+                        }, this);
                     } else if (res[0]) {
                         vals.push([link, res[0]]);
                     }
@@ -713,6 +724,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         }, this);
 
         // Add Random series if plotting distance data
+        var seriesNames = linkData.seriesNames;
         if (extras.showRandoms) {
             if (this.options.reRandom) {
                 this.precalcedDistributions["Random"] = this.recalcRandomBinning.call(this, this.model.get("TTCrossLinkCount"));
@@ -891,7 +903,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         seriesNames.forEach(function(seriesName, i) {
             colMap[seriesName] = colRange[i];
         });
-        colMap[this.options.unknownID] = colModel.undefinedColour;
+        colMap[colModel.get("undefinedLabel")] = colModel.get("undefinedColour");
         return colMap;
     },
 
