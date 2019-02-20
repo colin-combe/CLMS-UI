@@ -160,10 +160,7 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
     initialize: function(properties, options) {
         var colScale;
         var labels = ["Same Protein"];
-        var proteinIDs = CLMS.arrayFromMapValues(options.proteins)
-            .filter(function(p) {
-                return !p.is_decoy;
-            })
+        var proteinIDs = CLMSUI.modelUtils.filterOutDecoyInteractors (CLMS.arrayFromMapValues(options.proteins))
             .map(function(p) {
                 return p.id;
             });
