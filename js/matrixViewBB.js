@@ -792,8 +792,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             var seqLengths = this.getSeqLengthData();
             // If so, it's worth drawing the background, setting up the canvas etc
             //if (linksOnly) {
-            // Don't draw backgrounds for huge protein combinations (2000 x 2000 is limit), begins to be memory issue
-            if (seqLengths.lengthA * seqLengths.lengthB > 4e6) {
+            // Don't draw backgrounds for huge protein combinations (5,000,000 =~ 2250 x 2250 is limit), begins to be memory issue
+            if (seqLengths.lengthA * seqLengths.lengthB > 5e6) {
                 // shrink canvas / hide image if not showing it
                 this.canvas
                     .attr("width", 1)

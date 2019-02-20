@@ -23,6 +23,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .allowInterModelDistancesCB": "toggleAllowInterModelDistances",
             "click .showAllProteinsCB": "toggleShowAllProteins",
             "click .chainLabelLengthRB": "setChainLabelLength",
+            "click .chainLabelFixedSizeCB": "setChainLabelFixedSize",
             "mouseleave canvas": "clearHighlighted",
         });
     },
@@ -36,6 +37,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         initialColourScheme: "uniform",
         showAllProteins: false,
         chainLabelSetting: "Short",
+        fixedLabelSize: false,
         defaultAssembly: "default",
         allowInterModelDistances: false,
         exportKey: true,
@@ -184,6 +186,13 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 type: "radio",
                 value: "None"
             },
+            {
+                initialState: this.options.fixedLabelSize,
+                class: "chainLabelFixedSizeCB",
+                label: "Fixed Size",
+                id: "showFixedSizeChainLabels",
+                d3tooltip: "Show fixed size protein chain labels",
+            },
         ];
         toggleButtonData
             .forEach(function(d) {
@@ -251,10 +260,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var residue = self.model.get("stageModel").getResidueByGlobalIndex (arindex);
                 
                 if (residue !== undefined) {
-                    var linkCount = self.xlRepr.crosslinkData.getLinkCountByResidue (residue);
-                    this.lastColour = (linkCount === 0 ? 0x0000FF : 0x00FF00);
+                    var linkCount = self.xlRepr.crosslinkData.getFullLinkCountByResidue (residue);
+                    this.lastColour = (linkCount === 0 ? 0x5555ff : 0xaaaaaa);
                 } else {
-                    this.lastColour = "0xaaaaaa";
+                    this.lastColour = 0xaaaaaa;
                 }
                 //console.log ("rid", arindex, this.lastColour);
                 return this.lastColour;
@@ -277,7 +286,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             entityindex: "Entity Index",
             entitytype: "Entity Type",
             partialcharge: "Partial Charge",
-            external: "External Cross-Links",
+            external: "Residues with Half-Links",
         };
         var labellabel = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference(allColourSchemes, ignoreColourSchemes);
@@ -608,9 +617,19 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             var value = checkedElem.property("value");
             this.options.chainLabelSetting = value;
             if (this.xlRepr) {
-                this.xlRepr.options.chainLabelSetting = value;
-                this.xlRepr.redoChainLabels();
+                this.xlRepr.updateOptions (this.options, ["chainLabelSetting"]);
+                this.xlRepr.redoChainLabels ();
             }
+        }
+        return this;
+    },
+    
+    setChainLabelFixedSize: function (event) {
+        var bool = event.target.checked;
+        this.options.fixedLabelSize = bool;
+        if (this.xlRepr) {
+            this.xlRepr.updateOptions (this.options, ["fixedLabelSize"]);
+            this.xlRepr.labelRepr.setParameters({fixedSize: bool, radiusScale: bool ? 1 : 3});
         }
         return this;
     },
@@ -625,14 +644,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     showHighlightedLinks: function() {
         if (this.xlRepr && this.isVisible()) {
-            this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getLinks());
+            this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getFullLinks());
         }
         return this;
     },
 
     showSelectedLinks: function() {
         if (this.xlRepr && this.isVisible()) {
-            this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getLinks());
+            this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getFullLinks());
         }
         return this;
     },
@@ -794,7 +813,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLinkRepr: function() {
 
         var comp = this.structureComp;
-        var links = this.crosslinkData.getLinks();
+        var links = this.crosslinkData.getFullLinks();
 
         var xlPair = this.crosslinkData.getAtomPairsFromLinks (links);
         var xlPairEmph = this.crosslinkData.getAtomPairsFromLinks (this.filterByLinkState(links, "selection"));
@@ -888,15 +907,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var atomSelection = this.crosslinkData.getFirstAtomPerChainSelection();
         //CLMSUI.utils.xilog ("LABEL SELE", atomSelection);
         this.labelRepr = this.structureComp.addRepresentation("label", {
+            radiusScale: 3,
             color: "#222",
-            radiusScale: 3.0,
             sele: atomSelection,
             labelType: "text",
             labelText: customText,
             showBackground: true,
             backgroundColor: "#ccc",
+            backgroundMargin: 1,
             backgroundOpacity: 0.6,
             name: "chainText",
+            fontFamily: "sans-serif",
+            fontWeight: "bold",
+            fixedSize: this.options.fixedLabelSize,
         });
 
         return this;
@@ -909,7 +932,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var colCache = {};
             //var first = true;
             this.bondColor = function(b) {
-                var linkObj = self.crosslinkData.getLinkByGlobalIndex (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getLinkByGlobalIndex (b.atom2.residueIndex, b.atom1.residueIndex);
+                var linkObj = self.crosslinkData.getFullLinkByGlobalIndex (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getFullLinkByGlobalIndex (b.atom2.residueIndex, b.atom1.residueIndex);
                 var origLinkID = linkObj.origId;
                 var model = self.crosslinkData.getModel();
                 var link = model.get("clmsModel").get("crossLinks").get(origLinkID);
@@ -956,7 +979,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var nglRep = repSchemePair.nglRep;
             nglRep.update ({color: repSchemePair.colourScheme});
             if (repSchemePair.immediateUpdate !== false) {
-                console.log ("viewer", nglRep.repr.viewer);
                 nglRep.repr.viewer.requestRender();
             }
         });
@@ -999,29 +1021,28 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 CLMSUI.utils.xilog("picked atom", atom, atom.residueIndex, atom.resno, atom.chainIndex);
                 var residue = crosslinkData.getResidueByGlobalIndex (atom.residueIndex);
                 if (residue) {
-                    pdtrans.residue = residue;
-
                     // this is to find the index of the residue in searchindex (crosslink) terms
                     // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
-                    var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), pdtrans.residue.chainIndex);
+                    var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
                     var alignId = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
                     // align from 3d to search index. resindex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
-                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(pdtrans.residue.resindex + 1, proteinId, true, alignId);
+                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.resindex + 1, proteinId, true, alignId);
 
-                    pdtrans.links = crosslinkData.getLinks (pdtrans.residue);
-                    pdtrans.xlinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
-                    //CLMSUI.utils.xilog (pdtrans.residue, "links", pdtrans.links); 
-
-                    var distances = pdtrans.xlinks.map (function (xlink) {
+                    pdtrans.links = crosslinkData.getFullLinksByResidueID (residue.residueId);
+                    var origFullLinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
+                    var halfLinks = crosslinkData.getHalfLinksByResidueID (residue.residueId);
+                    var origHalfLinks = crosslinkData.getOriginalCrossLinks (halfLinks);
+                    var distances = origFullLinks.map (function (xlink) {
                         var dist = crosslinkData.getModel().getSingleCrosslinkDistance (xlink);
                         if (dist) {
                             dist = d3.format(".2f")(dist);
                         }
                         return dist;
                     });
+                    pdtrans.xlinks = origFullLinks.concat (origHalfLinks);
 
-                    var cp = this.structureComp.structure.getChainProxy(pdtrans.residue.chainIndex);
+                    var cp = this.structureComp.structure.getChainProxy (residue.chainIndex);
                     var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
                     //console.log ("cp", cp, pdtrans, this, this.structureComp);
                     crosslinkData.getModel().get("tooltipModel")
@@ -1076,7 +1097,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         CLMSUI.utils.xilog("HANDLE DATA CHANGE 3D");
         this.defaultDisplayedProteins();
 
-        var links = this.crosslinkData.getLinks();
+        var links = this.crosslinkData.getFullLinks();
         this
             .setDisplayedResidues(this.crosslinkData.getResidues())
             .setSelectedResidues([])
