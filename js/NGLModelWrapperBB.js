@@ -102,18 +102,20 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         }
         
         function makePDBIndexedResidues (perModelChainEntry, searchIndexResidue, protID) {
-            var PDBResidues = perModelChainEntry.values.map (function (chainValue) {
-                var chainIndex = chainValue.index;
-                var alignID = CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
-                return {
-                    chainIndex: chainIndex, 
-                    modelIndex: chainValue.modelIndex, 
-                    seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, alignID, true) - 1,  // residues are 0-indexed in NGL so -1
-                };
-            }).filter (function (datum) {
-               return datum.seqIndex >= 0;
-            });
-            return PDBResidues;
+            if (perModelChainEntry) {
+                return perModelChainEntry.values.map (function (chainValue) {
+                    var chainIndex = chainValue.index;
+                    var alignID = CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
+                    return {
+                        chainIndex: chainIndex, 
+                        modelIndex: chainValue.modelIndex, 
+                        seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, alignID, true) - 1,  // residues are 0-indexed in NGL so -1
+                    };
+                }).filter (function (datum) {
+                   return datum.seqIndex >= 0;
+                });
+            }
+            return [];
         }
         
         // add extra info to a residue object that's handy later on
@@ -258,6 +260,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             } else if (!toEmpty || !fromEmpty) {    // only one end of link in a pdb-indexed protein
                 var toChains = chainValueMap.get (toProtID); 
                 var fromChains = chainValueMap.get (fromProtID); 
+                
                 // One of these residue lists will be empty
                 var fromPDBResidues = makePDBIndexedResidues (fromChains, xlink.fromResidue, fromProtID);
                 var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
