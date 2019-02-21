@@ -53,9 +53,13 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
 
-        var sectionData = [this.options.expectedFormat];
-        sectionData[0].id = "ExpectedFormat";
-        sectionData[0].sectionName = "Expected CSV Format";
+        if (this.options.expectedFormat) {
+            var sectionData = [this.options.expectedFormat];
+            sectionData[0].id = "ExpectedFormat";
+            sectionData[0].sectionName = "Expected CSV Format";
+        } else if (this.options.fileFormatLink) {
+            //formatPanel.append("a").text("blah").attr("href", "");
+        }
 
         var headerFunc = function(d) {
             return d.sectionName;
@@ -201,16 +205,7 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
             buttonText: "Select Gene Ontology .gaf File",
             loadedEventName: "gafAnnotationsUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
-            expectedFormat: {
-                header: "ProteinId, AnnotName, StartRes, EndRes, Color",
-                rows: "{Accession|Name|ProteinID}, {string}, {number}, {number}, then {#colour or colourName}",
-                example: [
-                    {"csv file": ["ProteinId", "AnnotName", "StartRes", "EndRes", "Color"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN", "Dimerization domain", "55", "144", "#e78ac3"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN", "Charged Region", "401", "510", "#1f78b4"]}
-                ],
-                notes: "ProteinId fields will be split by | and the individual parts parsed to find a name or accession number"
-            }
+
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);

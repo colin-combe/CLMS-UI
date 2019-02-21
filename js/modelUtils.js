@@ -535,29 +535,29 @@ CLMSUI.modelUtils = {
             });
         var matchMatrix = {};
 		var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
-		
+
 		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
 		var filteredSeqInfo = CLMSUI.modelUtils.filterRepeatedSequences (seqs);
-		
+
 		function finished (matchMatrix) {
 			// inflate score matrix to accommodate repeated sequences that were found and filtered out above
 			CLMSUI.vent.trigger ("sequenceMatchingDone", CLMSUI.modelUtils.reinflateSequenceMap (matchMatrix, seqs, filteredSeqInfo));
 		}
-		
+
 		function updateMatchMatrix (protID, alignResults) {
 			var uniqScores = alignResults.map (function (indRes) { return indRes.eScore; });
 			matchMatrix[protID] = uniqScores;
 		}
-		
+
 		var totalAlignments = filteredSeqInfo.uniqSeqs.length * proteins.length;
 		CLMSUI.vent.trigger ("alignmentProgress", "Attempting to match "+proteins.length+" proteins to "+seqs.length+" additional sequences.");
-	
+
 		var start = performance.now();
 		// webworker way, only do if enough proteins and cores to make it worthwhile
 		if ((!window || !!window.Worker) && proteins.length > 20 && workerpool.cpus > 2) {
 			var count = proteins.length;
 			var pool = workerpool.pool ("js/alignWorker.js");
-			
+
 			proteins.forEach (function (prot, i) {
             	var protAlignModel = protAlignCollection.get (prot.id);
 				var settings = protAlignModel.getSettings();
@@ -580,7 +580,7 @@ CLMSUI.modelUtils = {
 						}
 					})
 				;
-			});	
+			});
 		}
 		// else do it on main thread
 		else {
@@ -596,7 +596,7 @@ CLMSUI.modelUtils = {
 			finished (matchMatrix);
 		}
     },
-    
+
     	// return array of indices of first occurrence of a sequence when encountering a repetition
 	// e.g. ["CAT", "DOG", "CAT", "DOG"] -> [undefined, undefined, 0, 1];
 	indexSameSequencesToFirstOccurrence: function (sequences) {
@@ -612,7 +612,7 @@ CLMSUI.modelUtils = {
 		});
 		return firstIndex;
 	},
-	
+
 	filterRepeatedSequences: function (sequences) {
 		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
 		var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence (sequences);
@@ -621,7 +621,7 @@ CLMSUI.modelUtils = {
 		var uniqSeqReverseIndex = _.invert (uniqSeqIndices);	// ...and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
 		return {sameSeqIndices: sameSeqIndices, uniqSeqs: uniqSeqs, uniqSeqIndices: uniqSeqIndices, uniqSeqReverseIndex: uniqSeqReverseIndex};
 	},
-	
+
 	reinflateSequenceMap: function (matchMatrix, sequences, filteredSeqInfo) {
 		d3.keys(matchMatrix).forEach (function (protID) {
 			var matchMatrixProt = matchMatrix[protID];
@@ -629,7 +629,7 @@ CLMSUI.modelUtils = {
 				var sameSeqIndex = filteredSeqInfo.sameSeqIndices[i];
 				var seqIndex = sameSeqIndex === undefined ? i : sameSeqIndex;
 				var uniqSeqIndex = +filteredSeqInfo.uniqSeqReverseIndex[seqIndex];	// + 'cos invert above turns numbers into strings
-				return matchMatrixProt[uniqSeqIndex]; 	
+				return matchMatrixProt[uniqSeqIndex];
 			});
 		});
 
@@ -750,7 +750,7 @@ CLMSUI.modelUtils = {
         });
         return matchChains[0] ? matchChains[0].name : undefined;
     },
-    
+
     makeSubIndexedChainMap: function(chainMap, subIndexingProperty) {
         var subIndexedChainMap = {};
         d3.entries(chainMap).forEach(function(proteinEntry) {
@@ -760,7 +760,7 @@ CLMSUI.modelUtils = {
         });
         return subIndexedChainMap;
     },
-    
+
     getRangedCAlphaResidueSelectionForChain: function(chainProxy) { // chainProxy is NGL Object
         var min, max;
         chainProxy.eachResidue(function(rp) {
@@ -773,7 +773,7 @@ CLMSUI.modelUtils = {
             }
         });
 
-        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)       
+        // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)
         var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
         return sel;
     },
@@ -929,7 +929,7 @@ CLMSUI.modelUtils = {
             });
         }
     },
-    
+
     clearCrossLinkMetaData: function (crossLinkArr, metaFields) {
         crossLinkArr.forEach (function (crossLink) {
             if (crossLink.getMeta()) {
@@ -1005,7 +1005,7 @@ CLMSUI.modelUtils = {
             });
         }
     },
-    
+
     clearProteinMetaData: function (proteinArr, metaFields) {
         proteinArr.forEach (function (protein) {
             if (protein.meta) {
@@ -1017,8 +1017,8 @@ CLMSUI.modelUtils = {
             }
         });
     },
-    
-    
+
+
     updateUserAnnotationsMetadata: function(userAnnotationsFileContents, clmsModel) {
         var proteins = clmsModel.get("participants");
         var first = true;
@@ -1042,7 +1042,7 @@ CLMSUI.modelUtils = {
                 first = false;
                 columns = keys;
             }
-            
+
             var dl = {};
             d3.keys(d).forEach(function(key) {
                 dl[key.toLocaleLowerCase()] = d[key];
@@ -1087,7 +1087,77 @@ CLMSUI.modelUtils = {
             source: "file"
         });
     },
-    
+
+
+    updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
+        var proteins = clmsModel.get("participants");
+        var first = true;
+        var columns = [];
+
+        var protMap = d3.map();
+        proteins.forEach(function(value, key) {
+            protMap.set(value.accession, key);
+            protMap.set(value.name, key);
+            protMap.set(value.id, key);
+        });
+        var newAnnotations = [];
+        var annotationMap = d3.map();
+        var proteinSet = d3.set();
+
+        // d3.csv.parse(userAnnotationsFileContents, function(d) {
+        //     if (first) {
+        //         var keys = d3.keys(d).map(function(key) {
+        //             return key.toLocaleLowerCase();
+        //         });
+        //         first = false;
+        //         columns = keys;
+        //     }
+        //
+        //     var dl = {};
+        //     d3.keys(d).forEach(function(key) {
+        //         dl[key.toLocaleLowerCase()] = d[key];
+        //     });
+        //
+        //     var proteinIDValue = dl.proteinid;
+        //     var proteinID = protMap.get(proteinIDValue);
+        //     if (proteinID !== undefined) {
+        //         var protein = proteins.get(proteinID);
+        //
+        //         if (protein) {
+        //             protein.userAnnotations = protein.userAnnotations || [];
+        //             var newAnno = {
+        //                 type: dl.annotname,
+        //                 description: dl.description,
+        //                 category: "User Defined",
+        //                 begin: dl.startres,
+        //                 end: dl.endres,
+        //                 colour: dl.color || dl.colour
+        //             };
+        //             newAnnotations.push (newAnno);
+        //             protein.userAnnotations.push (newAnno);
+        //             if (!annotationMap.has (dl.annotname)) {
+        //                 annotationMap.set (dl.annotname, {
+        //                     category: "User Defined",
+        //                     type: dl.annotname,
+        //                     source: "Search",    // these will be matched to the search sequence,
+        //                     colour: dl.color || dl.colour,  // default colour for this type - undefined if not declared
+        //                 });
+        //             }
+        //             proteinSet.add (proteinID);
+        //         }
+        //     }
+        // });
+        //
+        // CLMSUI.vent.trigger("userAnnotationsUpdated", {
+        //     types:  annotationMap.values(),
+        //     columns: annotationMap.values(),
+        //     items: newAnnotations,
+        //     matchedItemCount: newAnnotations.length
+        // }, {
+        //     source: "file"
+        // });
+    },
+
 
     // Column clustering functions
 
@@ -1321,7 +1391,7 @@ CLMSUI.modelUtils = {
         var treeOrder = this.flattenBinaryTree(zdistances.tree);
 
         CLMSUI.modelUtils.clearCrossLinkMetaData (allCrossLinks, ["kmcluster", "treeOrder"]);
-        
+
         kmeans.forEach(function(cluster, i) {
             cluster.forEach(function(arr) {
                 arr.clink.setMeta("kmcluster", i + 1);
@@ -1447,8 +1517,8 @@ CLMSUI.modelUtils = {
         //console.log ("mergedFeatures", features, merged);
         return merged;
     },
-    
-    
+
+
     // merges array of single numbers
     // assumes vals are already sorted numerically (though each val is a string)
     joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
@@ -1480,7 +1550,7 @@ CLMSUI.modelUtils = {
         }
         return vals;
     },
-    
+
     getDistanceSquared: function (coords1, coords2) {
         var d2 = 0;
         for (var n = 0; n < coords1.length; n++) {
@@ -1489,12 +1559,12 @@ CLMSUI.modelUtils = {
         }
         return d2;
     },
-    
+
     getMinimumDistance: function (points1, points2, accessorObj, maxDistance, ignoreFunc) {
-        
+
         accessorObj = accessorObj || {};
         var points1Bigger = points1.length > points2.length;
-        
+
         var bigPointArr = points1Bigger ? points1 : points2;
         var smallPointArr = points1Bigger ? points2 : points1;
         var octree = d3.octree ();
@@ -1504,19 +1574,19 @@ CLMSUI.modelUtils = {
             .z(accessorObj.z || octree.z())
             .addAll (bigPointArr)
         ;
-        
+
         maxDistance = maxDistance || 200;
-        
+
         var nearest = smallPointArr.map (function (point) {
             return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
         var dist = smallPointArr.map (function (point, i) {
             return CLMSUI.modelUtils.getDistanceSquared (point.coords, nearest[i].coords);
         });
-        
+
         return d3.zip (points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
     },
-    
+
 
     radixSort: function(categoryCount, data, bucketFunction) {
         var radixSortBuckets = Array.apply(null, Array(categoryCount)).map(function() {
