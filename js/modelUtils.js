@@ -20,7 +20,7 @@ CLMSUI.modelUtils = {
         });
         if (integerise) {
             extent = extent.map(function(val, i) {
-                return Math[i === 0 ? "floor" : "ceil"](val);
+                return val !== undefined ? Math[i === 0 ? "floor" : "ceil"](val) : val;
                 //return Math[i === 0 ? "ceil" : "floor"](val + (i === 0 ? -1 : 1));
             });
         }
