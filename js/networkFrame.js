@@ -276,7 +276,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -463,6 +463,11 @@ CLMSUI.init.views = function() {
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
+        {
+            name: "GO Gene Annotation File",
+            eventName: "gafMetaShow",
+            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
+        },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
@@ -510,7 +515,7 @@ CLMSUI.init.viewsEssential = function(options) {
 
     var compModel = CLMSUI.compositeModelInst;
     var filterModel = compModel.get("filterModel");
-    
+
     var singleTargetProtein = compModel.get("clmsModel").targetProteinCount < 2;
     new CLMSUI.FilterViewBB({
         el: "#filterPlaceholder",
@@ -792,7 +797,7 @@ CLMSUI.init.viewsEssential = function(options) {
 CLMSUI.init.viewsThatNeedAsyncData = function() {
 
     var compModel = CLMSUI.compositeModelInst;
-    
+
     // This generates the legend div, we don't keep a handle to it - the event object has one
     new CLMSUI.KeyViewBB({
         el: "#keyPanel",
@@ -942,11 +947,17 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         model: compModel,
         displayEventName: "proteinMetaShow",
     });
-    
+
     new CLMSUI.UserAnnotationsMetaDataFileChooserBB({
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "userAnnotationsMetaShow",
+    });
+
+    new CLMSUI.GafMetaDataFileChooserBB({
+        el: "#gafAnnotationsMetaLoadPanel",
+        model: compModel,
+        displayEventName: "gafMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({
