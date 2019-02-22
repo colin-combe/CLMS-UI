@@ -39,7 +39,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         /*
         box.append("p").attr("class", "smallHeading").text("Pre-Load Options");
         var buttonData = [{
-                label: "Load C-α Atoms Only",
+                label: "Load C-Alpha Atoms Only",
                 class: "cAlphaOnly",
                 type: "checkbox",
                 id: "cAlphaOnly",
@@ -50,6 +50,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         ];
         CLMSUI.utils.makeBackboneButtons (box.append("div"), this.el.id, buttonData);
         */
+        
         
         
         box.append("p").attr("class", "smallHeading").text("PDB Source");
@@ -125,9 +126,13 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         this.updateProteinDropdown(queryBox);
+        
+        wrapperPanel.append("p").attr("class", "smallHeading").text("Load Results");
 
 
         wrapperPanel.append("div").attr("class", "messagebar").html("&nbsp;"); //.style("display", "none");
+        
+        d3.select(this.el).selectAll(".smallHeading").classed("smallHeadingBar", true);
 
         this.stage = new NGL.Stage("ngl", { /*fogNear: 20, fogFar: 100,*/
             backgroundColor: "white",
@@ -316,7 +321,6 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
     toggleCAlphaSetting: function (evt) {
         var val = evt.target.checked;
         this.cAlphaOnly = val;
-        console.log ("ffff", this.cAlphaOnly);
         return this;
     },
 

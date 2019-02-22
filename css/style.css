@@ -799,6 +799,10 @@ sup {font-size:xx-small; vertical-align:super;}
 	line-height: 1.4em;
 }
 
+.smallHeadingBar {
+    background: rgba(0,0,0,0.1);
+}
+
 .btn-tight {
 	margin: 0;
 	padding: 2px 2px;
