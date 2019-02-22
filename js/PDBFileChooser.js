@@ -19,11 +19,13 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             "change .selectPdbButton": "selectPDBFile",
             "keyup .inputPDBCode": "enteringPDBCode",
             "click button.PDBSubmit": "loadPDBCode",
+            "click .cAlphaOnly": "toggleCAlphaSetting",
         });
     },
 
     initialize: function(viewOptions) {
         CLMSUI.PDBFileChooserBB.__super__.initialize.apply(this, arguments);
+        this.cAlphaOnly = false;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
@@ -32,28 +34,49 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         var wrapperPanel = mainDivSel.append("div")
             .attr("class", "panelInner");
 
-        var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
-
-        toolbar.append("span")
+        var box = wrapperPanel.append("div").attr("class", "columnbar");
+        
+        /*
+        box.append("p").attr("class", "smallHeading").text("Pre-Load Options");
+        var buttonData = [{
+                label: "Load C-α Atoms Only",
+                class: "cAlphaOnly",
+                type: "checkbox",
+                id: "cAlphaOnly",
+                tooltip: "Faster & Less Cluttered 3D Rendering on Large PDBs",
+                inputFirst: true,
+                value: this.cAlphaOnly,
+            },
+        ];
+        CLMSUI.utils.makeBackboneButtons (box.append("div"), this.el.id, buttonData);
+        */
+        
+        
+        box.append("p").attr("class", "smallHeading").text("PDB Source");
+        
+        box.append("div")
             .attr("class", "btn nopadLeft nopadRight sectionDivider2 dashedBorder")
             .text("Either")
-            .append("div")
+            .append("span")
             .append("label")
             .attr("class", "btn btn-1 btn-1a fakeButton")
             .append("span")
             //.attr("class", "noBreak")
-            .text("Select Local PDB File")
+            .text("Select A Local PDB File")
             .append("input")
             .attr({
                 type: "file",
                 accept: ".txt,.cif,.pdb",
                 class: "selectPdbButton"
-            });;
+            })
+        ;
+        
 
-        var pdbCodeSpan = toolbar.append("span")
+        var pdbCodeSpan = box.append("span")
             .attr("class", "btn sectionDivider2 nopadLeft")
-            .text("or Enter 4-character PDB ID")
-            .append("div");
+            .text("or Enter a 4-character PDB ID")
+            //.append("div")
+        ;
 
         pdbCodeSpan.append("input")
             .attr({
@@ -62,19 +85,26 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 maxlength: 4,
                 pattern: CLMSUI.utils.commonRegexes.pdbPattern,
                 size: 6,
-                title: "Enter a PDB ID here e.g. 1AO6"
+                title: "Enter a PDB ID here e.g. 1AO6",
+                //placeholder: "eg 1AO6"
             })
-            .property("required", true);
+            .property("required", true)
+        ;
+        
+        pdbCodeSpan.append("span").attr("class", "promptEnter").text("& Press Enter");
 
+        /*
         pdbCodeSpan.append("span").attr("class", "prompt").text("→");
 
         pdbCodeSpan.append("button")
             .attr("class", "PDBSubmit btn btn-1 btn-1a")
             .text("Enter")
-            .property("disabled", true);
+            .property("disabled", true)
+        ;
+        */
+        
 
-        var queryBox = toolbar.append("div")
-            .attr("class", "verticalFlexContainer queryBox");
+        var queryBox = box.append("div").attr("class", "verticalFlexContainer queryBox");
 
         queryBox.append("p").attr("class", "smallHeading").text("PDB Query Services");
 
@@ -206,7 +236,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     launchExternalEBIPDBWindow: function() {
-        var chosenSeq = (this.getSelectedOption(d3.select(this.el).select(".toolbar"), "Proteins") || {
+        var chosenSeq = (this.getSelectedOption(d3.select(this.el).select(".columnbar"), "Proteins") || {
             sequence: ""
         }).sequence;
         window.open("http://www.ebi.ac.uk/pdbe-srv/PDBeXplore/sequence/?seq=" + chosenSeq + "&tab=PDB%20entries", "_blank");
@@ -214,13 +244,13 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
     setWaitingEffect: function() {
         this.setStatusText("Please Wait...");
-        d3.select(this.el).selectAll(".toolbar, .fakeButton").property("disabled", true).attr("disabled", true);
-        d3.select(this.el).selectAll(".toolbar .btn").property("disabled", true);
+        d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", true).attr("disabled", true);
+        d3.select(this.el).selectAll(".btn").property("disabled", true);
     },
 
     setCompletedEffect: function() {
-        d3.select(this.el).selectAll(".toolbar, .fakeButton").property("disabled", false).attr("disabled", null);
-        d3.select(this.el).selectAll(".toolbar .btn").property("disabled", false);
+        d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", false).attr("disabled", null);
+        d3.select(this.el).selectAll(".btn").property("disabled", false);
     },
 
     setStatusText: function(msg, success) {
@@ -246,7 +276,10 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             var fileExtension = fileObj.name.substr(fileObj.name.lastIndexOf('.') + 1);
             CLMSUI.modelUtils.repopulateNGL({
                 pdbFileContents: blob,
-                ext: fileExtension,
+                params: {
+                    ext: fileExtension,
+                    cAlphaOnly: self.cAlphaOnly,
+                },
                 name: fileObj.name,
                 stage: self.stage,
                 bbmodel: self.model
@@ -267,6 +300,9 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         this.setWaitingEffect();
         CLMSUI.modelUtils.repopulateNGL({
             pdbCode: pdbCode,
+            params: {
+                cAlphaOnly: this.cAlphaOnly,
+            },
             stage: this.stage,
             bbmodel: this.model
         });
@@ -275,6 +311,13 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
     isPDBCodeValid: function() {
         var elem = d3.select(this.el).select(".inputPDBCode");
         return elem.node().checkValidity();
+    },
+    
+    toggleCAlphaSetting: function (evt) {
+        var val = evt.target.checked;
+        this.cAlphaOnly = val;
+        console.log ("ffff", this.cAlphaOnly);
+        return this;
     },
 
     identifier: "PDB File Chooser",

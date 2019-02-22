@@ -1011,13 +1011,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
         var add = (false || (pickingData && (pickingData.ctrlKey || pickingData.shiftKey))) && (pickType === 'selection'); // should selection add to current selection?
 
-        //console.log("pickingData", pickingData, pickType, add);
+        /*
+        console.log("pickingData", pickingData, pickType, add);
+        ["atom", "bond", "distance"].forEach (function (v) {
+            if (pickingData && pickingData[v]) {
+                console.log (v, pickingData[v].index);
+            }
+        });
+        */
 
         if (pickingData) {
             var atom = pickingData.atom;
-            var bond = pickingData.bond || pickingData.distance; // pickingData.distance is now where picks are returned for crosslinks
+            var link3d = pickingData.distance; // pickingData.distance is now where picks are returned for crosslinks
 
-            if (atom !== undefined && bond === undefined) {
+            if (atom !== undefined && link3d === undefined) {
+                //console.log (atom.atomname);
                 CLMSUI.utils.xilog("picked atom", atom, atom.residueIndex, atom.resno, atom.chainIndex);
                 var residue = crosslinkData.getResidueByGlobalIndex (atom.residueIndex);
                 if (residue) {
@@ -1053,13 +1061,13 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                         .set("location", this.makeTooltipCoords(pickingData.canvasPosition));
                     crosslinkData.getModel().get("tooltipModel").trigger("change:location");
                 }
-            } else if (bond !== undefined) {
+            } else if (link3d !== undefined) {
                 // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
-                CLMSUI.utils.xilog("picked bond", bond, bond.index, bond.atom1.resno, bond.atom2.resno, bond.atomIndex1, bond.atomIndex2);
+                CLMSUI.utils.xilog("picked bond", link3d, link3d.index, link3d.atom1.resno, link3d.atom2.resno, link3d.atomIndex1, link3d.atomIndex2);
 
-                var residueA = crosslinkData.getResidueByGlobalIndex (bond.atom1.residueIndex);
-                var residueB = crosslinkData.getResidueByGlobalIndex (bond.atom2.residueIndex);
-                CLMSUI.utils.xilog("res", bond.atom1.residueIndex, bond.atom2.residueIndex);
+                var residueA = crosslinkData.getResidueByGlobalIndex (link3d.atom1.residueIndex);
+                var residueB = crosslinkData.getResidueByGlobalIndex (link3d.atom2.residueIndex);
+                CLMSUI.utils.xilog("res", link3d.atom1.residueIndex, link3d.atom2.residueIndex);
                 if (pickType === "selection") {
                     var selectionSelection = this.crosslinkData.getSelectionFromResidueList([residueA, residueB]);
                     CLMSUI.utils.xilog("seleSele", selectionSelection);
