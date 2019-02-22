@@ -221,7 +221,9 @@ CLMSUI.init.modelsEssential = function(options) {
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
     var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange(clmsModelInst.get("matches"), true);
-    scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
+    if (scoreExtentInstance[0]) {
+        scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
+    }
     var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true, //clmsModelInst.targetProteinCount > 1,
