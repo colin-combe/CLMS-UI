@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '?v='.microtime(true);
+    $cacheBuster = '';//?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -107,12 +107,19 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/P_PLink.js<?php echo $cacheBuster ?>"></script>-->
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js<?php echo $cacheBuster ?>"></script>
-
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedMolecule.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/P_PLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/Link.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/NaryLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedComplex.js<?php echo $cacheBuster ?>"></script>
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/circleArrange.js<?php echo $cacheBuster ?>"></script>

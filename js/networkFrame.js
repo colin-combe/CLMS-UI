@@ -621,7 +621,7 @@ CLMSUI.init.viewsEssential = function(options) {
                     this.model.get("clmsModel").get("sid") +
                     "&unval=1&linears=1&spectrum=" + match.spectrumId + "&matchid=" + match.id;
                 var self = this;
-                var jd = d3.json(url, function(error, json) {
+                d3.json(url, function(error, json) {
                     if (error) {
                         console.log("error", error, "for", url, arguments);
                     } else {
@@ -652,7 +652,6 @@ CLMSUI.init.viewsEssential = function(options) {
                         }
                     }
                 });
-                console.log("jd", jd);
             } else {
                 //~ //this.model.clear();
             }
@@ -664,7 +663,7 @@ CLMSUI.init.viewsEssential = function(options) {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        knownModificationsURL: false, //CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
     }

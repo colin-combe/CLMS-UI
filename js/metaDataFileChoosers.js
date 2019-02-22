@@ -45,7 +45,7 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .append("input")
             .attr({
                 type: "file",
-                accept: "text/csv,.csv",
+                accept: "text/csv,.csv,.gaf",
                 class: "selectMetaDataFileButton"
             });
 
@@ -53,13 +53,9 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
 
-        if (this.options.expectedFormat) {
-            var sectionData = [this.options.expectedFormat];
-            sectionData[0].id = "ExpectedFormat";
-            sectionData[0].sectionName = "Expected CSV Format";
-        } else if (this.options.fileFormatLink) {
-            //formatPanel.append("a").text("blah").attr("href", "");
-        }
+        var sectionData = [this.options.expectedFormat];
+        sectionData[0].id = "ExpectedFormat";
+        sectionData[0].sectionName = "Expected CSV Format";
 
         var headerFunc = function(d) {
             return d.sectionName;
@@ -205,7 +201,14 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
             buttonText: "Select Gene Ontology .gaf File",
             loadedEventName: "gafAnnotationsUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
-
+            expectedFormat: {
+                header: "http://geneontology.org/docs/go-annotation-file-gaf-format-21/",
+                rows: "{}",
+                example: [
+                    {"": [""]},
+                ],
+                notes: ""
+            }
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);

@@ -1090,72 +1090,65 @@ CLMSUI.modelUtils = {
 
 
     updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
-        var proteins = clmsModel.get("participants");
-        var first = true;
-        var columns = [];
 
-        var protMap = d3.map();
-        proteins.forEach(function(value, key) {
-            protMap.set(value.accession, key);
-            protMap.set(value.name, key);
-            protMap.set(value.id, key);
+        var url = "../go.obo";
+
+        d3.text(url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url, arguments);
+            } else {
+                var go = new Map();
+                var lines = txt.split('\n');
+                var term;
+                for(var l = 0; l < lines.length; l++){
+                  //console.log(lines[l]);
+                  var line = lines[l];
+                  if (line.trim() == "[Term]"){
+                      if (term) {
+                          if (term.namespace == "molecular_function"){
+                              go.set(term.id, term);
+                          }
+                      }
+                      term = {};
+                  }
+                  else if (term) {
+                      var parts = line.split(":");
+                      term[parts[0]] = parts.slice(1, parts.length).join(":").trim();
+                  }
+                }
+                if (term.namespace == "molecular_function"){
+                    go.set(term.id, term);
+                }
+                CLMSUI.compositeModelInst.set("go", go);
+
+                var proteins = clmsModel.get("participants");
+                var protMap = d3.map();
+                proteins.forEach(function(value, key) {
+                    protMap.set(value.accession, key);
+                });
+
+                var gafLines = gafFileContents.split('\n');
+                for(var g = 0; g < gafLines.length; g++){
+                  line = gafLines[g];
+                  if (line.startsWith("!") == false) {
+                      var fields = line.split("\t");
+                      var goId = fields[4];
+                      if (go.get(goId)) {
+                          var proteinId = protMap.get(fields[1]);
+                          var protein = proteins.get(proteinId);
+
+                          if (protein) {
+                              if (!protein.go) {
+                                  protein.go = [];
+                              }
+                              protein.go.push(goId);
+                              //console.log(">>"+goId);
+                          }
+                      }
+                  }
+                }
+            }
         });
-        var newAnnotations = [];
-        var annotationMap = d3.map();
-        var proteinSet = d3.set();
-
-        // d3.csv.parse(userAnnotationsFileContents, function(d) {
-        //     if (first) {
-        //         var keys = d3.keys(d).map(function(key) {
-        //             return key.toLocaleLowerCase();
-        //         });
-        //         first = false;
-        //         columns = keys;
-        //     }
-        //
-        //     var dl = {};
-        //     d3.keys(d).forEach(function(key) {
-        //         dl[key.toLocaleLowerCase()] = d[key];
-        //     });
-        //
-        //     var proteinIDValue = dl.proteinid;
-        //     var proteinID = protMap.get(proteinIDValue);
-        //     if (proteinID !== undefined) {
-        //         var protein = proteins.get(proteinID);
-        //
-        //         if (protein) {
-        //             protein.userAnnotations = protein.userAnnotations || [];
-        //             var newAnno = {
-        //                 type: dl.annotname,
-        //                 description: dl.description,
-        //                 category: "User Defined",
-        //                 begin: dl.startres,
-        //                 end: dl.endres,
-        //                 colour: dl.color || dl.colour
-        //             };
-        //             newAnnotations.push (newAnno);
-        //             protein.userAnnotations.push (newAnno);
-        //             if (!annotationMap.has (dl.annotname)) {
-        //                 annotationMap.set (dl.annotname, {
-        //                     category: "User Defined",
-        //                     type: dl.annotname,
-        //                     source: "Search",    // these will be matched to the search sequence,
-        //                     colour: dl.color || dl.colour,  // default colour for this type - undefined if not declared
-        //                 });
-        //             }
-        //             proteinSet.add (proteinID);
-        //         }
-        //     }
-        // });
-        //
-        // CLMSUI.vent.trigger("userAnnotationsUpdated", {
-        //     types:  annotationMap.values(),
-        //     columns: annotationMap.values(),
-        //     items: newAnnotations,
-        //     matchedItemCount: newAnnotations.length
-        // }, {
-        //     source: "file"
-        // });
     },
 
 
