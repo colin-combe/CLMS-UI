@@ -453,6 +453,11 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 	padding: 0 0.5em;
 }
 
+#pdbPanel .promptEnter {
+	vertical-align: middle;
+	padding: 0 0.5em;
+}
+
 #pdbPanel .toolbar {
 	display: flex;
 	flex-wrap: wrap;
@@ -592,7 +597,7 @@ A.btn {
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
-div.toolbar[disabled], label.fakeButton[disabled] {
+div.columnbar[disabled], div.columnbar[disabled], label.fakeButton[disabled] {
 	color: grey;
 	pointer-events: none;
 	border-color: grey;

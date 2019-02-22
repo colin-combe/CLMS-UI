@@ -327,10 +327,7 @@ CLMSUI.modelUtils = {
 
     repopulateNGL: function(pdbInfo) {
         pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
-        var params = {}; // {sele: ":A"};    // example: show just 'A' chain
-        if (pdbInfo.ext) {
-            params.ext = pdbInfo.ext;
-        }
+        var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
         var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
         var stage = pdbInfo.stage;
         var bbmodel = pdbInfo.bbmodel;
@@ -343,6 +340,8 @@ CLMSUI.modelUtils = {
             emptySequenceMap.pdbid = pdbInfo.baseSeqId;
             bbmodel.trigger("3dsync", emptySequenceMap);
         }
+        
+        console.log ("pareams", params);
 
         stage.loadFile(uri, params)
             .catch(function(reason) {
