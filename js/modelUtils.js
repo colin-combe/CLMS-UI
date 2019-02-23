@@ -50,8 +50,7 @@ CLMSUI.modelUtils = {
             var linear = xlink.isLinearLink();
             var info = [
                 ["From", xlink.fromProtein.name, xlink.fromResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, false))],
-                linear ? ["To", "Linear", "---", "---"] :
-                ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
+                linear ? ["To", "Linear", "---", "---"] : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
                 ["Matches", xlink.filteredMatches_pp.length],
                 ["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
@@ -344,85 +343,91 @@ CLMSUI.modelUtils = {
             .catch(function(reason) {
                 returnFailure(reason);
             })
-            .then (function (structureComp) {
+            .then(function(structureComp) {
 
-				console.log ("structureComp", structureComp);
-				if (structureComp) {
-					// match by alignment func for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
-					function matchByAlignment () {
-						var protAlignCollection = bbmodel.get("alignColl");
-						CLMSUI.vent.listenToOnce (CLMSUI.vent, "sequenceMatchingDone", function (matchMatrix) {
-							var pdbUniProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, nglSequences);
-							sequenceMapsAvailable (pdbUniProtMap);
-						});
-						// sequenceMatchingDone event triggered in matchSequencesToExistingProteins when alignments done, sync or async
-						CLMSUI.modelUtils.matchSequencesToExistingProteins (protAlignCollection, nglSequences, interactorArr,
-							function(sObj) { return sObj.data; }
-						);
-					}
+                console.log("structureComp", structureComp);
+                if (structureComp) {
+                    // match by alignment func for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
+                    function matchByAlignment() {
+                        var protAlignCollection = bbmodel.get("alignColl");
+                        CLMSUI.vent.listenToOnce(CLMSUI.vent, "sequenceMatchingDone", function(matchMatrix) {
+                            var pdbUniProtMap = CLMSUI.modelUtils.matrixPairings(matchMatrix, nglSequences);
+                            sequenceMapsAvailable(pdbUniProtMap);
+                        });
+                        // sequenceMatchingDone event triggered in matchSequencesToExistingProteins when alignments done, sync or async
+                        CLMSUI.modelUtils.matchSequencesToExistingProteins(protAlignCollection, nglSequences, interactorArr,
+                            function(sObj) {
+                                return sObj.data;
+                            }
+                        );
+                    }
 
-					var nglSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stage);
-					var interactorMap = bbmodel.get("clmsModel").get("participants");
-					var interactorArr = CLMS.arrayFromMapValues(interactorMap);
+                    var nglSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel(stage);
+                    var interactorMap = bbmodel.get("clmsModel").get("participants");
+                    var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
-					// If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
-					// between ngl protein chains and clms proteins. This is asynchronous so we use a callback
-					if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
-                        console.log ("WEB SERVICE CALLED");
-						CLMSUI.modelUtils.matchPDBChainsToUniprot (pdbInfo.pdbCode, nglSequences, interactorArr, function (pdbUniProtMap) {
-							if (pdbUniProtMap.fail) {	// No data returned for this pdb codem fall back to aligning
-								matchByAlignment();
-								//returnFailure ("No valid uniprot data returned");
-							} else if (!pdbUniProtMap.length) {    // no matches, fall back to aligning
-								matchByAlignment();
-							} else {
-								sequenceMapsAvailable (pdbUniProtMap);
-							}
-						});
-					}
-					else {  // without access to pdb codes have to match comparing all proteins against all chains
-						matchByAlignment();
-					}
+                    // If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
+                    // between ngl protein chains and clms proteins. This is asynchronous so we use a callback
+                    if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
+                        console.log("WEB SERVICE CALLED");
+                        CLMSUI.modelUtils.matchPDBChainsToUniprot(pdbInfo.pdbCode, nglSequences, interactorArr, function(pdbUniProtMap) {
+                            if (pdbUniProtMap.fail) { // No data returned for this pdb codem fall back to aligning
+                                matchByAlignment();
+                                //returnFailure ("No valid uniprot data returned");
+                            } else if (!pdbUniProtMap.length) { // no matches, fall back to aligning
+                                matchByAlignment();
+                            } else {
+                                sequenceMapsAvailable(pdbUniProtMap);
+                            }
+                        });
+                    } else { // without access to pdb codes have to match comparing all proteins against all chains
+                        matchByAlignment();
+                    }
 
-					// bit to continue onto after ngl protein chain to clms protein matching has been done
-					function sequenceMapsAvailable (sequenceMap) {
+                    // bit to continue onto after ngl protein chain to clms protein matching has been done
+                    function sequenceMapsAvailable(sequenceMap) {
 
-						console.log ("seqmpa", sequenceMap);
-						//if (!_.isEmpty(sequenceMap)) {
-							sequenceMap.pdbid = pdbInfo.baseSeqId;
-							var chainMap = {};
-							sequenceMap.forEach (function (pMatch) {
-								pMatch.data = pMatch.seqObj.data;
-								pMatch.name = CLMSUI.modelUtils.make3DAlignID (pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
-								chainMap[pMatch.id] = chainMap[pMatch.id] || [];
-								chainMap[pMatch.id].push ({index: pMatch.seqObj.chainIndex, name: pMatch.seqObj.chainName, modelIndex: pMatch.seqObj.modelIndex});
-								pMatch.otherAlignSettings = {semiLocal: true};
-							});
-							console.log ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
+                        console.log("seqmpa", sequenceMap);
+                        //if (!_.isEmpty(sequenceMap)) {
+                        sequenceMap.pdbid = pdbInfo.baseSeqId;
+                        var chainMap = {};
+                        sequenceMap.forEach(function(pMatch) {
+                            pMatch.data = pMatch.seqObj.data;
+                            pMatch.name = CLMSUI.modelUtils.make3DAlignID(pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
+                            chainMap[pMatch.id] = chainMap[pMatch.id] || [];
+                            chainMap[pMatch.id].push({
+                                index: pMatch.seqObj.chainIndex,
+                                name: pMatch.seqObj.chainName,
+                                modelIndex: pMatch.seqObj.modelIndex
+                            });
+                            pMatch.otherAlignSettings = {
+                                semiLocal: true
+                            };
+                        });
+                        console.log("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
 
-							if (bbmodel.get("stageModel")) {
-								 bbmodel.get("stageModel").stopListening();  // Stop the following 3dsync event triggering stuff in the old stage model
-							}
-							bbmodel.trigger ("3dsync", sequenceMap);
-							// Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
+                        if (bbmodel.get("stageModel")) {
+                            bbmodel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
+                        }
+                        bbmodel.trigger("3dsync", sequenceMap);
+                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
 
-							// Make a new model and set of data ready for the ngl viewer
-							var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB ();
-							crosslinkData.set({
-								structureComp: structureComp,
-								chainMap: chainMap,
-								pdbBaseSeqID: pdbInfo.baseSeqId,
-								masterModel: bbmodel,
-							});
-							bbmodel.set ("stageModel", crosslinkData);
-							// important that the new stagemodel is set first ^^^ before we setupLinks() on the model
-							// otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
-							// changed:linklist event is received. (i.e. it broke the other way round)
-							crosslinkData.setupLinks ();
-					}
-				}
-            })
-        ;
+                        // Make a new model and set of data ready for the ngl viewer
+                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB();
+                        crosslinkData.set({
+                            structureComp: structureComp,
+                            chainMap: chainMap,
+                            pdbBaseSeqID: pdbInfo.baseSeqId,
+                            masterModel: bbmodel,
+                        });
+                        bbmodel.set("stageModel", crosslinkData);
+                        // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
+                        // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
+                        // changed:linklist event is received. (i.e. it broke the other way round)
+                        crosslinkData.setupLinks();
+                    }
+                }
+            });
     },
 
 
@@ -534,122 +539,142 @@ CLMSUI.modelUtils = {
                 return protAlignCollection.get(protein.id);
             });
         var matchMatrix = {};
-		var seqs = extractFunc ? sequenceObjs.map (extractFunc) : sequenceObjs;
+        var seqs = extractFunc ? sequenceObjs.map(extractFunc) : sequenceObjs;
 
-		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
-		var filteredSeqInfo = CLMSUI.modelUtils.filterRepeatedSequences (seqs);
+        // Filter out repeated sequences to avoid costly realignment calculation of the same sequences
+        var filteredSeqInfo = CLMSUI.modelUtils.filterRepeatedSequences(seqs);
 
-		function finished (matchMatrix) {
-			// inflate score matrix to accommodate repeated sequences that were found and filtered out above
-			CLMSUI.vent.trigger ("sequenceMatchingDone", CLMSUI.modelUtils.reinflateSequenceMap (matchMatrix, seqs, filteredSeqInfo));
-		}
+        function finished(matchMatrix) {
+            // inflate score matrix to accommodate repeated sequences that were found and filtered out above
+            CLMSUI.vent.trigger("sequenceMatchingDone", CLMSUI.modelUtils.reinflateSequenceMap(matchMatrix, seqs, filteredSeqInfo));
+        }
 
-		function updateMatchMatrix (protID, alignResults) {
-			var uniqScores = alignResults.map (function (indRes) { return indRes.eScore; });
-			matchMatrix[protID] = uniqScores;
-		}
+        function updateMatchMatrix(protID, alignResults) {
+            var uniqScores = alignResults.map(function(indRes) {
+                return indRes.eScore;
+            });
+            matchMatrix[protID] = uniqScores;
+        }
 
-		var totalAlignments = filteredSeqInfo.uniqSeqs.length * proteins.length;
-		CLMSUI.vent.trigger ("alignmentProgress", "Attempting to match "+proteins.length+" proteins to "+seqs.length+" additional sequences.");
+        var totalAlignments = filteredSeqInfo.uniqSeqs.length * proteins.length;
+        CLMSUI.vent.trigger("alignmentProgress", "Attempting to match " + proteins.length + " proteins to " + seqs.length + " additional sequences.");
 
-		var start = performance.now();
-		// webworker way, only do if enough proteins and cores to make it worthwhile
-		if ((!window || !!window.Worker) && proteins.length > 20 && workerpool.cpus > 2) {
-			var count = proteins.length;
-			var pool = workerpool.pool ("js/alignWorker.js");
+        var start = performance.now();
+        // webworker way, only do if enough proteins and cores to make it worthwhile
+        if ((!window || !!window.Worker) && proteins.length > 20 && workerpool.cpus > 2) {
+            var count = proteins.length;
+            var pool = workerpool.pool("js/alignWorker.js");
 
-			proteins.forEach (function (prot, i) {
-            	var protAlignModel = protAlignCollection.get (prot.id);
-				var settings = protAlignModel.getSettings();
-				settings.aligner = undefined;
-				pool.exec ('protAlignPar', [prot.id, settings, filteredSeqInfo.uniqSeqs, {semiLocal: true}])
-					.then(function (alignResultsObj) {
-						// be careful this is async, so protID better obtained from returned object - might not be prot.id
-						updateMatchMatrix (alignResultsObj.protID, alignResultsObj.fullResults)
-					})
-					.catch(function (err) { console.log (err); })
-					.then(function () {
-						count--;
-						if (count % 10 === 0) {
-							CLMSUI.vent.trigger ("alignmentProgress", count+" proteins remaining to align.");
-							if (count === 0) {
-								pool.terminate(); // terminate all workers when done
-								console.log ("tidy pool. TIME PAR", performance.now() - start);
-								finished (matchMatrix);
-							}
-						}
-					})
-				;
-			});
-		}
-		// else do it on main thread
-		else {
-			// Do alignments
-			proteins.forEach (function (prot) {
-				var protAlignModel = protAlignCollection.get (prot.id);
-				// Only calc alignments for unique sequences, we can copy values for repeated sequences in the next bit
-				var alignResults = protAlignModel.alignWithoutStoring (filteredSeqInfo.uniqSeqs, {semiLocal: true});
-				console.log ("alignResults", /*alignResults,*/ prot.id);	// printing alignResults uses lots of memory in console (prevents garbage collection)
-				updateMatchMatrix (prot.id, alignResults)
-			});
+            proteins.forEach(function(prot, i) {
+                var protAlignModel = protAlignCollection.get(prot.id);
+                var settings = protAlignModel.getSettings();
+                settings.aligner = undefined;
+                pool.exec('protAlignPar', [prot.id, settings, filteredSeqInfo.uniqSeqs, {
+                        semiLocal: true
+                    }])
+                    .then(function(alignResultsObj) {
+                        // be careful this is async, so protID better obtained from returned object - might not be prot.id
+                        updateMatchMatrix(alignResultsObj.protID, alignResultsObj.fullResults)
+                    })
+                    .catch(function(err) {
+                        console.log(err);
+                    })
+                    .then(function() {
+                        count--;
+                        if (count % 10 === 0) {
+                            CLMSUI.vent.trigger("alignmentProgress", count + " proteins remaining to align.");
+                            if (count === 0) {
+                                pool.terminate(); // terminate all workers when done
+                                console.log("tidy pool. TIME PAR", performance.now() - start);
+                                finished(matchMatrix);
+                            }
+                        }
+                    });
+            });
+        }
+        // else do it on main thread
+        else {
+            // Do alignments
+            proteins.forEach(function(prot) {
+                var protAlignModel = protAlignCollection.get(prot.id);
+                // Only calc alignments for unique sequences, we can copy values for repeated sequences in the next bit
+                var alignResults = protAlignModel.alignWithoutStoring(filteredSeqInfo.uniqSeqs, {
+                    semiLocal: true
+                });
+                console.log("alignResults", /*alignResults,*/ prot.id); // printing alignResults uses lots of memory in console (prevents garbage collection)
+                updateMatchMatrix(prot.id, alignResults)
+            });
 
-			finished (matchMatrix);
-		}
+            finished(matchMatrix);
+        }
     },
 
-    	// return array of indices of first occurrence of a sequence when encountering a repetition
-	// e.g. ["CAT", "DOG", "CAT", "DOG"] -> [undefined, undefined, 0, 1];
-	indexSameSequencesToFirstOccurrence: function (sequences) {
-		var firstIndex = [];
-		sequences.forEach (function (seq, i) {
-			firstIndex[i] = undefined;
-			for (var j = 0; j < i; j++) {
-				if (seq === sequences[j]) {
-					firstIndex[i] = j;
-					break;
-				}
-			}
-		});
-		return firstIndex;
-	},
+    // return array of indices of first occurrence of a sequence when encountering a repetition
+    // e.g. ["CAT", "DOG", "CAT", "DOG"] -> [undefined, undefined, 0, 1];
+    indexSameSequencesToFirstOccurrence: function(sequences) {
+        var firstIndex = [];
+        sequences.forEach(function(seq, i) {
+            firstIndex[i] = undefined;
+            for (var j = 0; j < i; j++) {
+                if (seq === sequences[j]) {
+                    firstIndex[i] = j;
+                    break;
+                }
+            }
+        });
+        return firstIndex;
+    },
 
-	filterRepeatedSequences: function (sequences) {
-		// Filter out repeated sequences to avoid costly realignment calculation of the same sequences
-		var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence (sequences);
-		var uniqSeqs = sequences.filter (function (seq, i) { return sameSeqIndices[i] === undefined; });	// unique sequences...
-		var uniqSeqIndices = d3.range(0, sequences.length).filter (function (i) { return sameSeqIndices[i] === undefined; });	// ...and their indices in 'seqs'...
-		var uniqSeqReverseIndex = _.invert (uniqSeqIndices);	// ...and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
-		return {sameSeqIndices: sameSeqIndices, uniqSeqs: uniqSeqs, uniqSeqIndices: uniqSeqIndices, uniqSeqReverseIndex: uniqSeqReverseIndex};
-	},
+    filterRepeatedSequences: function(sequences) {
+        // Filter out repeated sequences to avoid costly realignment calculation of the same sequences
+        var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence(sequences);
+        var uniqSeqs = sequences.filter(function(seq, i) {
+            return sameSeqIndices[i] === undefined;
+        }); // unique sequences...
+        var uniqSeqIndices = d3.range(0, sequences.length).filter(function(i) {
+            return sameSeqIndices[i] === undefined;
+        }); // ...and their indices in 'seqs'...
+        var uniqSeqReverseIndex = _.invert(uniqSeqIndices); // ...and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
+        return {
+            sameSeqIndices: sameSeqIndices,
+            uniqSeqs: uniqSeqs,
+            uniqSeqIndices: uniqSeqIndices,
+            uniqSeqReverseIndex: uniqSeqReverseIndex
+        };
+    },
 
-	reinflateSequenceMap: function (matchMatrix, sequences, filteredSeqInfo) {
-		d3.keys(matchMatrix).forEach (function (protID) {
-			var matchMatrixProt = matchMatrix[protID];
-			matchMatrix[protID] = d3.range(0, sequences.length).map (function (i) {
-				var sameSeqIndex = filteredSeqInfo.sameSeqIndices[i];
-				var seqIndex = sameSeqIndex === undefined ? i : sameSeqIndex;
-				var uniqSeqIndex = +filteredSeqInfo.uniqSeqReverseIndex[seqIndex];	// + 'cos invert above turns numbers into strings
-				return matchMatrixProt[uniqSeqIndex];
-			});
-		});
+    reinflateSequenceMap: function(matchMatrix, sequences, filteredSeqInfo) {
+        d3.keys(matchMatrix).forEach(function(protID) {
+            var matchMatrixProt = matchMatrix[protID];
+            matchMatrix[protID] = d3.range(0, sequences.length).map(function(i) {
+                var sameSeqIndex = filteredSeqInfo.sameSeqIndices[i];
+                var seqIndex = sameSeqIndex === undefined ? i : sameSeqIndex;
+                var uniqSeqIndex = +filteredSeqInfo.uniqSeqReverseIndex[seqIndex]; // + 'cos invert above turns numbers into strings
+                return matchMatrixProt[uniqSeqIndex];
+            });
+        });
 
-		return matchMatrix;
-	},
+        return matchMatrix;
+    },
 
-    matrixPairings: function (matrix, sequenceObjs) {
+    matrixPairings: function(matrix, sequenceObjs) {
         var entries = d3.entries(matrix);
         var pairings = [];
 
         for (var n = 0; n < sequenceObjs.length; n++) {
-            var max = {key: undefined, seqObj: undefined, eScore: 1e-25};
+            var max = {
+                key: undefined,
+                seqObj: undefined,
+                eScore: 1e-25
+            };
             var seqObj = sequenceObjs[n];
-            entries.forEach (function (entry) {
-				var eScore = entry.value[n];
+            entries.forEach(function(entry) {
+                var eScore = entry.value[n];
 
                 if (eScore < max.eScore) { // lower eScore is better
                     max.key = entry.key;
                     max.seqObj = seqObj;
-					max.eScore = eScore;
+                    max.eScore = eScore;
                 }
             });
             if (max.key) {
@@ -664,7 +689,7 @@ CLMSUI.modelUtils = {
         return pairings;
     },
 
-    not3DHomomultimeric: function (crossLink, chain1ID, chain2ID) {
+    not3DHomomultimeric: function(crossLink, chain1ID, chain2ID) {
         return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
     },
 
@@ -695,8 +720,7 @@ CLMSUI.modelUtils = {
                 })
                 .filter(function(accession) {
                     return accession.match(CLMSUI.utils.commonRegexes.uniprotAccession);
-                })
-            ;
+                });
         }
         return ids;
     },
@@ -930,10 +954,10 @@ CLMSUI.modelUtils = {
         }
     },
 
-    clearCrossLinkMetaData: function (crossLinkArr, metaFields) {
-        crossLinkArr.forEach (function (crossLink) {
+    clearCrossLinkMetaData: function(crossLinkArr, metaFields) {
+        crossLinkArr.forEach(function(crossLink) {
             if (crossLink.getMeta()) {
-                metaFields.forEach (function (metaField) {
+                metaFields.forEach(function(metaField) {
                     if (crossLink.getMeta(metaField) !== undefined) {
                         crossLink.setMeta(metaField, undefined);
                     }
@@ -1006,10 +1030,10 @@ CLMSUI.modelUtils = {
         }
     },
 
-    clearProteinMetaData: function (proteinArr, metaFields) {
-        proteinArr.forEach (function (protein) {
+    clearProteinMetaData: function(proteinArr, metaFields) {
+        proteinArr.forEach(function(protein) {
             if (protein.meta) {
-                metaFields.forEach (function (metaField) {
+                metaFields.forEach(function(metaField) {
                     if (protein.meta[metaField] !== undefined) {
                         protein.meta[metaField] = undefined;
                     }
@@ -1063,23 +1087,23 @@ CLMSUI.modelUtils = {
                         end: dl.endres,
                         colour: dl.color || dl.colour
                     };
-                    newAnnotations.push (newAnno);
-                    protein.userAnnotations.push (newAnno);
-                    if (!annotationMap.has (dl.annotname)) {
-                        annotationMap.set (dl.annotname, {
+                    newAnnotations.push(newAnno);
+                    protein.userAnnotations.push(newAnno);
+                    if (!annotationMap.has(dl.annotname)) {
+                        annotationMap.set(dl.annotname, {
                             category: "User Defined",
                             type: dl.annotname,
-                            source: "Search",    // these will be matched to the search sequence,
-                            colour: dl.color || dl.colour,  // default colour for this type - undefined if not declared
+                            source: "Search", // these will be matched to the search sequence,
+                            colour: dl.color || dl.colour, // default colour for this type - undefined if not declared
                         });
                     }
-                    proteinSet.add (proteinID);
+                    proteinSet.add(proteinID);
                 }
             }
         });
 
         CLMSUI.vent.trigger("userAnnotationsUpdated", {
-            types:  annotationMap.values(),
+            types: annotationMap.values(),
             columns: annotationMap.values(),
             items: newAnnotations,
             matchedItemCount: newAnnotations.length
@@ -1100,23 +1124,22 @@ CLMSUI.modelUtils = {
                 var go = new Map();
                 var lines = txt.split('\n');
                 var term;
-                for(var l = 0; l < lines.length; l++){
-                  //console.log(lines[l]);
-                  var line = lines[l];
-                  if (line.trim() == "[Term]"){
-                      if (term) {
-                          if (term.namespace == "molecular_function"){
-                              go.set(term.id, term);
-                          }
-                      }
-                      term = {};
-                  }
-                  else if (term) {
-                      var parts = line.split(":");
-                      term[parts[0]] = parts.slice(1, parts.length).join(":").trim();
-                  }
+                for (var l = 0; l < lines.length; l++) {
+                    //console.log(lines[l]);
+                    var line = lines[l];
+                    if (line.trim() == "[Term]") {
+                        if (term) {
+                            if (term.namespace == "molecular_function") {
+                                go.set(term.id, term);
+                            }
+                        }
+                        term = {};
+                    } else if (term) {
+                        var parts = line.split(":");
+                        term[parts[0]] = parts.slice(1, parts.length).join(":").trim();
+                    }
                 }
-                if (term.namespace == "molecular_function"){
+                if (term.namespace == "molecular_function") {
                     go.set(term.id, term);
                 }
                 CLMSUI.compositeModelInst.set("go", go);
@@ -1128,25 +1151,42 @@ CLMSUI.modelUtils = {
                 });
 
                 var gafLines = gafFileContents.split('\n');
-                for(var g = 0; g < gafLines.length; g++){
-                  line = gafLines[g];
-                  if (line.startsWith("!") == false) {
-                      var fields = line.split("\t");
-                      var goId = fields[4];
-                      if (go.get(goId)) {
-                          var proteinId = protMap.get(fields[1]);
-                          var protein = proteins.get(proteinId);
+                var groups = new Map();
+                for (var g = 0; g < gafLines.length; g++) {
+                    line = gafLines[g];
+                    if (line.startsWith("!") == false) {
+                        var fields = line.split("\t");
+                        var goId = fields[4];
+                        if (go.get(goId)) {
+                            var proteinId = protMap.get(fields[1]);
+                            var protein = proteins.get(proteinId);
 
-                          if (protein) {
-                              if (!protein.go) {
-                                  protein.go = [];
-                              }
-                              protein.go.push(goId);
-                              //console.log(">>"+goId);
-                          }
-                      }
-                  }
+                            if (protein) {
+                                if (!protein.go) {
+                                    protein.go = [];
+                                }
+                                protein.go.push(goId);
+                                //console.log(">>"+goId);
+                                if (!groups.has(goId)) {
+                                    var accs = new Set();
+                                    accs.add(proteinId);
+                                    groups.set(goId, accs);
+                                } else {
+                                    groups.get(goId).add(proteinId);
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // update groups
+
+                CLMSUI.vent.trigger("goAnnotationsUpdated", {
+                    groups: groups
+                }, {
+                    source: "file"
+                });
+
             }
         });
     },
@@ -1361,7 +1401,7 @@ CLMSUI.modelUtils = {
         };
     },
 
-    metaClustering: function (filteredCrossLinks, allCrossLinks, myOptions) {
+    metaClustering: function(filteredCrossLinks, allCrossLinks, myOptions) {
         var defaults = {
             distance: "euclidean",
             linkage: "average",
@@ -1383,7 +1423,7 @@ CLMSUI.modelUtils = {
         var zdistances = clusterfck.hcluster(zScoresByLink, options.distance, options.linkage);
         var treeOrder = this.flattenBinaryTree(zdistances.tree);
 
-        CLMSUI.modelUtils.clearCrossLinkMetaData (allCrossLinks, ["kmcluster", "treeOrder"]);
+        CLMSUI.modelUtils.clearCrossLinkMetaData(allCrossLinks, ["kmcluster", "treeOrder"]);
 
         kmeans.forEach(function(cluster, i) {
             cluster.forEach(function(arr) {
@@ -1514,7 +1554,7 @@ CLMSUI.modelUtils = {
 
     // merges array of single numbers
     // assumes vals are already sorted numerically (though each val is a string)
-    joinConsecutiveNumbersIntoRanges: function (vals, joinString) {
+    joinConsecutiveNumbersIntoRanges: function(vals, joinString) {
         joinString = joinString || "-";
 
         if (vals && vals.length > 1) {
@@ -1544,7 +1584,7 @@ CLMSUI.modelUtils = {
         return vals;
     },
 
-    getDistanceSquared: function (coords1, coords2) {
+    getDistanceSquared: function(coords1, coords2) {
         var d2 = 0;
         for (var n = 0; n < coords1.length; n++) {
             var diff = coords1[n] - coords2[n];
@@ -1553,31 +1593,30 @@ CLMSUI.modelUtils = {
         return d2;
     },
 
-    getMinimumDistance: function (points1, points2, accessorObj, maxDistance, ignoreFunc) {
+    getMinimumDistance: function(points1, points2, accessorObj, maxDistance, ignoreFunc) {
 
         accessorObj = accessorObj || {};
         var points1Bigger = points1.length > points2.length;
 
         var bigPointArr = points1Bigger ? points1 : points2;
         var smallPointArr = points1Bigger ? points2 : points1;
-        var octree = d3.octree ();
+        var octree = d3.octree();
         octree
             .x(accessorObj.x || octree.x())
             .y(accessorObj.y || octree.y())
             .z(accessorObj.z || octree.z())
-            .addAll (bigPointArr)
-        ;
+            .addAll(bigPointArr);
 
         maxDistance = maxDistance || 200;
 
-        var nearest = smallPointArr.map (function (point) {
-            return octree.find (octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
+        var nearest = smallPointArr.map(function(point) {
+            return octree.find(octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
-        var dist = smallPointArr.map (function (point, i) {
-            return CLMSUI.modelUtils.getDistanceSquared (point.coords, nearest[i].coords);
+        var dist = smallPointArr.map(function(point, i) {
+            return CLMSUI.modelUtils.getDistanceSquared(point.coords, nearest[i].coords);
         });
 
-        return d3.zip (points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
+        return d3.zip(points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);
     },
 
 
