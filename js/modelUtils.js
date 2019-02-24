@@ -1150,6 +1150,8 @@ CLMSUI.modelUtils = {
                     protMap.set(value.accession, key);
                 });
 
+                var exclusionList = ["GO:0005515"];
+
                 var gafLines = gafFileContents.split('\n');
                 var groups = new Map();
                 for (var g = 0; g < gafLines.length; g++) {
@@ -1165,14 +1167,16 @@ CLMSUI.modelUtils = {
                                 if (!protein.go) {
                                     protein.go = [];
                                 }
-                                protein.go.push(goId);
                                 //console.log(">>"+goId);
-                                if (!groups.has(goId)) {
-                                    var accs = new Set();
-                                    accs.add(proteinId);
-                                    groups.set(goId, accs);
-                                } else {
-                                    groups.get(goId).add(proteinId);
+                                if (exclusionList.includes(goId) == false) {
+                                    protein.go.push(goId);
+                                    if (!groups.has(goId)) {
+                                        var accs = new Set();
+                                        accs.add(proteinId);
+                                        groups.set(goId, accs);
+                                    } else {
+                                        groups.get(goId).add(proteinId);
+                                    }
                                 }
                             }
                         }
