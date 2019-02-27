@@ -36,6 +36,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         selectedColour: "#ff0",
         exportKey: true,
         exportTitle: true,
+        canHideToolbarArea: true,
     },
 
     initialize: function(viewOptions) {
@@ -72,7 +73,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
         mainDivSel.append("div")
             .attr("class", "verticalFlexContainer")
-            .html("<DIV class='toolbar'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
+            .html("<DIV class='toolbar toolbarArea'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
 
         var buttonData = [{
             class: "downloadButton",

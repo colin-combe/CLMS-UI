@@ -42,6 +42,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         allowInterModelDistances: false,
         exportKey: true,
         exportTitle: true,
+        canHideToolbarArea: true,
     },
 
     initialize: function (viewOptions) {
@@ -70,7 +71,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             },
         ];
 
-        var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar");
+        var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar toolbarArea");
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
 
 
