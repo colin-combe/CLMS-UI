@@ -79,7 +79,10 @@ CLMSUI.utils = {
 
         parentBar
             .append("i")
-            .attr("class", "fa fa-times-circle closeButton");
+            .attr("class", "fa fa-times-circle closeButton")
+            .attr ("title", "Hide View")
+        ;
+        
         return parentBar;
     },
 
@@ -981,6 +984,7 @@ CLMSUI.utils = {
             "click .downloadButton": "downloadSVG",
             "click .downloadButton2": "downloadSVGWithCanvas",
             "click .closeButton": "hideView",
+            "click .hideToolbarButton": "hideToolbarArea",
             "click": "bringToTop",
         },
 
@@ -990,6 +994,7 @@ CLMSUI.utils = {
             var globalOptions = {
                 canBringToTop: true,
                 background: null,
+                canHideToolbarArea: false,
             };
             this.options = _.extend(globalOptions, this.defaultOptions, viewOptions.myOptions);
 
@@ -1002,6 +1007,12 @@ CLMSUI.utils = {
 
             // Set up some html scaffolding in d3
             CLMSUI.utils.addDynDivScaffolding(mainDivSel);
+            if (this.options.canHideToolbarArea) {
+                mainDivSel.select(".dynDiv_moveParentDiv").append("i")
+                    .attr("class", "fa fa-tv hideToolbarButton")
+                    .attr("title", "Hide/Show View Toolbar")
+                ;
+            }
             mainDivSel.select(".dynTitle").text(this.identifier);
 
             // add drag listener to four corners to call resizing locally rather than through dyn_div's api, which loses this view context
@@ -1211,6 +1222,14 @@ CLMSUI.utils = {
 
         hideView: function() {
             CLMSUI.vent.trigger(this.displayEventName, false);
+        },
+        
+        hideToolbarArea: function () {
+            var currentState = d3.select(this.el).select(".toolbarArea").style("display");
+            var newState = (currentState !== "none" ? "none" : null);
+            d3.select(this.el).select(".toolbarArea").style("display", newState);
+            this.relayout({dragEnd: true});
+            return this;
         },
 
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index

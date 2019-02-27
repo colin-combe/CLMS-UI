@@ -40,6 +40,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         },
         exportKey: true,
         exportTitle: true,
+        canHideToolbarArea: true,
     },
 
     initialize: function(viewOptions) {
@@ -64,7 +65,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         var flexWrapperPanel = mainDivSel.append("div")
             .attr("class", "verticalFlexContainer");
 
-        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
+        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar toolbarArea");
 
         this.controlDiv.append("button")
             .attr("class", "downloadButton btn btn-1 btn-1a")
@@ -116,7 +117,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.controlDiv.append("label")
             .attr("class", "btn selectHolder")
             .append("span")
-            .attr("class", "noBreak")
+            //.attr("class", "noBreak")
             .text("Show Protein Pairing ►")
             .append("select")
             .attr("id", mainDivSel.attr("id") + "chainSelect")
