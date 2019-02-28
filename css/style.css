@@ -52,7 +52,7 @@ span, label {
     color: #091D42;
     background:white;
 }
-.fa-times-circle{
+.fa-times-circle, .hideToolbarButton {
     vertical-align:baseline;
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
@@ -62,7 +62,10 @@ span, label {
     margin:2px;
     margin-right:22px;
 }
-.fa-times-circle:hover {
+.hideToolbarButton {
+    margin-right: 0.5em;
+}
+.fa-times-circle:hover, .hideToolbarButton:hover {
     color: #091D42;
     background:white;
 }
@@ -216,7 +219,7 @@ span, label {
     border-color: #091d42;
 }
 
-.fa-times-circle {
+.fa-times-circle, .hideToolbarButton {
     color: white;
 }
 
@@ -453,6 +456,11 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 	padding: 0 0.5em;
 }
 
+#pdbPanel .promptEnter {
+	vertical-align: middle;
+	padding: 0 0.5em;
+}
+
 #pdbPanel .toolbar {
 	display: flex;
 	flex-wrap: wrap;
@@ -592,7 +600,7 @@ A.btn {
     flex-shrink: 0; /* fixes toolbar overflow in ie11 */
 }
 
-div.toolbar[disabled], label.fakeButton[disabled] {
+div.columnbar[disabled], div.columnbar[disabled], label.fakeButton[disabled] {
 	color: grey;
 	pointer-events: none;
 	border-color: grey;
@@ -792,6 +800,10 @@ sup {font-size:xx-small; vertical-align:super;}
 	font-size: 0.75em;
 	color: #668;
 	line-height: 1.4em;
+}
+
+.smallHeadingBar {
+    background: rgba(0,0,0,0.1);
 }
 
 .btn-tight {

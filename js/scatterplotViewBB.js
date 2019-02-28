@@ -39,6 +39,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         logY: false,
         exportKey: true,
         exportTitle: true,
+        canHideToolbarArea: true,
     },
 
     initialize: function(viewOptions) {
@@ -63,7 +64,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         var flexWrapperPanel = mainDivSel.append("div")
             .attr("class", "verticalFlexContainer");
 
-        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
+        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar toolbarArea");
 
         // Add download button
         var buttonData = [{

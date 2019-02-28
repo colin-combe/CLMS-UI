@@ -278,7 +278,7 @@ function callback (model) {
         };
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        var actualValue = CLMSUI.modelUtils.makeSubIndexedChainMap (data, "modelIndex");
+        var actualValue = CLMSUI.modelUtils.makeSubIndexedMap (data, "modelIndex");
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" when mapping from "+JSON.stringify(data));
 	});
     
@@ -444,7 +444,7 @@ function callback (model) {
         var cproxy = stageModel.get("structureComp").structure.getChainProxy();
         var atomIndexA = stageModel.getAtomIndex (0, 0); // residue 0-indexed here
         var resObj = {resno: 5, resindex: 0, chainIndex: 0};
-        var atomIndexB = stageModel._getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 resindex)
+        var atomIndexB = stageModel.getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 resindex)
 			
 		assert.deepEqual (atomIndexA, atomIndexB, "Expected "+atomIndexA+" index in both methods (A chain 415 residue), Passed!");
 	});

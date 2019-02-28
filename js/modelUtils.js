@@ -20,7 +20,7 @@ CLMSUI.modelUtils = {
         });
         if (integerise) {
             extent = extent.map(function(val, i) {
-                return Math[i === 0 ? "floor" : "ceil"](val);
+                return val !== undefined ? Math[i === 0 ? "floor" : "ceil"](val) : val;
                 //return Math[i === 0 ? "ceil" : "floor"](val + (i === 0 ? -1 : 1));
             });
         }
@@ -37,6 +37,10 @@ CLMSUI.modelUtils = {
 
     getDirectionalResidueType: function(xlink, getTo, seqAlignFunc) {
         return CLMSUI.modelUtils.getResidueType(getTo ? xlink.toProtein : xlink.fromProtein, getTo ? xlink.toResidue : xlink.fromResidue, seqAlignFunc);
+    },
+
+    filterOutDecoyInteractors: function (interactors) {
+        return interactors.filter (function (i) { return !i.is_decoy; });
     },
 
     makeTooltipContents: {
@@ -322,10 +326,7 @@ CLMSUI.modelUtils = {
 
     repopulateNGL: function(pdbInfo) {
         pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
-        var params = {}; // {sele: ":A"};    // example: show just 'A' chain
-        if (pdbInfo.ext) {
-            params.ext = pdbInfo.ext;
-        }
+        var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
         var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
         var stage = pdbInfo.stage;
         var bbmodel = pdbInfo.bbmodel;
@@ -338,6 +339,8 @@ CLMSUI.modelUtils = {
             emptySequenceMap.pdbid = pdbInfo.baseSeqId;
             bbmodel.trigger("3dsync", emptySequenceMap);
         }
+
+        console.log ("pareams", params);
 
         stage.loadFile(uri, params)
             .catch(function(reason) {
@@ -496,9 +499,7 @@ CLMSUI.modelUtils = {
                     var mapArr = CLMS.arrayFromMapValues(map);
 
                     if (callback) {
-                        var interactors = interactorArr.filter(function(i) {
-                            return !i.is_decoy;
-                        });
+                        var interactors = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorArr);
 
                         mapArr.forEach(function(mapping) {
                             var dotIndex = mapping.pdb.indexOf(".");
@@ -531,13 +532,11 @@ CLMSUI.modelUtils = {
 
     // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline.
     matchSequencesToExistingProteins: function(protAlignCollection, sequenceObjs, proteins, extractFunc) {
-        proteins = proteins
-            .filter(function(protein) {
-                return !protein.is_decoy;
-            })
+        proteins = CLMSUI.modelUtils.filterOutDecoyInteractors (proteins)
             .filter(function(protein) {
                 return protAlignCollection.get(protein.id);
-            });
+            })
+        ;
         var matchMatrix = {};
         var seqs = extractFunc ? sequenceObjs.map(extractFunc) : sequenceObjs;
 
@@ -704,17 +703,14 @@ CLMSUI.modelUtils = {
         return [];
     },
 
-    // interactorMap can also now be an array
-    getLegalAccessionIDs: function(interactorMap) {
+    // interactorCollection can be map or array
+    getLegalAccessionIDs: function(interactorCollection) {
         var ids = [];
-        if (interactorMap) {
-            if (interactorMap.length === undefined) {
-                interactorMap = CLMS.arrayFromMapValues(interactorMap);
+        if (interactorCollection) {
+            if (interactorCollection.length === undefined) {
+                interactorCollection = CLMS.arrayFromMapValues(interactorCollection);
             }
-            ids = interactorMap
-                .filter(function(prot) {
-                    return !prot.is_decoy;
-                })
+            ids = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorCollection)
                 .map(function(prot) {
                     return prot.accession;
                 })
@@ -775,14 +771,15 @@ CLMSUI.modelUtils = {
         return matchChains[0] ? matchChains[0].name : undefined;
     },
 
-    makeSubIndexedChainMap: function(chainMap, subIndexingProperty) {
-        var subIndexedChainMap = {};
-        d3.entries(chainMap).forEach(function(proteinEntry) {
-            subIndexedChainMap[proteinEntry.key] = d3.nest().key(function(d) {
-                return d[subIndexingProperty];
-            }).entries(proteinEntry.value);
+    makeSubIndexedMap: function(mmap, subIndexingProperty) {
+        var subIndexedMap = {};
+        d3.entries(mmap).forEach(function(entry) {
+            subIndexedMap[entry.key] = d3.nest()
+                .key(function(d) { return d[subIndexingProperty];})
+                .entries(entry.value)
+            ;
         });
-        return subIndexedChainMap;
+        return subIndexedMap;
     },
 
     getRangedCAlphaResidueSelectionForChain: function(chainProxy) { // chainProxy is NGL Object

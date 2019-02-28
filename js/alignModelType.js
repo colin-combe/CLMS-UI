@@ -393,10 +393,7 @@
         },
         
         addNewProteins : function (proteinArray) {
-            proteinArray
-                .filter (function (prot) {
-                    return !prot.is_decoy;
-                })
+            CLMSUI.modelUtils.filterOutDecoyInteractors (proteinArray)
                 .forEach (function (prot) {
                 //console.log ("entry", entry);
                     this.add ([{

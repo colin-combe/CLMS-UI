@@ -148,6 +148,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         showLinkless: true,
         exportKey: true,
         exportTitle: true,
+        canHideToolbarArea: true,
     },
 
     initialize: function(viewOptions) {
@@ -203,7 +204,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
         // defs to store path definitions for curved text, two nested g's, one for translating, then one for rotating
-        var template = _.template("<DIV class='toolbar'></DIV><DIV class='panelInner backdrop' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
+        var template = _.template("<DIV class='toolbar toolbarArea'></DIV><DIV class='panelInner backdrop' flex-grow='1'><svg class='<%= svgClass %>'><defs></defs><g><g></g></g></svg></DIV>");
         mainDivSel.append("div")
             .attr("class", "verticalFlexContainer")
             .html(
