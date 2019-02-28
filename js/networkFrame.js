@@ -222,7 +222,9 @@ CLMSUI.init.modelsEssential = function(options) {
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 
     var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange(clmsModelInst.get("matches"), true);
+    if (scoreExtentInstance[0]) {
     scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
+    }
     var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
         betweenLinks: true, //clmsModelInst.targetProteinCount > 1,
@@ -277,7 +279,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -464,6 +466,11 @@ CLMSUI.init.views = function() {
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
+        {
+            name: "GO Gene Annotation File",
+            eventName: "gafMetaShow",
+            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
+        },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
@@ -617,7 +624,7 @@ CLMSUI.init.viewsEssential = function(options) {
                     this.model.get("clmsModel").get("sid") +
                     "&unval=1&linears=1&spectrum=" + match.spectrumId + "&matchid=" + match.id;
                 var self = this;
-                var jd = d3.json(url, function(error, json) {
+                d3.json(url, function(error, json) {
                     if (error) {
                         console.log("error", error, "for", url, arguments);
                     } else {
@@ -648,7 +655,6 @@ CLMSUI.init.viewsEssential = function(options) {
                         }
                     }
                 });
-                console.log("jd", jd);
             } else {
                 //~ //this.model.clear();
             }
@@ -942,6 +948,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "userAnnotationsMetaShow",
+    });
+
+    new CLMSUI.GafMetaDataFileChooserBB({
+        el: "#gafAnnotationsMetaLoadPanel",
+        model: compModel,
+        displayEventName: "gafMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({

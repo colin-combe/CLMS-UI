@@ -52,17 +52,19 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         ;
         return this;
     },
-
-    setLinkList: function (crossLinks) {
-        var linkList = this.makeLinkList (crossLinks);
-        var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
-        linkList = this.get("showShortestLinksOnly") && distanceObj ? distanceObj.getShortestLinks(linkList) : linkList;
-        this.setLinkListWrapped (linkList);
-        return this;
-    },
     
     setFilteredLinkList: function () {
         this.setLinkList (this.getModel().getFilteredCrossLinks());
+        return this;
+    },
+    
+    setLinkList: function (crossLinks) {
+        var linkDataObj = this.makeLinkList (crossLinks);
+        var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
+        if (this.get("showShortestLinksOnly") && distanceObj) {
+            linkDataObj.fullLinkList = distanceObj.getShortestLinks(linkDataObj.fullLinkList);
+        }
+        this.setLinkListWrapped (linkDataObj);
         return this;
     },
    
@@ -72,9 +74,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var nextResidueId = 0;
         var structureId = null;
         var residueDict = {};
-        var linkList = [];
+        var fullLinkList = [];  // links where both ends are in pdb
+        var halfLinkList = [];  // links where one end is in the pdb
         var residueProxy1 = structure.getResidueProxy();
-        var residueProxy2 = structure.getResidueProxy();
         var chainProxy = structure.getChainProxy();
         var atomProxy = structure.getAtomProxy();
         var alignColl = this.getModel().get("alignColl");
@@ -89,19 +91,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             return residueDict[globalNGLResIndex];
         }
         
-        function makeResidueObj (resIndex, chainIndex, residueProxy, structureID) {
-            var ri = residueProxy.index;
-            return {
-                globalIndex: ri,
-                resindex: resIndex,
-                residueId: getResidueId (ri),
-                resno: residueProxy.resno, // ngl resindex to resno conversion, as Selection() works with resno not resindex
-                chainIndex: chainIndex,
-                modelIndex: residueProxy.modelIndex,
-                structureId: structureID    
-            };
-        }
-        
         function addAtomPoints (pdbIndexedResidues) {
             pdbIndexedResidues.forEach (function (fat) {
                 var atomIndex = this.getAtomIndex (fat.seqIndex, fat.chainIndex);
@@ -113,16 +102,24 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         }
         
         function makePDBIndexedResidues (perModelChainEntry, searchIndexResidue, protID) {
-            var PDBResidues = perModelChainEntry.values.map (function (chainValue) {
-                var chainIndex = chainValue.index;
-                return {chainIndex: chainIndex, modelIndex: chainValue.modelIndex, seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex), true) - 1}; // residues are 0-indexed in NGL so -1
-            }).filter (function (datum) {
-               return datum.seqIndex >= 0;
-            });
-            return PDBResidues;
+            if (perModelChainEntry) {
+                return perModelChainEntry.values.map (function (chainValue) {
+                    var chainIndex = chainValue.index;
+                    var alignID = CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
+                    return {
+                        chainIndex: chainIndex, 
+                        modelIndex: chainValue.modelIndex, 
+                        seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, alignID, true) - 1,  // residues are 0-indexed in NGL so -1
+                    };
+                }).filter (function (datum) {
+                   return datum.seqIndex >= 0;
+                });
+            }
+            return [];
         }
         
-        function addExtraInfo (pdbIndexedResidue, residueProxy) {
+        // add extra info to a residue object that's handy later on
+        function addResidueExtraInfo (pdbIndexedResidue, residueProxy) {
             var ri = residueProxy.index;
             pdbIndexedResidue.globalIndex = ri;
             pdbIndexedResidue.resindex = pdbIndexedResidue.seqIndex;
@@ -130,19 +127,46 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             pdbIndexedResidue.resno = residueProxy.resno;   // ngl resindex to resno conversion, as NGL.Selection() works with resno values
             pdbIndexedResidue.structureId = null;
         }
+        
+        // call the previous function with the contents of an array of arrays
+        // usually the to and from residues object lists
+        function addResidueListsExtraInfo (residueObjLists) {
+            residueObjLists.forEach (function (residueObjList) {
+                residueObjList.forEach (function (residueObj) {
+                    chainProxy.index = residueObj.chainIndex;
+                    residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
+                    addResidueExtraInfo (residueObj, residueProxy1);
+                }, this);
+            });
+        }
+        
+        function addToHalfLinkList (crossLink, residueObjList) {
+            residueObjList.forEach (function (residueObj) {
+                halfLinkList.push ({
+                    origId: crossLink.id,
+                    linkId: halfLinkList.length,
+                    residue: residueObj,
+                });
+            }, this);
+        }
 
         var t = performance.now();
         var chainMap = this.get("chainMap");
         // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
-        var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedChainMap(chainMap, "modelIndex");
+        var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedMap(chainMap, "modelIndex");
+        
+        // d3.mapped and wrapped versions of chainMap and modelIndexedChainMap. Easier to use for some operations.
+        var chainValueMap = d3.map(); 
         var chainModelMapMap = d3.map();
-        var chainValueMap = d3.map();
-        d3.entries(chainMap).forEach (function (protEntry) { chainValueMap.set (protEntry.key, {values: protEntry.value}); });
+        d3.entries(chainMap).forEach (function (protEntry) { 
+            chainValueMap.set (protEntry.key, {values: protEntry.value}); 
+        });
         d3.entries(modelIndexedChainMap).forEach (function (protEntry) { 
             chainModelMapMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
         });
+
         var allowInterModelDistances = this.get("allowInterModelDistances");
-        console.log ("chainValueMap", chainValueMap, modelIndexedChainMap);
+        console.log ("chainValueMap", chainValueMap, chainModelMapMap, modelIndexedChainMap);
         var octAccessorObj = {
             id: function (d) { return d; },
             x: function (d) { return d.coords[0]; },
@@ -159,8 +183,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             var fromPerModelChains = allowInterModelDistances ? [chainValueMap.get(fromProtID)] : modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
+            var fromEmpty = _.isEmpty(fromPerModelChains);
+            var toEmpty = _.isEmpty(toPerModelChains);
             // Don't continue if neither end of crosslink within pdb
-            if (!_.isEmpty(fromPerModelChains) && !_.isEmpty(toPerModelChains)) {
+            if (!fromEmpty && !toEmpty) {
                 
                 // get a map (key -> value) of the toPerModelChains entries 
                 var toPerModelChainMap = chainModelMapMap.get (toProtID);
@@ -209,133 +235,205 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                             toPDBResidues = [prime[1]];    // take top result for new toPDBResidues array
                         }
                         
-                        if (alternativeCount > 0) {
+                        addResidueListsExtraInfo ([fromPDBResidues, toPDBResidues]);
                         
-                            fromPDBResidues.forEach (function (residueObj) {
-                                chainProxy.index = residueObj.chainIndex;
-                                residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
-                                addExtraInfo (residueObj, residueProxy1);
-                            }, this);
-
-                            toPDBResidues.forEach (function (residueObj) {
-                                chainProxy.index = residueObj.chainIndex;
-                                residueProxy1.index = residueObj.seqIndex + chainProxy.residueOffset;
-                                addExtraInfo (residueObj, residueProxy1);
-                            }, this);
-
+                        if (alternativeCount > 0) {
                             fromPDBResidues.forEach (function (fromPDB) {
-                                //chainProxy.index = fromPDB.chainIndex;
-                                //residueProxy1.index = fromPDB.seqIndex + chainProxy.residueOffset;
-
                                 toPDBResidues.forEach (function (toPDB) {
-
                                     if (CLMSUI.modelUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
-                                        //chainProxy.index = toPDB.chainIndex;
-                                        //residueProxy2.index = toPDB.seqIndex + chainProxy.residueOffset;
-
-                                        linkList.push({
+                                        fullLinkList.push({
                                             origId: xlink.id,
-                                            linkId: linkList.length,
+                                            linkId: fullLinkList.length,
                                             residueA: fromPDB,
                                             residueB: toPDB,
-                                            //residueA: makeResidueObj (fromPDB.seqIndex, fromPDB.chainIndex, residueProxy1, structureId),
-                                            //residueB: makeResidueObj (toPDB.seqIndex, toPDB.chainIndex, residueProxy2, structureId),
                                         });
                                     }
                                 }, this);
                             }, this);
+                        } else {
+                            // one or more of the residues isn't within a pdb-indexed portion of the protein
+                            addToHalfLinkList (xlink, fromPDBResidues);
+                            addToHalfLinkList (xlink, toPDBResidues);
                         }
                     }
                 }, this);
+            } else if (!toEmpty || !fromEmpty) {    // only one end of link in a pdb-indexed protein
+                var toChains = chainValueMap.get (toProtID); 
+                var fromChains = chainValueMap.get (fromProtID); 
+                
+                // One of these residue lists will be empty
+                var fromPDBResidues = makePDBIndexedResidues (fromChains, xlink.fromResidue, fromProtID);
+                var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
+                addResidueListsExtraInfo ([fromPDBResidues, toPDBResidues]);
+                addToHalfLinkList (xlink, fromPDBResidues);
+                addToHalfLinkList (xlink, toPDBResidues);
             }
         }, this);
 
         console.log ("TIME", (performance.now() - t) / 1000, "seconds");
-        console.log("linklist", linkList.length, linkList);
-        return linkList;
+        //console.log ("linklist", linkList.length, linkList);
+        //console.log ("halfLinkList", halfLinkList);
+        return {fullLinkList: fullLinkList, halfLinkList: halfLinkList};
     },
 
-    setLinkListWrapped: function(linkList) {
-        var residueIdToLinkIds = {};
+    setLinkListWrapped: function(linkDataObj) {
+        var linkList = linkDataObj.fullLinkList;
+        var halfLinkList = linkDataObj.halfLinkList;
+        var residueIdToFullLinkIds = {};
+        var residueIdToHalfLinkIds = {};
         var linkIdMap = {};
+        var halfLinkIdMap = {};
         var residueIdMap = {};
-
-        function insertResidue(residue, link) {
+        
+        halfLinkList.forEach (function (halfLink) {
+            halfLinkIdMap[halfLink.linkId] = halfLink;
+            insertResidue(halfLink.residue, halfLink, residueIdToHalfLinkIds);
+        });
+        
+        function insertResidue (residue, link, map) {
             var resID = residue.residueId;
-            var list = residueIdToLinkIds[resID];
+            var list = map[resID];
             if (list === undefined) {
-                residueIdToLinkIds[resID] = [link.linkId];
+                map[resID] = [link.linkId];
             } else if (!_.includes(list, link.linkId)) {
                 list.push(link.linkId);
             }
             residueIdMap[resID] = residue;
         }
 
-        linkList.forEach(function(rl) {
-            linkIdMap[rl.linkId] = rl;
-            insertResidue(rl.residueA, rl);
-            insertResidue(rl.residueB, rl);
+        linkList.forEach(function(link) {
+            linkIdMap[link.linkId] = link;
+            insertResidue(link.residueA, link, residueIdToFullLinkIds);
+            insertResidue(link.residueB, link, residueIdToFullLinkIds);
         });
 
-        var residueList = d3.values(residueIdMap);
-
-        this._residueIdToLinkIds = residueIdToLinkIds;
+        // Useful maps for later work
+        this._residueIdToFullLinkIds = residueIdToFullLinkIds;
+        this._residueIdToHalfLinkIds = residueIdToHalfLinkIds;
         this._linkIdMap = linkIdMap;
+        this._halfLinkIdMap = halfLinkIdMap;
         this._residueIdMap = residueIdMap;
-        this._residueList = residueList;
-        //console.log ("setLinkList", residueIdMap, residueList, residueIdToLinkIds, linkIdMap);
-
+        this._residueList = d3.values(residueIdMap);
+        this._residueNGLIndexMap = _.indexBy (this._residueList, "globalIndex");
+        this._fullLinkNGLIndexMap = {};
+        linkList.forEach (function (link) {
+            this._fullLinkNGLIndexMap[link.residueA.globalIndex+"-"+link.residueB.globalIndex] = link;
+        }, this);
+        
+        //console.log ("setLinkList", residueIdMap, this._residueList, residueIdToFullLinkIds, linkIdMap);
         this.set("linkList", linkList);
     },
 
-    getLinks: function(residue) {
-        if (residue === undefined) {
-            return this.get("linkList");
-        } else {
-            var linkIds = this._residueIdToLinkIds[residue.residueId];
-            return linkIds ? linkIds.map(function(l) {
-                return this._linkIdMap[l];
-            }, this) : [];
-        }
+    getFullLinks: function (residue) {
+        return residue === undefined ? this.get("linkList") : this.getFullLinksByResidueID (residue.residueId);
+    },
+    
+    getFullLinkCountByResidue: function (residue) {
+        var linkIds = this._residueIdToFullLinkIds[residue.residueId];
+        return linkIds ? linkIds.length : 0;
+    },
+    
+    getFullLinksByResidueID: function (residueId) {
+        var linkIds = this._residueIdToFullLinkIds[residueId];
+        return linkIds ? linkIds.map(function(l) {
+            return this._linkIdMap[l];
+        }, this) : [];
+    },
+    
+    getHalfLinksByResidueID: function (residueId) {
+        var linkIds = this._residueIdToHalfLinkIds[residueId];
+        return linkIds ? linkIds.map(function(l) {
+            return this._halfLinkIdMap[l];
+        }, this) : [];
+    },
+    
+    getFullLinkByGlobalIndex: function (residueGlobalIndex1, residueGlobalIndex2) {
+        return this._fullLinkNGLIndexMap[residueGlobalIndex1 + "-" + residueGlobalIndex2];
     },
 
-    getResidues: function(link) {
-        if (link === undefined) {
+    getResidues: function (fullLink) {
+        if (fullLink === undefined) {
             return this._residueList;
-        } else if (Array.isArray(link)) {
+        } else if (Array.isArray(fullLink)) {
             var residues = [];
-            link.forEach(function(l) {
+            fullLink.forEach(function(l) {
                 residues.push(l.residueA, l.residueB); // push two values at once so don't use .map
             });
             return residues;
         } else {
-            return [link.residueA, link.residueB];
+            return [fullLink.residueA, fullLink.residueB];
         }
     },
 
     getSharedLinks: function(residueA, residueB) {
-        var aLinks = this.getLinks (residueA);
-        var bLinks = this.getLinks (residueB);
+        var aLinks = this.getFullLinks (residueA);
+        var bLinks = this.getFullLinks (residueB);
         var sharedLinks = CLMSUI.modelUtils.intersectObjectArrays (aLinks, bLinks, function(l) {
             return l.linkId;
         });
         return sharedLinks.length ? sharedLinks : false;
     },
 
-    findResidues: function (nglGlobalResidueIndex) {
-        var residues = this.getResidues().filter(function(r) {
-            return r.globalIndex === nglGlobalResidueIndex;
-        });
-        console.log("find r", nglGlobalResidueIndex, residues);
-        return residues.length ? residues : false;
+    getResidueByGlobalIndex: function (nglGlobalResidueIndex) {
+        return this._residueNGLIndexMap[nglGlobalResidueIndex];
     },
 
     hasResidue: function(residue) {
-        return this._residueIdMap[residue.residueId] === undefined ? false : true;
+        return this._residueIdMap[residue.residueId] !== undefined;
     },
 
     hasLink: function(link) {
-        return this._linkIdMap[link.linkId] === undefined ? false : true;
+        return this._linkIdMap[link.linkId] !== undefined;
+    },
+    
+    // Filter down a list of residue objects to those that are currently in the residueIdMap object
+    getAvailableResidues: function(residues) {
+        return residues.filter(function(r) {
+            return this.hasResidue(r);
+        }, this);
+    },
+
+    // Filter down a list of links to those that are currently in the linkIdMap object
+    getAvailableLinks: function (linkObjs) {
+        return linkObjs.filter(function(linkObj) {
+            return this.hasLink(linkObj);
+        }, this);
+    },
+    
+    // Return original crosslinks from this model's link objects using origId property value
+    getOriginalCrossLinks: function(linkObjs) {
+        var xlinks = this.getModel().get("clmsModel").get("crossLinks");
+        return linkObjs.map(function(linkObj) {
+            return xlinks.get(linkObj.origId);
+        });
+    },
+    
+    getAtomPairsFromLinks: function (fullLinkList) {
+        var atomPairs = [];
+
+        if (fullLinkList) {
+            if (fullLinkList === "all") {
+                fullLinkList = this.getFullLinks();
+            }
+
+            fullLinkList.forEach(function(link) {
+                var atomA = this.getAtomIndexFromResidueObj (link.residueA);
+                var atomB = this.getAtomIndexFromResidueObj (link.residueB);
+
+                if (atomA !== undefined && atomB !== undefined) {
+                    atomPairs.push([atomA, atomB, link.origId]);
+                } else {
+                    CLMSUI.utils.xilog("dodgy pair", link);
+                }
+            }, this);
+            //CLMSUI.utils.xilog ("getAtomPairs", atomPairs);
+        }
+
+        return atomPairs;
+    },
+
+    getAtomPairsFromResidue: function (residue) {
+        return this.getAtomPairsFromLinks (this.getFullLinks (residue));
     },
 
     getChainInfo: function() {
@@ -396,7 +494,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     getChainDistances: function (linksOnly) {
         var entries = d3.entries(this.get("chainCAtomIndices"));
         var matrixMap = {};
-        var links = this.getLinks();
+        var links = this.getFullLinks();
 
         entries.forEach (function (chain1Entry) {
             var chain1 = chain1Entry.key;
@@ -622,7 +720,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
 
-    _getAtomIndexFromResidueObj: function (resObj) {
+    getAtomIndexFromResidueObj: function (resObj) {
         var resno = resObj.resno;
         return resno !== undefined ? this.getAtomIndex (resObj.resindex, resObj.chainIndex) : undefined;
     },

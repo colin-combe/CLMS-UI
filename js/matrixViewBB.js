@@ -40,6 +40,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         },
         exportKey: true,
         exportTitle: true,
+        canHideToolbarArea: true,
     },
 
     initialize: function(viewOptions) {
@@ -64,7 +65,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         var flexWrapperPanel = mainDivSel.append("div")
             .attr("class", "verticalFlexContainer");
 
-        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
+        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar toolbarArea");
 
         this.controlDiv.append("button")
             .attr("class", "downloadButton btn btn-1 btn-1a")
@@ -116,7 +117,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.controlDiv.append("label")
             .attr("class", "btn selectHolder")
             .append("span")
-            .attr("class", "noBreak")
+            //.attr("class", "noBreak")
             .text("Show Protein Pairing ►")
             .append("select")
             .attr("id", mainDivSel.attr("id") + "chainSelect")
@@ -792,8 +793,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             var seqLengths = this.getSeqLengthData();
             // If so, it's worth drawing the background, setting up the canvas etc
             //if (linksOnly) {
-            // Don't draw backgrounds for huge protein combinations (2000 x 2000 is limit), begins to be memory issue
-            if (seqLengths.lengthA * seqLengths.lengthB > 4e6) {
+            // Don't draw backgrounds for huge protein combinations (5,000,000 =~ 2250 x 2250 is limit), begins to be memory issue
+            if (seqLengths.lengthA * seqLengths.lengthB > 5e6) {
                 // shrink canvas / hide image if not showing it
                 this.canvas
                     .attr("width", 1)
