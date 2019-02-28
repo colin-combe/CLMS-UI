@@ -207,12 +207,24 @@ function getMatchesCSV() {
             if (match.isAmbig()){
                 linkType = "Ambig.";
             }
+            else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___"){
+                linkType = "__AMBIG__";
+            }
+            // else if (match.heavyIsAmbig()){
+            //     linkType = "ShouldBe_Ambig.";
+            // }
             else if (match.crossLinks[0].isSelfLink()) {
                 linkType = "Self";
             }
             else  {
                 linkType = "Between";
             }
+
+            // if (match.matchedPeptides[0].sequence.indexOf(match.matchedPeptides[1].sequence)  > -1
+            //     || match.matchedPeptides[1].sequence.indexOf(match.matchedPeptides[0].sequence) > -1) {
+            //     linkType = "Substring";
+            // }
+
             var decoyType;
             if (decoy1 && decoy2) {
                 decoyType = "DD";
@@ -221,6 +233,7 @@ function getMatchesCSV() {
             } else {
                 decoyType = "TT"
             }
+            
 			var data = [
 				match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType
 			];
