@@ -40,6 +40,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         exportKey: true,
         exportTitle: true,
         canHideToolbarArea: true,
+        canTakeImage: true,
     },
 
     initialize: function(viewOptions) {
@@ -302,6 +303,10 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
 
         this.axisChosen().render(); // initial render with defaults
+    },
+    
+    takeImage: function(event, thisSVG) {
+        return this.downloadSVGWithCanvas ();
     },
 
     setMultipleSelectControls: function(elem, options, keepOld) {
