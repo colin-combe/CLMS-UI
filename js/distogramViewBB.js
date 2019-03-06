@@ -37,6 +37,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         exportKey: true,
         exportTitle: true,
         canHideToolbarArea: true,
+        canTakeImage: true,
     },
 
     initialize: function(viewOptions) {
