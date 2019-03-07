@@ -1126,9 +1126,7 @@ CLMSUI.modelUtils = {
                     var line = lines[l];
                     if (line.trim() == "[Term]") {
                         if (term) {
-                            if (term.namespace == "molecular_function") {
-                                go.set(term.id, term);
-                            }
+                            go.set(term.id, term);
                         }
                         term = {};
                     } else if (term) {
@@ -1136,9 +1134,7 @@ CLMSUI.modelUtils = {
                         term[parts[0]] = parts.slice(1, parts.length).join(":").trim();
                     }
                 }
-                if (term.namespace == "molecular_function") {
-                    go.set(term.id, term);
-                }
+                go.set(term.id, term);
                 CLMSUI.compositeModelInst.set("go", go);
 
                 var proteins = clmsModel.get("participants");
@@ -1165,15 +1161,13 @@ CLMSUI.modelUtils = {
                                     protein.go = [];
                                 }
                                 //console.log(">>"+goId);
-                                if (exclusionList.includes(goId) == false) {
-                                    protein.go.push(goId);
-                                    if (!groups.has(goId)) {
-                                        var accs = new Set();
-                                        accs.add(proteinId);
-                                        groups.set(goId, accs);
-                                    } else {
-                                        groups.get(goId).add(proteinId);
-                                    }
+                                protein.go.push(goId);
+                                if (!groups.has(goId)) {
+                                    var accs = new Set();
+                                    accs.add(proteinId);
+                                    groups.set(goId, accs);
+                                } else {
+                                    groups.get(goId).add(proteinId);
                                 }
                             }
                         }

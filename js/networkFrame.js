@@ -278,7 +278,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -360,7 +360,14 @@ CLMSUI.init.views = function() {
             id: "keyChkBxPlaceholder",
             label: "Legend",
             eventName: "keyShow",
-            tooltip: "Explains and allows changing of current colour scheme"
+            tooltip: "Explains and allows changing of current colour scheme",
+            sectionEnd: true
+        },
+        {
+            id: "goTermsChkBxPlaceholder",
+            label: "GO Terms",
+            eventName: "goTermsShow",
+            tooltip: "Browse Gene Ontology terms"
         },
     ];
     checkBoxData.forEach(function(cbdata) {
@@ -959,6 +966,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#gafAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "gafMetaShow",
+    });
+
+    new CLMSUI.GoTermsViewBB({
+        el: "#goTermsPanel",
+        model: compModel,
+        displayEventName: "goTermsShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({
