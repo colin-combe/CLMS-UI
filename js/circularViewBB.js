@@ -435,7 +435,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.nodeDrag.startClick = mc;
                 var dragStartTheta = Math.atan2(mc[1] - self.radius, mc[0] - self.radius);
                 self.nodeDrag.startDeg = (((dragStartTheta / degToRad) + 90) + 360) % 360;
-                d3.select(this).classed("draggedNode", true);
+                // draw drag representation if >1 protein displayed
+                if (self.filterInteractors(self.model.get("clmsModel").get("participants")).length > 1) {
+                    d3.select(this).classed("draggedNode", true);
+                }
                 self.nodeDrag.visited = true;
             })
             .on("drag", function(d) {
@@ -1059,7 +1062,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
     drawNodes: function(g, nodes) {
         var self = this;
 
-        var multipleNodes = this.filterInteractors(this.model.get("clmsModel").get("participants")).length > 1;
+        var multipleNodes = true; //this.filterInteractors(this.model.get("clmsModel").get("participants")).length > 1;
 
         var nodeLayer = this.addOrGetGroupLayer(g, "nodeLayer");
         var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
