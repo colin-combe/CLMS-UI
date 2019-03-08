@@ -985,6 +985,7 @@ CLMSUI.utils = {
             "click .downloadButton2": "downloadSVGWithCanvas",
             "click .closeButton": "hideView",
             "click .hideToolbarButton": "hideToolbarArea",
+            "click .takeImageButton": "takeImage",
             "click": "bringToTop",
         },
 
@@ -995,6 +996,7 @@ CLMSUI.utils = {
                 canBringToTop: true,
                 background: null,
                 canHideToolbarArea: false,
+                canTakeImage: false,
             };
             this.options = _.extend(globalOptions, this.defaultOptions, viewOptions.myOptions);
 
@@ -1010,7 +1012,13 @@ CLMSUI.utils = {
             if (this.options.canHideToolbarArea) {
                 mainDivSel.select(".dynDiv_moveParentDiv").append("i")
                     .attr("class", "fa fa-tv hideToolbarButton")
-                    .attr("title", "Hide/Show View Toolbar")
+                    .attr("title", "Hide/Show the View Toolbar")
+                ;
+            }
+            if (this.options.canTakeImage) {
+                mainDivSel.select(".dynDiv_moveParentDiv").append("i")
+                    .attr("class", "fa fa-photo takeImageButton")
+                    .attr("title", "Download Image")
                 ;
             }
             mainDivSel.select(".dynTitle").text(this.identifier);
@@ -1065,6 +1073,10 @@ CLMSUI.utils = {
             
             return {detachedSVGD3: detachedSVGD3, allSVGs: svgStrings};
         },
+        
+        takeImage: function(event, thisSVG) {
+            return this.downloadSVG (event, thisSVG);
+        },
 
         // use thisSVG d3 selection to set a specific svg element to download, otherwise take first in the view
         downloadSVG: function(event, thisSVG) {
@@ -1078,6 +1090,8 @@ CLMSUI.utils = {
             var fileName = this.filenameStateString().substring(0, 240);
             download(svgXML, 'application/svg', fileName + ".svg");
             this.removeKey();
+            
+            return this;
         },
 
         canvasImageParent: "svg",
@@ -1119,6 +1133,8 @@ CLMSUI.utils = {
                 // Now convert the canvas and its data to the image element we just added and download the whole svg when done
                 CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, finalDownload);
             });
+            
+            return this;
         },
         
         addKey: function (options) {
@@ -1222,13 +1238,16 @@ CLMSUI.utils = {
 
         hideView: function() {
             CLMSUI.vent.trigger(this.displayEventName, false);
+            return this;
         },
         
         hideToolbarArea: function () {
-            var currentState = d3.select(this.el).select(".toolbarArea").style("display");
-            var newState = (currentState !== "none" ? "none" : null);
-            d3.select(this.el).select(".toolbarArea").style("display", newState);
-            this.relayout({dragEnd: true});
+            var toolbarArea = d3.select(this.el).select(".toolbarArea");
+            if (!toolbarArea.empty()) {
+                var currentState = toolbarArea.style("display");
+                toolbarArea.style("display", currentState !== "none" ? "none" : null);
+                this.relayout({dragEnd: true});
+            }
             return this;
         },
 
@@ -1269,6 +1288,7 @@ CLMSUI.utils = {
                 CLMSUI.utils.BaseFrameView.staticLastTopID = this.el.id; // store current top view as property of 'class' BaseFrameView (not instance of view)
                 //console.log ("sortArr", sortArr);
             }
+            return this;
         },
 
         setVisible: function(show) {
@@ -1283,6 +1303,7 @@ CLMSUI.utils = {
                     .render();
                 this.bringToTop();
             }
+            return this;
         },
 
         // Ask if view is currently visible in the DOM (use boolean for performance, querying dom for visibility often took ages)

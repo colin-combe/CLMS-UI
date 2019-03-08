@@ -43,6 +43,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         exportKey: true,
         exportTitle: true,
         canHideToolbarArea: true,
+        canTakeImage: true,
     },
 
     initialize: function (viewOptions) {
@@ -488,6 +489,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         }
         return this;
+    },
+    
+    takeImage: function(event, thisSVG) {
+        return this.downloadImage ();
     },
 
     downloadImage: function() {
