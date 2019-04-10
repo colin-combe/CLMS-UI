@@ -110,8 +110,8 @@
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedMolecule.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedComplex.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/P_PLink.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/Link.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/NaryLink.js<?php echo $cacheBuster ?>"></script>
