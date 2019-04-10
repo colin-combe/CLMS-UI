@@ -25,12 +25,12 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
     initialize: function(viewOptions) {
         CLMSUI.AbstractMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
-        
+
         var self = this;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
-        
+
         mainDivSel.classed ("metaLoadPanel", true);
 
         var wrapperPanel = mainDivSel.append("div")
@@ -45,7 +45,7 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .append("input")
             .attr({
                 type: "file",
-                accept: "text/csv,.csv",
+                accept: "text/csv,.csv,.gaf",
                 class: "selectMetaDataFileButton"
             });
 
@@ -194,4 +194,31 @@ CLMSUI.UserAnnotationsMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooser
     identifier: "User Annotations File Chooser",
 });
 
-CLMSUI.MetaLoaderViewRegistry = [CLMSUI.ProteinMetaDataFileChooserBB, CLMSUI.LinkMetaDataFileChooserBB, CLMSUI.UserAnnotationsMetaDataFileChooserBB];
+CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
+
+    initialize: function(viewOptions) {
+        var myDefaults = {
+            buttonText: "Select Gene Ontology .gaf File",
+            loadedEventName: "gafAnnotationsUpdated",
+            parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
+            expectedFormat: {
+                header: "http://geneontology.org/docs/go-annotation-file-gaf-format-21/",
+                rows: "{}",
+                example: [
+                    {"": [""]},
+                ],
+                notes: ""
+            }
+        };
+        viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
+        CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
+    },
+
+    onLoadFunction: function(fileContents) {
+        CLMSUI.modelUtils.updateGafAnnotationsMetadata(fileContents, this.model.get("clmsModel"));
+    },
+
+    identifier: "GAF File Chooser",
+});
+
+CLMSUI.MetaLoaderViewRegistry = [CLMSUI.ProteinMetaDataFileChooserBB, CLMSUI.LinkMetaDataFileChooserBB, CLMSUI.UserAnnotationsMetaDataFileChooserBB, CLMSUI.GafMetaDataFileChooserBB];

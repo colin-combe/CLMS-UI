@@ -146,7 +146,7 @@ function download(content, contentType, fileName) {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(a.href);   // clear up url reference to blob so it can be g.c.'ed
         }
-        
+
         blob = null;
     }
 
@@ -169,7 +169,7 @@ function mostReadableId(protein) {
 
 
 function getMatchesCSV() {
-    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2"\r\n';
+    var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2", "LinkType", "DecoyType"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 	var distance2dp = d3.format(".2f");
 
@@ -203,8 +203,39 @@ function getMatchesCSV() {
 			var distancesTransposed = d3.transpose (distances2DArr); // transpose so distance data now grouped in array by field (distance, tores, etc)
 			var distancesJoined = distancesTransposed.map (function (arr) { return arr.join(", "); });
 
+            var linkType;
+            if (match.isAmbig()){
+                linkType = "Ambig.";
+            }
+            else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___"){
+                linkType = "__AMBIG__";
+            }
+            // else if (match.heavyIsAmbig()){
+            //     linkType = "ShouldBe_Ambig.";
+            // }
+            else if (match.crossLinks[0].isSelfLink()) {
+                linkType = "Self";
+            }
+            else  {
+                linkType = "Between";
+            }
+
+            // if (match.matchedPeptides[0].sequence.indexOf(match.matchedPeptides[1].sequence)  > -1
+            //     || match.matchedPeptides[1].sequence.indexOf(match.matchedPeptides[0].sequence) > -1) {
+            //     linkType = "Substring";
+            // }
+
+            var decoyType;
+            if (decoy1 && decoy2) {
+                decoyType = "DD";
+            } else if (decoy1 || decoy2) {
+                decoyType = "TD";
+            } else {
+                decoyType = "TT"
+            }
+            
 			var data = [
-				match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","')
+				match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType
 			];
             csv += '"' + data.join('","') + '"\r\n';
 		/*

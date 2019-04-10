@@ -222,7 +222,7 @@ CLMSUI.init.modelsEssential = function(options) {
 
     var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange(clmsModelInst.get("matches"), true);
     if (scoreExtentInstance[0]) {
-        scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
+    scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
     }
     var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
@@ -278,7 +278,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -465,6 +465,11 @@ CLMSUI.init.views = function() {
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
+        {
+            name: "GO Gene Annotation File",
+            eventName: "gafMetaShow",
+            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
+        },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
@@ -512,7 +517,7 @@ CLMSUI.init.viewsEssential = function(options) {
 
     var compModel = CLMSUI.compositeModelInst;
     var filterModel = compModel.get("filterModel");
-    
+
     var singleTargetProtein = compModel.get("clmsModel").targetProteinCount < 2;
     new CLMSUI.FilterViewBB({
         el: "#filterPlaceholder",
@@ -618,7 +623,7 @@ CLMSUI.init.viewsEssential = function(options) {
                     this.model.get("clmsModel").get("sid") +
                     "&unval=1&linears=1&spectrum=" + match.spectrumId + "&matchid=" + match.id;
                 var self = this;
-                var jd = d3.json(url, function(error, json) {
+                d3.json(url, function(error, json) {
                     if (error) {
                         console.log("error", error, "for", url, arguments);
                     } else {
@@ -649,7 +654,6 @@ CLMSUI.init.viewsEssential = function(options) {
                         }
                     }
                 });
-                console.log("jd", jd);
             } else {
                 //~ //this.model.clear();
             }
@@ -661,7 +665,7 @@ CLMSUI.init.viewsEssential = function(options) {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        knownModificationsURL: false, //CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
     }
@@ -794,7 +798,7 @@ CLMSUI.init.viewsEssential = function(options) {
 CLMSUI.init.viewsThatNeedAsyncData = function() {
 
     var compModel = CLMSUI.compositeModelInst;
-    
+
     // This generates the legend div, we don't keep a handle to it - the event object has one
     new CLMSUI.KeyViewBB({
         el: "#keyPanel",
@@ -944,11 +948,17 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         model: compModel,
         displayEventName: "proteinMetaShow",
     });
-    
+
     new CLMSUI.UserAnnotationsMetaDataFileChooserBB({
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "userAnnotationsMetaShow",
+    });
+
+    new CLMSUI.GafMetaDataFileChooserBB({
+        el: "#gafAnnotationsMetaLoadPanel",
+        model: compModel,
+        displayEventName: "gafMetaShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({

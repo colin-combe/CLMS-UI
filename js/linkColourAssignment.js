@@ -269,7 +269,7 @@ CLMSUI.BackboneModelTypes.MapBasedLinkColourModel = CLMSUI.BackboneModelTypes.Co
 CLMSUI.linkColour.setupColourModels = function() {
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel({
         colScale: d3.scale.ordinal().domain([0, 1, 2]).range([
-            "#9970ab", "#9970ab", "#35978f"
+            "#9970ab", "#35978f", "#35978f"
         ]),
         title: "Cross-Link Type",
         longDescription: "Default colour scheme, differentiates self and between Cross-Links.",
