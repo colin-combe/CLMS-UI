@@ -104,7 +104,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             buttonHtml
         );
 
-        if (this.model.get("clmsModel").get("xiNETLayout").name) {
+        if (this.model.get("clmsModel").get("xiNETLayout")) {
             d3.select(".savedLayoutName").property("value", this.model.get("clmsModel").get("xiNETLayout").name);
         }
 
