@@ -76,7 +76,7 @@ CLMSUI.CSVFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             var fileInfo = {
                 name: this.csvFileObj.name,
                 size: this.csvFileObj.size,
-                modified: this.csvFileObj.lastModifiedDate.toString(),
+                //modified: this.csvFileObj.lastModifiedDate.toString(),
                 //path: this.csvFileObj.webkitRelativePath,
             };
             var spinner = new Spinner({
