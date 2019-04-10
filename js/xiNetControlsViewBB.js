@@ -62,7 +62,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                             var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
                             var params = "sid=" + sid +
                                 "&layout=" + encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g, "")) +
-                                "&name=" + encodeURIComponent(d3.select("#name").property("value"));
+                                "&name=" + encodeURIComponent(d3.select(".savedLayoutName").property("value"));
                             xmlhttp.send(params);
                         };
 
@@ -91,7 +91,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
-        buttonHtml += "<input type='text' name='name' id='save' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
+        buttonHtml += "<input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
                 "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
 
         buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
