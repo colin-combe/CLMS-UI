@@ -91,7 +91,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
-        buttonHtml += "<input type='text' name='name' id='name' value='' placeholder='Enter Save Layout Name'>" +
+        buttonHtml += "<input type='text' name='name' id='save' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
                 "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
 
         buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
@@ -103,6 +103,10 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         mainDivSel.html(
             buttonHtml
         );
+
+        if (this.model.get("clmsModel").get("xiNETLayout").name) {
+            d3.select(".savedLayoutName").property("value", this.model.get("clmsModel").get("xiNETLayout").name);
+        }
 
         var tooltips = {
             autoLayoutButton: 'Automatically relayout network of displayed proteins',
@@ -165,9 +169,6 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    //console.log("layout>" + xmlhttp.responseText, true);
-                    //alert("Layout Saved");
-
                     var layouts = JSON.parse(xmlhttp.responseText);
                     var menu = [];
                     for (var key in layouts) {
@@ -190,6 +191,7 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
             return {
                 name: selectedKey,
                 func: function() {
+                    d3.select(".savedLayoutName").property("value", selectedKey);
                     CLMSUI.vent.trigger("xiNetLoadLayout", layouts[selectedKey]);
                 },
                 context: CLMSUI.compositeModelInst
