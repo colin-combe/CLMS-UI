@@ -844,3 +844,8 @@ image.sharpImage {
     -ms-interpolation-mode: nearest-neighbor;
     image-rendering: pixelated;
 }
+
+.textFilters.chargeFilterControl {
+    /* hide charge control here */
+    /* display: none; */
+}

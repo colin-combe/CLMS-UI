@@ -130,7 +130,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "id": "charge",
                     "chars": 3,
                     tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6",
-                    pattern: "\\d+-?\\d*"
+                    pattern: "\\d+-?\\d*",
+                    classType: "chargeFilterControl",
                 },
                 {
                     "label": "Run",
@@ -142,7 +143,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "label": "Scan",
                     "id": "scanNumber",
                     "chars": 5,
-                    tooltip: "Filter to cross-links with matches with this (partial) scan number e.g. 44565",
+                    tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
                     pattern: "\\d*"
                 },
             ],
@@ -387,15 +388,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 })
                 .enter()
                 .append("div")
-                .attr("class", "textFilters")
+                .attr("class", function(d) {   
+                    return "textFilters" + (d.classType ? " "+ d.classType : "");
+                })
                 .attr("title", function(d) {
                     return d.tooltip ? d.tooltip : undefined;
                 })
-                .append("label");
+                .append("label")
+            ;
             textFilters.append("span")
                 .text(function(d) {
                     return d.label;
-                });
+                })
+            ;
             textFilters.append("input")
                 .attr("id", function(d) {
                     return d.id;
@@ -411,7 +416,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 })
                 .attr("pattern", function(d) {
                     return d.pattern;
-                });
+                })
+            ;
         }
 
 
