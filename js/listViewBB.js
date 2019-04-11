@@ -38,7 +38,9 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         groupAverageFunc: {
             key: "mean",
             value: d3.mean
-        }
+        },
+        canHideToolbarArea: true,
+        canTakeImage: true,
     },
 
     initialize: function(viewOptions) {
@@ -65,7 +67,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         var flexWrapperPanel = mainDivSel.append("div")
             .attr("class", "verticalFlexContainer");
 
-        this.controlDiv = flexWrapperPanel.append("div").attr("class", "toolbar");
+        this.toolbarArea = flexWrapperPanel.append("div").attr("class", "toolbarArea");
+        this.controlDiv = this.toolbarArea.append("div").attr("class", "toolbar");
 
         this.viewStateModel = new(Backbone.Model.extend({
             initialize: function() {
@@ -129,7 +132,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.utils.makeBackboneButtons(this.controlDiv, self.el.id, buttonData);
 
 
-        this.controlDiv2 = flexWrapperPanel.append("div").attr("class", "toolbar");
+        this.controlDiv2 = this.toolbarArea.append("div").attr("class", "toolbar");
 
         // Set up d3table
         var selfModel = this.model;
@@ -1072,6 +1075,10 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
         
         return d3g;
+    },
+    
+    takeImage: function(event, thisSVG) {
+        return this.downloadImage ();
     },
     
     downloadImage: function() {

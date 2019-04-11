@@ -239,10 +239,11 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
 
                 //scan number check
-                var scanNumberFilter = this.get("scanNumber");
-                if (scanNumberFilter &&
-                    match.scanNumber.toString().toLowerCase()
-                    .indexOf(scanNumberFilter.toLowerCase()) == -1) {
+                var scanNumberFilter = parseInt (this.get("scanNumber"));
+                if (!isNaN(scanNumberFilter) &&
+                    match.scanNumber !== scanNumberFilter
+                    //match.scanNumber.toString().toLowerCase().indexOf(scanNumberFilter.toLowerCase()) == -1
+                ) {
                     return false;
                 }
 
