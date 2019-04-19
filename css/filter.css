@@ -32,7 +32,7 @@
 }
 */
 
-.filterControlGroup > div > label, .filterControlGroup div.scoreSlider {
+.filterControlGroup > div > label, .filterControlSpan > div > label, .filterControlGroup div.scoreSlider {
 	padding-left: 0.25em;
 	padding-right: 0.25em;
 }
@@ -141,9 +141,11 @@ div.filterControlGroup label.noBreak2 {
 }
 
 .tallButton {
-	height: 100%;
+	height: 90%;
 	width: 1em;
-	margin: 0 0.5em 0 0;
+	margin: 0;
+    border: 0;
+    background: #ddf;
 }
 
 .fixedBottomRight {
@@ -158,4 +160,10 @@ div.filterControlGroup label.noBreak2 {
 
 .filterControlGroup input:invalid {
 	background: pink;
+}
+
+.filterControlGroup .verticalLabel {
+    transform: rotate(90deg);
+    width: 1.4em;
+    height: 1.4em;
 }
