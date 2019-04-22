@@ -236,13 +236,15 @@ CLMSUI.init.modelsEssential = function(options) {
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
         //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
-        matchScoreCutoff: scoreExtentInstance.slice()
+        matchScoreCutoff: scoreExtentInstance.slice(),
+        searchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
     filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
-        scoreExtent: scoreExtentInstance
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {
+        scoreExtent: scoreExtentInstance,
+        possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();

@@ -148,6 +148,17 @@ div.filterControlGroup label.noBreak2 {
     background: #ddf;
 }
 
+.verticalButton {
+    height: 1em;
+    width: 1em;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    transform: rotate(90deg);
+    color: #99b;
+    line-height: 1.4em;
+}
+
 .fixedBottomRight {
 	position: fixed;
 	bottom: 0;
@@ -160,10 +171,4 @@ div.filterControlGroup label.noBreak2 {
 
 .filterControlGroup input:invalid {
 	background: pink;
-}
-
-.filterControlGroup .verticalLabel {
-    transform: rotate(90deg);
-    width: 1.4em;
-    height: 1.4em;
 }
