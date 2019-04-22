@@ -13,8 +13,11 @@ CLMSUI.utils = {
     commonRegexes: {
         uniprotAccession: new RegExp("[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "i"),
         pdbPattern: "[A-Za-z0-9]{4}",
+        multiPdbPattern: "(\\b[A-Za-z0-9]{4}((\\W+)|$))+",    // matches only if full string conforms to 4 char and some separator pattern (double escaped)
+        multiPdbSplitter: /(\b[A-Za-z0-9]{4}\b)+/g, // matches parts of the string that conform to 4 char and some separator pattern
         hexColour: new RegExp("#[0-9A-F]{3}([0-9A-F]{3})?", "i"), // matches #3-char or #6-char hex colour strings
-        validDomID: /^[^a-z]+|[^\w:.-]+/gi
+        validDomID: /^[^a-z]+|[^\w:.-]+/gi,
+        invalidFilenameChars: /[^a-zA-Z0-9-=&()¦_\\.]/g
     },
 
     // return comma-separated list of protein names from array of protein ids
@@ -624,7 +627,7 @@ CLMSUI.utils = {
     },
 
     makeLegalFileName: function(fileNameStr) {
-        var newStr = fileNameStr.replace(/[^a-zA-Z0-9-=&()¦_\\.]/g, "");
+        var newStr = fileNameStr.replace (CLMSUI.utils.commonRegexes.invalidFilenameChars, "");
         newStr = newStr.substring(0, 240);
         return newStr;
     },
