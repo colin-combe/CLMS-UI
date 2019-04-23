@@ -328,8 +328,11 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             
             
             groupFilter: function (match) {
-                var matchGroup = this.precalcedSearchToGroupMap.get(match.searchId);
-                return this.precalcedSearchGroupsSet.has (matchGroup);
+                if (this.possibleSearchGroups.length > 1) {
+                    var matchGroup = this.precalcedSearchToGroupMap.get (match.searchId);
+                    return this.precalcedSearchGroupsSet.has (matchGroup);
+                }
+                return true;
             },
 
 

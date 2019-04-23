@@ -185,21 +185,23 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var setPanelState = function (divSel, collapsed) {
                     divSel.select(".filterControlSpan").style ("display", collapsed ? "none" : null);
                     divSel
-                        .select(".verticalButton")
-                        .attr("title", collapsed ? "Expand" : "Collapse")
-                        .text ((collapsed ? "+" : "-") + " " + options.groupName)
+                        .select(".verticalTextContainer")
+                        .attr("title", (collapsed ? "Expand" : "Collapse") + " this filter section")
+                        .select(".verticalText")
+                        .text ((collapsed ? "+ " : "- ") + options.groupName)
                     ;
                 };
                 
                 div.append("div")
-                    .attr ("class", "verticalButton btn-1a")
+                    .attr ("class", "verticalTextContainer btn-1a")
                     .on("click", function() {
                         var div = d3.select(this.parentNode);
                         var panel = div.select(".filterControlSpan");
                         var collapse = panel.style("display") !== "none";
                         div.call (setPanelState, collapse);                        
                     })
-                    //.append ("text")
+                    .append ("div")
+                        .attr ("class", "verticalText")
                 ;
                 
                 div.call (setPanelState, false);
@@ -490,7 +492,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         // Make controls for filtering out links in particular search groups
         function initGroupGroup () {
-            var navGroupSel = makeFilterControlDiv ({id: "navNumberFilters", expandable: true, groupName: "Groups"});
+            var navGroupSel = makeFilterControlDiv ({id: "groupFilters", expandable: true, groupName: "Groups"});
             
             var subsetToggles = navGroupSel.selectAll("div.groupToggles")
                 .data(this.options.searchGroupToggles, function(d) {
@@ -620,8 +622,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         if (data) {
             var current = d3.set(this.model.get("searchGroups"));
             current[target.checked ? "add" : "remove"](data.id);
-            console.log ("Current groups", current.values());
-
             this.model.set("searchGroups", current.values());
         }
     },
@@ -684,6 +684,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 this.model.set("ambig", false);
             }
             d3.select("#ambig").property("disabled", fdrMode == true);
+            
+            // hide groups control if only 1 group
+            d3.select("#groupFilters").style ("display", this.model.possibleSearchGroups && this.model.possibleSearchGroups.length < 2 ? "none" : null);
         }
     },
 
