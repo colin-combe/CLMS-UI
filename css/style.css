@@ -839,7 +839,7 @@ input:invalid:focus {
 }
 
 image.sharpImage {
-    image-rendering: optimizeSpeed; 
+    image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
     -ms-interpolation-mode: nearest-neighbor;
     image-rendering: pixelated;
@@ -847,5 +847,5 @@ image.sharpImage {
 
 .textFilters.chargeFilterControl {
     /* hide charge control here */
-    /* display: none; */
+    display: none;
 }
