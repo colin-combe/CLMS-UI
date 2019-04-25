@@ -36,10 +36,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var clmsModel = this.get("clmsModel");
         var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
         var clCount = crossLinksArr.length;
+        var searches = CLMS.arrayFromMapValues(clmsModel.get("searches"));
         var result;
 
         if (filterModel) {
-            filterModel.processTextFilters(); // saves doing stuff later on for every match
+            filterModel.processTextFilters (searches); // saves doing stuff later on for every match
         }
         // if its FDR based filtering,
         // set all matches fdrPass att to false, then calc
@@ -100,7 +101,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                         //check its not manually hidden and meets navigation filter
                         if (crossLink.fromProtein.manuallyHidden != true &&
                             (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true) &&
-                            filterModel.navigationFilter(fm.match)) {
+                            filterModel.navigationFilter(fm.match) &&
+                            filterModel.groupFilter(fm.match)) {
                             crossLink.filteredMatches_pp.push(fm);
                         }
                     }
@@ -135,7 +137,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
                         // Or 2.
                         // this afterwards means navigation filters don't affect ambiguous state of crosslinks
-                        pass = pass && filterModel.navigationFilter(match);
+                        pass = pass && filterModel.navigationFilter(match) && filterModel.groupFilter(match);
 
                         if (pass) {
                             crossLink.filteredMatches_pp.push(matchAndPepPos);
