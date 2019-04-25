@@ -337,13 +337,13 @@ CLMSUI.init.views = function() {
             eventName: "scatterplotShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
         },
-        {
-            id: "listChkBxPlaceholder",
-            label: "List / HeatMap",
-            eventName: "listShow",
-            tooltip: "Sortable list of cross-links, can convert to heatmap",
-            sectionEnd: true
-        },
+        // {
+        //     id: "listChkBxPlaceholder",
+        //     label: "List / HeatMap",
+        //     eventName: "listShow",
+        //     tooltip: "Sortable list of cross-links, can convert to heatmap",
+        //     sectionEnd: true
+        // },
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
