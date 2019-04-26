@@ -1014,7 +1014,7 @@ CLMSUI.utils = {
             CLMSUI.utils.addDynDivScaffolding(mainDivSel);
             if (this.options.canHideToolbarArea) {
                 mainDivSel.select(".dynDiv_moveParentDiv").append("i")
-                    .attr("class", "fa fa-tv hideToolbarButton")
+                    .attr("class", "fa fa-wrench hideToolbarButton")
                     .attr("title", "Hide/Show the View Toolbar")
                 ;
             }

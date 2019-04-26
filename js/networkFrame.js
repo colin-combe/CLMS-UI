@@ -360,7 +360,7 @@ CLMSUI.init.views = function() {
         },
         {
             id: "keyChkBxPlaceholder",
-            label: "Legend",
+            label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme"
         },

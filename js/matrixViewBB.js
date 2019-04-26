@@ -280,18 +280,19 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         // rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
-        this.listenTo(this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
-        this.listenTo(this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
-        this.listenTo(this.model, "change:linkColourAssignment", this.render);
-        this.listenTo(this.colourScaleModel, "colourModelChanged", this.render); // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
-        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
-        this.listenTo(this.model.get("clmsModel"), "change:matches", this.matchesChanged); // New matches added (via csv generally)
-        this.listenTo(CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
-        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
+        this.listenTo (this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
+        this.listenTo (this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
+        this.listenTo (this.model, "change:linkColourAssignment", this.render);
+        this.listenTo (this.model, "change:selectedProteins", this.makeProteinPairingOptions);
+        this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
+        this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
+        this.listenTo (this.model.get("clmsModel"), "change:matches", this.matchesChanged); // New matches added (via csv generally)
+        this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
             this.makeProteinPairingOptions();
             this.updateAxisLabels();
         });
-        this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.distancesChanged);
+        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.distancesChanged);
 
         var entries = this.makeProteinPairingOptions();
         var startPairing = _.isEmpty(entries) ? undefined : entries[0].value;
@@ -324,6 +325,16 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         var nonEmptyEntries = entries.filter(function(entry) {
             return entry.value.crossLinks.length;
         });
+        
+        // If there are selected proteins, reduce the choice to pairs within this set
+        var selectedProteins = this.model.get("selectedProteins");
+        if (selectedProteins.length) {
+            var selectedProteinSet = d3.set (_.pluck(selectedProteins, "id"));
+            nonEmptyEntries = nonEmptyEntries.filter (function (entry) {
+                var value = entry.value;
+                return selectedProteinSet.has (value.fromProtein.id) && selectedProteinSet.has (value.toProtein.id);
+            });
+        }
 
         nonEmptyEntries.sort(function(a, b) {
             return b.value.crossLinks.length - a.value.crossLinks.length;
@@ -338,14 +349,17 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         matrixOptions.exit().remove();
         matrixOptions
             .enter()
-            .append("option");
+            .append("option")
+        ;
         matrixOptions
+            .order()
             .property("value", function(d) {
                 return d.key;
             })
             .text(function(d) {
                 return "[" + d.value.crossLinks.length + "] " + d.value.label;
-            });
+            })
+        ;
 
         return nonEmptyEntries.length ? nonEmptyEntries : entries;
     },
@@ -531,6 +545,12 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
 
+    getOverallScale: function (sizeData) {
+        var sd = sizeData || this.getSizeData();
+        var baseScale = Math.min (sd.width / sd.lengthA, sd.height / sd.lengthB);
+        return baseScale * this.zoomStatus.scale();
+    },
+    
     // Tooltip functions     
     convertEvtToXY: function(evt) {
         var sd = this.getSizeData();
@@ -542,8 +562,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         //console.log ("p", evt, px, py, evt.target, evt.originalEvent.offsetX);
 
         var t = this.zoomStatus.translate();
-        var baseScale = Math.min(sd.width / sd.lengthA, sd.height / sd.lengthB);
-        var scale = baseScale * this.zoomStatus.scale();
+        var scale = this.getOverallScale (sd);
         //console.log ("XXXY", this.zoomStatus.scale(), baseScale, scale, t);
 
         px -= t[0]; // translate
@@ -959,6 +978,12 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var xStep = 1; //minDim / seqLengthA;
                 var yStep = 1; //minDim / seqLengthB;
                 var linkWidth = this.options.linkWidth;
+                var overallScale = this.getOverallScale();
+                //if (overallScale < 1 && overallScale > 0) {
+                    //linkWidth /= overallScale;
+                    //linkWidth = Math.ceil (linkWidth);
+                //}
+                console.log ("os", overallScale);
                 var linkWidthOffset = (linkWidth - 1) / 2;
                 var xLinkWidth = linkWidth * xStep;
                 var yLinkWidth = linkWidth * yStep;
@@ -1193,8 +1218,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         var sizeData = this.getSizeData();
 
         // rescale and position canvas according to pan/zoom settings and available space
-        var baseScale = Math.min(sizeData.width / sizeData.lengthA, sizeData.height / sizeData.lengthB);
-        var scale = baseScale * this.zoomStatus.scale();
+        var scale = this.getOverallScale (sizeData);
         var scaleString = "scale(" + scale + ")";
         var translateString = "translate(" + this.zoomStatus.translate()[0] + "px," + this.zoomStatus.translate()[1] + "px)";
         var translateStringAttr = "translate(" + this.zoomStatus.translate()[0] + "," + this.zoomStatus.translate()[1] + ")";
@@ -1215,7 +1239,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var tString = transformStrings[d3sel.type];
                 ["-ms-transform", "-moz-transform", "-o-transform", "-webkit-transform", "transform"].forEach(function(styleName) {
                     d3sel.elem.style(styleName, tString);
-                })
+                });
             }
         });
 
