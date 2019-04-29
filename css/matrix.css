@@ -67,3 +67,7 @@
     stroke: grey;
     stroke-width: 1;
 }
+
+.matrixView .crossLinkPlot {
+    shape-rendering: auto;  /* so small circles look like circles */
+}

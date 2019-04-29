@@ -977,14 +977,13 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var seqLengthB = seqLengths.lengthB - 1;
                 var xStep = 1; //minDim / seqLengthA;
                 var yStep = 1; //minDim / seqLengthB;
-                var linkWidth = this.options.linkWidth;
+                var linkWidth = this.options.linkWidth / 2;
                 var overallScale = this.getOverallScale();
-                //if (overallScale < 1 && overallScale > 0) {
-                    //linkWidth /= overallScale;
-                    //linkWidth = Math.ceil (linkWidth);
-                //}
+                if (overallScale < 1 && overallScale > 0) {
+                    linkWidth /= overallScale;
+                    linkWidth = Math.ceil (linkWidth);
+                }
                 console.log ("os", overallScale);
-                var linkWidthOffset = (linkWidth - 1) / 2;
                 var xLinkWidth = linkWidth * xStep;
                 var yLinkWidth = linkWidth * yStep;
 
@@ -1029,7 +1028,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 // if redoing highlights only, find previously highlighted links not part of current set and restore them
                 // to a non-highlighted state
                 if (highlightOnly) {
-                    var oldHighLinkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.high")
+                    var oldHighLinkSel = this.zoomGroup.select(".crossLinkPlot").selectAll(".high")
                         .filter (function (d) {
                             return ! highlightedCrossLinkIDs.has(d.id);
                         })
@@ -1037,7 +1036,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     ;
                 }
                 
-                var linkSel = this.zoomGroup.select(".crossLinkPlot").selectAll("rect.crossLink")
+                var linkSel = this.zoomGroup.select(".crossLinkPlot").selectAll(".crossLink")
                     .data(sortedFinalCrossLinks, function(d) {
                         return d.id;
                     })
@@ -1050,18 +1049,20 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 
                 if (!highlightOnly) {
                     linkSel.exit().remove();
-                    linkSel.enter().append("rect")
+                    linkSel.enter().append("circle")    // replacing rect
                         .attr("class", "crossLink")
-                        .attr("width", xLinkWidth)
-                        .attr("height", yLinkWidth)
+                        .attr("r", xLinkWidth)
+                        //.attr("width", xLinkWidth)
+                        //.attr("height", yLinkWidth)
                     ;
                 }
+                //var linkWidthOffset = (linkWidth - 1) / 2;    // for rects
                 linkSel
-                    .attr("x", function(d, i) {
-                        return fromToStore[i][0] - linkWidthOffset;
+                    .attr("cx", function(d, i) {    // cx/cy for circle, x/y for rect
+                        return fromToStore[i][0];// - linkWidthOffset;
                     })
-                    .attr("y", function(d, i) {
-                        return (seqLengthB - fromToStore[i][1]) - linkWidthOffset;
+                    .attr("cy", function(d, i) {
+                        return (seqLengthB - fromToStore[i][1]);// - linkWidthOffset;
                     })
                     .each (indLinkPlot);
             }
