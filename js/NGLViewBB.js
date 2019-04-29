@@ -430,10 +430,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
     
     reportLinks: function () {
-        var fullLinkCount = this.xlRepr.crosslinkData.getFullLinks().length;
-        //var halfLinkCount = this.xlRepr.crosslinkData.getHalfLinks();
+        var fullLinkCount = this.xlRepr.crosslinkData.getFullLinkCount();
+        var halfLinkCount = this.xlRepr.crosslinkData.getHalfLinkCount();
+        var currentFilteredLinkCount = this.model.getFilteredCrossLinks().length;
+        var missingLinkCount = currentFilteredLinkCount - fullLinkCount - halfLinkCount;
         var commaFormat = d3.format(",");
-        var linkText = "Currently showing " + commaFormat(fullLinkCount) + " of " + commaFormat(this.model.getAllTTCrossLinks().length) + " filtered TT links in full (others fully/partly outside of structure scope)";
+        var linkText = "Currently showing " + commaFormat(fullLinkCount) + " in full "+
+            (halfLinkCount ? "and "+commaFormat(halfLinkCount)+" in part " : "" ) + 
+            "of " + commaFormat(currentFilteredLinkCount) + " filtered TT crosslinks"+
+            (missingLinkCount ? " ("+missingLinkCount+" others outside of structure scope)" : "")
+        ;
         this.chartDiv.select("div.linkInfo").html(linkText);
         return this;
     },
