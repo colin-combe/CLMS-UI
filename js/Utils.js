@@ -82,7 +82,7 @@ CLMSUI.utils = {
 
         parentBar
             .append("i")
-            .attr("class", "fa fa-times-circle closeButton")
+            .attr("class", "fa fa-times-circle closeButton panelMenuButton")
             .attr ("title", "Hide View")
         ;
         
@@ -942,7 +942,7 @@ CLMSUI.utils = {
         link.exit().remove();
         link.enter().append("g")
             .attr("class", "dlink")
-            .append("path");;
+            .append("path");
         link.select("path").attr("d", function(d) {
             return "M" + d.source.y + " " + d.source.x + " V " + d.target.x + " H " + d.target.y;
         });
@@ -989,6 +989,7 @@ CLMSUI.utils = {
             "click .closeButton": "hideView",
             "click .hideToolbarButton": "hideToolbarArea",
             "click .takeImageButton": "takeImage",
+            "click .maximiseButton": "minMaxPanel",
             "click": "bringToTop",
         },
 
@@ -997,6 +998,7 @@ CLMSUI.utils = {
             // window level options that don't depend on type of view
             var globalOptions = {
                 canBringToTop: true,
+                canMaximise: true,
                 background: null,
                 canHideToolbarArea: false,
                 canTakeImage: false,
@@ -1012,15 +1014,21 @@ CLMSUI.utils = {
 
             // Set up some html scaffolding in d3
             CLMSUI.utils.addDynDivScaffolding(mainDivSel);
+            if (this.options.canMaximise) {
+                mainDivSel.select(".dynDiv_moveParentDiv").append("i")
+                    .attr("class", "fa fa-expand maximiseButton panelMenuButton")
+                    .attr("title", "Maximise / Restore Panel Size")
+                ;
+            }
             if (this.options.canHideToolbarArea) {
                 mainDivSel.select(".dynDiv_moveParentDiv").append("i")
-                    .attr("class", "fa fa-tv hideToolbarButton")
+                    .attr("class", "fa fa-wrench hideToolbarButton panelMenuButton")
                     .attr("title", "Hide/Show the View Toolbar")
                 ;
             }
             if (this.options.canTakeImage) {
                 mainDivSel.select(".dynDiv_moveParentDiv").append("i")
-                    .attr("class", "fa fa-photo takeImageButton")
+                    .attr("class", "fa fa-photo takeImageButton panelMenuButton")
                     .attr("title", "Download Image")
                 ;
             }
@@ -1251,6 +1259,28 @@ CLMSUI.utils = {
                 toolbarArea.style("display", currentState !== "none" ? "none" : null);
                 this.relayout({dragEnd: true});
             }
+            return this;
+        },
+        
+        minMaxPanel: function () {
+            var panel = d3.select(this.el);
+            var maxed = panel.classed("maxSize");
+            panel.classed ("maxSize", !maxed);
+            if (maxed) {
+                panel.style("bottom", null).style("right", null);
+                d3.entries(this.prevBounds).forEach (function (propEntry) {
+                    panel.style (propEntry.key, propEntry.value);    
+                });
+            } else {
+                var collectThese = ["top", "left", "width", "height"];
+                this.prevBounds = {};
+                collectThese.forEach (function (prop) { this.prevBounds[prop] = panel.style(prop); }, this);
+                panel.style("bottom", "65px").style("top", "75px").style("left",0).style("right", 0).style("width", "auto").style("height", "auto");
+            }
+            
+            panel.selectAll(".maximiseButton").classed("fa-expand", maxed).classed("fa-compress", !maxed);
+            this.relayout({dragEnd: true});
+            
             return this;
         },
 

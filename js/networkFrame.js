@@ -236,13 +236,15 @@ CLMSUI.init.modelsEssential = function(options) {
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
         //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
-        matchScoreCutoff: scoreExtentInstance.slice()
+        matchScoreCutoff: scoreExtentInstance.slice(),
+        searchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
     filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
-        scoreExtent: scoreExtentInstance
+        scoreExtent: scoreExtentInstance,
+        possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
@@ -358,7 +360,7 @@ CLMSUI.init.views = function() {
         },
         {
             id: "keyChkBxPlaceholder",
-            label: "Legend",
+            label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme",
             sectionEnd: true
@@ -672,7 +674,7 @@ CLMSUI.init.viewsEssential = function(options) {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: false, //CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
     }

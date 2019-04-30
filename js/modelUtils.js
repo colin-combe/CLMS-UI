@@ -1680,6 +1680,13 @@ CLMSUI.modelUtils = {
             return d.size;
         });
     },
+    
+    getSearchGroups: function (clmsModel) {
+        var searchArr = CLMS.arrayFromMapValues (clmsModel.get("searches"));
+        var uniqueGroups = _.uniq (_.pluck (searchArr, "group"));
+        console.log ("SSS", searchArr, uniqueGroups); 
+        return uniqueGroups;
+    },
 };
 
 CLMSUI.modelUtils.amino1to3Map = _.invert(CLMSUI.modelUtils.amino3to1Map);

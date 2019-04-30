@@ -341,6 +341,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         this.chartDiv.append("div").attr("class", "overlayInfo").html("No PDB File Loaded");
+        this.chartDiv.append("div").attr("class", "linkInfo").html("...");
 
         this.listenTo(this.model.get("filterModel"), "change", this.showFiltered); // any property changing in the filter model means rerendering this view
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function () {
@@ -374,6 +375,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .listenTo (newStageModel, "change:linkList", function () {
                     if (this.xlRepr) {
                         this.xlRepr._handleDataChange();
+                        this.reportLinks();
                     }
                 })
                 .listenTo (newStageModel, "change:allowInterModelDistances", function (stageModel, value) {
@@ -424,6 +426,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     setAssemblyChains: function() {
         this.model.get("clmsModel").get("distancesObj").setAssemblyChains(this.model.get("stageModel").get("structureComp").structure, this.options.defaultAssembly);
+        return this;
+    },
+    
+    reportLinks: function () {
+        var fullLinkCount = this.xlRepr.crosslinkData.getFullLinkCount();
+        var halfLinkCount = this.xlRepr.crosslinkData.getHalfLinkCount();
+        var currentFilteredLinkCount = this.model.getFilteredCrossLinks().length;
+        var missingLinkCount = currentFilteredLinkCount - fullLinkCount - halfLinkCount;
+        var commaFormat = d3.format(",");
+        var linkText = "Currently showing " + commaFormat(fullLinkCount) + " in full "+
+            (halfLinkCount ? "and "+commaFormat(halfLinkCount)+" in part " : "" ) + 
+            "of " + commaFormat(currentFilteredLinkCount) + " filtered TT crosslinks"+
+            (missingLinkCount ? " ("+missingLinkCount+" others outside of structure scope)" : "")
+        ;
+        this.chartDiv.select("div.linkInfo").html(linkText);
         return this;
     },
 
@@ -1127,6 +1144,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 {nglRep: this.resRepr, colourScheme: this.colorOptions.residueColourScheme, immediateUpdate: false},
             ]);
         }
+        
+        
     },
 
     defaultDisplayedProteins: function(getSelectionOnly) {
