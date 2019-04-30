@@ -1121,6 +1121,7 @@ CLMSUI.modelUtils = {
                 var go = new Map();
                 var lines = txt.split('\n');
                 var term;
+                //term.id = term.id.replace(":", "")
                 for (var l = 0; l < lines.length; l++) {
                     //console.log(lines[l]);
                     var line = lines[l];
@@ -1131,7 +1132,7 @@ CLMSUI.modelUtils = {
                         term = {};
                     } else if (term) {
                         var parts = line.split(":");
-                        term[parts[0]] = parts.slice(1, parts.length).join(":").trim();
+                        term[parts[0]] = parts.slice(1, parts.length).join("").trim();
                     }
                 }
                 go.set(term.id, term);
@@ -1143,15 +1144,13 @@ CLMSUI.modelUtils = {
                     protMap.set(value.accession, key);
                 });
 
-                var exclusionList = ["GO:0005515"];
-
                 var gafLines = gafFileContents.split('\n');
                 var groups = new Map();
                 for (var g = 0; g < gafLines.length; g++) {
                     line = gafLines[g];
                     if (line.startsWith("!") == false) {
                         var fields = line.split("\t");
-                        var goId = fields[4];
+                        var goId = fields[4].replace(":", "");
                         if (go.get(goId)) {
                             var proteinId = protMap.get(fields[1]);
                             var protein = proteins.get(proteinId);

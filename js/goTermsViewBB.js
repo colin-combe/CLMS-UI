@@ -103,6 +103,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         // d3.select(self.frameElement).style("height", "500px");
         var self = this;
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
+        this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
+        this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
         // any property changing in the filter model means rerendering this view
         // this.listenTo(this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
         // this.listenTo(this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
@@ -171,33 +173,33 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .size([height, width]);
 
 
-        var groupMap = new Map();
+        this.groupMap = new Map();
         var go = CLMSUI.compositeModelInst.get("go");
         var self = this;
+
         function checkTerm(term) {
             if (term.namespace == "biological_process") {
-                if (!groupMap.has(term.id)) {
+                if (!self.groupMap.has(term.id)) {
                     var group = {};
-                    group.name= term.name;
+                    group.name = term.name;
                     group.id = term.id;
                     group._children = [];
 
-                    if (term.is_a){
+                    if (term.is_a) {
+                        if (group.parent){alert("multiple isa?");}
                         var parentTerm = go.get(term.is_a.split(" ")[0]);
                         var parentGroup = checkTerm(parentTerm);
                         // if (parentGroup) {
-                            group.parent = parentGroup.name;
-                            parentGroup._children.push(group);
+                        group.parent = parentGroup.id;
+                        parentGroup._children.push(group);
                         // }
-                    }
-                    else if (term.id == "GO:0008150"){
+                    } else if (term.id == "GO0008150") {
                         self.root = group;
                     }
-                    groupMap.set(group.id, group);
+                    self.groupMap.set(group.id, group);
                     return group;
-                }
-                else {
-                    return groupMap.get(term.id);
+                } else {
+                    return self.groupMap.get(term.id);
                 }
             }
             return null;
@@ -247,6 +249,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 });
 
             nodeEnter.append("circle")
+                .attr("id", function(d) {
+                    return d.id;
+                })
                 .attr("r", 1e-6)
                 .style("fill", function(d) {
                     return d._children ? "lightsteelblue" : "#fff";
@@ -275,7 +280,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             nodeUpdate.select("circle")
                 .attr("r", 10)
                 .style("fill", function(d) {
-                    return d._children ? "lightsteelblue" : "#fff";
+                    //  return d._children ? "lightsteelblue" : "#fff";
                 });
 
             nodeUpdate.select("text")
@@ -356,6 +361,22 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.render(d);
     },
 
+    // Toggle children on click.
+    expandToShow: function(d) {
+        if (d._children) {
+            d.children = d._children;
+            d._children = null;
+        }
+        if (d.parent) {
+          var group = this.groupMap.get(d.parent);
+          if (group) {
+            this.expandToShow(group);
+          } else {
+            console.log("?", d.parent);
+          }
+        }
+    },
+
     relayout: function() {
         this.resize();
         return this;
@@ -363,15 +384,50 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     // called when things need repositioned, but not re-rendered from data
     resize: function() {
-                // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
-                var jqElem = $(this.svg.node());
-                var cx = jqElem.width(); //this.svg.node().clientWidth;
-                var cy = jqElem.height(); //this.svg.node().clientHeight;
-                var margin = this.options.margin;
-                var width = Math.max(0, cx - margin.left - margin.right);
-                var height = Math.max(0, cy - margin.top - margin.bottom);
+        // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
+        var jqElem = $(this.svg.node());
+        var cx = jqElem.width(); //this.svg.node().clientWidth;
+        var cy = jqElem.height(); //this.svg.node().clientHeight;
+        var margin = this.options.margin;
+        var width = Math.max(0, cx - margin.left - margin.right);
+        var height = Math.max(0, cy - margin.top - margin.bottom);
         //this.update(this.treeData2);
         this.tree.size([height, width]);
+        return this;
+    },
+
+    highlightedProteinsChanged: function() {
+        var highlightedParticipants = this.model.get("highlightedProteins");
+        for (var highlightedParticipant of highlightedParticipants) {
+            console.log("*", highlightedParticipant.go);
+            if (highlightedParticipant.go) {
+                for (var goTerm of highlightedParticipant.go) {
+                    d3.select("#" + goTerm)
+                        .style("fill", "#000");
+                }
+            }
+        }
+        return this;
+    },
+
+    selectedProteinsChanged: function() {
+        var selectedParticipants = this.model.get("selectedProteins");
+        for (var selectedParticipant of selectedParticipants) {
+            console.log("**", selectedParticipant.go);
+            if (selectedParticipant.go) {
+                for (var goTerm of selectedParticipant.go) {
+                    // d3.select("circle")
+                    //   .style("fill", "#000");
+                    if (this.groupMap.has(goTerm)) {
+                        console.log("!", goTerm);
+                        var group = this.groupMap.get(goTerm);
+                        this.expandToShow(group);
+                    }
+
+                }
+            }
+        }
+        this.render(this.root);
         return this;
     },
 
