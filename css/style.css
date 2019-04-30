@@ -88,7 +88,7 @@ span, label {
     color: #fff;
     position: absolute;
     /* increased z-index to 50 so it's children (i.e. drop-down menus) overlay floating windows */
-    z-index: 50; 
+    z-index: 50;
     width: 100%;
 }
 
@@ -846,4 +846,8 @@ image.sharpImage {
 .textFilters.chargeFilterControl {
     /* hide charge control here */
     display: none;
+}
+
+div#gafAnnotationsMetaLoadPanel > div > div.expectedFormatPanel {
+  display: none;
 }

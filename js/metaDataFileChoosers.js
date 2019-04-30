@@ -195,10 +195,18 @@ CLMSUI.UserAnnotationsMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooser
 });
 
 CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
-
+    events: function() {
+        var parentEvents = CLMSUI.AbstractMetaDataFileChooserBB.prototype.events;
+        if (_.isFunction(parentEvents)) {
+            parentEvents = parentEvents();
+        }
+        return _.extend({}, parentEvents, {
+            "click .loadEcoliButton": "loadEcoliGaf",
+        });
+    },
     initialize: function(viewOptions) {
         var myDefaults = {
-            buttonText: "Select Gene Ontology .gaf File",
+            buttonText: "Select Gene Annotation File",
             loadedEventName: "gafAnnotationsUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
             expectedFormat: {
@@ -211,14 +219,44 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
             }
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
+
+        // this.el is the dom element this should be getting added to, replaces targetDiv
+        var mainDivSel = d3.select(this.el);
+
+        // var wrapperPanel = mainDivSel.append("div")
+        //     .attr("class", "panelInner");
+        //
+        // var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
+
+        mainDivSel.append("label")
+            .append("span")
+          //  .attr("class", "btn btn-1 btn-1a")
+            .append("button")
+            .attr("class", "btn btn-1 btn-1a loadEcoliButton")
+            .text("Load Ecoli .gaf")
+            ;
+
         CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
+    },
+
+    loadEcoliGaf: function(evt) {
+        var url = "../ecocyc.gaf";
+        self = this;
+        d3.text(url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url);
+            } else {
+                CLMSUI.modelUtils.updateGafAnnotationsMetadata(txt, self.model.get("clmsModel"));
+                self.hideView();
+          }
+        });
     },
 
     onLoadFunction: function(fileContents) {
         CLMSUI.modelUtils.updateGafAnnotationsMetadata(fileContents, this.model.get("clmsModel"));
     },
 
-    identifier: "GAF File Chooser",
+    identifier: "Gene Annotation File Chooser",
 });
 
 CLMSUI.MetaLoaderViewRegistry = [CLMSUI.ProteinMetaDataFileChooserBB, CLMSUI.LinkMetaDataFileChooserBB, CLMSUI.UserAnnotationsMetaDataFileChooserBB, CLMSUI.GafMetaDataFileChooserBB];

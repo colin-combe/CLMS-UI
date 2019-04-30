@@ -22,26 +22,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     defaultOptions: {
-        // xlabel: "Residue Index 1",
-        // ylabel: "Residue Index 2",
-        // chartTitle: "Cross-Link Matrix",
-        // chainBackground: "white",
-        // matrixObj: null,
-        // selectedColour: "#ff0",
-        // highlightedColour: "#f80",
-        // linkWidth: 5,
-        // tooltipRange: 7,
-        // matrixDragMode: "Pan",
         margin: {
             top: 30,
             right: 20,
             bottom: 40,
             left: 60
         },
-        // exportKey: true,
-        // exportTitle: true,
-        // canHideToolbarArea: true,
-        // canTakeImage: true,
     },
 
     initialize: function(viewOptions) {
@@ -100,44 +86,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.duration = 750;
 
-        // d3.select(self.frameElement).style("height", "500px");
         var self = this;
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
         this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
         this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
-        // any property changing in the filter model means rerendering this view
-        // this.listenTo(this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
-        // this.listenTo(this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
-        // this.listenTo(this.model, "change:linkColourAssignment", this.render);
-        // this.listenTo(this.colourScaleModel, "colourModelChanged", this.render); // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
-        // this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
-        // this.listenTo(this.model.get("clmsModel"), "change:matches", this.matchesChanged); // New matches added (via csv generally)
-        // this.listenTo(CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
 
-        // var treeData = [{
-        //     "name": "Top Level",
-        //     "parent": "null",
-        //     "children": [{
-        //             "name": "Level 2: A",
-        //             "parent": "Top Level",
-        //             "children": [{
-        //                     "name": "Son of A",
-        //                     "parent": "Level 2: A"
-        //                 },
-        //                 {
-        //                     "name": "Daughter of A",
-        //                     "parent": "Level 2: A"
-        //                 }
-        //             ]
-        //         },
-        //         {
-        //             "name": "Level 2: B",
-        //             "parent": "Top Level"
-        //         }
-        //     ]
-        // }];
         this.i = 0;
-        // this.update(treeData);
     },
 
     update: function() {
@@ -178,36 +132,38 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
 
         function checkTerm(term) {
-            if (term.namespace == "biological_process") {
-                if (!self.groupMap.has(term.id)) {
-                    var group = {};
-                    group.name = term.name;
-                    group.id = term.id;
-                    group._children = [];
+            if (!self.groupMap.has(term.id)) {
+                var group = {};
+                group.name = term.name;
+                group.id = term.id;
+                group._children = [];
 
-                    if (term.is_a) {
-                        if (group.parent){alert("multiple isa?");}
-                        var parentTerm = go.get(term.is_a.split(" ")[0]);
-                        var parentGroup = checkTerm(parentTerm);
-                        // if (parentGroup) {
-                        group.parent = parentGroup.id;
-                        parentGroup._children.push(group);
-                        // }
-                    } else if (term.id == "GO0008150") {
-                        self.root = group;
+                if (term.is_a) {
+                    if (group.parent) {
+                        alert("multiple isa?");
                     }
-                    self.groupMap.set(group.id, group);
-                    return group;
-                } else {
-                    return self.groupMap.get(term.id);
+                    var parentTerm = go.get(term.is_a.split(" ")[0]);
+                    var parentGroup = checkTerm(parentTerm);
+                    // if (parentGroup) {
+                    group.parent = parentGroup;
+                    parentGroup._children.push(group);
+                    // }
+                } else if (term.id == "GO0008150") {
+                    self.root = group;
                 }
+                self.groupMap.set(group.id, group);
+                return group;
+            } else {
+                return self.groupMap.get(term.id);
             }
             return null;
         }
 
         if (go) {
             for (var t of go.values()) {
-                checkTerm(t);
+                if (t.namespace == "biological_process") {
+                    checkTerm(t);
+                }
             }
         }
 
@@ -363,18 +319,19 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     // Toggle children on click.
     expandToShow: function(d) {
+        console.log("expanding:" + d.name, d)
         if (d._children) {
             d.children = d._children;
             d._children = null;
         }
         if (d.parent) {
-          var group = this.groupMap.get(d.parent);
-          if (group) {
-            this.expandToShow(group);
-          } else {
-            console.log("?", d.parent);
-          }
+            // var group = this.groupMap.get(d.parent);
+            // if (group) {
+            this.expandToShow(d.parent);
+        } else {
+            console.log("no parent?", d.name);
         }
+        // }
     },
 
     relayout: function() {
@@ -393,6 +350,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var height = Math.max(0, cy - margin.top - margin.bottom);
         //this.update(this.treeData2);
         this.tree.size([height, width]);
+        this.render();
         return this;
     },
 
@@ -411,6 +369,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     selectedProteinsChanged: function() {
+        for (var group of this.groupMap.values()) {
+            if (group.children) {
+                group._children = group.children;
+                group.children = null;
+            }
+        }
+
         var selectedParticipants = this.model.get("selectedProteins");
         for (var selectedParticipant of selectedParticipants) {
             console.log("**", selectedParticipant.go);
