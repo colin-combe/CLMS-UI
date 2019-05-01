@@ -66,6 +66,7 @@ CLMSUI.fdr = function(crossLinksArr, options) {
 
     // Loop through both groups and work out the fdr
     var fdrResult = linkArrs.map(function(linkArr, index) {
+        
         var fdr = 1,
             t = [0, 0, 0, 0],
             cutoffIndex = 0,
