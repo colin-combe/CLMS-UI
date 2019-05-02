@@ -7,8 +7,8 @@
 }
 
 .goTermsView svg {
-    height: 100%;
-    width: 100%;
+    /* height: 150%;
+    width: 150%; */
     position: absolute;
     /* shape-rendering: crispedges; */
 }
@@ -19,7 +19,7 @@
 
 .node circle {
     fill: #fff;
-    stroke: steelblue;
+    /* stroke: steelblue; */
     stroke-width: 3px;
 }
 
@@ -30,5 +30,10 @@
 .goLink {
     fill: none;
     stroke: #aaa;
-    stroke-width: 2px;
+    stroke-width: 1px;
+}
+
+
+div.goTermsView > div > div.panelInner {
+  overflow: scroll;
 }

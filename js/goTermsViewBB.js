@@ -89,14 +89,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
         this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
-        this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
+        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
 
         this.i = 0;
     },
 
     update: function() {
 
-        var termSelectData = ["biological_ process"]
+        var termSelectData = ["biological_ process"]; //, "molecular_function"];
 
         var options = this.termSelect.selectAll("option")
             .data(termSelectData)
@@ -116,20 +116,20 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         // ************** Generate the tree diagram	 *****************
 
         // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
-        var jqElem = $(this.svg.node());
-        var cx = jqElem.width(); //this.svg.node().clientWidth;
-        var cy = jqElem.height(); //this.svg.node().clientHeight;
-        var margin = this.options.margin;
-        var width = Math.max(0, cx - margin.left - margin.right);
-        var height = Math.max(0, cy - margin.top - margin.bottom);
-
-        this.tree = d3.layout.tree()
-            .size([height, width]);
-
+        // var jqElem = $(this.svg.node());
+        // var cx = jqElem.width(); //this.svg.node().clientWidth;
+        // var cy = jqElem.height(); //this.svg.node().clientHeight;
+        // var margin = this.options.margin;
+        // var width = Math.max(0, cx - margin.left - margin.right);
+        // var height = Math.max(0, cy - margin.top - margin.bottom);
 
         this.groupMap = new Map();
         var go = CLMSUI.compositeModelInst.get("go");
         var self = this;
+        // this.root = {};
+        // this.root.name = "root";
+        // this.root.id = "root";
+        // this.root._children = [];
 
         function checkTerm(term) {
             if (!self.groupMap.has(term.id)) {
@@ -140,7 +140,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                 if (term.is_a) {
                     if (group.parent) {
-                        alert("multiple isa?");
+                        alert("multiple isa/partof?");
                     }
                     var parentTerm = go.get(term.is_a.split(" ")[0]);
                     var parentGroup = checkTerm(parentTerm);
@@ -148,9 +148,33 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     group.parent = parentGroup;
                     parentGroup._children.push(group);
                     // }
+                // }
+                // if (term.relationship) {
+                //     // console.log("£", term.relationship);
+                //     if (group.parent) {
+                //         alert("multiple isa/partof?");
+                //     }
+                //     var splitRel = term.relationship.split(" ");
+                //     if (splitRel[0] == "part_of") {
+                //         var parentGroup = checkTerm(splitRel[1]);
+                //         // if (parentGroup) {
+                //         group.parent = parentGroup;
+                //         parentGroup._children.push(group);
+                //         // }
+                //     }
+
+
                 } else if (term.id == "GO0008150") {
-                    self.root = group;
+                    self.biologicalProcess = group;
+                } else if (term.id == "GO0003674") {
+                    self.molecularFunction = group;
+                } else if (term.id == "GO0005575") {
+                    self.cellularComponent = group;
                 }
+                // else {
+                //   group.parent = self.root;
+                //   self.root._children.push(group);
+                // }
                 self.groupMap.set(group.id, group);
                 return group;
             } else {
@@ -161,16 +185,23 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         if (go) {
             for (var t of go.values()) {
-                if (t.namespace == "biological_process") {
+                if (t.namespace == "cellular_component") {
                     checkTerm(t);
                 }
             }
         }
 
-        this.root.x0 = height / 2;
+       this.root = this.cellularComponent;
+
+        var size = this.getTreeSize();
+
+        this.root.x0 = size[1] / 2;
         this.root.y0 = 0;
         this.root.children = this.root._children;
         this.root._children = null;
+
+        this.tree = d3.layout.tree().size(size);
+
         this.render(this.root);
     },
 
@@ -197,11 +228,24 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             // Enter any new nodes at the parent's previous position.
             var nodeEnter = node.enter().append("g")
                 .attr("class", "node")
+                // .attr("title", function(d) {
+                //     return d.name;
+                // })
                 .attr("transform", function(d) {
                     return "translate(" + source.y0 + "," + source.x0 + ")";
                 })
                 .on("click", function(d) {
+                    self.model.setSelectedProteins([], false);
+                    self.toSelect = new Set();
+                    self.selectTerm(d);
+                    self.model.setSelectedProteins(Array.from(self.toSelect), true);
                     self.click(d);
+                })
+                .on("mouseover", function(d) {
+                    d3.select(this).select("circle").classed("highlightedProtein", true);
+                })
+                .on("mouseout", function(d) {
+                    d3.select(this).select("circle").classed("highlightedProtein", false);
                 });
 
             nodeEnter.append("circle")
@@ -314,7 +358,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             d.children = d._children;
             d._children = null;
         }
-        this.render(d);
+        this.render(d); // TODO
     },
 
     // Toggle children on click.
@@ -334,6 +378,23 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         // }
     },
 
+
+    selectTerm: function(d) {
+        var goId = d.id;
+        var proteins = this.model.get("clmsModel").get("participants");
+        for (var protein of proteins.values()) {
+            if (protein.go && protein.go.indexOf(goId) > -1) {
+                this.toSelect.add(protein);
+            }
+        }
+        var children = d.children ? d.children : d._children;
+        if (children) {
+            for (var child of children) {
+                this.selectTerm(child);
+            }
+        }
+    },
+
     relayout: function() {
         this.resize();
         return this;
@@ -342,22 +403,50 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     // called when things need repositioned, but not re-rendered from data
     resize: function() {
         // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
-        var jqElem = $(this.svg.node());
-        var cx = jqElem.width(); //this.svg.node().clientWidth;
-        var cy = jqElem.height(); //this.svg.node().clientHeight;
-        var margin = this.options.margin;
-        var width = Math.max(0, cx - margin.left - margin.right);
-        var height = Math.max(0, cy - margin.top - margin.bottom);
+        // var jqElem = $(this.svg.node());
+        // var cx = jqElem.width(); //this.svg.node().clientWidth;
+        // var cy = jqElem.height(); //this.svg.node().clientHeight;
+        // var margin = this.options.margin;
+        // var width = Math.max(0, cx - margin.left - margin.right);
+        // var height = Math.max(0, cy - margin.top - margin.bottom);
         //this.update(this.treeData2);
-        this.tree.size([height, width]);
+        this.tree.size(this.getTreeSize());
         this.render();
         return this;
+    },
+
+    getTreeSize: function() {
+        // compute the new height
+        var levelWidth = [1];
+        var childCount = function(level, n) {
+
+            if (n.children && n.children.length > 0) {
+                if (levelWidth.length <= level + 1) levelWidth.push(0);
+
+                levelWidth[level + 1] += n.children.length;
+                n.children.forEach(function(d) {
+                    childCount(level + 1, d);
+                });
+            }
+        };
+        childCount(0, this.root);
+        var newHeight = d3.max(levelWidth) * 30; // 20 pixels per line
+        //tree = tree.size([newHeight, w]);
+
+        var width = 2000;
+
+        this.svg.attr("width", width + "px");
+        this.svg.attr("height", newHeight + "px");
+        var margin = this.options.margin;
+        // var width = Math.max(0, cx - margin.left - margin.right);
+        // var height = Math.max(0, cy - margin.top - margin.bottom)
+        return [newHeight - margin.top - margin.bottom, width - margin.left - margin.right];
     },
 
     highlightedProteinsChanged: function() {
         var highlightedParticipants = this.model.get("highlightedProteins");
         for (var highlightedParticipant of highlightedParticipants) {
-            console.log("*", highlightedParticipant.go);
+            //console.log("*", highlightedParticipant.go);
             if (highlightedParticipant.go) {
                 for (var goTerm of highlightedParticipant.go) {
                     d3.select("#" + goTerm)
@@ -393,6 +482,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         }
         this.render(this.root);
+        //this.resize();
         return this;
     },
 

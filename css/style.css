@@ -850,7 +850,7 @@ image.sharpImage {
 
 
 div#gafAnnotationsMetaLoadPanel > div > div.expectedFormatPanel {
-  dislay:none;
+  display:none;
 }
 
 div.validationControls{

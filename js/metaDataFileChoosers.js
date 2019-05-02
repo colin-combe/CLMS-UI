@@ -220,15 +220,17 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
 
+        CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
+
         // this.el is the dom element this should be getting added to, replaces targetDiv
         var mainDivSel = d3.select(this.el);
 
-        // var wrapperPanel = mainDivSel.append("div")
+         var wrapperPanel = mainDivSel.select(".panelInner");
         //     .attr("class", "panelInner");
         //
         // var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
 
-        mainDivSel.append("label")
+        wrapperPanel.append("label")
             .append("span")
           //  .attr("class", "btn btn-1 btn-1a")
             .append("button")
@@ -236,8 +238,7 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
             .text("Load Ecoli .gaf")
             ;
 
-        CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
-    },
+      },
 
     loadEcoliGaf: function(evt) {
         var url = "../ecocyc.gaf";
