@@ -276,7 +276,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return {fullLinkList: fullLinkList, halfLinkList: halfLinkList};
     },
 
-    setLinkListWrapped: function(linkDataObj) {
+    setLinkListWrapped: function (linkDataObj) {
         var linkList = linkDataObj.fullLinkList;
         var halfLinkList = linkDataObj.halfLinkList;
         var residueIdToFullLinkIds = {};
@@ -319,11 +319,17 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         linkList.forEach (function (link) {
             this._fullLinkNGLIndexMap[link.residueA.globalIndex+"-"+link.residueB.globalIndex] = link;
         }, this);
+        this._origFullLinkCount = this.getOriginalCrossLinkCount (linkList);
+        this._origHalfLinkCount = this.getOriginalCrossLinkCount (halfLinkList);
         
         //console.log ("setLinkList", residueIdMap, this._residueList, residueIdToFullLinkIds, linkIdMap);
         this.set("linkList", linkList);
     },
 
+    getFullLinkCount: function () {
+        return this._origFullLinkCount;    
+    },
+    
     getFullLinks: function (residue) {
         return residue === undefined ? this.get("linkList") : this.getFullLinksByResidueID (residue.residueId);
     },
@@ -338,6 +344,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return linkIds ? linkIds.map(function(l) {
             return this._linkIdMap[l];
         }, this) : [];
+    },
+    
+    getHalfLinkCount: function () {
+        return this._origHalfLinkCount;    
     },
     
     getHalfLinksByResidueID: function (residueId) {
@@ -378,16 +388,16 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this._residueNGLIndexMap[nglGlobalResidueIndex];
     },
 
-    hasResidue: function(residue) {
+    hasResidue: function (residue) {
         return this._residueIdMap[residue.residueId] !== undefined;
     },
 
-    hasLink: function(link) {
+    hasLink: function (link) {
         return this._linkIdMap[link.linkId] !== undefined;
     },
     
     // Filter down a list of residue objects to those that are currently in the residueIdMap object
-    getAvailableResidues: function(residues) {
+    getAvailableResidues: function (residues) {
         return residues.filter(function(r) {
             return this.hasResidue(r);
         }, this);
@@ -406,6 +416,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return linkObjs.map(function(linkObj) {
             return xlinks.get(linkObj.origId);
         });
+    },
+    
+    getOriginalCrossLinkCount: function (linkObjs) {
+        return d3.set(_.pluck (linkObjs, "origId")).size();
     },
     
     getAtomPairsFromLinks: function (fullLinkList) {

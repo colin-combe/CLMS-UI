@@ -360,7 +360,7 @@ CLMSUI.init.views = function() {
         },
         {
             id: "keyChkBxPlaceholder",
-            label: "Legend",
+            label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme"
         },
@@ -667,7 +667,7 @@ CLMSUI.init.viewsEssential = function(options) {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: false, //CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
     }
