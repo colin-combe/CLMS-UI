@@ -454,6 +454,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 subSeries.isSubSeries = true;
                 seriesData.push(subSeries);
             });
+            
 
             //console.log ("seriesLengths", seriesLengths);
             var removeCatchAllCategory = (this.options.maxX !== undefined);
@@ -495,9 +496,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             //console.log ("countArrays", countArrays);
 
             if (this.isEmpty(seriesData)) {
-                countArrays = [
-                    []
-                ];
+                countArrays = [[]];
             }
 
             var redoChart = function() {

@@ -722,7 +722,8 @@ CLMSUI.FDRViewBB = Backbone.View.extend({
             .attr("name", "fdrPercent")
             .on("click", function(d) {
                 self.model.set("fdrThreshold", d);
-            });
+            })
+        ;
 
         chartDiv.select("span")
             .append("label")
@@ -738,7 +739,8 @@ CLMSUI.FDRViewBB = Backbone.View.extend({
             .attr("class", "fdrValue")
             .on("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
                 self.model.set("fdrThreshold", (+this.value) / 100);
-            });
+            })
+        ;
 
         this.listenTo(this.model, "change:fdrThreshold", this.setInputValuesFromModel);
         this.model.trigger("change:fdrThreshold", this.model);

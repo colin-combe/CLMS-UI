@@ -86,8 +86,8 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         });
 
         // build scales on the basis of this mapping
-        var groupDomain = [undefined];
-        var labelRange = ["Multiple Group"];
+        var groupDomain = [-1]; //[undefined];
+        var labelRange = ["Multiple Groups"];
         var groupArray = CLMS.arrayFromMapEntries(groups);
         groupArray.forEach(function(group) {
             groupDomain.push(group[0]);
@@ -103,7 +103,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
             colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
         } else { // more than 10 groups, not really feasible to find colour scale that works - a d3.scale that always returns gray?
             colScale = d3.scale.linear().domain([-1, 0]).range([multiGroupColour, "#448866"]).clamp(true);
-            labelRange = ["Multiple Group", "Single Group"];
+            labelRange = ["Multiple Groups", "Single Group"];
         }
         this
             .set("colScale", colScale)
@@ -121,7 +121,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
             if (!foundGroup) {
                 foundGroup = group;
             } else if (foundGroup !== group) {
-                foundGroup = undefined;
+                foundGroup = -1;    //undefined;
                 break;
             }
         }

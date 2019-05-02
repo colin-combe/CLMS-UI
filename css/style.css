@@ -848,6 +848,11 @@ image.sharpImage {
     display: none;
 }
 
+
 div#gafAnnotationsMetaLoadPanel > div > div.expectedFormatPanel {
+  dislay:none;
+}
+
+div.validationControls{
   display: none;
 }
