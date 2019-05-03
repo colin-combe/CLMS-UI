@@ -117,6 +117,20 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
+        var findIndexofNthUpperCaseLetter = function (str, n) { // n is 1-indexed here
+            var i = -1;
+            while (n > 0 && i < str.length) {
+                i++;
+                var c = str[i];
+                if (c >= "A" && c <= "Z") n--;
+            }
+            return i === str.length ? undefined : i;
+        };
+        var emphasiseLinkedResidue = function (str, linkPos) {
+            var i = findIndexofNthUpperCaseLetter (str, linkPos);
+            return i !== undefined ? str.substr(0,i) + "<span class='linkedResidue'>" + str[i] + "</span>" + str.substr(i+1) : str;
+            //return i !== undefined ? str.substr(0,i+1) + "&#829;" + str.substr(i+1) : str;
+        };
         this.cellFuncs = {
             id: function(d) {
                 return d.id;
@@ -150,11 +164,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return CLMSUI.utils.pepPosConcat(d, 1);
             },
             pepSeq1raw: function(d) {
-                return d.matchedPeptides[0].seq_mods;
+                var seqMods = d.matchedPeptides[0].seq_mods;
+                return emphasiseLinkedResidue (seqMods, d.linkPos1);
             },
             pepSeq2raw: function(d) {
                 var dmp1 = d.matchedPeptides[1];
-                return dmp1 ? dmp1.seq_mods : "";
+                return dmp1 ? emphasiseLinkedResidue (dmp1 ? dmp1.seq_mods : "", d.linkPos2) : "";
             },
             linkPos1: function(d) {
                 return d.linkPos1;
@@ -427,7 +442,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                         ambigSet.add(mid);
                     }
                 }
-            })
+            });
         });
 
         return repeatedAmbigCount;
@@ -574,7 +589,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 */
                 var d3this = d3.select(this);
                 if (self.numberColumns.has(d)) {
-                    d3this.html(deemphasiseFraction(getText.call(this, d)))
+                    d3this.html(deemphasiseFraction(getText.call(this, d)));
+                } else if (self.monospacedColumns.has(d)) {
+                    d3this.html(getText);
                 } else {
                     d3this.text(getText);
                 }
