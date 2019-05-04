@@ -73,12 +73,22 @@ CLMSUI.modelUtils = {
         },
 
         interactor: function(interactor) {
-            return [
+            contents = [
                 ["ID", interactor.id],
                 ["Accession", interactor.accession],
                 ["Size", interactor.size],
                 ["Desc.", interactor.description]
             ];
+            if (interactor.go) {
+                var goTermsMap = CLMSUI.compositeModelInst.get("go");
+                var goTermsText = "";
+                for (var goId of interactor.go) {
+                  var goTerm = goTermsMap.get(goId);
+                  goTermsText  += goTerm.name + "<br>";
+                }
+                contents.push(["GO", goTermsText]);
+            }
+            return contents;
         },
 
         multilinks: function(xlinks, interactorId, residueIndex, extras) {
@@ -179,6 +189,19 @@ CLMSUI.modelUtils = {
         match: function(match) {
             return [
                 ["Match ID", match.match.id],
+            ];
+        },
+
+        goTerm: function(goTerm) {
+            return [
+                ["ID", goTerm.id],
+                ["Name", goTerm.name],
+                ["Namespace", goTerm.namespace],
+                ["Definition", goTerm.def],
+                ["Synonym", goTerm.synomym],
+                ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
+                ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
+                ["relationship", Array.from(goTerm.relationship.values()).join(", ")]
             ];
         },
     },
@@ -1130,9 +1153,16 @@ CLMSUI.modelUtils = {
                             go.set(term.id, term);
                         }
                         term = {};
+                        term.is_a = new Set ();
+                        term.intersection_of = new Set ();
+                        term.relationship = new Set ();
                     } else if (term) {
                         var parts = line.split(":");
-                        term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                        if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
+                            term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
+                        } else {
+                          term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                        }
                     }
                 }
                 go.set(term.id, term);
@@ -1157,10 +1187,10 @@ CLMSUI.modelUtils = {
 
                             if (protein) {
                                 if (!protein.go) {
-                                    protein.go = [];
+                                    protein.go = new Set();
                                 }
                                 //console.log(">>"+goId);
-                                protein.go.push(goId);
+                                protein.go.add(goId);
                                 if (!groups.has(goId)) {
                                     var accs = new Set();
                                     accs.add(proteinId);
@@ -1680,11 +1710,11 @@ CLMSUI.modelUtils = {
             return d.size;
         });
     },
-    
+
     getSearchGroups: function (clmsModel) {
         var searchArr = CLMS.arrayFromMapValues (clmsModel.get("searches"));
         var uniqueGroups = _.uniq (_.pluck (searchArr, "group"));
-        console.log ("SSS", searchArr, uniqueGroups); 
+        console.log ("SSS", searchArr, uniqueGroups);
         return uniqueGroups;
     },
 };

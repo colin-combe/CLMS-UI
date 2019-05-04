@@ -133,35 +133,49 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         function checkTerm(term) {
             if (!self.groupMap.has(term.id)) {
-                var group = {};
-                group.name = term.name;
-                group.id = term.id;
+                var group = term;
+                // group.name = term.name;
+                // group.id = term.id;
                 group._children = [];
 
-                if (term.is_a) {
+                if (term.is_a.size > 0) {
                     if (group.parent) {
                         alert("multiple isa/partof?");
                     }
-                    var parentTerm = go.get(term.is_a.split(" ")[0]);
-                    var parentGroup = checkTerm(parentTerm);
-                    // if (parentGroup) {
-                    group.parent = parentGroup;
-                    parentGroup._children.push(group);
+                    var is_aValues = term.is_a.values();
+                    var parents = [];
+                    for (var potentialParent of is_aValues) {
+                        var parentId = potentialParent.split(" ")[0];
+                        var parentTerm = go.get(parentId);
+                        parents.push(parentTerm);
+                        checkTerm(parentTerm);
+                        parentTerm._children.push(group);
+                    }
+
+                    // if (potentialParents.length > 1) {
+                    //   console.log("!" + !term.name, potentialParents)
                     // }
-                // }
-                // if (term.relationship) {
-                //     // console.log("£", term.relationship);
-                //     if (group.parent) {
-                //         alert("multiple isa/partof?");
-                //     }
-                //     var splitRel = term.relationship.split(" ");
-                //     if (splitRel[0] == "part_of") {
-                //         var parentGroup = checkTerm(splitRel[1]);
-                //         // if (parentGroup) {
-                //         group.parent = parentGroup;
-                //         parentGroup._children.push(group);
-                //         // }
-                //     }
+
+                    // var parentTerm = potentialParents[0];
+                    // var parentGroup = checkTerm(parentTerm);
+                    // if (parentGroup) {
+                    group.parents = parents;
+                    // parentGroup._children.push(group);
+                    // }
+                    // }
+                    // if (term.relationship) {
+                    //     // console.log("£", term.relationship);
+                    //     if (group.parent) {
+                    //         alert("multiple isa/partof?");
+                    //     }
+                    //     var splitRel = term.relationship.split(" ");
+                    //     if (splitRel[0] == "part_of") {
+                    //         var parentGroup = checkTerm(splitRel[1]);
+                    //         // if (parentGroup) {
+                    //         group.parent = parentGroup;
+                    //         parentGroup._children.push(group);
+                    //         // }
+                    //     }
 
 
                 } else if (term.id == "GO0008150") {
@@ -185,13 +199,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         if (go) {
             for (var t of go.values()) {
-                if (t.namespace == "cellular_component") {
+                if (t.namespace == "biological_process") {
                     checkTerm(t);
                 }
             }
         }
 
-       this.root = this.cellularComponent;
+        this.root = this.biologicalProcess;
 
         var size = this.getTreeSize();
 
@@ -243,9 +257,17 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 })
                 .on("mouseover", function(d) {
                     d3.select(this).select("circle").classed("highlightedProtein", true);
+                    self.model.get("tooltipModel")
+                        .set("header", "GO Term")
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d))
+                        .set("location", {
+                            pageX: d3.event.pageX,
+                            pageY: d3.event.pageY
+                        });
                 })
                 .on("mouseout", function(d) {
                     d3.select(this).select("circle").classed("highlightedProtein", false);
+                    self.model.get("tooltipModel").set("contents", null);
                 });
 
             nodeEnter.append("circle")
@@ -383,7 +405,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var goId = d.id;
         var proteins = this.model.get("clmsModel").get("participants");
         for (var protein of proteins.values()) {
-            if (protein.go && protein.go.indexOf(goId) > -1) {
+            if (protein.go && protein.go.has(goId)) {
                 this.toSelect.add(protein);
             }
         }
