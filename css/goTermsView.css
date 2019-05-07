@@ -7,8 +7,8 @@
 }
 
 .goTermsView svg {
-    /* height: 150%;
-    width: 150%; */
+    height: 4500px;
+    width: 4500px;
     position: absolute;
     /* shape-rendering: crispedges; */
 }
@@ -31,6 +31,7 @@
     fill: none;
     stroke: #aaa;
     stroke-width: 1px;
+      marker-start: url(#end-arrow);
 }
 
 

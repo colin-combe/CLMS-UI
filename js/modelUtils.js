@@ -1149,13 +1149,14 @@ CLMSUI.modelUtils = {
                     //console.log(lines[l]);
                     var line = lines[l];
                     if (line.trim() == "[Term]") {
-                        if (term) {
+                        if (term && term.namespace == "biological_process") {
                             go.set(term.id, term);
                         }
                         term = {};
                         term.is_a = new Set ();
                         term.intersection_of = new Set ();
                         term.relationship = new Set ();
+                        term.interactors = new Set ();
                     } else if (term) {
                         var parts = line.split(":");
                         if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
@@ -1165,7 +1166,9 @@ CLMSUI.modelUtils = {
                         }
                     }
                 }
-                go.set(term.id, term);
+                if (term.namespace == "biological_process") {
+                    go.set(term.id, term);
+                }
                 CLMSUI.compositeModelInst.set("go", go);
 
                 var proteins = clmsModel.get("participants");
@@ -1184,7 +1187,7 @@ CLMSUI.modelUtils = {
                         if (go.get(goId)) {
                             var proteinId = protMap.get(fields[1]);
                             var protein = proteins.get(proteinId);
-
+                            // go.interactors.add(protein);
                             if (protein) {
                                 if (!protein.go) {
                                     protein.go = new Set();
