@@ -363,14 +363,14 @@ CLMSUI.init.views = function() {
             label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme",
-            sectionEnd: true
+            sectionEnd: false
         },
-        {
-            id: "goTermsChkBxPlaceholder",
-            label: "GO Terms",
-            eventName: "goTermsShow",
-            tooltip: "Browse Gene Ontology terms"
-        },
+        // {
+        //     id: "goTermsChkBxPlaceholder",
+        //     label: "GO Terms",
+        //     eventName: "goTermsShow",
+        //     tooltip: "Browse Gene Ontology terms"
+        // },
     ];
     checkBoxData.forEach(function(cbdata) {
         var options = $.extend ({labelFirst: false}, cbdata);
@@ -474,11 +474,11 @@ CLMSUI.init.views = function() {
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
-        {
-            name: "GO Gene Annotation File",
-            eventName: "gafMetaShow",
-            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
-        },
+        // {
+        //     name: "GO Gene Annotation File",
+        //     eventName: "gafMetaShow",
+        //     tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
+        // },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
