@@ -730,6 +730,11 @@ CLMSUI.init.viewsEssential = function(options) {
                         tooltip: "Produces a CSV File of Filtered Matches data"
                     },
                     {
+                        name: "Filtered Matches as SSL",
+                        func: downloadSSL,
+                        tooltip: "Produces an SSL file for quantitation in SkyLine"
+                    },
+                    {
                         name: "Filtered Residues as CSV",
                         func: downloadResidueCount,
                         tooltip: "Produces a CSV File of Count of Filtered Residues ",
