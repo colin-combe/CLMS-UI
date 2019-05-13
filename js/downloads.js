@@ -228,7 +228,7 @@ function getMatchesCSV() {
             } else if (decoy1 || decoy2) {
                 decoyType = "TD";
             } else {
-                decoyType = "TT"
+                decoyType = "TT";
             }
 
 			var data = [
