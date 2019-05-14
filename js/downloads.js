@@ -256,6 +256,38 @@ function getSSL() {
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var mass6dp = d3.format(".6f");
 
+    var deltaMassRegex = /DELTAMASS:(.*)/
+    var massRegex = /MASS:(.*)/
+    var modifiedRegex = /MODIFIED:(.*);/
+    var modificationDeltasMap = new Map();
+    for (var search of clmsModel.get("searches").values()) {
+        for (var mod of search.modifications) {
+            var sym = mod.symbol;
+            var delta;
+            var desc = mod.description;
+            var deltaMatch = +deltaMassRegex.exec(desc);
+            if (deltaMatch) {
+                delta = deltaMatch[1];
+            } else {
+                var modified = modifiedRegex.exec(desc)[1]
+                delta = massRegex.exec(desc)[1] - CLMSUI.modelUtils.amino1toMass[modified];
+            }
+
+            if (delta > 0) {
+                delta = "[+" + mass6dp(delta) + "]";
+            } else {
+                delta = "[" + mass6dp(delta) + "]";
+            }
+
+            modificationDeltasMap.set(sym, delta);
+
+        }
+    }
+
+    console.log("modDeltas", modificationDeltasMap);
+
+
+
     var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all");
     var matchMap = d3.map();
 
@@ -266,14 +298,30 @@ function getSSL() {
         })
     });
 
+    var notUpperCase = /[^A-Z]/g;
+    var makeSslPepSeq = function(seq, linkPos) {
+        notUpperCase.lastIndex = 0;
+        if (notUpperCase.test(seq)) {
+            for (var modInfo of modificationDeltasMap.entries()) {
+                seq = seq.replace(new RegExp(modInfo[0], 'g'), modInfo[1]);
+            }
+        }
+        var sslSeqLinkIndex = findIndexofNthUpperCaseLetter(seq, linkPos);
+        return seq.slice(0, sslSeqLinkIndex + 1) + "[+1.008]" + seq.slice(sslSeqLinkIndex + 1, seq.length);
+    }
+    var findIndexofNthUpperCaseLetter = function(str, n) { // n is 1-indexed here
+        var i = -1;
+        while (n > 0 && i < str.length) {
+            i++;
+            var c = str[i];
+            if (c >= "A" && c <= "Z") n--;
+        }
+        return i === str.length ? undefined : i;
+    };
 
     matchMap.values().forEach(function(match) {
         var peptide1 = match.matchedPeptides[0];
         var peptide2 = match.matchedPeptides[1];
-        var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
-        var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
-        var lp1 = CLMSUI.utils.fullPosConcat(match, 0);
-        var lp2 = CLMSUI.utils.fullPosConcat(match, 1);
 
         var decoy1 = clmsModel.get("participants").get(peptide1.prt[0]).is_decoy;
         var decoy2 = peptide2 ? clmsModel.get("participants").get(peptide2.prt[0]).is_decoy : "";
@@ -287,29 +335,18 @@ function getSSL() {
             decoyType = "TT";
         }
 
-        var pep1sslSeq = peptide1.sequence.slice(0, match.linkPos1) + "[+1.008]" + peptide1.sequence.slice(match.linkPos1, peptide1.length);
-        var pep2sslSeq = peptide2.sequence.slice(0, match.linkPos2) + "[+1.008]" + peptide2.sequence.slice(match.linkPos2, peptide2.length);
-
-        var crosslinkerModMass = match.crossLinkerModMass();
-
-        var sequence = pep1sslSeq + "K[+" + mass6dp(crosslinkerModMass - 112.099857)+ "]" + pep2sslSeq;
-        // + "*myk*" + peptides2.seq_mods;
-
         if (decoyType == "TT") {
+            var pep1sslSeq = makeSslPepSeq(peptide1.seq_mods, match.linkPos1);
+            var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
+            var crosslinkerModMass = match.crossLinkerModMass();
+            var sequence = pep1sslSeq + "K[+" + mass6dp(crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
             var data = [
-              match.peakListFileName(),
-              match.scanNumber,
-              match.precursorCharge,
-              sequence,
-              "UNKNOWN",
-              match.score(),
-
-
-                // match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""),
-                //
-                // lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(),
-                //  match.autovalidated, match.validated, match.searchId, match.runName(), , , match.scanIndex,
-                //  match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType
+                match.peakListFileName(),
+                match.scanNumber,
+                match.precursorCharge,
+                sequence,
+                "UNKNOWN",
+                match.score(),
             ];
             csv += data.join('\t') + '\r\n';
         }
