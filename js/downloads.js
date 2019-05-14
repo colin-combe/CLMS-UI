@@ -295,7 +295,7 @@ function getSSL() {
         var sequence = pep1sslSeq + "K[+" + mass6dp(crosslinkerModMass - 112.099857)+ "]" + pep2sslSeq;
         // + "*myk*" + peptides2.seq_mods;
 
-        if (decoyType = "TT") {
+        if (decoyType == "TT") {
             var data = [
               match.peakListFileName(),
               match.scanNumber,
