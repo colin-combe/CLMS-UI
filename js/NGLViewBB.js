@@ -914,7 +914,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             //console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
             var description = chainProxy.entity ? chainProxy.entity.description : "";
             var pid = chainIndexToProteinMap.get(chainProxy.index);
-            if (pid && CLMSUI.modelUtils.isViableChain(chainProxy)) {
+            if (pid && CLMSUI.NGLUtils.isViableChain(chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = (verboseSetting === "None" ? "" : (pname + ":" + chainProxy.chainname + "(" + chainProxy.index + ")" + (verboseSetting === "Verbose" ? " " + description : "")));
@@ -1054,8 +1054,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 if (residue) {
                     // this is to find the index of the residue in searchindex (crosslink) terms
                     // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
-                    var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
-                    var alignId = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
+                    var proteinId = CLMSUI.NGLUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
+                    var alignId = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
                     // align from 3d to search index. resindex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
                     var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.resindex + 1, proteinId, true, alignId);

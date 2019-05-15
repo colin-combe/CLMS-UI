@@ -248,7 +248,7 @@ function callback (model) {
 		];
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-		var actual = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
+		var actual = CLMSUI.NGLUtils.getChainSequencesFromNGLStage (stageModel.get("structureComp").stage);
 		assert.deepEqual (actual, expected, "Expected "+JSON.stringify(expected)+" when generating sequences from `1AO6`");
 	});
 	
@@ -274,7 +274,7 @@ function callback (model) {
 	
 	QUnit.test ("Align test", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-		var chainSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
+		var chainSequences = CLMSUI.NGLUtils.getChainSequencesFromNGLStage (stageModel.get("structureComp").stage);
 		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
 		var protAlignModel = alignCollection.get ("2000171");
         var actualValue = protAlignModel.alignWithoutStoring (
@@ -406,7 +406,7 @@ function callback (model) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var chainProxy = stageModel.get("structureComp").structure.getChainProxy();
 		chainProxy.index = 0;
-		var actualMapping = CLMSUI.modelUtils.getRangedCAlphaResidueSelectionForChain (chainProxy);
+		var actualMapping = CLMSUI.NGLUtils.getRangedCAlphaResidueSelectionForChain (chainProxy);
 		
 		assert.deepEqual (actualMapping, expectedMapping, "Expected "+expectedMapping+" NGL Selection String generated, Passed!");
 	});
@@ -586,7 +586,7 @@ function callback (model) {
 		var expected = {ntermList: [], ctermList: []};	// because pdb for 1ao6 is within the larger sequence so neither cterm nor nterm match
 		
 		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
-		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
+		var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
         var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
 		$.extend (seqRange, {alignID: alignID, chainIndex: 0, protID: "2000171"});
 		var seqMap = d3.map ();
@@ -621,7 +621,7 @@ function callback (model) {
 		var linkableResidues = residueSets["wrong mass SDA "].linkables;
 		
 		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
-		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
+		var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
         var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
 		var actualFilteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
 		actualFilteredSubSeqIndices = actualFilteredSubSeqIndices.slice(-10);	// last 10
@@ -1213,7 +1213,7 @@ function testSetupNew (cbfunc) {
 			});
 		
 			var stage = new NGL.Stage ("ngl", {tooltip: false});
-			CLMSUI.modelUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
+			CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
 			console.log ("here");
 		});
 		
