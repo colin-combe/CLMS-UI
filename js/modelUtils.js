@@ -1174,11 +1174,7 @@ CLMSUI.modelUtils = {
                         if (term && term.namespace == "biological_process") {
                             go.set(term.id, term);
                         }
-                        term = {};
-                        term.is_a = new Set ();
-                        term.intersection_of = new Set ();
-                        term.relationship = new Set ();
-                        term.interactors = new Set ();
+                        term = new CLMSUI.GoTerm();
                     } else if (term) {
                         var parts = line.split(":");
                         if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
@@ -1200,29 +1196,30 @@ CLMSUI.modelUtils = {
                 });
 
                 var gafLines = gafFileContents.split('\n');
-                var groups = new Map();
+                //var groups = new Map();
                 for (var g = 0; g < gafLines.length; g++) {
                     line = gafLines[g];
                     if (line.startsWith("!") == false) {
                         var fields = line.split("\t");
                         var goId = fields[4].replace(":", "");
-                        if (go.get(goId)) {
+                        var goTerm = go.get(goId);
+                        if (goTerm) {
                             var proteinId = protMap.get(fields[1]);
                             var protein = proteins.get(proteinId);
-                            // go.interactors.add(protein);
+                            goTerm.interactors.add(protein);
                             if (protein) {
                                 if (!protein.go) {
                                     protein.go = new Set();
                                 }
                                 //console.log(">>"+goId);
                                 protein.go.add(goId);
-                                if (!groups.has(goId)) {
-                                    var accs = new Set();
-                                    accs.add(proteinId);
-                                    groups.set(goId, accs);
-                                } else {
-                                    groups.get(goId).add(proteinId);
-                                }
+                                // if (!groups.has(goId)) {
+                                //     var accs = new Set();
+                                //     accs.add(proteinId);
+                                //     groups.set(goId, accs);
+                                // } else {
+                                //     groups.get(goId).add(proteinId);
+                                // }
                             }
                         }
                     }
@@ -1231,7 +1228,7 @@ CLMSUI.modelUtils = {
                 // update groups
 
                 CLMSUI.vent.trigger("goAnnotationsUpdated", {
-                    groups: groups
+                    // groups: groups
                 }, {
                     source: "file"
                 });

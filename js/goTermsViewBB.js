@@ -88,28 +88,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .on("zoom", zoomed));
 
         function zoomed() {
-            self.vis.attr("transform", d3.event.transform);
+            self.vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
         //        this.duration = 750;
 
-        var self = this;
-        this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
-        //  this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
-        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
-        this.nodes = [];
-        this.edges = [];
-        this.d3cola = cola.d3adaptor(d3)
-            .avoidOverlaps(true)
-            .convergenceThreshold(1e-3)
-            .flowLayout('x', 100)
-            .nodes(this.nodes)
-            .links(this.edges);; //.convergenceThreshold(0.1);
-
-        this.allLinkMap = new Map();
-
-    },
-
-    update: function() {
 
         var termSelectData = ["biological_ process"]; //, "molecular_function"];
 
@@ -127,8 +109,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d;
             });
 
+        this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
+        //  this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
+        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
 
+        this.d3cola = cola.d3adaptor(d3)
+    },
 
+    update: function() {
         this.groupMap = new Map();
         var go = CLMSUI.compositeModelInst.get("go");
         console.log("go size:" + go.size)
@@ -137,16 +125,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         function checkTerm(term) {
             if (!self.groupMap.has(term.id)) {
                 var group = term;
-                // group.name = term.name;
-                // group.id = term.id;
-                group.children = [];
-                group.parents = [];
-                group.height = 100;
-                group.width = 100;
-                group.expanded = false;
                 if (term.is_a.size > 0) {
                     if (group.parent) {
-                        alert("multiple isa/partof?");
+                        console.log("multiple isa/partof?");
                     }
                     var is_aValues = term.is_a.values();
                     for (var potentialParent of is_aValues) {
@@ -197,22 +178,21 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         recurseGroup(this.root);
 
         function recurseGroup(group, ) {
-            if (!nodes.has(group.id)) {
+            if (!nodes.has(group.id) && group.getInteractors().size > 0) {
                 nodes.set(group.id, group);
                 for (var p of group.parents) {
                     recurseGroup(p);
                     var fromId = p.id;
                     var toId = group.id;
                     var linkId = fromId + "_" + toId;
-                    var link = self.allLinkMap.get(linkId);
+                    var link = linkSubsetMap.get(linkId);
                     if (!link) {
                         var link = {};
                         link.source = p; //.getRenderedParticipant();
                         link.target = group; //.getRenderedParticipant();
                         link.id = linkId;
-                        self.allLinkMap.set(linkId, link);
+                        linkSubsetMap.set(linkId, link);
                     }
-                    linkSubsetMap.set(linkId, link);
                 }
                 if (group.expanded) {
                     for (var c of group.children) {
@@ -226,33 +206,25 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var width = bBox ? bBox.width : 500;
         var height = bBox ? bBox.height : 500;
 
-        this.nodes.length = 0;
-        for (var n of nodes.values()) {
-            this.nodes.push(n);
-        }
-        this.edges.length = 0;
-        for (var e of linkSubsetMap.values()) {
-            this.edges.push(e);
-        }
-        // nodes = CLMS.arrayFromMapValues(nodes);
-        // edges = CLMS.arrayFromMapValues(links);
+        nodes = CLMS.arrayFromMapValues(nodes);
+        edges = CLMS.arrayFromMapValues(linkSubsetMap);
 
         console.log("wh:", width, height);
 
         this.d3cola
-            // .avoidOverlaps(true)
-            // .convergenceThreshold(1e-3)
-            // .flowLayout('x', 100)
-            .size([width, height]);
-        // .nodes(nodes)
-        // .links(edges);
+            .avoidOverlaps(true)
+            .convergenceThreshold(1e-3)
+            .flowLayout('x', 100)
+            .size([width, height * 4])
+            .nodes(nodes)
+            .links(edges);
         //  .jaccardLinkLengths(150);
 
         var self = this;
         var margin = 10,
             pad = 12;
         var node = this.vis.selectAll(".node")
-            .data(this.nodes, function(d) {
+            .data(nodes, function(d) {
                 return d.id;
             });
 
@@ -286,7 +258,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         node.exit().remove();
 
         nodeEnter.append("circle")
-            .attr('r', 25);
+            //.attr('r', 25);
+            .attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();});
 
         nodeEnter.append("text")
             .attr("class", "label")
@@ -295,7 +268,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         var link = this.vis.selectAll(".goLink")
-            .data(this.edges, function(d) {
+            .data(edges, function(d) {
                 return d.id;
             });
 
@@ -307,6 +280,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         link.exit().remove();
+
+//        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
 
         this.d3cola.start(50, 100, 200).on("tick", function() {
             node.attr("transform", function(d) {
