@@ -1157,7 +1157,7 @@ CLMSUI.modelUtils = {
 
     updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
 
-        var url = "../go.obo";
+        var url = "./go.obo";
 
         d3.text(url, function(error, txt) {
             if (error) {

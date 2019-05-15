@@ -36,5 +36,5 @@
 
 
 div.goTermsView > div > div.panelInner {
-  overflow: scroll;
+  /* overflow: scroll; */
 }

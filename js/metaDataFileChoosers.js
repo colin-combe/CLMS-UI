@@ -241,7 +241,7 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
       },
 
     loadEcoliGaf: function(evt) {
-        var url = "../ecocyc.gaf";
+        var url = "./ecocyc.gaf";
         self = this;
         d3.text(url, function(error, txt) {
             if (error) {
