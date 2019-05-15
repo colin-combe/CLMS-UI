@@ -336,6 +336,10 @@
             );
         },
         
+        removeSequence: function (seqID) {
+            this.get("seqCollection").remove (seqID); 
+        },
+        
         PDBAlignmentsAsFeatures: function (includeCanonical) {
             return this.get("seqCollection")
                 .map (function (seqModel) {
@@ -376,7 +380,7 @@
                 compFunc: function(m) {
                     return d3.sum(m.get("seqCollection").pluck("compAlignment").map(function(ca) {
                         return ca.score;
-                    }))
+                    }));
                 }
             }
         ],
@@ -388,6 +392,14 @@
             if (model) {
                 //console.log ("entry", modelId, seqId, seq, otherSettingsObj);
                 model.addSequence (seqID, seq, otherSettingsObj || {});
+            }
+            return this;
+        },
+        
+        removeSeq: function (proteinID, seqID) {
+            var model = this.get (proteinID);
+            if (model) {
+                model.removeSequence (seqID);
             }
             return this;
         },
