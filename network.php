@@ -125,6 +125,7 @@
         <script type="text/javascript" src="./js/annotationTypeModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/NGLUtils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/fdr.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distancesObj.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js<?php echo $cacheBuster ?>"></script>
