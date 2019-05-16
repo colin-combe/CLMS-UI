@@ -111,7 +111,7 @@ CLMSUI.DistancesObj.prototype = {
                             // align from 3d to search index. resindex is 0-indexed so -1 before querying
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
-                            if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
+                            if (resIndex2 >= 0 && CLMSUI.NGLUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
                                 var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
 
                                 if (dist !== undefined) {

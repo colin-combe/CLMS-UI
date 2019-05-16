@@ -193,7 +193,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var toChainMap = chainValueMap.get (toProtID); 
                 
                 var octreeIgnoreFunc = function (point1, point2) {
-                    return CLMSUI.modelUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
+                    return CLMSUI.NGLUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
                 };
                     
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
@@ -240,7 +240,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         if (alternativeCount > 0) {
                             fromPDBResidues.forEach (function (fromPDB) {
                                 toPDBResidues.forEach (function (toPDB) {
-                                    if (CLMSUI.modelUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
+                                    if (CLMSUI.NGLUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
                                         fullLinkList.push({
                                             origId: xlink.id,
                                             linkId: fullLinkList.length,
@@ -544,7 +544,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         
         var notHomomultimeric = function (xlinkID, c1, c2) {
             var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
-            return CLMSUI.modelUtils.not3DHomomultimeric(xlink, c1, c2);
+            return CLMSUI.NGLUtils.not3DHomomultimeric(xlink, c1, c2);
         };
         
         links = links.filter(function(link) {
