@@ -131,12 +131,18 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         var nodes = new Map(); // not hidden nodes
         var linkSubsetMap = new Map();
-
+        var depthMap = new Map();
         recurseGroup(this.root);
 
-        function recurseGroup(group, ) {
+        function recurseGroup(group) {
             if (!nodes.has(group.id)) { //}&& group.getInteractors().size > 0) {
                 nodes.set(group.id, group);
+                var sameDepthArr = depthMap.get(group.depth);
+                if (!sameDepthArr) {
+                    sameDepthArr = [];
+                }
+                sameDepthArr.push(group);
+
                 for (var p of group.parents) {
                     recurseGroup(p);
                     var fromId = p.id;
@@ -167,15 +173,37 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         edges = CLMS.arrayFromMapValues(linkSubsetMap);
 
         console.log("wh:", width, height);
+        var constraints = [];
+        for (var sameDepth of depthMap.values()) {
+            var constraint = {
+                "type": "alignment",
+                "axis": "x",
+                //     "offsets": [
+                //         {"node": "1","offset": "0"},
+                //         {"node": "2", "offset": "0"},
+                //         {"node": "3", "offset": "0"}
+                //     ]
+            }
+            var offsets = [];
+            for (var n of sameDepth) {
+                var ni = nodes.indexOf(n);
+                offsets.push({node: ni, offset:0});
+            }
+            constraint.offsets = offsets;
+            constraints.push(constraint);
+        }
+
 
         this.d3cola
             .avoidOverlaps(true)
-            // .convergenceThreshold(1e-3)
-            //.flowLayout('x', 200)
-            // .size([width, height * 4])
+            .convergenceThreshold(1e-3)
+            .size([width, height * 4])
             .nodes(nodes)
-            .links(edges);
-        //  .jaccardLinkLengths(150);
+            .links(edges)
+            .jaccardLinkLengths(150);
+            // .constraints(constraints)
+            // .flowLayout('x', 500)
+            ;
 
         var self = this;
         var margin = 10,
@@ -257,7 +285,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         nodeDebug.exit().remove();
 
-        this.d3cola.start(50, 100, 200).on("tick", function() {
+        this.d3cola.start(200, 100, 100, 200).on("tick", function() {
             node.attr("transform", function(d) {
                 return "translate(" + d.x + "," + d.y + ")";
             });

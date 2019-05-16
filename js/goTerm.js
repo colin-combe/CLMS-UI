@@ -8,8 +8,8 @@ CLMSUI.GoTerm = function() {
 
     this.children = [];
     this.parents = [];
-    this.height = 30;
-    this.width = 150;
+    this.height = 250;
+    this.width = 250;
     this.expanded = false;
     this.depth = 0;
 
