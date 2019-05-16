@@ -482,6 +482,7 @@
                             ["Align Raw Score", scoreFormat(seqInfo.score)],
                             ["Align Bit Score", rformat(seqInfo.bitScore)],
                             ["Align E Score", seqInfo.eScore],
+                            ["Align Avg Bit Score", seqInfo.avgBitScore],
                         ])
                         .set("location", d3.event);
                     self.tooltipModel.trigger("change:location");

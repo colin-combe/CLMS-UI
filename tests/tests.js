@@ -543,7 +543,7 @@ function callback (model) {
         }
         
         var octreeIgnoreFunc = function (point1, point2) {
-            return CLMSUI.modelUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
+            return CLMSUI.NGLUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
         };
         
         var cdist = CLMSUI.utils.toNearest ((0.25 * 0.25) + (0.4 * 0.4) + (0.4 * 0.4), 0.25);

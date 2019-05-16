@@ -24,6 +24,7 @@
                 score: fullResult.res[0],
                 bitScore: fullResult.bitScore,
                 eScore: fullResult.eScore,
+                avgBitScore: fullResult.avgBitScore,
                 label: this.get("compID"),
             };
 
@@ -236,10 +237,11 @@
                 var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
 				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
                 bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length); 
+                bioseqResults.avgBitScore = this.averageBitScorePerResidue (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length);
+                //console.log (this.id, bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length, bioseqResults.eScore, bioseqResults.avgBitScore);
 				return bioseqResults;
             }, this);
 
-            //console.log ("fr", fullResults);
             return fullResults;
         },
 		
@@ -254,6 +256,10 @@
         alignmentSignificancy: function (bitScore, dbLength, seqLength) {
             var exp = Math.pow (2, -bitScore);
             return (dbLength || 100) * seqLength * exp;	// escore
+        },
+        
+        averageBitScorePerResidue: function (bitScore, dbLength, seqLength) {
+            return bitScore / seqLength;    
         },
 
         getSettings: function() {
@@ -336,6 +342,10 @@
             );
         },
         
+        removeSequence: function (seqID) {
+            this.get("seqCollection").remove (seqID); 
+        },
+        
         PDBAlignmentsAsFeatures: function (includeCanonical) {
             return this.get("seqCollection")
                 .map (function (seqModel) {
@@ -376,7 +386,7 @@
                 compFunc: function(m) {
                     return d3.sum(m.get("seqCollection").pluck("compAlignment").map(function(ca) {
                         return ca.score;
-                    }))
+                    }));
                 }
             }
         ],
@@ -388,6 +398,14 @@
             if (model) {
                 //console.log ("entry", modelId, seqId, seq, otherSettingsObj);
                 model.addSequence (seqID, seq, otherSettingsObj || {});
+            }
+            return this;
+        },
+        
+        removeSeq: function (proteinID, seqID) {
+            var model = this.get (proteinID);
+            if (model) {
+                model.removeSequence (seqID);
             }
             return this;
         },
