@@ -238,7 +238,7 @@
 				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
                 bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length); 
                 bioseqResults.avgBitScore = this.averageBitScorePerResidue (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length);
-                console.log (this.id, bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length, bioseqResults.eScore, bioseqResults.avgBitScore);
+                //console.log (this.id, bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length, bioseqResults.eScore, bioseqResults.avgBitScore);
 				return bioseqResults;
             }, this);
 
