@@ -1,0 +1,40 @@
+.goTermsView {
+    display: none;
+    left: 6em;
+    top: 6em;
+    width: 500px;
+    height: 500px;
+}
+
+.goTermsView svg {
+    height: 4500px;
+    width: 4500px;
+    position: absolute;
+    /* shape-rendering: crispedges; */
+}
+
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: #fff;
+    /* stroke: steelblue; */
+    stroke-width: 3px;
+}
+
+.node text {
+    font: 12px sans-serif;
+}
+
+.goLink {
+    fill: none;
+    stroke: #aaa;
+    stroke-width: 1px;
+      marker-start: url(#end-arrow);
+}
+
+
+div.goTermsView > div > div.panelInner {
+  overflow: scroll;
+}

@@ -242,7 +242,7 @@ CLMSUI.init.modelsEssential = function(options) {
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
     filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
-    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel (filterSettings, {
+    var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
         scoreExtent: scoreExtentInstance,
         possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
     });
@@ -280,7 +280,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -362,8 +362,15 @@ CLMSUI.init.views = function() {
             id: "keyChkBxPlaceholder",
             label: "Legend & Colours",
             eventName: "keyShow",
-            tooltip: "Explains and allows changing of current colour scheme"
+            tooltip: "Explains and allows changing of current colour scheme",
+            sectionEnd: false
         },
+        // {
+        //     id: "goTermsChkBxPlaceholder",
+        //     label: "GO Terms",
+        //     eventName: "goTermsShow",
+        //     tooltip: "Browse Gene Ontology terms"
+        // },
     ];
     checkBoxData.forEach(function(cbdata) {
         var options = $.extend ({labelFirst: false}, cbdata);
@@ -467,11 +474,11 @@ CLMSUI.init.views = function() {
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
-        {
-            name: "GO Gene Annotation File",
-            eventName: "gafMetaShow",
-            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
-        },
+        // {
+        //     name: "GO Gene Annotation File",
+        //     eventName: "gafMetaShow",
+        //     tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
+        // },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
@@ -723,6 +730,11 @@ CLMSUI.init.viewsEssential = function(options) {
                         tooltip: "Produces a CSV File of Filtered Matches data"
                     },
                     {
+                        name: "Filtered Matches as SSL",
+                        func: downloadSSL,
+                        tooltip: "Produces an SSL file for quantitation in SkyLine"
+                    },
+                    {
                         name: "Filtered Residues as CSV",
                         func: downloadResidueCount,
                         tooltip: "Produces a CSV File of Count of Filtered Residues ",
@@ -961,6 +973,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#gafAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "gafMetaShow",
+    });
+
+    new CLMSUI.GoTermsViewBB({
+        el: "#goTermsPanel",
+        model: compModel,
+        displayEventName: "goTermsShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({

@@ -537,8 +537,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         proteinIDsObj.forEach(function(pid) {
             pid.alignID = null;
             if (pid.proteinID) {
-                var chainName = CLMSUI.modelUtils.getChainNameFromChainIndex(distancesObj.chainMap, pid.chainID);
-                pid.alignID = CLMSUI.modelUtils.make3DAlignID(distancesObj.pdbBaseSeqID, chainName, pid.chainID);
+                var chainName = CLMSUI.NGLUtils.getChainNameFromChainIndex(distancesObj.chainMap, pid.chainID);
+                pid.alignID = CLMSUI.NGLUtils.make3DAlignID(distancesObj.pdbBaseSeqID, chainName, pid.chainID);
             }
         }, this);
         return proteinIDsObj;

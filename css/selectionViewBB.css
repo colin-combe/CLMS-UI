@@ -70,6 +70,11 @@
     font-size: 1.1em;
 }
 
+.selectView span.linkedResidue {
+    color: #000;
+    font-weight: bold;
+}
+
 .selectView TD.maxWidth {
     max-width: 12em;
     overflow: hidden;
