@@ -117,52 +117,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     update: function() {
-        this.groupMap = new Map();
-        var go = CLMSUI.compositeModelInst.get("go");
-        console.log("go size:" + go.size)
-        var self = this;
-
-        function checkTerm(term) {
-            if (!self.groupMap.has(term.id)) {
-                var group = term;
-                if (term.is_a.size > 0) {
-                    if (group.parent) {
-                        console.log("multiple isa/partof?");
-                    }
-                    var is_aValues = term.is_a.values();
-                    for (var potentialParent of is_aValues) {
-                        var parentId = potentialParent.split(" ")[0];
-                        var parentTerm = go.get(parentId);
-                        group.parents.push(parentTerm);
-                        checkTerm(parentTerm);
-                        parentTerm.children.push(group);
-                    }
-                } else if (term.id == "GO0008150") {
-                    self.biologicalProcess = group;
-                } else if (term.id == "GO0003674") {
-                    self.molecularFunction = group;
-                } else if (term.id == "GO0005575") {
-                    self.cellularComponent = group;
-                }
-                self.groupMap.set(group.id, group);
-                return group;
-            } else {
-                return self.groupMap.get(term.id);
-            }
-            return null;
-        };
-
-        if (go) {
-            for (var t of go.values()) {
-                if (t.namespace == "biological_process") {
-                    checkTerm(t);
-                }
-            }
-        }
-
-        this.root = this.biologicalProcess;
+        this.goTrees = CLMSUI.compositeModelInst.get("goTrees");
+        this.root = this.goTrees.cellularComponent;
         this.root.expanded = true;
-
         // this.render(this.root);
     },
 
@@ -178,7 +135,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         recurseGroup(this.root);
 
         function recurseGroup(group, ) {
-            if (!nodes.has(group.id) && group.getInteractors().size > 0) {
+            if (!nodes.has(group.id)) { //}&& group.getInteractors().size > 0) {
                 nodes.set(group.id, group);
                 for (var p of group.parents) {
                     recurseGroup(p);
@@ -213,9 +170,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.d3cola
             .avoidOverlaps(true)
-            .convergenceThreshold(1e-3)
-            .flowLayout('x', 100)
-            .size([width, height * 4])
+            // .convergenceThreshold(1e-3)
+            //.flowLayout('x', 200)
+            // .size([width, height * 4])
             .nodes(nodes)
             .links(edges);
         //  .jaccardLinkLengths(150);
@@ -256,15 +213,16 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         //     self.model.get("tooltipModel").set("contents", null);
         // });
         node.exit().remove();
-
         nodeEnter.append("circle")
             //.attr('r', 25);
-            .attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();});
+            .attr("r", function(d) {
+                return d.expanded ? 0 : d.getBlobRadius();
+            });
 
         nodeEnter.append("text")
             .attr("class", "label")
             .text(function(d) {
-                return d.name;
+                return d.depth + d.name;
             });
 
         var link = this.vis.selectAll(".goLink")
@@ -281,7 +239,23 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         link.exit().remove();
 
-//        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
+        //        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
+        var nodeDebug = this.vis.selectAll(".nodeDebug")
+            .data(nodes, function(d) {
+                return d.id;
+            });
+
+        var nodeDebugEnter = nodeDebug
+            .enter().append('rect')
+            .classed('node', true)
+            .attr({
+                rx: 5,
+                ry: 5
+            })
+            .style('stroke', "red")
+            .style('fill', "none");
+
+        nodeDebug.exit().remove();
 
         this.d3cola.start(50, 100, 200).on("tick", function() {
             node.attr("transform", function(d) {
@@ -293,6 +267,21 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             // .attr("height", function(d) {
             //     return d.innerBounds.height();
             // });
+
+            nodeDebug.attr({
+                x: function(d) {
+                    return d.bounds.x
+                },
+                y: function(d) {
+                    return d.bounds.y
+                },
+                width: function(d) {
+                    return d.bounds.width()
+                },
+                height: function(d) {
+                    return d.bounds.height()
+                }
+            });
 
             link.attr("x1", function(d) {
                 return d.source.x;

@@ -8,9 +8,10 @@ CLMSUI.GoTerm = function() {
 
     this.children = [];
     this.parents = [];
-    this.height = 100;
-    this.width = 100;
+    this.height = 30;
+    this.width = 150;
     this.expanded = false;
+    this.depth = 0;
 
     // //TODO - this wastes a bit memory coz the property is not on the prototype, fix
     // Object.defineProperty(this, "width", {

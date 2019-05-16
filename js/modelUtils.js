@@ -1166,28 +1166,86 @@ CLMSUI.modelUtils = {
                 var go = new Map();
                 var lines = txt.split('\n');
                 var term;
+
+                // var termType = "cellular_component";
+
                 //term.id = term.id.replace(":", "")
                 for (var l = 0; l < lines.length; l++) {
                     //console.log(lines[l]);
                     var line = lines[l];
-                    if (line.trim() == "[Term]") {
-                        if (term && term.namespace == "biological_process") {
-                            go.set(term.id, term);
-                        }
-                        term = new CLMSUI.GoTerm();
-                    } else if (term) {
-                        var parts = line.split(":");
-                        if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
-                            term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
-                        } else {
-                          term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                    if (line.trim() != "") {
+                        if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
+                            if (term){//} && term.namespace == termType) {
+                                go.set(term.id, term);
+                            }
+                            term = new CLMSUI.GoTerm();
+                        } else if (term) {
+                            var parts = line.split(":");
+                            if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
+                                term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
+                            } else {
+                              term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                            }
                         }
                     }
                 }
-                if (term.namespace == "biological_process") {
+                // if (term.namespace == termType) {
                     go.set(term.id, term);
-                }
+                // }
+                console.log("go size:" + go.size)
                 CLMSUI.compositeModelInst.set("go", go);
+
+                var tempMap = new Map();
+                var goTrees = {};
+
+                function checkTerm(goTerm) {
+                    if (!tempMap.has(goTerm.id)) {
+                        if (goTerm.is_a.size > 0) {
+                          var is_aValues = goTerm.is_a.values();
+                          for (var potentialParent of is_aValues) {
+                              var parentId = potentialParent.split(" ")[0];
+                              var parentTerm = go.get(parentId);
+                              if (goTerm.namespace = parentTerm.namespace) {
+                                goTerm.parents.push(parentTerm);
+                                checkTerm(parentTerm);
+                                parentTerm.children.push(goTerm);
+                              }
+                          }
+                        }
+                        else if (goTerm.id == "GO0008150") {
+                            goTrees.biologicalProcess = goTerm;
+                        } else if (goTerm.id == "GO0003674") {
+                            goTrees.molecularFunction = goTerm;
+                        } else if (goTerm.id == "GO0005575") {
+                            goTrees.cellularComponent = goTerm;
+                        }
+                        tempMap.set(goTerm.id, goTerm);
+                        return goTerm;
+                    } else {
+                        return tempMap.get(goTerm.id);
+                    }
+                    return null;
+                };
+
+                for (var t of go.values()) {
+                    // if (t.namespace == termType) {
+                        checkTerm(t);
+                    // }
+                }
+
+                function setNodeDepth (node, depth) {
+                    if (depth > node.depth) {
+                        node.depth = depth;
+                    }
+                    for (var c of node.children){
+                        setNodeDepth(c, depth + 1);
+                    }
+                }
+
+                setNodeDepth(goTrees.biologicalProcess, 0);
+                setNodeDepth(goTrees.molecularFunction, 0);
+                setNodeDepth(goTrees.cellularComponent, 0);
+                CLMSUI.compositeModelInst.set("goTrees", goTrees);
 
                 var proteins = clmsModel.get("participants");
                 var protMap = d3.map();

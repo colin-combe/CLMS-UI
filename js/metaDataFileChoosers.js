@@ -230,11 +230,11 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
         //
         // var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
 
-        wrapperPanel.append("label")
-            .append("span")
+        wrapperPanel//.append("label")
           //  .attr("class", "btn btn-1 btn-1a")
             .append("button")
             .attr("class", "btn btn-1 btn-1a loadEcoliButton")
+            .append("span")
             .text("Load Ecoli .gaf")
             ;
 
