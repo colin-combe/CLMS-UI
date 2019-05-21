@@ -105,7 +105,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             if (perModelChainEntry) {
                 return perModelChainEntry.values.map (function (chainValue) {
                     var chainIndex = chainValue.index;
-                    var alignID = CLMSUI.modelUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
+                    var alignID = CLMSUI.NGLUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
                     return {
                         chainIndex: chainIndex, 
                         modelIndex: chainValue.modelIndex, 
@@ -193,7 +193,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var toChainMap = chainValueMap.get (toProtID); 
                 
                 var octreeIgnoreFunc = function (point1, point2) {
-                    return CLMSUI.modelUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
+                    return CLMSUI.NGLUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
                 };
                     
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
@@ -240,7 +240,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         if (alternativeCount > 0) {
                             fromPDBResidues.forEach (function (fromPDB) {
                                 toPDBResidues.forEach (function (toPDB) {
-                                    if (CLMSUI.modelUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
+                                    if (CLMSUI.NGLUtils.not3DHomomultimeric (xlink, toPDB.chainIndex, fromPDB.chainIndex)) {
                                         fullLinkList.push({
                                             origId: xlink.id,
                                             linkId: fullLinkList.length,
@@ -457,7 +457,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         //console.log ("strcutcomp", this.get("structureComp").structure);
         this.get("structureComp").structure.eachChain(function(cp) {
             // Don't include chains which are tiny or ones we can't match to a protein
-            if (CLMSUI.modelUtils.isViableChain(cp) && CLMSUI.modelUtils.getProteinFromChainIndex(self.get("chainMap"), cp.index)) {
+            if (CLMSUI.NGLUtils.isViableChain(cp) && CLMSUI.NGLUtils.getProteinFromChainIndex(self.get("chainMap"), cp.index)) {
                 resCount += cp.residueCount;
                 viableChainIndices.push(cp.index);
             }
@@ -480,7 +480,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var atomIndices = chainCAtomIndices[ci] = [];
                 // 918 in 5taf matches to just one atom, which isn't a carbon, dodgy pdb?
 
-                var sel = CLMSUI.modelUtils.getRangedCAlphaResidueSelectionForChain(chainProxy);
+                var sel = CLMSUI.NGLUtils.getRangedCAlphaResidueSelectionForChain(chainProxy);
                 sele.setString(sel, true); // true = doesn't fire unnecessary dispatch events in ngl
                 var ai = this.get("structureComp").structure.getAtomIndices(sele);
 
@@ -544,7 +544,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         
         var notHomomultimeric = function (xlinkID, c1, c2) {
             var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
-            return CLMSUI.modelUtils.not3DHomomultimeric(xlink, c1, c2);
+            return CLMSUI.NGLUtils.not3DHomomultimeric(xlink, c1, c2);
         };
         
         links = links.filter(function(link) {
@@ -614,7 +614,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     getAtomIndex: function (resIndex, chainIndex, chainAtomIndices) {
         var cai = chainAtomIndices || this.get("chainCAtomIndices");
         var ci = cai[chainIndex];
-        var ai = ci[resIndex];      
+        var ai = ci[resIndex];
         return ai;
     },
     
@@ -744,7 +744,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var sels = [];
         comp.eachChain(function(cp) {
             // if chain longer than 10 resiudes and (no chainindexset present or chain index is in chainindexset)
-            if (CLMSUI.modelUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index))) {
+            if (CLMSUI.NGLUtils.isViableChain(cp) && (!chainIndexSet || chainIndexSet.has(cp.index))) {
                 sels.push(cp.atomOffset);
             }
         });

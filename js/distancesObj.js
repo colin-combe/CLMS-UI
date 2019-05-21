@@ -5,7 +5,7 @@ CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID, residueCoords)
     this.chainMap = chainMap;
     this.pdbBaseSeqID = pdbBaseSeqID;
     this.residueCoords = residueCoords;
-    this.setAllowedChainNameSet();
+    this.setAllowedChainNameSet (undefined, true);
 };
 
 CLMSUI.DistancesObj.prototype = {
@@ -96,7 +96,7 @@ CLMSUI.DistancesObj.prototype = {
             for (var n = 0; n < chains1.length; n++) {
                 var chainIndex1 = chains1[n].index;
                 var chainName1 = chains1[n].name;
-                var alignId1 = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chainName1, chainIndex1);
+                var alignId1 = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, chainName1, chainIndex1);
                 var resIndex1 = alignCollBB.getAlignedIndex(xlink.fromResidue, pid1, false, alignId1, true) - 1; // -1 for ZERO-INDEXED
                 var modelIndex1 = chains1[n].modelIndex;
 
@@ -106,12 +106,12 @@ CLMSUI.DistancesObj.prototype = {
                         if (modelIndex1 === modelIndex2 || options.allowInterModelDistances) {  // bar distances between models
                             var chainIndex2 = chains2[m].index;
                             var chainName2 = chains2[m].name;
-                            var alignId2 = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chainName2, chainIndex2);
+                            var alignId2 = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, chainName2, chainIndex2);
                             var resIndex2 = alignCollBB.getAlignedIndex(xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
                             // align from 3d to search index. resindex is 0-indexed so -1 before querying
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
-                            if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
+                            if (resIndex2 >= 0 && CLMSUI.NGLUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
                                 var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
 
                                 if (dist !== undefined) {
@@ -254,7 +254,7 @@ CLMSUI.DistancesObj.prototype = {
                     return this.permittedChainIndicesSet.has(chain.index);
                 }, this) // remove chains that are currently distance barred
                 .map(function(chain) {
-                    var alignID = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chain.name, chain.index);
+                    var alignID = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, chain.name, chain.index);
                     var range = alignCollBB.getSearchRangeIndexOfMatches(protID, alignID);
                     $.extend(range, {
                         chainIndex: chain.index,
@@ -484,7 +484,7 @@ CLMSUI.DistancesObj.prototype = {
             });
         }
         var chainNameSet = d3.set(chainNames);
-        this.setAllowedChainNameSet(chainNameSet);
+        this.setAllowedChainNameSet (chainNameSet, false);
 
         return this;
     },
@@ -492,7 +492,7 @@ CLMSUI.DistancesObj.prototype = {
     // set of chain names that are allowed to be in distance calculations
     // needed as others are restricted by the assembly in the ngl model
     // If chainNameSet is undefined all chain names are permitted
-    setAllowedChainNameSet: function(chainNameSet) {
+    setAllowedChainNameSet: function(chainNameSet, isNewObj) {
         this.permittedChainIndicesSet = d3.set();
         d3.values(this.chainMap).map(function(valueArr) {
             valueArr.map(function(d) {
@@ -503,7 +503,10 @@ CLMSUI.DistancesObj.prototype = {
         }, this);
 
         console.log("PCIS", this.permittedChainIndicesSet);
-        CLMSUI.vent.trigger("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
+        if (!isNewObj) {
+            // if changing existing object fire an event, otherwise hold off. Fire an event once whole new distancesObj object is installed.
+            CLMSUI.vent.trigger("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
+        }
 
         return this;
     }
