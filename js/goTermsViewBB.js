@@ -1,7 +1,7 @@
-//		a matrix viewer
+//		GO terms viewer
 //
 //		Colin Combe, Martin Graham
-//		Rappsilber Laboratory, 2015
+//		Rappsilber Laboratory, 2019
 
 var CLMSUI = CLMSUI || {};
 
@@ -60,17 +60,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
 
-        var chartDiv = flexWrapperPanel.append("div")
+        this.chartDiv = flexWrapperPanel.append("div")
             .attr("class", "panelInner")
             .attr("flex-grow", 1)
             .style("position", "relative");
 
-        var viewDiv = chartDiv.append("div")
-            .attr("class", "viewDiv");
-
-
         // SVG element
-        this.svg = viewDiv.append("svg");
+        this.svg = this.chartDiv.append("svg");
 
         this.svg.append('svg:defs').append('svg:marker')
             .attr('id', 'end-arrow')
@@ -87,17 +83,15 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.vis = this.svg.append("g");
         // .attr("transform", "translate(" + this.options.margin.left + "," + this.options.margin.top + ")");
 
+        this.svg.call(d3.behavior.zoom()
+            .scaleExtent([1 / 2, 4])
+            .on("zoom", zoomed));
+
+        function zoomed() {
+            self.vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        }
         //        this.duration = 750;
 
-        var self = this;
-        this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
-        //  this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
-        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
-        this.d3cola = cola.d3adaptor(d3); //.convergenceThreshold(0.1);
-
-    },
-
-    update: function() {
 
         var termSelectData = ["biological_ process"]; //, "molecular_function"];
 
@@ -115,67 +109,17 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d;
             });
 
+        this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
+        //  this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
+        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
 
+        this.d3cola = cola.d3adaptor(d3)
+    },
 
-        this.groupMap = new Map();
-        var go = CLMSUI.compositeModelInst.get("go");
-        console.log("go size:" + go.size)
-        var self = this;
-
-        function checkTerm(term) {
-            if (!self.groupMap.has(term.id)) {
-                var group = term;
-                // group.name = term.name;
-                // group.id = term.id;
-                group.children = [];
-                group.parents = [];
-                group.height = 100;
-                group.width = 100;
-                group.expanded = false;
-                if (term.is_a.size > 0) {
-                    if (group.parent) {
-                        alert("multiple isa/partof?");
-                    }
-                    var is_aValues = term.is_a.values();
-                    for (var potentialParent of is_aValues) {
-                        var parentId = potentialParent.split(" ")[0];
-                        var parentTerm = go.get(parentId);
-                        group.parents.push(parentTerm);
-                        checkTerm(parentTerm);
-                        parentTerm.children.push(group);
-                    }
-                } else if (term.id == "GO0008150") {
-                    self.biologicalProcess = group;
-                } else if (term.id == "GO0003674") {
-                    self.molecularFunction = group;
-                } else if (term.id == "GO0005575") {
-                    self.cellularComponent = group;
-                }
-                // else {
-                //   group.parent = self.root;
-                //   self.root._children.push(group);
-                // }
-                self.groupMap.set(group.id, group);
-                return group;
-            } else {
-                return self.groupMap.get(term.id);
-            }
-            return null;
-        };
-
-        if (go) {
-            for (var t of go.values()) {
-                if (t.namespace == "biological_process") {
-                    checkTerm(t);
-                }
-            }
-        }
-
-        this.root = this.biologicalProcess;
+    update: function() {
+        this.goTrees = CLMSUI.compositeModelInst.get("goTrees");
+        this.root = this.goTrees.cellularComponent;
         this.root.expanded = true;
-        // this.root.x0 = size[1] / 2;
-        // this.root.y0 = 0;
-
         // this.render(this.root);
     },
 
@@ -184,63 +128,82 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (this.d3cola) {
             this.d3cola.stop();
         }
-
+        var self = this;
         var nodes = new Map(); // not hidden nodes
-        var links = new Map();
-        var l = 0,
-            depthLimit = 3;
-        recurseGroup(this.root, l);
-        //
-        // for (var c of this.root.children) {
-        //     recurseGroup(c, 2);
-        // }
+        var linkSubsetMap = new Map();
+        var depthMap = new Map();
+        recurseGroup(this.root);
 
-        function recurseGroup(group, l) {
-            if (!nodes.has(group.id)) {
-                // if (l < depthLimit) {
-                //console.log("rG:" + l, group);
+        function recurseGroup(group) {
+            if (!nodes.has(group.id)) { //}&& group.getInteractors().size > 0) {
                 nodes.set(group.id, group);
+                var sameDepthArr = depthMap.get(group.depth);
+                if (!sameDepthArr) {
+                    sameDepthArr = [];
+                }
+                sameDepthArr.push(group);
+
                 for (var p of group.parents) {
-                    recurseGroup(p, l);
+                    recurseGroup(p);
                     var fromId = p.id;
                     var toId = group.id;
-                    var linkId = fromId + "-" + toId;
-                    if (!links.has(linkId)) {
-                        var linkObj = {};
-                        linkObj.source = p; //.getRenderedParticipant();
-                        linkObj.target = group; //.getRenderedParticipant();
-                        linkObj.id = linkId;
-                        links.set(linkId, linkObj);
+                    var linkId = fromId + "_" + toId;
+                    var link = linkSubsetMap.get(linkId);
+                    if (!link) {
+                        var link = {};
+                        link.source = p; //.getRenderedParticipant();
+                        link.target = group; //.getRenderedParticipant();
+                        link.id = linkId;
+                        linkSubsetMap.set(linkId, link);
                     }
-
                 }
                 if (group.expanded) {
                     for (var c of group.children) {
-                        recurseGroup(c, l + 1);
+                        recurseGroup(c);
                     }
                 }
-                // }
             }
         };
 
-        var bBox = this.svg.node().getBoundingClientRect();
-        var width = 4500; //bBox ? bBox.width : 500;
-        var height = 4500; //bBox ? bBox.height : 500;
+        var bBox = this.chartDiv.node().getBoundingClientRect();
+        var width = bBox ? bBox.width : 500;
+        var height = bBox ? bBox.height : 500;
 
         nodes = CLMS.arrayFromMapValues(nodes);
-        edges = CLMS.arrayFromMapValues(links);
+        edges = CLMS.arrayFromMapValues(linkSubsetMap);
 
-
+        console.log("wh:", width, height);
+        var constraints = [];
+        for (var sameDepth of depthMap.values()) {
+            var constraint = {
+                "type": "alignment",
+                "axis": "x",
+                //     "offsets": [
+                //         {"node": "1","offset": "0"},
+                //         {"node": "2", "offset": "0"},
+                //         {"node": "3", "offset": "0"}
+                //     ]
+            }
+            var offsets = [];
+            for (var n of sameDepth) {
+                var ni = nodes.indexOf(n);
+                offsets.push({node: ni, offset:0});
+            }
+            constraint.offsets = offsets;
+            constraints.push(constraint);
+        }
 
 
         this.d3cola
             .avoidOverlaps(true)
             .convergenceThreshold(1e-3)
-            .flowLayout('x', 100)
-            .size([width, height])
+            .size([width, height * 4])
             .nodes(nodes)
-            .links(edges);
-        //  .jaccardLinkLengths(150);
+            .links(edges)
+            .jaccardLinkLengths(150);
+            // .constraints(constraints)
+            // .flowLayout('x', 500)
+            ;
 
         var self = this;
         var margin = 10,
@@ -252,6 +215,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var nodeEnter = node.enter().append("g")
             .classed("node", true)
+            .attr("id", function(d) {
+                return d.id;
+            })
             .on("click", function(d) {
                 // self.model.setSelectedProteins([], false);
                 // self.toSelect = new Set();
@@ -274,49 +240,76 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         //     d3.select(this).select("circle").classed("highlightedProtein", false);
         //     self.model.get("tooltipModel").set("contents", null);
         // });
-      ///  node.exit().remove();
-
+        node.exit().remove();
         nodeEnter.append("circle")
-            .attr('r', 25);
+            //.attr('r', 25);
+            .attr("r", function(d) {
+                return d.expanded ? 0 : d.getBlobRadius();
+            });
 
         nodeEnter.append("text")
             .attr("class", "label")
             .text(function(d) {
-                return d.name;
+                return d.depth + d.name;
             });
 
-        var link = this.vis.selectAll(".link")
+        var link = this.vis.selectAll(".goLink")
             .data(edges, function(d) {
                 return d.id;
             });
 
         var linkEnter =
             link.enter().append("line") //.append("path")
-            .attr("class", "goLink");
+            .classed("goLink", true)
+            .attr("id", function(d) {
+                return d.id;
+            });
 
-        //link.exit().remove();
+        link.exit().remove();
 
-        this.d3cola.start(50, 100, 200).on("tick", function() {
-            node
-                // .each(function(d) {
-                //         d.innerBounds = d.bounds.inflate(-margin);
-                //     })
-                // .attr("cx", function(d) {
-                //     return d.x;
-                // })
-                // .attr("cy", function(d) {
-                //     return d.y;
-                // });
+        //        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
+        var nodeDebug = this.vis.selectAll(".nodeDebug")
+            .data(nodes, function(d) {
+                return d.id;
+            });
 
-                .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y + ")";
-                });
+        var nodeDebugEnter = nodeDebug
+            .enter().append('rect')
+            .classed('node', true)
+            .attr({
+                rx: 5,
+                ry: 5
+            })
+            .style('stroke', "red")
+            .style('fill', "none");
+
+        nodeDebug.exit().remove();
+
+        this.d3cola.start(200, 100, 100, 200).on("tick", function() {
+            node.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
             // .attr("width", function(d) {
             //     return d.innerBounds.width();
             // })
             // .attr("height", function(d) {
             //     return d.innerBounds.height();
             // });
+
+            nodeDebug.attr({
+                x: function(d) {
+                    return d.bounds.x
+                },
+                y: function(d) {
+                    return d.bounds.y
+                },
+                width: function(d) {
+                    return d.bounds.width()
+                },
+                height: function(d) {
+                    return d.bounds.height()
+                }
+            });
 
             link.attr("x1", function(d) {
                 return d.source.x;
@@ -327,175 +320,11 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }).attr("y2", function(d) {
                 return d.target.y;
             });
-            // if (isIE()) link.each(function(d) {
-            //     this.parentNode.insertBefore(this, this)
-            // });
-
-            // label
-            //     .attr("x", function(d) {
-            //         return d.x
-            //     })
-            //     .attr("y", function(d) {
-            //         return d.y + (margin + pad) / 2
-            //     });
 
         }); //.on("end", routeEdges);
 
-
         return this;
     },
-    //
-    // render: function(source) {
-    //     if (this.tree) {
-    //         // Compute the new tree layout.
-    //         var nodes = this.tree.nodes(this.root).reverse(),
-    //             links = this.tree.links(nodes);
-    //
-    //         // Normalize for fixed-depth.
-    //         nodes.forEach(function(d) {
-    //             d.y = d.depth * 180;
-    //         });
-    //
-    //         //var i = 0;
-    //         var self = this;
-    //         // Update the nodes…
-    //         var node = this.vis.selectAll("g.node")
-    //             .data(nodes, function(d) {
-    //                 return d.id || (d.id = ++self.i);
-    //             });
-    //
-    //         var self = this;
-    //         // Enter any new nodes at the parent's previous position.
-    //         var nodeEnter = node.enter().append("g")
-    //             .attr("class", "node")
-    //             // .attr("title", function(d) {
-    //             //     return d.name;
-    //             // })
-    //             .attr("transform", function(d) {
-    //                 return "translate(" + source.y0 + "," + source.x0 + ")";
-    //             })
-    //             .on("click", function(d) {
-    //                 self.model.setSelectedProteins([], false);
-    //                 self.toSelect = new Set();
-    //                 self.selectTerm(d);
-    //                 self.model.setSelectedProteins(Array.from(self.toSelect), true);
-    //                 self.click(d);
-    //             })
-    //             .on("mouseover", function(d) {
-    //                 d3.select(this).select("circle").classed("highlightedProtein", true);
-    //                 self.model.get("tooltipModel")
-    //                     .set("header", "GO Term")
-    //                     .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d))
-    //                     .set("location", {
-    //                         pageX: d3.event.pageX,
-    //                         pageY: d3.event.pageY
-    //                     });
-    //             })
-    //             .on("mouseout", function(d) {
-    //                 d3.select(this).select("circle").classed("highlightedProtein", false);
-    //                 self.model.get("tooltipModel").set("contents", null);
-    //             });
-    //
-    //         nodeEnter.append("circle")
-    //             .attr("id", function(d) {
-    //                 return d.id;
-    //             })
-    //             .attr("r", 1e-6)
-    //             .style("fill", function(d) {
-    //                 return d._children ? "lightsteelblue" : "#fff";
-    //             });
-    //
-    //         nodeEnter.append("text")
-    //             .attr("x", function(d) {
-    //                 return d.children || d._children ? -13 : 13;
-    //             })
-    //             .attr("dy", ".35em")
-    //             .attr("text-anchor", function(d) {
-    //                 return d.children || d._children ? "end" : "start";
-    //             })
-    //             .text(function(d) {
-    //                 return d.name;
-    //             })
-    //             .style("fill-opacity", 1e-6);
-    //
-    //         // Transition nodes to their new position.
-    //         var nodeUpdate = node.transition()
-    //             .duration(self.duration)
-    //             .attr("transform", function(d) {
-    //                 return "translate(" + d.y + "," + d.x + ")";
-    //             });
-    //
-    //         nodeUpdate.select("circle")
-    //             .attr("r", 10)
-    //             .style("fill", function(d) {
-    //                 //  return d._children ? "lightsteelblue" : "#fff";
-    //             });
-    //
-    //         nodeUpdate.select("text")
-    //             .style("fill-opacity", 1);
-    //
-    //         // Transition exiting nodes to the parent's new position.
-    //         var nodeExit = node.exit().transition()
-    //             .duration(self.duration)
-    //             .attr("transform", function(d) {
-    //                 return "translate(" + source.y + "," + source.x + ")";
-    //             })
-    //             .remove();
-    //
-    //         nodeExit.select("circle")
-    //             .attr("r", 1e-6);
-    //
-    //         nodeExit.select("text")
-    //             .style("fill-opacity", 1e-6);
-    //
-    //         // Update the links…
-    //         var link = this.vis.selectAll("path.goLink")
-    //             .data(links, function(d) {
-    //                 return d.target.id;
-    //             });
-    //
-    //         // Enter any new links at the parent's previous position.
-    //         link.enter().insert("path", "g")
-    //             .attr("class", "goLink")
-    //             .attr("d", function(d) {
-    //                 var o = {
-    //                     x: source.x0,
-    //                     y: source.y0
-    //                 };
-    //                 return self.diagonal({
-    //                     source: o,
-    //                     target: o
-    //                 });
-    //             });
-    //
-    //         // Transition links to their new position.
-    //         link.transition()
-    //             .duration(self.duration)
-    //             .attr("d", self.diagonal);
-    //
-    //         // Transition exiting nodes to the parent's new position.
-    //         link.exit().transition()
-    //             .duration(self.duration)
-    //             .attr("d", function(d) {
-    //                 var o = {
-    //                     x: source.x,
-    //                     y: source.y
-    //                 };
-    //                 return self.diagonal({
-    //                     source: o,
-    //                     target: o
-    //                 });
-    //             })
-    //             .remove();
-    //
-    //         // Stash the old positions for transition.
-    //         nodes.forEach(function(d) {
-    //             d.x0 = d.x;
-    //             d.y0 = d.y;
-    //         });
-    //     }
-    //     return this;
-    // },
 
     // Toggle children on click.
     click: function(d) {
@@ -507,11 +336,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         //     d.children = d._children;
         //     d._children = null;
         // }
-        this.render(); // TODO
+        this.render();
     },
 
     /*
-            // Toggle children on click.
             expandToShow: function(d) {
                 console.log("expanding:" + d.name, d)
                 if (d._children) {

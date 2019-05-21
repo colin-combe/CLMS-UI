@@ -230,18 +230,18 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
         //
         // var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
 
-        wrapperPanel.append("label")
-            .append("span")
+        wrapperPanel//.append("label")
           //  .attr("class", "btn btn-1 btn-1a")
             .append("button")
             .attr("class", "btn btn-1 btn-1a loadEcoliButton")
+            .append("span")
             .text("Load Ecoli .gaf")
             ;
 
       },
 
     loadEcoliGaf: function(evt) {
-        var url = "../ecocyc.gaf";
+        var url = "./ecocyc.gaf";
         self = this;
         d3.text(url, function(error, txt) {
             if (error) {

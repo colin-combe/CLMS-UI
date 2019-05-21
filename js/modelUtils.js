@@ -833,7 +833,7 @@ CLMSUI.modelUtils = {
 
     updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
 
-        var url = "../go.obo";
+        var url = "./go.obo";
 
         d3.text(url, function(error, txt) {
             if (error) {
@@ -842,32 +842,86 @@ CLMSUI.modelUtils = {
                 var go = new Map();
                 var lines = txt.split('\n');
                 var term;
+
+                // var termType = "cellular_component";
+
                 //term.id = term.id.replace(":", "")
                 for (var l = 0; l < lines.length; l++) {
                     //console.log(lines[l]);
                     var line = lines[l];
-                    if (line.trim() == "[Term]") {
-                        if (term && term.namespace == "biological_process") {
-                            go.set(term.id, term);
-                        }
-                        term = {};
-                        term.is_a = new Set ();
-                        term.intersection_of = new Set ();
-                        term.relationship = new Set ();
-                        term.interactors = new Set ();
-                    } else if (term) {
-                        var parts = line.split(":");
-                        if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
-                            term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
-                        } else {
-                          term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                    if (line.trim() != "") {
+                        if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
+                            if (term){//} && term.namespace == termType) {
+                                go.set(term.id, term);
+                            }
+                            term = new CLMSUI.GoTerm();
+                        } else if (term) {
+                            var parts = line.split(":");
+                            if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
+                                term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
+                            } else {
+                              term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                            }
                         }
                     }
                 }
-                if (term.namespace == "biological_process") {
+                // if (term.namespace == termType) {
                     go.set(term.id, term);
-                }
+                // }
+                console.log("go size:" + go.size)
                 CLMSUI.compositeModelInst.set("go", go);
+
+                var tempMap = new Map();
+                var goTrees = {};
+
+                function checkTerm(goTerm) {
+                    if (!tempMap.has(goTerm.id)) {
+                        if (goTerm.is_a.size > 0) {
+                          var is_aValues = goTerm.is_a.values();
+                          for (var potentialParent of is_aValues) {
+                              var parentId = potentialParent.split(" ")[0];
+                              var parentTerm = go.get(parentId);
+                              if (goTerm.namespace = parentTerm.namespace) {
+                                goTerm.parents.push(parentTerm);
+                                checkTerm(parentTerm);
+                                parentTerm.children.push(goTerm);
+                              }
+                          }
+                        }
+                        else if (goTerm.id == "GO0008150") {
+                            goTrees.biologicalProcess = goTerm;
+                        } else if (goTerm.id == "GO0003674") {
+                            goTrees.molecularFunction = goTerm;
+                        } else if (goTerm.id == "GO0005575") {
+                            goTrees.cellularComponent = goTerm;
+                        }
+                        tempMap.set(goTerm.id, goTerm);
+                        return goTerm;
+                    } else {
+                        return tempMap.get(goTerm.id);
+                    }
+                    return null;
+                };
+
+                for (var t of go.values()) {
+                    // if (t.namespace == termType) {
+                        checkTerm(t);
+                    // }
+                }
+
+                function setNodeDepth (node, depth) {
+                    if (depth > node.depth) {
+                        node.depth = depth;
+                    }
+                    for (var c of node.children){
+                        setNodeDepth(c, depth + 1);
+                    }
+                }
+
+                setNodeDepth(goTrees.biologicalProcess, 0);
+                setNodeDepth(goTrees.molecularFunction, 0);
+                setNodeDepth(goTrees.cellularComponent, 0);
+                CLMSUI.compositeModelInst.set("goTrees", goTrees);
 
                 var proteins = clmsModel.get("participants");
                 var protMap = d3.map();
@@ -876,29 +930,30 @@ CLMSUI.modelUtils = {
                 });
 
                 var gafLines = gafFileContents.split('\n');
-                var groups = new Map();
+                //var groups = new Map();
                 for (var g = 0; g < gafLines.length; g++) {
                     line = gafLines[g];
                     if (line.startsWith("!") == false) {
                         var fields = line.split("\t");
                         var goId = fields[4].replace(":", "");
-                        if (go.get(goId)) {
+                        var goTerm = go.get(goId);
+                        if (goTerm) {
                             var proteinId = protMap.get(fields[1]);
                             var protein = proteins.get(proteinId);
-                            // go.interactors.add(protein);
+                            goTerm.interactors.add(protein);
                             if (protein) {
                                 if (!protein.go) {
                                     protein.go = new Set();
                                 }
                                 //console.log(">>"+goId);
                                 protein.go.add(goId);
-                                if (!groups.has(goId)) {
-                                    var accs = new Set();
-                                    accs.add(proteinId);
-                                    groups.set(goId, accs);
-                                } else {
-                                    groups.get(goId).add(proteinId);
-                                }
+                                // if (!groups.has(goId)) {
+                                //     var accs = new Set();
+                                //     accs.add(proteinId);
+                                //     groups.set(goId, accs);
+                                // } else {
+                                //     groups.get(goId).add(proteinId);
+                                // }
                             }
                         }
                     }
@@ -907,7 +962,7 @@ CLMSUI.modelUtils = {
                 // update groups
 
                 CLMSUI.vent.trigger("goAnnotationsUpdated", {
-                    groups: groups
+                    // groups: groups
                 }, {
                     source: "file"
                 });
