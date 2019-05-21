@@ -36,6 +36,10 @@ function downloadResidueCount() {
     download(getResidueCount(), 'text/csv', downloadFilename("residueCount"));
 }
 
+function downloadProteinAccessions() {
+    download(getProteinAccessions(), 'text/csv', downloadFilename("proteinAccessions"));
+}
+
 function download(content, contentType, fileName) {
     //var b64svg = window.btoa(content);
 
@@ -475,4 +479,15 @@ function getResidueCount() {
         }
     }
     return csv;
+}
+
+function getProteinAccessions() {
+    var accs = [];
+    var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+    for (var p of proteins) {
+        if (!p.hidden) {
+            accs.push(p.accession);
+        }
+    }
+    return accs.join(",");
 }

@@ -741,6 +741,12 @@ CLMSUI.init.viewsEssential = function(options) {
                         sectionEnd: true
                     },
                     {
+                        name: "Protein Accession list",
+                        func: downloadProteinAccessions,
+                        tooltip: "Produces a list of visible proteins' accession numbers",
+                        sectionEnd: true
+                    },
+                    {
                         name: "Make Filtered XI URL",
                         func: function() {
                             CLMSUI.vent.trigger("shareURL", true);
