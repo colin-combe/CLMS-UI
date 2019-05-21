@@ -49,7 +49,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
             "autovalidated", "validated", "group", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
-            "precursorIntensity", "elutionStart", "elutionEnd",
+            "precursorIntensity", "elutionStart", "elutionEnd", "missedCleavages",
         ];
 
         this.headerLabels = {
@@ -80,9 +80,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             precursorIntensity: "Intensity",
             elutionStart: "Elut. Start",
             elutionEnd: "Elut. End",
+            missedCleavages: "Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", "missedCleavages",]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -203,6 +204,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             },
             elutionEnd: function(d) {
                 return d.elution_time_end;
+            },
+            missedCleavages: function(d) {
+                return d.missedCleavageCount();
             },
         };
 
