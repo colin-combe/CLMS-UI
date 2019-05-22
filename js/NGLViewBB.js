@@ -16,6 +16,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return _.extend({}, parentEvents, {
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
+            "click .savePDBButton": "savePDB",
             "click .distanceLabelCB": "toggleLabels",
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
@@ -62,6 +63,13 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 type: "button",
                 id: "download",
                 tooltip: "Save a PNG image of the view"
+            },
+            {
+                label: "Save PDB + CrossLinks",
+                class: "savePDBButton",
+                type: "button",
+                id: "savePDB",
+                tooltip: "Saves a copy of the PDB with filtered fully visible cross-links"
             },
             {
                 label: "Re-Centre",
@@ -581,6 +589,20 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
         return this;
     },
+    
+    savePDB: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.exportPDB (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
+                ["PDB ID: "+this.xlRepr.pdbBaseSeqID, 
+                "Exported by "+this.identifier+" and XiView", 
+                 "Xi Crosslinks in CONECT and LINK records", 
+                 "Search ID: "+CLMSUI.utils.searchesToString(), 
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ]
+        );
+        return this;
+    },
 
     toggleLabels: function(event) {
         var bool = event.target.checked;
@@ -711,7 +733,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         return CLMSUI.utils.objectStateToAbbvString(optionsPlus, fields, d3.set(), abbvMap);
     },
-
+    
+    pdbFilenameStateString: function () {
+        return CLMSUI.utils.makeLegalFileName (this.xlRepr.pdbBaseSeqID + "-CrossLinks-"+CLMSUI.utils.searchesToString() + "-" + CLMSUI.utils.filterStateToString());
+    },
+    
     // Returns a useful filename given the view and filters current states
     filenameStateString: function() {
         return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "-PDB=" + this.xlRepr.pdbBaseSeqID + "--" + CLMSUI.utils.filterStateToString());

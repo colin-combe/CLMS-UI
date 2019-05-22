@@ -406,4 +406,25 @@ CLMSUI.NGLUtils = {
         // should be chainProxy.entity.isPolymer() but some hand-built ngl models muff these settings up
         return chainProxy.residueCount > 10 && (!chainProxy.entity || (!chainProxy.entity.isWater() && !chainProxy.entity.isMacrolide()));
     },
+    
+    exportPDB: function (structure, nglModelWrapper, name, remarks) {
+        var PDBLinks = nglModelWrapper.getPDBLinkString (nglModelWrapper.getFullLinks());
+        var PDBConects = nglModelWrapper.getPDBConectString (nglModelWrapper.getFullLinks());
+        //console.log ("ATOMPAIRS", PDBLinks, PDBConects);
+        var PDBRemarks = remarks.map (function (remark) { return remark.match(/.{1,69}/g); });  // chop remarks into strings of max-length 69
+        PDBRemarks = d3.merge (PDBRemarks);
+        PDBRemarks.unshift ("");
+        PDBRemarks = PDBRemarks.map (function (remark) { return "  3 "+remark; });
+        
+        var writer = new NGL.PdbWriter (structure, {renumberSerial: false, remarks: PDBRemarks});
+        writer.oldGetData = writer.getData;
+        writer.getData = function () {
+            var data = this.oldGetData();
+            var linkInsert = data.indexOf("\nMODEL") + 1;
+            var conectInsert = data.lastIndexOf("END");
+            return data.substring(0, linkInsert) + PDBLinks + "\n" + data.slice (linkInsert, conectInsert) + PDBConects + "\n" + data.slice(conectInsert);
+        };
+    
+        writer.download (name || structure.name+"-Crosslinked");
+    }
 };
