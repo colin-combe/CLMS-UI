@@ -31,7 +31,7 @@ CLMSUI.DistancesObj.prototype = {
         return d;
     },
 
-    getShortestLinks: function(linkWrappers, angstromAccuracy) {
+    getShortestLinks: function (linkWrappers, angstromAccuracy) {
         angstromAccuracy = angstromAccuracy || 1;
         var self = this;
 

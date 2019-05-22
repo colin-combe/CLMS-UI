@@ -422,6 +422,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return d3.set(_.pluck (linkObjs, "origId")).size();
     },
     
+    // Return an array of atom pair indices (along with original link id) for a given array of crosslink objects
     getAtomPairsFromLinks: function (fullLinkList) {
         var atomPairs = [];
 
@@ -630,7 +631,68 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this.getAtomProxyDistance(ap1, ap2);
     },
 
+    // make an array of pdb file compatible link entries for the supplied crosslink objects
+    getAtomPairsFromLinksWithDistances: function (links) {
+        var struc = this.get("structureComp").structure;
+        var ap1 = struc.getAtomProxy();
+        var ap2 = struc.getAtomProxy();
+        var atomPairs = this.getAtomPairsFromLinks (links);
 
+        atomPairs.forEach (function (pair) {
+            ap1.index = pair[0];
+            ap2.index = pair[1];
+            if (ap1.index !== undefined && ap2.index !== undefined) {
+                pair[3] = this.getAtomProxyDistance (ap1, ap2);
+            }
+        }, this);
+        
+        return atomPairs;
+    },
+    
+    getPDBLinkString: function (links) {
+        var pdbLinks = [];
+        var struc = this.get("structureComp").structure;
+        var ap = struc.getAtomProxy();
+        var linkFormat = 'LINK        %-4s %-3s %1s%4d                %-4s %-3s %1s%4d   %6s %6s %5.2f';
+        
+        links.forEach (function (link) {
+            var res1 = link.residueA;
+            var res2 = link.residueB;
+            var atomIndex1 = this.getAtomIndexFromResidueObj (res1);
+            var atomIndex2 = this.getAtomIndexFromResidueObj (res2);
+            ap.index = atomIndex1;
+            var atomName1 = ap.atomname;
+            var resName1 = ap.resname;
+            var resSeq1 = ap.resno;
+            var chainID1 = ap.chainname;
+            ap.index = atomIndex2;
+            var atomName2 = ap.atomname;
+            var resName2 = ap.resname;
+            var resSeq2 = ap.resno;
+            var chainID2 = ap.chainname;
+            
+            var sym1 = "      ";
+            var sym2 = "      ";
+            var distance = Math.min (99.99, this.getSingleDistanceBetween2Residues (res1.resindex, res2.resindex, res1.chainIndex, res2.chainIndex));
+            
+            pdbLinks.push (sprintf (linkFormat, atomName1, resName1, chainID1, resSeq1, atomName2, resName2, chainID2, resSeq2, sym1, sym2, distance));
+        }, this);
+        
+        return pdbLinks.join("\n");
+    },
+    
+    
+    getPDBConectString: function (links) {  // Conect is spelt right
+        var pdbConects = [];
+        var atomPairs = this.getAtomPairsFromLinks (links);
+        var conectFormat = 'CONECT%5d%5d                                                                ';
+        
+        atomPairs.forEach (function (atomPair) {   
+            pdbConects.push (sprintf (conectFormat, atomPair[0], atomPair[1]));
+        }, this);
+        
+        return pdbConects.join("\n");
+    },
 
 
     getSelectionFromResidueList: function(resnoList, options) { // set allAtoms to true to not restrict selection to alpha carbon atoms
