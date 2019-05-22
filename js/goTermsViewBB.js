@@ -48,15 +48,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .append("select")
             .attr("id", mainDivSel.attr("id") + "goTermSelect")
             .on("change", function(d) {
-                var value = this.value;
-                var selectedDatum = d3.select(this).selectAll("option")
-                    .filter(function(d) {
-                        return d3.select(this).property("selected");
-                    })
-                    .datum();
-                //self.setAndShowPairing(selectedDatum.value);
-                var selElem = d3.select(d3.event.target);
-                //setSelectTitleString(selElem);
+                self.update();
             });
 
 
@@ -68,17 +60,17 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         // SVG element
         this.svg = this.chartDiv.append("svg");
 
-        this.svg.append('svg:defs').append('svg:marker')
-            .attr('id', 'end-arrow')
-            .attr('viewBox', '0 0 10 10')
-            .attr('refX', 5)
-            .attr('refY', 5)
-            .attr('markerWidth', 10)
-            .attr('markerHeight', 8)
-            .attr('orient', 'auto-start-reverse')
-            .append('svg:path')
-            .attr('d', 'M 0 0 L 10 5 L 0 10 z')
-            .attr('fill', '#000');
+        // this.svg.append('svg:defs').append('svg:marker')
+        //     .attr('id', 'end-arrow')
+        //     .attr('viewBox', '0 0 10 10')
+        //     .attr('refX', 5)
+        //     .attr('refY', 5)
+        //     .attr('markerWidth', 10)
+        //     .attr('markerHeight', 8)
+        //     .attr('orient', 'auto-start-reverse')
+        //     .append('svg:path')
+        //     .attr('d', 'M 0 0 L 10 5 L 0 10 z')
+        //     .attr('fill', '#000');
 
         this.vis = this.svg.append("g");
         // .attr("transform", "translate(" + this.options.margin.left + "," + this.options.margin.top + ")");
@@ -90,10 +82,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         function zoomed() {
             self.vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
-        //        this.duration = 750;
 
-
-        var termSelectData = ["biological_ process"]; //, "molecular_function"];
+        var termSelectData = ["biological_process", "molecular_function", "cellular_component"];
 
         var options = this.termSelect.selectAll("option")
             .data(termSelectData)
@@ -117,10 +107,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     update: function() {
-        this.goTrees = CLMSUI.compositeModelInst.get("goTrees");
-        this.root = this.goTrees.biologicalProcess;
+        var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
+            .filter(function(d) {
+                return d3.select(this).property("selected");
+            })
+            .datum();
+        this.root = CLMSUI.compositeModelInst.get("goTrees")[termType];
         this.root.expanded = true;
-        // this.render(this.root);
+        this.render(this.root);
     },
 
     render: function() {
@@ -188,7 +182,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             var offsets = [];
             for (var n of sameDepth) {
                 var ni = nodes.indexOf(n);
-                offsets.push({node: ni, offset:0});
+                offsets.push({
+                    node: ni,
+                    offset: 0
+                });
             }
             constraint.offsets = offsets;
             constraints.push(constraint);
@@ -199,23 +196,20 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         delete this.d3cola._descent;
         delete this.d3cola._rootGroup;
 
-        console.log("CONST", constraints)
-
         this.d3cola
             .avoidOverlaps(true)
             .convergenceThreshold(0.1)
             // .size([width, height * 4])
             .nodes(nodes)
             .links(edges)
+            // .groups([])
             //.symmetricDiffLinkLengths()
             // .jaccardLinkLengths(40);
             .constraints(constraints)
-            .flowLayout('x', 300)
-            ;
+            .flowLayout('x', 300);
 
         var self = this;
-        var margin = 10,
-            pad = 12;
+
         var node = this.vis.selectAll(".node")
             .data(nodes, function(d) {
                 return d.id;
@@ -232,23 +226,24 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 // self.selectTerm(d);
                 // self.model.setSelectedProteins(Array.from(self.toSelect), true);
                 self.click(d);
+            })
+            .on("mouseover", function(d) {
+                d3.select(this).select("circle").classed("highlightedProtein", true);
+                self.model.get("tooltipModel")
+                    .set("header", "GO Term")
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d))
+                    .set("location", {
+                        pageX: d3.event.pageX,
+                        pageY: d3.event.pageY
+                    });
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).select("circle").classed("highlightedProtein", false);
+                self.model.get("tooltipModel").set("contents", null);
             });
 
-        // .on("mouseover", function(d) {
-        //     d3.select(this).select("circle").classed("highlightedProtein", true);
-        //     self.model.get("tooltipModel")
-        //         .set("header", "GO Term")
-        //         .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d))
-        //         .set("location", {
-        //             pageX: d3.event.pageX,
-        //             pageY: d3.event.pageY
-        //         });
-        // })
-        // .on("mouseout", function(d) {
-        //     d3.select(this).select("circle").classed("highlightedProtein", false);
-        //     self.model.get("tooltipModel").set("contents", null);
-        // });
         node.exit().remove();
+        
         nodeEnter.append("circle")
             //.attr('r', 25);
             .attr("r", function(d) {
@@ -276,7 +271,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         link.exit().remove();
 
         //        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
-        var nodeDebug = this.vis.selectAll(".nodeDebug")
+
+        /*var nodeDebug = this.vis.selectAll(".nodeDebug")
             .data(nodes, function(d) {
                 return d.id;
             });
@@ -291,7 +287,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .style('stroke', "red")
             .style('fill', "none");
 
-        nodeDebug.exit().remove();
+        nodeDebug.exit().remove();*/
 
         this.d3cola.start(10, 15, 20).on("tick", function() {
             node.attr("transform", function(d) {
@@ -304,6 +300,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             //     return d.innerBounds.height();
             // });
 
+            /*
             nodeDebug.attr({
                 x: function(d) {
                     return d.bounds.x
@@ -312,12 +309,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return d.bounds.y
                 },
                 width: function(d) {
-                    return 50;//d.bounds.width()
+                    return 50; //d.bounds.width()
                 },
                 height: function(d) {
-                    return 50;//d.bounds.height()
+                    return 50; //d.bounds.height()
                 }
-            });
+            });*/
 
             link.attr("x1", function(d) {
                 return d.source.x;
@@ -329,7 +326,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d.target.y;
             });
 
-        }); //.on("end", routeEdges);
+        });
 
         return this;
     },

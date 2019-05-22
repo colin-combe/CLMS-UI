@@ -325,7 +325,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         var nonEmptyEntries = entries.filter(function(entry) {
             return entry.value.crossLinks.length;
         });
-        
+
         // If there are selected proteins, reduce the choice to pairs within this set
         var selectedProteins = this.model.get("selectedProteins");
         if (selectedProteins.length) {
@@ -550,8 +550,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         var baseScale = Math.min (sd.width / sd.lengthA, sd.height / sd.lengthB);
         return baseScale * this.zoomStatus.scale();
     },
-    
-    // Tooltip functions     
+
+    // Tooltip functions
     convertEvtToXY: function(evt) {
         var sd = this.getSizeData();
 
@@ -663,7 +663,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.trigger("change:location", this.model, evt); // necessary to change position 'cos d3 event is a global property, it won't register as a change
         }
     },
-    // end of tooltip functions  
+    // end of tooltip functions
 
     zoomHandler: function(self) {
         var sizeData = this.getSizeData();
@@ -739,7 +739,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         blockSel.remove();
 
         //console.log ("BLOX", blockMap);
-        
+
         var allowInterModel = this.model.get("stageModel").get("allowInterModelDistances");
 
         alignInfo[0].forEach (function (alignInfo1) {
@@ -762,7 +762,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     }, this);
                 }
             }, this);
-            
+
         }, this);
     },
 
@@ -862,10 +862,10 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     });
                     //console.log ("pcsi", preCalcSearchIndices, this);
 
-                    var atoms1 = linksOnly ? stageModel.getAllResidueCoordsForChain (matrixValue.chain1) : []; 
-                    var atoms2 = linksOnly ? ((matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1) : []; 
+                    var atoms1 = linksOnly ? stageModel.getAllResidueCoordsForChain (matrixValue.chain1) : [];
+                    var atoms2 = linksOnly ? ((matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1) : [];
                     //console.log ("atoms", atoms1, atoms2);
-                    
+
                     // draw chain values, aligned to search sequence
                     if (linksOnly) {
                         preCalcSearchIndices = d3.range(atoms2.length).map(function(resIndex) {
@@ -873,12 +873,12 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                         });
                         var max2 = max * max;
                         var min2 = min * min;
-                        
+
                         var p = performance.now();
                         for (var i = 0; i < atoms1.length; i++) {
                             var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
                             if (searchIndex1 >= 0) {
-                                for (var j = 0, len = atoms2.length; j < len; j++) { // was seqLength     
+                                for (var j = 0, len = atoms2.length; j < len; j++) { // was seqLength
                                     var distance2 = CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
                                     if (distance2 < max2) {
                                         var searchIndex2 = preCalcSearchIndices[j];
@@ -906,7 +906,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                             var row = distanceMatrix[i];
                             var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
                             if (row && searchIndex1 >= 0) {
-                                for (var j = 0, len = row.length; j < len; j++) { // was seqLength     
+                                for (var j = 0, len = row.length; j < len; j++) { // was seqLength
                                     var distance = !linksOnly ? row[j] : Math.sqrt (CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]));
                                     if (distance < max) {
                                         var searchIndex2 = preCalcSearchIndices[j];
@@ -963,7 +963,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     renderCrossLinks: function (renderOptions) {
-        
+
         renderOptions = renderOptions || {};
 
         if (renderOptions.isVisible || (this.options.matrixObj && this.isVisible())) {
@@ -1010,7 +1010,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var fromToStore = sortedFinalCrossLinks.map(function(crossLink) {
                     return [crossLink.fromResidue - 1, crossLink.toResidue - 1];
                 });
-                
+
                 var indLinkPlot = function (d) {
                     var high = highlightedCrossLinkIDs.has(d.id);
                     var selected = high ? false : selectedCrossLinkIDs.has(d.id);
@@ -1024,7 +1024,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                         //.style ("stroke-opacity", high || selected ? 0.4 : null)
                     ;
                 };
-                
+
                 // if redoing highlights only, find previously highlighted links not part of current set and restore them
                 // to a non-highlighted state
                 if (highlightOnly) {
@@ -1035,7 +1035,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                         .each (indLinkPlot)
                     ;
                 }
-                
+
                 var linkSel = this.zoomGroup.select(".crossLinkPlot").selectAll(".crossLink")
                     .data(sortedFinalCrossLinks, function(d) {
                         return d.id;
@@ -1046,7 +1046,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     })
                     //.order()
                 ;
-                
+
                 if (!highlightOnly) {
                     linkSel.exit().remove();
                     linkSel.enter().append("circle")    // replacing rect
@@ -1252,12 +1252,12 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var bottom = sizeData.viewHeight;
         /*Math.min (
-                   cvs.position().top + (($.zepto ? cvs.height() : cvs.outerHeight(true)) * scale), 
+                   cvs.position().top + (($.zepto ? cvs.height() : cvs.outerHeight(true)) * scale),
                    sizeData.viewHeight
                ); */
         var right = sizeData.viewWidth;
         /*Math.min (
-                   cvs.position().left + (($.zepto ? cvs.width() : cvs.outerWidth(true)) * scale), 
+                   cvs.position().left + (($.zepto ? cvs.width() : cvs.outerWidth(true)) * scale),
                    sizeData.viewWidth
                );*/
 

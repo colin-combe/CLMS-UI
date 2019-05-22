@@ -479,11 +479,11 @@ CLMSUI.init.views = function() {
             eventName: "gafMetaShow",
             tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
         },
-        {
-            name: "SkyLine quantitation",
-            eventName: "skylineMetaShow",
-            tooltip: "Load crosslink quantitation data from SkyLine output."
-        },
+        // {
+        //     name: "SkyLine quantitation",
+        //     eventName: "skylineMetaShow",
+        //     tooltip: "Load crosslink quantitation data from SkyLine output."
+        // },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
