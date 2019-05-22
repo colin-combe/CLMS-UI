@@ -118,7 +118,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     update: function() {
         this.goTrees = CLMSUI.compositeModelInst.get("goTrees");
-        this.root = this.goTrees.cellularComponent;
+        this.root = this.goTrees.biologicalProcess;
         this.root.expanded = true;
         // this.render(this.root);
     },
@@ -140,6 +140,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var sameDepthArr = depthMap.get(group.depth);
                 if (!sameDepthArr) {
                     sameDepthArr = [];
+                    depthMap.set(group.depth, sameDepthArr)
                 }
                 sameDepthArr.push(group);
 
@@ -193,16 +194,23 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             constraints.push(constraint);
         }
 
+        delete this.d3cola._lastStress;
+        delete this.d3cola._alpha;
+        delete this.d3cola._descent;
+        delete this.d3cola._rootGroup;
+
+        console.log("CONST", constraints)
 
         this.d3cola
             .avoidOverlaps(true)
-            .convergenceThreshold(1e-3)
-            .size([width, height * 4])
+            .convergenceThreshold(0.1)
+            // .size([width, height * 4])
             .nodes(nodes)
             .links(edges)
-            .jaccardLinkLengths(150);
-            // .constraints(constraints)
-            // .flowLayout('x', 500)
+            //.symmetricDiffLinkLengths()
+            // .jaccardLinkLengths(40);
+            .constraints(constraints)
+            .flowLayout('x', 300)
             ;
 
         var self = this;
@@ -285,7 +293,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         nodeDebug.exit().remove();
 
-        this.d3cola.start(200, 100, 100, 200).on("tick", function() {
+        this.d3cola.start(10, 15, 20).on("tick", function() {
             node.attr("transform", function(d) {
                 return "translate(" + d.x + "," + d.y + ")";
             });
@@ -304,10 +312,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return d.bounds.y
                 },
                 width: function(d) {
-                    return d.bounds.width()
+                    return 50;//d.bounds.width()
                 },
                 height: function(d) {
-                    return d.bounds.height()
+                    return 50;//d.bounds.height()
                 }
             });
 
