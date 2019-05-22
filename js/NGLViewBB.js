@@ -415,6 +415,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .setAssemblyChains()
                     .repopulate();
             });
+            
+            // can't save pdb files with 100,000 or more atoms
+            d3.select(this.el).select(".savePDBButton").property("disabled", newStageModel.get("structureComp").structure.atomCount > 99999);
+            
         });
 
         this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
