@@ -425,16 +425,18 @@ CLMSUI.modelUtils = {
             var max = {
                 key: undefined,
                 seqObj: undefined,
-                eScore: 1e-25
+                bestScore: 2   //1e-25
             };
             var seqObj = sequenceObjs[n];
             entries.forEach(function(entry) {
-                var eScore = entry.value[n];
+                //var eScore = entry.value[n];
+                var avgBitScore = entry.value[n];
 
-                if (eScore < max.eScore) { // lower eScore is better
+                //if (eScore < max.eScore) { // lower eScore is better
+                if (avgBitScore > max.bestScore) { // higher avgBitScore is better
                     max.key = entry.key;
                     max.seqObj = seqObj;
-                    max.eScore = eScore;
+                    max.bestScore = avgBitScore;
                 }
             });
             if (max.key) {
@@ -447,10 +449,6 @@ CLMSUI.modelUtils = {
         }
 
         return pairings;
-    },
-
-    not3DHomomultimeric: function(crossLink, chain1ID, chain2ID) {
-        return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
     },
 
     intersectObjectArrays: function(a, b, compFunc) {

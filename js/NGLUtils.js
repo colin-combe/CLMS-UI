@@ -41,7 +41,7 @@ CLMSUI.NGLUtils = {
             })
             .then (function (structureCompArray) {
 
-                console.log("structureComp", structureCompArray);
+                CLMSUI.utils.xilog ("structureComp", structureCompArray);
             
                 var structureComp;
                 if (structureCompArray.length > 1) {
@@ -61,6 +61,7 @@ CLMSUI.NGLUtils = {
                         var protAlignCollection = bbmodel.get("alignColl");
                         CLMSUI.vent.listenToOnce (CLMSUI.vent, "sequenceMatchingDone", function (matchMatrix) {
                             var pdbXiProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, whichNGLSequences);
+                            CLMSUI.utils.xilog ("XI PAIRED", pdbXiProtMap);
                             sequenceMapsAvailable (pdbXiProtMap.concat (pdbUniProtMap));    // concat uniprot service and xi matched pdb-protein pairs
                         });
                         // the above sequenceMatchingDone event is triggered in matchSequencesToExistingProteins when these further alignments done, sync or async
@@ -80,7 +81,7 @@ CLMSUI.NGLUtils = {
                     if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
                         console.log("WEB SERVICE CALLED");
                         CLMSUI.NGLUtils.matchPDBChainsToUniprot(multiplePDBURI /*pdbInfo.pdbCode*/, nglSequences, interactorArr, function (uniprotMappingResults) {
-                            console.log ("UniprotMapRes", uniprotMappingResults, nglSequences);
+                            CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
                             if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
                                 var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
                                 matchByXiAlignment (remainingSequences, uniprotMappingResults.uniprotMapped);   // fire them into xi alignment routine
@@ -96,7 +97,7 @@ CLMSUI.NGLUtils = {
                     // bit to continue onto after ngl protein chain to clms protein matching has been done
                     function sequenceMapsAvailable (sequenceMap) {
 
-                        console.log("seqmpa", sequenceMap);
+                        CLMSUI.utils.xilog ("seqmap", sequenceMap);
                         //if (!_.isEmpty(sequenceMap)) {
                         //sequenceMap.pdbid = pdbInfo.baseSeqId;
                         var chainMap = {};
@@ -113,7 +114,7 @@ CLMSUI.NGLUtils = {
                                 semiLocal: true
                             };
                         });
-                        console.log("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
+                        CLMSUI.utils.xilog ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
 
                         if (bbmodel.get("stageModel")) {
                             bbmodel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
@@ -160,7 +161,7 @@ CLMSUI.NGLUtils = {
                 //console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName(), resList.join(""));
             }
         });
-        console.log ("seq", sequences);
+        CLMSUI.utils.xilog ("seq", sequences);
         return sequences;
     },
     
@@ -194,7 +195,7 @@ CLMSUI.NGLUtils = {
         */
 
         function dealWithReturnedData (data) {
-            console.log ("DATAAA", data);
+            //console.log ("DATAAA", data);
             var map = d3.map();
 
             $(data).find("block").each(function(i, b) {
@@ -216,7 +217,7 @@ CLMSUI.NGLUtils = {
             // sometimes there are several blocks for the same uniprot/pdb combination so had to map then take the values to remove duplicate pairings i.e. 3C2I
             // we calculate the alignment later on, this routine is purely to pair pdb chains to our proteins via uniprot accession numbers
             var mapArr = CLMS.arrayFromMapValues(map);
-            console.log ("MapArr", mapArr);
+            CLMSUI.utils.xilog ("PDB Service Map All", mapArr);
 
             if (callback) {
                 var interactors = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorArr);
@@ -241,7 +242,7 @@ CLMSUI.NGLUtils = {
                 mapArr = mapArr.filter(function(mapping) {
                     return mapping.id !== "none" && mapping.seqObj;
                 });
-                console.log("mapArr", mapArr);
+                CLMSUI.utils.xilog ("PDB Service Map Matched", mapArr);
                 callback ({uniprotMapped: mapArr, remaining: requireXiAlign});
             }
         }
@@ -283,8 +284,10 @@ CLMSUI.NGLUtils = {
         */
     },
 
-    // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline.
-    matchSequencesToExistingProteins: function(protAlignCollection, sequenceObjs, proteins, extractFunc) {
+    // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline or we still have sequences in the pdb unmatched to proteins
+    matchSequencesToExistingProteins: function (protAlignCollection, sequenceObjs, proteins, extractFunc) {
+        CLMSUI.utils.xilog ("SEQS TO PAIR INTERNALLY", sequenceObjs);
+        
         proteins = CLMSUI.modelUtils.filterOutDecoyInteractors (proteins)
             .filter(function(protein) {
                 return protAlignCollection.get(protein.id);
@@ -296,14 +299,14 @@ CLMSUI.NGLUtils = {
         // Filter out repeated sequences to avoid costly realignment calculation of the same sequences
         var filteredSeqInfo = CLMSUI.modelUtils.filterRepeatedSequences(seqs);
 
-        function finished(matchMatrix) {
+        function finished (matchMatrix) {
             // inflate score matrix to accommodate repeated sequences that were found and filtered out above
-            CLMSUI.vent.trigger("sequenceMatchingDone", CLMSUI.modelUtils.reinflateSequenceMap(matchMatrix, seqs, filteredSeqInfo));
+            CLMSUI.vent.trigger("sequenceMatchingDone", CLMSUI.modelUtils.reinflateSequenceMap (matchMatrix, seqs, filteredSeqInfo));
         }
 
         function updateMatchMatrix(protID, alignResults) {
             var uniqScores = alignResults.map(function(indRes) {
-                return indRes.eScore;
+                return indRes.avgBitScore;  //indRes.eScore;
             });
             matchMatrix[protID] = uniqScores;
         }
@@ -426,5 +429,9 @@ CLMSUI.NGLUtils = {
         };
     
         writer.download (name || structure.name+"-Crosslinked");
-    }
+    },
+    
+    not3DHomomultimeric: function(crossLink, chain1ID, chain2ID) {
+        return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
+    },
 };

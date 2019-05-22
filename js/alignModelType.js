@@ -24,6 +24,7 @@
                 score: fullResult.res[0],
                 bitScore: fullResult.bitScore,
                 eScore: fullResult.eScore,
+                avgBitScore: fullResult.avgBitScore,
                 label: this.get("compID"),
             };
 
@@ -236,10 +237,11 @@
                 var bioseqResults = settings.aligner.align (cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
 				bioseqResults.bitScore = this.getBitScore (bioseqResults.res[0], settings.scoringSystem.matrix); 
                 bioseqResults.eScore = this.alignmentSignificancy (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length); 
+                bioseqResults.avgBitScore = this.averageBitScorePerResidue (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length);
+                //console.log (this.id, bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length, bioseqResults.eScore, bioseqResults.avgBitScore);
 				return bioseqResults;
             }, this);
 
-            //console.log ("fr", fullResults);
             return fullResults;
         },
 		
@@ -254,6 +256,10 @@
         alignmentSignificancy: function (bitScore, dbLength, seqLength) {
             var exp = Math.pow (2, -bitScore);
             return (dbLength || 100) * seqLength * exp;	// escore
+        },
+        
+        averageBitScorePerResidue: function (bitScore, dbLength, seqLength) {
+            return bitScore / seqLength;    
         },
 
         getSettings: function() {
