@@ -255,9 +255,12 @@ function callback (model) {
 	
 	QUnit.test ("Matrix pairings", function (assert) {
 		var testMatrix = {    // E-values per search sequence per pdb id
-			"1AO6": [0.01, 0.001, 1e-35],
-			"1AO7": [1e-30, 1e-15, 1e-30],
-			"1AO8": [1e-40, 1e-50, 1e-10],
+			//"1AO6": [0.01, 0.001, 1e-35],
+			//"1AO7": [1e-30, 1e-15, 1e-30],
+			//"1AO8": [1e-40, 1e-50, 1e-10],
+            "1AO6": [0.1, 0.1, 8],
+			"1AO7": [0.001, 5, 0.001],
+			"1AO8": [5, 6, 0.1],
 		};
 		var testSeqs = [{data: "ABCD"}, {data: "EFGH"}, {data: "IJKL"}];
 		var expectedValue = [
@@ -561,7 +564,71 @@ function callback (model) {
 
 		var actual = CLMSUI.modelUtils.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
         actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
-        console.log ("results", actual);
+		
+		assert.deepEqual (actual, expected, "Expected "+expected.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
+	});
+    
+    
+    QUnit.test ("Octree test with negative match function 2", function (assert) {
+       var octAccessorObj = {
+            id: function (d) { return d; },
+            x: function (d) { return d.coords[0]; },
+            y: function (d) { return d.coords[1]; },
+            z: function (d) { return d.coords[2]; },
+        };
+		
+        var pointsA = [
+            {atomIndex: 11889,
+            chainIndex: 10,
+            coords: [-145.10899353027344, 78.43499755859375, 10.786999702453613],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 88267,
+            chainIndex: 45,
+            coords: [-54.07099914550781, 253.4219970703125, -149.92100524902344],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 164645,
+            chainIndex: 80,
+            coords: [65.1240005493164, 100.05500030517578, -38.1879997253418],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 241023,
+            chainIndex: 115,
+            coords: [8.039999961853027, 239.88600158691406, 57.78200149536133],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 317401,
+            chainIndex: 150,
+            coords: [157.01600646972656, 229.23500061035156, -101.27899932861328],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 393779,
+            chainIndex: 185,
+            coords: [-1.2970000505447388, 98.26599884033203, 171.0780029296875],
+            modelIndex: 0,
+            seqIndex: 208}
+        ];
+
+        var pointsB = pointsA.slice();
+        
+        var octreeIgnoreFunc = function (point1, point2) {
+            return CLMSUI.NGLUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
+        };
+        
+        var cdist = CLMSUI.utils.toNearest ((0.25 * 0.25) + (0.4 * 0.4) + (0.4 * 0.4), 0.25);
+        var odddist = CLMSUI.utils.toNearest ((2.25 * 2.25) + (0.4 * 0.4) + (1.6 * 1.6), 0.25);
+        var expected = [
+            [pointsB[0], undefined, NaN],
+            [pointsB[1], undefined, NaN],
+            [pointsB[2], pointsA[4], 29112],
+            [pointsB[3], pointsA[2], 32021.5],
+            [pointsB[4], pointsA[2], 29112],
+            [pointsB[5], pointsA[3], 32979.5],
+        ];
+
+		var actual = CLMSUI.modelUtils.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
+        actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
 		
 		assert.deepEqual (actual, expected, "Expected "+expected.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
 	});

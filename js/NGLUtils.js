@@ -149,8 +149,10 @@ CLMSUI.NGLUtils = {
             if (CLMSUI.NGLUtils.isViableChain(c)) { // short chains are ions/water molecules, ignore
                 var resList = [];
                 c.eachResidue(function(r) {
-                    resList.push(CLMSUI.modelUtils.amino3to1Map[r.resname] || "X");
+                    resList.push(r.getResname1() || "X");
                 });
+                //esList = structureComponent.structure.getSequence (new NGL.Selection (c.qualifiedName()));
+                
                 sequences.push ({
                     chainName: c.chainname,
                     chainIndex: c.index,
@@ -161,6 +163,7 @@ CLMSUI.NGLUtils = {
                 //console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName(), resList.join(""));
             }
         });
+        
         CLMSUI.utils.xilog ("seq", sequences);
         return sequences;
     },
@@ -429,6 +432,10 @@ CLMSUI.NGLUtils = {
         };
     
         writer.download (name || structure.name+"-Crosslinked");
+    },
+    
+    exportMMCIF: function (structure, nglModelWrapper, name, remarks) {
+        
     },
     
     not3DHomomultimeric: function(crossLink, chain1ID, chain2ID) {

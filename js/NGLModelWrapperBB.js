@@ -470,8 +470,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     calculateCAtomsAllResidues: function(chainIndices) {
-        var chainProxy = this.get("structureComp").structure.getChainProxy();
-        var atomProxy = this.get("structureComp").structure.getAtomProxy();
+        var structure = this.get("structureComp").structure;
+        var chainProxy = structure.getChainProxy();
+        var atomProxy = structure.getAtomProxy();
         var sele = new NGL.Selection();
         var chainCAtomIndices = {}; // keys on chain index, and within this keys on residue index
 
@@ -483,7 +484,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
                 var sel = CLMSUI.NGLUtils.getRangedCAlphaResidueSelectionForChain(chainProxy);
                 sele.setString(sel, true); // true = doesn't fire unnecessary dispatch events in ngl
-                var ai = this.get("structureComp").structure.getAtomIndices(sele);
+                var ai = structure.getAtomIndices(sele);
 
                 // Building a resmap in one loop and then running through available residues in another loop because some (errored) residues don't have c-alpha atoms
                 // This shouldn't happen, but it does i.e. 5taf, so a 1-to-1 loop between residues and atomIndices wouldn't work in all cases
@@ -686,6 +687,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var pdbConects = [];
         var atomPairs = this.getAtomPairsFromLinks (links);
         var conectFormat = 'CONECT%5d%5d                                                                ';
+        atomPairs.sort (function (a, b) { return a[0] - b[0]; });   // order by ascending first atompair index
         
         atomPairs.forEach (function (atomPair) {   
             pdbConects.push (sprintf (conectFormat, atomPair[0], atomPair[1]));
