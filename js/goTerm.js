@@ -8,22 +8,10 @@ CLMSUI.GoTerm = function() {
 
     this.children = [];
     this.parents = [];
-    this.height = 30;
+    this.height = 25;
     this.width = 50;
     this.expanded = false;
     this.depth = 0;
-
-    // //TODO - this wastes a bit memory coz the property is not on the prototype, fix
-    // Object.defineProperty(this, "width", {
-    //     get: function width() {
-    //         return this.upperGroup.getBBox().width;
-    //     }
-    // });
-    // Object.defineProperty(this, "height", {
-    //     get: function height() {
-    //         return this.upperGroup.getBBox().height;
-    //     }
-    // });
 }
 
 CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
@@ -39,7 +27,29 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
     return interactorSet;
 }
 
-CLMSUI.GoTerm.prototype.getBlobRadius = function() {
-    var br = Math.sqrt(this.getInteractors().size / Math.PI) * 10;// * 0.7;
-    return br;
-};
+CLMSUI.GoTerm.prototype.getClosestVisibleParents = function(visibleParents) {
+    if (!visibleParents) {
+        visibleParents = new Set();
+    }
+    for (var parent of this.parents) {
+        if (parent.isVisible()) {
+            visibleParents.add(parent);
+        } else {
+            parent.getClosestVisibleParents(visibleParents);
+        }
+    }
+    return visibleParents;
+}
+
+CLMSUI.GoTerm.prototype.isVisible = function() {
+    if (this.parents.length == 0) {
+        return true;
+    } else {
+        for (let p of this.parents) {
+            if (p.expanded) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

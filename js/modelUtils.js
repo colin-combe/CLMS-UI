@@ -909,18 +909,6 @@ CLMSUI.modelUtils = {
                     // }
                 }
 
-                function setNodeDepth (node, depth) {
-                    if (depth > node.depth) {
-                        node.depth = depth;
-                    }
-                    for (var c of node.children){
-                        setNodeDepth(c, depth + 1);
-                    }
-                }
-
-                setNodeDepth(goTrees.biological_process, 0);
-                setNodeDepth(goTrees.molecular_function, 0);
-                setNodeDepth(goTrees.cellular_component, 0);
                 CLMSUI.compositeModelInst.set("goTrees", goTrees);
 
                 var proteins = clmsModel.get("participants");
