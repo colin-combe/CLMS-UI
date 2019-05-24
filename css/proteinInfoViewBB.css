@@ -31,7 +31,7 @@
 }
 
 .proteinInfoPanel .hit {
-    color: red;
+    color: #00c;
     /*background: white;*/
     cursor: pointer;
     font-weight: bold;
@@ -44,9 +44,9 @@
 
 .proteinInfoPanel .hit.filteredOutResidue {
     background: none;
-    color: #f88;
+    color: #66c;
     pointer-events: none;
-    font-weight: bold;
+    font-weight: normal;
     cursor: text;
     text-decoration: none;
 }

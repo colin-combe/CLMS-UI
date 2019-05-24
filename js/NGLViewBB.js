@@ -267,7 +267,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 }
                 this.lastResidueIndex = arindex;
                 
-                var residue = self.model.get("stageModel").getResidueByGlobalIndex (arindex);
+                var residue = self.model.get("stageModel").getResidueByNGLGlobalIndex (arindex);
                 
                 if (residue !== undefined) {
                     var linkCount = self.xlRepr.crosslinkData.getFullLinkCountByResidue (residue);
@@ -985,7 +985,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var colCache = {};
             //var first = true;
             this.bondColor = function(b) {
-                var linkObj = self.crosslinkData.getFullLinkByGlobalIndex (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getFullLinkByGlobalIndex (b.atom2.residueIndex, b.atom1.residueIndex);
+                var linkObj = self.crosslinkData.getFullLinkByNGLResIndices (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getFullLinkByNGLResIndices (b.atom2.residueIndex, b.atom1.residueIndex);
                 var origLinkID = linkObj.origId;
                 var model = self.crosslinkData.getModel();
                 var link = model.get("clmsModel").get("crossLinks").get(origLinkID);
@@ -1080,15 +1080,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (atom !== undefined && link3d === undefined) {
                 //console.log (atom.atomname);
                 CLMSUI.utils.xilog("picked atom", atom, atom.residueIndex, atom.resno, atom.chainIndex);
-                var residue = crosslinkData.getResidueByGlobalIndex (atom.residueIndex);
+                var residue = crosslinkData.getResidueByNGLGlobalIndex (atom.residueIndex);
                 if (residue) {
                     // this is to find the index of the residue in searchindex (crosslink) terms
-                    // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
+                    // thought I could rely on residue.seqIndex + chain.residueOffset but nooooo.....
                     var proteinId = CLMSUI.NGLUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
                     var alignId = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
-                    // align from 3d to search index. resindex is 0-indexed so +1 before querying
+                    // align from 3d to search index. seqIndex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
-                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.resindex + 1, proteinId, true, alignId);
+                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.seqIndex + 1, proteinId, true, alignId);
 
                     pdtrans.links = crosslinkData.getFullLinksByResidueID (residue.residueId);
                     var origFullLinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
@@ -1118,8 +1118,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
                 CLMSUI.utils.xilog("picked bond", link3d, link3d.index, link3d.atom1.resno, link3d.atom2.resno, link3d.atomIndex1, link3d.atomIndex2);
 
-                var residueA = crosslinkData.getResidueByGlobalIndex (link3d.atom1.residueIndex);
-                var residueB = crosslinkData.getResidueByGlobalIndex (link3d.atom2.residueIndex);
+                var residueA = crosslinkData.getResidueByNGLGlobalIndex (link3d.atom1.residueIndex);
+                var residueB = crosslinkData.getResidueByNGLGlobalIndex (link3d.atom2.residueIndex);
                 CLMSUI.utils.xilog("res", link3d.atom1.residueIndex, link3d.atom2.residueIndex);
                 if (pickType === "selection") {
                     var selectionSelection = this.crosslinkData.getSelectionFromResidueList([residueA, residueB]);
