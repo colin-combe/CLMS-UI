@@ -1378,15 +1378,16 @@ CLMSUI.modelUtils = {
             .x(accessorObj.x || octree.x())
             .y(accessorObj.y || octree.y())
             .z(accessorObj.z || octree.z())
-            .addAll(bigPointArr);
+            .addAll(bigPointArr)
+        ;
 
         maxDistance = maxDistance || 200;
 
         var nearest = smallPointArr.map(function(point) {
             return octree.find(octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
-        var dist = smallPointArr.map(function(point, i) {
-            return CLMSUI.modelUtils.getDistanceSquared(point.coords, nearest[i].coords);
+        var dist = smallPointArr.map (function (point, i) {
+            return nearest[i] ? CLMSUI.modelUtils.getDistanceSquared(point.coords, nearest[i].coords) : undefined;
         });
 
         return d3.zip(points1Bigger ? nearest : smallPointArr, points1Bigger ? smallPointArr : nearest, dist);

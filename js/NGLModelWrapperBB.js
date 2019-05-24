@@ -205,34 +205,43 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         
                         var fromPDBResidues = makePDBIndexedResidues (fromPerModelChainEntry, xlink.fromResidue, fromProtID);
                         var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
-                        //console.log (fromPDBResidues, toPDBResidues);
-                        
                         var alternativeCount = fromPDBResidues.length * toPDBResidues.length;
-                        if (alternativeCount > 4) {
+                        //console.log ("FTpdbr", fromPDBResidues, toPDBResidues, alternativeCount);
+                        
+                        if (alternativeCount > 4) { // if more than a certain number of possible pairings whittle it down to the closest one
                             addAtomPoints.call (this, fromPDBResidues);
                             addAtomPoints.call (this, toPDBResidues);
                             var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
-                            results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
-                            var prime = results[0];
-                            results.forEach (function (res) {
-                                var d = prime[2] - res[2];
-                                if (d === 0) {
-                                    d = (prime[0].modelIndex + prime[1].modelIndex) - (res[0].modelIndex + res[1].modelIndex);
-                                    if (d === 0) {
-                                        d = (prime[0].chainIndex + prime[1].chainIndex) - (res[0].chainIndex + res[1].chainIndex);
+                            results = results.filter (function (res) { return res[2] !== undefined; });
+                            if (results.length) {
+                                results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
+                                console.log ("res", results);
+
+                                var prime = results[0];
+                                results.forEach (function (res, i) {
+                                    if (i > 0) {
+                                        var d = prime[2] - res[2];
                                         if (d === 0) {
-                                            d = Math.min(prime[0].chainIndex, prime[1].chainIndex) - Math.min(res[0].chainIndex, res[1].chainIndex);
+                                            d = (prime[0].modelIndex + prime[1].modelIndex) - (res[0].modelIndex + res[1].modelIndex);
+                                            if (d === 0) {
+                                                d = (prime[0].chainIndex + prime[1].chainIndex) - (res[0].chainIndex + res[1].chainIndex);
+                                                if (d === 0) {
+                                                    d = Math.min(prime[0].chainIndex, prime[1].chainIndex) - Math.min(res[0].chainIndex, res[1].chainIndex);
+                                                }
+                                            }
+                                        }
+                                        if (d > 0) {
+                                            prime = res;
                                         }
                                     }
-                                }
-                                if (d > 0) {
-                                    prime = res;
-                                }
-                            });
+                                });
 
-                            //console.log ("aa", alternativeCount, results);
-                            fromPDBResidues = [prime[0]];  // take top result for new fromPDBResidues array
-                            toPDBResidues = [prime[1]];    // take top result for new toPDBResidues array
+                                //console.log ("aa", alternativeCount, results, prime);
+                                fromPDBResidues = [prime[0]];  // take top result for new fromPDBResidues array
+                                toPDBResidues = [prime[1]];    // take top result for new toPDBResidues array
+                            } else {
+                                alternativeCount = 0;   // no valid distances found
+                            }
                         }
                         
                         addResidueListsExtraInfo ([fromPDBResidues, toPDBResidues]);
@@ -470,8 +479,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     calculateCAtomsAllResidues: function(chainIndices) {
-        var chainProxy = this.get("structureComp").structure.getChainProxy();
-        var atomProxy = this.get("structureComp").structure.getAtomProxy();
+        var structure = this.get("structureComp").structure;
+        var chainProxy = structure.getChainProxy();
+        var atomProxy = structure.getAtomProxy();
         var sele = new NGL.Selection();
         var chainCAtomIndices = {}; // keys on chain index, and within this keys on residue index
 
@@ -483,7 +493,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
                 var sel = CLMSUI.NGLUtils.getRangedCAlphaResidueSelectionForChain(chainProxy);
                 sele.setString(sel, true); // true = doesn't fire unnecessary dispatch events in ngl
-                var ai = this.get("structureComp").structure.getAtomIndices(sele);
+                var ai = structure.getAtomIndices(sele);
 
                 // Building a resmap in one loop and then running through available residues in another loop because some (errored) residues don't have c-alpha atoms
                 // This shouldn't happen, but it does i.e. 5taf, so a 1-to-1 loop between residues and atomIndices wouldn't work in all cases
@@ -686,6 +696,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var pdbConects = [];
         var atomPairs = this.getAtomPairsFromLinks (links);
         var conectFormat = 'CONECT%5d%5d                                                                ';
+        atomPairs.sort (function (a, b) { return a[0] - b[0]; });   // order by ascending first atompair index
         
         atomPairs.forEach (function (atomPair) {   
             pdbConects.push (sprintf (conectFormat, atomPair[0], atomPair[1]));
