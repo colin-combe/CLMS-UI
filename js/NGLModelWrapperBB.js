@@ -6,7 +6,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         masterModel: null,
         structureComp: null,
         chainMap: null,
-        pdbBaseSeqID: null,
         linkList: null,
         fullDistanceCalcCutoff: 1200,
         allowInterModelDistances: false,
@@ -32,6 +31,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     getModel: function() {
         return this.get("masterModel");
     },
+    
+    getStructureName: function () {
+        return this.get("structureComp").structure.name;    
+    },
 
     setupLinks: function() {
         var chainInfo = this.getChainInfo();
@@ -42,7 +45,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
         // generally at CLMSUI.modelUtils.get3DDistance
         var distances = this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
-        var distancesObj = new CLMSUI.DistancesObj (distances, this.get("chainMap"), this.get("pdbBaseSeqID"));
+        var distancesObj = new CLMSUI.DistancesObj (distances, this.get("chainMap"), this.getStructureName());
 
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
@@ -70,9 +73,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
    
     makeLinkList: function(linkModel) {
         var structure = this.get("structureComp").structure;
-        var pdbBaseSeqID = this.get("pdbBaseSeqID");
         var nextResidueId = 0;
         var structureId = null;
+        var structureName = this.getStructureName();
         var residueDict = {};
         var fullLinkList = [];  // links where both ends are in pdb
         var halfLinkList = [];  // links where one end is in the pdb
@@ -105,13 +108,13 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             if (perModelChainEntry) {
                 return perModelChainEntry.values.map (function (chainValue) {
                     var chainIndex = chainValue.index;  // global NGL chain index
-                    var alignID = CLMSUI.NGLUtils.make3DAlignID (pdbBaseSeqID, chainValue.name, chainIndex);
+                    var alignID = CLMSUI.NGLUtils.make3DAlignID (structureName, chainValue.name, chainIndex);
                     return {
                         chainIndex: chainIndex, 
                         modelIndex: chainValue.modelIndex, 
                         seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, alignID, true) - 1,  // residues are 0-indexed in NGL so -1
                     };
-                }).filter (function (datum) {
+                }).filter (function (datum) {   // remove residues with no aligned residue in ngl sequence
                    return datum.seqIndex >= 0;
                 });
             }

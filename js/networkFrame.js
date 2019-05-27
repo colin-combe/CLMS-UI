@@ -141,11 +141,18 @@ CLMSUI.init.models = function(options) {
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences) {
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
         if (!_.isEmpty(sequences)) { // if sequences passed and it has a non-zero length...
             sequences.forEach(function(entry) {
                 this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
             }, this);
+            console.log ("3dsync", arguments);
+            if (removeThese && removeThese.length) {
+                removeThese.forEach (function (structureName) {
+                    var seqModels = this.getSeqsByPredicate (function (seq) { return structureName+":" === seq.get("id").substring(0, structureName.length + 1); });
+                    this.removeSeqs (seqModels);
+                }, this);
+            }
             // this triggers an event to say loads has changed in the alignment collection
             // more efficient to listen to that then redraw/recalc for every seq addition
             this.bulkAlignChangeFinished();

@@ -459,9 +459,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     repopulate: function() {
         var stageModel = this.model.get("stageModel");
         CLMSUI.utils.xilog("REPOPULATE", this.model, stageModel);
-        var pdbID = stageModel.get("pdbBaseSeqID");
-        var overText = "PDB File: " + (pdbID.length === 4 ?
-                "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId=" + pdbID + "'>" + pdbID + "</A>" : pdbID) +
+        var sname = stageModel.getStructureName();
+        var overText = "PDB File: " + (sname.length === 4 ?
+                "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId=" + sname + "'>" + sname + "</A>" : sname) +
             " - " + stageModel.get("structureComp").structure.title;
 
         var interactors = CLMSUI.modelUtils.filterOutDecoyInteractors (Array.from(this.model.get("clmsModel").get("participants").values()));
@@ -598,7 +598,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var stageModel = this.model.get("stageModel");
         CLMSUI.NGLUtils.exportPDB (
             stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
-                ["PDB ID: "+this.xlRepr.pdbBaseSeqID, 
+                ["PDB ID: "+stageModel.getStructureName(), 
                 "Exported by "+this.identifier+" and XiView", 
                  "Xi Crosslinks in CONECT and LINK records", 
                  "Search ID: "+CLMSUI.utils.searchesToString(), 
@@ -739,12 +739,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
     
     pdbFilenameStateString: function () {
-        return CLMSUI.utils.makeLegalFileName (this.xlRepr.pdbBaseSeqID + "-CrossLinks-"+CLMSUI.utils.searchesToString() + "-" + CLMSUI.utils.filterStateToString());
+        var stageModel = this.model.get("stageModel");
+        return CLMSUI.utils.makeLegalFileName (stageModel.getStructureName() + "-CrossLinks-"+CLMSUI.utils.searchesToString() + "-" + CLMSUI.utils.filterStateToString());
     },
     
     // Returns a useful filename given the view and filters current states
     filenameStateString: function() {
-        return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "-PDB=" + this.xlRepr.pdbBaseSeqID + "--" + CLMSUI.utils.filterStateToString());
+        var stageModel = this.model.get("stageModel");
+        return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "-PDB=" + stageModel.getStructureName() + "--" + CLMSUI.utils.filterStateToString());
     },
 });
 
@@ -795,7 +797,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.chainMap = nglModelWrapper.get("chainMap");
         this.structureComp = nglModelWrapper.get("structureComp");
         this.crosslinkData = nglModelWrapper;
-        this.pdbBaseSeqID = nglModelWrapper.get("pdbBaseSeqID");
 
         this.colorOptions = {};
         this
@@ -1085,7 +1086,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     // this is to find the index of the residue in searchindex (crosslink) terms
                     // thought I could rely on residue.seqIndex + chain.residueOffset but nooooo.....
                     var proteinId = CLMSUI.NGLUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
-                    var alignId = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
+                    var alignId = CLMSUI.NGLUtils.make3DAlignID (crosslinkData.getStructureName(), atom.chainname, atom.chainIndex);
                     // align from 3d to search index. seqIndex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
                     var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.seqIndex + 1, proteinId, true, alignId);

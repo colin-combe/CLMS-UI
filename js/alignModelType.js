@@ -286,6 +286,10 @@
         getSequenceModel: function (seqName) {
             return this.get("seqCollection").get(seqName);
         },
+        
+        getSequenceModelsByPred: function (predicateFunc) {
+            return this.get("seqCollection").filter (function (m) { return predicateFunc (m); });
+        },
 
         // These following routines assume that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
         // if no compSeq will return undefined
@@ -340,10 +344,6 @@
             this.get("seqCollection").add (
                 [{id: seqID, compID: seqID, compSeq: seq, semiLocal: !!otherSettingsObj.semiLocal, local: !!otherSettingsObj.lLocal}]
             );
-        },
-        
-        removeSequence: function (seqID) {
-            this.get("seqCollection").remove (seqID); 
         },
         
         PDBAlignmentsAsFeatures: function (includeCanonical) {
@@ -402,14 +402,6 @@
             return this;
         },
         
-        removeSeq: function (proteinID, seqID) {
-            var model = this.get (proteinID);
-            if (model) {
-                model.removeSequence (seqID);
-            }
-            return this;
-        },
-        
         addNewProteins : function (proteinArray) {
             CLMSUI.modelUtils.filterOutDecoyInteractors (proteinArray)
                 .forEach (function (prot) {
@@ -426,6 +418,27 @@
             }, this);
             
             this.totalRefSeqLength = d3.sum (this.pluck("refSeq").map(function (refSeq) { return refSeq.length; }));                          
+        },
+                
+        // Remove passed in sequenceModels from their parent collections (use in tandem with next function)
+        // Easier than going down the protAlignCollection -> protModel -> seqCollection -> seqModel route
+        removeSeqs: function (sequenceModels) {
+            sequenceModels.forEach (function (seqMod) {
+                if (seqMod.collection) {
+                    seqMod.collection.remove (seqMod);
+                }
+            });
+            return this;
+        },
+        
+        // get sequenceModels by predicate function
+        getSeqsByPredicate: function (predicateFunc) {
+            var seqModels = [];
+            this.each (function (protAlignModel) {
+                seqModels.push.apply (seqModels, protAlignModel.getSequenceModelsByPred (predicateFunc));
+            });
+            console.log ("SSSS", seqModels);
+            return seqModels;
         },
         
         bulkAlignChangeFinished: function () {

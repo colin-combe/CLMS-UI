@@ -1,9 +1,9 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID, residueCoords) {
+CLMSUI.DistancesObj = function (matrices, chainMap, structureName, residueCoords) {
     this.matrices = matrices;
     this.chainMap = chainMap;
-    this.pdbBaseSeqID = pdbBaseSeqID;
+    this.structureName = structureName;
     this.residueCoords = residueCoords;
     this.setAllowedChainNameSet (undefined, true);
 };
@@ -96,7 +96,7 @@ CLMSUI.DistancesObj.prototype = {
             for (var n = 0; n < chains1.length; n++) {
                 var chainIndex1 = chains1[n].index;
                 var chainName1 = chains1[n].name;
-                var alignId1 = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, chainName1, chainIndex1);
+                var alignId1 = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chainName1, chainIndex1);
                 var seqIndex1 = alignCollBB.getAlignedIndex(xlink.fromResidue, pid1, false, alignId1, true) - 1; // -1 for ZERO-INDEXED
                 var modelIndex1 = chains1[n].modelIndex;
 
@@ -106,7 +106,7 @@ CLMSUI.DistancesObj.prototype = {
                         if (modelIndex1 === modelIndex2 || options.allowInterModelDistances) {  // bar distances between models
                             var chainIndex2 = chains2[m].index;
                             var chainName2 = chains2[m].name;
-                            var alignId2 = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, chainName2, chainIndex2);
+                            var alignId2 = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chainName2, chainIndex2);
                             var seqIndex2 = alignCollBB.getAlignedIndex(xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
                             // align from 3d to search index. seqindex is 0-indexed so -1 before querying
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
@@ -254,7 +254,7 @@ CLMSUI.DistancesObj.prototype = {
                     return this.permittedChainIndicesSet.has(chain.index);
                 }, this) // remove chains that are currently distance barred
                 .map(function(chain) {
-                    var alignID = CLMSUI.NGLUtils.make3DAlignID(this.pdbBaseSeqID, chain.name, chain.index);
+                    var alignID = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chain.name, chain.index);
                     var range = alignCollBB.getSearchRangeIndexOfMatches(protID, alignID);
                     $.extend(range, {
                         chainIndex: chain.index,

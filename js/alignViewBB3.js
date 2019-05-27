@@ -137,7 +137,8 @@
                 })
                 .property("checked", function(d, i) {
                     return i === 0;
-                });
+                })
+            ;
 
             pspans.append("label")
                 .attr("for", function(d, i) {
@@ -270,10 +271,11 @@
                 });
 
             d3.select(this.el).select(".alignChoiceGroup input[type=radio][value='" + this.defaults.defaultSeqShowSetting + "']").property("checked", true);
-            this.listenTo(this.model.get("seqCollection"), "change:compAlignment", function(affectedModel) {
-                this.render({
-                    affectedModel: affectedModel
-                });
+            this.listenTo(this.model.get("seqCollection"), "change:compAlignment", function(affectedSeqModel) {
+                this.render({affectedSeqModel: affectedSeqModel});
+            });
+            this.listenTo(this.model.get("seqCollection"), "remove", function(affectedSeqModel) {
+                this.render();
             });
 
             // Listen for change in blosum selection and pass it to model
@@ -311,8 +313,7 @@
         },
 
         render: function(obj) {
-            var affectedModel = obj ? obj.affectedModel : undefined;
-            console.log("rerendering alignment for", affectedModel);
+            var affectedSeqModel = obj ? obj.affectedSeqModel : undefined;
             var place = d3.select(this.el).select("table.seqTable"); //.select("tbody");
             var self = this;
 
@@ -325,7 +326,7 @@
 
             // I suppose I could do a view per model rather than this, but it fits the d3 way of doing things
             var seqModels = this.model.get("seqCollection").models.filter(function(m) {
-                return !affectedModel || (affectedModel.id === m.id);
+                return !affectedSeqModel || (affectedSeqModel.id === m.id);
             });
             var refs = seqModels.map(function(seqModel) {
                 return seqModel.get("refAlignment");
@@ -440,8 +441,8 @@
             // add one tbody per alignment
             var tbodybind = place.selectAll("tbody").data(comps, function(d) {
                 return d.label;
-            })
-            //tbodybind.exit().remove();	  // removes other tbodies if only 1 affectedmodel passed in. Don't want that.
+            });
+            if (!affectedSeqModel) { tbodybind.exit().remove(); }   // removes other tbodies if only 1 affectedSeqModel passed in. Don't want that.
             tbodybind.enter().append("tbody");
 
             // add 2 rows to each tbody

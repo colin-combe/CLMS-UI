@@ -2,7 +2,6 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.NGLUtils = {
     repopulateNGL: function (pdbInfo) {
-        pdbInfo.baseSeqId = (pdbInfo.pdbCode || pdbInfo.name);
         var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
         var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
         
@@ -21,9 +20,9 @@ CLMSUI.NGLUtils = {
         stage.removeAllComponents(); // necessary to remove old stuff so old sequences don't pop up in sequence finding
 
         function returnFailure(reason) {
+            var id = _.pluck(multiplePDBURI, "id").join(", ");
             var emptySequenceMap = [];
-            emptySequenceMap.failureReason = "Error for " + pdbInfo.baseSeqId + ", " + reason;
-            emptySequenceMap.pdbid = pdbInfo.baseSeqId;
+            emptySequenceMap.failureReason = "Error for " + id + ", " + reason;
             bbmodel.trigger("3dsync", emptySequenceMap);
         }
 
@@ -41,7 +40,11 @@ CLMSUI.NGLUtils = {
             })
             .then (function (structureCompArray) {
 
+                structureCompArray = structureCompArray || [];  // set to empty array if undefined to avoid error in next bit
                 CLMSUI.utils.xilog ("structureComp", structureCompArray);
+                structureCompArray.forEach (function (scomp, i) {   // give structure a name if none present (usually because loaded as local file)
+                    scomp.structure.name = scomp.structure.name || multiplePDBURI[i].id;
+                });
             
                 var structureComp;
                 if (structureCompArray.length > 1) {
@@ -50,6 +53,7 @@ CLMSUI.NGLUtils = {
                     //var cs = NGL.concatStructures ("concat", structureCompArray.map (function (sc) { return sc.structure; }));
                     var comp = stage.addComponentFromObject(cs);
                     comp.structure.title = structureCompArray.map (function (scomp) { return scomp.structure.title; }).join(", ");
+                    comp.structure.name = structureCompArray.map (function (scomp) { return scomp.structure.name; }).join(", ");
                     structureComp = comp;
                 } else {
                     structureComp = structureCompArray[0];
@@ -99,11 +103,10 @@ CLMSUI.NGLUtils = {
 
                         CLMSUI.utils.xilog ("seqmap", sequenceMap);
                         //if (!_.isEmpty(sequenceMap)) {
-                        //sequenceMap.pdbid = pdbInfo.baseSeqId;
                         var chainMap = {};
                         sequenceMap.forEach (function (pMatch) {
                             pMatch.data = pMatch.seqObj.data;
-                            pMatch.name = CLMSUI.NGLUtils.make3DAlignID(pdbInfo.baseSeqId, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
+                            pMatch.name = CLMSUI.NGLUtils.make3DAlignID (structureComp.structure.name, pMatch.seqObj.chainName, pMatch.seqObj.chainIndex);
                             chainMap[pMatch.id] = chainMap[pMatch.id] || [];
                             chainMap[pMatch.id].push({
                                 index: pMatch.seqObj.chainIndex,
@@ -119,7 +122,8 @@ CLMSUI.NGLUtils = {
                         if (bbmodel.get("stageModel")) {
                             bbmodel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
                         }
-                        bbmodel.trigger("3dsync", sequenceMap);
+                        var removeThese = bbmodel.get("stageModel") ? [bbmodel.get("stageModel").getStructureName()] : [];    // old alignments to remove
+                        bbmodel.trigger("3dsync", sequenceMap, removeThese);
                         // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
 
                         // Make a new model and set of data ready for the ngl viewer
@@ -127,7 +131,6 @@ CLMSUI.NGLUtils = {
                         crosslinkData.set({
                             structureComp: structureComp,
                             chainMap: chainMap,
-                            pdbBaseSeqID: pdbInfo.baseSeqId,
                             masterModel: bbmodel,
                         });
                         bbmodel.set("stageModel", crosslinkData);
