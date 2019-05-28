@@ -542,21 +542,19 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
     },
 
-    // includeUndefineds to true to preserve indexing of returned distances to input crosslinks
+    // set includeUndefineds to true to preserve indexing of returned distances to input crosslinks
     getCrossLinkDistances: function(crossLinks, options) {
         options = options || {};
         var includeUndefineds = options.includeUndefineds || false;
 
-        var distArr = [];
         var distModel = this.get("clmsModel").get("distancesObj");
         var protAlignCollection = this.get("alignColl");
-        for (var cl = 0; cl < crossLinks.length; cl++) {
-            var dist = this.getSingleCrosslinkDistance(crossLinks[cl], distModel, protAlignCollection, options);
-            if (dist != null) {
-                distArr.push(options.returnChainInfo ? dist : +dist); // + is to stop it being a string
-            } else if (includeUndefineds) {
-                distArr.push(undefined);
-            }
+        var distArr = crossLinks.map (function (cl) {
+            var dist = this.getSingleCrosslinkDistance (cl, distModel, protAlignCollection, options);
+            return options.returnChainInfo || dist == undefined ? dist : +dist; // + is to stop it being a string
+        }, this);
+        if (!includeUndefineds) {
+            distArr = distArr.filter (function (d) { return d != undefined; });
         }
         //console.log ("distArr", distArr);
 

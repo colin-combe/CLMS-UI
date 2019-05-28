@@ -410,7 +410,7 @@
         },
 
         render: function(obj) {
-            console.log ("ALIGNVIEWMODEL RENDER", obj);
+            //console.log ("ALIGNVIEWMODEL RENDER", obj);
             var affectedSeqModel = obj ? obj.affectedSeqModel : undefined;
             var affectedAction = obj ? obj.affectedAction : undefined;  // set to 'remove' if you want to remove this particular sequence from the view
             
