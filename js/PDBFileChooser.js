@@ -279,7 +279,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         this.setWaitingEffect();
         var self = this;
         var fileObj = evt.target.files[0];
-
+        evt.target.value = null;    // reset value so same file can be chosen twice in succession
+        
         CLMSUI.modelUtils.loadUserFile(fileObj, function(pdbFileContents) {
             var blob = new Blob([pdbFileContents], {
                 type: 'application/text'
