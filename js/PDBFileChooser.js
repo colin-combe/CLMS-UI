@@ -160,7 +160,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setCompletedEffect();
             var nameArr = _.pluck(newSequences, "name");
             // list pdb's these sequences derive from
-            console.log ("seq", newSequences);
+            //console.log ("seq", newSequences);
             var pdbString = nameArr ? 
                 d3.set (nameArr.map(function(name) { return name.substr(0, _./*last*/indexOf (name, ":")); })).values().join(", ") : "?"
             ;

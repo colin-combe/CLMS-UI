@@ -275,7 +275,7 @@
                 this.render({affectedSeqModel: affectedSeqModel});
             });
             this.listenTo(this.model.get("seqCollection"), "remove", function(affectedSeqModel) {
-                this.render();
+                this.render({affectedSeqModel: affectedSeqModel, affectedAction: "remove"});
             });
 
             // Listen for change in blosum selection and pass it to model
@@ -311,9 +311,109 @@
             }
             return segs.join("");
         },
+        
+        // generate other sequence strings from comp object
+        stringGeneration: function (seq, showSimilar, showDiff) {
+            
+            var ellipsisInsert = this.ellipFill.bind(this);
+
+            var MATCH = 0,
+                DELETE = 1,
+                INSERT = 2,
+                VARIATION = 3;
+            var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];
+            
+            var rstr = seq.refStr;
+            var str = seq.str;
+            //var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
+            //var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
+            var segments = [];
+            var rf = [];
+            var streak = MATCH;
+            var i = 0,
+                ri = 0,
+                ci = 0;
+
+            function addSequenceSegment(streakType) {
+                if (n) { // don't add zero-length match at start of sequence
+                    var oldri = ri;
+                    var insert = streakType === INSERT;
+                    ri += (insert ? 0 : n - i);
+
+                    var oldci = ci;
+                    var deleted = streakType === DELETE;
+                    ci += (deleted ? 0 : n - i);
+
+                    var newSegment = {
+                        klass: classes[streakType],
+                        rstart: oldri,
+                        rend: ri + (insert ? 1 : 0),
+                        cstart: oldci,
+                        cend: ci + (deleted ? 1 : 0),
+                        segment: str.substring(i, n)
+                    };
+
+                    if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) { // add sequence part
+                        rf.push(rstr.substring(i, n));
+                        newSegment.segment = str.substring(i, n);
+                    } else if (n > i) { // or add ellipses as showDiff / showSimilar flags dictate
+                        var ellip = ellipsisInsert(n - i);
+                        rf.push(ellip);
+                        newSegment.segment = ellip;
+                    }
+
+                    segments.push(newSegment);
+                    i = n;
+                }
+            };
+
+            for (var n = 0; n < str.length; n++) {
+                var c = str[n];
+                var r = rstr[n];
+                var rhyphen = (r === "-");
+                var chyphen = (c === "-");
+
+                // if AA's are the same, but not currently on a match streak
+                if (c === r && streak !== MATCH) {
+                    // add previous characters as current streak type
+                    addSequenceSegment(streak);
+                    streak = MATCH; // set new streak type
+                }
+                // if AA missing in c, but not currently on a delete streak
+                else if (chyphen && streak !== DELETE) {
+                    // add previous characters as current streak type
+                    addSequenceSegment(streak);
+                    streak = DELETE; // set new streak type
+                }
+                // else if AA missing in ref, but not currently on an insert streak
+                else if (rhyphen && streak !== INSERT) {
+                    // add previous characters as current streak type
+                    addSequenceSegment(streak);
+                    streak = INSERT; // set new streak type
+                }
+                // else if AAs in c and ref different, but not currently on a variation streak
+                else if (!chyphen && !rhyphen && c !== r && streak !== VARIATION) {
+                    // add previous characters as current streak type
+                    addSequenceSegment(streak);
+                    streak = VARIATION; // set new streak type
+                }
+            }
+
+            // deal with remaining sequence when end reached
+            addSequenceSegment(streak);
+            streak = MATCH;
+
+            seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
+            seq.segments = segments;
+            var max = Math.max(seq.str.length, seq.refStr.length);
+            seq.indexStr = this.makeIndexString(max, 20).substring(0, max);
+        },
 
         render: function(obj) {
+            console.log ("ALIGNVIEWMODEL RENDER", obj);
             var affectedSeqModel = obj ? obj.affectedSeqModel : undefined;
+            var affectedAction = obj ? obj.affectedAction : undefined;  // set to 'remove' if you want to remove this particular sequence from the view
+            
             var place = d3.select(this.el).select("table.seqTable"); //.select("tbody");
             var self = this;
 
@@ -325,112 +425,12 @@
             var showDiff = (selectedRadioValue & 1) > 0;
 
             // I suppose I could do a view per model rather than this, but it fits the d3 way of doing things
-            var seqModels = this.model.get("seqCollection").models.filter(function(m) {
+            // remove treated special, because it will be missing from the collection by this point
+            var seqModels = (affectedAction === "remove") ? [affectedSeqModel] : this.model.get("seqCollection").filter(function(m) {
                 return !affectedSeqModel || (affectedSeqModel.id === m.id);
             });
-            var refs = seqModels.map(function(seqModel) {
-                return seqModel.get("refAlignment");
-            });
-            var comps = seqModels.map(function(seqModel) {
-                return seqModel.get("compAlignment");
-            });
-            //console.log ("refs, comps", refs, comps);
-
-            var ellipsisInsert = this.ellipFill.bind(this);
-
-            var MATCH = 0,
-                DELETE = 1,
-                INSERT = 2,
-                VARIATION = 3;
-            var classes = ["seqMatch", "seqDelete", "seqInsert", "seqVar"];
-
-            comps.forEach(function(seq) {
-                var rstr = seq.refStr;
-                var str = seq.str;
-                //var rstr = "ABC----HIJKLMNOPQR-TUVWXYZABC";
-                //var str =  "ABCDEFGHIAKLM-OPQRS-UV----ABC";
-                var segments = [];
-                var rf = [];
-                var streak = MATCH;
-                var i = 0,
-                    ri = 0,
-                    ci = 0;
-
-                function addSequenceSegment(streakType) {
-                    if (n) { // don't add zero-length match at start of sequence
-                        var oldri = ri;
-                        var insert = streakType === INSERT;
-                        ri += (insert ? 0 : n - i);
-
-                        var oldci = ci;
-                        var deleted = streakType === DELETE;
-                        ci += (deleted ? 0 : n - i);
-
-                        var newSegment = {
-                            klass: classes[streakType],
-                            rstart: oldri,
-                            rend: ri + (insert ? 1 : 0),
-                            cstart: oldci,
-                            cend: ci + (deleted ? 1 : 0),
-                            segment: str.substring(i, n)
-                        };
-
-                        if ((showDiff && streakType !== MATCH) || (showSimilar && streakType == MATCH)) { // add sequence part
-                            rf.push(rstr.substring(i, n));
-                            newSegment.segment = str.substring(i, n);
-                        } else if (n > i) { // or add ellipses as showDiff / showSimilar flags dictate
-                            var ellip = ellipsisInsert(n - i);
-                            rf.push(ellip);
-                            newSegment.segment = ellip;
-                        }
-
-                        segments.push(newSegment);
-                        i = n;
-                    }
-                };
-
-                for (var n = 0; n < str.length; n++) {
-                    var c = str[n];
-                    var r = rstr[n];
-                    var rhyphen = (r === "-");
-                    var chyphen = (c === "-");
-
-                    // if AA's are the same, but not currently on a match streak
-                    if (c === r && streak !== MATCH) {
-                        // add previous characters as current streak type
-                        addSequenceSegment(streak);
-                        streak = MATCH; // set new streak type
-                    }
-                    // if AA missing in c, but not currently on a delete streak
-                    else if (chyphen && streak !== DELETE) {
-                        // add previous characters as current streak type
-                        addSequenceSegment(streak);
-                        streak = DELETE; // set new streak type
-                    }
-                    // else if AA missing in ref, but not currently on an insert streak
-                    else if (rhyphen && streak !== INSERT) {
-                        // add previous characters as current streak type
-                        addSequenceSegment(streak);
-                        streak = INSERT; // set new streak type
-                    }
-                    // else if AAs in c and ref different, but not currently on a variation streak
-                    else if (!chyphen && !rhyphen && c !== r && streak !== VARIATION) {
-                        // add previous characters as current streak type
-                        addSequenceSegment(streak);
-                        streak = VARIATION; // set new streak type
-                    }
-                }
-
-                // deal with remaining sequence when end reached
-                addSequenceSegment(streak);
-                streak = MATCH;
-
-                seq.decoratedRStr = showSimilar && showDiff ? rstr : rf.join('');
-                seq.segments = segments;
-                var max = Math.max(seq.str.length, seq.refStr.length);
-                seq.indexStr = this.makeIndexString(max, 20).substring(0, max);
-            }, this);
-
+            //var seqModels = affectedSeqModel ? [affectedSeqModel] : this.model.get("seqCollection").models;
+            var comps = seqModels.map (function(seqModel) { return seqModel.get("compAlignment"); });
 
             var nformat = d3.format(",d");
             var rformat = d3.format(",.2f");
@@ -442,8 +442,13 @@
             var tbodybind = place.selectAll("tbody").data(comps, function(d) {
                 return d.label;
             });
-            if (!affectedSeqModel) { tbodybind.exit().remove(); }   // removes other tbodies if only 1 affectedSeqModel passed in. Don't want that.
+            if (!affectedSeqModel) { tbodybind.exit().remove(); }   // don't remove other tbodies if only 1 affectedSeqModel passed in.
+            else if (affectedAction === "remove") { tbodybind.remove(); return this; }   // but do remove matched tbodies if action is to remove 
+            
             tbodybind.enter().append("tbody");
+            tbodybind.each (function (d) { 
+                self.stringGeneration (d, showSimilar, showDiff);   // calculate sequence strings per comparator sequence model
+            });
 
             // add 2 rows to each tbody
             var rowBind = tbodybind.selectAll("tr")
@@ -518,7 +523,6 @@
             segmentSpans.enter()
                 .append("span")
                 .on("mouseenter", function(d) {
-                    //console.log ("hi", this);
                     if (self.tooltipModel && d.klass) {
                         var parent = d3.select(this.parentNode);
                         var parentDatum = parent.datum();

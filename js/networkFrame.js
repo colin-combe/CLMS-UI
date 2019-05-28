@@ -149,12 +149,13 @@ CLMSUI.init.models = function(options) {
             console.log ("3dsync", arguments);
             if (removeThese && removeThese.length) {
                 removeThese.forEach (function (structureName) {
-                    var seqModels = this.getSeqsByPredicate (function (seq) { return structureName+":" === seq.get("id").substring(0, structureName.length + 1); });
-                    this.removeSeqs (seqModels);
+                    var seqModels = this.getSequencesByPredicate (function (seq) { return structureName+":" === seq.get("id").substring(0, structureName.length + 1); });
+                    this.removeSequences (seqModels);
                 }, this);
             }
             // this triggers an event to say loads has changed in the alignment collection
             // more efficient to listen to that then redraw/recalc for every seq addition
+            
             this.bulkAlignChangeFinished();
 
             console.log("3D sequences poked to collection", this);

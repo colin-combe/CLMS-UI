@@ -157,11 +157,11 @@
         model: CLMSUI.BackboneModelTypes.SeqModel,
 
         initialize: function() {
-            this.listenTo(this, "add", function(addedModel) {
+            this.listenTo(this, "add", function (newSequenceModel) {
                 //~ console.log ("new sequence added. align it.", arguments);
-                this.currentlyAddingModel = addedModel;
-                addedModel.align();
-                this.currentlyAddingModel = null;
+                //this.currentlyAddingModel = newSequenceModel;
+                newSequenceModel.align();
+                //this.currentlyAddingModel = null;
             });
             return this;
         }
@@ -287,7 +287,7 @@
             return this.get("seqCollection").get(seqName);
         },
         
-        getSequenceModelsByPred: function (predicateFunc) {
+        getSequenceModelsByPredicate: function (predicateFunc) {
             return this.get("seqCollection").filter (function (m) { return predicateFunc (m); });
         },
 
@@ -422,7 +422,7 @@
                 
         // Remove passed in sequenceModels from their parent collections (use in tandem with next function)
         // Easier than going down the protAlignCollection -> protModel -> seqCollection -> seqModel route
-        removeSeqs: function (sequenceModels) {
+        removeSequences: function (sequenceModels) {
             sequenceModels.forEach (function (seqMod) {
                 if (seqMod.collection) {
                     seqMod.collection.remove (seqMod);
@@ -432,12 +432,11 @@
         },
         
         // get sequenceModels by predicate function
-        getSeqsByPredicate: function (predicateFunc) {
+        getSequencesByPredicate: function (predicateFunc) {
             var seqModels = [];
             this.each (function (protAlignModel) {
-                seqModels.push.apply (seqModels, protAlignModel.getSequenceModelsByPred (predicateFunc));
+                seqModels.push.apply (seqModels, protAlignModel.getSequenceModelsByPredicate (predicateFunc));
             });
-            console.log ("SSSS", seqModels);
             return seqModels;
         },
         
