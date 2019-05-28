@@ -208,6 +208,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             decoysTD: [], // links with a decoy protein at one end (will include any decoy linears)
             decoysDD: [], // links with decoy proteins at both ends
         };
+        
+        this.filteredStats = {
+            ppi: 0
+        };
         // all = targets + linearTargets + decoysTD + decoysDD
         // count of decoy linears = linears - linearTargets
 
@@ -265,6 +269,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     getFilteredCrossLinks: function(type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
+    },
+    
+    getFilteredDatum: function (key) {
+        return this.filteredStats[key];
     },
     
     getAllTTCrossLinks: function () {

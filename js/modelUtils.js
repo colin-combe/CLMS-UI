@@ -1453,6 +1453,11 @@ CLMSUI.modelUtils = {
         var searchArr = CLMS.arrayFromMapValues (clmsModel.get("searches"));
         var uniqueGroups = _.uniq (_.pluck (searchArr, "group"));
         //console.log ("SSS", searchArr, uniqueGroups);
+        uniqueGroups.sort (function (a,b) {
+            var an = Number.parseFloat (a);
+            var bn = Number.parseFloat (b);
+            return !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : a.localeCompare (b);
+        });
         return uniqueGroups;
     },
 };
