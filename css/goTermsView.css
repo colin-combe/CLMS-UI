@@ -18,20 +18,22 @@
 }
 
 .node circle {
-    fill: #fff;
+    fill: #000;
     /* stroke: steelblue; */
-    stroke-width: 3px;
+    stroke-width: 1px;
 }
 
 .node text {
     font: 12px sans-serif;
+    dominant-baseline: middle;
+    margin-left: 5px;
 }
 
 .goLink {
     fill: none;
     stroke: #aaa;
     stroke-width: 1px;
-      marker-start: url(#end-arrow);
+      /* marker-start: url(#end-arrow); */
 }
 
 

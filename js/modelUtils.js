@@ -889,11 +889,11 @@ CLMSUI.modelUtils = {
                           }
                         }
                         else if (goTerm.id == "GO0008150") {
-                            goTrees.biologicalProcess = goTerm;
+                            goTrees.biological_process = goTerm;
                         } else if (goTerm.id == "GO0003674") {
-                            goTrees.molecularFunction = goTerm;
+                            goTrees.molecular_function = goTerm;
                         } else if (goTerm.id == "GO0005575") {
-                            goTrees.cellularComponent = goTerm;
+                            goTrees.cellular_component = goTerm;
                         }
                         tempMap.set(goTerm.id, goTerm);
                         return goTerm;
@@ -909,18 +909,6 @@ CLMSUI.modelUtils = {
                     // }
                 }
 
-                function setNodeDepth (node, depth) {
-                    if (depth > node.depth) {
-                        node.depth = depth;
-                    }
-                    for (var c of node.children){
-                        setNodeDepth(c, depth + 1);
-                    }
-                }
-
-                setNodeDepth(goTrees.biologicalProcess, 0);
-                setNodeDepth(goTrees.molecularFunction, 0);
-                setNodeDepth(goTrees.cellularComponent, 0);
                 CLMSUI.compositeModelInst.set("goTrees", goTrees);
 
                 var proteins = clmsModel.get("participants");
@@ -1464,7 +1452,7 @@ CLMSUI.modelUtils = {
     getSearchGroups: function (clmsModel) {
         var searchArr = CLMS.arrayFromMapValues (clmsModel.get("searches"));
         var uniqueGroups = _.uniq (_.pluck (searchArr, "group"));
-        //console.log ("SSS", searchArr, uniqueGroups); 
+        //console.log ("SSS", searchArr, uniqueGroups);
         return uniqueGroups;
     },
 };
