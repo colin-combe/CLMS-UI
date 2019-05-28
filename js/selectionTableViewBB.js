@@ -77,13 +77,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             calcMZ: "Calc M/Z",
             calcMass: "Calc Mass",
             massError: "Mass Error (ppm)",
+            missingPeaks: "Missing Peaks",
             precursorIntensity: "Intensity",
             elutionStart: "Elut. Start",
             elutionEnd: "Elut. End",
-            missedCleavages: "Missed Cleavages",
+            missedCleavages: "Max.Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", "missedCleavages",]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "missedCleavages",]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -195,6 +196,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             },
             massError: function(d) {
                 return massZeroPadder(d.massError());
+            },
+            missingPeaks: function(d) {
+                return massZeroPadder(d.missingPeaks());
             },
             precursorIntensity: function(d) {
                 return scientific(d.precursor_intensity);
