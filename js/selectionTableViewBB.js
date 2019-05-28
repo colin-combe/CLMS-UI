@@ -47,7 +47,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var tableDataPropOrder = [
             "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
             "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
-            "autovalidated", "validated", "group", "runName", "scanNumber",
+            "autovalidated", "validated", "group", "searchId", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
             "precursorIntensity", "elutionStart", "elutionEnd", "missedCleavages",
         ];
@@ -69,6 +69,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             autovalidated: "Auto",
             validated: "Manual",
             group: "Group",
+            searchId: "Search Id",
             runName: "Run Name",
             scanNumber: "Scan Number",
             precursorCharge: "Charge (Z)",
@@ -152,6 +153,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             },
             group: function(d) {
                 return d.group();
+            },
+            searchId: function(d) {
+                return d.searchId;
             },
             pos1: function(d) {
                 return CLMSUI.utils.fullPosConcat(d, 0);
