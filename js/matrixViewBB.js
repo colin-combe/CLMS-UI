@@ -538,7 +538,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             pid.alignID = null;
             if (pid.proteinID) {
                 var chainName = CLMSUI.NGLUtils.getChainNameFromChainIndex(distancesObj.chainMap, pid.chainID);
-                pid.alignID = CLMSUI.NGLUtils.make3DAlignID(distancesObj.pdbBaseSeqID, chainName, pid.chainID);
+                pid.alignID = CLMSUI.NGLUtils.make3DAlignID(distancesObj.structureName, chainName, pid.chainID);
             }
         }, this);
         return proteinIDsObj;
@@ -868,8 +868,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                     // draw chain values, aligned to search sequence
                     if (linksOnly) {
-                        preCalcSearchIndices = d3.range(atoms2.length).map(function(resIndex) {
-                            return alignColl.getAlignedIndex(resIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
+                        preCalcSearchIndices = d3.range(atoms2.length).map(function(seqIndex) {
+                            return alignColl.getAlignedIndex(seqIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
                         });
                         var max2 = max * max;
                         var min2 = min * min;

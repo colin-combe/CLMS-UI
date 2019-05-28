@@ -27,12 +27,12 @@ CLMSUI.modelUtils = {
         return extent;
     },
 
-    getResidueType: function(protein, resIndex, seqAlignFunc) {
+    getResidueType: function(protein, seqIndex, seqAlignFunc) {
         var seq = protein.sequence;
         // Some sequence alignment stuff can be done if you pass in a func
-        resIndex = seqAlignFunc ? seqAlignFunc(resIndex) : resIndex;
-        // seq is 0-indexed, but resIndex is 1-indexed so -1
-        return seq[resIndex - 1];
+        seqIndex = seqAlignFunc ? seqAlignFunc(seqIndex) : seqIndex;
+        // seq is 0-indexed, but seqIndex is 1-indexed so -1
+        return seq[seqIndex - 1];
     },
 
     getDirectionalResidueType: function(xlink, getTo, seqAlignFunc) {

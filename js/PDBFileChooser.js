@@ -154,20 +154,20 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
 
-        this.listenTo (this.model, "3dsync", function(sequences) {
-            var count = _.isEmpty(sequences) ? 0 : sequences.length;
+        this.listenTo (this.model, "3dsync", function(newSequences) {
+            var count = _.isEmpty(newSequences) ? 0 : newSequences.length;
             var success = count > 0;
             this.setCompletedEffect();
-            var nameArr = _.pluck(sequences, "name");
+            var nameArr = _.pluck(newSequences, "name");
             // list pdb's these sequences derive from
-            console.log ("seq", sequences);
+            //console.log ("seq", newSequences);
             var pdbString = nameArr ? 
                 d3.set (nameArr.map(function(name) { return name.substr(0, _./*last*/indexOf (name, ":")); })).values().join(", ") : "?"
             ;
             
-            var msg = sequences.failureReason ? "" : "Completed Loading " + sanitise(pdbString) + ".<br>";
+            var msg = newSequences.failureReason ? "" : "Completed Loading " + sanitise(pdbString) + ".<br>";
             msg += success ? "✓ Success! " + count + " sequence" + (count > 1 ? "s" : "") + " mapped between this search and the PDB file." :
-                sanitise((sequences.failureReason || "No sequence matches found between this search and the PDB file") +
+                sanitise((newSequences.failureReason || "No sequence matches found between this search and the PDB file") +
                     ". Please check the PDB file or code is correct.");
             this.setStatusText(msg, success);
         });

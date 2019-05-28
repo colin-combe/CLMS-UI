@@ -333,7 +333,7 @@ function callback (model) {
 		
 		var expectedValue = "(( /0 AND (( :A AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) ) OR ( :B AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) )) ) ) AND .CA";
 		var data = [
-			{resindex:410, residueId:0, resno:415, chainIndex:0, structureId:null},{resindex:492, residueId:1, resno:497, chainIndex:0, structureId:null},{resindex:492, residueId:2, resno:497, chainIndex:1, structureId:null},{resindex:410, residueId:3, resno:415, chainIndex:1, structureId:null},{resindex:185, residueId:4, resno:190, chainIndex:0, structureId:null},{resindex:420, residueId:5, resno:425, chainIndex:0, structureId:null},{resindex:420, residueId:6, resno:425, chainIndex:1, structureId:null},{resindex:185, residueId:7, resno:190, chainIndex:1, structureId:null},{resindex:120, residueId:8, resno:125, chainIndex:0, structureId:null},{resindex:156, residueId:9, resno:161, chainIndex:0, structureId:null},{resindex:156, residueId:10, resno:161, chainIndex:1, structureId:null},{resindex:120, residueId:11, resno:125, chainIndex:1, structureId:null},{resindex:126, residueId:12, resno:131, chainIndex:0, structureId:null},{resindex:157, residueId:13, resno:162, chainIndex:0, structureId:null},{resindex:157, residueId:14, resno:162, chainIndex:1, structureId:null},{resindex:126, residueId:15, resno:131, chainIndex:1, structureId:null},{resindex:102, residueId:16, resno:107, chainIndex:0, structureId:null},{resindex:461, residueId:17, resno:466, chainIndex:0, structureId:null},{resindex:461, residueId:18, resno:466, chainIndex:1, structureId:null},{resindex:102, residueId:19, resno:107, chainIndex:1, structureId:null}
+			{seqIndex:410, residueId:0, resno:415, chainIndex:0, structureId:null},{seqIndex:492, residueId:1, resno:497, chainIndex:0, structureId:null},{seqIndex:492, residueId:2, resno:497, chainIndex:1, structureId:null},{seqIndex:410, residueId:3, resno:415, chainIndex:1, structureId:null},{seqIndex:185, residueId:4, resno:190, chainIndex:0, structureId:null},{seqIndex:420, residueId:5, resno:425, chainIndex:0, structureId:null},{seqIndex:420, residueId:6, resno:425, chainIndex:1, structureId:null},{seqIndex:185, residueId:7, resno:190, chainIndex:1, structureId:null},{seqIndex:120, residueId:8, resno:125, chainIndex:0, structureId:null},{seqIndex:156, residueId:9, resno:161, chainIndex:0, structureId:null},{seqIndex:156, residueId:10, resno:161, chainIndex:1, structureId:null},{seqIndex:120, residueId:11, resno:125, chainIndex:1, structureId:null},{seqIndex:126, residueId:12, resno:131, chainIndex:0, structureId:null},{seqIndex:157, residueId:13, resno:162, chainIndex:0, structureId:null},{seqIndex:157, residueId:14, resno:162, chainIndex:1, structureId:null},{seqIndex:126, residueId:15, resno:131, chainIndex:1, structureId:null},{seqIndex:102, residueId:16, resno:107, chainIndex:0, structureId:null},{seqIndex:461, residueId:17, resno:466, chainIndex:0, structureId:null},{seqIndex:461, residueId:18, resno:466, chainIndex:1, structureId:null},{seqIndex:102, residueId:19, resno:107, chainIndex:1, structureId:null}
 		];
 		
 		var expectedValue2 = "(( /0 AND (( 415:A ) OR ( 497:B )) ) ) AND .CA";
@@ -468,8 +468,8 @@ function callback (model) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
         var cproxy = stageModel.get("structureComp").structure.getChainProxy();
         var atomIndexA = stageModel.getAtomIndex (0, 0); // residue 0-indexed here
-        var resObj = {resno: 5, resindex: 0, chainIndex: 0};
-        var atomIndexB = stageModel.getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 resindex)
+        var resObj = {resno: 5, seqIndex: 0, chainIndex: 0};
+        var atomIndexB = stageModel.getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 seqIndex)
 			
 		assert.deepEqual (atomIndexA, atomIndexB, "Expected "+atomIndexA+" index in both methods (A chain 415 residue), Passed!");
 	});
@@ -487,8 +487,8 @@ function callback (model) {
 
 		crossLinks.forEach (function (crossLink) {
 			var chainIndex = crossLink.residueA.chainIndex + "-" + crossLink.residueB.chainIndex;
-			list1.push (matrices1[chainIndex].distanceMatrix[crossLink.residueA.resindex][crossLink.residueB.resindex]);
-			list2.push (matrices2[chainIndex].distanceMatrix[crossLink.residueA.resindex][crossLink.residueB.resindex]);
+			list1.push (matrices1[chainIndex].distanceMatrix[crossLink.residueA.seqIndex][crossLink.residueB.seqIndex]);
+			list2.push (matrices2[chainIndex].distanceMatrix[crossLink.residueA.seqIndex][crossLink.residueB.seqIndex]);
 		});
         
         list1 = list1.map (function (v) { return v.toFixed (2); });
@@ -509,10 +509,10 @@ function callback (model) {
         var atoms = stageModel.getAllResidueCoordsForChain(0);
 
 		crossLinks.forEach (function (crossLink) {
-            var resIndexA = crossLink.residueA.resindex;
-            var resIndexB = crossLink.residueB.resindex;
-			list1.push (matrices1["0-0"].distanceMatrix[resIndexA][resIndexB]);
-            var distanceSquared = CLMSUI.modelUtils.getDistanceSquared (atoms[resIndexA], atoms[resIndexB]);
+            var seqIndexA = crossLink.residueA.seqIndex;
+            var seqIndexB = crossLink.residueB.seqIndex;
+			list1.push (matrices1["0-0"].distanceMatrix[seqIndexA][seqIndexB]);
+            var distanceSquared = CLMSUI.modelUtils.getDistanceSquared (atoms[seqIndexA], atoms[seqIndexB]);
 			list2.push (Math.sqrt (distanceSquared));
 		});
         
@@ -705,7 +705,7 @@ function callback (model) {
 	QUnit.test ("Calc Filtered Residue Points from Cross-linker Specificity", function (assert) {
 		var expectedValue = [535, 536, 540, 552, 555, 559, 561, 568, 569, 574];	// last 10 KSTY
 		expectedValue = expectedValue.map (function (v) {
-			return {chainIndex: 1, protID: "2000171", resIndex: v+1, searchIndex: v+5}	// resindex 1-indexed, sdearchIndex 4 on from that, last 10 residues will be chain 1
+			return {chainIndex: 1, protID: "2000171", seqIndex: v+1, searchIndex: v+5}	// seqIndex 1-indexed, sdearchIndex 4 on from that, last 10 residues will be chain 1
 		});
 		
 		var searchArray = CLMS.arrayFromMapValues (clmsModel.get("searches"));
