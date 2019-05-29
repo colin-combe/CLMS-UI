@@ -256,7 +256,7 @@ function getMatchesCSV() {
 }
 
 function getSSL() {
-    var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\r\n';
+    var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\tId\tProtein1\tSeqPos1\tPepPos1\tPepSeq1\tLinkPos1\tProtein2\tSeqPos2\tPepPos2\tPepSeq2\tLinkPos2\tCharge\tExpMz\tExpMass\tCalcMz\tCalcMass\tMassError\tAutoValidated\tValidated\tSearch\tRawFileName\tPeakListFileName\tScanNumber\tScanIndex\tCrossLinkerModMass\tFragmentTolerance\tIonTypes\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     var mass6dp = d3.format(".6f");
 
@@ -344,6 +344,12 @@ function getSSL() {
             var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
             var crosslinkerModMass = match.crossLinkerModMass();
             var sequence = pep1sslSeq + "K[+" + mass6dp(crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
+
+            var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
+            var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
+            var lp1 = CLMSUI.utils.fullPosConcat(match, 0);
+            var lp2 = CLMSUI.utils.fullPosConcat(match, 1);
+
             var data = [
                 match.peakListFileName(),
                 match.scanNumber,
@@ -351,6 +357,33 @@ function getSSL() {
                 sequence,
                 "UNKNOWN",
                 match.score(),
+                match.id,
+                CLMSUI.utils.proteinConcat(match, 0, clmsModel),
+                lp1,
+                pp1,
+                peptide1.seq_mods,
+                match.linkPos1,
+                (peptide1 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""),
+                lp2,
+                pp2,
+                (peptide2 ? peptide2.seq_mods : ""),
+                match.linkPos2,
+                match.precursorCharge,
+                match.expMZ(),
+                match.expMass(),
+                match.calcMZ(),
+                match.calcMass(),
+                match.massError(),
+                match.autovalidated,
+                match.validated,
+                match.searchId,
+                match.runName(),
+                match.peakListFileName(),
+                match.scanNumber,
+                match.scanIndex,
+                match.crossLinkerModMass(),
+                match.fragmentToleranceString(),
+                match.ionTypesString()
             ];
             csv += data.join('\t') + '\r\n';
         }
