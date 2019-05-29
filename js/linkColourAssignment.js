@@ -9,6 +9,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
         fixed: false,
         undefinedColour: "#aaa",
         undefinedLabel: "Unknown",
+        unit: "",
     },
     setDomain: function(newDomain) {
         this.get("colScale").domain(newDomain);
@@ -48,6 +49,13 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
     },
     isCategorical: function() {
         return this.get("type") !== "linear";
+    },
+    getLabelColourPairings: function () {
+        var colScale = this.get("colScale");
+        var labels = this.get("labels").range().concat(this.get("undefinedLabel"));
+        var minLength = Math.min (colScale.range().length, this.get("labels").range().length);  // restrict range used when ordinal scale
+        var colScaleRange = colScale.range().slice(0, minLength).concat(this.get("undefinedColour"));
+        return d3.zip (labels, colScaleRange);
     },
 });
 
@@ -108,7 +116,8 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         this
             .set("colScale", colScale)
             .set("labels", this.get("colScale").copy().range(labelRange))
-            .set("type", "ordinal");
+            .set("type", "ordinal")
+        ;
     },
     getValue: function(crossLink) {
         //check if link uniquely belongs to one group
@@ -149,7 +158,9 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
     initialize: function() {
         this
             .set("type", "threshold")
-            .set("labels", this.get("colScale").copy().range(["Within Distance", "Borderline", "Overlong"]));
+            .set("labels", this.get("colScale").copy().range(["Within Distance", "Borderline", "Overlong"]))
+            .set("unit", "Å")
+        ;
     },
     getValue: function(crossLink) {
         return CLMSUI.compositeModelInst.getSingleCrosslinkDistance(crossLink);
@@ -163,8 +174,10 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
         var proteinIDs = CLMSUI.modelUtils.filterOutDecoyInteractors (CLMS.arrayFromMapValues(options.proteins))
             .map(function(p) {
                 return p.id;
-            });
+            })
+        ;
 
+        
         if (proteinIDs && proteinIDs.length > 2 && proteinIDs.length < 6) {
             var groupDomain = ["same"];
             for (var n = 0; n < proteinIDs.length; n++) {
@@ -183,7 +196,8 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
 
         this
             .set("colScale", colScale)
-            .set("labels", this.get("colScale").copy().range(labels));
+            .set("labels", this.get("colScale").copy().range(labels))
+        ;
     },
 
     makeProteinPairKey: function(pid1, pid2) {
@@ -206,7 +220,7 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
             labels = domain.map(function(domVal) {
                 return String(domVal)
                     .toLowerCase()
-                    .replace(/\b[a-z](?=[a-z]{2})/g, function(letter) {
+                    .replace(/\b[a-z](?=[a-z]{1})/g, function(letter) {
                         return letter.toUpperCase();
                     });
             });
@@ -384,16 +398,19 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
     // see if it is a list of colours
     var hexRegex = CLMSUI.utils.commonRegexes.hexColour;
     var dataIsColours = (hexRegex.test(extents[0]) && hexRegex.test(extents[1]));
+    var isCategorical = false;
 
-    // if it isn't a list of colours and only a few uinique values, make it categorical
-    var uniq = d3.set(linkArr.map(function(link) {
-        return link.getMeta(field);
-    })).size();
-    // if the values in this metadata form 6 or less distinct values count it as categorical
-    var isCategorical = uniq < 7;
-    if (isCategorical && !dataIsColours) {
-        extents.push(undefined);
-        range = colorbrewer.Dark2[8];
+    // if it isn't a list of colours and consists of only a few unique values, make it categorical
+    if (!dataIsColours) {
+        var uniq = d3.set(linkArr.map(function(link) {
+            return link.getMeta(field);
+        })).size();
+        // if the values in this metadata form 6 or less distinct values count it as categorical
+        isCategorical = uniq < 7;
+        if (isCategorical) {
+            //extents.push(undefined);  // removed, undefined will automatically get assigned a value in an ordinal scale if present
+            range = colorbrewer.Dark2[8].slice();
+        }
     }
 
     var newColourModel = new CLMSUI.BackboneModelTypes.MetaDataColourModel({
@@ -416,7 +433,8 @@ CLMSUI.linkColour.makeColourModel = function(field, label, links) {
         };
         newColourModel
             .set("fixed", true)
-            .set("longDescription", (label || field) + ", fixed colours per Cross-Link from metadata. Not editable.");
+            .set("longDescription", (label || field) + ", fixed colours per Cross-Link from metadata. Not editable.")
+        ;
     }
 
     return newColourModel;

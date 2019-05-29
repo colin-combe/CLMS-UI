@@ -640,7 +640,8 @@ CLMSUI.utils = {
         var keyGroup = svgElem.selectAll("g.key").data([0]);
         keyGroup.enter()
             .append("g").attr("class", "key")
-            .append("text").attr("class", "keyTitle");
+            .append("text").attr("class", "keyTitle")
+        ;
 
         var colourAssign = model.get("linkColourAssignment");
         if (colourAssign) {
@@ -648,63 +649,66 @@ CLMSUI.utils = {
                 .attr("y", 12)
                 .text("Key: " + colourAssign.get("title"))
             ;
-            console.log ("colour", colourAssign);
 
+            var schemeType = colourAssign.get("type");
             var colScale = colourAssign.get("colScale");
-            var labels = colourAssign.get("labels");
             var domain = colScale.domain();
-            var pairUp = d3.zip(colScale.range(), labels.range());
-            var isLinear = colourAssign.get("type") === "linear";
+            var labelColourPairs = colourAssign.getLabelColourPairings();
+            var isLinear = schemeType === "linear";
             var linearHeight = 150;
             var normalScale = d3.scale.linear().domain(d3.extent(domain)).range([0, 100]);
             var heightScale = d3.scale.linear().domain(d3.extent(domain)).range([18, linearHeight + 18]);
 
-            if (colourAssign.get("type") === "threshold") {
-                pairUp.forEach(function(pair, i) {
-                    var d1 = i > 0 ? ">" + domain[i - 1] : undefined;
-                    var d2 = i < domain.length ? "<" + domain[i] : undefined;
-                    var dp = [d1, d2].filter(function(d) {
-                        return d !== undefined;
-                    });
-                    pair[1] += " (" + dp.join(" & ") + ")";
+            if (schemeType === "threshold") {
+                labelColourPairs.forEach(function(pair, i) {
+                    if (i < labelColourPairs.length - 1) {    // don't do for last category - which is unknown
+                        var d1 = i > 0 ? ">" + domain[i - 1] : undefined;
+                        var d2 = i < domain.length ? "<" + domain[i] : undefined;
+                        var dp = [d1, d2].filter(function(d) {
+                            return d !== undefined;
+                        });
+                        pair[0] += " (" + dp.join(" & ") + ")";
+                    }
                 });
             }
 
-            pairUp.forEach(function(pair, i) {
-                pair[2] = isLinear ? heightScale(domain[i]) : 3 + ((i + 1) * 15); // y-position of colour swatches and labels
+             // set y-position of colour swatches and labels
+            labelColourPairs.forEach(function(pair, i) {
+                pair[2] = isLinear ? (domain[i] === undefined ? _.last(heightScale.range()) + 15 : heightScale(domain[i])) : 3 + ((i + 1) * 15);
             });
-            
-            pairUp.push ([colourAssign.get("undefinedColour"), colourAssign.get("undefinedLabel"), _.last(pairUp)[2] + 15]);
 
-            var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
+            var colourElems = keyGroup.selectAll("g.keyPoint").data(colourAssign.get("fixed") ? [] : labelColourPairs);
             colourElems.exit().remove();
             var newElems = colourElems.enter().append("g")
                 .attr("class", "keyPoint")
                 .attr("transform", function(d) {
                     return "translate(0," + d[2] + ")";
-                });
+                })
+            ;
             newElems.append("rect")
                 .attr("height", 4)
                 .attr("width", "1em")
                 .attr("x", 1)
                 .attr("y", 5)
-                .style("stroke", "none");
+                .style("stroke", "none")
+            ;
             newElems.append("text")
                 .attr("x", 19)
-                .attr("y", 12);
+                .attr("y", 12)
+            ;
             colourElems.select("rect")
                 .style("fill", function(d, i) {
-                    return d[0];
+                    return d[1];
                 })
                 // hide individual colour swatches if showing linear scale
-                .style("display", function(d) { return isLinear && d[1] !== colourAssign.get("undefinedLabel") ? "none" : null; })
+                .style("display", function(d) { return isLinear && d[0] !== colourAssign.get("undefinedLabel") ? "none" : null; })
             ;
             colourElems.select("text").text(function(d, i) {
-                return d[1];
+                return d[0];
             });
 
 
-            if (isLinear) {
+            if (isLinear && !colourAssign.get("fixed")) {
                 // Make gradient and fill a rect with it
                 var gradID = "grad" + Math.ceil(Math.random() * 100000);
 
@@ -725,13 +729,13 @@ CLMSUI.utils = {
                         return Math.round(normalScale(d)) + "%";
                     })
                     .attr("stop-color", function(d, i) {
-                        return colScale.range()[i];
+                        return labelColourPairs[i][1];
                     })
                 ;
 
                 svgElem.selectAll("rect.gradientScale").remove();
 
-                svgElem.append("rect")
+                keyGroup.append("rect")
                     .attr("class", "gradientScale")
                     .attr("x", 1)
                     .attr("y", heightScale.range()[0] + 5)
