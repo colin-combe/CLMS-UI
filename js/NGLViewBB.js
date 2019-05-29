@@ -113,7 +113,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         self.options.defaultAssembly = d3.event.target.value;
                         self.xlRepr
                             .updateOptions(self.options, ["defaultAssembly"])
-                            .updateAssemblyType();
+                            .updateAssemblyType()
+                        ;
                         self.setAssemblyChains();
                     }
                 },
@@ -260,6 +261,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         NGL.ColormakerRegistry.add ("external", function () {
             this.lastResidueIndex = null;
             this.lastColour = null;
+            this.dontGrey = true;
             this.atomColor = function (atom) {
                 var arindex = atom.residueIndex;
                 if (this.lastResidueIndex === arindex) {    // saves recalculating, as colour is per residue
@@ -271,9 +273,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 
                 if (residue !== undefined) {
                     var linkCount = self.xlRepr.crosslinkData.getFullLinkCountByResidue (residue);
-                    this.lastColour = (linkCount === 0 ? 0x5555ff : 0xaaaaaa);
+                    this.lastColour = (linkCount === 0 ? 0x000077 : 0xcccccc);
                 } else {
-                    this.lastColour = 0xaaaaaa;
+                    this.lastColour = 0xcccccc;
                 }
                 //console.log ("rid", arindex, this.lastColour);
                 return this.lastColour;
@@ -304,26 +306,17 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var colourChangeFunc = function() {
             if (self.xlRepr) {
                 var value = d3.event.target.value;
-                var schemeObj = {
-                    colorScheme: value || "uniform",
-                    colorScale: undefined,
-                    colorValue: 0x808080
-                };
-                // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
-
                 var structure = self.model.get("stageModel").get("structureComp").structure;
-                var scheme = NGL.ColormakerRegistry.getScheme({
+                self.xlRepr.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme({
                     scheme: value || "uniform",
                     structure: structure
                 });
-                //console.log ("SUBSCHEME", scheme);
-                self.xlRepr.colorOptions.residueSubScheme = scheme;
+                //console.log ("SUBSCHEME", self.xlRepr.colorOptions.residueSubScheme);
                 
                 self.rerenderColourSchemes ([
                     {nglRep: self.xlRepr.resRepr, colourScheme: self.xlRepr.colorOptions.residueColourScheme, immediateUpdate: false},
                     {nglRep: self.xlRepr.sstrucRepr, colourScheme: self.xlRepr.colorOptions.residueColourScheme},
                 ]);
-                //console.log ("label rep", self.xlRepr.labelRepr);
             }
         };
 
@@ -1008,6 +1001,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                  //console.log ("SUBCOL 2", self.colorOptions.residueSubScheme);
                 var subScheme = self.colorOptions.residueSubScheme;
                 var c = subScheme.atomColor ? subScheme.atomColor (a) : self.colorOptions.residueSubScheme.value;
+                if (subScheme.dontGrey) {
+                    return c;
+                }
                 var notGrey = 1 - this.greyness;
                 var greyComp = 176 * this.greyness;
 
@@ -1019,7 +1015,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
         };
 
-        this.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme ({colorScheme: "uniform"});
+        var structure = this.structureComp.structure;
+        this.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme ({scheme: "uniform", structure: structure});
         this.colorOptions.residueColourScheme = NGL.ColormakerRegistry.addScheme(residueColourScheme, "custom");
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme(linkColourScheme, "xlink");
 
