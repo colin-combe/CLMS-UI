@@ -415,7 +415,8 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
     },
 
     downloadKey: function() {
-        var tempSVG = d3.select(this.el).append("svg").attr("class", "temp").style("text-transform", "capitalize");
+        var tempSVG = d3.select(this.el).append("svg").attr("class", "tempKey").style("text-transform", "capitalize");
+        var self = this;
         CLMSUI.utils.updateAnnotationColourKey(
             this.collection.where({
                 shown: true
@@ -423,7 +424,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
             tempSVG, 
             {
                 colour: function(d) {
-                    return this.collection.getColour(d.category, d.type);
+                    return self.collection.getColour(d.category, d.type);
                 },
                 label: function(d) {
                     return (d.category ? d.category.replace(/_/g, " ") + ": " : "") + d.type;
