@@ -272,8 +272,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var residue = self.model.get("stageModel").getResidueByNGLGlobalIndex (arindex);
                 
                 if (residue !== undefined) {
-                    var linkCount = self.xlRepr.crosslinkData.getFullLinkCountByResidue (residue);
-                    this.lastColour = (linkCount === 0 ? 0x000077 : 0xcccccc);
+                    var linkCount = self.xlRepr.crosslinkData.getHalfLinkCountByResidue (residue);
+                    this.lastColour = (linkCount > 0 ? 0x000077 : 0xcccccc);
                 } else {
                     this.lastColour = 0xcccccc;
                 }

@@ -362,6 +362,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this._origHalfLinkCount;    
     },
     
+    getHalfLinkCountByResidue: function (residue) {
+        var linkIds = this._residueIdToHalfLinkIds[residue.residueId];
+        return linkIds ? linkIds.length : 0;
+    },
+    
     getHalfLinksByResidueID: function (residueId) {
         var linkIds = this._residueIdToHalfLinkIds[residueId];
         return linkIds ? linkIds.map(function(l) {
