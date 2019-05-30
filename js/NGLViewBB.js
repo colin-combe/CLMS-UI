@@ -934,14 +934,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             });
         });
         //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
+        console.log ("PIM", chainIndexToProteinMap);
         comp.structure.eachChain(function(chainProxy) {
-            //console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
             var description = chainProxy.entity ? chainProxy.entity.description : "";
             var pid = chainIndexToProteinMap.get(chainProxy.index);
+            console.log ("chain label", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description, pid);
             if (pid && CLMSUI.NGLUtils.isViableChain(chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = (verboseSetting === "None" ? "" : (pname + ":" + chainProxy.chainname + "(" + chainProxy.index + ")" + (verboseSetting === "Verbose" ? " " + description : "")));
+                console.log ("YO", chainProxy.atomOffset);
             }
         });
 

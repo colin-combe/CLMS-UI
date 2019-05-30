@@ -47,13 +47,17 @@ CLMSUI.NGLUtils = {
                 });
             
                 var structureComp;
+                var origChainBridge;
                 if (structureCompArray.length > 1) {
                     //structureCompArray 
-                    var cs = NGL.concatStructures.apply (NGL, ["concat"].concat(structureCompArray.map (function (sc) { return sc.structure; })) );
+                    var oldStructures = structureCompArray.map (function (sc) { return sc.structure; });
+                    var combinedStructure = NGL.concatStructures.apply (NGL, ["concat"].concat(oldStructures));
+                    CLMSUI.NGLUtils.copyEntities (oldStructures, combinedStructure);
+                    origChainBridge = CLMSUI.NGLUtils.makeOrigChainBridge (oldStructures, combinedStructure);
                     //var cs = NGL.concatStructures ("concat", structureCompArray.map (function (sc) { return sc.structure; }));
-                    var comp = stage.addComponentFromObject(cs);
-                    comp.structure.title = structureCompArray.map (function (scomp) { return scomp.structure.title; }).join(", ");
-                    comp.structure.name = structureCompArray.map (function (scomp) { return scomp.structure.name; }).join(", ");
+                    var comp = stage.addComponentFromObject (combinedStructure);
+                    comp.structure.title = _.pluck(oldStructures, "title").join(", ");
+                    comp.structure.name = _.pluck(oldStructures, "name").join(", ");
                     structureComp = comp;
                 } else {
                     structureComp = structureCompArray[0];
@@ -76,7 +80,7 @@ CLMSUI.NGLUtils = {
                         );
                     }
 
-                    var nglSequences = CLMSUI.NGLUtils.getChainSequencesFromNGLStage(stage);
+                    var nglSequences = CLMSUI.NGLUtils.getChainSequencesFromNGLStructure (structureComp, origChainBridge);
                     var interactorMap = bbmodel.get("clmsModel").get("participants");
                     var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
@@ -88,6 +92,7 @@ CLMSUI.NGLUtils = {
                             CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
                             if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
                                 var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
+                                console.log ("rem", remainingSequences);
                                 matchByXiAlignment (remainingSequences, uniprotMappingResults.uniprotMapped);   // fire them into xi alignment routine
                                 //returnFailure ("No valid uniprot data returned");
                             } else {
@@ -143,7 +148,7 @@ CLMSUI.NGLUtils = {
             });
     },
     
-    getChainSequencesFromNGLStructure: function (structureComponent) {
+    getChainSequencesFromNGLStructure: function (structureComponent, origChainBridge) {
         var sequences = [];
         //console.log ("comp", structureComponent);
         
@@ -155,12 +160,14 @@ CLMSUI.NGLUtils = {
                     resList.push(r.getResname1() || "X");
                 });
                 //esList = structureComponent.structure.getSequence (new NGL.Selection (c.qualifiedName()));
+                var structureID = origChainBridge ? origChainBridge[c.index] : structureComponent.structure.name;
                 
                 sequences.push ({
                     chainName: c.chainname,
                     chainIndex: c.index,
                     modelIndex: c.modelIndex,
                     residueOffset: c.residueOffset,
+                    structureID: structureID.toLocaleLowerCase(),
                     data: resList.join("")
                 });
                 //console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName(), resList.join(""));
@@ -230,10 +237,12 @@ CLMSUI.NGLUtils = {
 
                 mapArr.forEach(function(mapping) {
                     var dotIndex = mapping.pdb.indexOf(".");
+                    var pdbName = (dotIndex >= 0 ? mapping.pdb.slice(0, dotIndex) : mapping.pdb.slice(-1)).toLocaleLowerCase();
                     var chainName = dotIndex >= 0 ? mapping.pdb.slice(dotIndex + 1) : mapping.pdb.slice(-1); // bug fix 27/01/17
                     var matchSeqs = nglSequences.filter (function(seqObj) {
-                        return seqObj.chainName === chainName;
+                        return seqObj.chainName === chainName && seqObj.structureID === pdbName;
                     });
+                    console.log ("SEQOBJS", matchSeqs);
                     mapping.seqObj = matchSeqs[0];
                     var matchingInteractors = interactors.filter (function (i) {
                         var minLength = Math.min(i.accession.length, mapping.uniprot.length);
@@ -435,6 +444,41 @@ CLMSUI.NGLUtils = {
         };
     
         writer.download (name || structure.name+"-Crosslinked");
+    },
+    
+    copyEntities: function (structures, combinedStructure) {
+        var gci = 0;
+        
+        structures.forEach (function (s) {
+            s.eachChain (function (cp) {
+                var entity = cp.entity;
+                var targetEntityIndex = combinedStructure.entityList.length;
+                //structure.entityList.push (new NGL.Entity (
+                //    structure, targetEntityIndex, entity.description, entity.type, [gci]
+                //));
+                combinedStructure.entityList.push (entity);
+                
+                var targetcp = combinedStructure.getChainProxy (gci);
+                targetcp.entityIndex = targetEntityIndex;
+                gci++;
+            })
+        });
+        
+        console.log (combinedStructure.entityList);
+    },
+    
+    makeOrigChainBridge: function (structures, combinedStructure) {
+        var gci = 0;
+        var origStructuresByChain = [];
+        
+        structures.forEach (function (s) {
+            s.eachChain (function (cp) {
+                origStructuresByChain[gci] = s.name;
+                gci++;
+            })
+        });
+        
+        return origStructuresByChain;
     },
     
     exportMMCIF: function (structure, nglModelWrapper, name, remarks) {
