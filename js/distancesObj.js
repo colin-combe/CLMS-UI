@@ -12,17 +12,17 @@ CLMSUI.DistancesObj.prototype = {
 
     constructor: CLMSUI.DistancesObj,
 
-    leewayFunc: function(a, b) {
+    tieBreaker: function (link1resA, link1resB, link2resA, link2resB) {
         var d;
-        var mitotalDiff = (a.residueA.modelIndex + a.residueB.modelIndex) - (b.residueA.modelIndex + b.residueB.modelIndex);
+        var mitotalDiff = (link1resA.modelIndex + link1resB.modelIndex) - (link2resA.modelIndex + link2resB.modelIndex);
         if (mitotalDiff) {
             d = mitotalDiff;
         } else {
-            var citotalDiff = (a.residueA.chainIndex + a.residueB.chainIndex) - (b.residueA.chainIndex + b.residueB.chainIndex);
+            var citotalDiff = (link1resA.chainIndex + link1resB.chainIndex) - (link2resA.chainIndex + link2resB.chainIndex);
             if (citotalDiff) {
                 d = citotalDiff;
             } else {
-                var minDiff = Math.min(a.residueA.chainIndex, a.residueB.chainIndex) - Math.min(b.residueA.chainIndex, b.residueB.chainIndex);
+                var minDiff = Math.min(link1resA.chainIndex, link1resB.chainIndex) - Math.min(link2resA.chainIndex, link2resB.chainIndex);
                 if (minDiff) {
                     d = minDiff;
                 }
@@ -46,11 +46,12 @@ CLMSUI.DistancesObj.prototype = {
             .key(function(d) {
                 return d.origId;
             })
-            .sortValues(function(a, b) {
-                var d = a.distance - b.distance;
-                return (d < 0 ? -1 : (d > 0 ? 1 : self.leewayFunc (a, b)));
+            .sortValues(function(link1, link2) {
+                var d = link1.distance - link2.distance;
+                return (d < 0 ? -1 : (d > 0 ? 1 : self.tieBreaker (link1.residueA, link1.residueB, link2.residueA, link2.residueB)));
             })
-            .entries(linkWrappers);
+            .entries(linkWrappers)
+        ;
 
         var shortestLinks = nestedLinks.map(function(group) {
             return group.values[0];

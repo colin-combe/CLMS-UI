@@ -176,6 +176,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             y: function (d) { return d.coords[1]; },
             z: function (d) { return d.coords[2]; },
         };
+        var tieBreakerFunc = CLMSUI.DistancesObj.prototype.tieBreaker;
 
         linkModel.forEach (function (xlink) {
             // loop through fromProtein's models/chains in modelIndexedChainMap
@@ -217,7 +218,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                             var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
                             results = results.filter (function (res) { return res[2] !== undefined; });
                             if (results.length) {
-                                results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (r[2], 1); });
+                                results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (Math.sqrt(r[2]), 1); });
                                 //console.log ("res", results);
 
                                 var prime = results[0];
@@ -225,13 +226,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                                     if (i > 0) {
                                         var d = prime[2] - res[2];
                                         if (d === 0) {
-                                            d = (prime[0].modelIndex + prime[1].modelIndex) - (res[0].modelIndex + res[1].modelIndex);
-                                            if (d === 0) {
-                                                d = (prime[0].chainIndex + prime[1].chainIndex) - (res[0].chainIndex + res[1].chainIndex);
-                                                if (d === 0) {
-                                                    d = Math.min(prime[0].chainIndex, prime[1].chainIndex) - Math.min(res[0].chainIndex, res[1].chainIndex);
-                                                }
-                                            }
+                                            d = tieBreakerFunc (prime[0], prime[1], res[0], res[1]);
                                         }
                                         if (d > 0) {
                                             prime = res;
@@ -283,7 +278,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         }, this);
 
         console.log ("TIME", (performance.now() - t) / 1000, "seconds");
-        //console.log ("linklist", linkList.length, linkList);
+        //console.log ("fullLinklist", fullLinkList.length, fullLinkList);
         //console.log ("halfLinkList", halfLinkList);
         return {fullLinkList: fullLinkList, halfLinkList: halfLinkList};
     },
