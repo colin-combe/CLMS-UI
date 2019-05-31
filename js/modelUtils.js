@@ -1370,7 +1370,7 @@ CLMSUI.modelUtils = {
         ;
 
         maxDistance = maxDistance || 200;
-
+        
         var nearest = smallPointArr.map(function(point) {
             return octree.find(octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
