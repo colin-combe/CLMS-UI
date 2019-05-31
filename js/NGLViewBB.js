@@ -272,7 +272,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var residue = self.model.get("stageModel").getResidueByNGLGlobalIndex (arindex);
                 
                 if (residue !== undefined) {
-                    var linkCount = self.xlRepr.crosslinkData.getHalfLinkCountByResidue (residue);
+                    var linkCount = self.xlRepr ? self.xlRepr.crosslinkData.getHalfLinkCountByResidue (residue) : 0;
                     this.lastColour = (linkCount > 0 ? 0x000077 : 0xcccccc);
                 } else {
                     this.lastColour = 0xcccccc;
@@ -306,6 +306,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var colourChangeFunc = function() {
             if (self.xlRepr) {
                 var value = d3.event.target.value;
+                self.colourScheme = value;
                 var structure = self.model.get("stageModel").get("structureComp").structure;
                 self.xlRepr.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme({
                     scheme: value || "uniform",
@@ -483,7 +484,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 defaultAssembly: this.options.defaultAssembly,
                 selectedColor: "yellow",
                 selectedLinksColor: "yellow",
-                sstrucColor: "gray",
+                sstrucColourScheme: this.colourScheme,
                 displayedLabelColor: "black",
                 displayedLabelVisible: this.options.labelVisible,
                 showAllProteins: this.options.showAllProteins,
@@ -748,8 +749,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
 
     var defaults = {
+        sstrucColourScheme: "uniform",
         chainRep: "cartoon",
-        sstrucColor: "wheat",
         displayedLabelColor: "black",
         selectedLabelColor: "black",
         highlightedLabelColor: "black",
@@ -757,8 +758,6 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
         selectedLabelVisible: true,
         highlightedLabelVisible: true,
         labelSize: 3.0,
-        displayedResiduesColor: params.displayedColor || "lightgrey",
-        displayedLinksColor: params.displayedColor || "lightblue",
         selectedResiduesColor: params.selectedColor || "lightgreen",
         selectedLinksColor: "lightgreen",
         highlightedLinksColor: params.highlightedColor || "orange",
@@ -793,7 +792,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.colorOptions = {};
         this
-            ._initColorSchemes()
+            ._initColourSchemes()
             ._initStructureRepr()
             ._initLinkRepr()
             ._initLabelRepr()
@@ -817,7 +816,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var chainSelector = this.defaultDisplayedProteins(true); // true means the selection isn't enforced, just returned
 
         this.sstrucRepr = this.structureComp.addRepresentation(newType, {
-            //color: this.sstrucColor,
             colorScheme: this.colorOptions.residueColourScheme,
             colorScale: null,
             name: "sstruc",
@@ -839,9 +837,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.resRepr = comp.addRepresentation("spacefill", {
             sele: resSele,
-            //color: this.displayedResiduesColor,
             colorScheme: this.colorOptions.residueColourScheme,
-            //colorScale: ["#44f", "#444"],
             radiusScale: 0.6,
             name: "res"
         });
@@ -869,7 +865,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.linkRepr = comp.addRepresentation("distance", {
             atomPair: xlPair,
-            //colorValue: this.displayedLinksColor,
             colorScheme: this.colorOptions.linkColourScheme,
             labelSize: this.options.labelSize,
             labelColor: this.options.displayedLabelColor,
@@ -934,10 +929,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             });
         });
         //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
+        //console.log ("PIM", chainIndexToProteinMap);
         comp.structure.eachChain(function(chainProxy) {
-            //console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
             var description = chainProxy.entity ? chainProxy.entity.description : "";
             var pid = chainIndexToProteinMap.get(chainProxy.index);
+            //console.log ("chain label", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description, pid);
             if (pid && CLMSUI.NGLUtils.isViableChain(chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
@@ -972,7 +968,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this;
     },
 
-    _initColorSchemes: function() {
+    _initColourSchemes: function() {
         var self = this;
 
         var linkColourScheme = function() {
@@ -1016,7 +1012,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         };
 
         var structure = this.structureComp.structure;
-        this.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme ({scheme: "uniform", structure: structure});
+        this.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme ({scheme: this.options.sstrucColourScheme, structure: structure});
         this.colorOptions.residueColourScheme = NGL.ColormakerRegistry.addScheme(residueColourScheme, "custom");
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme(linkColourScheme, "xlink");
 
