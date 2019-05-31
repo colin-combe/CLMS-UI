@@ -83,9 +83,11 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .attr({
                 type: "text",
                 class: "inputPDBCode",
-                maxlength: 4,   // 24,
-                pattern: CLMSUI.utils.commonRegexes.pdbPattern, // .multiPdbPattern,
-                size: 6,
+                //maxlength: 4,
+                //pattern: CLMSUI.utils.commonRegexes.pdbPattern,
+                maxlength: 100,
+                pattern: CLMSUI.utils.commonRegexes.multiPdbPattern,
+                size: 8,
                 title: "Enter a PDB ID here e.g. 1AO6",
                 //placeholder: "eg 1AO6"
             })
