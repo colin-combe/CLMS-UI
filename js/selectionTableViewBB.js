@@ -49,7 +49,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
             "autovalidated", "validated", "group", "searchId", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
-            "precursorIntensity", "elutionStart", "elutionEnd", "missedCleavages",
+            "precursorIntensity", "elutionStart", "elutionEnd", "expMissedCleavages",
+            "searchMissedCleavages",
         ];
 
         this.headerLabels = {
@@ -82,10 +83,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             precursorIntensity: "Intensity",
             elutionStart: "Elut. Start",
             elutionEnd: "Elut. End",
-            missedCleavages: "Max.Missed Cleavages",
+            expMissedCleavages: "Experimental Max. Missed Cleavages",
+            searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "missedCleavages",]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "expMissedCleavages", "searchMissedCleavages",]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -213,8 +215,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             elutionEnd: function(d) {
                 return d.elution_time_end;
             },
-            missedCleavages: function(d) {
-                return d.missedCleavageCount();
+            expMissedCleavages: function(d) {
+                return d.experimentalMissedCleavageCount();
+            },
+            searchMissedCleavages: function(d) {
+                return d.searchMissedCleavageCount();
             },
         };
 
